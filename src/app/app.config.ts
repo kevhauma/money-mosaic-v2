@@ -7,8 +7,8 @@ import {
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { appDb } from './core/data-access';
-import { AccountsStore } from './feature-accounts';
-import { TransactionsStore } from './feature-transactions';
+import { AccountsStore } from './feature-accounts/accounts.store';
+import { TransactionsStore } from './feature-transactions/transactions.store';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
