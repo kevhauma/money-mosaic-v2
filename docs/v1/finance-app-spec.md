@@ -98,11 +98,12 @@ IDs are stable references for later discussion.
 
 ### 4.6 Statistics & Dashboard
 - **FR-STAT-1** Per-account current balance and combined **net worth**.
-- **FR-STAT-2** Per-period (default calendar month) **income**, **expense**, **net cash flow**, and **savings rate** = (income − expense) / income, with transfers excluded from both income and expense.
-- **FR-STAT-3** **Category breakdown** for a period (expense-by-category, income-by-source), as totals and share-of-total.
-- **FR-STAT-4** Trends: month-over-month income/expense and net-worth-over-time.
+- **FR-STAT-2** Per-period (default: current calendar month) **income**, **expense**, **net cash flow**, and **savings rate** = (income − expense) / income, with transfers excluded from both income and expense.
+- **FR-STAT-3** **Category breakdown** for the selected date range (expense-by-category, income-by-source), as totals and share-of-total.
+- **FR-STAT-4** Trends: income/expense and net-worth-over-time, bucketed at the selected grouping granularity across the selected date range.
 - **FR-STAT-5** All stats respond instantly to edits (recategorising a transaction updates every affected figure) via computed signals.
 - **FR-STAT-6** Every aggregate is drill-downable to the underlying transactions.
+- **FR-STAT-7** User can pick a custom **date range** (quick presets: This month, Last month, This quarter, This year, plus a custom picker) and a **grouping granularity** — day, week, month, or quarter — that determines how all period-based stats and trends are bucketed. Default: current calendar month, grouped by month. Range and grouping are independent: e.g. a full year range grouped by week is valid.
 
 ### 4.7 Data Management
 - **FR-DAT-1** Full **export** of all data to a single JSON file (backup / device migration).
@@ -163,22 +164,22 @@ Source-of-truth entities (persisted in IndexedDB). Everything statistical is der
 ## 7. Signals Architecture (shape, not implementation)
 
 - **Source signals:** `accounts`, `transactions`, `categories`, `rules`, `mappingProfiles`, `importBatches`, `settings`.
-- **Derived (`computed`) signals:** account balances, net worth, per-month income/expense/net/savings rate, category breakdowns, uncategorised queue, transfer-review queue, month/account trends.
+- **Derived (`computed`) signals:** account balances, net worth, per-bucket income/expense/net/savings rate (bucketed by the active date range + grouping granularity), category breakdowns, uncategorised queue, transfer-review queue, range/account trends.
 - **Persistence layer:** an `effect()` (or explicit service calls) mirrors source-signal changes into IndexedDB; on boot, the DB hydrates the source signals.
-- **Memoization:** heavy aggregates keyed by `(accountId, yearMonth)` so edits invalidate only the touched buckets.
+- **Memoization:** heavy aggregates keyed by `(accountId, granularity, bucketKey)` — e.g. `(accountId, 'month', '2026-07')` or `(accountId, 'week', '2026-W27')` — so edits invalidate only the touched buckets, and switching grouping granularity doesn't require recomputing buckets that are already cached at that granularity.
 
 ---
 
 ## 8. Roadmap
 
 **v1 — MVP (this doc)**
-Accounts (4 types as cash ledgers) · CSV import (presets + wizard + saved profiles) · dedupe · manual + rules categorisation · auto transfer linking (IBAN-first) · core stats · JSON backup · local-first IndexedDB.
+Accounts (4 types as cash ledgers) · CSV import (presets + wizard + saved profiles) · dedupe · manual + rules categorisation · auto transfer linking (IBAN-first) · core stats with custom date range + grouping (day/week/month/quarter) · JSON backup · local-first IndexedDB.
 
 **v1.5 — Refinements**
 Account manager (per-account colour, priority/display order, initial saldo — assumes no legacy transactions before it, renaming) · joint-account splitting (deposits from the paired account excluded from aggregates; every other transaction counted at a per-account share, default 50/50, configurable per joint account) · category manager (dedicated screen surfacing the rules engine as per-category auto-assign rule sets, e.g. "description contains {store name}") · loading/calculating-state animations (import progress, aggregate recompute).
 
 **v2 — Depth**
-Subscription/recurring detection · split transactions · category groups/hierarchy · budgets · custom date ranges & richer trends · multi-currency · CODA import.
+Subscription/recurring detection · split transactions · category groups/hierarchy · budgets · richer trend analytics (forecasted/projected buckets) · multi-currency · CODA import.
 
 **v3 — Investing & intelligence**
 Real portfolio tracking (holdings, price feed, valuation, returns) · forecasting/insights · optional encrypted sync.
@@ -192,4 +193,4 @@ Real portfolio tracking (holdings, price feed, valuation, returns) · forecastin
 3. **Splits** — confirmed out of v1?
 4. **Currency** — EUR-only for v1 confirmed?
 5. **Bank preset priority** — which of KBC / Belfius / BNP Fortis / ING / Argenta do you actually use, so we build those presets first?
-6. **Period definition** — calendar month as the default reporting period, with custom ranges in v2. OK, or do you want custom ranges in v1?
+6. ~~**Period definition** — calendar month as the default reporting period, with custom ranges in v2. OK, or do you want custom ranges in v1?~~ **Resolved:** custom date range + grouping (day/week/month/quarter) is in v1 (FR-STAT-7), defaulting to the current calendar month grouped by month.

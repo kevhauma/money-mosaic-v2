@@ -9,10 +9,10 @@ Companion to [finance-app-spec.md](./finance-app-spec.md) and [user-stories.md](
 Persistent-sidebar layout built on daisyUI's `drawer` component.
 
 - **Sidebar** (`drawer-side`) — app name at top, a `menu` of top-level nav items with icons: Dashboard, Accounts, Transactions, Categories, Transfers, Import, Settings. "Transfers" shows a badge with the pending-review count when > 0. Permanently visible ≥1024px; becomes an off-canvas overlay (hamburger-triggered) below that.
-- **Topbar** (top of `drawer-content`) — hamburger (mobile/tablet only), current page title, a global **period switcher** (prev/next month arrows + "July 2026" label + "This month" jump), and a page-specific primary action slot (e.g. "Import CSV" on Dashboard/Transactions). Theme toggle (light/dark/system) lives here too.
+- **Topbar** (top of `drawer-content`) — hamburger (mobile/tablet only), current page title, a global **range & grouping switcher** (FR-STAT-7), and a page-specific primary action slot (e.g. "Import CSV" on Dashboard/Transactions). Theme toggle (light/dark/system) lives here too.
 - **Content** — `<router-outlet>` in a padded, max-width-free container (financial tables benefit from full width; cap prose-only pages like Settings at `max-w-2xl`).
 
-The period switcher is global because most stats are month-sliced (FR-STAT-2/§7); it writes a `month` query param that Dashboard, Transactions, and Categories all read, so navigating between them keeps you looking at the same period. Centralize the key in `shared/utils/search-params.ts` per the routing convention.
+**Range & grouping switcher** — two controls, always shown together: a date-range picker (quick presets — This month, Last month, This quarter, This year — plus a custom from/to picker) and a grouping segmented control (Day / Week / Month / Quarter) that decides how period-based stats are bucketed. Default: current calendar month, grouped by month. It's global because most stats are range-sliced (FR-STAT-2/FR-STAT-7/§7); it writes `from`, `to`, `groupBy` query params that Dashboard, Accounts detail, and Categories all read, so navigating between them keeps you looking at the same range. Centralize the keys in `shared/utils/search-params.ts` per the routing convention. Transactions reads `from`/`to` too (to inherit the range on drill-down) but ignores `groupBy` — a flat list has nothing to bucket.
 
 ## 2. Breakpoints
 
@@ -28,7 +28,7 @@ Tailwind's default `sm`/`lg` breakpoints map directly to tablet/desktop above �
 
 - **Money display** — a shared `signed-amount.pipe.ts` (`shared/utils/`) formats signed EUR amounts and a `MoneyComponent`/CSS convention colors them: `text-success` for positive, `text-error` for negative, never raw green/red hex (daisyUI theme tokens only, so it survives theme/dark-mode changes).
 - **Category badge** — color dot + name, one shared `CategoryBadgeComponent` wrapping a daisyUI `badge`, used in transaction rows, rule targets, and category breakdowns alike.
-- **Drill-down** — every stat, chart segment, and category total is a link that navigates to `/transactions` with the matching filters pre-filled via query params (FR-STAT-6). Dashboard passes `month`; category breakdown additionally passes `categoryId`.
+- **Drill-down** — every stat, chart segment, and category total is a link that navigates to `/transactions` with the matching filters pre-filled via query params (FR-STAT-6). Dashboard passes `from`/`to` (its active range, `groupBy` dropped since Transactions doesn't use it); category breakdown additionally passes `categoryId`.
 - **Empty states** — icon + one-line message + a primary action (e.g. "No transactions yet — Import a CSV"), one shared `EmptyStateComponent`. Action queue widgets (uncategorised, transfer review) hide themselves entirely at zero rather than showing "0", so the dashboard doesn't nag when there's nothing to do.
 - **Destructive confirmations** — one shared `ConfirmDialogComponent` (daisyUI `modal`) for delete-account, delete-all-data, unlink-transfer, etc. Consistent copy pattern: state what happens, then the irreversible part in one sentence.
 - **Create/edit forms** — daisyUI `modal` for short forms (account, category, rule, mapping profile). Reactive Forms per convention, validators colocated with the form component.
@@ -39,8 +39,8 @@ Tailwind's default `sm`/`lg` breakpoints map directly to tablet/desktop above �
 
 ### 4.1 Dashboard — `/dashboard` (default route)
 
-1. Stats row — daisyUI `stats`, 4 items (income, expense, net cash flow, savings rate) for the selected period, collapsing 4→2→1 columns per breakpoint. Net worth shown separately in the topbar-adjacent header, since it's not period-scoped.
-2. Two-column row (stacks on mobile): **category breakdown** (donut + top-5 list, "view all" → `/categories`) | **net worth trend** (12-month line chart).
+1. Stats row — daisyUI `stats`, 4 items (income, expense, net cash flow, savings rate) totalled across the selected date range, collapsing 4→2→1 columns per breakpoint. Net worth shown separately in the topbar-adjacent header, since it's a point-in-time figure, not range-scoped.
+2. Two-column row (stacks on mobile): **category breakdown** (donut + top-5 list for the selected range, "view all" → `/categories?from=…&to=…`) | **trend chart** (income/expense and net-worth-over-time, bucketed at the selected grouping — one bar/point per day, week, month, or quarter — across the selected range).
 3. Action queue row — "N uncategorised transactions" and "N transfers need review" cards, each linking to the relevant page's filtered view; hidden individually when their count is zero.
 4. Per-account balance strip — compact horizontal list of account name + balance, linking to `/accounts/:id`.
 
@@ -52,7 +52,7 @@ Tailwind's default `sm`/`lg` breakpoints map directly to tablet/desktop above �
 
 ### 4.3 Transactions — `/transactions`
 
-- **Toolbar**: account multi-select, date range, category, free-text search, amount range — collapses into a filter sheet below `lg`. "Import CSV" primary action. A bulk-action bar appears once rows are checkbox-selected ("Categorise as…").
+- **Toolbar**: account multi-select, date range, category, free-text search, amount range — collapses into a filter sheet below `lg`. "Import CSV" primary action. A bulk-action bar appears once rows are checkbox-selected ("Categorise as…"). The date-range filter here is independent of the topbar's global range & grouping switcher (a flat list has no grouping), but it inherits `from`/`to` as its initial value when arrived at via drill-down, and can be widened/narrowed freely afterwards without affecting the global range.
 - **Table** (`≥1024px`): sticky header; columns = select, date, account badge, description/counterparty, category (inline-editable badge), amount (right-aligned, coloured), transfer indicator icon. Paginated at 50 rows (NFR-PERF-1) rather than rendering all 10k+ at once.
 - **Mobile**: table becomes a stacked card list — date + amount on the first line, description below, category badge, tap to open the same quick-edit slide-over.
 - **Quick-edit slide-over**: full field set, notes textarea, transfer link/unlink, "always categorise this merchant as X" shortcut (FR-CAT-4).
@@ -72,7 +72,7 @@ Footer nav (Back/Next/Confirm) stays fixed at the bottom of the wizard card acro
 
 Two daisyUI `tabs`:
 
-- **Categories** — grouped list (Expense / Income sections, optional group sub-headers within), each row: colour dot, icon, name, group tag, edit/archive. "+ Add category".
+- **Categories** — grouped list (Expense / Income sections, optional group sub-headers within), each row: colour dot, icon, name, group tag, this-range total (reads the topbar's `from`/`to`, so the "view all" link from the Dashboard breakdown lands on matching figures), edit/archive. "+ Add category".
 - **Rules** — priority-ordered, drag-reorderable list; each row summarises its conditions in plain text ("description contains 'Delhaize'") plus the target category badge and an enabled toggle. "+ Add rule" opens a condition-builder modal: repeatable condition rows (field / operator / value), a "continue on match" toggle, and the target category.
 
 ### 4.6 Transfers — `/transfers`
@@ -99,12 +99,12 @@ Build these once, reuse everywhere, rather than re-authoring daisyUI markup per 
 | `StatCardComponent` | daisyUI `stat` | Dashboard, Account detail |
 | `CategoryBadgeComponent` | daisyUI `badge` | Transactions, Categories, Rules |
 | `AccountBadgeComponent` | daisyUI `badge` | Transactions, Transfers |
-| `PeriodSwitcherComponent` | — | Topbar |
+| `RangeGroupingSwitcherComponent` | — | Topbar |
 | `EmptyStateComponent` | — | every list/queue view |
 | `ConfirmDialogComponent` | daisyUI `modal` | destructive actions everywhere |
 | `SlideOverComponent` | daisyUI `drawer` (`drawer-end`) | Transaction quick-edit |
 
-`shared/utils/` gets `signed-amount.pipe.ts` and `search-params.ts` (centralizing `month`, `accountId`, `categoryId`, `from`, `to`, `q`, `minAmount`, `maxAmount` keys) alongside the reactive-forms validators already called for in the conventions doc.
+`shared/utils/` gets `signed-amount.pipe.ts`, a `date-bucket.ts` helper (buckets a date into its day/week/month/quarter key for the memoized aggregates described in spec §7), and `search-params.ts` (centralizing `from`, `to`, `groupBy`, `accountId`, `categoryId`, `q`, `minAmount`, `maxAmount` keys) alongside the reactive-forms validators already called for in the conventions doc.
 
 ## 6. Theming (closes spec Open Decision, informally)
 
@@ -114,11 +114,13 @@ Use daisyUI's built-in `light` / `dark` themes, switched via `prefers-color-sche
 
 | Path | Feature | Reads query params |
 |---|---|---|
-| `/dashboard` | `feature-dashboard` | `month` |
+| `/dashboard` | `feature-dashboard` | `from`, `to`, `groupBy` |
 | `/accounts` | `feature-accounts` | — |
-| `/accounts/:id` | `feature-accounts` | `month` (for the mini stats) |
-| `/transactions` | `feature-transactions` | `accountId`, `categoryId`, `from`, `to`, `q`, `minAmount`, `maxAmount`, `month` (shorthand for `from`/`to`) |
+| `/accounts/:id` | `feature-accounts` | `from`, `to`, `groupBy` (for the mini stats) |
+| `/transactions` | `feature-transactions` | `accountId`, `categoryId`, `from`, `to`, `q`, `minAmount`, `maxAmount` |
 | `/import` | `feature-import` | — (wizard step is component-local state, not URL state) |
-| `/categories` | `feature-categories` | `tab` (`categories` \| `rules`) |
+| `/categories` | `feature-categories` | `tab` (`categories` \| `rules`), `from`, `to` (range-scoped totals) |
 | `/transfers` | `feature-transfers` | `tab` (`review` \| `linked`) |
 | `/settings` | `feature-settings` | — |
+
+`groupBy` is one of `day` \| `week` \| `month` \| `quarter`. Pages that don't bucket anything (Transactions, Categories) still read `from`/`to` so the number they show always matches what the topbar switcher currently displays.
