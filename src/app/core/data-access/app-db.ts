@@ -86,6 +86,8 @@ export type MappingProfile = {
   id?: number;
   name: string;
   bankPreset?: string;
+  /** Header names used to auto-detect this profile from an uploaded CSV. Only set on bank template profiles, not user-saved account mappings. */
+  headerSignature?: string[];
   delimiter: string;
   decimalSeparator: string;
   dateFormat: string;
@@ -95,6 +97,69 @@ export type MappingProfile = {
   columns: MappingProfileColumns;
   defaultAccountId?: number;
 };
+
+/**
+ * Best-effort bank CSV export signatures, reconstructed from general knowledge of each
+ * bank's export format — NOT verified against a real sample file. Seeded into
+ * `mappingProfiles` on first run so users get a starting point; correct or delete them
+ * from the mapping profiles UI once a real export is available.
+ */
+const DEFAULT_MAPPING_PROFILE_TEMPLATES: MappingProfile[] = [
+  {
+    name: 'KBC',
+    bankPreset: 'kbc',
+    headerSignature: [
+      'Rekeningnummer',
+      'Boekingsdatum',
+      'Bedrag',
+      'Munt',
+      'Omschrijving',
+      'Naam tegenpartij',
+      'Rekeningnummer tegenpartij',
+    ],
+    columns: {
+      date: 'Boekingsdatum',
+      amount: 'Bedrag',
+      description: 'Omschrijving',
+      counterpartyName: 'Naam tegenpartij',
+      counterpartyIban: 'Rekeningnummer tegenpartij',
+      balance: 'Saldo',
+    },
+    delimiter: ';',
+    decimalSeparator: ',',
+    dateFormat: 'DD/MM/YYYY',
+    encoding: 'windows-1252',
+    headerRows: 1,
+    signConvention: 'as-is',
+  },
+  {
+    name: 'Belfius',
+    bankPreset: 'belfius',
+    headerSignature: [
+      'Rekening',
+      'Boekingsdatum',
+      'Bedrag',
+      'Munt',
+      'Omschrijving',
+      'Naam tegenpartij',
+      'Rekening tegenpartij',
+    ],
+    columns: {
+      date: 'Boekingsdatum',
+      amount: 'Bedrag',
+      description: 'Omschrijving',
+      counterpartyName: 'Naam tegenpartij',
+      counterpartyIban: 'Rekening tegenpartij',
+      balance: 'Saldo',
+    },
+    delimiter: ';',
+    decimalSeparator: ',',
+    dateFormat: 'DD/MM/YYYY',
+    encoding: 'windows-1252',
+    headerRows: 1,
+    signConvention: 'as-is',
+  },
+];
 
 export type ImportBatch = {
   id?: number;
@@ -129,6 +194,10 @@ export class AppDb extends Dexie {
       rules: '++id, priority, enabled',
       mappingProfiles: '++id, name, bankPreset, defaultAccountId',
       importBatches: '++id, accountId, importedAt',
+    });
+
+    this.on('populate', () => {
+      this.mappingProfiles.bulkAdd(DEFAULT_MAPPING_PROFILE_TEMPLATES);
     });
   }
 }

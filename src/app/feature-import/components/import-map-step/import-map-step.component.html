@@ -5,7 +5,7 @@
 } @else {
   @if (detectedPreset(); as preset) {
     <div class="alert alert-success mb-4 text-sm">
-      Detected: {{ preset.label }}
+      Detected: {{ preset.name }}
       {{
         usedSavedProfile()
           ? '— using your saved mapping'

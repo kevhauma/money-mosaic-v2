@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { MappingProfile, MappingProfileColumns } from '@/core/data-access';
-import { CsvImportService, detectBankPreset, guessDelimiter, type BankPreset } from '@/core/import';
+import { CsvImportService, guessDelimiter } from '@/core/import';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
@@ -39,7 +39,7 @@ export class ImportMapStepComponent {
   protected readonly loading = signal(true);
   protected readonly headers = signal<string[]>([]);
   protected readonly previewRows = signal<string[][]>([]);
-  protected readonly detectedPreset = signal<BankPreset | null>(null);
+  protected readonly detectedPreset = signal<MappingProfile | null>(null);
   protected readonly usedSavedProfile = signal(false);
 
   protected readonly form = this.formBuilder.nonNullable.group({
@@ -81,9 +81,9 @@ export class ImportMapStepComponent {
       const guessedDelimiter = guessDelimiter(sampleText);
 
       const headers = await this.csvImportService.detectHeaders(file, guessedDelimiter, 'utf-8');
-      const preset = detectBankPreset(headers);
+      const preset = this.mappingProfilesStore.findTemplateForHeaders(headers) ?? null;
       const savedProfile = preset
-        ? this.mappingProfilesStore.findForBankAndAccount(preset.id, this.accountId())
+        ? this.mappingProfilesStore.findForBankAndAccount(preset.bankPreset, this.accountId())
         : undefined;
 
       this.detectedPreset.set(preset);
@@ -103,7 +103,7 @@ export class ImportMapStepComponent {
         });
       } else if (preset) {
         this.form.patchValue({
-          name: preset.label,
+          name: preset.name,
           delimiter: preset.delimiter,
           decimalSeparator: preset.decimalSeparator,
           dateFormat: preset.dateFormat,
@@ -155,7 +155,7 @@ export class ImportMapStepComponent {
     this.result.set({
       mappingProfile: {
         name: value.name,
-        bankPreset: this.detectedPreset()?.id,
+        bankPreset: this.detectedPreset()?.bankPreset,
         delimiter: value.delimiter,
         decimalSeparator: value.decimalSeparator,
         dateFormat: value.dateFormat,
