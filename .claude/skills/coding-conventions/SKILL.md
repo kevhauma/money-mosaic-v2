@@ -1,30 +1,29 @@
 ---
 name: frontend-conventions
 description: Component patterns and conventions for frontend code
-paths: "**/*.tsx,**/*.jsx,**/*.ts,**/*.vue,**/*.html,**/*.css"
+paths: "**/*.ts,**/*.html,**/*.css"
 ---
 
 ## Common Commands
 
 ```bash
-yarn dev              # start dev server
-yarn build            # production build
-yarn test             # run tests
-yarn codegen     # regenerate API types and hooks from OpenAPI spec
-yarn lint             # ESLint check
+ng serve              # start dev server
+ng build              # production build
+ng test               # run unit tests
+ng lint               # ESLint check
+ng generate component feature-{name}/components/{Name}  # scaffold a standalone component
 ```
 
 ## Architecture
 
-`src/` is organized into tiers:
-- `app/` — page entries
-- `data-access/` — HTTP client config, code-generated API hooks, custom data hooks
-- `feature-{name}/` — colocated domain modules (40+)
-- `layouts/` — global shell components
-- `libs/ui/` — shared component library and theme
-- `libs/utils/` — shared hooks and utilities
+`src/app/` is organized into tiers:
+- `app.routes.ts` — top-level lazy route table
+- `core/` — singleton services, app-wide guards/interceptors, the Dexie database and its repositories
+- `feature-{name}/` — colocated domain modules (accounts, transactions, import, categories, transfers, stats, settings, ...)
+- `shared/ui/` — shared standalone components wrapping Tailwind/daisyUI primitives
+- `shared/utils/` — shared signals, pipes, directives, and utilities
 
-Libraries exist for: UI components, CSS-in-JS styling, state management, server state / data fetching, API code generation, form handling + schema validation, internationalization, notifications.
+No backend: all persistence is local-first via IndexedDB (Dexie.js). There is no HTTP data-access layer, API codegen, or axios client — everything an app previously fetched from a server instead lives in `core/data-access/`.
 
 ## Feature Folder Structure
 
@@ -32,104 +31,88 @@ Every feature follows this pattern:
 
 ```
 feature-{name}/
-├── {Feature}Layout.tsx
+├── {feature}.routes.ts
+├── {feature}.store.ts
 ├── index.ts
 └── components/
-    ├── {Feature}Overview.tsx
-    ├── {Feature}Detail.tsx
+    ├── {feature}-overview.component.ts
+    ├── {feature}-overview.component.html
+    ├── {feature}-detail.component.ts
+    ├── {feature}-detail.component.html
     └── index.ts
 ```
 
-Add sub-folders inside `components/` for multi-file sub-components (e.g. `AddTagGrid/`).
+Add sub-folders inside `components/` for multi-file sub-components (e.g. `add-tag-grid/`).
 
 ## Naming Conventions
 
 | Thing | Convention | Example |
 |---|---|---|
-| Component files | PascalCase | `EntityEdit.tsx` |
-| Hook files | camelCase | `useFetchUser.ts` |
-| Utility files | camelCase | `stringUtils.ts` |
-| State atom files | PascalCase | `ThemeAtom.ts` |
-| Feature folders | `feature-` + kebab-case | `feature-entity` |
-| Component names | PascalCase, descriptive | `EntityLayout` |
-| Hook names | `use` prefix + camelCase | `useDisclosure` |
-| DTO types | `{Resource}Dto` | `EntityDto` (generated) |
-| Test files | `*.spec.ts` | `useDisclosure.spec.ts` |
+| Component files | kebab-case + `.component.ts`/`.html` | `entity-edit.component.ts` |
+| Component class | PascalCase + `Component` suffix | `EntityEditComponent` |
+| Component selector | `app-` + kebab-case | `app-entity-edit` |
+| Service files | kebab-case + `.service.ts` | `transaction.service.ts` |
+| Service class | PascalCase + `Service` suffix | `TransactionService` |
+| Store (signal state) files | kebab-case + `.store.ts` | `transactions.store.ts` |
+| Directive files | kebab-case + `.directive.ts` | `currency-input.directive.ts` |
+| Pipe files | kebab-case + `.pipe.ts` | `signed-amount.pipe.ts` |
+| Feature folders | `feature-` + kebab-case | `feature-transactions` |
+| Model/DTO types | PascalCase, no suffix | `Transaction`, `Account` |
+| Test files | `*.spec.ts` | `transaction.service.spec.ts` |
 
 ## Code Style
 
-- **Named exports only** — default exports only for file-based routing entry points (`page.tsx` / `layout.tsx`)
+- **Standalone components only** — no `NgModule`s; each component declares its own `imports: [...]`
+- **`ChangeDetectionStrategy.OnPush`** on every component
+- **`inject()`** for dependency injection instead of constructor injection
+- **Signal-based inputs/outputs** — `input()` / `output()` / `model()` instead of `@Input()` / `@Output()` decorators
+- **Native control flow** in templates — `@if` / `@for` / `@switch`, never `*ngIf` / `*ngFor`
 - **`type` over `interface`** for all type definitions
-- **Props as a local `type Props = { ... }`** — export only if consumed by other modules
-- Use `@/*` path alias for all imports (`@/feature-entity/...`, not relative `../../...`)
+- Use `@/*` path alias for cross-tier imports (`@/feature-transactions/...`, not relative `../../...`)
 - Single quotes — enforced by Prettier and pre-commit hook
-- **Cross-feature imports go through `index.ts`** — when importing a component from a different feature, import from the feature root (`@/feature-other`) or its `index.ts`, never directly from the `.vue` file (`@/feature-other/components/Foo.vue`)
-- **Prefer arrow function notation over the `function` keyword**. Use `const foo = (...): T => { ... }` for all function definitions, including exports (e.g. `export const useCurrentUser = () => { ... }`). Exception: do not edit files under `src/data-access/generated/` — those are auto-generated.
+- **Cross-feature imports go through `index.ts`** — when importing from a different feature, import from its `index.ts`, never a component file directly (e.g. `@/feature-accounts`, not `@/feature-accounts/components/account-edit.component`)
+- **Prefer arrow function class fields / `const` functions** over the `function` keyword where the codebase already does so; component/service class methods stay as class methods
 
+## State Management (signals-first)
 
-## State Management
+- **Source signals are the source of truth**, held inside injectable `providedIn: 'root'` store services — one per aggregate (`AccountsStore`, `TransactionsStore`, `CategoriesStore`, `RulesStore`, `TransfersStore`, ...)
+- **Every statistic is a `computed()` derivation** of source signals — never a manually maintained/mutated field
+- **Persistence via `effect()`** — each store service's constructor registers an `effect()` that mirrors signal writes into IndexedDB through the matching repository; app bootstrap hydrates source signals from IndexedDB before the app renders
+- **Memoize expensive aggregates** (e.g. per `(accountId, yearMonth)`) with a `computed()` backed by a `Map` cache, so a single edit invalidates only the touched bucket, not all history
+- Reach for RxJS only at boundaries that are inherently stream-based (router events, `fromEvent`, Web Worker messages for CSV parsing) — convert to a signal with `toSignal()` at the boundary rather than threading Observables through component state
 
-- **Atomic global state** for persisted UI config (theme, preferences); atom files named `{Feature}Atom.ts` with a localStorage persistence effect
-- **Server state (data fetching)** for all API data — use the code-generated query and mutation hooks
-- **`useState`** for local UI state
-- **`useDisclosure`** (`libs/utils/useDisclosure.ts`) for open/close toggle state
-- Access atoms with the minimal scope needed: read-only, read/write, or write-only
+## Data Access (Dexie.js / IndexedDB)
 
-## Data Access
-
-**Never hand-edit** `src/data-access/generated/` — always regenerate with `yarn generate:api`.
-
-Generated hooks follow this naming:
-- `useGetApi{Resource}()` — fetch list
-- `useGetApi{Resource}Id(id)` — fetch single
-- `usePostApi{Resource}()` — create mutation
-- `usePatchApi{Resource}()` — update mutation
-- `useDeleteApi{Resource}Id()` — delete mutation
-
-Always type mutations with `DefaultAxiosError`:
-```typescript
-const { mutate } = usePatchApiAircraft<DefaultAxiosError>();
-```
-
-Invalidate cache using the generated key factories:
-```typescript
-queryClient.invalidateQueries(getGetApiAircraftQueryKey());
-```
-
-Global HTTP error handling is in `src/data-access/initAxios.ts`. Use `useWatchHttpErrorCode` for feature-level reactions to specific HTTP status codes.
-
-## Form Handling
-
-- Validation schemas are defined inside the form component using the schema validation library
-- All form inputs are controlled — use components from `libs/ui/components/form/formInputs/` (`FormTextField`, `FormAutocomplete`, `FormCheckbox`, `FormMultiAutocomplete`, etc.)
+- One `Dexie` subclass in `core/data-access/app-db.ts` declares all tables via `.version(n).stores({ ... })`
+- **Schema changes are additive** — add a new `.version(n + 1).stores(...)` (+ `.upgrade()` block if data needs transforming); never edit a shipped version in place
+- Each entity gets a thin repository in `core/data-access/` (e.g. `TransactionsRepository`) wrapping the Dexie table — components and store services never touch `db.transactions` directly
+- Multi-table writes (e.g. import batch insert + fingerprint dedupe check) run inside `db.transaction('rw', [...tables], async () => { ... })` for atomicity
+- All repository methods are `async`/`await`, called from store service effects/methods — never awaited directly inside a template or component constructor
 
 ## Styling
 
-- **CSS-in-JS only** — no Tailwind, no CSS files, no CSS modules
-- **Visual styling belongs in `libs/ui/` only** — colors, typography, borders, shadows, backgrounds, and similar visual properties must be defined there, either as styled components or as component props
-- **Outside `libs/ui/`, only layout/positioning styles are allowed** — flex, grid, margin, padding, gap, width, height, overflow, and similar structural properties
-- When a feature component needs visual customization, expose it as a prop on the base component in `libs/ui/` rather than overriding styles inline
-- Theme is in `libs/ui/theme.tsx`; dark mode and font size are stored in a global state atom
+- **Tailwind CSS utility classes + daisyUI components** — written directly in the template
+- **No component-level `.scss`/CSS-in-JS** — leave `styleUrls` empty; all styling is Tailwind utilities on the template
+- **Use daisyUI theme tokens** (`bg-base-100`, `text-primary`, etc.), never hardcoded hex colors, so dark mode themes stay correct
+- Shared visual primitives (buttons, cards, form fields) live in `shared/ui/` as thin standalone components wrapping daisyUI markup — feature templates should reuse these rather than re-authoring the same daisyUI pattern twice
+- Only layout/positioning utilities (flex, grid, gap, margin, padding, width/height) belong directly in feature templates outside `shared/ui/`
 
 ## Routing
 
-- Build all URLs via `clientRoutes` (`libs/utils/clientRoutes.ts`) — never construct paths manually
-- Read/write URL search params using keys from `SearchParamKeys` (`libs/utils/searchParamKeys.ts`)
-- **Handle URL/query params as close to the routing layer as possible** — extract them in the `page.tsx` file and pass the resolved values down as props; feature components should not read from the URL themselves
-- Tab navigation via `useUrlTabs` / `useNavigateToTab`
+- Lazy-load every feature via `loadChildren`/`loadComponent` in `app.routes.ts`
+- Feature-level routes live in `{feature}.routes.ts`
+- **Handle URL/query params as close to the routing layer as possible** — resolve them in the feature's route entry component via `ActivatedRoute`/`input()` route bindings, then pass the resolved values down as `input()`s to child components; child components should not read the URL themselves
+- Tab-style navigation reads/writes the same param keys consistently — centralize key names in `shared/utils/search-params.ts`
 
-## Views
+## Forms
 
-Views (`src/views/`) are thin route entry points — they should contain **no business logic**.
-
-The only work a view is allowed to do:
-- Read route params and query strings from the URL
-- Pass the resolved values down as props to feature components
-
-Everything else (data fetching, state, UI logic) belongs in the feature component the view renders. If a view needs more than a handful of lines of `<script setup>`, that logic should move into the feature.
+- **Reactive Forms** (`FormGroup`/`FormBuilder`/`FormControl`) for all forms — no template-driven forms
+- Validators are colocated with the form's component; shared custom validators live in `shared/utils/validators/`
+- Bind controls with `[formControl]`/`[formGroup]`, not manual signal wiring, so Angular's built-in validation/state (`dirty`, `touched`, `errors`) stays available
 
 ## Testing
 
-- Test files: `*.spec.ts`, adjacent to the source file (hooks may have a named subfolder)
-- Format: `describe('{Hook/Component}: {operation}', () => { it('{scenario}', ...) })`
-- Unit tests for pure logic; extract helper functions for shared setup
+- Test files: `*.spec.ts`, adjacent to the source file
+- Format: `describe('{Service/Component}: {operation}', () => { it('{scenario}', ...) })`
+- Use `TestBed` for component/service tests; assert on signal `.value()`/computed output directly rather than over-relying on `fixture.detectChanges()` timing
+- Unit tests for pure logic (fingerprinting, rule matching, transfer-linking, aggregation math) should not require `TestBed` at all — test the plain functions/classes directly

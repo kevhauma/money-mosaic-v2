@@ -174,6 +174,9 @@ Source-of-truth entities (persisted in IndexedDB). Everything statistical is der
 **v1 — MVP (this doc)**
 Accounts (4 types as cash ledgers) · CSV import (presets + wizard + saved profiles) · dedupe · manual + rules categorisation · auto transfer linking (IBAN-first) · core stats · JSON backup · local-first IndexedDB.
 
+**v1.5 — Refinements**
+Account manager (per-account colour, priority/display order, initial saldo — assumes no legacy transactions before it, renaming) · joint-account splitting (deposits from the paired account excluded from aggregates; every other transaction counted at a per-account share, default 50/50, configurable per joint account) · category manager (dedicated screen surfacing the rules engine as per-category auto-assign rule sets, e.g. "description contains {store name}") · loading/calculating-state animations (import progress, aggregate recompute).
+
 **v2 — Depth**
 Subscription/recurring detection · split transactions · category groups/hierarchy · budgets · custom date ranges & richer trends · multi-currency · CODA import.
 
