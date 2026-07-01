@@ -12,7 +12,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Account } from '@/core/data-access';
 import { ibanValidator } from '@/shared/utils/validators/iban.validator';
-import { ICON_BY_ACCOUNT_TYPE } from '../account-icons';
+import { ICON_BY_ACCOUNT_TYPE } from '../../account-icons';
 
 export type AccountFormValue = Omit<Account, 'id' | 'archived'>;
 

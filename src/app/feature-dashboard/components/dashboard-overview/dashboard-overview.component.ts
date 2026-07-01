@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { DashboardStore } from '../dashboard.store';
+import { DashboardStore } from '../../dashboard.store';
 
 @Component({
   selector: 'app-dashboard-overview',

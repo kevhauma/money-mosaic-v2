@@ -1,3 +1,3 @@
-export * from './accounts-overview.component';
-export * from './accounts-detail.component';
-export * from './account-form.component';
+export * from './accounts-overview/accounts-overview.component';
+export * from './accounts-detail/accounts-detail.component';
+export * from './account-form/account-form.component';

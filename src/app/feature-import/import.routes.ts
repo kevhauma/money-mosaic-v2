@@ -4,6 +4,8 @@ export const IMPORT_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./components/import-wizard.component').then((m) => m.ImportWizardComponent),
+      import('./components/import-wizard/import-wizard.component').then(
+        (m) => m.ImportWizardComponent,
+      ),
   },
 ];

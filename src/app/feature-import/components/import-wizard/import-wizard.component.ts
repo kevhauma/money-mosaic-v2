@@ -2,12 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { AccountsStore } from '@/feature-accounts';
 import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
-import { MappingProfilesStore } from '../mapping-profiles.store';
-import { ImportBatchesStore } from '../import-batches.store';
-import { ImportSelectStepComponent } from './import-select-step.component';
-import { ImportMapStepComponent, type ImportMappingResult } from './import-map-step.component';
-import { ImportPreviewStepComponent } from './import-preview-step.component';
-import { ImportSummaryStepComponent } from './import-summary-step.component';
+import { MappingProfilesStore } from '../../mapping-profiles.store';
+import { ImportBatchesStore } from '../../import-batches.store';
+import { ImportSelectStepComponent } from '../import-select-step/import-select-step.component';
+import {
+  ImportMapStepComponent,
+  type ImportMappingResult,
+} from '../import-map-step/import-map-step.component';
+import { ImportPreviewStepComponent } from '../import-preview-step/import-preview-step.component';
+import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
 
 type WizardStep = 1 | 2 | 3 | 4;
 type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;

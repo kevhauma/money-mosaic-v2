@@ -11,7 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { MappingProfile, MappingProfileColumns } from '@/core/data-access';
 import { CsvImportService, detectBankPreset, guessDelimiter, type BankPreset } from '@/core/import';
-import { MappingProfilesStore } from '../mapping-profiles.store';
+import { MappingProfilesStore } from '../../mapping-profiles.store';
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
 

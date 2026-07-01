@@ -12,9 +12,12 @@ import {
 import type { Account } from '@/core/data-access';
 import { ConfirmDialogComponent, EmptyStateComponent, PageHeaderComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
-import { ACCOUNT_ICON_SET, accountIconName } from '../account-icons';
-import { AccountsStore } from '../accounts.store';
-import { AccountFormComponent, type AccountFormValue } from './account-form.component';
+import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
+import { AccountsStore } from '../../accounts.store';
+import {
+  AccountFormComponent,
+  type AccountFormValue,
+} from '../account-form/account-form.component';
 
 @Component({
   selector: 'app-accounts-overview',

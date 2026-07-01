@@ -11,7 +11,7 @@ ng serve              # start dev server
 ng build              # production build
 ng test               # run unit tests
 ng lint               # ESLint check
-ng generate component feature-{name}/components/{Name}  # scaffold a standalone component
+ng generate component feature-{name}/components/{Name}  # scaffold a standalone component (creates its own folder by default — do not pass --flat)
 ```
 
 ## Architecture
@@ -35,14 +35,20 @@ feature-{name}/
 ├── {feature}.store.ts
 ├── index.ts
 └── components/
-    ├── {feature}-overview.component.ts
-    ├── {feature}-overview.component.html
-    ├── {feature}-detail.component.ts
-    ├── {feature}-detail.component.html
+    ├── {feature}-overview/
+    │   ├── {feature}-overview.component.ts
+    │   ├── {feature}-overview.component.html
+    │   └── {feature}-overview.component.spec.ts
+    ├── {feature}-detail/
+    │   ├── {feature}-detail.component.ts
+    │   ├── {feature}-detail.component.html
+    │   └── {feature}-detail.component.spec.ts
     └── index.ts
 ```
 
-Add sub-folders inside `components/` for multi-file sub-components (e.g. `add-tag-grid/`).
+**Every component gets its own folder** — `.component.ts`, `.component.html`, and `.component.spec.ts` (when present) live together in a folder named after the component (kebab-case, no `.component` suffix on the folder itself). Never place component files flat as siblings in `components/`. This applies everywhere a component lives, not just `feature-{name}/components/` — `shared/ui/` follows the same one-folder-per-component shape (e.g. `shared/ui/confirm-dialog/confirm-dialog.component.ts`).
+
+A component's own folder may still `import` a sibling within that same folder using `./`; reaching the parent feature's store/service from inside a component folder now needs `../../` (one level for `components/`, one more for the component's own folder) — double-check relative import depth after moving or adding files.
 
 ## Naming Conventions
 
@@ -112,7 +118,17 @@ Add sub-folders inside `components/` for multi-file sub-components (e.g. `add-ta
 
 ## Testing
 
-- Test files: `*.spec.ts`, adjacent to the source file
+- Test files: `*.spec.ts`, adjacent to the source file (inside the component's own folder for components — see Feature Folder Structure above)
 - Format: `describe('{Service/Component}: {operation}', () => { it('{scenario}', ...) })`
 - Use `TestBed` for component/service tests; assert on signal `.value()`/computed output directly rather than over-relying on `fixture.detectChanges()` timing
 - Unit tests for pure logic (fingerprinting, rule matching, transfer-linking, aggregation math) should not require `TestBed` at all — test the plain functions/classes directly
+
+## Verification
+
+Before considering any change complete, run:
+
+1. `ng lint` — must pass clean
+2. `ng test` — must pass clean
+3. `ng build --configuration development` — must compile (catches worker-bundling and cross-tier import issues `ng test`/`ng lint` can miss)
+4. **The `Fallow` skill** — a code quality tool, run as part of verification alongside the commands above. If `Fallow` isn't available yet in a given session, don't skip it silently — say so, and fall back to the checks above.
+5. For UI-observable changes, a live browser check per this repo's standard `<verification_workflow>` (dev server + preview tools), not just the automated checks above
