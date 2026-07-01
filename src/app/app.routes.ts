@@ -10,4 +10,8 @@ export const routes: Routes = [
     path: 'accounts',
     loadChildren: () => import('@/feature-accounts').then((m) => m.ACCOUNTS_ROUTES),
   },
+  {
+    path: 'import',
+    loadChildren: () => import('@/feature-import').then((m) => m.IMPORT_ROUTES),
+  },
 ];

@@ -21,17 +21,17 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 
 ## 2. CSV Import (FR-IMP)
 
-- [ ] As a user, I want to pick a CSV file and the account to import it into, so I can bring in a bank export (FR-IMP-1)
-- [ ] As a user, I want the app to auto-detect my bank's format from the file and pre-fill the mapping, so I don't have to configure it every time (FR-IMP-2)
-- [ ] As a user, I want a mapping wizard (date, amount/debit+credit, description, counterparty name/IBAN, running balance, delimiter, decimal separator, date format, encoding, header rows, sign convention) when no preset matches, so any bank's CSV can be imported (FR-IMP-3)
-- [ ] As a user, I want a live preview of the first rows under my current mapping before committing, so I can catch mistakes before importing (FR-IMP-4)
-- [ ] As a user, I want my column mapping saved as a reusable profile per bank/account, so re-imports are one click (FR-IMP-5)
-- [ ] As a user, I want duplicate rows (by deterministic fingerprint) skipped on re-import, while genuine same-day duplicates within one file are kept, so re-importing a file is always safe (FR-IMP-6, §5 Fingerprint)
-- [ ] As a user, I want an import summary (rows read/added/skipped, date range) that I can undo as a whole batch, so I can safely recover from a bad import (FR-IMP-7)
-- [ ] As a user, I want malformed rows reported instead of silently dropped, and to still be able to proceed with the valid rows, so one bad line doesn't block my whole import (FR-IMP-8)
-- [ ] As a user, I want CSV parsing to run in a Web Worker so the UI doesn't freeze on large files (NFR-PERF-2)
-- [ ] As a user, I want a failed import to leave my data untouched (transactional import), so I never end up with a half-imported mess (NFR-RESIL-1)
-- [ ] As a developer, I want bank presets for KBC, Belfius, BNP Paribas Fortis, ING, and Argenta, prioritised by what the user actually uses (FR-IMP §"v1 preset targets", Open Decision #5)
+- [x] As a user, I want to pick a CSV file and the account to import it into, so I can bring in a bank export (FR-IMP-1)
+- [x] As a user, I want the app to auto-detect my bank's format from the file and pre-fill the mapping, so I don't have to configure it every time (FR-IMP-2)
+- [x] As a user, I want a mapping wizard (date, amount/debit+credit, description, counterparty name/IBAN, running balance, delimiter, decimal separator, date format, encoding, header rows, sign convention) when no preset matches, so any bank's CSV can be imported (FR-IMP-3)
+- [x] As a user, I want a live preview of the first rows under my current mapping before committing, so I can catch mistakes before importing (FR-IMP-4)
+- [x] As a user, I want my column mapping saved as a reusable profile per bank/account, so re-imports are one click (FR-IMP-5)
+- [x] As a user, I want duplicate rows (by deterministic fingerprint) skipped on re-import, while genuine same-day duplicates within one file are kept, so re-importing a file is always safe (FR-IMP-6, §5 Fingerprint)
+- [x] As a user, I want an import summary (rows read/added/skipped, date range) that I can undo as a whole batch, so I can safely recover from a bad import (FR-IMP-7)
+- [x] As a user, I want malformed rows reported instead of silently dropped, and to still be able to proceed with the valid rows, so one bad line doesn't block my whole import (FR-IMP-8)
+- [x] As a user, I want CSV parsing to run in a Web Worker so the UI doesn't freeze on large files (NFR-PERF-2)
+- [x] As a user, I want a failed import to leave my data untouched (transactional import), so I never end up with a half-imported mess (NFR-RESIL-1)
+- [ ] As a developer, I want bank presets for KBC, Belfius, BNP Paribas Fortis, ING, and Argenta, prioritised by what the user actually uses (FR-IMP §"v1 preset targets", Open Decision #5) — **partial:** KBC + Belfius shipped (column signatures unverified against a real export, best-effort only); BNP Paribas Fortis/ING/Argenta deferred to a follow-up
 
 ## 3. Transactions (FR-TXN)
 

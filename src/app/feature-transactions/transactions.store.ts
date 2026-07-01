@@ -11,4 +11,15 @@ export class TransactionsStore {
   hydrate = async (): Promise<void> => {
     this.transactionsSignal.set(await this.transactionsRepository.getAll());
   };
+
+  addMany = (transactions: Transaction[]): void => {
+    this.transactionsSignal.update((existing) => [...existing, ...transactions]);
+  };
+
+  removeMany = (ids: number[]): void => {
+    const idsToRemove = new Set(ids);
+    this.transactionsSignal.update((existing) =>
+      existing.filter((transaction) => !idsToRemove.has(transaction.id!)),
+    );
+  };
 }

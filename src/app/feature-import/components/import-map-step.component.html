@@ -1,0 +1,124 @@
+@if (loading()) {
+  <div class="flex justify-center py-8">
+    <span class="loading loading-spinner loading-md"></span>
+  </div>
+} @else {
+  @if (detectedPreset(); as preset) {
+    <div class="alert alert-success mb-4 text-sm">
+      Detected: {{ preset.label }}
+      {{
+        usedSavedProfile()
+          ? '— using your saved mapping'
+          : '— preset mapping applied, editable below'
+      }}
+    </div>
+  } @else {
+    <div class="alert alert-info mb-4 text-sm">No bank preset matched — map the columns below.</div>
+  }
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <form [formGroup]="form" class="flex flex-col gap-3">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Mapping profile name</legend>
+        <input type="text" formControlName="name" class="input input-sm w-full" />
+      </fieldset>
+
+      <div class="grid grid-cols-2 gap-3">
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Delimiter</legend>
+          <input
+            type="text"
+            formControlName="delimiter"
+            class="input input-sm w-full"
+            maxlength="1"
+          />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Decimal separator</legend>
+          <input
+            type="text"
+            formControlName="decimalSeparator"
+            class="input input-sm w-full"
+            maxlength="1"
+          />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Date format</legend>
+          <select formControlName="dateFormat" class="select select-sm w-full">
+            @for (format of dateFormats; track format) {
+              <option [value]="format">{{ format }}</option>
+            }
+          </select>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Encoding</legend>
+          <select formControlName="encoding" class="select select-sm w-full">
+            @for (encoding of encodings; track encoding) {
+              <option [value]="encoding">{{ encoding }}</option>
+            }
+          </select>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Header rows</legend>
+          <input type="number" formControlName="headerRows" min="1" class="input input-sm w-full" />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Sign convention</legend>
+          <select formControlName="signConvention" class="select select-sm w-full">
+            <option value="as-is">As-is</option>
+            <option value="debit-negative">Debit negative (default)</option>
+            <option value="credit-negative">Credit negative</option>
+          </select>
+        </fieldset>
+      </div>
+
+      <div class="divider my-1 text-xs">Columns</div>
+
+      @for (
+        field of [
+          { key: 'date', label: 'Date', required: true },
+          { key: 'amount', label: 'Amount (single column)', required: false },
+          { key: 'debit', label: 'Debit (if separate)', required: false },
+          { key: 'credit', label: 'Credit (if separate)', required: false },
+          { key: 'description', label: 'Description', required: true },
+          { key: 'counterpartyName', label: 'Counterparty name', required: false },
+          { key: 'counterpartyIban', label: 'Counterparty IBAN', required: false },
+          { key: 'balance', label: 'Running balance', required: false },
+        ];
+        track field.key
+      ) {
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">{{ field.label }}</legend>
+          <select [formControlName]="field.key" class="select select-sm w-full">
+            <option value="">{{ field.required ? '— select column —' : '— none —' }}</option>
+            @for (header of headers(); track header) {
+              <option [value]="header">{{ header }}</option>
+            }
+          </select>
+        </fieldset>
+      }
+
+      <label class="label mt-2 cursor-pointer justify-start gap-2">
+        <input type="checkbox" formControlName="rememberForAccount" class="checkbox checkbox-sm" />
+        <span class="text-sm">Remember this mapping for this account next time</span>
+      </label>
+    </form>
+
+    <div>
+      <p class="mb-2 text-xs font-medium text-base-content/60">Raw file preview</p>
+      <div class="overflow-x-auto rounded-box border border-base-300">
+        <table class="table table-xs">
+          <tbody>
+            @for (row of previewRows(); track $index) {
+              <tr>
+                @for (cell of row; track $index) {
+                  <td class="whitespace-nowrap">{{ cell }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

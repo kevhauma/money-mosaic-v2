@@ -1,0 +1,43 @@
+<p class="mb-3 text-sm">
+  <span class="font-semibold">{{ validCount() }}</span> of
+  <span class="font-semibold">{{ rows().length }}</span> rows are valid.
+  @if (invalidCount() > 0) {
+    <span class="text-error">{{ invalidCount() }} row(s) will be skipped.</span>
+  }
+</p>
+
+<div class="max-h-96 overflow-auto rounded-box border border-base-300">
+  <table class="table table-xs">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Amount</th>
+        <th>Description</th>
+        <th>Counterparty</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of previewRows(); track $index) {
+        <tr>
+          @if (row.valid) {
+            <td><span class="badge badge-success badge-sm">valid</span></td>
+            <td>{{ row.transaction.bookingDate }}</td>
+            <td [class.text-error]="row.transaction.amount < 0">{{ row.transaction.amount }}</td>
+            <td>{{ row.transaction.rawDescription }}</td>
+            <td>{{ row.transaction.counterpartyName }}</td>
+          } @else {
+            <td><span class="badge badge-error badge-sm">invalid</span></td>
+            <td colspan="4" class="text-error">{{ row.errors.join(', ') }}</td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (rows().length > previewRows().length) {
+  <p class="mt-2 text-xs text-base-content/60">
+    Showing the first {{ previewRows().length }} of {{ rows().length }} rows.
+  </p>
+}

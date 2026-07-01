@@ -1,0 +1,36 @@
+<div class="stats stats-vertical sm:stats-horizontal border border-base-300 shadow-none">
+  <div class="stat">
+    <div class="stat-title">Rows read</div>
+    <div class="stat-value text-2xl">{{ batch().rowsRead }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-title">Added</div>
+    <div class="stat-value text-2xl text-success">{{ batch().rowsAdded }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-title">Skipped duplicates</div>
+    <div class="stat-value text-2xl">{{ batch().rowsDuplicate }}</div>
+  </div>
+</div>
+
+<p class="mt-4 text-sm text-base-content/70">
+  Date range: {{ batch().dateFrom }} to {{ batch().dateTo }}
+</p>
+
+<!-- Transfer-review / uncategorised-queue links are deferred: those features don't exist yet. -->
+
+<div class="mt-6 flex items-center gap-3">
+  <a routerLink="/accounts" class="btn btn-primary btn-sm">Done</a>
+  <button type="button" class="btn btn-ghost btn-sm text-error" (click)="undoConfirmOpen.set(true)">
+    Undo this import
+  </button>
+</div>
+
+<app-confirm-dialog
+  [(open)]="undoConfirmOpen"
+  title="Undo this import?"
+  message="This removes every transaction this import added. This cannot be undone."
+  confirmLabel="Undo import"
+  [danger]="true"
+  (confirmed)="confirmUndo()"
+/>

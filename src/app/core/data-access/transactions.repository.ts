@@ -14,4 +14,24 @@ export class TransactionsRepository {
     appDb.transactions.update(id, changes);
 
   remove = (id: number): Promise<void> => appDb.transactions.delete(id);
+
+  bulkAdd = (transactions: Transaction[]): Promise<number[]> =>
+    appDb.transactions.bulkAdd(transactions, { allKeys: true });
+
+  // `importBatchId` has no Dexie index (added after v1 shipped), so this is a full-table filter scan.
+  getByImportBatch = (importBatchId: number): Promise<Transaction[]> =>
+    appDb.transactions
+      .filter((transaction) => transaction.importBatchId === importBatchId)
+      .toArray();
+
+  getFingerprintsByAccount = async (accountId: number): Promise<Set<string>> => {
+    const fingerprints = new Set<string>();
+    await appDb.transactions
+      .where('accountId')
+      .equals(accountId)
+      .each((transaction) => fingerprints.add(transaction.fingerprint));
+    return fingerprints;
+  };
+
+  bulkRemove = (ids: number[]): Promise<void> => appDb.transactions.bulkDelete(ids);
 }
