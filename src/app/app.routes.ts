@@ -6,4 +6,8 @@ export const routes: Routes = [
     path: 'dashboard',
     loadChildren: () => import('@/feature-dashboard').then((m) => m.DASHBOARD_ROUTES),
   },
+  {
+    path: 'accounts',
+    loadChildren: () => import('@/feature-accounts').then((m) => m.ACCOUNTS_ROUTES),
+  },
 ];

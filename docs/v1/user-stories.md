@@ -10,13 +10,14 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] Build one placeholder feature end-to-end (`feature-dashboard`) to prove the stack works
 - [x] As a developer, I want the full Dexie schema (accounts, transactions, transfers, categories, rules, mappingProfiles, importBatches) defined in `app-db.ts` v1, so every later feature has its persistence layer ready (§5 Data Model)
 - [x] As a developer, I want app bootstrap to hydrate all source signals from IndexedDB before the app renders, so the UI never flashes empty state (§7 Signals Architecture)
+- [x] As a user, I want a persistent sidebar nav + topbar app shell, so features are actually reachable (not in the original checklist — added as groundwork once Accounts needed real navigation; see [ui-layout-spec.md](./ui-layout-spec.md) §1)
 
 ## 1. Accounts (FR-ACC)
 
-- [ ] As a user, I want to create an account with name, type (Checking/Savings/Joint/Invest), optional IBAN, opening balance, opening-balance date, and colour/icon, so I can start tracking a real bank account (FR-ACC-1)
-- [ ] As a user, I want to edit, archive, or delete an account, and be warned about associated transactions before deleting, so I don't lose data by accident (FR-ACC-2)
-- [ ] As a user, I want each account's current balance derived from opening balance + its transactions (never stored as a mutable field), so the number I see is always trustworthy (FR-ACC-3)
-- [ ] As a user, I want my account's IBAN used as a matching key for transfer detection, so transfers between my own accounts are found automatically later (FR-ACC-4)
+- [x] As a user, I want to create an account with name, type (Checking/Savings/Joint/Invest), optional IBAN, opening balance, opening-balance date, and colour/icon, so I can start tracking a real bank account (FR-ACC-1)
+- [x] As a user, I want to edit, archive, or delete an account, and be warned about associated transactions before deleting, so I don't lose data by accident (FR-ACC-2)
+- [x] As a user, I want each account's current balance derived from opening balance + its transactions (never stored as a mutable field), so the number I see is always trustworthy (FR-ACC-3)
+- [ ] As a user, I want my account's IBAN used as a matching key for transfer detection, so transfers between my own accounts are found automatically later (FR-ACC-4) — deferred: real transfer-matching logic belongs to §5 Transfers; account IBANs are already captured and ready for it
 
 ## 2. CSV Import (FR-IMP)
 

@@ -1,0 +1,12 @@
+<div
+  class="flex flex-col items-center justify-center gap-3 rounded-box bg-base-100 p-12 text-center"
+>
+  <div class="text-base-content/40">
+    <ng-content select="[icon]" />
+  </div>
+  <h2 class="text-lg font-medium">{{ title() }}</h2>
+  @if (message()) {
+    <p class="max-w-sm text-sm text-base-content/70">{{ message() }}</p>
+  }
+  <ng-content select="[action]" />
+</div>

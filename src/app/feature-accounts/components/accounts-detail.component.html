@@ -1,0 +1,53 @@
+@if (account(); as account) {
+  <app-page-header [title]="account.name" [subtitle]="account.type | titlecase">
+    <div actions class="flex items-center gap-2">
+      <a routerLink="/accounts" class="btn btn-ghost btn-sm">Back to accounts</a>
+      <button type="button" class="btn btn-sm" (click)="formOpen.set(true)">
+        <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+        Edit
+      </button>
+      <button type="button" class="btn btn-sm" (click)="toggleArchive()">
+        <ng-icon
+          [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
+          size="14"
+          aria-hidden="true"
+        />
+        {{ account.archived ? 'Unarchive' : 'Archive' }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline btn-error btn-sm"
+        (click)="deleteConfirmOpen.set(true)"
+      >
+        <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+        Delete
+      </button>
+    </div>
+  </app-page-header>
+
+  <div class="card border border-base-300 bg-base-100">
+    <div class="card-body">
+      <p class="text-sm text-base-content/60">Current balance</p>
+      <p class="text-4xl font-semibold" [class.text-error]="balance() < 0">
+        {{ balance() | signedAmount }}
+      </p>
+      @if (account.iban) {
+        <p class="mt-2 text-sm text-base-content/60">IBAN ···· {{ account.iban.slice(-4) }}</p>
+      }
+    </div>
+  </div>
+
+  <app-account-form [(open)]="formOpen" [account]="account" (saved)="saveAccount($event)" />
+  <app-confirm-dialog
+    [(open)]="deleteConfirmOpen"
+    title="Delete this account?"
+    [message]="deleteMessage()"
+    confirmLabel="Delete account"
+    [danger]="true"
+    (confirmed)="deleteConfirmed()"
+  />
+} @else {
+  <app-empty-state title="Account not found" message="It may have been deleted or archived away.">
+    <a action routerLink="/accounts" class="btn btn-primary mt-2">Back to accounts</a>
+  </app-empty-state>
+}

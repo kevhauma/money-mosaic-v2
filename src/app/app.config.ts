@@ -1,17 +1,26 @@
 import {
   ApplicationConfig,
+  inject,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { appDb } from './core/data-access';
+import { AccountsStore } from './feature-accounts';
+import { TransactionsStore } from './feature-transactions';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
-    provideAppInitializer(() => appDb.open()),
+    provideRouter(routes, withComponentInputBinding()),
+    provideAppInitializer(() => {
+      const accountsStore = inject(AccountsStore);
+      const transactionsStore = inject(TransactionsStore);
+      return appDb
+        .open()
+        .then(() => Promise.all([transactionsStore.hydrate(), accountsStore.hydrate()]));
+    }),
   ],
 };

@@ -1,1 +1,37 @@
-<router-outlet />
+<div class="drawer lg:drawer-open">
+  <input id="app-drawer" type="checkbox" class="drawer-toggle" />
+
+  <div class="drawer-content flex min-h-screen flex-col bg-base-200">
+    <div class="navbar border-b border-base-300 bg-base-100 px-4 lg:hidden">
+      <label for="app-drawer" class="btn btn-square btn-ghost" aria-label="Open menu">
+        <ng-icon name="tablerMenu2" size="20" aria-hidden="true" />
+      </label>
+      <span class="ml-2 text-lg font-semibold">Money Mosaic</span>
+    </div>
+
+    <main class="flex-1 p-4 lg:p-6">
+      <router-outlet />
+    </main>
+  </div>
+
+  <div class="drawer-side z-20">
+    <label for="app-drawer" aria-label="Close menu" class="drawer-overlay"></label>
+    <div class="menu min-h-full w-64 border-r border-base-300 bg-base-100 p-4">
+      <span class="hidden px-2 pb-4 text-lg font-semibold lg:block">Money Mosaic</span>
+      <ul class="menu-vertical gap-1">
+        <li>
+          <a routerLink="/dashboard" routerLinkActive="menu-active">
+            <ng-icon name="tablerHome" size="18" aria-hidden="true" />
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a routerLink="/accounts" routerLinkActive="menu-active">
+            <ng-icon name="tablerBuildingBank" size="18" aria-hidden="true" />
+            Accounts
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

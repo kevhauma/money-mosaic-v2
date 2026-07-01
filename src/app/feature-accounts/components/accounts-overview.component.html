@@ -1,0 +1,107 @@
+<app-page-header title="Accounts" subtitle="Every account you track, in one place.">
+  <div actions class="flex items-center gap-3">
+    <label class="label cursor-pointer gap-2">
+      <span class="text-sm">Show archived</span>
+      <input
+        type="checkbox"
+        class="toggle toggle-sm"
+        [checked]="showArchived()"
+        (change)="showArchived.set(!showArchived())"
+      />
+    </label>
+    <button type="button" class="btn btn-primary btn-sm" (click)="openAddForm()">
+      <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
+      Add account
+    </button>
+  </div>
+</app-page-header>
+
+@if (visibleAccounts().length === 0) {
+  <app-empty-state
+    title="No accounts yet"
+    message="Add your first account to start tracking transactions."
+  >
+    <ng-icon icon name="accountWallet" size="40" aria-hidden="true" />
+    <button action type="button" class="btn btn-primary mt-2" (click)="openAddForm()">
+      Add account
+    </button>
+  </app-empty-state>
+} @else {
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    @for (account of visibleAccounts(); track account.id) {
+      <div
+        class="card border border-base-300 bg-base-100"
+        [style.border-inline-start]="'4px solid ' + account.color"
+      >
+        <div class="card-body gap-3">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-2">
+              <ng-icon [name]="accountIconName(account.icon)" size="20" aria-hidden="true" />
+              <a [routerLink]="[account.id]" class="card-title text-base hover:underline">
+                {{ account.name }}
+              </a>
+            </div>
+            <div class="dropdown dropdown-end">
+              <div
+                tabindex="0"
+                role="button"
+                class="btn btn-square btn-ghost btn-sm"
+                aria-label="Account actions"
+              >
+                <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
+              </div>
+              <ul
+                tabindex="0"
+                class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
+              >
+                <li>
+                  <button type="button" (click)="openEditForm(account)">
+                    <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+                    Edit
+                  </button>
+                </li>
+                <li>
+                  <button type="button" (click)="toggleArchive(account)">
+                    <ng-icon
+                      [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
+                      size="14"
+                      aria-hidden="true"
+                    />
+                    {{ account.archived ? 'Unarchive' : 'Archive' }}
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="text-error" (click)="confirmDelete(account)">
+                    <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+                    Delete
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <span class="badge badge-outline badge-sm w-fit capitalize">{{ account.type }}</span>
+
+          <p class="text-2xl font-semibold" [class.text-error]="balanceFor(account) < 0">
+            {{ balanceFor(account) | signedAmount }}
+          </p>
+
+          @if (account.iban) {
+            <p class="text-xs text-base-content/60">···· {{ account.iban.slice(-4) }}</p>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<app-account-form [(open)]="formOpen" [account]="editingAccount()" (saved)="saveAccount($event)" />
+
+<app-confirm-dialog
+  [(open)]="deleteConfirmOpen"
+  title="Delete this account?"
+  [message]="deleteMessage()"
+  confirmLabel="Delete account"
+  [danger]="true"
+  (confirmed)="deleteConfirmed()"
+/>
