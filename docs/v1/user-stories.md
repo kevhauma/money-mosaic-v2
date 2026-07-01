@@ -8,8 +8,8 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] Wire up Tailwind CSS v4 + daisyUI
 - [x] Set up Dexie (IndexedDB) and the `core/data-access` repository pattern
 - [x] Build one placeholder feature end-to-end (`feature-dashboard`) to prove the stack works
-- [ ] As a developer, I want the full Dexie schema (accounts, transactions, transfers, categories, rules, mappingProfiles, importBatches) defined in `app-db.ts` v1, so every later feature has its persistence layer ready (§5 Data Model)
-- [ ] As a developer, I want app bootstrap to hydrate all source signals from IndexedDB before the app renders, so the UI never flashes empty state (§7 Signals Architecture)
+- [x] As a developer, I want the full Dexie schema (accounts, transactions, transfers, categories, rules, mappingProfiles, importBatches) defined in `app-db.ts` v1, so every later feature has its persistence layer ready (§5 Data Model)
+- [x] As a developer, I want app bootstrap to hydrate all source signals from IndexedDB before the app renders, so the UI never flashes empty state (§7 Signals Architecture)
 
 ## 1. Accounts (FR-ACC)
 
