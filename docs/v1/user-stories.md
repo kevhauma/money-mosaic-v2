@@ -35,10 +35,10 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 
 ## 3. Transactions (FR-TXN)
 
-- [ ] As a user, I want every transaction to store account, booking date, optional value date, signed amount, raw description, optional counterparty name/IBAN, category, transfer link, and notes, so nothing about a transaction is lost (FR-TXN-1)
-- [ ] As a user, I want to manually edit a transaction's category or notes, and have that manual category "stick" so rules never silently overwrite it (FR-TXN-2)
-- [ ] As a user, I want to search/filter transactions by account, date range, category, text, and amount range, so I can find what I'm looking for (FR-TXN-3)
-- [ ] As a user, I want to manually mark two transactions as a transfer pair, or unlink an auto-detected one, so I can correct the system when it's wrong (FR-TXN-4)
+- [x] As a user, I want every transaction to store account, booking date, optional value date, signed amount, raw description, optional counterparty name/IBAN, category, transfer link, and notes, so nothing about a transaction is lost (FR-TXN-1)
+- [x] As a user, I want to manually edit a transaction's category or notes, and have that manual category "stick" so rules never silently overwrite it (FR-TXN-2)
+- [x] As a user, I want to search/filter transactions by account, date range, category, text, and amount range, so I can find what I'm looking for (FR-TXN-3)
+- [x] As a user, I want to manually mark two transactions as a transfer pair, or unlink an auto-detected one, so I can correct the system when it's wrong (FR-TXN-4)
 
 ## 4. Categorisation (FR-CAT)
 

@@ -24,6 +24,8 @@ export type Transaction = {
   counterpartyName?: string;
   counterpartyIban?: string;
   categoryId?: number;
+  /** True once the user has manually assigned/changed the category — rules must never overwrite it (FR-TXN-2, FR-CAT-3). */
+  categoryManual?: boolean;
   transferId?: number;
   importBatchId?: number;
   fingerprint: string;
@@ -161,6 +163,95 @@ const DEFAULT_MAPPING_PROFILE_TEMPLATES: MappingProfile[] = [
   },
 ];
 
+/**
+ * Sensible out-of-the-box categories (FR-CAT-1). Seeded into `categories` on first run;
+ * users can rename/archive them once the category manager ships in a later story.
+ */
+const DEFAULT_CATEGORIES: Category[] = [
+  {
+    name: 'Groceries',
+    kind: 'expense',
+    color: '#4ADE80',
+    icon: 'shopping-cart',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Shopping',
+    kind: 'expense',
+    color: '#F472B6',
+    icon: 'shopping-bag',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Subscriptions',
+    kind: 'expense',
+    color: '#A78BFA',
+    icon: 'repeat',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Housing',
+    kind: 'expense',
+    color: '#FB923C',
+    icon: 'home',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Transport',
+    kind: 'expense',
+    color: '#60A5FA',
+    icon: 'car',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Eating Out',
+    kind: 'expense',
+    color: '#FBBF24',
+    icon: 'tools-kitchen',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Utilities',
+    kind: 'expense',
+    color: '#38BDF8',
+    icon: 'bolt',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Health',
+    kind: 'expense',
+    color: '#F87171',
+    icon: 'heartbeat',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Salary',
+    kind: 'income',
+    group: 'Income',
+    color: '#34D399',
+    icon: 'cash',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: 'Other Income',
+    kind: 'income',
+    group: 'Income',
+    color: '#2DD4BF',
+    icon: 'coin',
+    archived: false,
+    isSystem: true,
+  },
+];
+
 export type ImportBatch = {
   id?: number;
   accountId: number;
@@ -198,6 +289,7 @@ export class AppDb extends Dexie {
 
     this.on('populate', () => {
       this.mappingProfiles.bulkAdd(DEFAULT_MAPPING_PROFILE_TEMPLATES);
+      this.categories.bulkAdd(DEFAULT_CATEGORIES);
     });
   }
 }

@@ -3,3 +3,5 @@ export * from './accounts.repository';
 export * from './transactions.repository';
 export * from './mapping-profiles.repository';
 export * from './import-batches.repository';
+export * from './categories.repository';
+export * from './transfers.repository';

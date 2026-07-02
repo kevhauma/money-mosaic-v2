@@ -9,6 +9,8 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { appDb } from './core/data-access';
 import { AccountsStore } from './feature-accounts/accounts.store';
 import { TransactionsStore } from './feature-transactions/transactions.store';
+import { TransfersStore } from './feature-transactions/transfers.store';
+import { CategoriesStore } from './feature-categories/categories.store';
 import { MappingProfilesStore } from './feature-import/mapping-profiles.store';
 import { ImportBatchesStore } from './feature-import/import-batches.store';
 import { routes } from './app.routes';
@@ -20,6 +22,8 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       const accountsStore = inject(AccountsStore);
       const transactionsStore = inject(TransactionsStore);
+      const transfersStore = inject(TransfersStore);
+      const categoriesStore = inject(CategoriesStore);
       const mappingProfilesStore = inject(MappingProfilesStore);
       const importBatchesStore = inject(ImportBatchesStore);
       return appDb
@@ -27,6 +31,8 @@ export const appConfig: ApplicationConfig = {
         .then(() =>
           Promise.all([
             transactionsStore.hydrate(),
+            transfersStore.hydrate(),
+            categoriesStore.hydrate(),
             accountsStore.hydrate(),
             mappingProfilesStore.hydrate(),
             importBatchesStore.hydrate(),

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  tablerArrowsExchange,
   tablerBuildingBank,
   tablerFileImport,
   tablerHome,
@@ -14,6 +15,14 @@ import {
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerMenu2, tablerHome, tablerBuildingBank, tablerFileImport })],
+  viewProviders: [
+    provideIcons({
+      tablerMenu2,
+      tablerHome,
+      tablerBuildingBank,
+      tablerFileImport,
+      tablerArrowsExchange,
+    }),
+  ],
 })
 export class App {}

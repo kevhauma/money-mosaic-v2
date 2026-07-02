@@ -11,6 +11,14 @@ export const routes: Routes = [
     loadChildren: () => import('@/feature-accounts').then((m) => m.ACCOUNTS_ROUTES),
   },
   {
+    // Imported directly (not via the @/feature-transactions barrel) to avoid a circular import:
+    // the lazy-loaded overview component pulls in AccountsStore, which imports TransactionsStore
+    // from that same barrel.
+    path: 'transactions',
+    loadChildren: () =>
+      import('./feature-transactions/transactions.routes').then((m) => m.TRANSACTIONS_ROUTES),
+  },
+  {
     path: 'import',
     loadChildren: () => import('@/feature-import').then((m) => m.IMPORT_ROUTES),
   },

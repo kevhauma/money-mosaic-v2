@@ -22,4 +22,21 @@ export class TransactionsStore {
       existing.filter((transaction) => !idsToRemove.has(transaction.id!)),
     );
   };
+
+  updateTransaction = async (id: number, changes: Partial<Transaction>): Promise<void> => {
+    await this.transactionsRepository.update(id, changes);
+    this.patchMany([{ id, changes }]);
+  };
+
+  /** Reflects changes already persisted elsewhere (e.g. an atomic multi-transaction write) into local state. */
+  patchMany = (updates: { id: number; changes: Partial<Transaction> }[]): void => {
+    const changesById = new Map(updates.map((update) => [update.id, update.changes]));
+    this.transactionsSignal.update((existing) =>
+      existing.map((transaction) =>
+        changesById.has(transaction.id!)
+          ? { ...transaction, ...changesById.get(transaction.id!) }
+          : transaction,
+      ),
+    );
+  };
 }
