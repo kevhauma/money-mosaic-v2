@@ -42,11 +42,11 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 
 ## 4. Categorisation (FR-CAT)
 
-- [ ] As a user, I want to manage categories (name, kind, colour, icon, optional group) with sensible defaults shipped out of the box, so I'm not starting from zero (FR-CAT-1)
-- [ ] As a user, I want a rules engine (ordered conditions on description/counterparty/amount/account with contains/equals/regex/comparison operators, priority, first-match-wins or continue) that assigns categories automatically, so I don't have to categorise everything by hand (FR-CAT-2)
-- [ ] As a user, I want rules to run on import and be re-runnable on demand across existing transactions, but never override a manually-set category, so automation stays safely reversible (FR-CAT-3)
-- [ ] As a user, I want an "always categorise this merchant as X" one-click shortcut that creates a rule from a transaction's counterparty, so teaching the system is effortless (FR-CAT-4)
-- [ ] As a user, I want uncategorised transactions surfaced prominently, so I can clear the backlog instead of losing track of them (FR-CAT-5)
+- [x] As a user, I want to manage categories (name, kind, colour, icon, optional group) with sensible defaults shipped out of the box, so I'm not starting from zero (FR-CAT-1)
+- [x] As a user, I want a rules engine (ordered conditions on description/counterparty/amount/account with contains/equals/regex/comparison operators, priority, first-match-wins or continue) that assigns categories automatically, so I don't have to categorise everything by hand (FR-CAT-2)
+- [x] As a user, I want rules to run on import and be re-runnable on demand across existing transactions, but never override a manually-set category, so automation stays safely reversible (FR-CAT-3)
+- [x] As a user, I want an "always categorise this merchant as X" one-click shortcut that creates a rule from a transaction's counterparty, so teaching the system is effortless (FR-CAT-4)
+- [x] As a user, I want uncategorised transactions surfaced prominently, so I can clear the backlog instead of losing track of them (FR-CAT-5)
 
 ## 5. Transfers (FR-TRF)
 

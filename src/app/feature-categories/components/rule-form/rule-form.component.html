@@ -1,0 +1,128 @@
+<dialog #dialog class="modal" (close)="open.set(false)">
+  <div class="modal-box max-w-2xl">
+    <h3 class="text-lg font-semibold">{{ rule() ? 'Edit rule' : 'Add rule' }}</h3>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Name</legend>
+        <input
+          type="text"
+          formControlName="name"
+          class="input w-full"
+          placeholder="e.g. Netflix subscription"
+        />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <p class="label text-error">Name is required.</p>
+        }
+      </fieldset>
+
+      <div class="grid grid-cols-3 gap-3">
+        <fieldset class="fieldset col-span-2">
+          <legend class="fieldset-legend">Assign category</legend>
+          <select formControlName="categoryId" class="select w-full">
+            <option value="" disabled>Choose a category</option>
+            @for (category of categoriesStore.activeCategories(); track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Priority</legend>
+          <input type="number" formControlName="priority" class="input w-full" />
+        </fieldset>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <label class="label cursor-pointer gap-2">
+          <input type="checkbox" formControlName="enabled" class="toggle toggle-sm" />
+          <span class="text-sm">Enabled</span>
+        </label>
+        <label class="label cursor-pointer gap-2">
+          <input type="checkbox" formControlName="continueOnMatch" class="toggle toggle-sm" />
+          <span class="text-sm">Continue to next rule after a match</span>
+        </label>
+      </div>
+
+      <div class="divider my-2">Conditions (all must match)</div>
+
+      <div formArrayName="conditions" class="flex flex-col gap-3">
+        @for (group of conditionsArray.controls; track $index) {
+          <div [formGroup]="group" class="grid grid-cols-12 items-start gap-2">
+            <select
+              formControlName="field"
+              class="select select-sm col-span-3"
+              (change)="onFieldChange(group)"
+            >
+              @for (option of fieldOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+
+            <select formControlName="operator" class="select select-sm col-span-3">
+              @for (operator of operatorsFor(group); track operator) {
+                <option [value]="operator">{{ operatorLabels[operator] }}</option>
+              }
+            </select>
+
+            @if (isAccountField(group)) {
+              <select formControlName="value" class="select select-sm col-span-5">
+                <option value="" disabled>Choose an account</option>
+                @for (account of accountsStore.accounts(); track account.id) {
+                  <option [value]="account.id">{{ account.name }}</option>
+                }
+              </select>
+            } @else if (isBetween(group)) {
+              <input
+                type="number"
+                step="0.01"
+                formControlName="value"
+                class="input input-sm col-span-2"
+                placeholder="Min"
+              />
+              <input
+                type="number"
+                step="0.01"
+                formControlName="valueTo"
+                class="input input-sm col-span-2"
+                placeholder="Max"
+              />
+            } @else if (isNumericField(group)) {
+              <input
+                type="number"
+                step="0.01"
+                formControlName="value"
+                class="input input-sm col-span-5"
+              />
+            } @else {
+              <input type="text" formControlName="value" class="input input-sm col-span-5" />
+            }
+
+            <button
+              type="button"
+              class="btn btn-square btn-ghost btn-sm col-span-1"
+              [disabled]="conditionsArray.length === 1"
+              (click)="removeCondition($index)"
+              aria-label="Remove condition"
+            >
+              &times;
+            </button>
+          </div>
+        }
+      </div>
+
+      <button type="button" class="btn btn-ghost btn-sm mt-2" (click)="addCondition()">
+        + Add condition
+      </button>
+
+      <div class="modal-action">
+        <button type="button" class="btn" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          {{ rule() ? 'Save changes' : 'Add rule' }}
+        </button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button type="submit">close</button>
+  </form>
+</dialog>

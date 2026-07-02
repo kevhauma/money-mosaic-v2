@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -7,7 +7,9 @@ import {
   tablerFileImport,
   tablerHome,
   tablerMenu2,
+  tablerTags,
 } from '@ng-icons/tabler-icons';
+import { TransactionsStore } from '@/feature-transactions';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +24,10 @@ import {
       tablerBuildingBank,
       tablerFileImport,
       tablerArrowsExchange,
+      tablerTags,
     }),
   ],
 })
-export class App {}
+export class App {
+  protected readonly transactionsStore = inject(TransactionsStore);
+}

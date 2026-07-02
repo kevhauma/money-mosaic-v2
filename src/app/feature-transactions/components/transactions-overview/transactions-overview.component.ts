@@ -109,6 +109,10 @@ export class TransactionsOverviewComponent {
   protected readonly formOpen = signal(false);
   protected readonly editingTransaction = signal<Transaction | null>(null);
 
+  protected showUncategorisedOnly(): void {
+    this.filterForm.patchValue({ categoryId: 'uncategorised' });
+  }
+
   protected clearFilters(): void {
     this.filterForm.reset({
       accountId: '',

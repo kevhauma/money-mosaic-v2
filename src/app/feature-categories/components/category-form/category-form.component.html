@@ -1,0 +1,68 @@
+<dialog #dialog class="modal" (close)="open.set(false)">
+  <div class="modal-box">
+    <h3 class="text-lg font-semibold">{{ category() ? 'Edit category' : 'Add category' }}</h3>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Name</legend>
+        <input
+          type="text"
+          formControlName="name"
+          class="input w-full"
+          placeholder="e.g. Groceries"
+        />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <p class="label text-error">Name is required.</p>
+        }
+      </fieldset>
+
+      <div class="grid grid-cols-2 gap-3">
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Kind</legend>
+          <select formControlName="kind" class="select w-full">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Group (optional)</legend>
+          <input
+            type="text"
+            formControlName="group"
+            class="input w-full"
+            placeholder="e.g. Income"
+          />
+        </fieldset>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Colour</legend>
+          <input
+            type="color"
+            formControlName="color"
+            class="h-10 w-full rounded-field border border-base-300 bg-base-100"
+          />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Icon</legend>
+          <select formControlName="icon" class="select w-full">
+            @for (option of iconOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </fieldset>
+      </div>
+
+      <div class="modal-action">
+        <button type="button" class="btn" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          {{ category() ? 'Save changes' : 'Add category' }}
+        </button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button type="submit">close</button>
+  </form>
+</dialog>

@@ -1,0 +1,141 @@
+<app-page-header title="Rules" subtitle="Automatically categorise transactions as they come in.">
+  <div actions class="flex items-center gap-3">
+    <button
+      type="button"
+      class="btn btn-sm"
+      [class.loading]="running()"
+      [disabled]="running()"
+      (click)="runRules()"
+    >
+      <ng-icon name="tablerRefresh" size="16" aria-hidden="true" />
+      Re-run rules
+    </button>
+    <button type="button" class="btn btn-primary btn-sm" (click)="openAddForm()">
+      <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
+      Add rule
+    </button>
+  </div>
+</app-page-header>
+
+<div role="tablist" class="tabs tabs-box mb-4 w-fit">
+  <a
+    routerLink="/categories"
+    routerLinkActive="tab-active"
+    [routerLinkActiveOptions]="{ exact: true }"
+    class="tab"
+  >
+    Categories
+  </a>
+  <a routerLink="/categories/rules" routerLinkActive="tab-active" class="tab">Rules</a>
+</div>
+
+@if (rulesStore.lastRunCount(); as count) {
+  <div class="alert alert-success mb-4 py-2 text-sm">
+    Re-ran rules: {{ count }} transaction{{ count === 1 ? '' : 's' }} recategorised.
+  </div>
+}
+
+@if (rulesStore.rulesByPriority().length === 0) {
+  <app-empty-state
+    title="No rules yet"
+    message="Add a rule to automatically categorise matching transactions on import."
+  >
+    <button action type="button" class="btn btn-primary mt-2" (click)="openAddForm()">
+      Add rule
+    </button>
+  </app-empty-state>
+} @else {
+  <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Rule</th>
+          <th>Category</th>
+          <th>Enabled</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (rule of rulesStore.rulesByPriority(); track rule.id) {
+          <tr [class.opacity-60]="!rule.enabled">
+            <td>
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  class="btn btn-square btn-ghost btn-xs"
+                  [disabled]="isFirst(rule)"
+                  (click)="moveRule(rule, 'up')"
+                  aria-label="Move rule up"
+                >
+                  <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-square btn-ghost btn-xs"
+                  [disabled]="isLast(rule)"
+                  (click)="moveRule(rule, 'down')"
+                  aria-label="Move rule down"
+                >
+                  <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
+                </button>
+              </div>
+            </td>
+            <td>
+              <div class="font-medium">{{ rule.name }}</div>
+              <div class="text-xs text-base-content/60">{{ conditionSummary(rule) }}</div>
+              @if (rule.continueOnMatch) {
+                <span class="badge badge-ghost badge-xs mt-1">continues after match</span>
+              }
+            </td>
+            <td>{{ categoryNameFor(rule) }}</td>
+            <td>
+              <input
+                type="checkbox"
+                class="toggle toggle-sm"
+                [checked]="rule.enabled"
+                (change)="toggleEnabled(rule)"
+              />
+            </td>
+            <td>
+              <div class="flex items-center justify-end gap-1">
+                <button
+                  type="button"
+                  class="btn btn-square btn-ghost btn-xs"
+                  title="Edit rule"
+                  (click)="openEditForm(rule)"
+                >
+                  <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-square btn-ghost btn-xs text-error"
+                  title="Delete rule"
+                  (click)="confirmDelete(rule)"
+                >
+                  <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<app-rule-form
+  [(open)]="formOpen"
+  [rule]="editingRule()"
+  [defaultPriority]="nextPriority()"
+  (saved)="saveRule($event)"
+/>
+
+<app-confirm-dialog
+  [(open)]="deleteConfirmOpen"
+  title="Delete this rule?"
+  message="This cannot be undone. Transactions already categorised by it keep their category."
+  confirmLabel="Delete rule"
+  [danger]="true"
+  (confirmed)="deleteConfirmed()"
+/>

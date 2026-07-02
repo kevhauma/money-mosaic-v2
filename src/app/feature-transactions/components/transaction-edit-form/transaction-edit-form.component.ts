@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  computed,
   effect,
   inject,
   input,
@@ -11,7 +12,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import type { Category, Transaction } from '@/core/data-access';
-import { CategoriesStore } from '@/feature-categories';
+import { CategoriesStore, RulesStore } from '@/feature-categories';
 
 export type TransactionEditResult = Partial<
   Pick<Transaction, 'categoryId' | 'categoryManual' | 'notes'>
@@ -29,6 +30,7 @@ export class TransactionEditFormComponent {
   readonly saved = output<TransactionEditResult>();
 
   protected readonly categoriesStore = inject(CategoriesStore);
+  private readonly rulesStore = inject(RulesStore);
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
@@ -36,6 +38,7 @@ export class TransactionEditFormComponent {
   protected readonly form = this.formBuilder.nonNullable.group({
     categoryId: [''],
     notes: [''],
+    alwaysCategorise: [false],
   });
 
   constructor() {
@@ -54,15 +57,18 @@ export class TransactionEditFormComponent {
     return category.group ? `${category.group} · ${category.name}` : category.name;
   }
 
+  protected readonly showAlwaysCategorise = computed(() => !!this.transaction()?.counterpartyName);
+
   private resetForm(): void {
     const existing = this.transaction();
     this.form.reset({
       categoryId: existing?.categoryId != null ? String(existing.categoryId) : '',
       notes: existing?.notes ?? '',
+      alwaysCategorise: false,
     });
   }
 
-  protected submit(): void {
+  protected async submit(): Promise<void> {
     const existing = this.transaction();
     if (!existing) {
       return;
@@ -80,6 +86,10 @@ export class TransactionEditFormComponent {
 
     this.saved.emit(result);
     this.open.set(false);
+
+    if (value.alwaysCategorise && categoryId != null) {
+      await this.rulesStore.createRuleFromCounterparty(existing, categoryId);
+    }
   }
 
   protected cancel(): void {

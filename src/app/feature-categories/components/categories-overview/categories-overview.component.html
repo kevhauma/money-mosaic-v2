@@ -1,0 +1,137 @@
+<app-page-header title="Categories" subtitle="Manage the categories transactions get sorted into.">
+  <div actions class="flex items-center gap-3">
+    <label class="label cursor-pointer gap-2">
+      <span class="text-sm">Show archived</span>
+      <input
+        type="checkbox"
+        class="toggle toggle-sm"
+        [checked]="showArchived()"
+        (change)="showArchived.set(!showArchived())"
+      />
+    </label>
+    <button type="button" class="btn btn-primary btn-sm" (click)="openAddForm()">
+      <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
+      Add category
+    </button>
+  </div>
+</app-page-header>
+
+<div role="tablist" class="tabs tabs-box mb-4 w-fit">
+  <a
+    routerLink="/categories"
+    routerLinkActive="tab-active"
+    [routerLinkActiveOptions]="{ exact: true }"
+    class="tab"
+  >
+    Categories
+  </a>
+  <a routerLink="/categories/rules" routerLinkActive="tab-active" class="tab">Rules</a>
+</div>
+
+@if (visibleCategories().length === 0) {
+  <app-empty-state
+    title="No categories yet"
+    message="Add your first category to start sorting transactions."
+  >
+    <ng-icon icon name="categoryTag" size="40" aria-hidden="true" />
+    <button action type="button" class="btn btn-primary mt-2" (click)="openAddForm()">
+      Add category
+    </button>
+  </app-empty-state>
+} @else {
+  <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Kind</th>
+          <th>Group</th>
+          <th class="text-right">Transactions</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (category of visibleCategories(); track category.id) {
+          <tr [class.opacity-60]="category.archived">
+            <td>
+              <div class="flex items-center gap-2">
+                <span
+                  class="flex h-7 w-7 items-center justify-center rounded-full"
+                  [style.background-color]="category.color + '33'"
+                  [style.color]="category.color"
+                >
+                  <ng-icon [name]="categoryIconName(category.icon)" size="16" aria-hidden="true" />
+                </span>
+                <span class="font-medium">{{ category.name }}</span>
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge badge-outline badge-sm capitalize"
+                [class.badge-success]="category.kind === 'income'"
+              >
+                {{ category.kind }}
+              </span>
+            </td>
+            <td class="text-sm text-base-content/60">{{ category.group || '—' }}</td>
+            <td class="text-right">{{ transactionCountFor(category) }}</td>
+            <td>
+              <div class="dropdown dropdown-end">
+                <div
+                  tabindex="0"
+                  role="button"
+                  class="btn btn-square btn-ghost btn-sm"
+                  aria-label="Category actions"
+                >
+                  <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
+                </div>
+                <ul
+                  tabindex="0"
+                  class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
+                >
+                  <li>
+                    <button type="button" (click)="openEditForm(category)">
+                      <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+                      Edit
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button" (click)="toggleArchive(category)">
+                      <ng-icon
+                        [name]="category.archived ? 'tablerArchiveOff' : 'tablerArchive'"
+                        size="14"
+                        aria-hidden="true"
+                      />
+                      {{ category.archived ? 'Unarchive' : 'Archive' }}
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button" class="text-error" (click)="confirmDelete(category)">
+                      <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+                      Delete
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<app-category-form
+  [(open)]="formOpen"
+  [category]="editingCategory()"
+  (saved)="saveCategory($event)"
+/>
+
+<app-confirm-dialog
+  [(open)]="deleteConfirmOpen"
+  title="Delete this category?"
+  [message]="deleteMessage()"
+  confirmLabel="Delete category"
+  [danger]="true"
+  (confirmed)="deleteConfirmed()"
+/>

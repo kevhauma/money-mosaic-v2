@@ -9,6 +9,13 @@
   </div>
 </app-page-header>
 
+@if (transactionsStore.uncategorisedCount(); as count) {
+  <div class="alert alert-warning mb-4 flex items-center justify-between py-2 text-sm">
+    <span>{{ count }} transaction{{ count === 1 ? '' : 's' }} still need a category.</span>
+    <button type="button" class="btn btn-xs" (click)="showUncategorisedOnly()">Show them</button>
+  </div>
+}
+
 <form
   [formGroup]="filterForm"
   class="mb-4 grid grid-cols-2 gap-3 rounded-box border border-base-300 bg-base-100 p-4 sm:grid-cols-3 lg:grid-cols-6"

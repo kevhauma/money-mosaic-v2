@@ -35,6 +35,15 @@
           <a routerLink="/transactions" routerLinkActive="menu-active">
             <ng-icon name="tablerArrowsExchange" size="18" aria-hidden="true" />
             Transactions
+            @if (transactionsStore.uncategorisedCount(); as count) {
+              <span class="badge badge-warning badge-sm ml-auto">{{ count }}</span>
+            }
+          </a>
+        </li>
+        <li>
+          <a routerLink="/categories" routerLinkActive="menu-active">
+            <ng-icon name="tablerTags" size="18" aria-hidden="true" />
+            Categories
           </a>
         </li>
         <li>

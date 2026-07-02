@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
 
 @Injectable({ providedIn: 'root' })
@@ -7,6 +7,13 @@ export class TransactionsStore {
 
   private readonly transactionsSignal = signal<Transaction[]>([]);
   readonly transactions = this.transactionsSignal.asReadonly();
+
+  /** Surfaces the categorisation backlog so it's never quietly lost (FR-CAT-5). */
+  readonly uncategorisedTransactions = computed(() =>
+    this.transactionsSignal().filter((transaction) => transaction.categoryId == null),
+  );
+
+  readonly uncategorisedCount = computed(() => this.uncategorisedTransactions().length);
 
   hydrate = async (): Promise<void> => {
     this.transactionsSignal.set(await this.transactionsRepository.getAll());

@@ -26,6 +26,15 @@
         ></textarea>
       </fieldset>
 
+      @if (showAlwaysCategorise()) {
+        <label class="label cursor-pointer justify-start gap-2">
+          <input type="checkbox" formControlName="alwaysCategorise" class="checkbox checkbox-sm" />
+          <span class="text-sm">
+            Always categorise "{{ transaction()?.counterpartyName }}" this way
+          </span>
+        </label>
+      }
+
       <div class="modal-action">
         <button type="button" class="btn" (click)="cancel()">Cancel</button>
         <button type="submit" class="btn btn-primary">Save changes</button>
