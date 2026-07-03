@@ -1,34 +1,107 @@
-import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, model } from '@angular/core';
 import type { Account } from '@/core/data-access';
+import { detectOwnIban, matchAccountByIban, CsvImportService, guessDelimiter } from '@/core/import';
+import { BadgeComponent, ButtonComponent } from '@/shared/ui';
+import { MappingProfilesStore } from '../../mapping-profiles.store';
+
+export type QueuedImportFile = {
+  file: File;
+  accountId: number | null;
+  autoDetected: boolean;
+};
 
 @Component({
   selector: 'app-import-select-step',
-  imports: [],
+  imports: [BadgeComponent, ButtonComponent],
   templateUrl: './import-select-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportSelectStepComponent {
   readonly accounts = input.required<Account[]>();
-  readonly accountId = model<number | null>(null);
-  readonly file = model<File | null>(null);
+  readonly queue = model<QueuedImportFile[]>([]);
 
-  protected onAccountChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    this.accountId.set(value ? Number(value) : null);
-  }
+  private readonly csvImportService = inject(CsvImportService);
+  private readonly mappingProfilesStore = inject(MappingProfilesStore);
 
-  protected onFileSelected(event: Event): void {
+  protected async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    this.file.set(input.files?.[0] ?? null);
+    await this.addFiles(input.files);
+    input.value = '';
   }
 
-  protected onDrop(event: DragEvent): void {
+  protected async onDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
-    const dropped = event.dataTransfer?.files?.[0];
-    if (dropped) this.file.set(dropped);
+    await this.addFiles(event.dataTransfer?.files ?? null);
   }
 
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
+  }
+
+  protected onAccountChange(index: number, event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    const accountId = value ? Number(value) : null;
+    this.queue.update((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, accountId, autoDetected: false } : row)),
+    );
+  }
+
+  protected removeFile(index: number): void {
+    this.queue.update((rows) => rows.filter((_, i) => i !== index));
+  }
+
+  private async addFiles(fileList: FileList | null): Promise<void> {
+    if (!fileList || fileList.length === 0) return;
+
+    const existingKeys = new Set(this.queue().map((row) => `${row.file.name}:${row.file.size}`));
+    const newFiles = Array.from(fileList).filter(
+      (file) => !existingKeys.has(`${file.name}:${file.size}`),
+    );
+    if (newFiles.length === 0) return;
+
+    const startIndex = this.queue().length;
+    this.queue.update((rows) => [
+      ...rows,
+      ...newFiles.map((file) => ({ file, accountId: null, autoDetected: false })),
+    ]);
+
+    await Promise.all(
+      newFiles.map(async (file, offset) => {
+        const accountId = await this.detectAccountId(file);
+        if (accountId === null) return;
+        const index = startIndex + offset;
+        this.queue.update((rows) =>
+          rows.map((row, i) =>
+            i === index && row.file === file ? { ...row, accountId, autoDetected: true } : row,
+          ),
+        );
+      }),
+    );
+  }
+
+  private async detectAccountId(file: File): Promise<number | null> {
+    try {
+      const sampleBuffer = await file.slice(0, 8192).arrayBuffer();
+      const sampleText = new TextDecoder('utf-8').decode(sampleBuffer);
+      const delimiter = guessDelimiter(sampleText);
+
+      const quickHeaders = await this.csvImportService.detectHeaders(file, delimiter, 'utf-8');
+      const profile = this.mappingProfilesStore.findTemplateForHeaders(quickHeaders);
+      if (!profile?.columns.ownIban) return null;
+
+      const headerRows = profile.headerRows || 1;
+      const previewRows = await this.csvImportService.previewRawRows(
+        file,
+        delimiter,
+        profile.encoding || 'utf-8',
+        headerRows + 5,
+      );
+      const headerRow = previewRows[headerRows - 1] ?? [];
+      const dataRows = previewRows.slice(headerRows);
+      const detectedIban = detectOwnIban(headerRow, dataRows, profile);
+      return matchAccountByIban(detectedIban, this.accounts())?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 }

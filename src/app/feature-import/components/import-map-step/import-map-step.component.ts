@@ -58,6 +58,7 @@ export class ImportMapStepComponent {
     description: ['', Validators.required],
     counterpartyName: [''],
     counterpartyIban: [''],
+    ownIban: [''],
     balance: [''],
     rememberForAccount: [false],
   });
@@ -150,6 +151,7 @@ export class ImportMapStepComponent {
       description: value.description,
       counterpartyName: value.counterpartyName || undefined,
       counterpartyIban: value.counterpartyIban || undefined,
+      ownIban: value.ownIban || undefined,
       balance: value.balance || undefined,
     };
 

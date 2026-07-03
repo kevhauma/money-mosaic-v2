@@ -94,6 +94,8 @@ export type MappingProfileColumns = {
   description: string;
   counterpartyName?: string;
   counterpartyIban?: string;
+  /** Column holding the CSV's own account number/IBAN, used to auto-detect which account a file belongs to. */
+  ownIban?: string;
   balance?: string;
 };
 
@@ -138,6 +140,7 @@ const DEFAULT_MAPPING_PROFILE_TEMPLATES: MappingProfile[] = [
       description: 'Omschrijving',
       counterpartyName: 'Naam tegenpartij',
       counterpartyIban: 'Rekeningnummer tegenpartij',
+      ownIban: 'Rekeningnummer',
       balance: 'Saldo',
     },
     delimiter: ';',
@@ -165,6 +168,7 @@ const DEFAULT_MAPPING_PROFILE_TEMPLATES: MappingProfile[] = [
       description: 'Omschrijving',
       counterpartyName: 'Naam tegenpartij',
       counterpartyIban: 'Rekening tegenpartij',
+      ownIban: 'Rekening',
       balance: 'Saldo',
     },
     delimiter: ';',
@@ -314,6 +318,35 @@ export class AppDb extends Dexie {
       })
       .upgrade(async (tx) => {
         await tx.table('transferSettings').add(DEFAULT_TRANSFER_SETTINGS);
+      });
+
+    // Backfills `ownIban` onto already-seeded KBC/Belfius profiles so multi-file import
+    // auto-detection works without requiring users to delete and re-seed their mapping profiles.
+    this.version(3)
+      .stores({
+        accounts: '++id, name, type, archived',
+        transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+        transfers: '++id, fromTransactionId, toTransactionId',
+        categories: '++id, name, kind, archived',
+        rules: '++id, priority, enabled',
+        mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+        importBatches: '++id, accountId, importedAt',
+        transferSettings: 'id',
+      })
+      .upgrade(async (tx) => {
+        const ownIbanHeaderByPreset: Record<string, string> = {
+          kbc: 'Rekeningnummer',
+          belfius: 'Rekening',
+        };
+        const profiles = await tx.table<MappingProfile, number>('mappingProfiles').toArray();
+        for (const profile of profiles) {
+          const ownIbanHeader = profile.bankPreset && ownIbanHeaderByPreset[profile.bankPreset];
+          if (ownIbanHeader && !profile.columns?.ownIban) {
+            await tx
+              .table('mappingProfiles')
+              .update(profile.id!, { columns: { ...profile.columns, ownIban: ownIbanHeader } });
+          }
+        }
       });
 
     this.on('populate', () => {

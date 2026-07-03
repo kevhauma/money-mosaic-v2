@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { daisyClasses } from '@/shared/utils';
 
@@ -10,7 +11,7 @@ export type ButtonShape = 'default' | 'square' | 'circle' | 'wide' | 'block';
 
 @Component({
   selector: 'mm-button',
-  imports: [RouterLink],
+  imports: [RouterLink, NgTemplateOutlet],
   templateUrl: './button.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -10,6 +10,7 @@ import type { ImportBatch } from '@/core/data-access';
 })
 export class ImportSummaryStepComponent {
   readonly batch = input.required<ImportBatch>();
+  readonly showDoneLink = input(true);
   readonly undo = output<void>();
 
   protected readonly undoConfirmOpen = signal(false);

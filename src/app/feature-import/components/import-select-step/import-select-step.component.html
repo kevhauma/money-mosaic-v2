@@ -1,36 +1,60 @@
 <div class="flex flex-col gap-4">
   <fieldset class="fieldset">
-    <legend class="fieldset-legend">Account</legend>
-    <select class="select w-full" [value]="accountId() ?? ''" (change)="onAccountChange($event)">
-      <option value="" disabled>Choose an account</option>
-      @for (account of accounts(); track account.id) {
-        <option [value]="account.id">{{ account.name }}</option>
-      }
-    </select>
-  </fieldset>
-
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">CSV file</legend>
+    <legend class="fieldset-legend">CSV files</legend>
     <div
       class="flex flex-col items-center justify-center gap-2 rounded-box border-2 border-dashed border-base-300 p-8 text-center"
       (drop)="onDrop($event)"
       (dragover)="onDragOver($event)"
     >
-      @if (file(); as selectedFile) {
-        <p class="font-medium">{{ selectedFile.name }}</p>
-        <p class="text-xs text-base-content/60">{{ (selectedFile.size / 1024).toFixed(1) }} KB</p>
-      } @else {
-        <p class="text-sm text-base-content/60">Drag & drop a CSV file here, or</p>
-      }
+      <p class="text-sm text-base-content/60">Drag &#38; drop one or more CSV files here, or</p>
       <label class="btn btn-sm">
         Browse
         <input
           type="file"
           accept=".csv,text/csv"
+          multiple
           class="hidden"
           (change)="onFileSelected($event)"
         />
       </label>
     </div>
   </fieldset>
+
+  @if (queue().length > 0) {
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Files ({{ queue().length }})</legend>
+      <ul class="flex flex-col gap-2">
+        @for (row of queue(); track row.file; let i = $index) {
+          <li class="flex flex-wrap items-center gap-3 rounded-box border border-base-300 p-3">
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium">{{ row.file.name }}</p>
+              <p class="text-xs text-base-content/60">{{ (row.file.size / 1024).toFixed(1) }} KB</p>
+            </div>
+            <select
+              class="select select-sm w-48"
+              [value]="row.accountId ?? ''"
+              (change)="onAccountChange(i, $event)"
+            >
+              <option value="" disabled>Choose an account</option>
+              @for (account of accounts(); track account.id) {
+                <option [value]="account.id">{{ account.name }}</option>
+              }
+            </select>
+            @if (row.autoDetected) {
+              <mm-badge color="success" size="sm">Auto-detected</mm-badge>
+            }
+            <mm-button
+              variant="ghost"
+              size="sm"
+              shape="square"
+              ariaLabel="Remove file"
+              (click)="removeFile(i)"
+            >
+              ✕
+            </mm-button>
+          </li>
+        }
+      </ul>
+    </fieldset>
+  }
 </div>

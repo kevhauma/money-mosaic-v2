@@ -8,19 +8,21 @@
     <li class="step" [class.step-primary]="step() >= 4">Summary</li>
   </ul>
 
+  @if ((step() === 2 || step() === 3) && totalFiles() > 1) {
+    <p class="mb-4 text-xs font-medium text-base-content/60">
+      File {{ currentFileIndex() + 1 }} of {{ totalFiles() }} — {{ currentFile()?.name }}
+    </p>
+  }
+
   <div class="card border border-base-300 bg-base-100">
     <div class="card-body">
       @switch (step()) {
         @case (1) {
-          <app-import-select-step
-            [accounts]="accountsStore.activeAccounts()"
-            [(accountId)]="selectedAccountId"
-            [(file)]="selectedFile"
-          />
+          <app-import-select-step [accounts]="accountsStore.activeAccounts()" [(queue)]="queue" />
         }
         @case (2) {
-          @if (selectedFile(); as file) {
-            @if (selectedAccountId(); as accountId) {
+          @if (currentFile(); as file) {
+            @if (currentAccountId(); as accountId) {
               <app-import-map-step [file]="file" [accountId]="accountId" [(result)]="mapResult" />
             }
           }
@@ -32,9 +34,21 @@
           <app-import-preview-step [rows]="parsedRows()" />
         }
         @case (4) {
-          @if (commitResult(); as result) {
-            <app-import-summary-step [batch]="result.batch" (undo)="onUndo()" />
-          }
+          <div class="flex flex-col gap-6">
+            @for (result of commitResults(); track result.batch.id) {
+              <app-import-summary-step
+                [batch]="result.batch"
+                [showDoneLink]="false"
+                (undo)="onUndo(result)"
+              />
+            }
+            <div class="flex items-center gap-3 border-t border-base-300 pt-4">
+              <mm-button color="primary" size="sm" link="/accounts">Done</mm-button>
+              <mm-button variant="ghost" size="sm" (click)="startNewImport()">
+                Start new import
+              </mm-button>
+            </div>
+          </div>
         }
       }
 
@@ -57,6 +71,8 @@
               Parsing…
             } @else if (step() === 3 && committing()) {
               Importing…
+            } @else if (step() === 3 && currentFileIndex() + 1 < totalFiles()) {
+              Confirm &#38; continue
             } @else if (step() === 3) {
               Confirm import
             } @else {

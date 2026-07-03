@@ -1,6 +1,10 @@
+<ng-template #content>
+  <ng-content />
+</ng-template>
+
 @if (link(); as href) {
   <a [routerLink]="href" [class]="classes()" [attr.aria-label]="ariaLabel()">
-    <ng-content />
+    <ng-container [ngTemplateOutlet]="content" />
   </a>
 } @else {
   <button
@@ -9,6 +13,6 @@
     [class]="classes()"
     [attr.aria-label]="ariaLabel()"
   >
-    <ng-content />
+    <ng-container [ngTemplateOutlet]="content" />
   </button>
 }
