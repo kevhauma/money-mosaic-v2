@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "angular-best-practices": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "skillPath": "skills/angular-best-practices/SKILL.md",
+      "computedHash": "8a0f0f438f5fc7ec25cae5b336f587156089e03f1cb9de436bc323e9f11e1416"
+    },
     "angular-developer": {
       "source": "angular/skills",
       "sourceType": "github",
