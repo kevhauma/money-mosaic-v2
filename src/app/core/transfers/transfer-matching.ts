@@ -1,0 +1,150 @@
+import type { Account, Transaction } from '@/core/data-access';
+
+export type TransferCandidate = {
+  from: Transaction;
+  to: Transaction;
+  method: 'auto-iban' | 'auto-amountdate';
+  confidence: 'high' | 'medium';
+};
+
+export type TransferMatchResult = {
+  autoLink: TransferCandidate[];
+  /** Unique-but-unlinked (medium confidence disabled) or genuinely ambiguous candidates, surfaced for one-click confirmation (FR-TRF-3). */
+  ambiguous: TransferCandidate[];
+};
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const daysBetween = (a: string, b: string): number =>
+  Math.abs(new Date(a).getTime() - new Date(b).getTime()) / MS_PER_DAY;
+
+const isCandidatePair = (a: Transaction, b: Transaction, windowDays: number): boolean =>
+  a.accountId !== b.accountId &&
+  a.amount !== 0 &&
+  a.amount === -b.amount &&
+  daysBetween(a.bookingDate, b.bookingDate) <= windowDays;
+
+const ibanConfirms = (
+  a: Transaction,
+  b: Transaction,
+  accountsById: Map<number, Account>,
+): boolean => {
+  const accountIban = (transaction: Transaction) => accountsById.get(transaction.accountId)?.iban;
+  return (
+    (!!a.counterpartyIban && a.counterpartyIban === accountIban(b)) ||
+    (!!b.counterpartyIban && b.counterpartyIban === accountIban(a))
+  );
+};
+
+/** Flags a still one-sided movement whose counterparty is a known own account (FR-TRF-5). */
+export const isLikelyTransfer = (
+  transaction: Transaction,
+  ownIbans: ReadonlySet<string>,
+): boolean =>
+  transaction.transferId == null &&
+  !!transaction.counterpartyIban &&
+  ownIbans.has(transaction.counterpartyIban);
+
+/** High confidence: counterparty IBAN corroborates the pair — linked even if more than one IBAN-confirmed candidate exists (closest by date wins). */
+const findHighConfidenceMatches = (
+  unlinked: Transaction[],
+  accountsById: Map<number, Account>,
+  windowDays: number,
+): { matches: TransferCandidate[]; consumed: Set<number> } => {
+  const matches: TransferCandidate[] = [];
+  const consumed = new Set<number>();
+
+  for (const transaction of unlinked) {
+    if (consumed.has(transaction.id!)) continue;
+
+    const ibanCandidates = unlinked.filter(
+      (other) =>
+        other.id !== transaction.id &&
+        !consumed.has(other.id!) &&
+        isCandidatePair(transaction, other, windowDays) &&
+        ibanConfirms(transaction, other, accountsById),
+    );
+    if (ibanCandidates.length === 0) continue;
+
+    const closest = ibanCandidates.reduce((best, candidate) =>
+      daysBetween(transaction.bookingDate, candidate.bookingDate) <
+      daysBetween(transaction.bookingDate, best.bookingDate)
+        ? candidate
+        : best,
+    );
+    matches.push({ from: transaction, to: closest, method: 'auto-iban', confidence: 'high' });
+    consumed.add(transaction.id!);
+    consumed.add(closest.id!);
+  }
+
+  return { matches, consumed };
+};
+
+/** Medium confidence: opposite-sign/equal-amount/in-window pair with no IBAN corroboration — only auto-linked when the match is mutually unique. */
+const findMediumConfidenceMatches = (
+  remaining: Transaction[],
+  windowDays: number,
+  autoLinkMediumConfidence: boolean,
+): { autoLink: TransferCandidate[]; ambiguous: TransferCandidate[] } => {
+  const candidatesByTransactionId = new Map<number, Transaction[]>(
+    remaining.map((transaction) => [
+      transaction.id!,
+      remaining.filter(
+        (other) => other.id !== transaction.id && isCandidatePair(transaction, other, windowDays),
+      ),
+    ]),
+  );
+
+  const autoLink: TransferCandidate[] = [];
+  const ambiguous: TransferCandidate[] = [];
+  const seenPairs = new Set<string>();
+
+  for (const transaction of remaining) {
+    for (const match of candidatesByTransactionId.get(transaction.id!) ?? []) {
+      const pairKey = [transaction.id!, match.id!].sort((a, b) => a - b).join(':');
+      if (seenPairs.has(pairKey)) continue;
+      seenPairs.add(pairKey);
+
+      const unique =
+        candidatesByTransactionId.get(transaction.id!)!.length === 1 &&
+        candidatesByTransactionId.get(match.id!)!.length === 1;
+      const candidate: TransferCandidate = {
+        from: transaction,
+        to: match,
+        method: 'auto-amountdate',
+        confidence: 'medium',
+      };
+      (unique && autoLinkMediumConfidence ? autoLink : ambiguous).push(candidate);
+    }
+  }
+
+  return { autoLink, ambiguous };
+};
+
+/**
+ * Finds transfer pairs among unlinked transactions (FR-TRF-3): high-confidence IBAN matches first,
+ * then medium-confidence amount/date matches among what's left. Everything not mutually unique is
+ * surfaced for manual confirmation rather than guessed at.
+ */
+export const resolveTransferMatches = (
+  transactions: Transaction[],
+  accounts: Account[],
+  windowDays: number,
+  autoLinkMediumConfidence: boolean,
+): TransferMatchResult => {
+  const accountsById = new Map(accounts.map((account) => [account.id!, account]));
+  const unlinked = transactions.filter((transaction) => transaction.transferId == null);
+
+  const highConfidence = findHighConfidenceMatches(unlinked, accountsById, windowDays);
+  const remaining = unlinked.filter((transaction) => !highConfidence.consumed.has(transaction.id!));
+  const mediumConfidence = findMediumConfidenceMatches(
+    remaining,
+    windowDays,
+    autoLinkMediumConfidence,
+  );
+
+  return {
+    autoLink: [...highConfidence.matches, ...mediumConfidence.autoLink],
+    ambiguous: mediumConfidence.ambiguous,
+  };
+};

@@ -8,7 +8,7 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { ImportBatchesRepository, type ImportBatch } from '@/core/data-access';
-import { TransactionsStore } from '@/feature-transactions';
+import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { ImportService, type CommitImportInput, type CommitImportResult } from '@/core/import';
 import { RulesEngineService } from '@/core/categorisation';
 
@@ -24,6 +24,7 @@ export const ImportBatchesStore = signalStore(
   withMethods((store) => {
     const importBatchesRepository = inject(ImportBatchesRepository);
     const transactionsStore = inject(TransactionsStore);
+    const transfersStore = inject(TransfersStore);
     const importService = inject(ImportService);
     const rulesEngineService = inject(RulesEngineService);
 
@@ -49,6 +50,11 @@ export const ImportBatchesStore = signalStore(
 
         patchState(store, addEntity(result.batch, importBatchConfig));
         transactionsStore.addMany(categorisedTransactions);
+
+        // Re-scans the entire dataset, not just this batch, so a later import can retroactively
+        // pair with an earlier one-sided movement (FR-TRF-2).
+        await transfersStore.runAutoLink();
+
         return { ...result, addedTransactions: categorisedTransactions };
       },
 
@@ -58,10 +64,15 @@ export const ImportBatchesStore = signalStore(
           .filter((transaction) => transaction.importBatchId === batch.id)
           .map((transaction) => transaction.id!);
 
-        await importService.undoImport(batch.id!);
+        const { unlinkedTransferIds, clearedTransferTransactionIds } =
+          await importService.undoImport(batch.id!);
 
         patchState(store, removeEntity(batch.id!));
         transactionsStore.removeMany(transactionIds);
+        transactionsStore.patchMany(
+          clearedTransferTransactionIds.map((id) => ({ id, changes: { transferId: undefined } })),
+        );
+        transfersStore.removeLocal(unlinkedTransferIds);
       },
     };
   }),

@@ -10,6 +10,7 @@ import { appDb } from './core/data-access';
 import { AccountsStore } from './feature-accounts/accounts.store';
 import { TransactionsStore } from './feature-transactions/transactions.store';
 import { TransfersStore } from './feature-transactions/transfers.store';
+import { TransferSettingsStore } from './feature-transactions/transfer-settings.store';
 import { CategoriesStore } from './feature-categories/categories.store';
 import { RulesStore } from './feature-categories/rules.store';
 import { MappingProfilesStore } from './feature-import/mapping-profiles.store';
@@ -24,6 +25,7 @@ export const appConfig: ApplicationConfig = {
       const accountsStore = inject(AccountsStore);
       const transactionsStore = inject(TransactionsStore);
       const transfersStore = inject(TransfersStore);
+      const transferSettingsStore = inject(TransferSettingsStore);
       const categoriesStore = inject(CategoriesStore);
       const rulesStore = inject(RulesStore);
       const mappingProfilesStore = inject(MappingProfilesStore);
@@ -34,6 +36,7 @@ export const appConfig: ApplicationConfig = {
           Promise.all([
             transactionsStore.hydrate(),
             transfersStore.hydrate(),
+            transferSettingsStore.hydrate(),
             categoriesStore.hydrate(),
             rulesStore.hydrate(),
             accountsStore.hydrate(),

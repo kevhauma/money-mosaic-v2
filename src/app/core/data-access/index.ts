@@ -6,3 +6,4 @@ export * from './import-batches.repository';
 export * from './categories.repository';
 export * from './rules.repository';
 export * from './transfers.repository';
+export * from './transfer-settings.repository';

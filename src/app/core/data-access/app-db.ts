@@ -42,6 +42,19 @@ export type Transfer = {
   linkedAt: string;
 };
 
+/** Singleton row (id always 1) configuring transfer auto-matching (FR-TRF-4). */
+export type TransferSettings = {
+  id?: number;
+  matchWindowDays: number;
+  autoLinkMediumConfidence: boolean;
+};
+
+export const DEFAULT_TRANSFER_SETTINGS: TransferSettings = {
+  id: 1,
+  matchWindowDays: 3,
+  autoLinkMediumConfidence: true,
+};
+
 export type Category = {
   id?: number;
   name: string;
@@ -273,6 +286,7 @@ export class AppDb extends Dexie {
   rules!: Table<Rule, number>;
   mappingProfiles!: Table<MappingProfile, number>;
   importBatches!: Table<ImportBatch, number>;
+  transferSettings!: Table<TransferSettings, number>;
 
   constructor() {
     super('money-mosaic');
@@ -287,9 +301,25 @@ export class AppDb extends Dexie {
       importBatches: '++id, accountId, importedAt',
     });
 
+    this.version(2)
+      .stores({
+        accounts: '++id, name, type, archived',
+        transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+        transfers: '++id, fromTransactionId, toTransactionId',
+        categories: '++id, name, kind, archived',
+        rules: '++id, priority, enabled',
+        mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+        importBatches: '++id, accountId, importedAt',
+        transferSettings: 'id',
+      })
+      .upgrade(async (tx) => {
+        await tx.table('transferSettings').add(DEFAULT_TRANSFER_SETTINGS);
+      });
+
     this.on('populate', () => {
       this.mappingProfiles.bulkAdd(DEFAULT_MAPPING_PROFILE_TEMPLATES);
       this.categories.bulkAdd(DEFAULT_CATEGORIES);
+      this.transferSettings.add(DEFAULT_TRANSFER_SETTINGS);
     });
   }
 }

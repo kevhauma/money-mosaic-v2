@@ -12,6 +12,7 @@ import {
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
 import type { Category, Transaction } from '@/core/data-access';
+import { isLikelyTransfer } from '@/core/transfers';
 import {
   AlertComponent,
   BadgeComponent,
@@ -28,6 +29,7 @@ import {
   TransactionEditFormComponent,
   type TransactionEditResult,
 } from '../transaction-edit-form/transaction-edit-form.component';
+import { TransferReviewComponent } from '../transfer-review/transfer-review.component';
 
 @Component({
   selector: 'app-transactions-overview',
@@ -43,6 +45,7 @@ import {
     PageHeaderComponent,
     SelectComponent,
     TransactionEditFormComponent,
+    TransferReviewComponent,
   ],
   templateUrl: './transactions-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,6 +121,22 @@ export class TransactionsOverviewComponent {
   );
 
   protected readonly canLinkSelection = computed(() => this.selectedIds().size === 2);
+
+  /** One-sided movements to/from a known own-account IBAN, flagged before their pair arrives (FR-TRF-5). */
+  protected readonly likelyTransferIds = computed(() => {
+    const ownIbans = new Set(
+      this.accountsStore
+        .accounts()
+        .map((account) => account.iban)
+        .filter((iban): iban is string => !!iban),
+    );
+    return new Set(
+      this.transactionsStore
+        .transactions()
+        .filter((transaction) => isLikelyTransfer(transaction, ownIbans))
+        .map((transaction) => transaction.id!),
+    );
+  });
 
   protected readonly formOpen = signal(false);
   protected readonly editingTransaction = signal<Transaction | null>(null);

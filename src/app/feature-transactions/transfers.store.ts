@@ -1,15 +1,18 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, type, withComputed, withMethods } from '@ngrx/signals';
 import {
+  addEntities,
   addEntity,
   entityConfig,
+  removeEntities,
   removeEntity,
   setAllEntities,
   withEntities,
 } from '@ngrx/signals/entities';
 import { TransfersRepository, type Transaction, type Transfer } from '@/core/data-access';
-import { TransferLinkingService } from '@/core/transfers';
+import { TransferLinkingService, TransferMatchingService } from '@/core/transfers';
 import { TransactionsStore } from './transactions.store';
+import { TransferSettingsStore } from './transfer-settings.store';
 
 const transferConfig = entityConfig({
   entity: type<Transfer>(),
@@ -65,6 +68,34 @@ export const TransfersStore = signalStore(
           { id: transfer.fromTransactionId, changes: { transferId: undefined } },
           { id: transfer.toTransactionId, changes: { transferId: undefined } },
         ]);
+      },
+
+      /** Reflects transfer deletions already persisted elsewhere (e.g. undoing an import that severed a cross-import link). */
+      removeLocal: (transferIds: number[]): void => {
+        patchState(store, removeEntities(transferIds));
+      },
+    };
+  }),
+  withMethods((store) => {
+    const transferMatchingService = inject(TransferMatchingService);
+    const transferSettingsStore = inject(TransferSettingsStore);
+    const transactionsStore = inject(TransactionsStore);
+
+    return {
+      /** Re-runs auto-matching across the whole dataset — called after every import and on demand (FR-TRF-2). */
+      runAutoLink: async (): Promise<number> => {
+        const linked = await transferMatchingService.runAndPersist(
+          transferSettingsStore.matchWindowDays(),
+          transferSettingsStore.autoLinkMediumConfidence(),
+        );
+        patchState(store, addEntities(linked, transferConfig));
+        transactionsStore.patchMany(
+          linked.flatMap((transfer) => [
+            { id: transfer.fromTransactionId, changes: { transferId: transfer.id } },
+            { id: transfer.toTransactionId, changes: { transferId: transfer.id } },
+          ]),
+        );
+        return linked.length;
       },
     };
   }),

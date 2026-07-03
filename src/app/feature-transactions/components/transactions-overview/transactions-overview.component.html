@@ -16,6 +16,8 @@
   </mm-alert>
 }
 
+<app-transfer-review />
+
 <form
   [formGroup]="filterForm"
   class="mb-4 grid grid-cols-2 gap-3 rounded-box border border-base-300 bg-base-100 p-4 sm:grid-cols-3 lg:grid-cols-6"
@@ -118,7 +120,12 @@
             </td>
             <td class="whitespace-nowrap">{{ transaction.bookingDate }}</td>
             <td>
-              <div class="font-medium">{{ transaction.rawDescription }}</div>
+              <div class="flex items-center gap-1">
+                <span class="font-medium">{{ transaction.rawDescription }}</span>
+                @if (likelyTransferIds().has(transaction.id!)) {
+                  <mm-badge variant="outline" size="sm">Likely transfer</mm-badge>
+                }
+              </div>
               @if (transaction.counterpartyName) {
                 <div class="text-xs text-base-content/60">{{ transaction.counterpartyName }}</div>
               }

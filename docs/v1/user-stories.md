@@ -17,7 +17,7 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want to create an account with name, type (Checking/Savings/Joint/Invest), optional IBAN, opening balance, opening-balance date, and colour/icon, so I can start tracking a real bank account (FR-ACC-1)
 - [x] As a user, I want to edit, archive, or delete an account, and be warned about associated transactions before deleting, so I don't lose data by accident (FR-ACC-2)
 - [x] As a user, I want each account's current balance derived from opening balance + its transactions (never stored as a mutable field), so the number I see is always trustworthy (FR-ACC-3)
-- [ ] As a user, I want my account's IBAN used as a matching key for transfer detection, so transfers between my own accounts are found automatically later (FR-ACC-4) — deferred: real transfer-matching logic belongs to §5 Transfers; account IBANs are already captured and ready for it
+- [x] As a user, I want my account's IBAN used as a matching key for transfer detection, so transfers between my own accounts are found automatically later (FR-ACC-4) — implemented as the high-confidence tier of §5 Transfers auto-linking
 
 ## 2. CSV Import (FR-IMP)
 
@@ -50,11 +50,11 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 
 ## 5. Transfers (FR-TRF)
 
-- [ ] As a saver, I want transfers between my own accounts linked and excluded from income/expense (but included in net worth), so moving money to savings never looks like spending (FR-TRF-1, §5 Aggregation rules)
-- [ ] As a user, I want auto-linking to re-run across the entire dataset on every import, so a later-imported counterpart retroactively pairs with an earlier one-sided movement (FR-TRF-2)
-- [ ] As a user, I want high-confidence matches (same-IBAN) and unique medium-confidence matches (opposite-sign, equal-amount, within a configurable day window) auto-linked, while ambiguous matches wait for my one-click confirmation, so linking is accurate, not just automatic (FR-TRF-3)
-- [ ] As a user, I want the matching window and confidence behaviour configurable in settings, so I can tune it to how I actually bank (FR-TRF-4)
-- [ ] As a user, I want a one-sided movement to an own-account IBAN flagged "likely transfer" even before its pair arrives, so I'm not misled by a temporarily-incomplete import (FR-TRF-5)
+- [x] As a saver, I want transfers between my own accounts linked and excluded from income/expense (but included in net worth), so moving money to savings never looks like spending (FR-TRF-1, §5 Aggregation rules) — linking sets `transferId` on both sides; the income/expense exclusion itself is exercised once §6 Statistics is built on top of it
+- [x] As a user, I want auto-linking to re-run across the entire dataset on every import, so a later-imported counterpart retroactively pairs with an earlier one-sided movement (FR-TRF-2)
+- [x] As a user, I want high-confidence matches (same-IBAN) and unique medium-confidence matches (opposite-sign, equal-amount, within a configurable day window) auto-linked, while ambiguous matches wait for my one-click confirmation, so linking is accurate, not just automatic (FR-TRF-3)
+- [x] As a user, I want the matching window and confidence behaviour configurable in settings, so I can tune it to how I actually bank (FR-TRF-4)
+- [x] As a user, I want a one-sided movement to an own-account IBAN flagged "likely transfer" even before its pair arrives, so I'm not misled by a temporarily-incomplete import (FR-TRF-5)
 
 ## 6. Statistics & Dashboard (FR-STAT)
 
