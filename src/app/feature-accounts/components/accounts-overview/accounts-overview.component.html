@@ -1,4 +1,4 @@
-<app-page-header title="Accounts" subtitle="Every account you track, in one place.">
+<mm-page-header title="Accounts" subtitle="Every account you track, in one place.">
   <div actions class="flex items-center gap-3">
     <label class="label cursor-pointer gap-2">
       <span class="text-sm">Show archived</span>
@@ -9,23 +9,21 @@
         (change)="showArchived.set(!showArchived())"
       />
     </label>
-    <button type="button" class="btn btn-primary btn-sm" (click)="openAddForm()">
+    <mm-button color="primary" size="sm" (click)="openAddForm()">
       <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
       Add account
-    </button>
+    </mm-button>
   </div>
-</app-page-header>
+</mm-page-header>
 
 @if (visibleAccounts().length === 0) {
-  <app-empty-state
+  <mm-empty-state
     title="No accounts yet"
     message="Add your first account to start tracking transactions."
   >
     <ng-icon icon name="accountWallet" size="40" aria-hidden="true" />
-    <button action type="button" class="btn btn-primary mt-2" (click)="openAddForm()">
-      Add account
-    </button>
-  </app-empty-state>
+    <mm-button action color="primary" class="mt-2" (click)="openAddForm()"> Add account </mm-button>
+  </mm-empty-state>
 } @else {
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
     @for (account of visibleAccounts(); track account.id) {
@@ -42,14 +40,9 @@
               </a>
             </div>
             <div class="dropdown dropdown-end">
-              <div
-                tabindex="0"
-                role="button"
-                class="btn btn-square btn-ghost btn-sm"
-                aria-label="Account actions"
-              >
+              <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Account actions">
                 <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
-              </div>
+              </mm-button>
               <ul
                 tabindex="0"
                 class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
@@ -80,7 +73,9 @@
             </div>
           </div>
 
-          <span class="badge badge-outline badge-sm w-fit capitalize">{{ account.type }}</span>
+          <mm-badge variant="outline" size="sm" class="w-fit capitalize">{{
+            account.type
+          }}</mm-badge>
 
           <p class="text-2xl font-semibold" [class.text-error]="balanceFor(account) < 0">
             {{ balanceFor(account) | signedAmount }}
@@ -97,7 +92,7 @@
 
 <app-account-form [(open)]="formOpen" [account]="editingAccount()" (saved)="saveAccount($event)" />
 
-<app-confirm-dialog
+<mm-confirm-dialog
   [(open)]="deleteConfirmOpen"
   title="Delete this account?"
   [message]="deleteMessage()"

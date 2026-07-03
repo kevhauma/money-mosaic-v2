@@ -13,6 +13,7 @@ import {
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import type { Category, Transaction } from '@/core/data-access';
 import { CategoriesStore, RulesStore } from '@/feature-categories';
+import { ButtonComponent, SelectComponent } from '@/shared/ui';
 
 export type TransactionEditResult = Partial<
   Pick<Transaction, 'categoryId' | 'categoryManual' | 'notes'>
@@ -20,7 +21,7 @@ export type TransactionEditResult = Partial<
 
 @Component({
   selector: 'app-transaction-edit-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ButtonComponent, SelectComponent],
   templateUrl: './transaction-edit-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

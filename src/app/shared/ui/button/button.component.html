@@ -1,0 +1,14 @@
+@if (link(); as href) {
+  <a [routerLink]="href" [class]="classes()" [attr.aria-label]="ariaLabel()">
+    <ng-content />
+  </a>
+} @else {
+  <button
+    [type]="type()"
+    [disabled]="disabled()"
+    [class]="classes()"
+    [attr.aria-label]="ariaLabel()"
+  >
+    <ng-content />
+  </button>
+}

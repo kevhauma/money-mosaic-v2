@@ -8,10 +8,11 @@ import {
   output,
   viewChild,
 } from '@angular/core';
+import { ButtonComponent } from '../button/button.component';
 
 @Component({
-  selector: 'app-confirm-dialog',
-  imports: [],
+  selector: 'mm-confirm-dialog',
+  imports: [ButtonComponent],
   templateUrl: './confirm-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

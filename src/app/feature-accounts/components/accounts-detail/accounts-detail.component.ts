@@ -1,9 +1,14 @@
 import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerArchive, tablerArchiveOff, tablerPencil, tablerTrash } from '@ng-icons/tabler-icons';
-import { ConfirmDialogComponent, EmptyStateComponent, PageHeaderComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  ConfirmDialogComponent,
+  EmptyStateComponent,
+  PageHeaderComponent,
+} from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 import { AccountsStore } from '../../accounts.store';
 import {
@@ -14,11 +19,11 @@ import {
 @Component({
   selector: 'app-accounts-detail',
   imports: [
-    RouterLink,
     NgIcon,
     TitleCasePipe,
     SignedAmountPipe,
     AccountFormComponent,
+    ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
     PageHeaderComponent,

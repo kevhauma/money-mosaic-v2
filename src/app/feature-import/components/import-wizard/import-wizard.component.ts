@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { AccountsStore } from '@/feature-accounts';
 import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
+import { ButtonComponent } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportBatchesStore } from '../../import-batches.store';
 import { ImportSelectStepComponent } from '../import-select-step/import-select-step.component';
@@ -22,6 +23,7 @@ type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
     ImportMapStepComponent,
     ImportPreviewStepComponent,
     ImportSummaryStepComponent,
+    ButtonComponent,
   ],
   templateUrl: './import-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

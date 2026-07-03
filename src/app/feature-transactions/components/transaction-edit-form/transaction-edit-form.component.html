@@ -8,12 +8,12 @@
     <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Category</legend>
-        <select formControlName="categoryId" class="select w-full">
+        <mm-select formControlName="categoryId" class="w-full">
           <option value="">Uncategorised</option>
           @for (category of categoriesStore.activeCategories(); track category.id) {
             <option [value]="category.id">{{ categoryLabel(category) }}</option>
           }
-        </select>
+        </mm-select>
       </fieldset>
 
       <fieldset class="fieldset">
@@ -36,8 +36,8 @@
       }
 
       <div class="modal-action">
-        <button type="button" class="btn" (click)="cancel()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save changes</button>
+        <mm-button (click)="cancel()">Cancel</mm-button>
+        <mm-button type="submit" color="primary">Save changes</mm-button>
       </div>
     </form>
   </div>

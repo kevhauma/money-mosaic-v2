@@ -12,7 +12,15 @@ import {
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
 import type { Category, Transaction } from '@/core/data-access';
-import { EmptyStateComponent, PageHeaderComponent } from '@/shared/ui';
+import {
+  AlertComponent,
+  BadgeComponent,
+  ButtonComponent,
+  EmptyStateComponent,
+  InputComponent,
+  PageHeaderComponent,
+  SelectComponent,
+} from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 import { TransactionsStore } from '../../transactions.store';
 import { TransfersStore } from '../../transfers.store';
@@ -27,8 +35,13 @@ import {
     ReactiveFormsModule,
     NgIcon,
     SignedAmountPipe,
+    AlertComponent,
+    BadgeComponent,
+    ButtonComponent,
     EmptyStateComponent,
+    InputComponent,
     PageHeaderComponent,
+    SelectComponent,
     TransactionEditFormComponent,
   ],
   templateUrl: './transactions-overview.component.html',

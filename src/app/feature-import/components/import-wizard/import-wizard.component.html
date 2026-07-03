@@ -40,17 +40,12 @@
 
       @if (step() < 4) {
         <div class="card-actions mt-6 justify-between border-t border-base-300 pt-4">
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
-            [disabled]="step() === 1"
-            (click)="goBack()"
-          >
+          <mm-button variant="ghost" size="sm" [disabled]="step() === 1" (click)="goBack()">
             Back
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary btn-sm"
+          </mm-button>
+          <mm-button
+            color="primary"
+            size="sm"
             [disabled]="
               (step() === 1 && !canAdvanceFromStep1()) ||
               (step() === 2 && (!mapResult() || parsing())) ||
@@ -67,7 +62,7 @@
             } @else {
               Next
             }
-          </button>
+          </mm-button>
         </div>
       }
     </div>

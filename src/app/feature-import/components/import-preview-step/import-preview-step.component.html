@@ -21,13 +21,13 @@
       @for (row of previewRows(); track $index) {
         <tr>
           @if (row.valid) {
-            <td><span class="badge badge-success badge-sm">valid</span></td>
+            <td><mm-badge color="success" size="sm">valid</mm-badge></td>
             <td>{{ row.transaction.bookingDate }}</td>
             <td [class.text-error]="row.transaction.amount < 0">{{ row.transaction.amount }}</td>
             <td>{{ row.transaction.rawDescription }}</td>
             <td>{{ row.transaction.counterpartyName }}</td>
           } @else {
-            <td><span class="badge badge-error badge-sm">invalid</span></td>
+            <td><mm-badge color="error" size="sm">invalid</mm-badge></td>
             <td colspan="4" class="text-error">{{ row.errors.join(', ') }}</td>
           }
         </tr>

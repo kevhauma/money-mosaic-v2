@@ -20,13 +20,13 @@
 <!-- Transfer-review / uncategorised-queue links are deferred: those features don't exist yet. -->
 
 <div class="mt-6 flex items-center gap-3">
-  <a routerLink="/accounts" class="btn btn-primary btn-sm">Done</a>
-  <button type="button" class="btn btn-ghost btn-sm text-error" (click)="undoConfirmOpen.set(true)">
+  <mm-button color="primary" size="sm" link="/accounts">Done</mm-button>
+  <mm-button variant="ghost" size="sm" class="text-error" (click)="undoConfirmOpen.set(true)">
     Undo this import
-  </button>
+  </mm-button>
 </div>
 
-<app-confirm-dialog
+<mm-confirm-dialog
   [(open)]="undoConfirmOpen"
   title="Undo this import?"
   message="This removes every transaction this import added. This cannot be undone."

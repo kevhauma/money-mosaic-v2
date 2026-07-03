@@ -1,29 +1,25 @@
 @if (account(); as account) {
-  <app-page-header [title]="account.name" [subtitle]="account.type | titlecase">
+  <mm-page-header [title]="account.name" [subtitle]="account.type | titlecase">
     <div actions class="flex items-center gap-2">
-      <a routerLink="/accounts" class="btn btn-ghost btn-sm">Back to accounts</a>
-      <button type="button" class="btn btn-sm" (click)="formOpen.set(true)">
+      <mm-button variant="ghost" size="sm" link="/accounts">Back to accounts</mm-button>
+      <mm-button size="sm" (click)="formOpen.set(true)">
         <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
         Edit
-      </button>
-      <button type="button" class="btn btn-sm" (click)="toggleArchive()">
+      </mm-button>
+      <mm-button size="sm" (click)="toggleArchive()">
         <ng-icon
           [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
           size="14"
           aria-hidden="true"
         />
         {{ account.archived ? 'Unarchive' : 'Archive' }}
-      </button>
-      <button
-        type="button"
-        class="btn btn-outline btn-error btn-sm"
-        (click)="deleteConfirmOpen.set(true)"
-      >
+      </mm-button>
+      <mm-button variant="outline" color="error" size="sm" (click)="deleteConfirmOpen.set(true)">
         <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
         Delete
-      </button>
+      </mm-button>
     </div>
-  </app-page-header>
+  </mm-page-header>
 
   <div class="card border border-base-300 bg-base-100">
     <div class="card-body">
@@ -38,7 +34,7 @@
   </div>
 
   <app-account-form [(open)]="formOpen" [account]="account" (saved)="saveAccount($event)" />
-  <app-confirm-dialog
+  <mm-confirm-dialog
     [(open)]="deleteConfirmOpen"
     title="Delete this account?"
     [message]="deleteMessage()"
@@ -47,7 +43,7 @@
     (confirmed)="deleteConfirmed()"
   />
 } @else {
-  <app-empty-state title="Account not found" message="It may have been deleted or archived away.">
-    <a action routerLink="/accounts" class="btn btn-primary mt-2">Back to accounts</a>
-  </app-empty-state>
+  <mm-empty-state title="Account not found" message="It may have been deleted or archived away.">
+    <mm-button action color="primary" class="mt-2" link="/accounts">Back to accounts</mm-button>
+  </mm-empty-state>
 }

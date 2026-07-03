@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { ParsedRowResult } from '@/core/import';
+import { BadgeComponent } from '@/shared/ui';
 
 @Component({
   selector: 'app-import-preview-step',
-  imports: [],
+  imports: [BadgeComponent],
   templateUrl: './import-preview-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -10,7 +10,13 @@ import {
   tablerTrash,
 } from '@ng-icons/tabler-icons';
 import type { Account } from '@/core/data-access';
-import { ConfirmDialogComponent, EmptyStateComponent, PageHeaderComponent } from '@/shared/ui';
+import {
+  BadgeComponent,
+  ButtonComponent,
+  ConfirmDialogComponent,
+  EmptyStateComponent,
+  PageHeaderComponent,
+} from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
 import { AccountsStore } from '../../accounts.store';
@@ -25,6 +31,8 @@ import {
     RouterLink,
     NgIcon,
     AccountFormComponent,
+    BadgeComponent,
+    ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
     PageHeaderComponent,

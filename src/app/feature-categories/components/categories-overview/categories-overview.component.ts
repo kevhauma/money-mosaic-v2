@@ -10,7 +10,13 @@ import {
   tablerTrash,
 } from '@ng-icons/tabler-icons';
 import type { Category } from '@/core/data-access';
-import { ConfirmDialogComponent, EmptyStateComponent, PageHeaderComponent } from '@/shared/ui';
+import {
+  BadgeComponent,
+  ButtonComponent,
+  ConfirmDialogComponent,
+  EmptyStateComponent,
+  PageHeaderComponent,
+} from '@/shared/ui';
 import { CATEGORY_ICON_SET, categoryIconName } from '../../category-icons';
 import { CategoriesStore } from '../../categories.store';
 import {
@@ -25,6 +31,8 @@ import {
     RouterLinkActive,
     NgIcon,
     CategoryFormComponent,
+    BadgeComponent,
+    ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
     PageHeaderComponent,

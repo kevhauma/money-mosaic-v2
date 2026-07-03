@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Account } from '@/core/data-access';
+import { ButtonComponent, InputComponent, SelectComponent } from '@/shared/ui';
 import { ibanValidator } from '@/shared/utils/validators/iban.validator';
 import { ICON_BY_ACCOUNT_TYPE } from '../../account-icons';
 
@@ -20,7 +21,7 @@ const today = (): string => new Date().toISOString().slice(0, 10);
 
 @Component({
   selector: 'app-account-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ButtonComponent, InputComponent, SelectComponent],
   templateUrl: './account-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

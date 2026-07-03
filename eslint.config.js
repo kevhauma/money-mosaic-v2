@@ -16,6 +16,7 @@ module.exports = defineConfig([
     processor: angular.processInlineTemplates,
     rules: {
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+      '@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }],
       '@angular-eslint/directive-selector': [
         'error',
         {
@@ -28,10 +29,11 @@ module.exports = defineConfig([
         'error',
         {
           type: 'element',
-          prefix: 'app',
+          prefix: ['app', 'mm'],
           style: 'kebab-case',
         },
       ],
+      '@angular-eslint/no-input-rename': ['error', { allowedNames: ['class'] }],
     },
   },
   {

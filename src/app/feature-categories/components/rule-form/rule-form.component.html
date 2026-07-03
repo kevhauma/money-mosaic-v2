@@ -5,10 +5,10 @@
     <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Name</legend>
-        <input
+        <mm-input
           type="text"
           formControlName="name"
-          class="input w-full"
+          class="w-full"
           placeholder="e.g. Netflix subscription"
         />
         @if (form.controls.name.invalid && form.controls.name.touched) {
@@ -19,16 +19,16 @@
       <div class="grid grid-cols-3 gap-3">
         <fieldset class="fieldset col-span-2">
           <legend class="fieldset-legend">Assign category</legend>
-          <select formControlName="categoryId" class="select w-full">
+          <mm-select formControlName="categoryId" class="w-full">
             <option value="" disabled>Choose a category</option>
             @for (category of categoriesStore.activeCategories(); track category.id) {
               <option [value]="category.id">{{ category.name }}</option>
             }
-          </select>
+          </mm-select>
         </fieldset>
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Priority</legend>
-          <input type="number" formControlName="priority" class="input w-full" />
+          <mm-input type="number" formControlName="priority" class="w-full" />
         </fieldset>
       </div>
 
@@ -48,77 +48,83 @@
       <div formArrayName="conditions" class="flex flex-col gap-3">
         @for (group of conditionsArray.controls; track $index) {
           <div [formGroup]="group" class="grid grid-cols-12 items-start gap-2">
-            <select
+            <mm-select
               formControlName="field"
-              class="select select-sm col-span-3"
+              size="sm"
+              class="col-span-3"
               (change)="onFieldChange(group)"
             >
               @for (option of fieldOptions; track option.value) {
                 <option [value]="option.value">{{ option.label }}</option>
               }
-            </select>
+            </mm-select>
 
-            <select formControlName="operator" class="select select-sm col-span-3">
+            <mm-select formControlName="operator" size="sm" class="col-span-3">
               @for (operator of operatorsFor(group); track operator) {
                 <option [value]="operator">{{ operatorLabels[operator] }}</option>
               }
-            </select>
+            </mm-select>
 
             @if (isAccountField(group)) {
-              <select formControlName="value" class="select select-sm col-span-5">
+              <mm-select formControlName="value" size="sm" class="col-span-5">
                 <option value="" disabled>Choose an account</option>
                 @for (account of accountsStore.accounts(); track account.id) {
                   <option [value]="account.id">{{ account.name }}</option>
                 }
-              </select>
+              </mm-select>
             } @else if (isBetween(group)) {
-              <input
+              <mm-input
                 type="number"
                 step="0.01"
                 formControlName="value"
-                class="input input-sm col-span-2"
+                size="sm"
+                class="col-span-2"
                 placeholder="Min"
               />
-              <input
+              <mm-input
                 type="number"
                 step="0.01"
                 formControlName="valueTo"
-                class="input input-sm col-span-2"
+                size="sm"
+                class="col-span-2"
                 placeholder="Max"
               />
             } @else if (isNumericField(group)) {
-              <input
+              <mm-input
                 type="number"
                 step="0.01"
                 formControlName="value"
-                class="input input-sm col-span-5"
+                size="sm"
+                class="col-span-5"
               />
             } @else {
-              <input type="text" formControlName="value" class="input input-sm col-span-5" />
+              <mm-input type="text" formControlName="value" size="sm" class="col-span-5" />
             }
 
-            <button
-              type="button"
-              class="btn btn-square btn-ghost btn-sm col-span-1"
+            <mm-button
+              variant="ghost"
+              shape="square"
+              size="sm"
+              class="col-span-1"
               [disabled]="conditionsArray.length === 1"
               (click)="removeCondition($index)"
-              aria-label="Remove condition"
+              ariaLabel="Remove condition"
             >
               &times;
-            </button>
+            </mm-button>
           </div>
         }
       </div>
 
-      <button type="button" class="btn btn-ghost btn-sm mt-2" (click)="addCondition()">
+      <mm-button variant="ghost" size="sm" class="mt-2" (click)="addCondition()">
         + Add condition
-      </button>
+      </mm-button>
 
       <div class="modal-action">
-        <button type="button" class="btn" (click)="cancel()">Cancel</button>
-        <button type="submit" class="btn btn-primary">
+        <mm-button (click)="cancel()">Cancel</mm-button>
+        <mm-button type="submit" color="primary">
           {{ rule() ? 'Save changes' : 'Add rule' }}
-        </button>
+        </mm-button>
       </div>
     </form>
   </div>

@@ -1,0 +1,12 @@
+<input
+  [type]="type()"
+  [class]="classes()"
+  [placeholder]="placeholder()"
+  [attr.step]="step()"
+  [attr.min]="min()"
+  [attr.maxlength]="maxlength()"
+  [disabled]="isDisabled()"
+  [value]="displayValue()"
+  (input)="handleInput($any($event.target).value)"
+  (blur)="handleBlur()"
+/>

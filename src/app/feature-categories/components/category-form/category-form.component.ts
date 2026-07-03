@@ -11,13 +11,14 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Category } from '@/core/data-access';
+import { ButtonComponent, InputComponent, SelectComponent } from '@/shared/ui';
 import { CATEGORY_ICON_OPTIONS } from '../../category-icons';
 
 export type CategoryFormValue = Omit<Category, 'id' | 'archived' | 'isSystem'>;
 
 @Component({
   selector: 'app-category-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ButtonComponent, InputComponent, SelectComponent],
   templateUrl: './category-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

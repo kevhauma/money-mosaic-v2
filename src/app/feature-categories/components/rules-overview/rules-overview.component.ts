@@ -11,7 +11,14 @@ import {
 } from '@ng-icons/tabler-icons';
 import type { Rule } from '@/core/data-access';
 import { AccountsStore } from '@/feature-accounts';
-import { ConfirmDialogComponent, EmptyStateComponent, PageHeaderComponent } from '@/shared/ui';
+import {
+  AlertComponent,
+  BadgeComponent,
+  ButtonComponent,
+  ConfirmDialogComponent,
+  EmptyStateComponent,
+  PageHeaderComponent,
+} from '@/shared/ui';
 import { CategoriesStore } from '../../categories.store';
 import { RulesStore } from '../../rules.store';
 import { describeCondition } from '../../rule-summary';
@@ -24,6 +31,9 @@ import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.co
     RouterLinkActive,
     NgIcon,
     RuleFormComponent,
+    AlertComponent,
+    BadgeComponent,
+    ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
     PageHeaderComponent,

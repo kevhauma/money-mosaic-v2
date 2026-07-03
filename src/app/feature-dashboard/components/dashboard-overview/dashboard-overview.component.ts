@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ButtonComponent } from '@/shared/ui';
 import { DashboardStore } from '../../dashboard.store';
 
 @Component({
   selector: 'app-dashboard-overview',
-  imports: [],
+  imports: [ButtonComponent],
   templateUrl: './dashboard-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

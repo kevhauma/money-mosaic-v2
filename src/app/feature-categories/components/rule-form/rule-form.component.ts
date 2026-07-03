@@ -20,6 +20,7 @@ import {
 import type { Rule, RuleCondition } from '@/core/data-access';
 import { OPERATORS_BY_FIELD } from '@/core/categorisation';
 import { AccountsStore } from '@/feature-accounts';
+import { ButtonComponent, InputComponent, SelectComponent } from '@/shared/ui';
 import { CategoriesStore } from '../../categories.store';
 
 export type RuleFormValue = Omit<Rule, 'id'>;
@@ -35,7 +36,7 @@ const NUMERIC_FIELDS: RuleCondition['field'][] = ['amount', 'accountId'];
 
 @Component({
   selector: 'app-rule-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ButtonComponent, InputComponent, SelectComponent],
   templateUrl: './rule-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

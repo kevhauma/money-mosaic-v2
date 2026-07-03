@@ -56,7 +56,7 @@ A component's own folder may still `import` a sibling within that same folder us
 |---|---|---|
 | Component files | kebab-case + `.component.ts`/`.html` | `entity-edit.component.ts` |
 | Component class | PascalCase + `Component` suffix | `EntityEditComponent` |
-| Component selector | `app-` + kebab-case | `app-entity-edit` |
+| Component selector | `app-` + kebab-case (`mm-` + kebab-case for `shared/ui/` primitives) | `app-entity-edit`, `mm-button` |
 | Service files | kebab-case + `.service.ts` | `transaction.service.ts` |
 | Service class | PascalCase + `Service` suffix | `TransactionService` |
 | Store (signal state) files | kebab-case + `.store.ts` | `transactions.store.ts` |
@@ -102,6 +102,10 @@ A component's own folder may still `import` a sibling within that same folder us
 - **Use daisyUI theme tokens** (`bg-base-100`, `text-primary`, etc.), never hardcoded hex colors, so dark mode themes stay correct
 - Shared visual primitives (buttons, cards, form fields) live in `shared/ui/` as thin standalone components wrapping daisyUI markup — feature templates should reuse these rather than re-authoring the same daisyUI pattern twice
 - Only layout/positioning utilities (flex, grid, gap, margin, padding, width/height) belong directly in feature templates outside `shared/ui/`
+- **`shared/ui/` primitives are `mm-`-prefixed** (`mm-button`, `mm-input`, `mm-select`, `mm-badge`, `mm-alert`, `mm-page-header`, `mm-empty-state`, `mm-confirm-dialog`) to keep them visually distinct from `app-`-prefixed feature components at usage sites
+- **Variant-driven primitives never expose raw daisyUI classes to callers.** Each takes typed string-union `input()`s mirroring daisyUI's actual modifier axes for that element (e.g. `ButtonColor`/`ButtonVariant`/`ButtonSize`/`ButtonShape` in [button.component.ts](../../../src/app/shared/ui/button/button.component.ts)) and computes the final class string internally via `computed()`. Callers set `variant`/`color`/`size`, never `class="btn-primary"`.
+- **`class = input('', { alias: 'class' })`** on every primitive routes a template `class="..."` attribute through the component input (in addition to the host element, which is harmless — the host is an unstyled custom element so a stray utility class there has no visible effect), so utility classes (`mt-2`, `w-full`, `col-span-*`) reliably reach the real inner element too. This only covers `class`/`style` — arbitrary native attributes (`step`, `min`, `maxlength`, `placeholder`, ...) need their own explicit `input()` since they don't forward automatically through a wrapping component.
+- **Any primitive that wraps a form control implements `ControlValueAccessor`** (via `NG_VALUE_ACCESSOR` + `forwardRef`, see [input.component.ts](../../../src/app/shared/ui/input/input.component.ts) / [select.component.ts](../../../src/app/shared/ui/select/select.component.ts)) so `formControlName`/`[formControl]` keep working transparently through the wrapper. If the native element has a built-in value accessor with type coercion (e.g. `NumberValueAccessor` for `<input type="number">`), the wrapper's `writeValue`/change handler must replicate that coercion explicitly — otherwise typed form values silently degrade to strings.
 
 ## Routing
 

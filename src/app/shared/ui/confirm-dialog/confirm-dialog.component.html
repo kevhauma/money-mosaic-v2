@@ -5,16 +5,10 @@
       <p class="py-3 text-sm text-base-content/70">{{ message() }}</p>
     }
     <div class="modal-action">
-      <button type="button" class="btn" (click)="cancel()">{{ cancelLabel() }}</button>
-      <button
-        type="button"
-        class="btn"
-        [class.btn-error]="danger()"
-        [class.btn-primary]="!danger()"
-        (click)="confirm()"
-      >
+      <mm-button type="button" (click)="cancel()">{{ cancelLabel() }}</mm-button>
+      <mm-button type="button" [color]="danger() ? 'error' : 'primary'" (click)="confirm()">
         {{ confirmLabel() }}
-      </button>
+      </mm-button>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop">

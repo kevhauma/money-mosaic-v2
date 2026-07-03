@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { MappingProfile, MappingProfileColumns } from '@/core/data-access';
 import { CsvImportService, guessDelimiter } from '@/core/import';
+import { AlertComponent, InputComponent, SelectComponent } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
@@ -20,7 +21,7 @@ const ENCODINGS = ['utf-8', 'windows-1252'];
 
 @Component({
   selector: 'app-import-map-step',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, AlertComponent, InputComponent, SelectComponent],
   templateUrl: './import-map-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

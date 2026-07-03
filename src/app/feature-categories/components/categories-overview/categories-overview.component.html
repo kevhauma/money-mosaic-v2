@@ -1,4 +1,4 @@
-<app-page-header title="Categories" subtitle="Manage the categories transactions get sorted into.">
+<mm-page-header title="Categories" subtitle="Manage the categories transactions get sorted into.">
   <div actions class="flex items-center gap-3">
     <label class="label cursor-pointer gap-2">
       <span class="text-sm">Show archived</span>
@@ -9,12 +9,12 @@
         (change)="showArchived.set(!showArchived())"
       />
     </label>
-    <button type="button" class="btn btn-primary btn-sm" (click)="openAddForm()">
+    <mm-button color="primary" size="sm" (click)="openAddForm()">
       <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
       Add category
-    </button>
+    </mm-button>
   </div>
-</app-page-header>
+</mm-page-header>
 
 <div role="tablist" class="tabs tabs-box mb-4 w-fit">
   <a
@@ -29,15 +29,15 @@
 </div>
 
 @if (visibleCategories().length === 0) {
-  <app-empty-state
+  <mm-empty-state
     title="No categories yet"
     message="Add your first category to start sorting transactions."
   >
     <ng-icon icon name="categoryTag" size="40" aria-hidden="true" />
-    <button action type="button" class="btn btn-primary mt-2" (click)="openAddForm()">
+    <mm-button action color="primary" class="mt-2" (click)="openAddForm()">
       Add category
-    </button>
-  </app-empty-state>
+    </mm-button>
+  </mm-empty-state>
 } @else {
   <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
     <table class="table">
@@ -66,25 +66,22 @@
               </div>
             </td>
             <td>
-              <span
-                class="badge badge-outline badge-sm capitalize"
-                [class.badge-success]="category.kind === 'income'"
+              <mm-badge
+                variant="outline"
+                size="sm"
+                class="capitalize"
+                [color]="category.kind === 'income' ? 'success' : undefined"
               >
                 {{ category.kind }}
-              </span>
+              </mm-badge>
             </td>
             <td class="text-sm text-base-content/60">{{ category.group || '—' }}</td>
             <td class="text-right">{{ transactionCountFor(category) }}</td>
             <td>
               <div class="dropdown dropdown-end">
-                <div
-                  tabindex="0"
-                  role="button"
-                  class="btn btn-square btn-ghost btn-sm"
-                  aria-label="Category actions"
-                >
+                <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Category actions">
                   <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
-                </div>
+                </mm-button>
                 <ul
                   tabindex="0"
                   class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
@@ -127,7 +124,7 @@
   (saved)="saveCategory($event)"
 />
 
-<app-confirm-dialog
+<mm-confirm-dialog
   [(open)]="deleteConfirmOpen"
   title="Delete this category?"
   [message]="deleteMessage()"

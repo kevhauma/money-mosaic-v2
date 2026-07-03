@@ -1,21 +1,20 @@
-<app-page-header title="Rules" subtitle="Automatically categorise transactions as they come in.">
+<mm-page-header title="Rules" subtitle="Automatically categorise transactions as they come in.">
   <div actions class="flex items-center gap-3">
-    <button
-      type="button"
-      class="btn btn-sm"
-      [class.loading]="running()"
+    <mm-button
+      size="sm"
+      [class]="running() ? 'loading' : ''"
       [disabled]="running()"
       (click)="runRules()"
     >
       <ng-icon name="tablerRefresh" size="16" aria-hidden="true" />
       Re-run rules
-    </button>
-    <button type="button" class="btn btn-primary btn-sm" (click)="openAddForm()">
+    </mm-button>
+    <mm-button color="primary" size="sm" (click)="openAddForm()">
       <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
       Add rule
-    </button>
+    </mm-button>
   </div>
-</app-page-header>
+</mm-page-header>
 
 <div role="tablist" class="tabs tabs-box mb-4 w-fit">
   <a
@@ -30,20 +29,18 @@
 </div>
 
 @if (rulesStore.lastRunCount(); as count) {
-  <div class="alert alert-success mb-4 py-2 text-sm">
+  <mm-alert status="success" class="mb-4 py-2 text-sm">
     Re-ran rules: {{ count }} transaction{{ count === 1 ? '' : 's' }} recategorised.
-  </div>
+  </mm-alert>
 }
 
 @if (rulesStore.rulesByPriority().length === 0) {
-  <app-empty-state
+  <mm-empty-state
     title="No rules yet"
     message="Add a rule to automatically categorise matching transactions on import."
   >
-    <button action type="button" class="btn btn-primary mt-2" (click)="openAddForm()">
-      Add rule
-    </button>
-  </app-empty-state>
+    <mm-button action color="primary" class="mt-2" (click)="openAddForm()"> Add rule </mm-button>
+  </mm-empty-state>
 } @else {
   <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
     <table class="table">
@@ -61,31 +58,33 @@
           <tr [class.opacity-60]="!rule.enabled">
             <td>
               <div class="flex items-center gap-1">
-                <button
-                  type="button"
-                  class="btn btn-square btn-ghost btn-xs"
+                <mm-button
+                  variant="ghost"
+                  shape="square"
+                  size="xs"
                   [disabled]="isFirst(rule)"
                   (click)="moveRule(rule, 'up')"
-                  aria-label="Move rule up"
+                  ariaLabel="Move rule up"
                 >
                   <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-square btn-ghost btn-xs"
+                </mm-button>
+                <mm-button
+                  variant="ghost"
+                  shape="square"
+                  size="xs"
                   [disabled]="isLast(rule)"
                   (click)="moveRule(rule, 'down')"
-                  aria-label="Move rule down"
+                  ariaLabel="Move rule down"
                 >
                   <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
-                </button>
+                </mm-button>
               </div>
             </td>
             <td>
               <div class="font-medium">{{ rule.name }}</div>
               <div class="text-xs text-base-content/60">{{ conditionSummary(rule) }}</div>
               @if (rule.continueOnMatch) {
-                <span class="badge badge-ghost badge-xs mt-1">continues after match</span>
+                <mm-badge variant="ghost" size="xs" class="mt-1">continues after match</mm-badge>
               }
             </td>
             <td>{{ categoryNameFor(rule) }}</td>
@@ -99,22 +98,25 @@
             </td>
             <td>
               <div class="flex items-center justify-end gap-1">
-                <button
-                  type="button"
-                  class="btn btn-square btn-ghost btn-xs"
-                  title="Edit rule"
+                <mm-button
+                  variant="ghost"
+                  shape="square"
+                  size="xs"
+                  ariaLabel="Edit rule"
                   (click)="openEditForm(rule)"
                 >
                   <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-square btn-ghost btn-xs text-error"
-                  title="Delete rule"
+                </mm-button>
+                <mm-button
+                  variant="ghost"
+                  shape="square"
+                  size="xs"
+                  class="text-error"
+                  ariaLabel="Delete rule"
                   (click)="confirmDelete(rule)"
                 >
                   <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
-                </button>
+                </mm-button>
               </div>
             </td>
           </tr>
@@ -131,7 +133,7 @@
   (saved)="saveRule($event)"
 />
 
-<app-confirm-dialog
+<mm-confirm-dialog
   [(open)]="deleteConfirmOpen"
   title="Delete this rule?"
   message="This cannot be undone. Transactions already categorised by it keep their category."

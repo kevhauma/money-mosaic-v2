@@ -4,71 +4,75 @@
   </div>
 } @else {
   @if (detectedPreset(); as preset) {
-    <div class="alert alert-success mb-4 text-sm">
+    <mm-alert status="success" class="mb-4 text-sm">
       Detected: {{ preset.name }}
       {{
         usedSavedProfile()
           ? '— using your saved mapping'
           : '— preset mapping applied, editable below'
       }}
-    </div>
+    </mm-alert>
   } @else {
-    <div class="alert alert-info mb-4 text-sm">No bank preset matched — map the columns below.</div>
+    <mm-alert status="info" class="mb-4 text-sm"
+      >No bank preset matched — map the columns below.</mm-alert
+    >
   }
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <form [formGroup]="form" class="flex flex-col gap-3">
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Mapping profile name</legend>
-        <input type="text" formControlName="name" class="input input-sm w-full" />
+        <mm-input type="text" formControlName="name" size="sm" class="w-full" />
       </fieldset>
 
       <div class="grid grid-cols-2 gap-3">
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Delimiter</legend>
-          <input
+          <mm-input
             type="text"
             formControlName="delimiter"
-            class="input input-sm w-full"
-            maxlength="1"
+            size="sm"
+            class="w-full"
+            [maxlength]="1"
           />
         </fieldset>
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Decimal separator</legend>
-          <input
+          <mm-input
             type="text"
             formControlName="decimalSeparator"
-            class="input input-sm w-full"
-            maxlength="1"
+            size="sm"
+            class="w-full"
+            [maxlength]="1"
           />
         </fieldset>
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Date format</legend>
-          <select formControlName="dateFormat" class="select select-sm w-full">
+          <mm-select formControlName="dateFormat" size="sm" class="w-full">
             @for (format of dateFormats; track format) {
               <option [value]="format">{{ format }}</option>
             }
-          </select>
+          </mm-select>
         </fieldset>
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Encoding</legend>
-          <select formControlName="encoding" class="select select-sm w-full">
+          <mm-select formControlName="encoding" size="sm" class="w-full">
             @for (encoding of encodings; track encoding) {
               <option [value]="encoding">{{ encoding }}</option>
             }
-          </select>
+          </mm-select>
         </fieldset>
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Header rows</legend>
-          <input type="number" formControlName="headerRows" min="1" class="input input-sm w-full" />
+          <mm-input type="number" formControlName="headerRows" min="1" size="sm" class="w-full" />
         </fieldset>
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Sign convention</legend>
-          <select formControlName="signConvention" class="select select-sm w-full">
+          <mm-select formControlName="signConvention" size="sm" class="w-full">
             <option value="as-is">As-is</option>
             <option value="debit-negative">Debit negative (default)</option>
             <option value="credit-negative">Credit negative</option>
-          </select>
+          </mm-select>
         </fieldset>
       </div>
 
@@ -89,12 +93,12 @@
       ) {
         <fieldset class="fieldset">
           <legend class="fieldset-legend">{{ field.label }}</legend>
-          <select [formControlName]="field.key" class="select select-sm w-full">
+          <mm-select [formControlName]="field.key" size="sm" class="w-full">
             <option value="">{{ field.required ? '— select column —' : '— none —' }}</option>
             @for (header of headers(); track header) {
               <option [value]="header">{{ header }}</option>
             }
-          </select>
+          </mm-select>
         </fieldset>
       }
 
