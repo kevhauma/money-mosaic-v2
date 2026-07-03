@@ -1,4 +1,6 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { inject } from '@angular/core';
+import { patchState, signalStore, type, withComputed, withMethods } from '@ngrx/signals';
+import { addEntity, entityConfig, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { MappingProfilesRepository, type MappingProfile } from '@/core/data-access';
 
 export const matchTemplateForHeaders = (
@@ -13,32 +15,46 @@ export const matchTemplateForHeaders = (
   );
 };
 
-@Injectable({ providedIn: 'root' })
-export class MappingProfilesStore {
-  private readonly mappingProfilesRepository = inject(MappingProfilesRepository);
+const mappingProfileConfig = entityConfig({
+  entity: type<MappingProfile>(),
+  selectId: (profile) => profile.id!,
+});
 
-  private readonly profilesSignal = signal<MappingProfile[]>([]);
-  readonly profiles = this.profilesSignal.asReadonly();
+export const MappingProfilesStore = signalStore(
+  { providedIn: 'root' },
+  withEntities(mappingProfileConfig),
+  withComputed(({ entities }) => ({ profiles: entities })),
+  withMethods((store) => {
+    const mappingProfilesRepository = inject(MappingProfilesRepository);
 
-  hydrate = async (): Promise<void> => {
-    this.profilesSignal.set(await this.mappingProfilesRepository.getAll());
-  };
+    return {
+      hydrate: async (): Promise<void> => {
+        patchState(
+          store,
+          setAllEntities(await mappingProfilesRepository.getAll(), mappingProfileConfig),
+        );
+      },
 
-  addProfile = async (profile: MappingProfile): Promise<MappingProfile> => {
-    const id = await this.mappingProfilesRepository.add(profile);
-    const added = { ...profile, id };
-    this.profilesSignal.update((profiles) => [...profiles, added]);
-    return added;
-  };
+      addProfile: async (profile: MappingProfile): Promise<MappingProfile> => {
+        const id = await mappingProfilesRepository.add(profile);
+        const added: MappingProfile = { ...profile, id };
+        patchState(store, addEntity(added, mappingProfileConfig));
+        return added;
+      },
 
-  findForBankAndAccount = (
-    bankPreset: string | undefined,
-    accountId: number,
-  ): MappingProfile | undefined =>
-    this.profilesSignal().find(
-      (profile) => profile.bankPreset === bankPreset && profile.defaultAccountId === accountId,
-    );
+      findForBankAndAccount: (
+        bankPreset: string | undefined,
+        accountId: number,
+      ): MappingProfile | undefined =>
+        store
+          .profiles()
+          .find(
+            (profile) =>
+              profile.bankPreset === bankPreset && profile.defaultAccountId === accountId,
+          ),
 
-  findTemplateForHeaders = (headers: string[]): MappingProfile | undefined =>
-    matchTemplateForHeaders(this.profilesSignal(), headers);
-}
+      findTemplateForHeaders: (headers: string[]): MappingProfile | undefined =>
+        matchTemplateForHeaders(store.profiles(), headers),
+    };
+  }),
+);

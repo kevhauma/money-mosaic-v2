@@ -1,8 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { signalStore, withState } from '@ngrx/signals';
 
-@Injectable({ providedIn: 'root' })
-export class DashboardStore {
-  private readonly placeholderMessage = signal('Money Mosaic scaffold is running.');
-
-  readonly message = this.placeholderMessage.asReadonly();
-}
+export const DashboardStore = signalStore(
+  { providedIn: 'root' },
+  withState({ message: 'Money Mosaic scaffold is running.' }),
+);
