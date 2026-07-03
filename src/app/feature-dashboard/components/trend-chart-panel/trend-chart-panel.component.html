@@ -1,0 +1,11 @@
+<div class="card h-full bg-base-100 shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title text-base">Trend</h2>
+    <div
+      echarts
+      [options]="chartOption()"
+      (chartClick)="onChartClick($event)"
+      class="h-72 w-full"
+    ></div>
+  </div>
+</div>

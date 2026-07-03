@@ -1,0 +1,26 @@
+@if (transactionsStore.uncategorisedCount() > 0 || transfersToReviewCount() > 0) {
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+    @if (transactionsStore.uncategorisedCount(); as count) {
+      <a
+        [routerLink]="['/transactions']"
+        [queryParams]="{ categoryId: uncategorisedSentinel }"
+        class="card bg-warning/10 shadow-sm transition hover:bg-warning/20"
+      >
+        <div class="card-body">
+          <p class="font-semibold">
+            {{ count }} uncategorised transaction{{ count === 1 ? '' : 's' }}
+          </p>
+          <p class="text-sm text-base-content/70">Clear the backlog</p>
+        </div>
+      </a>
+    }
+    @if (transfersToReviewCount(); as count) {
+      <a routerLink="/transactions" class="card bg-info/10 shadow-sm transition hover:bg-info/20">
+        <div class="card-body">
+          <p class="font-semibold">{{ count }} transfer{{ count === 1 ? '' : 's' }} need review</p>
+          <p class="text-sm text-base-content/70">Confirm ambiguous matches</p>
+        </div>
+      </a>
+    }
+  </div>
+}

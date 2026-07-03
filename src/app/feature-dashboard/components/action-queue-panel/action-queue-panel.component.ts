@@ -1,0 +1,32 @@
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { resolveTransferMatches } from '@/core/transfers';
+import { AccountsStore } from '@/feature-accounts';
+import { TransactionsStore, TransferSettingsStore } from '@/feature-transactions';
+import { UNCATEGORISED_SENTINEL } from '@/shared/utils';
+
+/** Uncategorised-backlog and transfers-needing-review action cards, each hidden when its count is zero. */
+@Component({
+  selector: 'app-action-queue-panel',
+  imports: [RouterLink],
+  templateUrl: './action-queue-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ActionQueuePanelComponent {
+  protected readonly transactionsStore = inject(TransactionsStore);
+  private readonly accountsStore = inject(AccountsStore);
+  private readonly transferSettingsStore = inject(TransferSettingsStore);
+
+  protected readonly uncategorisedSentinel = UNCATEGORISED_SENTINEL;
+
+  /** Same matching logic as TransferReviewComponent — reused rather than reimplemented (FR-TRF-3). */
+  protected readonly transfersToReviewCount = computed(
+    () =>
+      resolveTransferMatches(
+        this.transactionsStore.transactions(),
+        this.accountsStore.accounts(),
+        this.transferSettingsStore.matchWindowDays(),
+        this.transferSettingsStore.autoLinkMediumConfidence(),
+      ).ambiguous.length,
+  );
+}

@@ -6,3 +6,5 @@ export * from './input/input.component';
 export * from './select/select.component';
 export * from './badge/badge.component';
 export * from './alert/alert.component';
+export * from './stat-card/stat-card.component';
+export * from './range-grouping-switcher/range-grouping-switcher.component';

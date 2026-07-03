@@ -2,9 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { echarts } from '../../echarts-setup';
-import { DashboardOverviewComponent } from './dashboard-overview.component';
+import { TrendChartPanelComponent } from './trend-chart-panel.component';
 
-// jsdom has no ResizeObserver; the trend chart's echarts directive needs one to observe its host element.
+// jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
 class ResizeObserverStub {
   observe = (): void => {};
   unobserve = (): void => {};
@@ -12,22 +12,20 @@ class ResizeObserverStub {
 }
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
 
-describe('DashboardOverviewComponent', () => {
-  let component: DashboardOverviewComponent;
-  let fixture: ComponentFixture<DashboardOverviewComponent>;
+describe('TrendChartPanelComponent', () => {
+  let fixture: ComponentFixture<TrendChartPanelComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DashboardOverviewComponent],
+      imports: [TrendChartPanelComponent],
       providers: [provideRouter([]), provideEchartsCore({ echarts })],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(DashboardOverviewComponent);
-    component = fixture.componentInstance;
+    fixture = TestBed.createComponent(TrendChartPanelComponent);
     await fixture.whenStable();
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 });

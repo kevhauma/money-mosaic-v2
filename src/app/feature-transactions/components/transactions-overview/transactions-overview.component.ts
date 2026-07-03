@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArrowsExchange,
@@ -22,7 +23,7 @@ import {
   PageHeaderComponent,
   SelectComponent,
 } from '@/shared/ui';
-import { SignedAmountPipe } from '@/shared/utils';
+import { SignedAmountPipe, STAT_QUERY_PARAMS } from '@/shared/utils';
 import { TransactionsStore } from '../../transactions.store';
 import { TransfersStore } from '../../transfers.store';
 import {
@@ -60,12 +61,16 @@ export class TransactionsOverviewComponent {
   protected readonly categoriesStore = inject(CategoriesStore);
 
   private readonly formBuilder = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+
+  /** Drill-down inheritance (FR-STAT-6): a Dashboard/Categories link lands here pre-filtered via query params. */
+  private readonly initialQueryParams = this.route.snapshot.queryParamMap;
 
   protected readonly filterForm = this.formBuilder.nonNullable.group({
-    accountId: [''],
-    dateFrom: [''],
-    dateTo: [''],
-    categoryId: [''],
+    accountId: [this.initialQueryParams.get(STAT_QUERY_PARAMS.accountId) ?? ''],
+    dateFrom: [this.initialQueryParams.get(STAT_QUERY_PARAMS.from) ?? ''],
+    dateTo: [this.initialQueryParams.get(STAT_QUERY_PARAMS.to) ?? ''],
+    categoryId: [this.initialQueryParams.get(STAT_QUERY_PARAMS.categoryId) ?? ''],
     text: [''],
     amountMin: [''],
     amountMax: [''],

@@ -1,0 +1,45 @@
+<div class="flex flex-wrap items-center gap-2">
+  <select
+    class="select select-sm"
+    aria-label="Date range preset"
+    [value]="value().preset"
+    (change)="onPresetChange($any($event.target).value)"
+  >
+    <option value="this-month">This month</option>
+    <option value="last-month">Last month</option>
+    <option value="this-quarter">This quarter</option>
+    <option value="this-year">This year</option>
+    <option value="custom">Custom</option>
+  </select>
+
+  <input
+    type="date"
+    class="input input-sm w-36"
+    aria-label="Range start"
+    [value]="value().from"
+    [disabled]="value().preset !== 'custom'"
+    (change)="onFromChange($any($event.target).value)"
+  />
+  <span class="text-base-content/50">–</span>
+  <input
+    type="date"
+    class="input input-sm w-36"
+    aria-label="Range end"
+    [value]="value().to"
+    [disabled]="value().preset !== 'custom'"
+    (change)="onToChange($any($event.target).value)"
+  />
+
+  <div class="join">
+    @for (granularity of granularities; track granularity) {
+      <button
+        type="button"
+        class="btn btn-sm join-item"
+        [class.btn-active]="value().groupBy === granularity"
+        (click)="groupByChange.emit(granularity)"
+      >
+        {{ granularityLabel(granularity) }}
+      </button>
+    }
+  </div>
+</div>

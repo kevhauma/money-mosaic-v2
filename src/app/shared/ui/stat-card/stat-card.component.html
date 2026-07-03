@@ -1,0 +1,17 @@
+@if (link(); as href) {
+  <a [routerLink]="href" [queryParams]="queryParams()" class="stat transition hover:bg-base-200">
+    <div class="stat-title">{{ label() }}</div>
+    <div class="stat-value" [class]="valueClass()">{{ value() }}</div>
+    @if (subLabel(); as subLabel) {
+      <div class="stat-desc">{{ subLabel }}</div>
+    }
+  </a>
+} @else {
+  <div class="stat">
+    <div class="stat-title">{{ label() }}</div>
+    <div class="stat-value" [class]="valueClass()">{{ value() }}</div>
+    @if (subLabel(); as subLabel) {
+      <div class="stat-desc">{{ subLabel }}</div>
+    }
+  </div>
+}

@@ -58,14 +58,14 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 
 ## 6. Statistics & Dashboard (FR-STAT)
 
-- [ ] As a user, I want to see each account's current balance and my combined net worth, so I know where I stand (FR-STAT-1)
-- [ ] As a reconciler, I want income, expense, net cash flow, and savings rate (transfers excluded from both sides) for the selected date range, so I get an honest picture of whatever period I'm looking at (FR-STAT-2)
-- [ ] As a user, I want a category breakdown for the selected date range (expense-by-category, income-by-source) as totals and share-of-total, so I can see where money actually goes (FR-STAT-3)
-- [ ] As a saver, I want income/expense trends and net-worth-over-time bucketed at my chosen grouping granularity, so I can see if I'm actually getting ahead at whatever resolution matters to me (FR-STAT-4)
-- [ ] As a user, I want every stat to update instantly when I recategorise or edit a transaction, via computed signals, so the dashboard never shows stale numbers (FR-STAT-5, §7 Signals Architecture)
-- [ ] As a user, I want every aggregate drill-down able to its underlying transactions, so I can verify any number I see (FR-STAT-6)
-- [ ] As a user, I want a global date-range picker (with This month/Last month/This quarter/This year presets plus a custom range) and a day/week/month/quarter grouping control, so I can view my finances at whatever timeframe and resolution I actually want, not just a fixed calendar month (FR-STAT-7)
-- [ ] As a developer, I want heavy aggregates memoized per `(accountId, granularity, bucketKey)`, so a single edit doesn't recompute all history and switching grouping doesn't discard already-cached buckets (NFR-PERF-1)
+- [x] As a user, I want to see each account's current balance and my combined net worth, so I know where I stand (FR-STAT-1)
+- [x] As a reconciler, I want income, expense, net cash flow, and savings rate (transfers excluded from both sides) for the selected date range, so I get an honest picture of whatever period I'm looking at (FR-STAT-2)
+- [x] As a user, I want a category breakdown for the selected date range (expense-by-category, income-by-source) as totals and share-of-total, so I can see where money actually goes (FR-STAT-3)
+- [x] As a saver, I want income/expense trends and net-worth-over-time bucketed at my chosen grouping granularity, so I can see if I'm actually getting ahead at whatever resolution matters to me (FR-STAT-4)
+- [x] As a user, I want every stat to update instantly when I recategorise or edit a transaction, via computed signals, so the dashboard never shows stale numbers (FR-STAT-5, §7 Signals Architecture)
+- [x] As a user, I want every aggregate drill-down able to its underlying transactions, so I can verify any number I see (FR-STAT-6)
+- [x] As a user, I want a global date-range picker (with This month/Last month/This quarter/This year presets plus a custom range) and a day/week/month/quarter grouping control, so I can view my finances at whatever timeframe and resolution I actually want, not just a fixed calendar month (FR-STAT-7)
+- [x] As a developer, I want heavy aggregates memoized per `(accountId, granularity, bucketKey)`, so a single edit doesn't recompute all history and switching grouping doesn't discard already-cached buckets (NFR-PERF-1) — **pragmatic interpretation:** each aggregate is one shared O(n)/O(n log n) pass (grouped once, reused by every consumer) rather than truly incremental per-bucket caching; true incremental diffing was judged overkill for realistic v1 data sizes and is deferred
 
 ## 7. Data Management (FR-DAT)
 

@@ -1,0 +1,16 @@
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title text-base">Accounts</h2>
+    <div class="flex flex-wrap gap-3">
+      @for (account of accountsStore.activeAccounts(); track account.id) {
+        <a
+          [routerLink]="['/accounts', account.id]"
+          class="flex min-w-[10rem] flex-col rounded-box border border-base-300 px-4 py-3 transition hover:bg-base-200"
+        >
+          <span class="text-sm text-base-content/70">{{ account.name }}</span>
+          <span class="font-semibold">{{ balanceFor(account.id!) | signedAmount }}</span>
+        </a>
+      }
+    </div>
+  </div>
+</div>
