@@ -1,6 +1,6 @@
 # Money Mosaic — v1 Build Checklist (User Stories)
 
-Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each section is buildable on top of the last (data layer → accounts → import → transactions → categorisation → transfers → stats → data management → polish). Check items off as they're completed. FR/NFR IDs are kept in parentheses for traceability back to the spec.
+Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each section is buildable on top of the last (data layer → accounts → import → transactions → categorisation → transfers → stats). Check items off as they're completed. FR/NFR IDs are kept in parentheses for traceability back to the spec.
 
 ## 0. Foundation
 
@@ -32,6 +32,8 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want CSV parsing to run in a Web Worker so the UI doesn't freeze on large files (NFR-PERF-2)
 - [x] As a user, I want a failed import to leave my data untouched (transactional import), so I never end up with a half-imported mess (NFR-RESIL-1)
 - [ ] As a developer, I want bank presets for KBC, Belfius, BNP Paribas Fortis, ING, and Argenta, prioritised by what the user actually uses (FR-IMP §"v1 preset targets", Open Decision #5) — **partial:** KBC + Belfius shipped (column signatures unverified against a real export, best-effort only); BNP Paribas Fortis/ING/Argenta deferred to a follow-up
+- [ ] As a user, I want to select multiple CSV files, optionally link each to an account, and map the whole batch once instead of re-mapping every file, so importing several months across accounts isn't tedious (extends FR-IMP-1/FR-IMP-3 — today ImportWizardComponent loops the mapping step per file)
+- [ ] As a user, I want a visible error when a file's headers don't match the batch's chosen mapping, so I immediately know which file needs handling instead of it silently parsing wrong (extends FR-IMP-8)
 
 ## 3. Transactions (FR-TXN)
 
@@ -39,6 +41,8 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want to manually edit a transaction's category or notes, and have that manual category "stick" so rules never silently overwrite it (FR-TXN-2)
 - [x] As a user, I want to search/filter transactions by account, date range, category, text, and amount range, so I can find what I'm looking for (FR-TXN-3)
 - [x] As a user, I want to manually mark two transactions as a transfer pair, or unlink an auto-detected one, so I can correct the system when it's wrong (FR-TXN-4)
+- [ ] As a user, I want to select multiple transactions and assign one category to all of them via a bulk-action bar, so clearing a backlog doesn't mean editing one row at a time (ui-layout-spec.md §4.3 — today selection is capped at 2 rows and only used for transfer linking)
+- [ ] As a developer, I want the transactions table to virtualize row rendering (e.g. CDK virtual scroll) instead of rendering every filtered row at once, so the screen stays smooth at 10k+ transactions (NFR-PERF-1 — supersedes the "paginate at 50 rows" note in ui-layout-spec.md §4.3, which was never implemented)
 
 ## 4. Categorisation (FR-CAT)
 
@@ -47,6 +51,7 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want rules to run on import and be re-runnable on demand across existing transactions, but never override a manually-set category, so automation stays safely reversible (FR-CAT-3)
 - [x] As a user, I want an "always categorise this merchant as X" one-click shortcut that creates a rule from a transaction's counterparty, so teaching the system is effortless (FR-CAT-4)
 - [x] As a user, I want uncategorised transactions surfaced prominently, so I can clear the backlog instead of losing track of them (FR-CAT-5)
+- [ ] As a user, I want to combine a rule's conditions with AND/OR instead of an implicit AND across all of them, so one rule can express "description contains X OR description contains Y" without duplicating rules (extends FR-CAT-2 — matchesRule() currently requires every condition to match)
 
 ## 5. Transfers (FR-TRF)
 
@@ -55,6 +60,7 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want high-confidence matches (same-IBAN) and unique medium-confidence matches (opposite-sign, equal-amount, within a configurable day window) auto-linked, while ambiguous matches wait for my one-click confirmation, so linking is accurate, not just automatic (FR-TRF-3)
 - [x] As a user, I want the matching window and confidence behaviour configurable in settings, so I can tune it to how I actually bank (FR-TRF-4)
 - [x] As a user, I want a one-sided movement to an own-account IBAN flagged "likely transfer" even before its pair arrives, so I'm not misled by a temporarily-incomplete import (FR-TRF-5)
+- [ ] As a user, I want a transaction linked as a transfer to have no category and be excluded from income/expense on the dashboard, while still counting normally toward its account's balance, so a transfer never gets miscategorised as spending or income (extends FR-TRF-1 — income/expense exclusion already works via the `transferId` checks in `period-stats.ts`/`category-breakdown.ts`, and account balances already include transfers unexcluded; the gap is that `categoryId` isn't cleared when a transaction is linked, so a rule-assigned or manually-set category can survive on a linked transaction)
 
 ## 6. Statistics & Dashboard (FR-STAT)
 
@@ -66,31 +72,12 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want every aggregate drill-down able to its underlying transactions, so I can verify any number I see (FR-STAT-6)
 - [x] As a user, I want a global date-range picker (with This month/Last month/This quarter/This year presets plus a custom range) and a day/week/month/quarter grouping control, so I can view my finances at whatever timeframe and resolution I actually want, not just a fixed calendar month (FR-STAT-7)
 - [x] As a developer, I want heavy aggregates memoized per `(accountId, granularity, bucketKey)`, so a single edit doesn't recompute all history and switching grouping doesn't discard already-cached buckets (NFR-PERF-1) — **pragmatic interpretation:** each aggregate is one shared O(n)/O(n log n) pass (grouped once, reused by every consumer) rather than truly incremental per-bucket caching; true incremental diffing was judged overkill for realistic v1 data sizes and is deferred
-
-## 7. Data Management (FR-DAT)
-
-- [ ] As a privacy-conscious user, I want to export all my data to a single JSON file, so I have a portable backup that never touches a server (FR-DAT-1)
-- [ ] As a user, I want to import a JSON backup with a clear replace-vs-merge choice, so I can restore or migrate devices safely (FR-DAT-2)
-- [ ] As a user, I want a "delete all data" action with confirmation, so I can start fresh without digging through dev tools (FR-DAT-3)
-- [ ] As a user, I want the app to request persistent storage, so the browser doesn't silently evict my financial data (FR-DAT-4)
-- [ ] As a developer, I want every export to record its schema version and the IndexedDB schema to support forward migrations, so old backups keep working after upgrades (NFR-STORE-1)
-
-## 8. Cross-cutting polish
-
-- [ ] As a user, I want the app fully keyboard-navigable, screen-reader-labelled, and WCAG AA compliant, so it's usable by everyone (NFR-A11Y-1)
-- [ ] As a user, I want the layout responsive from mobile to desktop, so I can check my finances from any device (NFR-RESP-1)
-- [ ] As a privacy-conscious user, I want confirmation that no financial data is ever transmitted over the network and no third-party analytics run on financial content, so "local-first" is actually true, not just marketed (NFR-PRIV-1)
-- [ ] As a user, I want the app to stay smooth with 10k+ transactions, so performance doesn't degrade as my history grows (NFR-PERF-1)
+- [ ] As a user, I want selecting "Custom" in the topbar date-range dropdown to actually enable the from/to date pickers, so I can pick a custom range instead of the inputs staying disabled (bug fix, FR-STAT-7 — RangeGroupingSwitcherComponent.onPresetChange() currently no-ops for 'custom', so the disabled binding never releases)
+- [ ] As a saver, I want a per-account net-worth-over-time chart alongside the combined one, so I can see how each account individually trends, not just my total (extends FR-STAT-4 — TrendChartPanelComponent currently only plots one combined net-worth line)
 
 ---
 
-## Later phases (parked, not part of this checklist's "done")
-
-**v1.5 — Refinements:** account manager (colour/order/rename), joint-account splitting (configurable share, own-account deposits excluded), category manager with per-category rule sets, loading/calculating-state animations.
-
-**v2 — Depth:** subscription/recurring detection, split transactions, category groups/hierarchy, budgets, custom date ranges, multi-currency, CODA import.
-
-**v3 — Investing & intelligence:** real portfolio tracking (holdings/price feed/valuation/returns), forecasting/insights, optional encrypted sync.
+Data Management, cross-cutting polish, and the v1.5/v2/v3 roadmap have moved to [../v2/requirements.md](../v2/requirements.md).
 
 ## Open decisions blocking some stories above
 
