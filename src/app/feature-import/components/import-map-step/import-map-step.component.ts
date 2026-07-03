@@ -157,6 +157,7 @@ export class ImportMapStepComponent {
       mappingProfile: {
         name: value.name,
         bankPreset: this.detectedPreset()?.bankPreset,
+        headerSignature: value.rememberForAccount ? this.headers() : undefined,
         delimiter: value.delimiter,
         decimalSeparator: value.decimalSeparator,
         dateFormat: value.dateFormat,
