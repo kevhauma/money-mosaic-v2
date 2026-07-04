@@ -1,10 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArrowsExchange,
+  tablerChevronLeft,
+  tablerChevronRight,
   tablerFilterOff,
   tablerLink,
   tablerPencil,
@@ -32,6 +41,9 @@ import {
 } from '../transaction-edit-form/transaction-edit-form.component';
 import { TransferReviewComponent } from '../transfer-review/transfer-review.component';
 
+/** Rows rendered per page — keeps the table from materialising thousands of `<tr>` at once (CR-2.1). */
+const PAGE_SIZE = 50;
+
 @Component({
   selector: 'app-transactions-overview',
   imports: [
@@ -51,7 +63,15 @@ import { TransferReviewComponent } from '../transfer-review/transfer-review.comp
   templateUrl: './transactions-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
-    provideIcons({ tablerPencil, tablerLink, tablerUnlink, tablerArrowsExchange, tablerFilterOff }),
+    provideIcons({
+      tablerPencil,
+      tablerLink,
+      tablerUnlink,
+      tablerArrowsExchange,
+      tablerFilterOff,
+      tablerChevronLeft,
+      tablerChevronRight,
+    }),
   ],
 })
 export class TransactionsOverviewComponent {
@@ -117,6 +137,34 @@ export class TransactionsOverviewComponent {
     Object.values(this.filters()).some((value) => value !== ''),
   );
 
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredTransactions().length / PAGE_SIZE)),
+  );
+
+  /** Resets to page 1 whenever the filters change; otherwise persists the user's page. */
+  private readonly requestedPage = linkedSignal({
+    source: this.filters,
+    computation: () => 1,
+  });
+
+  /** The requested page clamped into range, so a shrinking result set can't strand us past the last page. */
+  protected readonly currentPage = computed(() =>
+    Math.min(this.requestedPage(), this.totalPages()),
+  );
+
+  protected readonly pagedTransactions = computed(() => {
+    const start = (this.currentPage() - 1) * PAGE_SIZE;
+    return this.filteredTransactions().slice(start, start + PAGE_SIZE);
+  });
+
+  /** Inclusive 1-based row range shown on the current page, for the "Showing x–y of z" summary. */
+  protected readonly pageRange = computed(() => {
+    const total = this.filteredTransactions().length;
+    if (total === 0) return { start: 0, end: 0, total };
+    const start = (this.currentPage() - 1) * PAGE_SIZE + 1;
+    return { start, end: Math.min(start + PAGE_SIZE - 1, total), total };
+  });
+
   protected readonly selectedIds = signal<Set<number>>(new Set());
 
   protected readonly selectedTransactions = computed(() =>
@@ -160,6 +208,14 @@ export class TransactionsOverviewComponent {
       amountMin: '',
       amountMax: '',
     });
+  }
+
+  protected goToPreviousPage(): void {
+    this.requestedPage.set(Math.max(this.currentPage() - 1, 1));
+  }
+
+  protected goToNextPage(): void {
+    this.requestedPage.set(Math.min(this.currentPage() + 1, this.totalPages()));
   }
 
   protected isSelected(id: number): boolean {
