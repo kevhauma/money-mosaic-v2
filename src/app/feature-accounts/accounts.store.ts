@@ -9,7 +9,8 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { AccountsRepository, type Account } from '@/core/data-access';
-import { TransactionsStore } from '@/feature-transactions';
+import { AccountDeletionService } from '@/core/accounts';
+import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { withArchivable } from '@/shared/utils';
 
 const accountConfig = entityConfig({
@@ -64,6 +65,9 @@ export const AccountsStore = signalStore(
   }),
   withMethods((store) => {
     const accountsRepository = inject(AccountsRepository);
+    const accountDeletionService = inject(AccountDeletionService);
+    const transactionsStore = inject(TransactionsStore);
+    const transfersStore = inject(TransfersStore);
 
     return {
       hydrate: async (): Promise<void> => {
@@ -81,9 +85,24 @@ export const AccountsStore = signalStore(
         patchState(store, updateEntity({ id, changes }, accountConfig));
       },
 
+      /**
+       * Cascades the delete: the account, its transactions, and any transfer links touching them are
+       * removed in one atomic write (CR-1.1), then mirrored into the transactions/transfers stores so
+       * no orphaned rows keep skewing stats or net worth.
+       */
       removeAccount: async (id: number): Promise<void> => {
-        await accountsRepository.remove(id);
+        const { removedTransactionIds, unlinkedTransferIds, clearedTransferTransactionIds } =
+          await accountDeletionService.deleteAccount(id);
+
         patchState(store, removeEntity(id));
+        transactionsStore.removeMany(removedTransactionIds);
+        transactionsStore.patchMany(
+          clearedTransferTransactionIds.map((txId) => ({
+            id: txId,
+            changes: { transferId: undefined },
+          })),
+        );
+        transfersStore.removeLocal(unlinkedTransferIds);
       },
     };
   }),
