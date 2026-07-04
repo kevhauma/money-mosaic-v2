@@ -28,6 +28,9 @@
           Linked {{ lastRunCount() }} pair{{ lastRunCount() === 1 ? '' : 's' }}.
         </span>
       }
+      <mm-button size="sm" variant="ghost" (click)="toggleReview()">
+        {{ reviewExpanded() ? 'Hide' : 'Review' }} possible transfers
+      </mm-button>
       <mm-button size="sm" (click)="runAutoLink()">
         <ng-icon name="tablerRefresh" size="16" aria-hidden="true" />
         Re-run auto-linking
@@ -35,36 +38,40 @@
     </div>
   </div>
 
-  @if (ambiguousCandidates().length > 0) {
-    <div class="mt-4 space-y-2">
-      <p class="text-sm font-medium">Possible transfers awaiting confirmation</p>
-      @for (candidate of ambiguousCandidates(); track candidate.from.id + '-' + candidate.to.id) {
-        <div
-          class="flex flex-wrap items-center justify-between gap-3 rounded-box border border-base-300 p-2 text-sm"
-        >
-          <div class="flex flex-1 flex-wrap items-center gap-3">
-            <div>
-              <div class="whitespace-nowrap">
-                {{ candidate.from.bookingDate }} · {{ accountName(candidate.from.accountId) }}
+  @if (reviewExpanded()) {
+    @if (ambiguousCandidates().length > 0) {
+      <div class="mt-4 space-y-2">
+        <p class="text-sm font-medium">Possible transfers awaiting confirmation</p>
+        @for (candidate of ambiguousCandidates(); track candidate.from.id + '-' + candidate.to.id) {
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 rounded-box border border-base-300 p-2 text-sm"
+          >
+            <div class="flex flex-1 flex-wrap items-center gap-3">
+              <div>
+                <div class="whitespace-nowrap">
+                  {{ candidate.from.bookingDate }} · {{ accountName(candidate.from.accountId) }}
+                </div>
+                <div class="text-base-content/60">{{ candidate.from.rawDescription }}</div>
               </div>
-              <div class="text-base-content/60">{{ candidate.from.rawDescription }}</div>
-            </div>
-            <span aria-hidden="true">→</span>
-            <div>
-              <div class="whitespace-nowrap">
-                {{ candidate.to.bookingDate }} · {{ accountName(candidate.to.accountId) }}
+              <span aria-hidden="true">→</span>
+              <div>
+                <div class="whitespace-nowrap">
+                  {{ candidate.to.bookingDate }} · {{ accountName(candidate.to.accountId) }}
+                </div>
+                <div class="text-base-content/60">{{ candidate.to.rawDescription }}</div>
               </div>
-              <div class="text-base-content/60">{{ candidate.to.rawDescription }}</div>
+              <span [class.text-error]="candidate.from.amount < 0">
+                {{ candidate.from.amount | signedAmount }}
+              </span>
             </div>
-            <span [class.text-error]="candidate.from.amount < 0">
-              {{ candidate.from.amount | signedAmount }}
-            </span>
+            <mm-button size="xs" color="primary" (click)="confirmCandidate(candidate)">
+              Confirm
+            </mm-button>
           </div>
-          <mm-button size="xs" color="primary" (click)="confirmCandidate(candidate)">
-            Confirm
-          </mm-button>
-        </div>
-      }
-    </div>
+        }
+      </div>
+    } @else {
+      <p class="mt-4 text-sm text-base-content/60">No possible transfers awaiting confirmation.</p>
+    }
   }
 </div>

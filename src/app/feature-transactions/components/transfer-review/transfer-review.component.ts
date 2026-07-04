@@ -30,18 +30,25 @@ export class TransferReviewComponent {
     autoLinkMediumConfidence: [this.settingsStore.autoLinkMediumConfidence()],
   });
 
-  /** Unique-but-disabled and genuinely ambiguous candidates, surfaced for one-click confirmation (FR-TRF-3). */
-  protected readonly ambiguousCandidates = computed(
-    () =>
-      resolveTransferMatches(
-        this.transactionsStore.transactions(),
-        this.accountsStore.accounts(),
-        this.settingsStore.matchWindowDays(),
-        this.settingsStore.autoLinkMediumConfidence(),
-      ).ambiguous,
-  );
+  /** Gates the expensive match scan: while collapsed the computed short-circuits, so editing a transaction never triggers a full re-match (CR-2.2). */
+  protected readonly reviewExpanded = signal(false);
+
+  /** Unique-but-disabled and genuinely ambiguous candidates, surfaced for one-click confirmation (FR-TRF-3). Only computed while the review section is expanded. */
+  protected readonly ambiguousCandidates = computed<TransferCandidate[]>(() => {
+    if (!this.reviewExpanded()) return [];
+    return resolveTransferMatches(
+      this.transactionsStore.transactions(),
+      this.accountsStore.accounts(),
+      this.settingsStore.matchWindowDays(),
+      this.settingsStore.autoLinkMediumConfidence(),
+    ).ambiguous;
+  });
 
   protected readonly lastRunCount = signal<number | null>(null);
+
+  protected toggleReview(): void {
+    this.reviewExpanded.update((expanded) => !expanded);
+  }
 
   protected accountName(accountId: number): string {
     return this.accountsStore.accounts().find((account) => account.id === accountId)?.name ?? '—';

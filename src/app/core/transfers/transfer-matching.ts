@@ -24,6 +24,24 @@ const isCandidatePair = (a: Transaction, b: Transaction, windowDays: number): bo
   a.amount === -b.amount &&
   daysBetween(a.bookingDate, b.bookingDate) <= windowDays;
 
+/**
+ * Buckets transactions by `Math.abs(amount)`. Because a candidate pair requires `a.amount === -b.amount`,
+ * both sides always share the same absolute amount — so pairing only ever needs to compare within a bucket,
+ * turning the previously O(n²) whole-list scans into near-linear work. Zero-amount rows never pair, so they're
+ * left out entirely.
+ */
+const bucketByAbsAmount = (transactions: Transaction[]): Map<number, Transaction[]> => {
+  const buckets = new Map<number, Transaction[]>();
+  for (const transaction of transactions) {
+    if (transaction.amount === 0) continue;
+    const key = Math.abs(transaction.amount);
+    const bucket = buckets.get(key);
+    if (bucket) bucket.push(transaction);
+    else buckets.set(key, [transaction]);
+  }
+  return buckets;
+};
+
 const ibanConfirms = (
   a: Transaction,
   b: Transaction,
@@ -53,11 +71,12 @@ const findHighConfidenceMatches = (
 ): { matches: TransferCandidate[]; consumed: Set<number> } => {
   const matches: TransferCandidate[] = [];
   const consumed = new Set<number>();
+  const buckets = bucketByAbsAmount(unlinked);
 
   for (const transaction of unlinked) {
     if (consumed.has(transaction.id!)) continue;
 
-    const ibanCandidates = unlinked.filter(
+    const ibanCandidates = (buckets.get(Math.abs(transaction.amount)) ?? []).filter(
       (other) =>
         other.id !== transaction.id &&
         !consumed.has(other.id!) &&
@@ -86,10 +105,11 @@ const findMediumConfidenceMatches = (
   windowDays: number,
   autoLinkMediumConfidence: boolean,
 ): { autoLink: TransferCandidate[]; ambiguous: TransferCandidate[] } => {
+  const buckets = bucketByAbsAmount(remaining);
   const candidatesByTransactionId = new Map<number, Transaction[]>(
     remaining.map((transaction) => [
       transaction.id!,
-      remaining.filter(
+      (buckets.get(Math.abs(transaction.amount)) ?? []).filter(
         (other) => other.id !== transaction.id && isCandidatePair(transaction, other, windowDays),
       ),
     ]),
