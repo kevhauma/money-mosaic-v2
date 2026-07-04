@@ -1,0 +1,23 @@
+<div class="flex items-center justify-between gap-3 text-sm">
+  <span class="text-base-content/60">
+    Showing {{ pageRange().start }}–{{ pageRange().end }} of {{ pageRange().total }}
+  </span>
+  @if (totalPages() > 1) {
+    <div class="flex items-center gap-2">
+      <mm-button variant="ghost" size="sm" [disabled]="currentPage() === 1" (click)="onPrev()">
+        <ng-icon name="tablerChevronLeft" size="16" aria-hidden="true" />
+        Prev
+      </mm-button>
+      <span class="whitespace-nowrap">Page {{ currentPage() }} of {{ totalPages() }}</span>
+      <mm-button
+        variant="ghost"
+        size="sm"
+        [disabled]="currentPage() === totalPages()"
+        (click)="onNext()"
+      >
+        Next
+        <ng-icon name="tablerChevronRight" size="16" aria-hidden="true" />
+      </mm-button>
+    </div>
+  }
+</div>
