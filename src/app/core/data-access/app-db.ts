@@ -1,4 +1,7 @@
 import Dexie, { type Table } from 'dexie';
+// Deep import (not the barrel) keeps this framework-agnostic Dexie module free of the Angular/ngrx
+// code the shared/utils barrel also re-exports.
+import { computeFingerprint } from '@/shared/utils/fingerprint';
 
 export type Account = {
   id?: number;
@@ -273,7 +276,8 @@ export type ImportBatch = {
   id?: number;
   accountId: number;
   fileName: string;
-  mappingProfileId: number;
+  /** The remembered mapping profile used, when the user chose to remember it; absent otherwise (CR-1.6). */
+  mappingProfileId?: number;
   importedAt: string;
   rowsRead: number;
   rowsAdded: number;
@@ -346,6 +350,41 @@ export class AppDb extends Dexie {
               .table('mappingProfiles')
               .update(profile.id!, { columns: { ...profile.columns, ownIban: ownIbanHeader } });
           }
+        }
+      });
+
+    // Rewrites stored transaction fingerprints into the new format: 64-bit base hash (CR-1.3) plus a
+    // `|<occurrence>` suffix per identical base within an account (CR-1.2). Recomputed from the row's
+    // own fields — the same inputs `commitImport` uses — so future imports of already-imported data
+    // still dedupe instead of silently duplicating.
+    this.version(4)
+      .stores({
+        accounts: '++id, name, type, archived',
+        transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+        transfers: '++id, fromTransactionId, toTransactionId',
+        categories: '++id, name, kind, archived',
+        rules: '++id, priority, enabled',
+        mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+        importBatches: '++id, accountId, importedAt',
+        transferSettings: 'id',
+      })
+      .upgrade(async (tx) => {
+        const table = tx.table<Transaction, number>('transactions');
+        const transactions = await table.toArray();
+        // Stable order so a base fingerprint's occurrence suffixes are assigned deterministically.
+        transactions.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+        const occurrenceByBase = new Map<string, number>();
+        for (const transaction of transactions) {
+          const base = computeFingerprint({
+            accountId: transaction.accountId,
+            bookingDate: transaction.bookingDate,
+            amount: transaction.amount,
+            description: transaction.rawDescription,
+            counterpartyIban: transaction.counterpartyIban,
+          });
+          const occurrence = (occurrenceByBase.get(base) ?? 0) + 1;
+          occurrenceByBase.set(base, occurrence);
+          await table.update(transaction.id!, { fingerprint: `${base}|${occurrence}` });
         }
       });
 

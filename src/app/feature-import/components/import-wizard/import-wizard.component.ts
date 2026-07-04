@@ -112,13 +112,19 @@ export class ImportWizardComponent {
 
     this.committing.set(true);
     try {
-      const savedProfile = await this.mappingProfilesStore.addProfile(mapResult.mappingProfile);
+      // Only persist the mapping when the user asked to remember it (defaultAccountId is set), and
+      // upsert so repeated imports for the same bank+account don't leave near-duplicate rows (CR-1.6).
+      const profile = mapResult.mappingProfile;
+      const savedProfile =
+        profile.defaultAccountId != null
+          ? await this.mappingProfilesStore.upsertForBankAndAccount(profile)
+          : undefined;
       const validRows = this.parsedRows().filter((row): row is ValidParsedRow => row.valid);
 
       const result = await this.importBatchesStore.commitImport({
         accountId,
         fileName: file.name,
-        mappingProfileId: savedProfile.id!,
+        mappingProfileId: savedProfile?.id,
         totalRowsRead: this.parsedRows().length,
         validRows,
       });

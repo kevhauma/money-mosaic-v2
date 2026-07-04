@@ -85,8 +85,9 @@ export class ImportSelectStepComponent {
       const sampleText = new TextDecoder('utf-8').decode(sampleBuffer);
       const delimiter = guessDelimiter(sampleText);
 
-      const quickHeaders = await this.csvImportService.detectHeaders(file, delimiter, 'utf-8');
-      const profile = this.mappingProfilesStore.findTemplateForHeaders(quickHeaders);
+      const profile = await this.mappingProfilesStore.detectTemplateForFile((encoding) =>
+        this.csvImportService.detectHeaders(file, delimiter, encoding),
+      );
       if (!profile?.columns.ownIban) return null;
 
       const headerRows = profile.headerRows || 1;

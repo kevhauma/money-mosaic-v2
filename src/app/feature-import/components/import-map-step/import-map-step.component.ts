@@ -63,14 +63,17 @@ export class ImportMapStepComponent {
     rememberForAccount: [false],
   });
 
-  private detectionStarted = false;
+  // Tracks the file we last ran detection for, so re-detection reacts to the file reference itself
+  // rather than a one-shot flag — correctness no longer depends on the wizard destroying/recreating
+  // this component between files (CR-1.5).
+  private detectedFile: File | null = null;
 
   constructor() {
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.updateResult());
     effect(() => {
       const file = this.file();
-      if (this.detectionStarted) return;
-      this.detectionStarted = true;
+      if (file === this.detectedFile) return;
+      this.detectedFile = file;
       void this.detectAndPrefill(file);
     });
   }
@@ -82,8 +85,10 @@ export class ImportMapStepComponent {
       const sampleText = new TextDecoder('utf-8').decode(sampleBuffer);
       const guessedDelimiter = guessDelimiter(sampleText);
 
-      const headers = await this.csvImportService.detectHeaders(file, guessedDelimiter, 'utf-8');
-      const preset = this.mappingProfilesStore.findTemplateForHeaders(headers) ?? null;
+      const preset =
+        (await this.mappingProfilesStore.detectTemplateForFile((encoding) =>
+          this.csvImportService.detectHeaders(file, guessedDelimiter, encoding),
+        )) ?? null;
       const savedProfile = preset
         ? this.mappingProfilesStore.findForBankAndAccount(preset.bankPreset, this.accountId())
         : undefined;

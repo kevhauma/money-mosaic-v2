@@ -15,7 +15,7 @@ type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
 export type CommitImportInput = {
   accountId: number;
   fileName: string;
-  mappingProfileId: number;
+  mappingProfileId?: number;
   totalRowsRead: number;
   validRows: ValidParsedRow[];
 };
@@ -33,17 +33,31 @@ export type UndoImportResult = {
   clearedTransferTransactionIds: number[];
 };
 
+/**
+ * Partitions candidate rows into accepted vs. duplicates against the account's stored fingerprints.
+ *
+ * Each accepted row is keyed by `<baseFingerprint>|<occurrence>`, where occurrence is the 1-based
+ * count of that base fingerprint *within this batch* (CR-1.2). This keeps two genuinely-identical
+ * same-day rows (FR-IMP-6) while making dedupe stable across re-imports in both directions: the
+ * stored keys are `key|1..key|n`, so re-importing a file with the same rows drops exactly the
+ * already-seen occurrences and accepts only any additional ones. The occurrence-qualified key is
+ * written back onto the accepted row's `fingerprint` so it lands in the DB and matches next time.
+ */
 export const partitionByFingerprint = <T extends { fingerprint: string }>(
   rows: T[],
   existingFingerprints: Set<string>,
 ): { accepted: T[]; duplicateCount: number } => {
   const accepted: T[] = [];
+  const occurrenceCounts = new Map<string, number>();
   let duplicateCount = 0;
   for (const row of rows) {
-    if (existingFingerprints.has(row.fingerprint)) {
+    const occurrence = (occurrenceCounts.get(row.fingerprint) ?? 0) + 1;
+    occurrenceCounts.set(row.fingerprint, occurrence);
+    const key = `${row.fingerprint}|${occurrence}`;
+    if (existingFingerprints.has(key)) {
       duplicateCount++;
     } else {
-      accepted.push(row);
+      accepted.push({ ...row, fingerprint: key });
     }
   }
   return { accepted, duplicateCount };

@@ -13,6 +13,10 @@ describe('computeFingerprint: determinism', () => {
     expect(computeFingerprint(baseInput)).toBe(computeFingerprint({ ...baseInput }));
   });
 
+  it('is a 64-bit hash (16 hex chars) so import-time collisions stay negligible (CR-1.3)', () => {
+    expect(computeFingerprint(baseInput)).toMatch(/^[0-9a-f]{16}$/);
+  });
+
   it('two identical rows legitimately produce the same fingerprint', () => {
     const rowA = { ...baseInput };
     const rowB = { ...baseInput };
