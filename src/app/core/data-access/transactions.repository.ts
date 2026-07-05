@@ -5,6 +5,8 @@ import { appDb, type Transaction } from './app-db';
 export class TransactionsRepository {
   getAll = (): Promise<Transaction[]> => appDb.transactions.toArray();
 
+  count = (): Promise<number> => appDb.transactions.count();
+
   getByAccount = (accountId: number): Promise<Transaction[]> =>
     appDb.transactions.where('accountId').equals(accountId).toArray();
 

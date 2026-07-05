@@ -11,7 +11,7 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a developer, I want the full Dexie schema (accounts, transactions, transfers, categories, rules, mappingProfiles, importBatches) defined in `app-db.ts` v1, so every later feature has its persistence layer ready (§5 Data Model)
 - [x] As a developer, I want app bootstrap to hydrate all source signals from IndexedDB before the app renders, so the UI never flashes empty state (§7 Signals Architecture)
 - [x] As a user, I want a persistent sidebar nav + topbar app shell, so features are actually reachable (not in the original checklist — added as groundwork once Accounts needed real navigation; see [ui-layout-spec.md](./ui-layout-spec.md) §1)
-- [ ] As a developer, I want a set of sample accounts and transactions auto-seeded on dev-server startup when the database is empty, so I can test features on a fresh browser without importing a CSV first ([TICKET-DEV-01](./tickets/TICKET-DEV-01-seed-dev-data.md), dev-only — supports §0 bootstrap hydration, no production FR)
+- [x] As a developer, I want a set of sample accounts and transactions auto-seeded on dev-server startup when the database is empty, so I can test features on a fresh browser without importing a CSV first ([TICKET-DEV-01](./tickets/TICKET-DEV-01-seed-dev-data.md), dev-only — supports §0 bootstrap hydration, no production FR)
 
 ## 1. Accounts (FR-ACC)
 

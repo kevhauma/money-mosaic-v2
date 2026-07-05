@@ -1,6 +1,8 @@
 import {
   ApplicationConfig,
   inject,
+  Injector,
+  isDevMode,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
@@ -22,6 +24,9 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
     provideAppInitializer(() => {
+      // Captured before the async boundary — `inject()` only works synchronously here, but the
+      // dev-seed step below runs after `await`, so it resolves its service off this injector.
+      const injector = inject(Injector);
       const accountsStore = inject(AccountsStore);
       const transactionsStore = inject(TransactionsStore);
       const transfersStore = inject(TransfersStore);
@@ -43,7 +48,16 @@ export const appConfig: ApplicationConfig = {
             mappingProfilesStore.hydrate(),
             importBatchesStore.hydrate(),
           ]),
-        );
+        )
+        .then(async () => {
+          // Dev-only sample-data seed (TICKET-DEV-01). The dynamic import keeps the seed module and
+          // its dataset in a separate chunk that a production build never references or loads, and
+          // `isDevMode()` gates it out at runtime regardless.
+          if (isDevMode()) {
+            const { DevSeedService } = await import('./dev-seed/dev-seed.service');
+            await injector.get(DevSeedService).seedIfEmpty();
+          }
+        });
     }),
   ],
 };

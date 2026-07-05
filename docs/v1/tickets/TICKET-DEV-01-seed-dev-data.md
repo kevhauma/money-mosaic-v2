@@ -25,14 +25,14 @@ Give the dev server a one-time, dev-only data seed: when the app boots in develo
 
 ## Acceptance criteria
 
-- [ ] On dev-mode bootstrap, if the database has zero accounts **and** zero transactions, a sample dataset is written; if either already has rows, seeding is skipped entirely (idempotent, non-destructive).
-- [ ] The seed writes through the repository/store layer (`AccountsStore`/`TransactionsStore` and their repositories in `core/data-access`), never via direct `appDb` table writes from the initializer — consistent with the "components/stores never touch tables directly" rule, and so hydrated stores reflect the seeded rows without a reload.
-- [ ] Seeding is gated to development only (e.g. `isDevMode()` from `@angular/core`): a `ng build` production bundle neither runs the seed nor includes the sample-data payload (verify the dataset is tree-shaken / not referenced from the prod path).
-- [ ] The seeded dataset contains ≥2 accounts, a date-spread of ≥20 transactions across several of the `DEFAULT_CATEGORIES`, and ≥1 linked own-account transfer pair, so dashboard stats, category breakdown, and the transfers view all render non-empty.
-- [ ] Seeded transactions carry a valid deterministic `fingerprint` and required fields (accountId, bookingDate, signed amount, rawDescription) so they pass the same invariants as imported rows and don't collide on a later real import.
-- [ ] No new Dexie schema version is introduced (seeding is data, not schema); if any migration is unavoidable it is additive per CLAUDE.md, and the `on('populate')` reference-data hook is left unchanged.
-- [ ] Unit tests cover: seeding runs and writes the dataset when the DB is empty; seeding is a no-op when accounts already exist; seeding is a no-op when transactions already exist; and the seed path is not invoked when dev mode is off.
-- [ ] Verified live in the browser: clear IndexedDB, reload the dev server, and confirm the dashboard/transactions/stats render populated from the seed; then reload again and confirm no duplication.
+- [x] On dev-mode bootstrap, if the database has zero accounts **and** zero transactions, a sample dataset is written; if either already has rows, seeding is skipped entirely (idempotent, non-destructive).
+- [x] The seed writes through the repository/store layer (`AccountsStore`/`TransactionsStore` and their repositories in `core/data-access`), never via direct `appDb` table writes from the initializer — consistent with the "components/stores never touch tables directly" rule, and so hydrated stores reflect the seeded rows without a reload.
+- [x] Seeding is gated to development only (e.g. `isDevMode()` from `@angular/core`): a `ng build` production bundle neither runs the seed nor includes the sample-data payload (verify the dataset is tree-shaken / not referenced from the prod path).
+- [x] The seeded dataset contains ≥2 accounts, a date-spread of ≥20 transactions across several of the `DEFAULT_CATEGORIES`, and ≥1 linked own-account transfer pair, so dashboard stats, category breakdown, and the transfers view all render non-empty.
+- [x] Seeded transactions carry a valid deterministic `fingerprint` and required fields (accountId, bookingDate, signed amount, rawDescription) so they pass the same invariants as imported rows and don't collide on a later real import.
+- [x] No new Dexie schema version is introduced (seeding is data, not schema); if any migration is unavoidable it is additive per CLAUDE.md, and the `on('populate')` reference-data hook is left unchanged.
+- [x] Unit tests cover: seeding runs and writes the dataset when the DB is empty; seeding is a no-op when accounts already exist; seeding is a no-op when transactions already exist; and the seed path is not invoked when dev mode is off.
+- [x] Verified live in the browser: clear IndexedDB, reload the dev server, and confirm the dashboard/transactions/stats render populated from the seed; then reload again and confirm no duplication.
 
 ## Notes
 
