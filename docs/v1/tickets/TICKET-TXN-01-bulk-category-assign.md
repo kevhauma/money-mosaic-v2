@@ -21,15 +21,15 @@ Let the user select any number of transactions and apply a single category to al
 
 ## Acceptance criteria
 
-- [ ] Rows can be multi-selected beyond two (no artificial cap); a bulk-action bar appears when ≥1 (or ≥2, per design) rows are selected and shows the count.
-- [ ] The bulk-action bar has a category selector; applying it assigns that category to **all** selected transactions.
-- [ ] Bulk assignment sets `categoryManual = true` on each affected transaction, so a later rules re-run does not overwrite it (per Hard rules: rules never overwrite a user-set category).
-- [ ] The change persists through the store/repository (not direct table writes) and all dependent computed stats/badges update immediately (FR-STAT-5).
-- [ ] Selection clears after a successful bulk apply.
-- [ ] The existing transfer-linking action still works: it activates only at exactly 2 selected rows and is visually/functionally distinct from bulk categorise.
-- [ ] A "select all (filtered)" / "clear selection" affordance is available and operates over the current filtered set (not just the visible page).
-- [ ] Bulk apply is efficient for large selections (single batched write, not N sequential awaits) and keeps the paginated table responsive.
-- [ ] Unit tests cover: bulk assign to N rows sets category + manual flag, selection clears, transfer-link path unaffected, and select-all-filtered scope.
+- [x] Rows can be multi-selected beyond two (no artificial cap); a bulk-action bar appears when ≥1 (or ≥2, per design) rows are selected and shows the count.
+- [x] The bulk-action bar has a category selector; applying it assigns that category to **all** selected transactions.
+- [x] Bulk assignment sets `categoryManual = true` on each affected transaction, so a later rules re-run does not overwrite it (per Hard rules: rules never overwrite a user-set category).
+- [x] The change persists through the store/repository (not direct table writes) and all dependent computed stats/badges update immediately (FR-STAT-5).
+- [x] Selection clears after a successful bulk apply.
+- [x] The existing transfer-linking action still works: it activates only at exactly 2 selected rows and is visually/functionally distinct from bulk categorise.
+- [x] A "select all (filtered)" / "clear selection" affordance is available and operates over the current filtered set (not just the visible page).
+- [x] Bulk apply is efficient for large selections (single batched write, not N sequential awaits) and keeps the paginated table responsive.
+- [x] Unit tests cover: bulk assign to N rows sets category + manual flag, selection clears, transfer-link path unaffected, and select-all-filtered scope.
 
 ## Notes
 

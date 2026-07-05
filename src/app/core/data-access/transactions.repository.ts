@@ -15,6 +15,10 @@ export class TransactionsRepository {
   update = (id: number, changes: Partial<Transaction>): Promise<number> =>
     appDb.transactions.update(id, changes);
 
+  /** One batched write for N per-row changes — used by bulk category assignment (TICKET-TXN-01). */
+  bulkUpdate = (updates: { id: number; changes: Partial<Transaction> }[]): Promise<number> =>
+    appDb.transactions.bulkUpdate(updates.map(({ id, changes }) => ({ key: id, changes })));
+
   remove = (id: number): Promise<void> => appDb.transactions.delete(id);
 
   bulkAdd = (transactions: Transaction[]): Promise<number[]> =>

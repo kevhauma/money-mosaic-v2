@@ -69,6 +69,18 @@ export const TransactionsStore = signalStore(
         await transactionsRepository.update(id, changes);
         store.patchMany([{ id, changes }]);
       },
+
+      /**
+       * Applies one category to many transactions in a single batched write, marking each as a manual
+       * category so a later rules re-run won't overwrite it (FR-TXN-2 / FR-CAT-3). Powers the bulk-action
+       * bar (TICKET-TXN-01).
+       */
+      bulkAssignCategory: async (ids: number[], categoryId: number): Promise<void> => {
+        if (ids.length === 0) return;
+        const changes: Partial<Transaction> = { categoryId, categoryManual: true };
+        await transactionsRepository.bulkUpdate(ids.map((id) => ({ id, changes })));
+        store.patchMany(ids.map((id) => ({ id, changes })));
+      },
     };
   }),
 );

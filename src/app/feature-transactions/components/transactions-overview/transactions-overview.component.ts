@@ -9,7 +9,9 @@ import {
   tablerFilterOff,
   tablerLink,
   tablerPencil,
+  tablerTag,
   tablerUnlink,
+  tablerX,
 } from '@ng-icons/tabler-icons';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
@@ -100,6 +102,8 @@ type TransactionRow = {
       tablerUnlink,
       tablerArrowsExchange,
       tablerFilterOff,
+      tablerTag,
+      tablerX,
     }),
   ],
 })
@@ -207,6 +211,24 @@ export class TransactionsOverviewComponent {
 
   protected readonly canLinkSelection = computed(() => this.selectedIds().size === 2);
 
+  protected readonly selectionCount = computed(() => this.selectedIds().size);
+
+  /** Category applied to every selected row when the bulk-action bar's Apply is pressed (TICKET-TXN-01). */
+  protected readonly bulkCategoryControl = this.formBuilder.nonNullable.control('');
+
+  /** True when every row in the current *filtered* set (not just the visible page) is selected. */
+  protected readonly allFilteredSelected = computed(() => {
+    const filtered = this.filteredTransactions();
+    if (filtered.length === 0) return false;
+    const selectedIds = this.selectedIds();
+    return filtered.every((transaction) => selectedIds.has(transaction.id!));
+  });
+
+  /** Drives the header checkbox's indeterminate state: some, but not all, filtered rows selected. */
+  protected readonly someFilteredSelected = computed(
+    () => this.selectionCount() > 0 && !this.allFilteredSelected(),
+  );
+
   /** One-sided movements to/from a known own-account IBAN, flagged before their pair arrives (FR-TRF-5). */
   protected readonly likelyTransferIds = computed(() => {
     const ownIbans = new Set(
@@ -275,6 +297,38 @@ export class TransactionsOverviewComponent {
       }
       return next;
     });
+  }
+
+  /** Selects every row in the current filtered set — the full result, not only `pagedItems()` (TICKET-TXN-01). */
+  protected selectAllFiltered(): void {
+    this.selectedIds.set(
+      new Set(this.filteredTransactions().map((transaction) => transaction.id!)),
+    );
+  }
+
+  protected clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  /** Header checkbox: collapse to none if the whole filtered set is already selected, otherwise select it all. */
+  protected toggleSelectAllFiltered(): void {
+    if (this.allFilteredSelected()) {
+      this.clearSelection();
+    } else {
+      this.selectAllFiltered();
+    }
+  }
+
+  /** Assigns the picked category to every selected row in one batched write, then clears the selection. */
+  protected async applyBulkCategory(): Promise<void> {
+    const rawCategoryId = this.bulkCategoryControl.value;
+    if (rawCategoryId === '') return;
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) return;
+
+    await this.transactionsStore.bulkAssignCategory(ids, Number(rawCategoryId));
+    this.clearSelection();
+    this.bulkCategoryControl.setValue('');
   }
 
   protected async linkSelection(): Promise<void> {

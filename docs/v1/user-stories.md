@@ -44,7 +44,7 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want to manually edit a transaction's category or notes, and have that manual category "stick" so rules never silently overwrite it (FR-TXN-2)
 - [x] As a user, I want to search/filter transactions by account, date range, category, text, and amount range, so I can find what I'm looking for (FR-TXN-3)
 - [x] As a user, I want to manually mark two transactions as a transfer pair, or unlink an auto-detected one, so I can correct the system when it's wrong (FR-TXN-4)
-- [ ] As a user, I want to select multiple transactions and assign one category to all of them via a bulk-action bar, so clearing a backlog doesn't mean editing one row at a time (ui-layout-spec.md §4.3 — today selection is capped at 2 rows and only used for transfer linking)
+- [x] As a user, I want to select multiple transactions and assign one category to all of them via a bulk-action bar, so clearing a backlog doesn't mean editing one row at a time (ui-layout-spec.md §4.3 — today selection is capped at 2 rows and only used for transfer linking)
 - [ ] As a developer, I want the transactions table to virtualize row rendering (e.g. CDK virtual scroll) instead of rendering every filtered row at once, so the screen stays smooth at 10k+ transactions (NFR-PERF-1 — supersedes the "paginate at 50 rows" note in ui-layout-spec.md §4.3, which was never implemented)
 
 ## 4. Categorisation (FR-CAT)

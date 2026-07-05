@@ -88,6 +88,44 @@
   </div>
 </form>
 
+@if (selectionCount() > 0) {
+  <div
+    class="mb-4 flex flex-wrap items-center gap-3 rounded-box border border-primary/40 bg-primary/5 p-3"
+  >
+    <span class="font-medium">
+      <ng-icon name="tablerTag" size="16" aria-hidden="true" class="align-text-bottom" />
+      {{ selectionCount() }} selected
+    </span>
+
+    <div class="flex items-end gap-2">
+      <mm-select [formControl]="bulkCategoryControl" size="sm">
+        <option value="">Assign category…</option>
+        @for (category of categoriesStore.activeCategories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </mm-select>
+      <mm-button
+        color="primary"
+        size="sm"
+        [disabled]="bulkCategoryControl.value === ''"
+        (click)="applyBulkCategory()"
+      >
+        Apply
+      </mm-button>
+    </div>
+
+    <div class="ms-auto flex items-center gap-2">
+      <mm-button variant="ghost" size="sm" (click)="selectAllFiltered()">
+        Select all {{ filteredTransactions().length }}
+      </mm-button>
+      <mm-button variant="ghost" size="sm" (click)="clearSelection()">
+        <ng-icon name="tablerX" size="16" aria-hidden="true" />
+        Clear
+      </mm-button>
+    </div>
+  </div>
+}
+
 @if (filteredTransactions().length === 0) {
   <mm-empty-state
     title="No transactions match"
@@ -98,7 +136,16 @@
     <table class="table">
       <thead>
         <tr>
-          <th></th>
+          <th>
+            <input
+              type="checkbox"
+              class="checkbox checkbox-sm"
+              aria-label="Select all filtered transactions"
+              [checked]="allFilteredSelected()"
+              [indeterminate]="someFilteredSelected()"
+              (change)="toggleSelectAllFiltered()"
+            />
+          </th>
           <th>Date</th>
           <th>Description</th>
           <th>Account</th>
