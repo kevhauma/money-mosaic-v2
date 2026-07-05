@@ -22,14 +22,14 @@ Allow a rule's conditions to be combined with OR (not only the current implicit 
 
 ## Acceptance criteria
 
-- [ ] The `Rule` model gains a combinator field (e.g. `conditionMatch: 'all' | 'any'`) with a **default of `'all'`** so existing rules are unchanged.
-- [ ] `matchesRule()` honours the combinator: `'all'` → `.every(...)`, `'any'` → `.some(...)`; an empty condition list never matches (preserved).
-- [ ] Any persistence/schema change for the new field is an **additive** Dexie version bump with an `.upgrade()` backfilling `'all'` onto existing rules (no shipped version block edited).
-- [ ] The rule form ([rule-form.component](../../../src/app/feature-categories/components/rule-form/rule-form.component.ts)) exposes an AND/OR (all/any) selector; saving persists it.
-- [ ] The rule summary ([rule-summary.ts](../../../src/app/feature-categories/rule-summary.ts)) renders the chosen combinator (e.g. "matches ANY of…" vs "matches ALL of…").
-- [ ] Rules run correctly with the combinator on import and on demand re-runs (FR-CAT-3), still never overwriting a manual category (Hard rules).
-- [ ] Priority ordering and `continueOnMatch` behaviour in `resolveCategoryForTransaction()` are unchanged by this feature.
-- [ ] Unit tests cover: `any` matches when one of several conditions matches, `all` still requires every condition, empty conditions never match, and existing rules (no field) behave as `all`.
+- [x] The `Rule` model gains a combinator field (e.g. `conditionMatch: 'all' | 'any'`) with a **default of `'all'`** so existing rules are unchanged.
+- [x] `matchesRule()` honours the combinator: `'all'` → `.every(...)`, `'any'` → `.some(...)`; an empty condition list never matches (preserved).
+- [x] Any persistence/schema change for the new field is an **additive** Dexie version bump with an `.upgrade()` backfilling `'all'` onto existing rules (no shipped version block edited).
+- [x] The rule form ([rule-form.component](../../../src/app/feature-categories/components/rule-form/rule-form.component.ts)) exposes an AND/OR (all/any) selector; saving persists it.
+- [x] The rule summary ([rule-summary.ts](../../../src/app/feature-categories/rule-summary.ts)) renders the chosen combinator (e.g. "matches ANY of…" vs "matches ALL of…").
+- [x] Rules run correctly with the combinator on import and on demand re-runs (FR-CAT-3), still never overwriting a manual category (Hard rules).
+- [x] Priority ordering and `continueOnMatch` behaviour in `resolveCategoryForTransaction()` are unchanged by this feature.
+- [x] Unit tests cover: `any` matches when one of several conditions matches, `all` still requires every condition, empty conditions never match, and existing rules (no field) behave as `all`.
 
 ## Notes
 

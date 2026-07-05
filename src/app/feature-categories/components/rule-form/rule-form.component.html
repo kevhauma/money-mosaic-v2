@@ -43,7 +43,15 @@
         </label>
       </div>
 
-      <div class="divider my-2">Conditions (all must match)</div>
+      <div class="divider my-2">Conditions</div>
+
+      <fieldset class="fieldset mb-2 flex-row items-center gap-2">
+        <label class="fieldset-legend" for="conditionMatch">Match</label>
+        <mm-select id="conditionMatch" formControlName="conditionMatch" size="sm" class="w-auto">
+          <option value="all">ALL conditions (AND)</option>
+          <option value="any">ANY condition (OR)</option>
+        </mm-select>
+      </fieldset>
 
       <div formArrayName="conditions" class="flex flex-col gap-3">
         @for (group of conditionsArray.controls; track $index) {

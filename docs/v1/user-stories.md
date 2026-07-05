@@ -54,7 +54,7 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want rules to run on import and be re-runnable on demand across existing transactions, but never override a manually-set category, so automation stays safely reversible (FR-CAT-3)
 - [x] As a user, I want an "always categorise this merchant as X" one-click shortcut that creates a rule from a transaction's counterparty, so teaching the system is effortless (FR-CAT-4)
 - [x] As a user, I want uncategorised transactions surfaced prominently, so I can clear the backlog instead of losing track of them (FR-CAT-5)
-- [ ] As a user, I want to combine a rule's conditions with AND/OR instead of an implicit AND across all of them, so one rule can express "description contains X OR description contains Y" without duplicating rules (extends FR-CAT-2 — matchesRule() currently requires every condition to match)
+- [x] As a user, I want to combine a rule's conditions with AND/OR instead of an implicit AND across all of them, so one rule can express "description contains X OR description contains Y" without duplicating rules (extends FR-CAT-2 — matchesRule() currently requires every condition to match)
 
 ## 5. Transfers (FR-TRF)
 

@@ -75,6 +75,7 @@ export class RuleFormComponent {
     priority: [10, Validators.required],
     enabled: [true],
     continueOnMatch: [false],
+    conditionMatch: this.formBuilder.nonNullable.control<'all' | 'any'>('all'),
     conditions: this.formBuilder.array<ConditionGroup>([]),
   });
 
@@ -165,6 +166,7 @@ export class RuleFormComponent {
       priority: existing?.priority ?? this.defaultPriority(),
       enabled: existing?.enabled ?? true,
       continueOnMatch: existing?.continueOnMatch ?? false,
+      conditionMatch: existing?.conditionMatch ?? 'all',
     });
     this.form.markAsPristine();
     this.form.markAsUntouched();
@@ -188,6 +190,7 @@ export class RuleFormComponent {
       priority: raw.priority,
       enabled: raw.enabled,
       continueOnMatch: raw.continueOnMatch,
+      conditionMatch: raw.conditionMatch,
       conditions,
       action: { setCategoryId: Number(raw.categoryId) },
     });

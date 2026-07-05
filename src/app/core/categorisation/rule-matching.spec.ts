@@ -149,6 +149,56 @@ describe('matchesRule: all conditions must match (AND)', () => {
   it('a rule with no conditions never matches', () => {
     expect(matchesRule(transaction(), rule({ conditions: [] }))).toBe(false);
   });
+
+  it('a rule with no conditions never matches even with conditionMatch any', () => {
+    expect(matchesRule(transaction(), rule({ conditionMatch: 'any', conditions: [] }))).toBe(false);
+  });
+
+  it('a rule without a conditionMatch field behaves as all (AND)', () => {
+    const multiCondition = rule({
+      conditions: [
+        { field: 'description', operator: 'contains', value: 'carrefour' },
+        { field: 'amount', operator: '<', value: 0 },
+      ],
+    });
+    expect(multiCondition.conditionMatch).toBeUndefined();
+    expect(matchesRule(transaction({ amount: -10 }), multiCondition)).toBe(true);
+    expect(matchesRule(transaction({ amount: 10 }), multiCondition)).toBe(false);
+  });
+});
+
+describe('matchesRule: any condition matches (OR)', () => {
+  const orRule = (): Rule =>
+    rule({
+      conditionMatch: 'any',
+      conditions: [
+        { field: 'description', operator: 'contains', value: 'carrefour' },
+        { field: 'description', operator: 'contains', value: 'delhaize' },
+      ],
+    });
+
+  it('matches when one of several conditions matches', () => {
+    expect(matchesRule(transaction({ rawDescription: 'DELHAIZE CITY' }), orRule())).toBe(true);
+  });
+
+  it('matches when a different condition matches', () => {
+    expect(matchesRule(transaction({ rawDescription: 'CARREFOUR EXPRESS' }), orRule())).toBe(true);
+  });
+
+  it('does not match when none of the conditions match', () => {
+    expect(matchesRule(transaction({ rawDescription: 'ALDI STORE' }), orRule())).toBe(false);
+  });
+
+  it('conditionMatch all still requires every condition', () => {
+    const andRule = rule({
+      conditionMatch: 'all',
+      conditions: [
+        { field: 'description', operator: 'contains', value: 'carrefour' },
+        { field: 'description', operator: 'contains', value: 'delhaize' },
+      ],
+    });
+    expect(matchesRule(transaction({ rawDescription: 'CARREFOUR EXPRESS' }), andRule)).toBe(false);
+  });
 });
 
 describe('resolveCategoryForTransaction: priority and continueOnMatch', () => {

@@ -21,7 +21,7 @@ import {
 } from '@/shared/ui';
 import { CategoriesStore } from '../../categories.store';
 import { RulesStore } from '../../rules.store';
-import { describeCondition } from '../../rule-summary';
+import { describeRule } from '../../rule-summary';
 import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.component';
 
 @Component({
@@ -124,16 +124,12 @@ export class RulesOverviewComponent {
   }
 
   protected conditionSummary(rule: Rule): string {
-    return rule.conditions
-      .map((condition) =>
-        describeCondition(
-          condition,
-          (accountId) =>
-            this.accountsStore.accounts().find((account) => account.id === accountId)?.name ??
-            `#${accountId}`,
-        ),
-      )
-      .join(' AND ');
+    return describeRule(
+      rule,
+      (accountId) =>
+        this.accountsStore.accounts().find((account) => account.id === accountId)?.name ??
+        `#${accountId}`,
+    );
   }
 
   protected async runRules(): Promise<void> {

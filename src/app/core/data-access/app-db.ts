@@ -85,6 +85,8 @@ export type Rule = {
   priority: number;
   enabled: boolean;
   continueOnMatch: boolean;
+  /** How the rule's conditions combine: `'all'` = AND (default), `'any'` = OR (FR-CAT-2). Absent on rules created before v5, treated as `'all'`. */
+  conditionMatch?: 'all' | 'any';
   conditions: RuleCondition[];
   action: RuleAction;
 };
@@ -386,6 +388,28 @@ export class AppDb extends Dexie {
           occurrenceByBase.set(base, occurrence);
           await table.update(transaction.id!, { fingerprint: `${base}|${occurrence}` });
         }
+      });
+
+    // Backfills the new `conditionMatch` combinator onto existing rules so they keep their
+    // original AND semantics (TICKET-CAT-01). No index change — `conditionMatch` isn't queried.
+    this.version(5)
+      .stores({
+        accounts: '++id, name, type, archived',
+        transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+        transfers: '++id, fromTransactionId, toTransactionId',
+        categories: '++id, name, kind, archived',
+        rules: '++id, priority, enabled',
+        mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+        importBatches: '++id, accountId, importedAt',
+        transferSettings: 'id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table<Rule, number>('rules')
+          .toCollection()
+          .modify((rule) => {
+            rule.conditionMatch ??= 'all';
+          });
       });
 
     this.on('populate', () => {

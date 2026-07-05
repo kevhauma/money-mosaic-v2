@@ -50,9 +50,14 @@ export const conditionMatches = (transaction: Transaction, condition: RuleCondit
   }
 };
 
-export const matchesRule = (transaction: Transaction, rule: Rule): boolean =>
-  rule.conditions.length > 0 &&
-  rule.conditions.every((condition) => conditionMatches(transaction, condition));
+export const matchesRule = (transaction: Transaction, rule: Rule): boolean => {
+  if (rule.conditions.length === 0) return false;
+  const matches = (condition: RuleCondition): boolean => conditionMatches(transaction, condition);
+  // Anything other than the explicit 'any' (including a legacy rule with no field) means AND.
+  return rule.conditionMatch === 'any'
+    ? rule.conditions.some(matches)
+    : rule.conditions.every(matches);
+};
 
 /** Evaluates enabled rules in priority order (ascending = higher priority). First match wins unless `continueOnMatch` lets a later rule override the assignment (FR-CAT-2). */
 export const resolveCategoryForTransaction = (
