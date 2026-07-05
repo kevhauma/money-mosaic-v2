@@ -4,6 +4,8 @@ Tickets for the **unchecked** user stories in [../user-stories.md](../user-stori
 
 | Ticket | Area | Title | Source story |
 |---|---|---|---|
+| [DEV-01](./TICKET-DEV-01-seed-dev-data.md) | Dev Tooling | Seed sample dev data on a fresh browser in dev mode | user-stories §0, dev-only |
+| [ACC-01](./TICKET-ACC-01-clear-account-transactions.md) | Accounts | Clear an account's transactions without deleting the account | user-stories §1, extends FR-ACC-2 |
 | [IMP-01](./TICKET-IMP-01-bank-presets.md) | Import | Bank presets for BNP Paribas Fortis, ING & Argenta | user-stories §2, FR-IMP, Open Decision #5 |
 | [IMP-02](./TICKET-IMP-02-batch-multi-file-mapping.md) | Import | Map a multi-file import batch once | user-stories §2, FR-IMP-1/3 |
 | [IMP-03](./TICKET-IMP-03-header-mismatch-error.md) | Import | Surface header/mapping mismatch per file | user-stories §2, FR-IMP-8 |
