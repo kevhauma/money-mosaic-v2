@@ -11,4 +11,5 @@ export type CsvParseRequest = {
   signConvention: RowMapOptions['signConvention'];
 };
 
-export type CsvParseResponse = { headers: string[]; rows: ParsedRowResult[] } | { error: string };
+export type CsvParseResponse =
+  { headers: string[]; rows: ParsedRowResult[]; warnings: string[] } | { error: string };

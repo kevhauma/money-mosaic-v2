@@ -70,7 +70,9 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     fixture.nativeElement.querySelectorAll('button')[1] as HTMLButtonElement;
 
   beforeEach(async () => {
-    parse = vi.fn().mockResolvedValue({ headers: ['Date', 'Desc'], rows: [validRow()] });
+    parse = vi
+      .fn()
+      .mockResolvedValue({ headers: ['Date', 'Desc'], rows: [validRow()], warnings: [] });
     commitImport = vi.fn().mockImplementation(
       async (input: { accountId: number }): Promise<CommitImportResult> =>
         ({

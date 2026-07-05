@@ -9,7 +9,7 @@ import {
 import { AccountsStore } from '@/feature-accounts';
 import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
-import { ButtonComponent } from '@/shared/ui';
+import { AlertComponent, ButtonComponent } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportBatchesStore } from '../../import-batches.store';
 import {
@@ -40,6 +40,7 @@ const PARSE_DEBOUNCE_MS = 300;
     ImportPreviewStepComponent,
     ImportSummaryStepComponent,
     ButtonComponent,
+    AlertComponent,
   ],
   templateUrl: './import-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +57,7 @@ export class ImportWizardComponent {
   protected readonly mapResult = signal<ImportMappingResult | null>(null);
   protected readonly parsedRows = signal<ParsedRowResult[]>([]);
   protected readonly parseError = signal<string | null>(null);
+  protected readonly parseWarnings = signal<string[]>([]);
   protected readonly commitResults = signal<CommitImportResult[]>([]);
 
   protected readonly parsing = signal(false);
@@ -96,6 +98,7 @@ export class ImportWizardComponent {
         this.parsing.set(false);
         this.parsedRows.set([]);
         this.parseError.set(null);
+        this.parseWarnings.set([]);
         return;
       }
 
@@ -137,10 +140,12 @@ export class ImportWizardComponent {
       if ('error' in response) {
         this.parseError.set(response.error);
         this.parsedRows.set([]);
+        this.parseWarnings.set([]);
         return;
       }
       this.parsedRows.set(response.rows);
       this.parseError.set(null);
+      this.parseWarnings.set(response.warnings);
     } finally {
       if (token === this.parseToken) this.parsing.set(false);
     }
@@ -179,6 +184,7 @@ export class ImportWizardComponent {
         this.mapResult.set(null);
         this.parsedRows.set([]);
         this.parseError.set(null);
+        this.parseWarnings.set([]);
         this.step.set(2);
       } else {
         this.step.set(3);
@@ -200,6 +206,7 @@ export class ImportWizardComponent {
     this.mapResult.set(null);
     this.parsedRows.set([]);
     this.parseError.set(null);
+    this.parseWarnings.set([]);
     this.commitResults.set([]);
   }
 }
