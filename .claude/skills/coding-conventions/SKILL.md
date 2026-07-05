@@ -79,6 +79,16 @@ A component's own folder may still `import` a sibling within that same folder us
 - **Cross-feature imports go through `index.ts`** — when importing from a different feature, import from its `index.ts`, never a component file directly (e.g. `@/feature-accounts`, not `@/feature-accounts/components/account-edit.component`)
 - **Prefer arrow function class fields / `const` functions** over the `function` keyword where the codebase already does so; component/service class methods stay as class methods
 
+## SOLID Principles
+
+Apply SOLID as it maps onto this codebase's existing tiers — don't import Java-style boilerplate (no needless interfaces/abstract base classes just to satisfy a letter).
+
+- **S — Single Responsibility.** One reason to change per unit: a store service owns one aggregate's state, a repository owns one entity's Dexie table, a component renders one view. Pure logic (fingerprinting, rule matching, transfer-linking, aggregation math) lives in its own testable function/class, not inlined into a component or store method. If a component is fetching, transforming, *and* rendering, push the non-render work down into the store/util.
+- **O — Open/Closed.** Extend behaviour without editing shipped code: add a new `.version(n + 1).stores(...)` block rather than editing a released one; add a new `shared/ui` variant to a typed string-union `input()` (e.g. `ButtonVariant`) rather than special-casing at call sites; add a new rule/matcher by registering it, not by growing a `switch`.
+- **L — Liskov Substitution.** A `shared/ui` primitive that wraps a form control must be a faithful stand-in for the native element it replaces — implement `ControlValueAccessor` fully and replicate the native value coercion (e.g. `NumberValueAccessor` for `<input type="number">`), so `[formControl]`/`formControlName` behave identically to using the raw control. A substitute that silently degrades typed values breaks LSP.
+- **I — Interface Segregation.** Keep `input()`/`output()` surfaces narrow and purpose-specific. Prefer several small, focused primitives over one mega-component with a dozen mutually-exclusive flags; a caller should only depend on the inputs it actually uses. Model/DTO `type`s stay minimal — don't force consumers to carry fields they don't need.
+- **D — Dependency Inversion.** Components depend on store services, and stores depend on repositories — never the reverse, and never a component reaching `db.*` directly. Wire dependencies with `inject()` so collaborators are provided, not hard-constructed, keeping units testable in isolation (inject a fake store/repo in specs).
+
 ## State Management (signals-first)
 
 - **Source signals are the source of truth**, held inside injectable `providedIn: 'root'` store services — one per aggregate (`AccountsStore`, `TransactionsStore`, `CategoriesStore`, `RulesStore`, `TransfersStore`, ...)

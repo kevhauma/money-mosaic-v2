@@ -59,8 +59,10 @@ go-ahead before editing any code.**
 
 ## Step 4 — Implement
 
-Work the plan criterion by criterion, following the `frontend-conventions` (coding
-conventions), `data-model`, and `project-map` skills. Keep changes scoped to this ticket —
+Work the plan criterion by criterion, following the coding conventions in
+`.claude/skills/coding-conventions/SKILL.md` (the `frontend-conventions` skill, which
+auto-attaches when you edit `.ts`/`.html`/`.css`) plus the `data-model` and `project-map`
+skills. Keep changes scoped to this ticket —
 resist unrelated refactors; if you spot out-of-scope work, note it rather than doing it.
 
 ## Step 5 — Verify, then tick each criterion
