@@ -13,6 +13,7 @@ Tickets for the **unchecked** user stories in [../user-stories.md](../user-stori
 | [TXN-02](./TICKET-TXN-02-virtualized-table.md) | Transactions | Virtualize the transactions table | user-stories §3, NFR-PERF-1 |
 | [CAT-01](./TICKET-CAT-01-and-or-rule-conditions.md) | Categorisation | AND/OR combinators for rule conditions | user-stories §4, FR-CAT-2 |
 | [TRF-01](./TICKET-TRF-01-clear-category-on-link.md) | Transfers | Clear category when a transaction is linked | user-stories §5, FR-TRF-1 |
+| [TRF-02](./TICKET-TRF-02-classify-savings-movements.md) | Transfers | Classify money moved into savings as "savings", not expense | user-stories §5, extends FR-TRF-1 |
 | [STAT-01](./TICKET-STAT-01-custom-range-enable.md) | Stats | Enable custom range on "Custom" preset | user-stories §6, FR-STAT-7 (bug) |
 | [STAT-02](./TICKET-STAT-02-per-account-networth.md) | Stats | Per-account net-worth-over-time chart | user-stories §6, FR-STAT-4 |
 

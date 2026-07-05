@@ -63,6 +63,7 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want the matching window and confidence behaviour configurable in settings, so I can tune it to how I actually bank (FR-TRF-4)
 - [x] As a user, I want a one-sided movement to an own-account IBAN flagged "likely transfer" even before its pair arrives, so I'm not misled by a temporarily-incomplete import (FR-TRF-5)
 - [ ] As a user, I want a transaction linked as a transfer to have no category and be excluded from income/expense on the dashboard, while still counting normally toward its account's balance, so a transfer never gets miscategorised as spending or income (extends FR-TRF-1 — income/expense exclusion already works via the `transferId` checks in `period-stats.ts`/`category-breakdown.ts`, and account balances already include transfers unexcluded; the gap is that `categoryId` isn't cleared when a transaction is linked, so a rule-assigned or manually-set category can survive on a linked transaction)
+- [ ] As a saver, I want money I move into a savings account reported as "savings" rather than "expense", and never requiring a category, so putting money aside doesn't look like spending or nag me for a category ([TICKET-TRF-02](./tickets/TICKET-TRF-02-classify-savings-movements.md), extends FR-TRF-1 — today a savings movement is only kept out of expenses when it happens to be linked; an unlinked one-sided movement to a savings account still counts as expense and shows up as uncategorised)
 
 ## 6. Statistics & Dashboard (FR-STAT)
 
