@@ -108,31 +108,33 @@
         </tr>
       </thead>
       <tbody>
-        @for (transaction of pagination.pagedItems(); track transaction.id) {
+        @for (row of rows(); track row.transaction.id) {
           <tr>
             <td>
               <input
                 type="checkbox"
                 class="checkbox checkbox-sm"
-                [checked]="isSelected(transaction.id!)"
-                (change)="toggleSelected(transaction.id!)"
+                [checked]="row.selected"
+                (change)="toggleSelected(row.transaction.id!)"
               />
             </td>
-            <td class="whitespace-nowrap">{{ transaction.bookingDate }}</td>
+            <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
             <td>
               <div class="flex items-center gap-1">
-                <span class="font-medium">{{ transaction.rawDescription }}</span>
-                @if (likelyTransferIds().has(transaction.id!)) {
+                <span class="font-medium">{{ row.transaction.rawDescription }}</span>
+                @if (row.likelyTransfer) {
                   <mm-badge variant="outline" size="sm">Likely transfer</mm-badge>
                 }
               </div>
-              @if (transaction.counterpartyName) {
-                <div class="text-xs text-base-content/60">{{ transaction.counterpartyName }}</div>
+              @if (row.transaction.counterpartyName) {
+                <div class="text-xs text-base-content/60">
+                  {{ row.transaction.counterpartyName }}
+                </div>
               }
             </td>
-            <td>{{ accountName(transaction.accountId) }}</td>
+            <td>{{ row.accountName }}</td>
             <td>
-              @if (categoryFor(transaction); as category) {
+              @if (row.category; as category) {
                 <mm-badge
                   size="sm"
                   class="gap-1"
@@ -145,12 +147,12 @@
                 <mm-badge variant="ghost" size="sm">Uncategorised</mm-badge>
               }
             </td>
-            <td class="text-right" [class.text-error]="transaction.amount < 0">
-              {{ transaction.amount | signedAmount }}
+            <td class="text-right" [class.text-error]="row.transaction.amount < 0">
+              {{ row.transaction.amount | signedAmount }}
             </td>
             <td>
               <div class="flex items-center justify-end gap-1">
-                @if (transfersStore.transferByTransactionId().get(transaction.id!); as transfer) {
+                @if (row.transfer; as transfer) {
                   <mm-button
                     variant="ghost"
                     shape="square"
@@ -166,7 +168,7 @@
                   shape="square"
                   size="xs"
                   ariaLabel="Edit transaction"
-                  (click)="openEdit(transaction)"
+                  (click)="openEdit(row.transaction)"
                 >
                   <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
                 </mm-button>

@@ -33,9 +33,9 @@
               [queryParams]="drilldownParams(entry.categoryId)"
               class="flex items-center justify-between py-2 transition hover:bg-base-200"
             >
-              <span>{{ categoryName(entry.categoryId) }}</span>
+              <span>{{ entry.name }}</span>
               <span class="text-sm text-base-content/70">
-                {{ formatTotal(entry.total) }} · {{ formatShare(entry.share) }}
+                {{ entry.formattedTotal }} · {{ entry.formattedShare }}
               </span>
             </a>
           </li>

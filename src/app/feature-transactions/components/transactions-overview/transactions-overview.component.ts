@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
+import { distinctUntilChanged, map } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArrowsExchange,
@@ -12,7 +13,7 @@ import {
 } from '@ng-icons/tabler-icons';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
-import type { Category, Transaction } from '@/core/data-access';
+import type { Category, Transaction, Transfer } from '@/core/data-access';
 import { isLikelyTransfer } from '@/core/transfers';
 import {
   AlertComponent,
@@ -24,7 +25,12 @@ import {
   PaginatorComponent,
   SelectComponent,
 } from '@/shared/ui';
-import { createPagination, SignedAmountPipe, STAT_QUERY_PARAMS } from '@/shared/utils';
+import {
+  createPagination,
+  debouncedTextSignal,
+  SignedAmountPipe,
+  STAT_QUERY_PARAMS,
+} from '@/shared/utils';
 import { TransactionsStore } from '../../transactions.store';
 import { TransfersStore } from '../../transfers.store';
 import {
@@ -35,6 +41,38 @@ import { TransferReviewComponent } from '../transfer-review/transfer-review.comp
 
 /** Rows rendered per page — keeps the table from materialising thousands of `<tr>` at once (CR-2.1). */
 const PAGE_SIZE = 50;
+
+/** The filter fields that apply immediately, i.e. everything except the debounced free-text needle (CR-2.4). */
+type StructuralFilters = {
+  accountId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  categoryId?: string;
+  amountMin?: string;
+  amountMax?: string;
+};
+
+/** Drops the free-text field so structural filters can be compared/emitted independently of debounced text (CR-2.4). */
+function structuralFiltersOf(value: StructuralFilters & { text?: string }): StructuralFilters {
+  return {
+    accountId: value.accountId,
+    dateFrom: value.dateFrom,
+    dateTo: value.dateTo,
+    categoryId: value.categoryId,
+    amountMin: value.amountMin,
+    amountMax: value.amountMax,
+  };
+}
+
+/** Joined-once-per-data-change view of a table row, so the template stops calling `.find()` methods per row (CR-2.3). */
+type TransactionRow = {
+  transaction: Transaction;
+  accountName: string;
+  category: Category | undefined;
+  transfer: Transfer | undefined;
+  likelyTransfer: boolean;
+  selected: boolean;
+};
 
 @Component({
   selector: 'app-transactions-overview',
@@ -87,14 +125,36 @@ export class TransactionsOverviewComponent {
     amountMax: [''],
   });
 
-  private readonly filters = toSignal(this.filterForm.valueChanges, {
-    initialValue: this.filterForm.getRawValue(),
-  });
+  /** Structural filters apply immediately; `distinctUntilChanged` keeps text keystrokes from re-emitting them. */
+  private readonly structuralFilters = toSignal(
+    this.filterForm.valueChanges.pipe(
+      map(structuralFiltersOf),
+      distinctUntilChanged(
+        (a, b) =>
+          a.accountId === b.accountId &&
+          a.dateFrom === b.dateFrom &&
+          a.dateTo === b.dateTo &&
+          a.categoryId === b.categoryId &&
+          a.amountMin === b.amountMin &&
+          a.amountMax === b.amountMax,
+      ),
+    ),
+    { initialValue: structuralFiltersOf(this.filterForm.getRawValue()) },
+  );
+
+  /** Free-text needle, debounced so typing doesn't re-run the filter/render pipeline on every keystroke (CR-2.4). */
+  private readonly debouncedText = debouncedTextSignal(this.filterForm.controls.text);
+
+  /** Single key that changes on either a structural change or a settled text change — drives page reset. */
+  private readonly filterKey = computed(() => ({
+    ...this.structuralFilters(),
+    text: this.debouncedText(),
+  }));
 
   protected readonly filteredTransactions = computed(() => {
-    const filters = this.filters();
+    const filters = this.structuralFilters();
+    const text = this.debouncedText();
     const accountId = filters.accountId ? Number(filters.accountId) : null;
-    const text = (filters.text ?? '').trim().toLowerCase();
     const amountMin = filters.amountMin !== '' ? Number(filters.amountMin) : null;
     const amountMax = filters.amountMax !== '' ? Number(filters.amountMax) : null;
 
@@ -124,15 +184,17 @@ export class TransactionsOverviewComponent {
       .sort((a, b) => b.bookingDate.localeCompare(a.bookingDate));
   });
 
-  protected readonly hasActiveFilters = computed(() =>
-    Object.values(this.filters()).some((value) => value !== ''),
+  protected readonly hasActiveFilters = computed(
+    () =>
+      this.debouncedText() !== '' ||
+      Object.values(this.structuralFilters()).some((value) => value !== ''),
   );
 
   /** Paging over the filtered rows; resets to page 1 whenever the filters change (FR-TXN, CR-2.1). */
   protected readonly pagination = createPagination({
     items: this.filteredTransactions,
     pageSize: PAGE_SIZE,
-    resetOn: this.filters,
+    resetOn: this.filterKey,
   });
 
   protected readonly selectedIds = signal<Set<number>>(new Set());
@@ -161,6 +223,29 @@ export class TransactionsOverviewComponent {
     );
   });
 
+  /**
+   * Joins each visible row's account name, category, transfer, likely-transfer, and selected flag once per
+   * data change, so the template renders plain fields instead of running `.find()` methods per change
+   * detection pass (CR-2.3). Only the paged slice is joined, keeping the work bounded to `PAGE_SIZE`.
+   */
+  protected readonly rows = computed<TransactionRow[]>(() => {
+    const accountsById = this.accountsStore.accountsById();
+    const categoriesById = this.categoriesStore.categoriesById();
+    const transferByTransactionId = this.transfersStore.transferByTransactionId();
+    const likelyTransferIds = this.likelyTransferIds();
+    const selectedIds = this.selectedIds();
+
+    return this.pagination.pagedItems().map((transaction) => ({
+      transaction,
+      accountName: accountsById.get(transaction.accountId)?.name ?? '—',
+      category:
+        transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined,
+      transfer: transferByTransactionId.get(transaction.id!),
+      likelyTransfer: likelyTransferIds.has(transaction.id!),
+      selected: selectedIds.has(transaction.id!),
+    }));
+  });
+
   protected readonly formOpen = signal(false);
   protected readonly editingTransaction = signal<Transaction | null>(null);
 
@@ -178,10 +263,6 @@ export class TransactionsOverviewComponent {
       amountMin: '',
       amountMax: '',
     });
-  }
-
-  protected isSelected(id: number): boolean {
-    return this.selectedIds().has(id);
   }
 
   protected toggleSelected(id: number): void {
@@ -216,15 +297,5 @@ export class TransactionsOverviewComponent {
     const transaction = this.editingTransaction();
     if (transaction?.id == null) return;
     await this.transactionsStore.updateTransaction(transaction.id, result);
-  }
-
-  protected accountName(accountId: number): string {
-    return this.accountsStore.accounts().find((account) => account.id === accountId)?.name ?? '—';
-  }
-
-  protected categoryFor(transaction: Transaction): Category | undefined {
-    return transaction.categoryId != null
-      ? this.categoriesStore.categoriesById().get(transaction.categoryId)
-      : undefined;
   }
 }

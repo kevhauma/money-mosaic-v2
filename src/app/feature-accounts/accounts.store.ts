@@ -50,6 +50,7 @@ export const AccountsStore = signalStore(
       accounts: entities,
       activeAccounts: activeEntities,
       archivedAccounts: archivedEntities,
+      accountsById: computed(() => new Map(entities().map((account) => [account.id!, account]))),
       balancesById,
       netWorth: computed(() =>
         [...balancesById().values()].reduce((sum, balance) => sum + balance, 0),

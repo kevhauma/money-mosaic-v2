@@ -9,6 +9,16 @@ import { StatsStore } from '../../stats.store';
 
 type BreakdownKind = 'expense' | 'income';
 
+/** Breakdown entry with category name/colour and formatted figures joined once, so the template stays method-free (CR-2.5). */
+type BreakdownEntryVm = {
+  categoryId: number | null;
+  total: number;
+  name: string;
+  color: string;
+  formattedTotal: string;
+  formattedShare: string;
+};
+
 const EUR_FORMATTER = new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' });
 const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
   style: 'percent',
@@ -29,9 +39,22 @@ export class CategoryBreakdownPanelComponent {
 
   protected readonly kind = signal<BreakdownKind>('expense');
 
-  protected readonly entries = computed(() => {
+  protected readonly entries = computed<BreakdownEntryVm[]>(() => {
     const breakdown = this.statsStore.categoryBreakdown();
-    return this.kind() === 'expense' ? breakdown.expenseByCategory : breakdown.incomeBySource;
+    const raw = this.kind() === 'expense' ? breakdown.expenseByCategory : breakdown.incomeBySource;
+    const categoriesById = this.categoriesStore.categoriesById();
+
+    return raw.map((entry) => {
+      const category = entry.categoryId != null ? categoriesById.get(entry.categoryId) : undefined;
+      return {
+        categoryId: entry.categoryId,
+        total: entry.total,
+        name: entry.categoryId != null ? (category?.name ?? 'Unknown') : 'Uncategorised',
+        color: entry.categoryId != null ? (category?.color ?? '#9ca3af') : '#9ca3af',
+        formattedTotal: EUR_FORMATTER.format(entry.total),
+        formattedShare: PERCENT_FORMATTER.format(entry.share),
+      };
+    });
   });
 
   protected readonly topEntries = computed(() => this.entries().slice(0, 5));
@@ -43,9 +66,9 @@ export class CategoryBreakdownPanelComponent {
         type: 'pie',
         radius: ['40%', '70%'],
         data: this.entries().map((entry) => ({
-          name: this.categoryName(entry.categoryId),
+          name: entry.name,
           value: entry.total,
-          itemStyle: { color: this.categoryColor(entry.categoryId) },
+          itemStyle: { color: entry.color },
         })),
       },
     ],
@@ -55,18 +78,6 @@ export class CategoryBreakdownPanelComponent {
     from: this.rangeStore.from(),
     to: this.rangeStore.to(),
   }));
-
-  protected categoryName(categoryId: number | null): string {
-    return categoryId != null
-      ? (this.categoriesStore.categoriesById().get(categoryId)?.name ?? 'Unknown')
-      : 'Uncategorised';
-  }
-
-  protected categoryColor(categoryId: number | null): string {
-    return categoryId != null
-      ? (this.categoriesStore.categoriesById().get(categoryId)?.color ?? '#9ca3af')
-      : '#9ca3af';
-  }
 
   protected drilldownParams(categoryId: number | null): Record<string, string> {
     return buildTransactionDrilldownParams({
@@ -78,13 +89,5 @@ export class CategoryBreakdownPanelComponent {
 
   protected setKind(kind: BreakdownKind): void {
     this.kind.set(kind);
-  }
-
-  protected formatTotal(total: number): string {
-    return EUR_FORMATTER.format(total);
-  }
-
-  protected formatShare(share: number): string {
-    return PERCENT_FORMATTER.format(share);
   }
 }
