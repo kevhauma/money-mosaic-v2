@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { AccountsStore } from '@/feature-accounts';
 import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
@@ -16,8 +23,14 @@ import {
 import { ImportPreviewStepComponent } from '../import-preview-step/import-preview-step.component';
 import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
 
-type WizardStep = 1 | 2 | 3 | 4;
+// Select → Map+Preview → Summary. Map and preview live on one screen (step 2); there is no
+// separate preview-only step anymore.
+type WizardStep = 1 | 2 | 3;
 type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
+
+// Debounce the reactive re-parse so editing the mapping form doesn't spawn a worker parse per
+// keystroke (NFR-PERF-2 — parsing runs in a Web Worker, but rapid re-parses are still wasteful).
+const PARSE_DEBOUNCE_MS = 300;
 
 @Component({
   selector: 'app-import-wizard',
@@ -60,6 +73,44 @@ export class ImportWizardComponent {
     () => this.queue().length > 0 && this.queue().every((row) => row.accountId !== null),
   );
 
+  // Guards against a stale worker parse overwriting fresher state: every parse (and every
+  // mapping-invalid reset) bumps the token, and a resolved parse only writes if its token still wins.
+  private parseToken = 0;
+  private reparseTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    // Live preview: whenever the mapping is valid (mapResult non-null) re-parse the current file
+    // after a short debounce; while it's invalid, drop any pending/in-flight parse and clear the
+    // preview so step 2 shows a neutral placeholder instead of stale rows.
+    effect(() => {
+      const file = this.currentFile();
+      const mapResult = this.mapResult();
+
+      if (this.reparseTimer !== null) {
+        clearTimeout(this.reparseTimer);
+        this.reparseTimer = null;
+      }
+
+      if (this.step() !== 2 || !file || !mapResult) {
+        this.parseToken++;
+        this.parsing.set(false);
+        this.parsedRows.set([]);
+        this.parseError.set(null);
+        return;
+      }
+
+      // Treat the debounce window as "parsing" too, so the confirm action stays disabled (and shows
+      // "Parsing…") until fresh rows land — otherwise a fast click could commit stale/empty rows
+      // between the mapping becoming valid and the worker parse resolving.
+      this.parsing.set(true);
+      const mappingProfile = mapResult.mappingProfile as MappingProfile;
+      this.reparseTimer = setTimeout(() => {
+        this.reparseTimer = null;
+        void this.runParse(file, mappingProfile);
+      }, PARSE_DEBOUNCE_MS);
+    });
+  }
+
   protected async goNext(): Promise<void> {
     switch (this.step()) {
       case 1:
@@ -68,10 +119,6 @@ export class ImportWizardComponent {
         this.step.set(2);
         return;
       case 2:
-        if (!this.mapResult()) return;
-        await this.runParse();
-        return;
-      case 3:
         await this.runCommit();
         return;
     }
@@ -81,26 +128,21 @@ export class ImportWizardComponent {
     if (this.step() > 1) this.step.set((this.step() - 1) as WizardStep);
   }
 
-  private async runParse(): Promise<void> {
-    const file = this.currentFile();
-    const mapResult = this.mapResult();
-    if (!file || !mapResult) return;
-
+  private async runParse(file: File, mappingProfile: MappingProfile): Promise<void> {
+    const token = ++this.parseToken;
     this.parsing.set(true);
     try {
-      const response = await this.csvImportService.parse(
-        file,
-        mapResult.mappingProfile as MappingProfile,
-      );
+      const response = await this.csvImportService.parse(file, mappingProfile);
+      if (token !== this.parseToken) return;
       if ('error' in response) {
         this.parseError.set(response.error);
+        this.parsedRows.set([]);
         return;
       }
       this.parsedRows.set(response.rows);
       this.parseError.set(null);
-      this.step.set(3);
     } finally {
-      this.parsing.set(false);
+      if (token === this.parseToken) this.parsing.set(false);
     }
   }
 
@@ -139,7 +181,7 @@ export class ImportWizardComponent {
         this.parseError.set(null);
         this.step.set(2);
       } else {
-        this.step.set(4);
+        this.step.set(3);
       }
     } finally {
       this.committing.set(false);

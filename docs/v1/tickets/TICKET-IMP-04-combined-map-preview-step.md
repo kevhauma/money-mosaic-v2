@@ -27,15 +27,15 @@ Collapse the separate **Map** (step 2) and **Preview** (step 3) stages of the im
 
 ## Acceptance criteria
 
-- [ ] The mapping form and a row preview are visible on the same screen for a queued file; there is no longer a separate preview-only step to click through.
-- [ ] The preview refreshes automatically whenever `mapResult()` is non-null (mapping valid), and shows a neutral placeholder (not stale/last-file rows) whenever the mapping is invalid or not yet complete.
-- [ ] Parse still runs through `CsvImportService.parse(...)` and malformed-row reporting (FR-IMP-8) is unchanged — a bad line is surfaced in the preview and doesn't block importing the valid rows.
-- [ ] Back and the primary confirm action are reachable at the top of the screen without scrolling; the primary action's label/disabled states still cover: mapping incomplete, parsing…, importing…, "Confirm & continue" (more files queued), "Confirm import" (last file).
-- [ ] Committing a file still goes through `ImportBatchesStore.commitImport(...)` and mapping persistence through `MappingProfilesStore` — no direct Dexie table writes — and per-file `accountId`, duplicate-fingerprint skipping (FR-IMP-6), and atomic commit (NFR-RESIL-1) are unchanged.
-- [ ] In a multi-file batch, files 2..N land on the same combined screen with their own live preview; the final Summary step (FR-IMP-7) still reports per-file results and each batch stays independently undoable.
-- [ ] The `steps` progress indicator and `WizardStep` typing/logic reflect the merged stage (Select → Map+Preview → Summary) with no dead step-3 branch left behind.
-- [ ] Unit tests cover: preview populated automatically once mapping becomes valid; preview cleared/placeholder when mapping goes invalid; top confirm action disabled while mapping invalid and while parsing/committing; advancing through a ≥2-file batch commits each file under its own account and reaches Summary.
-- [ ] Verified live in the browser: a single-file import and a 2-file import can each be completed from the top confirm control without scrolling to reach it, with the preview updating as the mapping is edited.
+- [x] The mapping form and a row preview are visible on the same screen for a queued file; there is no longer a separate preview-only step to click through.
+- [x] The preview refreshes automatically whenever `mapResult()` is non-null (mapping valid), and shows a neutral placeholder (not stale/last-file rows) whenever the mapping is invalid or not yet complete.
+- [x] Parse still runs through `CsvImportService.parse(...)` and malformed-row reporting (FR-IMP-8) is unchanged — a bad line is surfaced in the preview and doesn't block importing the valid rows.
+- [x] Back and the primary confirm action are reachable at the top of the screen without scrolling; the primary action's label/disabled states still cover: mapping incomplete, parsing…, importing…, "Confirm & continue" (more files queued), "Confirm import" (last file).
+- [x] Committing a file still goes through `ImportBatchesStore.commitImport(...)` and mapping persistence through `MappingProfilesStore` — no direct Dexie table writes — and per-file `accountId`, duplicate-fingerprint skipping (FR-IMP-6), and atomic commit (NFR-RESIL-1) are unchanged.
+- [x] In a multi-file batch, files 2..N land on the same combined screen with their own live preview; the final Summary step (FR-IMP-7) still reports per-file results and each batch stays independently undoable.
+- [x] The `steps` progress indicator and `WizardStep` typing/logic reflect the merged stage (Select → Map+Preview → Summary) with no dead step-3 branch left behind.
+- [x] Unit tests cover: preview populated automatically once mapping becomes valid; preview cleared/placeholder when mapping goes invalid; top confirm action disabled while mapping invalid and while parsing/committing; advancing through a ≥2-file batch commits each file under its own account and reaches Summary.
+- [x] Verified live in the browser: a single-file import and a 2-file import can each be completed from the top confirm control without scrolling to reach it, with the preview updating as the mapping is edited.
 
 ## Notes
 

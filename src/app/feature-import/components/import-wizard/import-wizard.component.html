@@ -1,14 +1,15 @@
-<div class="mx-auto max-w-3xl">
+<!-- Step 2 (map + live preview) gets a wider shell so the mapping form, raw file preview, and row
+     preview can sit side by side on desktop instead of stacking off-screen. -->
+<div class="mx-auto" [class.max-w-3xl]="step() !== 2" [class.max-w-6xl]="step() === 2">
   <h1 class="mb-6 text-xl font-semibold">Import CSV</h1>
 
   <ul class="steps mb-8 w-full">
     <li class="step" [class.step-primary]="step() >= 1">Select</li>
-    <li class="step" [class.step-primary]="step() >= 2">Map</li>
-    <li class="step" [class.step-primary]="step() >= 3">Preview</li>
-    <li class="step" [class.step-primary]="step() >= 4">Summary</li>
+    <li class="step" [class.step-primary]="step() >= 2">Map &#38; preview</li>
+    <li class="step" [class.step-primary]="step() >= 3">Summary</li>
   </ul>
 
-  @if ((step() === 2 || step() === 3) && totalFiles() > 1) {
+  @if (step() === 2 && totalFiles() > 1) {
     <p class="mb-4 text-xs font-medium text-base-content/60">
       File {{ currentFileIndex() + 1 }} of {{ totalFiles() }} — {{ currentFile()?.name }}
     </p>
@@ -16,24 +17,81 @@
 
   <div class="card border border-base-300 bg-base-100">
     <div class="card-body">
+      @if (step() < 3) {
+        <div class="card-actions mb-6 justify-between border-b border-base-300 pb-4">
+          <mm-button
+            variant="ghost"
+            size="sm"
+            [disabled]="step() === 1 || committing()"
+            (click)="goBack()"
+          >
+            Back
+          </mm-button>
+          <mm-button
+            color="primary"
+            size="sm"
+            [disabled]="
+              (step() === 1 && !canAdvanceFromStep1()) ||
+              (step() === 2 && (!mapResult() || parsing() || committing() || !!parseError()))
+            "
+            (click)="goNext()"
+          >
+            @if (step() === 2) {
+              @if (committing()) {
+                Importing…
+              } @else if (parsing()) {
+                Parsing…
+              } @else if (currentFileIndex() + 1 < totalFiles()) {
+                Confirm &#38; continue
+              } @else {
+                Confirm import
+              }
+            } @else {
+              Next
+            }
+          </mm-button>
+        </div>
+      }
+
       @switch (step()) {
         @case (1) {
           <app-import-select-step [accounts]="accountsStore.activeAccounts()" [(queue)]="queue" />
         }
         @case (2) {
-          @if (currentFile(); as file) {
-            @if (currentAccountId(); as accountId) {
-              <app-import-map-step [file]="file" [accountId]="accountId" [(result)]="mapResult" />
-            }
-          }
-          @if (parseError(); as error) {
-            <p class="text-error mt-3 text-sm">Couldn't parse this file: {{ error }}</p>
-          }
+          <div class="grid gap-6 xl:grid-cols-12">
+            <div class="xl:col-span-7">
+              @if (currentFile(); as file) {
+                @if (currentAccountId(); as accountId) {
+                  <app-import-map-step
+                    [file]="file"
+                    [accountId]="accountId"
+                    [(result)]="mapResult"
+                  />
+                }
+              }
+            </div>
+
+            <div
+              class="border-t border-base-300 pt-6 xl:col-span-5 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0"
+            >
+              <h2 class="mb-3 text-sm font-semibold">Row preview</h2>
+              @if (!mapResult()) {
+                <p class="text-sm text-base-content/60">
+                  Complete the required mapping fields to see a preview.
+                </p>
+              } @else if (parseError(); as error) {
+                <p class="text-error text-sm">Couldn't parse this file: {{ error }}</p>
+              } @else if (parsing() && parsedRows().length === 0) {
+                <div class="flex justify-center py-8">
+                  <span class="loading loading-spinner loading-md"></span>
+                </div>
+              } @else {
+                <app-import-preview-step [rows]="parsedRows()" />
+              }
+            </div>
+          </div>
         }
         @case (3) {
-          <app-import-preview-step [rows]="parsedRows()" />
-        }
-        @case (4) {
           <div class="flex flex-col gap-6">
             @for (result of commitResults(); track result.batch.id) {
               <app-import-summary-step
@@ -50,36 +108,6 @@
             </div>
           </div>
         }
-      }
-
-      @if (step() < 4) {
-        <div class="card-actions mt-6 justify-between border-t border-base-300 pt-4">
-          <mm-button variant="ghost" size="sm" [disabled]="step() === 1" (click)="goBack()">
-            Back
-          </mm-button>
-          <mm-button
-            color="primary"
-            size="sm"
-            [disabled]="
-              (step() === 1 && !canAdvanceFromStep1()) ||
-              (step() === 2 && (!mapResult() || parsing())) ||
-              (step() === 3 && committing())
-            "
-            (click)="goNext()"
-          >
-            @if (step() === 2 && parsing()) {
-              Parsing…
-            } @else if (step() === 3 && committing()) {
-              Importing…
-            } @else if (step() === 3 && currentFileIndex() + 1 < totalFiles()) {
-              Confirm &#38; continue
-            } @else if (step() === 3) {
-              Confirm import
-            } @else {
-              Next
-            }
-          </mm-button>
-        </div>
       }
     </div>
   </div>
