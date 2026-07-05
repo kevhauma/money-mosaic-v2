@@ -24,14 +24,14 @@ Add an account-level "Clear transactions" action that removes **all** of an acco
 
 ## Acceptance criteria
 
-- [ ] A new `clearTransactions(accountId)` operation removes all of the account's transactions and performs the same transfer cleanup as `deleteAccount` (delete transfer records touching removed transactions; un-link the surviving cross-account side by clearing its `transferId`) **without** removing the account row.
-- [ ] The work runs in a single atomic Dexie `rw` transaction over `transactions` + `transfers` (mirroring `AccountDeletionService`), so a failure leaves the account's data untouched — no half-cleared state.
-- [ ] Persistence goes through the repository/store layer (`TransactionsRepository` / `TransfersRepository` and the transactions/transfers stores), never direct `appDb` table writes from a component; the account entity itself is **not** mutated or removed.
-- [ ] The transactions and transfers stores are updated in memory (`removeMany` the cleared ids, `patchMany` the `transferId: undefined` survivors, `removeLocal` the deleted transfers) so `balancesById`, `netWorth`, and `transactionCountById` recompute immediately (FR-STAT-5).
-- [ ] The account keeps its name, type, IBAN, opening balance/date, colour/icon, and any saved mapping profiles after clearing; its balance reverts to the opening balance and its transaction count shows 0.
-- [ ] The detail page exposes a **Clear transactions** control, visually and functionally distinct from **Delete account**, disabled/hidden when the account has 0 transactions, and guarded by a confirmation dialog stating the exact count and that it cannot be undone (reuse `ConfirmDialogComponent`).
-- [ ] Unit tests cover: clearing removes all of the target account's transactions but leaves other accounts' transactions untouched; the account row survives with metadata intact; a transfer linking this account to a *different* account leaves the other side un-linked (transferId cleared) rather than dangling; and clearing an account with 0 transactions is a safe no-op.
-- [ ] Verified live in the browser: import into an account, clear its transactions, confirm the account remains with opening-balance and count 0, and a fresh re-import lands cleanly.
+- [x] A new `clearTransactions(accountId)` operation removes all of the account's transactions and performs the same transfer cleanup as `deleteAccount` (delete transfer records touching removed transactions; un-link the surviving cross-account side by clearing its `transferId`) **without** removing the account row.
+- [x] The work runs in a single atomic Dexie `rw` transaction over `transactions` + `transfers` (mirroring `AccountDeletionService`), so a failure leaves the account's data untouched — no half-cleared state.
+- [x] Persistence goes through the repository/store layer (`TransactionsRepository` / `TransfersRepository` and the transactions/transfers stores), never direct `appDb` table writes from a component; the account entity itself is **not** mutated or removed.
+- [x] The transactions and transfers stores are updated in memory (`removeMany` the cleared ids, `patchMany` the `transferId: undefined` survivors, `removeLocal` the deleted transfers) so `balancesById`, `netWorth`, and `transactionCountById` recompute immediately (FR-STAT-5).
+- [x] The account keeps its name, type, IBAN, opening balance/date, colour/icon, and any saved mapping profiles after clearing; its balance reverts to the opening balance and its transaction count shows 0.
+- [x] The detail page exposes a **Clear transactions** control, visually and functionally distinct from **Delete account**, disabled/hidden when the account has 0 transactions, and guarded by a confirmation dialog stating the exact count and that it cannot be undone (reuse `ConfirmDialogComponent`).
+- [x] Unit tests cover: clearing removes all of the target account's transactions but leaves other accounts' transactions untouched; the account row survives with metadata intact; a transfer linking this account to a *different* account leaves the other side un-linked (transferId cleared) rather than dangling; and clearing an account with 0 transactions is a safe no-op.
+- [x] Verified live in the browser: import into an account, clear its transactions, confirm the account remains with opening-balance and count 0, and a fresh re-import lands cleanly.
 
 ## Notes
 

@@ -14,6 +14,15 @@
         />
         {{ account.archived ? 'Unarchive' : 'Archive' }}
       </mm-button>
+      <mm-button
+        variant="outline"
+        size="sm"
+        [disabled]="transactionCount() === 0"
+        (click)="clearConfirmOpen.set(true)"
+      >
+        <ng-icon name="tablerEraser" size="14" aria-hidden="true" />
+        Clear transactions
+      </mm-button>
       <mm-button variant="outline" color="error" size="sm" (click)="deleteConfirmOpen.set(true)">
         <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
         Delete
@@ -41,6 +50,14 @@
     confirmLabel="Delete account"
     [danger]="true"
     (confirmed)="deleteConfirmed()"
+  />
+  <mm-confirm-dialog
+    [(open)]="clearConfirmOpen"
+    title="Clear this account's transactions?"
+    [message]="clearMessage()"
+    confirmLabel="Clear transactions"
+    [danger]="true"
+    (confirmed)="clearConfirmed()"
   />
 } @else {
   <mm-empty-state title="Account not found" message="It may have been deleted or archived away.">

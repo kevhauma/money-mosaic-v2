@@ -19,7 +19,7 @@ Derived from [finance-app-spec.md](./finance-app-spec.md). Ordered so each secti
 - [x] As a user, I want to edit, archive, or delete an account, and be warned about associated transactions before deleting, so I don't lose data by accident (FR-ACC-2)
 - [x] As a user, I want each account's current balance derived from opening balance + its transactions (never stored as a mutable field), so the number I see is always trustworthy (FR-ACC-3)
 - [x] As a user, I want my account's IBAN used as a matching key for transfer detection, so transfers between my own accounts are found automatically later (FR-ACC-4) — implemented as the high-confidence tier of §5 Transfers auto-linking
-- [ ] As a user, I want to clear a bank account of its transactions (e.g. to re-import if something's wrong) without deleting the full account, so I can start its history fresh while keeping the account, its settings, and mapping profiles ([TICKET-ACC-01](./tickets/TICKET-ACC-01-clear-account-transactions.md), extends FR-ACC-2)
+- [x] As a user, I want to clear a bank account of its transactions (e.g. to re-import if something's wrong) without deleting the full account, so I can start its history fresh while keeping the account, its settings, and mapping profiles ([TICKET-ACC-01](./tickets/TICKET-ACC-01-clear-account-transactions.md), extends FR-ACC-2)
 
 ## 2. CSV Import (FR-IMP)
 

@@ -2,7 +2,13 @@ import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerArchive, tablerArchiveOff, tablerPencil, tablerTrash } from '@ng-icons/tabler-icons';
+import {
+  tablerArchive,
+  tablerArchiveOff,
+  tablerEraser,
+  tablerPencil,
+  tablerTrash,
+} from '@ng-icons/tabler-icons';
 import {
   ButtonComponent,
   ConfirmDialogComponent,
@@ -30,7 +36,9 @@ import {
   ],
   templateUrl: './accounts-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerPencil, tablerArchive, tablerArchiveOff, tablerTrash })],
+  viewProviders: [
+    provideIcons({ tablerPencil, tablerArchive, tablerArchiveOff, tablerEraser, tablerTrash }),
+  ],
 })
 export class AccountsDetailComponent {
   readonly id = input.required<string>();
@@ -49,7 +57,7 @@ export class AccountsDetailComponent {
       : 0;
   });
 
-  private readonly transactionCount = computed(() => {
+  protected readonly transactionCount = computed(() => {
     const account = this.account();
     return account?.id != null
       ? (this.accountsStore.transactionCountById().get(account.id) ?? 0)
@@ -63,8 +71,14 @@ export class AccountsDetailComponent {
       : 'This cannot be undone.';
   });
 
+  protected readonly clearMessage = computed(() => {
+    const count = this.transactionCount();
+    return `This removes all ${count} transaction${count === 1 ? '' : 's'} from this account but keeps the account and its settings. This cannot be undone.`;
+  });
+
   protected readonly formOpen = signal(false);
   protected readonly deleteConfirmOpen = signal(false);
+  protected readonly clearConfirmOpen = signal(false);
 
   protected async saveAccount(value: AccountFormValue): Promise<void> {
     const account = this.account();
@@ -90,5 +104,15 @@ export class AccountsDetailComponent {
     }
     await this.accountsStore.removeAccount(account.id);
     await this.router.navigate(['/accounts']);
+  }
+
+  protected async clearConfirmed(): Promise<void> {
+    const account = this.account();
+    if (account?.id == null) {
+      return;
+    }
+    // Stay on the detail view (not the accounts list) so the user lands on the now-clean account,
+    // ready to re-import (TICKET-ACC-01).
+    await this.accountsStore.clearTransactions(account.id);
   }
 }

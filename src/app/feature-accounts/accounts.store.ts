@@ -105,6 +105,26 @@ export const AccountsStore = signalStore(
         );
         transfersStore.removeLocal(unlinkedTransferIds);
       },
+
+      /**
+       * Wipes an account's transactions (and the transfer links touching them) in one atomic write
+       * (CR-1.1) while keeping the account row and its settings/mapping profiles intact
+       * (TICKET-ACC-01), then mirrors the changes into the transactions/transfers stores so
+       * balancesById/netWorth/transactionCountById recompute immediately (FR-STAT-5).
+       */
+      clearTransactions: async (id: number): Promise<void> => {
+        const { removedTransactionIds, unlinkedTransferIds, clearedTransferTransactionIds } =
+          await accountDeletionService.clearTransactions(id);
+
+        transactionsStore.removeMany(removedTransactionIds);
+        transactionsStore.patchMany(
+          clearedTransferTransactionIds.map((txId) => ({
+            id: txId,
+            changes: { transferId: undefined },
+          })),
+        );
+        transfersStore.removeLocal(unlinkedTransferIds);
+      },
     };
   }),
   withMethods((store) => ({
