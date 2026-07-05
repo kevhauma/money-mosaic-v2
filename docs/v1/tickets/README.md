@@ -9,6 +9,7 @@ Tickets for the **unchecked** user stories in [../user-stories.md](../user-stori
 | [IMP-01](./TICKET-IMP-01-bank-presets.md) | Import | Bank presets for BNP Paribas Fortis, ING & Argenta | user-stories §2, FR-IMP, Open Decision #5 |
 | [IMP-02](./TICKET-IMP-02-batch-multi-file-mapping.md) | Import | Map a multi-file import batch once | user-stories §2, FR-IMP-1/3 |
 | [IMP-03](./TICKET-IMP-03-header-mismatch-error.md) | Import | Surface header/mapping mismatch per file | user-stories §2, FR-IMP-8 |
+| [IMP-04](./TICKET-IMP-04-combined-map-preview-step.md) | Import | Combine map + preview into one screen with a top confirm bar | user-stories §2, FR-IMP-4 |
 | [TXN-01](./TICKET-TXN-01-bulk-category-assign.md) | Transactions | Bulk-assign a category to selected rows | user-stories §3, ui-layout §4.3 |
 | [TXN-02](./TICKET-TXN-02-virtualized-table.md) | Transactions | Virtualize the transactions table | user-stories §3, NFR-PERF-1 |
 | [CAT-01](./TICKET-CAT-01-and-or-rule-conditions.md) | Categorisation | AND/OR combinators for rule conditions | user-stories §4, FR-CAT-2 |
