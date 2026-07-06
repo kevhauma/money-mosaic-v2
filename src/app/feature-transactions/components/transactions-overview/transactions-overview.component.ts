@@ -16,7 +16,7 @@ import {
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
 import type { Category, Transaction, Transfer } from '@/core/data-access';
-import { isLikelyTransfer } from '@/core/transfers';
+import { isLikelyTransfer, isSavingsMovement, savingsAccountIbans } from '@/core/transfers';
 import {
   AlertComponent,
   BadgeComponent,
@@ -155,9 +155,15 @@ export class TransactionsOverviewComponent {
     text: this.debouncedText(),
   }));
 
+  /** IBANs of own savings accounts — a movement to one never counts as uncategorised (TICKET-TRF-02). */
+  private readonly ownSavingsIbans = computed(() =>
+    savingsAccountIbans(this.accountsStore.accounts()),
+  );
+
   protected readonly filteredTransactions = computed(() => {
     const filters = this.structuralFilters();
     const text = this.debouncedText();
+    const ownSavingsIbans = this.ownSavingsIbans();
     const accountId = filters.accountId ? Number(filters.accountId) : null;
     const amountMin = filters.amountMin !== '' ? Number(filters.amountMin) : null;
     const amountMax = filters.amountMax !== '' ? Number(filters.amountMax) : null;
@@ -168,7 +174,12 @@ export class TransactionsOverviewComponent {
         if (accountId !== null && transaction.accountId !== accountId) return false;
         if (filters.dateFrom && transaction.bookingDate < filters.dateFrom) return false;
         if (filters.dateTo && transaction.bookingDate > filters.dateTo) return false;
-        if (filters.categoryId === 'uncategorised' && transaction.categoryId != null) return false;
+        if (
+          filters.categoryId === 'uncategorised' &&
+          (transaction.categoryId != null || isSavingsMovement(transaction, ownSavingsIbans))
+        ) {
+          return false;
+        }
         if (
           filters.categoryId &&
           filters.categoryId !== 'uncategorised' &&

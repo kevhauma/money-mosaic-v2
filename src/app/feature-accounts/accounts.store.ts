@@ -1,5 +1,5 @@
-import { computed, inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withMethods } from '@ngrx/signals';
+import { computed, effect, inject } from '@angular/core';
+import { patchState, signalStore, type, withComputed, withHooks, withMethods } from '@ngrx/signals';
 import {
   addEntity,
   entityConfig,
@@ -10,6 +10,7 @@ import {
 } from '@ngrx/signals/entities';
 import { AccountsRepository, type Account } from '@/core/data-access';
 import { AccountDeletionService } from '@/core/accounts';
+import { savingsAccountIbans } from '@/core/transfers';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { withArchivable } from '@/shared/utils';
 
@@ -131,4 +132,15 @@ export const AccountsStore = signalStore(
     archiveAccount: (id: number): Promise<void> => store.updateAccount(id, { archived: true }),
     unarchiveAccount: (id: number): Promise<void> => store.updateAccount(id, { archived: false }),
   })),
+  withHooks({
+    onInit(store) {
+      const transactionsStore = inject(TransactionsStore);
+      // Push savings-account IBANs down into TransactionsStore so its categorisation backlog can drop
+      // money moved into savings, without TransactionsStore importing AccountsStore (which would create
+      // a DI cycle — AccountsStore already depends on TransactionsStore) (TICKET-TRF-02).
+      effect(() => {
+        transactionsStore.setOwnSavingsIbans(savingsAccountIbans(store.accounts()));
+      });
+    },
+  }),
 );

@@ -7,6 +7,7 @@ import {
   computeTrendBuckets,
   RangeStore,
 } from '@/core/stats';
+import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore } from '@/feature-transactions';
@@ -34,8 +35,15 @@ export const StatsStore = signalStore(
     const categoriesStore = inject(CategoriesStore);
     const rangeStore = inject(RangeStore);
 
+    const ownSavingsIbans = computed(() => savingsAccountIbans(accountsStore.accounts()));
+
     const periodStats = computed(() =>
-      computePeriodStats(transactionsStore.transactions(), rangeStore.from(), rangeStore.to()),
+      computePeriodStats(
+        transactionsStore.transactions(),
+        rangeStore.from(),
+        rangeStore.to(),
+        ownSavingsIbans(),
+      ),
     );
 
     const categoryBreakdown = computed(() =>
@@ -44,6 +52,7 @@ export const StatsStore = signalStore(
         categoriesStore.categoriesById(),
         rangeStore.from(),
         rangeStore.to(),
+        ownSavingsIbans(),
       ),
     );
 

@@ -64,3 +64,36 @@ describe('TransactionsStore: bulkAssignCategory (TICKET-TXN-01)', () => {
     expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
   });
 });
+
+describe('TransactionsStore: uncategorised backlog excludes savings movements (TICKET-TRF-02)', () => {
+  const transactionsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+    bulkUpdate: vi.fn().mockResolvedValue(0),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [{ provide: TransactionsRepository, useValue: transactionsRepository }],
+    });
+  });
+
+  it('drops a movement to a savings account but keeps a genuine uncategorised spend', () => {
+    const store = TestBed.inject(TransactionsStore);
+    store.addMany([
+      // Uncategorised movement to an own savings account.
+      transaction({ id: 1, amount: -200, counterpartyIban: 'BE00SAVINGS' }),
+      // Genuinely uncategorised spend.
+      transaction({ id: 2, amount: -30, counterpartyIban: 'BE00SHOP' }),
+    ]);
+
+    // Before the savings IBANs are known, both look uncategorised.
+    expect(store.uncategorisedCount()).toBe(2);
+
+    store.setOwnSavingsIbans(new Set(['BE00SAVINGS']));
+
+    expect(store.uncategorisedCount()).toBe(1);
+    expect(store.uncategorisedTransactions().map((t) => t.id)).toEqual([2]);
+  });
+});

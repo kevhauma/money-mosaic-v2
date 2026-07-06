@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { TransactionsRepository, type Transaction } from '@/core/data-access';
+import { AccountsRepository, TransactionsRepository, type Transaction } from '@/core/data-access';
+import { AccountsStore } from '@/feature-accounts';
 import { TransactionsStore } from '../../transactions.store';
 import { TransactionsOverviewComponent } from './transactions-overview.component';
 
@@ -13,6 +14,7 @@ type Internals = {
   filteredTransactions: () => Transaction[];
   pagination: { pagedItems: () => Transaction[] };
   bulkCategoryControl: { setValue: (value: string) => void };
+  filterForm: { patchValue: (value: Record<string, string>) => void };
   toggleSelected: (id: number) => void;
   selectAllFiltered: () => void;
   clearSelection: () => void;
@@ -39,6 +41,10 @@ describe('TransactionsOverviewComponent', () => {
     bulkUpdate: vi.fn().mockResolvedValue(0),
   };
 
+  const accountsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+  };
+
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
@@ -46,6 +52,7 @@ describe('TransactionsOverviewComponent', () => {
       providers: [
         provideRouter([]),
         { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: AccountsRepository, useValue: accountsRepository },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } },
@@ -128,6 +135,37 @@ describe('TransactionsOverviewComponent', () => {
     expect(component.pagination.pagedItems().length).toBe(50); // one page (PAGE_SIZE)
     expect(component.selectionCount()).toBe(60);
     expect(component.allFilteredSelected()).toBe(true);
+  });
+
+  it('hides movements to a savings account when the uncategorised filter is applied (TICKET-TRF-02)', async () => {
+    await setup();
+    const accountsStore = TestBed.inject(AccountsStore);
+    accountsRepository.getAll.mockResolvedValue([
+      {
+        id: 2,
+        name: 'Savings',
+        type: 'savings',
+        currency: 'EUR',
+        openingBalance: 0,
+        openingBalanceDate: '2026-01-01',
+        color: '#fff',
+        icon: 'pig',
+        archived: false,
+        iban: 'BE00SAVINGS',
+      },
+    ]);
+    await accountsStore.hydrate();
+
+    TestBed.inject(TransactionsStore).addMany([
+      { ...transaction(1), amount: -200, counterpartyIban: 'BE00SAVINGS' },
+      { ...transaction(2), amount: -30, counterpartyIban: 'BE00SHOP' },
+    ]);
+    const component = internals();
+    component.filterForm.patchValue({ categoryId: 'uncategorised' });
+    await fixture.whenStable();
+
+    // The savings movement (id 1) is dropped; the genuine uncategorised spend (id 2) stays.
+    expect(component.filteredTransactions().map((row) => row.id)).toEqual([2]);
   });
 
   it('clears the selection after a successful bulk apply (TICKET-TXN-01)', async () => {

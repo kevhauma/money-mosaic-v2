@@ -1,4 +1,5 @@
 import type { Category, Transaction } from '@/core/data-access';
+import { isSavingsMovement } from '@/core/transfers';
 
 export type CategoryBreakdownEntry = {
   /** null = uncategorised entry (no category assigned, bucketed by amount sign). */
@@ -32,18 +33,24 @@ const finalizeEntries = (
     .sort((a, b) => b.total - a.total);
 };
 
-/** Splits [from, to], transfer-excluded transactions into expense-by-category and income-by-source totals with share-of-total (FR-STAT-3). */
+/**
+ * Splits [from, to] transactions into expense-by-category and income-by-source totals with
+ * share-of-total (FR-STAT-3). Linked transfers and movements to/from an own savings account are
+ * excluded, so a savings movement never surfaces as an (uncategorised) expense entry (TICKET-TRF-02).
+ */
 export const computeCategoryBreakdown = (
   transactions: Transaction[],
   categoriesById: Map<number, Category>,
   from: string,
   to: string,
+  ownSavingsIbans: ReadonlySet<string> = new Set(),
 ): CategoryBreakdown => {
   const expenseTotals = new Map<number | null, { total: number; count: number }>();
   const incomeTotals = new Map<number | null, { total: number; count: number }>();
 
   for (const transaction of transactions) {
     if (transaction.transferId != null) continue;
+    if (isSavingsMovement(transaction, ownSavingsIbans)) continue;
     if (!inRange(transaction, from, to)) continue;
     if (transaction.amount === 0) continue;
 

@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withMethods } from '@ngrx/signals';
+import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
   addEntities,
   entityConfig,
@@ -9,19 +9,34 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
+import { isSavingsMovement } from '@/core/transfers';
 
 const transactionConfig = entityConfig({
   entity: type<Transaction>(),
   selectId: (transaction) => transaction.id!,
 });
 
+/**
+ * Savings-account IBANs, pushed down from `AccountsStore` (which already depends on this store, so this
+ * store can't inject it back without a DI cycle) so the categorisation backlog can drop savings
+ * movements (TICKET-TRF-02).
+ */
+type TransactionsState = { ownSavingsIbans: ReadonlySet<string> };
+
 export const TransactionsStore = signalStore(
   { providedIn: 'root' },
   withEntities(transactionConfig),
-  withComputed(({ entities }) => {
-    /** Surfaces the categorisation backlog so it's never quietly lost (FR-CAT-5). */
+  withState<TransactionsState>({ ownSavingsIbans: new Set<string>() }),
+  withComputed(({ entities, ownSavingsIbans }) => {
+    /**
+     * Surfaces the categorisation backlog so it's never quietly lost (FR-CAT-5), minus money moved
+     * into a savings account — that never needs a category (TICKET-TRF-02).
+     */
     const uncategorisedTransactions = computed(() =>
-      entities().filter((transaction) => transaction.categoryId == null),
+      entities().filter(
+        (transaction) =>
+          transaction.categoryId == null && !isSavingsMovement(transaction, ownSavingsIbans()),
+      ),
     );
     return {
       transactions: entities,
@@ -35,6 +50,11 @@ export const TransactionsStore = signalStore(
     return {
       hydrate: async (): Promise<void> => {
         patchState(store, setAllEntities(await transactionsRepository.getAll(), transactionConfig));
+      },
+
+      /** Receives the current savings-account IBANs from `AccountsStore` (TICKET-TRF-02). */
+      setOwnSavingsIbans: (ownSavingsIbans: ReadonlySet<string>): void => {
+        patchState(store, { ownSavingsIbans });
       },
 
       addMany: (transactions: Transaction[]): void => {

@@ -59,4 +59,9 @@ export class DashboardOverviewComponent {
     const rate = this.statsStore.periodStats().savingsRate;
     return rate == null ? '—' : PERCENT_FORMATTER.format(rate);
   });
+
+  /** The absolute savings figure behind the rate — money moved into savings this period (TICKET-TRF-02). */
+  protected readonly savingsSubLabel = computed(
+    () => `${EUR_FORMATTER.format(this.statsStore.periodStats().savings)} to savings`,
+  );
 }

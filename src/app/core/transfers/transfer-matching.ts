@@ -63,6 +63,28 @@ export const isLikelyTransfer = (
   !!transaction.counterpartyIban &&
   ownIbans.has(transaction.counterpartyIban);
 
+/** The IBANs of the user's own `savings`-type accounts — the set `isSavingsMovement` checks against. */
+export const savingsAccountIbans = (accounts: Account[]): Set<string> =>
+  new Set(
+    accounts
+      .filter((account) => account.type === 'savings')
+      .map((account) => account.iban)
+      .filter((iban): iban is string => !!iban),
+  );
+
+/**
+ * Flags a movement whose counterparty is one of the user's own **savings** accounts (TICKET-TRF-02,
+ * extends FR-TRF-1). One predicate covers both cases the ticket names: an unlinked one-sided movement
+ * to a savings IBAN, and the spending-side leg of an IBAN-linked transfer (which carries the savings
+ * account as its counterparty). The savings-side leg of a linked pair points back at the spending
+ * account, so it is never flagged here — keeping the pair from being counted twice. Sign/direction is
+ * left to the caller (a negative amount is money moved *into* savings, a positive one a withdrawal).
+ */
+export const isSavingsMovement = (
+  transaction: Transaction,
+  ownSavingsIbans: ReadonlySet<string>,
+): boolean => !!transaction.counterpartyIban && ownSavingsIbans.has(transaction.counterpartyIban);
+
 /** High confidence: counterparty IBAN corroborates the pair — linked even if more than one IBAN-confirmed candidate exists (closest by date wins). */
 const findHighConfidenceMatches = (
   unlinked: Transaction[],

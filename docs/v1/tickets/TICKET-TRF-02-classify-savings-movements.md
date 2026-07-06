@@ -33,20 +33,20 @@ Money that leaves a spending account and lands in one of my own **savings** acco
 
 ## Acceptance criteria
 
-- [ ] A single shared helper (e.g. `isSavingsMovement(transaction, accountsById, ownSavingsIbans)` in `core/stats` or `core/transfers`) decides savings classification for both the linked and one-sided cases; the stats functions and the uncategorised surfacing all call it (no duplicated logic).
-- [ ] `computePeriodStats()` adds a `savings` figure and excludes savings movements from `expense` (and from `income` on the reverse leg); `net`/`savingsRate` are recomputed consistently and the meaning of `savingsRate` is documented against the new figure.
-- [ ] `computeCategoryBreakdown()` excludes savings movements from `expenseByCategory` / `incomeBySource` so they never appear as an (uncategorised) expense entry.
-- [ ] A savings movement is **excluded from every "needs a category" surface**, all of which currently key off `categoryId == null`:
+- [x] A single shared helper (e.g. `isSavingsMovement(transaction, accountsById, ownSavingsIbans)` in `core/stats` or `core/transfers`) decides savings classification for both the linked and one-sided cases; the stats functions and the uncategorised surfacing all call it (no duplicated logic).
+- [x] `computePeriodStats()` adds a `savings` figure and excludes savings movements from `expense` (and from `income` on the reverse leg); `net`/`savingsRate` are recomputed consistently and the meaning of `savingsRate` is documented against the new figure.
+- [x] `computeCategoryBreakdown()` excludes savings movements from `expenseByCategory` / `incomeBySource` so they never appear as an (uncategorised) expense entry.
+- [x] A savings movement is **excluded from every "needs a category" surface**, all of which currently key off `categoryId == null`:
   - the **"still need a category" counter** (`uncategorisedCount` / `uncategorisedTransactions` in `transactions.store.ts`) no longer counts savings movements;
   - the **"uncategorised" transactions filter** (`categoryId === 'uncategorised'`) no longer lists savings movements;
   - the dashboard action queue / backlog no longer presents them as needing a category.
   Exclusion goes through the shared `isSavingsMovement` helper, not a second `categoryId == null` check, so the counter, filter, and backlog stay in agreement.
-- [ ] Detection covers both paths: (a) linked transfer with a `savings`-type counterpart account, and (b) unlinked one-sided movement to an own `savings`-account IBAN (`isLikelyTransfer` + counterparty resolves to a savings account).
-- [ ] Account balances still include savings movements on both sides (transfers/savings are **not** excluded from balances) — verified unchanged.
-- [ ] No Dexie schema change is required; if one is unavoidable it is **additive** (new `.version(n+1)`), and any persistence goes through the store/repository, never a direct table write.
-- [ ] `categoryManual` handling is preserved: if the user *did* manually set a category, that is respected and not stripped (a manual category simply isn't required).
-- [ ] Unit tests cover: linked-to-savings excluded from expense and reported as savings; one-sided likely-transfer-to-savings excluded from expense (before any pair arrives); reverse leg (savings → checking) not counted as income; a normal expense to a non-savings account still counts as expense; savings movement absent from `uncategorisedCount`/`uncategorisedTransactions` and from the `'uncategorised'` filter results (while a genuinely uncategorised spend still appears in both); balances unchanged.
-- [ ] Verified live in the browser: a movement to a savings account shows under the savings figure (not expense) on the dashboard, is not counted by the "still need a category" counter, and does not appear when the transactions "uncategorised" filter is applied.
+- [x] Detection covers both paths: (a) linked transfer with a `savings`-type counterpart account, and (b) unlinked one-sided movement to an own `savings`-account IBAN (`isLikelyTransfer` + counterparty resolves to a savings account).
+- [x] Account balances still include savings movements on both sides (transfers/savings are **not** excluded from balances) — verified unchanged.
+- [x] No Dexie schema change is required; if one is unavoidable it is **additive** (new `.version(n+1)`), and any persistence goes through the store/repository, never a direct table write.
+- [x] `categoryManual` handling is preserved: if the user *did* manually set a category, that is respected and not stripped (a manual category simply isn't required).
+- [x] Unit tests cover: linked-to-savings excluded from expense and reported as savings; one-sided likely-transfer-to-savings excluded from expense (before any pair arrives); reverse leg (savings → checking) not counted as income; a normal expense to a non-savings account still counts as expense; savings movement absent from `uncategorisedCount`/`uncategorisedTransactions` and from the `'uncategorised'` filter results (while a genuinely uncategorised spend still appears in both); balances unchanged.
+- [x] Verified live in the browser: a movement to a savings account shows under the savings figure (not expense) on the dashboard, is not counted by the "still need a category" counter, and does not appear when the transactions "uncategorised" filter is applied.
 
 ## Notes
 

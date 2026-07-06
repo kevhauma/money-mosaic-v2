@@ -13,8 +13,11 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   ...overrides,
 });
 
+const SAVINGS_IBAN = 'BE00SAVINGS';
+const ownSavings = new Set([SAVINGS_IBAN]);
+
 describe('computePeriodStats', () => {
-  it('sums income and expense separately and computes net + savings rate', () => {
+  it('sums income and expense separately and computes net', () => {
     const transactions = [
       transaction({ id: 1, amount: 1000 }),
       transaction({ id: 2, amount: -300 }),
@@ -24,8 +27,9 @@ describe('computePeriodStats', () => {
     expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31')).toEqual({
       income: 1000,
       expense: 500,
+      savings: 0,
       net: 500,
-      savingsRate: 0.5,
+      savingsRate: 0,
     });
   });
 
@@ -38,8 +42,71 @@ describe('computePeriodStats', () => {
     expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31')).toEqual({
       income: 1000,
       expense: 0,
+      savings: 0,
       net: 1000,
-      savingsRate: 1,
+      savingsRate: 0,
+    });
+  });
+
+  it('reports a one-sided movement to a savings IBAN as savings, not expense (TICKET-TRF-02)', () => {
+    const transactions = [
+      transaction({ id: 1, amount: 1000 }),
+      // Unlinked (transferId null) outbound movement whose counterparty is an own savings account.
+      transaction({ id: 2, amount: -200, counterpartyIban: SAVINGS_IBAN }),
+    ];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31', ownSavings)).toEqual({
+      income: 1000,
+      expense: 0,
+      savings: 200,
+      net: 1000,
+      savingsRate: 0.2,
+    });
+  });
+
+  it('reports a linked transfer to savings as savings without double-counting the savings-side leg (TICKET-TRF-02)', () => {
+    const transactions = [
+      transaction({ id: 1, amount: 1000 }),
+      // Spending-side leg: counterparty is the savings account.
+      transaction({ id: 2, amount: -200, transferId: 9, counterpartyIban: SAVINGS_IBAN }),
+      // Savings-side leg: sits in the savings account, counterparty points back at checking.
+      transaction({ id: 3, amount: 200, transferId: 9, counterpartyIban: 'BE00CHECKING' }),
+    ];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31', ownSavings)).toEqual({
+      income: 1000,
+      expense: 0,
+      savings: 200,
+      net: 1000,
+      savingsRate: 0.2,
+    });
+  });
+
+  it('does not count a withdrawal from savings as income — the reverse leg nets savings down (TICKET-TRF-02)', () => {
+    const transactions = [
+      transaction({ id: 1, amount: 1000 }),
+      // Inbound from the savings account (money withdrawn back to checking).
+      transaction({ id: 2, amount: 200, counterpartyIban: SAVINGS_IBAN }),
+    ];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31', ownSavings)).toEqual({
+      income: 1000,
+      expense: 0,
+      savings: -200,
+      net: 1000,
+      savingsRate: -0.2,
+    });
+  });
+
+  it('still counts an expense to a non-savings counterparty as expense (TICKET-TRF-02)', () => {
+    const transactions = [transaction({ id: 1, amount: -50, counterpartyIban: 'BE00SHOP' })];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31', ownSavings)).toEqual({
+      income: 0,
+      expense: 50,
+      savings: 0,
+      net: -50,
+      savingsRate: null,
     });
   });
 
@@ -53,6 +120,7 @@ describe('computePeriodStats', () => {
     expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31')).toEqual({
       income: 0,
       expense: 300,
+      savings: 0,
       net: -300,
       savingsRate: null,
     });

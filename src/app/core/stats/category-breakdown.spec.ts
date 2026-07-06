@@ -70,6 +70,28 @@ describe('computeCategoryBreakdown', () => {
     ]);
   });
 
+  it('excludes movements to a savings account so they never surface as an uncategorised expense (TICKET-TRF-02)', () => {
+    const categoriesById = new Map<number, Category>();
+    const transactions = [
+      // Uncategorised movement to an own savings account — must NOT appear as an expense entry.
+      transaction({ id: 1, amount: -200, counterpartyIban: 'BE00SAVINGS' }),
+      // A genuinely uncategorised spend still shows up.
+      transaction({ id: 2, amount: -30, counterpartyIban: 'BE00SHOP' }),
+    ];
+
+    const { expenseByCategory } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+      new Set(['BE00SAVINGS']),
+    );
+
+    expect(expenseByCategory).toEqual([
+      { categoryId: null, total: 30, share: 1, transactionCount: 1 },
+    ]);
+  });
+
   it('excludes transfer-linked transactions', () => {
     const categoriesById = new Map<number, Category>([[1, category({ id: 1 })]]);
     const transactions = [transaction({ id: 1, amount: -100, categoryId: 1, transferId: 5 })];

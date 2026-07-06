@@ -24,7 +24,7 @@
     link="/transactions"
     [queryParams]="drilldownParams()"
   />
-  <mm-stat-card label="Savings rate" [value]="savingsRateValue()" />
+  <mm-stat-card label="Savings rate" [value]="savingsRateValue()" [subLabel]="savingsSubLabel()" />
 </div>
 
 <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

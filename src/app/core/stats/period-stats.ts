@@ -1,28 +1,47 @@
 import type { Transaction } from '@/core/data-access';
+import { isSavingsMovement } from '@/core/transfers';
 
 export type PeriodStats = {
   income: number;
   expense: number;
+  /**
+   * Net money moved into own savings accounts in the period — deposits count positively, withdrawals
+   * negatively, so a round-trip nets to zero. Excluded from `income`/`expense` on both legs (TICKET-TRF-02).
+   */
+  savings: number;
   net: number;
-  /** (income-expense)/income; null when income is zero (render as "—" rather than divide by zero). */
+  /** savings/income — the share of income deliberately moved into savings; null when income is zero (render as "—" rather than divide by zero). */
   savingsRate: number | null;
 };
 
 const inRange = (transaction: Transaction, from: string, to: string): boolean =>
   transaction.bookingDate >= from && transaction.bookingDate <= to;
 
-/** Income/expense/net/savings-rate for [from, to], excluding linked transfers on both sides (FR-STAT-2). */
+/**
+ * Income/expense/savings/net for [from, to]. Linked transfers between own accounts are excluded from
+ * income/expense (FR-STAT-2); movements to/from an own savings account are reported under a separate
+ * `savings` figure rather than as expense/income, whether linked or still one-sided (TICKET-TRF-02).
+ */
 export const computePeriodStats = (
   transactions: Transaction[],
   from: string,
   to: string,
+  ownSavingsIbans: ReadonlySet<string> = new Set(),
 ): PeriodStats => {
   let income = 0;
   let expense = 0;
+  let savings = 0;
 
   for (const transaction of transactions) {
-    if (transaction.transferId != null) continue;
     if (!inRange(transaction, from, to)) continue;
+
+    if (isSavingsMovement(transaction, ownSavingsIbans)) {
+      // Money moved into savings (negative amount) adds to savings; a withdrawal (positive amount)
+      // subtracts, so an emergency withdrawal isn't mistaken for income and round-trips net to zero.
+      savings += -transaction.amount;
+      continue;
+    }
+    if (transaction.transferId != null) continue;
 
     if (transaction.amount > 0) {
       income += transaction.amount;
@@ -34,7 +53,8 @@ export const computePeriodStats = (
   return {
     income,
     expense,
+    savings,
     net: income - expense,
-    savingsRate: income === 0 ? null : (income - expense) / income,
+    savingsRate: income === 0 ? null : savings / income,
   };
 };
