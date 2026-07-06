@@ -1,4 +1,4 @@
-# Money Mosaic — v1.5 Refinements (User Stories)
+# Money Mosaic — v1.1 Joint accounts
 
 Split out of the v1.5 line item in [../v2/requirements.md](../v2/requirements.md) — *"joint-account splitting (configurable share, own-account deposits excluded)"*. These stories refine v1 behaviour for **joint accounts**: how much of a shared pot counts as *my* net worth, how money arriving from a partner/other person is kept out of my income, and the aggregation/matching pitfalls that follow. FR/NFR IDs trace back to [../v1/finance-app-spec.md](../v1/finance-app-spec.md); where behaviour changes a shipped FR, the story says so explicitly.
 

@@ -1,4 +1,4 @@
-# Money Mosaic — v1.5 Tickets
+# Money Mosaic — v1.1 Tickets
 
 Tickets for the **joint-account refinement** user stories in [../user-stories.md](../user-stories.md). Each ticket carries a description, current situation (as-is), desired result (to-be), and detailed acceptance criteria. FR/NFR IDs trace back to [../../v1/finance-app-spec.md](../../v1/finance-app-spec.md).
 
