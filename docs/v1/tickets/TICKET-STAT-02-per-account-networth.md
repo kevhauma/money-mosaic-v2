@@ -1,36 +1,57 @@
-# TICKET-STAT-02 — Per-account net-worth-over-time chart
+# TICKET-STAT-02 — Account balance-history charts (detail + overview)
 
-- **Area:** Statistics & Dashboard
-- **Traceability:** extends FR-STAT-4
-- **Source story:** user-stories.md §6 — *"As a saver, I want a per-account net-worth-over-time chart alongside the combined one, so I can see how each account individually trends, not just my total."*
+- **Area:** Accounts (Statistics-flavoured)
+- **Traceability:** extends FR-STAT-4 (net-worth-over-time) and FR-ACC-3 (balance derived from opening balance + transactions)
+- **Source story:** user-stories.md §6 — *"As a saver, I want a full-history balance chart on each account's detail page, plus a stacked all-accounts net-worth-history chart (toggleable per account) on the accounts overview, so I can see how each account's saldo has trended over its whole life and how the accounts add up."*
 
 ## Description
 
-Show how each account's net worth trends over time, not just the combined total — either as multiple lines on the trend chart or a per-account breakdown the user can toggle.
+Give each account a **full-history balance (saldo) chart** on its detail page, and give the accounts **overview** a **stacked-area chart of every account's balance over its full history**, where the stack totals combined net worth and individual accounts can be toggled on/off. This lives entirely in the **Accounts** feature — the Dashboard trend chart is intentionally left as-is (income/expense bars + one combined net-worth line) so the dashboard stays a general income/expense view and doesn't get cluttered with per-account lines.
 
 ## Current situation (as-is)
 
-- [TrendChartPanelComponent](../../../src/app/feature-dashboard/components/trend-chart-panel/trend-chart-panel.component.ts) plots a **single combined** net-worth line: `series` builds one "Net worth" line from `statsStore.netWorthTrend()` (plus Income/Expense bars).
-- There is no per-account net-worth series; the account dimension is aggregated away before charting.
+- [TrendChartPanelComponent](../../../src/app/feature-dashboard/components/trend-chart-panel/trend-chart-panel.component.ts) (Dashboard) plots income/expense bars + a **single combined** net-worth line from `statsStore.netWorthTrend()`. This stays exactly as it is.
+- [AccountsDetailComponent](../../../src/app/feature-accounts/components/accounts-detail/accounts-detail.component.ts) shows the account's **current** balance as a single number, but no history of how it got there.
+- [AccountsOverviewComponent](../../../src/app/feature-accounts/components/accounts-overview/accounts-overview.component.ts) lists accounts with current balances, but no combined history.
+- The stats layer has `computeNetWorthTrend` (combined, range-scoped) but no per-account series, and echarts is currently registered only in the Dashboard lazy chunk ([echarts-setup.ts](../../../src/app/feature-dashboard/echarts-setup.ts)).
 
 ## Desired result (to-be)
 
-- The trend view can show each account's net-worth-over-time as its own line (using the account's colour), alongside — or toggled against — the combined total.
-- Bucketing respects the selected grouping granularity (day/week/month/quarter), same as the combined line (FR-STAT-4).
+**Account detail page** — a balance-over-time line for that one account:
+- Spans the account's **full history** (opening-balance date / first transaction → today), independent of the global topbar date-range and grouping controls.
+- Coloured by the account's configured colour; balance = opening balance + cumulative signed transactions (transfers included, consistent with net-worth/saldo semantics — FR-ACC-3).
+
+**Accounts overview page** — a stacked-area net-worth-history chart:
+- One filled band per account, stacked so the top edge is **combined net worth over time**; each band uses the account's colour with the account name in the legend.
+- Full-history span with the same auto-picked granularity as the detail chart.
+- Clicking a legend entry toggles that account's band in/out (echarts legend selection), keeping it readable as accounts grow.
+
+**Both charts:**
+- **Time scope = full history, own granularity** (decision): the charts ignore the global topbar range/grouping and always show the whole timeline. Granularity is auto-picked from the total span so the buckets stay legible — e.g. daily for short spans, weekly for medium, monthly for multi-year — reusing the existing `date-buckets` helpers rather than a parallel implementation.
+- **Horizontal (time-axis) dataZoom** is enabled on both charts so the user can scrub/zoom into a sub-window of the full history without the buckets getting cramped. Use an [echarts `dataZoom`](https://echarts.apache.org/en/option.html#dataZoom) bound to the x (category/time) axis — both an `inside` zoom (mouse-wheel/drag/pinch) and a `slider` handle beneath the chart — with no vertical (y-axis) zoom.
 
 ## Acceptance criteria
 
-- [ ] The stats layer exposes a per-account net-worth-over-time series bucketed by the active granularity, reusing the existing bucketing (`date-buckets` / `netWorthTrend`) rather than a parallel implementation.
-- [ ] Each account renders as its own line, coloured by the account's configured colour, with the account name in the legend.
-- [ ] The combined net-worth line remains available (kept alongside, or via a combined/per-account toggle — pick one and make it clear in the UI).
-- [ ] Per-account lines respect the selected date range and grouping granularity and update reactively on range/grouping change and on any transaction edit (FR-STAT-5).
-- [ ] Archived accounts are handled sensibly (e.g. excluded or shown per existing dashboard convention) — decision recorded.
-- [ ] Clicking/drilling from a point still navigates to the underlying transactions (FR-STAT-6); per-account drill-down carries the account filter in the query params.
-- [ ] Legibility holds with many accounts (e.g. line selection via legend); the chart stays readable and performant.
-- [ ] The `angular.json` bundle budget is not raised (Hard rules); echarts is already a dependency so no new heavy import is expected.
-- [ ] Unit tests cover: per-account series bucketing for ≥2 accounts, colour/legend mapping, granularity/range reactivity, and combined line still present.
+- [ ] The stats layer exposes a **per-account net-worth/balance-over-time series** bucketed by a given granularity, reusing the existing bucketing (`date-buckets` + `computeNetWorthTrend`) rather than a parallel implementation. The single-account detail chart and the stacked overview chart both consume this one function.
+- [ ] A pure helper computes the **full-history [from, to] range** (earliest of opening-balance date / first transaction → today) — a single-account variant for the detail chart and an all-accounts variant for the overview.
+- [ ] A pure helper **auto-picks the granularity** (day/week/month/quarter) from a span length, so short-lived and multi-year accounts both render legibly. Thresholds recorded in the code.
+- [ ] **Account detail:** renders a full-history balance line for that account, coloured by the account's colour, spanning its whole life and independent of the topbar range/grouping.
+- [ ] **Accounts overview:** renders a stacked-area chart where each account is a band in its own colour (name in the legend) and the stacked total equals combined net worth over time; legend clicks toggle individual accounts.
+- [ ] Archived accounts are handled sensibly — **decision recorded** (see Open question 1; resolve before building).
+- [ ] Drill-down (FR-STAT-6): a click still reaches the underlying transactions — the overview navigates to the clicked account (its detail or its account-filtered transactions), and the detail chart drills into that account's transactions for the clicked bucket, carrying the account filter in the query params.
+- [ ] Both charts have a **horizontal (x/time-axis) dataZoom** — an `inside` zoom plus a `slider` beneath the chart, bound to the x axis only (no y-axis zoom) — so the user can scrub into any sub-window of the full history. The default view still shows the whole timeline.
+- [ ] Both charts update reactively (FR-STAT-5) on transaction edits/imports and on adding/removing accounts, via computed signals off the existing stores — no manual invalidation.
+- [ ] The **Dashboard trend chart is unchanged** — still income/expense bars + one combined net-worth line, no per-account series.
+- [ ] The `angular.json` bundle budget is **not raised** (Hard rules): the tree-shaken echarts registration is shared between the Dashboard and Accounts lazy chunks (factored into a shared chunk, not duplicated); stacked area needs no new chart import (`LineChart` + `areaStyle` + `stack`). The only new echarts import is the (lightweight) `DataZoomComponent` for the zoom slider — added once to the shared registration.
+- [ ] Unit tests cover: per-account series for ≥2 accounts, granularity auto-pick for a short vs long span, full-history range calculation, colour/legend mapping, and that the stacked bands sum to the combined net-worth total.
+
+## Open questions (resolve before building)
+
+1. **Archived accounts on the overview stacked chart** — include them (their historical balances are part of past net worth) but let them be toggled off via the legend, or exclude them by default like the dashboard balance strip? Either way the detail chart should still render for an archived account. *Undecided.*
+2. **Negative-balance accounts in a stacked area** (e.g. a credit line) — stacked bands become visually ambiguous when a value goes below zero. Render such accounts as a line instead of a band, allow the stack to dip below zero, or something else? *Undecided.*
 
 ## Notes
 
-- Net worth per account over time = opening balance + cumulative signed transactions up to each bucket boundary (transfers **included**, consistent with net-worth semantics).
-- Watch chart clutter with many accounts; a toggle or legend-driven selection keeps it usable.
+- Balance per account over time = opening balance + cumulative signed transactions up to each bucket boundary (transfers **included**). A transfer between two of the user's own accounts moves balance from one band to another with the stacked total unchanged — consistent with net-worth semantics.
+- **echarts placement:** relocate the tree-shaken registration (currently `feature-dashboard/echarts-setup.ts`) to a shared location both features import, so the Accounts chunk reuses it via a common lazy chunk instead of pulling a second copy of echarts. Add `DataZoomComponent` to the `echarts.use([...])` list there so the x-axis zoom slider works (the current setup registers `LineChart`/`BarChart`/`PieChart` + `Tooltip`/`Grid`/`Legend` but no dataZoom).
+- This ticket deliberately **removes** the earlier "per-account lines on the dashboard trend chart" direction — the dashboard stays general income/expense + combined net worth.
