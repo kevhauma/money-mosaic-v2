@@ -21,12 +21,12 @@ The app-shell effect that mirrors range/grouping state into the URL calls `route
 
 ## Acceptance criteria
 
-- [ ] The URL-mirroring effect in `app.ts` skips `router.navigate` when the computed `from`/`to`/`groupBy` already equal the current `route.snapshot.queryParamMap` values.
-- [ ] Deep-linking (FR-STAT-7) still works: loading a URL with `from`/`to`/`groupBy` hydrates `RangeStore` and does **not** immediately re-navigate.
-- [ ] Changing the range or grouping still updates the URL exactly once per change (still `replaceUrl: true`, `queryParamsHandling: 'merge'`).
-- [ ] No navigation ping-pong with the transactions input-binding work (NG-02) or `RangeStore` updates.
-- [ ] Unit tests cover: no navigation when params already match, and one navigation when `groupBy` changes. Existing app specs still pass.
-- [ ] Verified live in the browser: changing range/grouping updates the URL; a hard reload of a deep-linked URL doesn't cause a redundant history/navigation churn (no console warnings).
+- [x] The URL-mirroring effect in `app.ts` skips `router.navigate` when the computed `from`/`to`/`groupBy` already equal the current `route.snapshot.queryParamMap` values.
+- [x] Deep-linking (FR-STAT-7) still works: loading a URL with `from`/`to`/`groupBy` hydrates `RangeStore` and does **not** immediately re-navigate.
+- [x] Changing the range or grouping still updates the URL exactly once per change (still `replaceUrl: true`, `queryParamsHandling: 'merge'`).
+- [x] No navigation ping-pong with the transactions input-binding work (NG-02) or `RangeStore` updates.
+- [x] Unit tests cover: no navigation when params already match, and one navigation when `groupBy` changes. Existing app specs still pass.
+- [x] Verified live in the browser: changing range/grouping updates the URL; a hard reload of a deep-linked URL doesn't cause a redundant history/navigation churn (no console warnings).
 
 ## Notes
 

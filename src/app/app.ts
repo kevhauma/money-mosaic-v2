@@ -83,6 +83,17 @@ export class App {
         [STAT_QUERY_PARAMS.to]: this.rangeStore.to(),
         [STAT_QUERY_PARAMS.groupBy]: this.rangeStore.groupBy(),
       };
+
+      // Skip navigating when the URL already mirrors this state — otherwise the initial
+      // read-in triggers an immediate redundant navigation right after construction.
+      const currentParams = this.route.snapshot.queryParamMap;
+      const alreadyMirrored = Object.entries(queryParams).every(
+        ([key, value]) => currentParams.get(key) === value,
+      );
+      if (alreadyMirrored) {
+        return;
+      }
+
       void this.router.navigate([], {
         queryParams,
         queryParamsHandling: 'merge',
