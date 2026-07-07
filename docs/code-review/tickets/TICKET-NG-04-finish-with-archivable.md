@@ -27,13 +27,13 @@ Either way, no dead code and no purely-in-memory `setArchived` that silently ski
 
 ## Acceptance criteria
 
-- [ ] A decision between Option A and Option B is recorded in the ticket/PR; the codebase reflects exactly one.
-- [ ] `setArchived` no longer exists in its current form: either removed (Option A) or replaced by a persistence-backed `archive`/`unarchive` (Option B).
-- [ ] No archive path patches store state without going through the repository (per CLAUDE.md: stores persist via repositories, never raw Dexie) — an in-memory-only archive toggle must not remain reachable.
-- [ ] `activeAccounts`/`archivedAccounts` and `activeCategories`/`archivedCategories` still resolve correctly.
-- [ ] If Option B: `AccountsStore` and `CategoriesStore` drop their duplicated `archiveX`/`unarchiveX` pairs in favour of the shared method; if Option A: the stores are unchanged and only `with-archivable.ts` shrinks.
-- [ ] Unit tests cover the archive/unarchive round-trip through whichever store keeps it, asserting persistence (repository called) and the active/archived filters updating. Existing store specs still pass.
-- [ ] Verified live in the browser: archiving and unarchiving an account and a category still persists across reload.
+- [x] A decision between Option A and Option B is recorded in the ticket/PR; the codebase reflects exactly one. — **Option A** chosen: the two stores' `archiveX`/`unarchiveX` pairs are minimal (one-line delegation to their own repository-backed `updateX`) and `withArchivable` is composed before those methods exist, so threading a persist callback into the feature (Option B) would add complexity for no real duplication removed.
+- [x] `setArchived` no longer exists in its current form: either removed (Option A) or replaced by a persistence-backed `archive`/`unarchive` (Option B). — removed from [with-archivable.ts](../../../src/app/shared/utils/with-archivable.ts).
+- [x] No archive path patches store state without going through the repository (per CLAUDE.md: stores persist via repositories, never raw Dexie) — an in-memory-only archive toggle must not remain reachable. — the only remaining archive paths are `AccountsStore.archiveAccount`/`unarchiveAccount` and `CategoriesStore.archiveCategory`/`unarchiveCategory`, which persist via `updateAccount`/`updateCategory` → repository.
+- [x] `activeAccounts`/`archivedAccounts` and `activeCategories`/`archivedCategories` still resolve correctly. — unchanged (still sourced from `withArchivable`'s `activeEntities`/`archivedEntities`); verified by unit tests and live browser check.
+- [x] If Option B: `AccountsStore` and `CategoriesStore` drop their duplicated `archiveX`/`unarchiveX` pairs in favour of the shared method; if Option A: the stores are unchanged and only `with-archivable.ts` shrinks. — Option A: stores unchanged, `with-archivable.ts` shrank (dropped `setArchived`, `withMethods`, unused `patchState`/`EntityId` imports).
+- [x] Unit tests cover the archive/unarchive round-trip through whichever store keeps it, asserting persistence (repository called) and the active/archived filters updating. Existing store specs still pass. — added to [accounts.store.spec.ts](../../../src/app/feature-accounts/accounts.store.spec.ts) and new [categories.store.spec.ts](../../../src/app/feature-categories/categories.store.spec.ts); full suite (`ng lint` + `ng test` + `ng build --configuration development`) passes, 214 tests green.
+- [x] Verified live in the browser: archiving and unarchiving an account and a category still persists across reload. — archived/unarchived "Everyday Checking" (account) and "Shopping" (category) via the UI; confirmed each disappeared/reappeared from the active list across a full page reload (IndexedDB persistence).
 
 ## Notes
 

@@ -35,7 +35,10 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
 });
 
 describe('AccountsStore: savings movements still count toward balances (TICKET-TRF-02)', () => {
-  const accountsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const accountsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
   const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
 
   beforeEach(() => {
@@ -66,5 +69,47 @@ describe('AccountsStore: savings movements still count toward balances (TICKET-T
     // savings 0 + 200.
     expect(accountsStore.balancesById().get(1)).toBe(800);
     expect(accountsStore.balancesById().get(2)).toBe(200);
+  });
+});
+
+describe('AccountsStore: archive/unarchive round-trip (TICKET-NG-04)', () => {
+  const accountsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
+    });
+  });
+
+  it('persists archiveAccount through the repository and updates the active/archived filters', async () => {
+    accountsRepository.getAll.mockResolvedValue([account({ id: 1, archived: false })]);
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    await accountsStore.archiveAccount(1);
+
+    expect(accountsRepository.update).toHaveBeenCalledWith(1, { archived: true });
+    expect(accountsStore.activeAccounts()).toHaveLength(0);
+    expect(accountsStore.archivedAccounts()).toHaveLength(1);
+  });
+
+  it('persists unarchiveAccount through the repository and updates the active/archived filters', async () => {
+    accountsRepository.getAll.mockResolvedValue([account({ id: 1, archived: true })]);
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    await accountsStore.unarchiveAccount(1);
+
+    expect(accountsRepository.update).toHaveBeenCalledWith(1, { archived: false });
+    expect(accountsStore.activeAccounts()).toHaveLength(1);
+    expect(accountsStore.archivedAccounts()).toHaveLength(0);
   });
 });
