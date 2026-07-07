@@ -10,21 +10,11 @@ Item IDs are `CR2-<section>.<n>` for traceability from [user-stories.md](./user-
 
 ## 1. Developer experience — docs & repo hygiene
 
-### 1.1 The docs reorg broke every documented entry point to the spec
-
-Commit `1d97d49` renamed `docs/v1` → `docs/v1.0_foundation` (and `docs/v1.5`/`v1.6` → `v1.1_joint_accounts`/`v1.2_auto_categorise`) but didn't update anything pointing at the old paths:
-
-- [CLAUDE.md:25-26](../../CLAUDE.md) — the "Where knowledge lives" table sends every session to `docs/v1/finance-app-spec.md`, `docs/v1/user-stories.md`, and `docs/v1/ui-layout-spec.md`, none of which exist.
-- [.claude/skills/project-map/SKILL.md:39-40](../../.claude/skills/project-map/SKILL.md) — same dead `docs/v1/` paths, in the skill whose whole job is telling agents where things live.
-- [docs/code-review/user-stories.md:3](../code-review/user-stories.md) — the "v1 build checklist" link (`../v1/user-stories.md`) is dead, and the `spec-navigator` subagent's source material moved out from under it.
-
-This is the highest-leverage DX fix in the review: every human and agent onboarding path routes through these files, and a wrong pointer is worse than no pointer — readers (and subagents like `spec-navigator`) fail silently or re-explore. → [TICKET-DX-01](./tickets/TICKET-DX-01-fix-stale-doc-paths.md)
-
 ### 1.2 Commit messages describe work that didn't happen
 
 Recent history misleads `git log`/`git blame` archaeology:
 
-- `80af6be` — *"feat: Add in-browser neural-net transaction categorizer with TensorFlow.js integration"* — the diff is one markdown file (`docs/v1.6/auto-categorise.md`). There is no TensorFlow.js anywhere in `package.json` or `src/`.
+- `80af6be` — *"feat: Add in-browser neural-net transaction categorizer with TensorFlow.js integration"* — the diff is one markdown file (`docs/v1.2_auto_categorise/auto-categorise.md`). There is no TensorFlow.js anywhere in `package.json` or `src/`.
 - `1d97d49` — *"feat: Implement neutral category kind for partner contributions in joint accounts"* (plus four more "Implemented/Introduced/Enhanced" bullets) — the diff is folder renames and two link tweaks. None of the described behaviour exists in code.
 - `ed99f72`, `ff99da6`, `ce1dd4c` — docs-only changes typed as `feat:`.
 

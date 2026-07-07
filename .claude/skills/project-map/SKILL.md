@@ -36,6 +36,6 @@ Pure logic files (`*-matching.ts`, `stats/*.ts`, `csv-row-mapper.ts`, `fingerpri
 
 ## Docs
 
-- `docs/v1/finance-app-spec.md` — functional requirements (FR-TXN-*, FR-CAT-*, FR-TRF-*, FR-IMP-*...), referenced from code comments.
-- `docs/v1/user-stories.md`, `docs/v1/ui-layout-spec.md` — v1 scope and layout.
+- `docs/v1.0_foundation/finance-app-spec.md` — functional requirements (FR-TXN-*, FR-CAT-*, FR-TRF-*, FR-IMP-*...), referenced from code comments.
+- `docs/v1.0_foundation/user-stories.md`, `docs/v1.0_foundation/ui-layout-spec.md` — v1 scope and layout.
 - `docs/v2/requirements.md` — deferred v2+ backlog (data management, cross-cutting polish).

@@ -4,7 +4,6 @@ Tickets for the DX/maintainability/SOLID backlog stories in [../user-stories.md]
 
 | Ticket | Area | Title | Source |
 |---|---|---|---|
-| [DX-01](./TICKET-DX-01-fix-stale-doc-paths.md) | Docs / DX | Fix stale `docs/v1` paths after the docs reorg | CR2-1.1 |
 | [SOLID-01](./TICKET-SOLID-01-split-transactions-overview.md) | SRP (Transactions) | Split `TransactionsOverviewComponent` into filter bar + selection model | CR2-2.1 |
 | [SOLID-02](./TICKET-SOLID-02-type-import-domain.md) | OCP / type safety (Import) | Single-source the import domain unions (`signConvention`, `dateFormat`, `encoding`) | CR2-3.1, CR2-3.2 |
 | [SOLID-03](./TICKET-SOLID-03-extract-transfer-cleanup-cascade.md) | DRY (Core) | Extract the shared transfer-cleanup cascade helper | CR2-4.2, CR2-4.3 |
@@ -12,7 +11,7 @@ Tickets for the DX/maintainability/SOLID backlog stories in [../user-stories.md]
 | [TEST-01](./TICKET-TEST-01-orchestrator-store-specs.md) | Testing | Spec the four untested orchestrator stores | CR2-5.1 |
 | [CLEANUP-01](./TICKET-CLEANUP-01-fallow-verified-dead-code.md) | Dead code | Remove Fallow-verified dead code (and correct stale CR-6.2) | CR2-6.4 |
 
-Suggested order: **DX-01** (independent, 10 minutes) → **CLEANUP-01** (independent, ~10 lines) → **TEST-01** (safety net for the rest) → **SOLID-02 / SOLID-03** (small, independent) → **SOLID-04** → **SOLID-01** (after or with [NG-02](../../code-review/tickets/TICKET-NG-02-overview-input-binding.md)).
+Suggested order: **CLEANUP-01** (independent, ~10 lines) → **TEST-01** (safety net for the rest) → **SOLID-02 / SOLID-03** (small, independent) → **SOLID-04** → **SOLID-01** (after or with [NG-02](../../code-review/tickets/TICKET-NG-02-overview-input-binding.md)).
 
 ## Definition of Done (applies to every ticket)
 
