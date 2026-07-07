@@ -18,112 +18,22 @@
 
 <app-transfer-review />
 
-<form
-  [formGroup]="filterForm"
-  class="mb-4 grid grid-cols-2 gap-3 rounded-box border border-base-300 bg-base-100 p-4 sm:grid-cols-3 lg:grid-cols-6"
->
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Account</legend>
-    <mm-select formControlName="accountId" size="sm" class="w-full">
-      <option value="">All accounts</option>
-      @for (account of accountsStore.accounts(); track account.id) {
-        <option [value]="account.id">{{ account.name }}</option>
-      }
-    </mm-select>
-  </fieldset>
+<app-transaction-filters
+  [accountId]="accountId()"
+  [from]="from()"
+  [to]="to()"
+  [categoryId]="categoryId()"
+  (filtersChange)="filters.set($event)"
+/>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">From</legend>
-    <mm-input type="date" formControlName="dateFrom" size="sm" class="w-full" />
-  </fieldset>
-
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">To</legend>
-    <mm-input type="date" formControlName="dateTo" size="sm" class="w-full" />
-  </fieldset>
-
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Category</legend>
-    <mm-select formControlName="categoryId" size="sm" class="w-full">
-      <option value="">All categories</option>
-      <option value="uncategorised">Uncategorised</option>
-      @for (category of categoriesStore.activeCategories(); track category.id) {
-        <option [value]="category.id">{{ category.name }}</option>
-      }
-    </mm-select>
-  </fieldset>
-
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Min amount</legend>
-    <mm-input type="number" step="0.01" formControlName="amountMin" size="sm" class="w-full" />
-  </fieldset>
-
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Max amount</legend>
-    <mm-input type="number" step="0.01" formControlName="amountMax" size="sm" class="w-full" />
-  </fieldset>
-
-  <fieldset class="fieldset col-span-2 sm:col-span-3 lg:col-span-5">
-    <legend class="fieldset-legend">Search</legend>
-    <mm-input
-      type="text"
-      formControlName="text"
-      size="sm"
-      class="w-full"
-      placeholder="Description or counterparty"
-    />
-  </fieldset>
-
-  <div class="flex items-end">
-    <mm-button
-      variant="ghost"
-      size="sm"
-      class="w-full"
-      [disabled]="!hasActiveFilters()"
-      (click)="clearFilters()"
-    >
-      <ng-icon name="tablerFilterOff" size="16" aria-hidden="true" />
-      Clear
-    </mm-button>
-  </div>
-</form>
-
-@if (selectionCount() > 0) {
-  <div
-    class="mb-4 flex flex-wrap items-center gap-3 rounded-box border border-primary/40 bg-primary/5 p-3"
-  >
-    <span class="font-medium">
-      <ng-icon name="tablerTag" size="16" aria-hidden="true" class="align-text-bottom" />
-      {{ selectionCount() }} selected
-    </span>
-
-    <div class="flex items-end gap-2">
-      <mm-select [formControl]="bulkCategoryControl" size="sm">
-        <option value="">Assign category…</option>
-        @for (category of categoriesStore.activeCategories(); track category.id) {
-          <option [value]="category.id">{{ category.name }}</option>
-        }
-      </mm-select>
-      <mm-button
-        color="primary"
-        size="sm"
-        [disabled]="bulkCategoryControl.value === ''"
-        (click)="applyBulkCategory()"
-      >
-        Apply
-      </mm-button>
-    </div>
-
-    <div class="ms-auto flex items-center gap-2">
-      <mm-button variant="ghost" size="sm" (click)="selectAllFiltered()">
-        Select all {{ filteredTransactions().length }}
-      </mm-button>
-      <mm-button variant="ghost" size="sm" (click)="clearSelection()">
-        <ng-icon name="tablerX" size="16" aria-hidden="true" />
-        Clear
-      </mm-button>
-    </div>
-  </div>
+@if (selection.count() > 0) {
+  <app-transaction-bulk-bar
+    [count]="selection.count()"
+    [filteredCount]="filteredTransactions().length"
+    (applyCategory)="applyBulkCategory($event)"
+    (selectAllRequested)="selectAllFiltered()"
+    (clearRequested)="selection.clear()"
+  />
 }
 
 @if (filteredTransactions().length === 0) {
@@ -162,7 +72,7 @@
                 type="checkbox"
                 class="checkbox checkbox-sm"
                 [checked]="row.selected"
-                (change)="toggleSelected(row.transaction.id!)"
+                (change)="selection.toggle(row.transaction.id!)"
               />
             </td>
             <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>

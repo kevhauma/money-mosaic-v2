@@ -1,0 +1,35 @@
+<div
+  class="mb-4 flex flex-wrap items-center gap-3 rounded-box border border-primary/40 bg-primary/5 p-3"
+>
+  <span class="font-medium">
+    <ng-icon name="tablerTag" size="16" aria-hidden="true" class="align-text-bottom" />
+    {{ count() }} selected
+  </span>
+
+  <div class="flex items-end gap-2">
+    <mm-select [formControl]="categoryControl" size="sm">
+      <option value="">Assign category…</option>
+      @for (category of categoriesStore.activeCategories(); track category.id) {
+        <option [value]="category.id">{{ category.name }}</option>
+      }
+    </mm-select>
+    <mm-button
+      color="primary"
+      size="sm"
+      [disabled]="categoryControl.value === ''"
+      (click)="apply()"
+    >
+      Apply
+    </mm-button>
+  </div>
+
+  <div class="ms-auto flex items-center gap-2">
+    <mm-button variant="ghost" size="sm" (click)="selectAllRequested.emit()">
+      Select all {{ filteredCount() }}
+    </mm-button>
+    <mm-button variant="ghost" size="sm" (click)="clearRequested.emit()">
+      <ng-icon name="tablerX" size="16" aria-hidden="true" />
+      Clear
+    </mm-button>
+  </div>
+</div>

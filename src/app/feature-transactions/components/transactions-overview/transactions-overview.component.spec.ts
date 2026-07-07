@@ -3,22 +3,32 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AccountsRepository, TransactionsRepository, type Transaction } from '@/core/data-access';
 import { AccountsStore } from '@/feature-accounts';
+import type { SelectionModel } from '@/shared/utils';
+import type { TransactionFilters } from '../../transaction-filters';
 import { TransactionsStore } from '../../transactions.store';
 import { TransactionsOverviewComponent } from './transactions-overview.component';
 
-/** Protected surface we reach into for selection/bulk assertions. */
+/** Protected surface we reach into for selection/bulk/filter assertions. */
 type Internals = {
-  selectionCount: () => number;
+  selection: SelectionModel<number>;
   canLinkSelection: () => boolean;
   allFilteredSelected: () => boolean;
   filteredTransactions: () => Transaction[];
+  filters: { set: (value: TransactionFilters) => void };
   pagination: { pagedItems: () => Transaction[] };
-  bulkCategoryControl: { setValue: (value: string) => void };
-  filterForm: { patchValue: (value: Record<string, string>) => void };
-  toggleSelected: (id: number) => void;
   selectAllFiltered: () => void;
-  clearSelection: () => void;
-  applyBulkCategory: () => Promise<void>;
+  applyBulkCategory: (categoryId: number) => Promise<void>;
+  showUncategorisedOnly: () => void;
+};
+
+const noFilters: TransactionFilters = {
+  accountId: '',
+  dateFrom: '',
+  dateTo: '',
+  categoryId: '',
+  text: '',
+  amountMin: '',
+  amountMax: '',
 };
 
 const transaction = (id: number): Transaction => ({
@@ -45,14 +55,6 @@ describe('TransactionsOverviewComponent', () => {
     getAll: vi.fn().mockResolvedValue([]),
   };
 
-  const setInputs = async (queryParams: Record<string, string>): Promise<void> => {
-    fixture.componentRef.setInput('accountId', queryParams['accountId']);
-    fixture.componentRef.setInput('from', queryParams['from']);
-    fixture.componentRef.setInput('to', queryParams['to']);
-    fixture.componentRef.setInput('categoryId', queryParams['categoryId']);
-    await fixture.whenStable();
-  };
-
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
@@ -65,7 +67,11 @@ describe('TransactionsOverviewComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransactionsOverviewComponent);
-    await setInputs(queryParams);
+    fixture.componentRef.setInput('accountId', queryParams['accountId']);
+    fixture.componentRef.setInput('from', queryParams['from']);
+    fixture.componentRef.setInput('to', queryParams['to']);
+    fixture.componentRef.setInput('categoryId', queryParams['categoryId']);
+    await fixture.whenStable();
   };
 
   const internals = (): Internals => fixture.componentInstance as unknown as Internals;
@@ -75,88 +81,31 @@ describe('TransactionsOverviewComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('pre-fills the filter form from drill-down query params (FR-STAT-6)', async () => {
-    await setup({ from: '2026-07-01', to: '2026-07-31', categoryId: '3', accountId: '2' });
-
-    const filterForm = (fixture.componentInstance as unknown as { filterForm: { value: unknown } })
-      .filterForm;
-    expect(filterForm.value).toEqual({
-      accountId: '2',
-      dateFrom: '2026-07-01',
-      dateTo: '2026-07-31',
-      categoryId: '3',
-      text: '',
-      amountMin: '',
-      amountMax: '',
-    });
-  });
-
-  it('accepts the uncategorised sentinel from a query param', async () => {
-    await setup({ categoryId: 'uncategorised' });
-
-    const filterForm = (
-      fixture.componentInstance as unknown as { filterForm: { value: { categoryId: string } } }
-    ).filterForm;
-    expect(filterForm.value.categoryId).toBe('uncategorised');
-  });
-
-  it('re-seeds the filter form when a same-route drill-down changes the categoryId input (CR-7.2)', async () => {
-    await setup({ categoryId: '3' });
-    const component = internals();
-    component.filterForm.patchValue({ text: 'groceries', amountMin: '10' });
-
-    await setInputs({ categoryId: '7' });
-
-    const filterForm = (
-      fixture.componentInstance as unknown as {
-        filterForm: { value: { categoryId: string; text: string; amountMin: string } };
-      }
-    ).filterForm;
-    expect(filterForm.value.categoryId).toBe('7');
-    // Free-text/amount filters are not URL-backed, so a route-driven reseed leaves them alone (CR-2.4).
-    expect(filterForm.value.text).toBe('groceries');
-    expect(filterForm.value.amountMin).toBe('10');
-  });
-
-  it('selects beyond two rows and reports the count for the bulk-action bar (TICKET-TXN-01)', async () => {
+  it('applies the filters emitted by the filter bar to filteredTransactions', async () => {
     await setup();
-    TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2), transaction(3)]);
+    TestBed.inject(TransactionsStore).addMany([
+      { ...transaction(1), accountId: 1 },
+      { ...transaction(2), accountId: 2 },
+    ]);
     const component = internals();
 
-    component.toggleSelected(1);
-    component.toggleSelected(2);
-    component.toggleSelected(3);
+    component.filters.set({ ...noFilters, accountId: '2' });
 
-    expect(component.selectionCount()).toBe(3);
-    // Transfer linking stays distinct: only ever active at exactly two rows.
-    expect(component.canLinkSelection()).toBe(false);
+    expect(component.filteredTransactions().map((row) => row.id)).toEqual([2]);
   });
 
-  it('keeps transfer linking active only at exactly two selected rows (TICKET-TXN-01)', async () => {
+  it('delegates "show uncategorised only" to the filter bar and re-filters (the alert banner action)', async () => {
     await setup();
-    TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2), transaction(3)]);
+    TestBed.inject(TransactionsStore).addMany([
+      { ...transaction(1), categoryId: 3 },
+      transaction(2),
+    ]);
     const component = internals();
 
-    component.toggleSelected(1);
-    component.toggleSelected(2);
-    expect(component.canLinkSelection()).toBe(true);
+    component.showUncategorisedOnly();
+    await fixture.whenStable();
 
-    component.toggleSelected(3);
-    expect(component.canLinkSelection()).toBe(false);
-  });
-
-  it('select-all covers the whole filtered set, not just the visible page (TICKET-TXN-01)', async () => {
-    await setup();
-    const many = Array.from({ length: 60 }, (_, index) => transaction(index + 1));
-    TestBed.inject(TransactionsStore).addMany(many);
-    const component = internals();
-
-    component.selectAllFiltered();
-
-    expect(component.filteredTransactions().length).toBe(60);
-    expect(component.pagination.pagedItems().length).toBe(50); // one page (PAGE_SIZE)
-    expect(component.selectionCount()).toBe(60);
-    expect(component.allFilteredSelected()).toBe(true);
+    expect(component.filteredTransactions().map((row) => row.id)).toEqual([2]);
   });
 
   it('hides movements to a savings account when the uncategorised filter is applied (TICKET-TRF-02)', async () => {
@@ -183,24 +132,64 @@ describe('TransactionsOverviewComponent', () => {
       { ...transaction(2), amount: -30, counterpartyIban: 'BE00SHOP' },
     ]);
     const component = internals();
-    component.filterForm.patchValue({ categoryId: 'uncategorised' });
-    await fixture.whenStable();
+
+    component.filters.set({ ...noFilters, categoryId: 'uncategorised' });
 
     // The savings movement (id 1) is dropped; the genuine uncategorised spend (id 2) stays.
     expect(component.filteredTransactions().map((row) => row.id)).toEqual([2]);
+  });
+
+  it('selects beyond two rows and reports the count for the bulk-action bar (TICKET-TXN-01)', async () => {
+    await setup();
+    TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2), transaction(3)]);
+    const component = internals();
+
+    component.selection.toggle(1);
+    component.selection.toggle(2);
+    component.selection.toggle(3);
+
+    expect(component.selection.count()).toBe(3);
+    // Transfer linking stays distinct: only ever active at exactly two rows.
+    expect(component.canLinkSelection()).toBe(false);
+  });
+
+  it('keeps transfer linking active only at exactly two selected rows (TICKET-TXN-01)', async () => {
+    await setup();
+    TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2), transaction(3)]);
+    const component = internals();
+
+    component.selection.toggle(1);
+    component.selection.toggle(2);
+    expect(component.canLinkSelection()).toBe(true);
+
+    component.selection.toggle(3);
+    expect(component.canLinkSelection()).toBe(false);
+  });
+
+  it('select-all covers the whole filtered set, not just the visible page (TICKET-TXN-01)', async () => {
+    await setup();
+    const many = Array.from({ length: 60 }, (_, index) => transaction(index + 1));
+    TestBed.inject(TransactionsStore).addMany(many);
+    const component = internals();
+
+    component.selectAllFiltered();
+
+    expect(component.filteredTransactions().length).toBe(60);
+    expect(component.pagination.pagedItems().length).toBe(50); // one page (PAGE_SIZE)
+    expect(component.selection.count()).toBe(60);
+    expect(component.allFilteredSelected()).toBe(true);
   });
 
   it('clears the selection after a successful bulk apply (TICKET-TXN-01)', async () => {
     await setup();
     TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2)]);
     const component = internals();
-    component.toggleSelected(1);
-    component.toggleSelected(2);
-    component.bulkCategoryControl.setValue('7');
+    component.selection.toggle(1);
+    component.selection.toggle(2);
 
-    await component.applyBulkCategory();
+    await component.applyBulkCategory(7);
 
     expect(transactionsRepository.bulkUpdate).toHaveBeenCalledTimes(1);
-    expect(component.selectionCount()).toBe(0);
+    expect(component.selection.count()).toBe(0);
   });
 });
