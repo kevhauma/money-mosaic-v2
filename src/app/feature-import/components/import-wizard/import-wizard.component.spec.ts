@@ -118,11 +118,12 @@ describe('ImportWizardComponent: combined map + preview step', () => {
 
   // Real timer wait — the app is zoneless, so fakeAsync/tick aren't available; wait past the
   // 300ms parse debounce and let the (resolved) worker mock settle.
-  const settleParse = async (): Promise<void> => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 350));
+  const wait = async (ms: number): Promise<void> => {
+    await new Promise<void>((resolve) => setTimeout(resolve, ms));
     await fixture.whenStable();
     fixture.detectChanges();
   };
+  const settleParse = (): Promise<void> => wait(350);
 
   const enterStep2WithFile = (): void => {
     set('queue', [{ file: csvFile('a.csv'), accountId: 1, autoDetected: false }]);
@@ -145,18 +146,92 @@ describe('ImportWizardComponent: combined map + preview step', () => {
   });
 
   it('clears the preview to a placeholder when the mapping goes invalid', async () => {
+    parse.mockResolvedValueOnce({
+      headers: ['Date', 'Desc'],
+      rows: [validRow()],
+      warnings: ['Some rows were skipped'],
+    });
     enterStep2WithFile();
     set('mapResult', VALID_RESULT);
     fixture.detectChanges();
     await settleParse();
     expect(read<ParsedRowResult[]>('parsedRows')).toHaveLength(1);
+    expect(read<string[]>('parseWarnings')).toHaveLength(1);
 
     set('mapResult', null);
     fixture.detectChanges();
 
     expect(read<ParsedRowResult[]>('parsedRows')).toEqual([]);
     expect(read('parseError')).toBeNull();
+    expect(read<string[]>('parseWarnings')).toEqual([]);
     expect(fixture.nativeElement.textContent).toContain('Complete the required mapping fields');
+  });
+
+  it('parsing() is true from the moment the mapping turns valid until fresh rows land', async () => {
+    enterStep2WithFile();
+    expect(read('parsing')).toBe(false);
+
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    expect(read('parsing')).toBe(true); // debounce window counts as parsing
+
+    await settleParse();
+    expect(read('parsing')).toBe(false);
+  });
+
+  it('coalesces rapid mapping edits into a single parse of the latest mapping', async () => {
+    enterStep2WithFile();
+
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await wait(100); // well inside the 300ms debounce window
+
+    const updatedProfile = { ...MAPPING_PROFILE, name: 'Updated mapping' };
+    set('mapResult', { mappingProfile: updatedProfile });
+    fixture.detectChanges();
+    await settleParse();
+
+    expect(parse).toHaveBeenCalledTimes(1);
+    expect(parse).toHaveBeenCalledWith(expect.any(File), updatedProfile);
+  });
+
+  it('drops a slow parse superseded by a newer mapping edit', async () => {
+    const staleRow = validRow();
+    const freshRow = validRow();
+    let resolveStale!: (value: {
+      headers: string[];
+      rows: ParsedRowResult[];
+      warnings: string[];
+    }) => void;
+    parse.mockReset();
+    parse.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveStale = resolve;
+        }),
+    );
+    parse.mockResolvedValueOnce({ headers: ['Date', 'Desc'], rows: [freshRow], warnings: [] });
+
+    enterStep2WithFile();
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await wait(350); // past the debounce; the first (stale) parse is now in flight, unresolved
+    expect(parse).toHaveBeenCalledTimes(1);
+
+    const secondProfile = { ...MAPPING_PROFILE, name: 'Second mapping' };
+    set('mapResult', { mappingProfile: secondProfile });
+    fixture.detectChanges();
+    await settleParse(); // past debounce again; the second (fresh) parse resolves
+
+    expect(parse).toHaveBeenCalledTimes(2);
+    expect(read<ParsedRowResult[]>('parsedRows')).toEqual([freshRow]);
+
+    // The stale parse finally resolves — switchMap already dropped it, so it must not overwrite
+    // the fresh rows that already landed.
+    resolveStale({ headers: ['Date', 'Desc'], rows: [staleRow], warnings: [] });
+    await wait(0);
+
+    expect(read<ParsedRowResult[]>('parsedRows')).toEqual([freshRow]);
   });
 
   it('disables the top confirm action while mapping invalid, parsing, or committing', async () => {
@@ -183,8 +258,9 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     set('step', 2);
 
     // File 1
-    set('parsedRows', [validRow()]);
     set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
     await (component as unknown as { goNext(): Promise<void> }).goNext();
 
     expect(commitImport).toHaveBeenCalledTimes(1);
@@ -193,8 +269,9 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     expect(read('currentFileIndex')).toBe(1);
 
     // File 2
-    set('parsedRows', [validRow()]);
     set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
     await (component as unknown as { goNext(): Promise<void> }).goNext();
 
     expect(commitImport).toHaveBeenCalledTimes(2);

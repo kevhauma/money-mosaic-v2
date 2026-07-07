@@ -1,11 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { from, of, startWith, switchMap, timer, map as rxMap, type Observable } from 'rxjs';
 import { AccountsStore } from '@/feature-accounts';
 import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
@@ -27,6 +22,13 @@ import { ImportSummaryStepComponent } from '../import-summary-step/import-summar
 // separate preview-only step anymore.
 type WizardStep = 1 | 2 | 3;
 type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
+
+type ParseInput = { file: File; mappingProfile: Omit<MappingProfile, 'id'> };
+type ParseState =
+  | { status: 'idle' }
+  | { status: 'parsing' }
+  | { status: 'error'; error: string }
+  | { status: 'done'; rows: ParsedRowResult[]; warnings: string[] };
 
 // Debounce the reactive re-parse so editing the mapping form doesn't spawn a worker parse per
 // keystroke (NFR-PERF-2 — parsing runs in a Web Worker, but rapid re-parses are still wasteful).
@@ -55,12 +57,8 @@ export class ImportWizardComponent {
   protected readonly queue = signal<QueuedImportFile[]>([]);
   protected readonly currentFileIndex = signal(0);
   protected readonly mapResult = signal<ImportMappingResult | null>(null);
-  protected readonly parsedRows = signal<ParsedRowResult[]>([]);
-  protected readonly parseError = signal<string | null>(null);
-  protected readonly parseWarnings = signal<string[]>([]);
   protected readonly commitResults = signal<CommitImportResult[]>([]);
 
-  protected readonly parsing = signal(false);
   protected readonly committing = signal(false);
 
   protected readonly totalFiles = computed(() => this.queue().length);
@@ -75,44 +73,52 @@ export class ImportWizardComponent {
     () => this.queue().length > 0 && this.queue().every((row) => row.accountId !== null),
   );
 
-  // Guards against a stale worker parse overwriting fresher state: every parse (and every
-  // mapping-invalid reset) bumps the token, and a resolved parse only writes if its token still wins.
-  private parseToken = 0;
-  private reparseTimer: ReturnType<typeof setTimeout> | null = null;
+  // Live preview: whenever the mapping is valid, re-parse the current file after a short debounce;
+  // while it's invalid (or step 2 isn't active), the pipeline goes idle and step 2 shows a neutral
+  // placeholder instead of stale rows. `switchMap` supersedes any in-flight debounce/parse the moment
+  // `parseInput` changes again, so a late-resolving worker result from a superseded input is dropped —
+  // the worker itself isn't cancellable, but its late message is simply never subscribed to anymore.
+  private readonly parseInput = computed<ParseInput | null>(() => {
+    const file = this.currentFile();
+    const mapResult = this.mapResult();
+    if (this.step() !== 2 || !file || !mapResult) return null;
+    return { file, mappingProfile: mapResult.mappingProfile };
+  });
 
-  constructor() {
-    // Live preview: whenever the mapping is valid (mapResult non-null) re-parse the current file
-    // after a short debounce; while it's invalid, drop any pending/in-flight parse and clear the
-    // preview so step 2 shows a neutral placeholder instead of stale rows.
-    effect(() => {
-      const file = this.currentFile();
-      const mapResult = this.mapResult();
+  private readonly parseState = toSignal(
+    toObservable(this.parseInput).pipe(
+      switchMap((input): Observable<ParseState> => {
+        if (!input) return of<ParseState>({ status: 'idle' });
+        return timer(PARSE_DEBOUNCE_MS).pipe(
+          switchMap(() => from(this.csvImportService.parse(input.file, input.mappingProfile))),
+          rxMap((response): ParseState =>
+            'error' in response
+              ? { status: 'error', error: response.error }
+              : { status: 'done', rows: response.rows, warnings: response.warnings },
+          ),
+          // The debounce window itself counts as "parsing" so the confirm action stays disabled
+          // (a fast click can't commit stale/empty rows) between the mapping turning valid and the
+          // worker parse resolving.
+          startWith<ParseState>({ status: 'parsing' }),
+        );
+      }),
+    ),
+    { initialValue: { status: 'idle' } },
+  );
 
-      if (this.reparseTimer !== null) {
-        clearTimeout(this.reparseTimer);
-        this.reparseTimer = null;
-      }
-
-      if (this.step() !== 2 || !file || !mapResult) {
-        this.parseToken++;
-        this.parsing.set(false);
-        this.parsedRows.set([]);
-        this.parseError.set(null);
-        this.parseWarnings.set([]);
-        return;
-      }
-
-      // Treat the debounce window as "parsing" too, so the confirm action stays disabled (and shows
-      // "Parsing…") until fresh rows land — otherwise a fast click could commit stale/empty rows
-      // between the mapping becoming valid and the worker parse resolving.
-      this.parsing.set(true);
-      const mappingProfile = mapResult.mappingProfile;
-      this.reparseTimer = setTimeout(() => {
-        this.reparseTimer = null;
-        void this.runParse(file, mappingProfile);
-      }, PARSE_DEBOUNCE_MS);
-    });
-  }
+  protected readonly parsing = computed(() => this.parseState().status === 'parsing');
+  protected readonly parsedRows = computed<ParsedRowResult[]>(() => {
+    const state = this.parseState();
+    return state.status === 'done' ? state.rows : [];
+  });
+  protected readonly parseError = computed(() => {
+    const state = this.parseState();
+    return state.status === 'error' ? state.error : null;
+  });
+  protected readonly parseWarnings = computed(() => {
+    const state = this.parseState();
+    return state.status === 'done' ? state.warnings : [];
+  });
 
   protected async goNext(): Promise<void> {
     switch (this.step()) {
@@ -129,26 +135,6 @@ export class ImportWizardComponent {
 
   protected goBack(): void {
     if (this.step() > 1) this.step.set((this.step() - 1) as WizardStep);
-  }
-
-  private async runParse(file: File, mappingProfile: Omit<MappingProfile, 'id'>): Promise<void> {
-    const token = ++this.parseToken;
-    this.parsing.set(true);
-    try {
-      const response = await this.csvImportService.parse(file, mappingProfile);
-      if (token !== this.parseToken) return;
-      if ('error' in response) {
-        this.parseError.set(response.error);
-        this.parsedRows.set([]);
-        this.parseWarnings.set([]);
-        return;
-      }
-      this.parsedRows.set(response.rows);
-      this.parseError.set(null);
-      this.parseWarnings.set(response.warnings);
-    } finally {
-      if (token === this.parseToken) this.parsing.set(false);
-    }
   }
 
   private async runCommit(): Promise<void> {
@@ -182,10 +168,6 @@ export class ImportWizardComponent {
       if (nextIndex < this.queue().length) {
         this.currentFileIndex.set(nextIndex);
         this.mapResult.set(null);
-        this.parsedRows.set([]);
-        this.parseError.set(null);
-        this.parseWarnings.set([]);
-        this.step.set(2);
       } else {
         this.step.set(3);
       }
@@ -204,9 +186,6 @@ export class ImportWizardComponent {
     this.queue.set([]);
     this.currentFileIndex.set(0);
     this.mapResult.set(null);
-    this.parsedRows.set([]);
-    this.parseError.set(null);
-    this.parseWarnings.set([]);
     this.commitResults.set([]);
   }
 }

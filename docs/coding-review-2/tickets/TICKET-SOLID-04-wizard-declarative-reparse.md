@@ -22,13 +22,13 @@
 
 ## Acceptance criteria
 
-- [ ] `parseToken`, `reparseTimer`, and all manual `setTimeout`/`clearTimeout` are gone from the component; staleness is handled by `switchMap` (or an equivalent single declarative operator chain).
-- [ ] Exactly one code path resets/derives the parse-state signals; `runCommit` and `startNewImport` no longer enumerate them individually.
-- [ ] Behaviour preserved, verified by the existing + extended [import-wizard.component.spec.ts](../../../src/app/feature-import/components/import-wizard/import-wizard.component.spec.ts): (a) editing the mapping twice quickly results in one parse whose result lands; (b) a slow parse superseded by a newer mapping never overwrites newer rows; (c) `parsing()` is true from the moment the mapping turns valid until fresh rows land; (d) invalidating the mapping clears rows/error/warnings.
-- [ ] The worker contract is untouched (`CsvImportService.parse` unchanged; note the worker itself isn't cancellable — `switchMap` only needs to drop its late result, matching today's token semantics).
-- [ ] Multi-file flow still works: committing file 1 of 2 moves to file 2 with a clean map/preview; the summary appears after the last file; "start new import" fully resets.
-- [ ] Verified live in the browser with a 2-file import, including rapid mapping edits during parse; no console errors.
-- [ ] The `angular.json` bundle budget is **not** raised.
+- [x] `parseToken`, `reparseTimer`, and all manual `setTimeout`/`clearTimeout` are gone from the component; staleness is handled by `switchMap` (or an equivalent single declarative operator chain).
+- [x] Exactly one code path resets/derives the parse-state signals; `runCommit` and `startNewImport` no longer enumerate them individually.
+- [x] Behaviour preserved, verified by the existing + extended [import-wizard.component.spec.ts](../../../src/app/feature-import/components/import-wizard/import-wizard.component.spec.ts): (a) editing the mapping twice quickly results in one parse whose result lands; (b) a slow parse superseded by a newer mapping never overwrites newer rows; (c) `parsing()` is true from the moment the mapping turns valid until fresh rows land; (d) invalidating the mapping clears rows/error/warnings.
+- [x] The worker contract is untouched (`CsvImportService.parse` unchanged; note the worker itself isn't cancellable — `switchMap` only needs to drop its late result, matching today's token semantics).
+- [x] Multi-file flow still works: committing file 1 of 2 moves to file 2 with a clean map/preview; the summary appears after the last file; "start new import" fully resets.
+- [x] Verified live in the browser with a 2-file import, including rapid mapping edits during parse; no console errors.
+- [x] The `angular.json` bundle budget is **not** raised.
 
 ## Notes
 
