@@ -1,10 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import {
-  appDb,
-  AccountsRepository,
-  TransactionsRepository,
-  TransfersRepository,
-} from '@/core/data-access';
+import { appDb, AccountsRepository, TransactionsRepository } from '@/core/data-access';
+import { TransferCleanupService } from '@/core/transfers';
 
 export type ClearTransactionsResult = {
   /** Transactions removed because they belonged to the cleared account. */
@@ -15,14 +11,11 @@ export type ClearTransactionsResult = {
   clearedTransferTransactionIds: number[];
 };
 
-/** @deprecated alias kept for callers referencing the old name; identical to {@link ClearTransactionsResult}. */
-export type DeleteAccountResult = ClearTransactionsResult;
-
 @Injectable({ providedIn: 'root' })
 export class AccountDeletionService {
   private readonly accountsRepository = inject(AccountsRepository);
   private readonly transactionsRepository = inject(TransactionsRepository);
-  private readonly transfersRepository = inject(TransfersRepository);
+  private readonly transferCleanupService = inject(TransferCleanupService);
 
   /**
    * Removes all of an account's transactions and any transfer links touching them, in one atomic
@@ -59,33 +52,16 @@ export class AccountDeletionService {
    */
   private async cascadeTransactions(accountId: number): Promise<ClearTransactionsResult> {
     const transactions = await this.transactionsRepository.getByAccount(accountId);
-    const removedIds = new Set(transactions.map((transaction) => transaction.id!));
+    const removedIds = transactions.map((transaction) => transaction.id!);
 
-    const transferIds = [
-      ...new Set(
-        transactions
-          .map((transaction) => transaction.transferId)
-          .filter((transferId): transferId is number => transferId != null),
-      ),
-    ];
-    const transfers = await this.transfersRepository.getByIds(transferIds);
-    const clearedTransferTransactionIds: number[] = [];
-    for (const transfer of transfers) {
-      await this.transfersRepository.remove(transfer.id!);
-      const survivingId = removedIds.has(transfer.fromTransactionId)
-        ? transfer.toTransactionId
-        : transfer.fromTransactionId;
-      if (!removedIds.has(survivingId)) {
-        await this.transactionsRepository.update(survivingId, { transferId: undefined });
-        clearedTransferTransactionIds.push(survivingId);
-      }
-    }
+    const { unlinkedTransferIds, clearedTransferTransactionIds } =
+      await this.transferCleanupService.cleanupTransfersForRemovedTransactions(transactions);
 
-    await this.transactionsRepository.bulkRemove([...removedIds]);
+    await this.transactionsRepository.bulkRemove(removedIds);
 
     return {
-      removedTransactionIds: [...removedIds],
-      unlinkedTransferIds: transfers.map((transfer) => transfer.id!),
+      removedTransactionIds: removedIds,
+      unlinkedTransferIds,
       clearedTransferTransactionIds,
     };
   }

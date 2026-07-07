@@ -4,10 +4,10 @@ import {
   appDb,
   ImportBatchesRepository,
   TransactionsRepository,
-  TransfersRepository,
   type ImportBatch,
   type Transaction,
 } from '@/core/data-access';
+import { TransferCleanupService } from '@/core/transfers';
 import type { ParsedRowResult } from './csv-row-mapper';
 
 type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
@@ -67,7 +67,7 @@ export const partitionByFingerprint = <T extends { fingerprint: string }>(
 export class ImportService {
   private readonly transactionsRepository = inject(TransactionsRepository);
   private readonly importBatchesRepository = inject(ImportBatchesRepository);
-  private readonly transfersRepository = inject(TransfersRepository);
+  private readonly transferCleanupService = inject(TransferCleanupService);
 
   commitImport = async (input: CommitImportInput): Promise<CommitImportResult> => {
     const existingFingerprints = await this.transactionsRepository.getFingerprintsByAccount(
@@ -126,44 +126,23 @@ export class ImportService {
     });
   };
 
+  // A removed transaction may have been auto-linked to a transaction from a *different* import
+  // (FR-TRF-2 re-links across the whole dataset) — the shared cleanup handles that surviving side.
   undoImport = async (importBatchId: number): Promise<UndoImportResult> =>
     appDb.transaction(
       'rw',
       [appDb.transactions, appDb.importBatches, appDb.transfers],
       async () => {
         const transactions = await this.transactionsRepository.getByImportBatch(importBatchId);
-        const removedIds = new Set(transactions.map((transaction) => transaction.id!));
+        const removedIds = transactions.map((transaction) => transaction.id!);
 
-        // A removed transaction may have been auto-linked to a transaction from a *different*
-        // import (FR-TRF-2 re-links across the whole dataset) — clean up that Transfer record so
-        // the surviving side doesn't keep a dangling transferId.
-        const transferIds = [
-          ...new Set(
-            transactions
-              .map((transaction) => transaction.transferId)
-              .filter((transferId): transferId is number => transferId != null),
-          ),
-        ];
-        const transfers = await this.transfersRepository.getByIds(transferIds);
-        const clearedTransferTransactionIds: number[] = [];
-        for (const transfer of transfers) {
-          await this.transfersRepository.remove(transfer.id!);
-          const survivingId = removedIds.has(transfer.fromTransactionId)
-            ? transfer.toTransactionId
-            : transfer.fromTransactionId;
-          if (!removedIds.has(survivingId)) {
-            await this.transactionsRepository.update(survivingId, { transferId: undefined });
-            clearedTransferTransactionIds.push(survivingId);
-          }
-        }
+        const { unlinkedTransferIds, clearedTransferTransactionIds } =
+          await this.transferCleanupService.cleanupTransfersForRemovedTransactions(transactions);
 
-        await this.transactionsRepository.bulkRemove([...removedIds]);
+        await this.transactionsRepository.bulkRemove(removedIds);
         await this.importBatchesRepository.remove(importBatchId);
 
-        return {
-          unlinkedTransferIds: transfers.map((transfer) => transfer.id!),
-          clearedTransferTransactionIds,
-        };
+        return { unlinkedTransferIds, clearedTransferTransactionIds };
       },
     );
 }

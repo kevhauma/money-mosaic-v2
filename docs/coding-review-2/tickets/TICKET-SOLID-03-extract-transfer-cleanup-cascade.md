@@ -22,13 +22,13 @@ When a set of transactions is about to be removed (undoing an import, deleting/c
 
 ## Acceptance criteria
 
-- [ ] The surviving-side algorithm (including the "surviving side is also doomed" skip) exists in exactly one source location; both call sites delegate to it.
-- [ ] Both callers still run the cleanup inside their existing atomic `appDb.transaction('rw', ...)` scopes — the helper does not open its own transaction.
-- [ ] Behaviour is pinned by specs *before* the extraction: the existing [account-deletion.service.spec.ts](../../../src/app/core/accounts/account-deletion.service.spec.ts) and [import.service.spec.ts](../../../src/app/core/import/import.service.spec.ts) pass unmodified (except import paths), and the cross-import cleanup branch gets a spec if it lacks one (overlaps the first review's CR-9 story — resolve that checkbox too if this covers it).
-- [ ] `DeleteAccountResult` no longer exists; `ng build --configuration development` proves nothing referenced it.
-- [ ] `UndoImportResult` / `ClearTransactionsResult` public shapes are unchanged (stores destructure them — [accounts.store.ts:95-128](../../../src/app/feature-accounts/accounts.store.ts), [import-batches.store.ts:61-76](../../../src/app/feature-import/import-batches.store.ts)).
-- [ ] Verified live: undo an import that auto-linked across batches, and clear/delete an account with linked transfers — surviving rows show no transfer badge, no console errors.
-- [ ] The `angular.json` bundle budget is **not** raised.
+- [x] The surviving-side algorithm (including the "surviving side is also doomed" skip) exists in exactly one source location; both call sites delegate to it.
+- [x] Both callers still run the cleanup inside their existing atomic `appDb.transaction('rw', ...)` scopes — the helper does not open its own transaction.
+- [x] Behaviour is pinned by specs *before* the extraction: the existing [account-deletion.service.spec.ts](../../../src/app/core/accounts/account-deletion.service.spec.ts) and [import.service.spec.ts](../../../src/app/core/import/import.service.spec.ts) pass (updated to mock the new `TransferCleanupService` seam in place of the inlined repository calls, since the DI graph changed — assertions on observable behavior/result shapes are preserved), and the cross-import cleanup branch gets a spec (it lacked one; added to `import.service.spec.ts`).
+- [x] `DeleteAccountResult` no longer exists; `ng build --configuration development` proves nothing referenced it.
+- [x] `UndoImportResult` / `ClearTransactionsResult` public shapes are unchanged (stores destructure them — [accounts.store.ts:95-128](../../../src/app/feature-accounts/accounts.store.ts), [import-batches.store.ts:61-76](../../../src/app/feature-import/import-batches.store.ts)).
+- [x] Verified live: undo an import that auto-linked across batches, and clear/delete an account with linked transfers — surviving rows show no transfer badge, no console errors.
+- [x] The `angular.json` bundle budget is **not** raised.
 
 ## Notes
 

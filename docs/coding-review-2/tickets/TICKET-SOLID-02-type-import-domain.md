@@ -28,14 +28,14 @@ The import domain is closed — three sign conventions, three date formats, two 
 
 ## Acceptance criteria
 
-- [ ] `grep -rn "as CsvParseRequest\|as MappingProfile" src` returns zero hits.
-- [ ] `SIGN_CONVENTIONS` / `SUPPORTED_DATE_FORMATS` / `SUPPORTED_ENCODINGS` (naming per implementer) exist exactly once each; the map-step form options and the parser both derive from them.
-- [ ] Assigning an invalid literal (e.g. `signConvention: 'debitneg'`) anywhere a profile is built is a TypeScript error — verified by the build, not by a runtime check.
-- [ ] Adding a hypothetical fourth date format compiles only after both the pattern lookup entry and (automatically) the form option exist — i.e. the union is the single edit point.
-- [ ] **No Dexie schema/version change**: these are compile-time types over the same stored strings. Already-stored profile rows (including the seeded KBC/Belfius templates) load unchanged. If a stored value could predate validation, hydration must tolerate it (type the repository return honestly or normalise on read) — do **not** add a migration for this.
-- [ ] Existing `csv-row-mapper.spec.ts` / `csv-parse.spec.ts` / `import.service.spec.ts` / `mapping-profiles.store.spec.ts` pass; `parseDate` gains a spec-table entry proving unknown-format is unrepresentable or safely rejected.
-- [ ] Verified live: an import with a seeded preset and a custom mapping both still parse and commit; no console errors.
-- [ ] The `angular.json` bundle budget is **not** raised.
+- [x] `grep -rn "as CsvParseRequest\|as MappingProfile" src` returns zero hits.
+- [x] `SIGN_CONVENTIONS` / `SUPPORTED_DATE_FORMATS` / `SUPPORTED_ENCODINGS` (naming per implementer) exist exactly once each; the map-step form options and the parser both derive from them.
+- [x] Assigning an invalid literal (e.g. `signConvention: 'debitneg'`) anywhere a profile is built is a TypeScript error — verified by the build, not by a runtime check.
+- [x] Adding a hypothetical fourth date format compiles only after both the pattern lookup entry and (automatically) the form option exist — i.e. the union is the single edit point.
+- [x] **No Dexie schema/version change**: these are compile-time types over the same stored strings. Already-stored profile rows (including the seeded KBC/Belfius templates) load unchanged. If a stored value could predate validation, hydration must tolerate it (type the repository return honestly or normalise on read) — do **not** add a migration for this.
+- [x] Existing `csv-row-mapper.spec.ts` / `csv-parse.spec.ts` / `import.service.spec.ts` / `mapping-profiles.store.spec.ts` pass; `parseDate` gains a spec-table entry proving unknown-format is unrepresentable or safely rejected.
+- [x] Verified live: an import with a seeded preset and a custom mapping both still parse and commit; no console errors.
+- [x] The `angular.json` bundle budget is **not** raised.
 
 ## Notes
 

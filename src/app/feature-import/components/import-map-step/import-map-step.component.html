@@ -69,9 +69,9 @@
         <fieldset class="fieldset">
           <legend class="fieldset-legend">Sign convention</legend>
           <mm-select formControlName="signConvention" size="sm" class="w-full">
-            <option value="as-is">As-is</option>
-            <option value="debit-negative">Debit negative (default)</option>
-            <option value="credit-negative">Credit negative</option>
+            @for (option of signConventionOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
           </mm-select>
         </fieldset>
       </div>

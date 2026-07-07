@@ -9,15 +9,27 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import type { MappingProfile, MappingProfileColumns } from '@/core/data-access';
+import {
+  SIGN_CONVENTIONS,
+  SUPPORTED_DATE_FORMATS,
+  SUPPORTED_ENCODINGS,
+  type CsvEncoding,
+  type DateFormat,
+  type MappingProfile,
+  type MappingProfileColumns,
+  type SignConvention,
+} from '@/core/data-access';
 import { CsvImportService, guessDelimiter } from '@/core/import';
 import { AlertComponent, InputComponent, SelectComponent } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
 
-const DATE_FORMATS = ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'];
-const ENCODINGS = ['utf-8', 'windows-1252'];
+const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
+  'as-is': 'As-is',
+  'debit-negative': 'Debit negative (default)',
+  'credit-negative': 'Credit negative',
+};
 
 @Component({
   selector: 'app-import-map-step',
@@ -30,8 +42,12 @@ export class ImportMapStepComponent {
   readonly accountId = input.required<number>();
   readonly result = model<ImportMappingResult | null>(null);
 
-  protected readonly dateFormats = DATE_FORMATS;
-  protected readonly encodings = ENCODINGS;
+  protected readonly dateFormats = SUPPORTED_DATE_FORMATS;
+  protected readonly encodings = SUPPORTED_ENCODINGS;
+  protected readonly signConventionOptions = SIGN_CONVENTIONS.map((value) => ({
+    value,
+    label: SIGN_CONVENTION_LABELS[value],
+  }));
 
   private readonly csvImportService = inject(CsvImportService);
   private readonly mappingProfilesStore = inject(MappingProfilesStore);
@@ -47,10 +63,10 @@ export class ImportMapStepComponent {
     name: ['Custom mapping', Validators.required],
     delimiter: [';', Validators.required],
     decimalSeparator: [',', Validators.required],
-    dateFormat: ['DD/MM/YYYY', Validators.required],
-    encoding: ['utf-8', Validators.required],
+    dateFormat: ['DD/MM/YYYY' as DateFormat, Validators.required],
+    encoding: ['utf-8' as CsvEncoding, Validators.required],
     headerRows: [1, [Validators.required, Validators.min(1)]],
-    signConvention: ['as-is', Validators.required],
+    signConvention: ['as-is' as SignConvention, Validators.required],
     date: ['', Validators.required],
     amount: [''],
     debit: [''],

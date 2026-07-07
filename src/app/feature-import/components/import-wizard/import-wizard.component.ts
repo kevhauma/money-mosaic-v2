@@ -106,7 +106,7 @@ export class ImportWizardComponent {
       // "Parsing…") until fresh rows land — otherwise a fast click could commit stale/empty rows
       // between the mapping becoming valid and the worker parse resolving.
       this.parsing.set(true);
-      const mappingProfile = mapResult.mappingProfile as MappingProfile;
+      const mappingProfile = mapResult.mappingProfile;
       this.reparseTimer = setTimeout(() => {
         this.reparseTimer = null;
         void this.runParse(file, mappingProfile);
@@ -131,7 +131,7 @@ export class ImportWizardComponent {
     if (this.step() > 1) this.step.set((this.step() - 1) as WizardStep);
   }
 
-  private async runParse(file: File, mappingProfile: MappingProfile): Promise<void> {
+  private async runParse(file: File, mappingProfile: Omit<MappingProfile, 'id'>): Promise<void> {
     const token = ++this.parseToken;
     this.parsing.set(true);
     try {

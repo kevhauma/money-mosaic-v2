@@ -122,6 +122,34 @@ describe('mapRow: single amount column', () => {
   });
 });
 
+describe('mapRow: date format dispatch', () => {
+  it.each([
+    ['YYYY-MM-DD', '2026-07-01', '2026-07-01'],
+    ['DD/MM/YYYY', '01/07/2026', '2026-07-01'],
+    ['MM/DD/YYYY', '07/01/2026', '2026-07-01'],
+  ] as const)('parses %s via the lookup dispatch', (dateFormat, raw, expected) => {
+    const result = mapRow(
+      { Boekingsdatum: raw, Bedrag: '12,34', Omschrijving: 'x' },
+      amountMapping,
+      { ...baseOpts, dateFormat },
+      0,
+    );
+    expect(result.valid).toBe(true);
+    if (result.valid) expect(result.transaction.bookingDate).toBe(expected);
+  });
+
+  it('safely rejects a date format outside the union instead of throwing (e.g. a stored profile predating validation)', () => {
+    const result = mapRow(
+      { Boekingsdatum: '2026-07-01', Bedrag: '12,34', Omschrijving: 'x' },
+      amountMapping,
+      { ...baseOpts, dateFormat: 'DD.MM.YYYY' as RowMapOptions['dateFormat'] },
+      0,
+    );
+    expect(result.valid).toBe(false);
+    if (!result.valid) expect(result.errors).toContain('unparseable date');
+  });
+});
+
 describe('mapRow: debit/credit columns', () => {
   it('maps a debit-filled row to a negative amount by default', () => {
     const result = mapRow(

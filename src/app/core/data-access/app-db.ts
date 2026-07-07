@@ -104,6 +104,18 @@ export type MappingProfileColumns = {
   balance?: string;
 };
 
+/** How debit/credit-column signs map onto the stored (negative-expense) amount. */
+export const SIGN_CONVENTIONS = ['as-is', 'debit-negative', 'credit-negative'] as const;
+export type SignConvention = (typeof SIGN_CONVENTIONS)[number];
+
+/** Date formats the CSV parser understands (see `parseDate` in `core/import/csv-row-mapper.ts`). */
+export const SUPPORTED_DATE_FORMATS = ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY'] as const;
+export type DateFormat = (typeof SUPPORTED_DATE_FORMATS)[number];
+
+/** Text encodings offered when decoding an uploaded CSV file. */
+export const SUPPORTED_ENCODINGS = ['utf-8', 'windows-1252'] as const;
+export type CsvEncoding = (typeof SUPPORTED_ENCODINGS)[number];
+
 export type MappingProfile = {
   id?: number;
   name: string;
@@ -112,10 +124,10 @@ export type MappingProfile = {
   headerSignature?: string[];
   delimiter: string;
   decimalSeparator: string;
-  dateFormat: string;
-  encoding: string;
+  dateFormat: DateFormat;
+  encoding: CsvEncoding;
   headerRows: number;
-  signConvention: string;
+  signConvention: SignConvention;
   columns: MappingProfileColumns;
   defaultAccountId?: number;
 };

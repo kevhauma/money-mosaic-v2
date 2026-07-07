@@ -1,4 +1,9 @@
-import type { MappingProfileColumns, Transaction } from '@/core/data-access';
+import type {
+  DateFormat,
+  MappingProfileColumns,
+  SignConvention,
+  Transaction,
+} from '@/core/data-access';
 
 export type MappedTransaction = Omit<
   Transaction,
@@ -11,8 +16,8 @@ export type ParsedRowResult =
 
 export type RowMapOptions = {
   decimalSeparator: string;
-  dateFormat: string;
-  signConvention: 'as-is' | 'debit-negative' | 'credit-negative';
+  dateFormat: DateFormat;
+  signConvention: SignConvention;
 };
 
 const parseAmount = (raw: string | undefined, decimalSeparator: string): number | null => {
@@ -29,26 +34,33 @@ const parseAmount = (raw: string | undefined, decimalSeparator: string): number 
 
 const pad2 = (value: number): string => value.toString().padStart(2, '0');
 
-const parseDate = (raw: string | undefined, dateFormat: string): string | null => {
+type DateField = 'year' | 'month' | 'day';
+
+// Keyed by the full `DateFormat` union so adding a member without an entry here is a compile
+// error, not a silent `null` at parse time.
+const DATE_FORMAT_PATTERNS: Record<DateFormat, { regex: RegExp; fieldOrder: DateField[] }> = {
+  'YYYY-MM-DD': { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})$/, fieldOrder: ['year', 'month', 'day'] },
+  'DD/MM/YYYY': { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, fieldOrder: ['day', 'month', 'year'] },
+  'MM/DD/YYYY': { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, fieldOrder: ['month', 'day', 'year'] },
+};
+
+const parseDate = (raw: string | undefined, dateFormat: DateFormat): string | null => {
   if (raw === undefined || raw.trim() === '') return null;
   const value = raw.trim();
 
-  let year: number, month: number, day: number;
-  if (dateFormat === 'YYYY-MM-DD') {
-    const match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value);
-    if (!match) return null;
-    [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
-  } else if (dateFormat === 'DD/MM/YYYY') {
-    const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
-    if (!match) return null;
-    [day, month, year] = [Number(match[1]), Number(match[2]), Number(match[3])];
-  } else if (dateFormat === 'MM/DD/YYYY') {
-    const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
-    if (!match) return null;
-    [month, day, year] = [Number(match[1]), Number(match[2]), Number(match[3])];
-  } else {
-    return null;
-  }
+  // `dateFormat` is typed exhaustively, but a stored profile row can predate the union (no schema
+  // migration for this — see TICKET-SOLID-02) — tolerate that as an unparseable date, not a crash.
+  const pattern = DATE_FORMAT_PATTERNS[dateFormat];
+  if (!pattern) return null;
+  const { regex, fieldOrder } = pattern;
+  const match = regex.exec(value);
+  if (!match) return null;
+
+  const fields = { year: 0, month: 0, day: 0 };
+  fieldOrder.forEach((field, index) => {
+    fields[field] = Number(match[index + 1]);
+  });
+  const { year, month, day } = fields;
 
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
   const date = new Date(Date.UTC(year, month - 1, day));

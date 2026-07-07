@@ -5,7 +5,10 @@ import type { CsvParseRequest, CsvParseResponse } from './csv-worker.types';
 
 @Injectable({ providedIn: 'root' })
 export class CsvImportService {
-  parse = async (file: File, mappingProfile: MappingProfile): Promise<CsvParseResponse> => {
+  parse = async (
+    file: File,
+    mappingProfile: Omit<MappingProfile, 'id'>,
+  ): Promise<CsvParseResponse> => {
     const buffer = await file.arrayBuffer();
     const fileText = new TextDecoder(mappingProfile.encoding).decode(buffer);
 
@@ -16,7 +19,7 @@ export class CsvImportService {
       mapping: mappingProfile.columns,
       decimalSeparator: mappingProfile.decimalSeparator,
       dateFormat: mappingProfile.dateFormat,
-      signConvention: mappingProfile.signConvention as CsvParseRequest['signConvention'],
+      signConvention: mappingProfile.signConvention,
     };
 
     return new Promise<CsvParseResponse>((resolve, reject) => {
