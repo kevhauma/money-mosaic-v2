@@ -1,7 +1,7 @@
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { resolvePresetRange, type Granularity, type RangePreset } from './date-buckets';
 
-export type RangeState = {
+type RangeState = {
   preset: RangePreset | 'custom';
   from: string;
   to: string;

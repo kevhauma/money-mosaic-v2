@@ -17,7 +17,7 @@ const OPERATOR_LABELS: Record<RuleCondition['operator'], string> = {
   between: 'between',
 };
 
-export const describeCondition = (
+const describeCondition = (
   condition: RuleCondition,
   resolveAccountName?: (accountId: number) => string,
 ): string => {

@@ -4,7 +4,7 @@ import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, map, type Observable } from 'rxjs';
 
 /** Default debounce for a search box — long enough to skip mid-word keystrokes, short enough to feel instant. */
-export const DEFAULT_TEXT_DEBOUNCE_MS = 150;
+const DEFAULT_TEXT_DEBOUNCE_MS = 150;
 
 /** Trim + lowercase — the usual normalisation for a case-insensitive, whitespace-tolerant search needle. */
 const normaliseNeedle = (value: string): string => value.trim().toLowerCase();

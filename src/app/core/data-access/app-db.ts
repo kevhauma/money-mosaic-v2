@@ -288,7 +288,7 @@ export type ImportBatch = {
   dateTo: string;
 };
 
-export class AppDb extends Dexie {
+class AppDb extends Dexie {
   accounts!: Table<Account, number>;
   transactions!: Table<Transaction, number>;
   transfers!: Table<Transfer, number>;

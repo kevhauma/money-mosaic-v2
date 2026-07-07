@@ -27,11 +27,11 @@ Grep-verified (2026-07-07) dead symbols:
 
 ## Acceptance criteria
 
-- [ ] `TransactionsRepository.add`/`.remove` and `MappingProfilesRepository.getByBankAndAccount`/`.remove` no longer exist (or carry `@expected-unused` with a reason referencing a planned story).
-- [ ] `describeCondition` and `DEFAULT_TEXT_DEBOUNCE_MS` are no longer exported; their in-file usages are untouched.
-- [ ] `TransactionsRepository.getByAccount` is **not** removed; the CR-6.2 story text is corrected with a dated note.
-- [ ] Re-running `fallow dead-code --format json --quiet` shows none of the addressed symbols; the known false-positive families from review §6.5 are the only remaining noise.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` pass (the dev build is the real check here — it catches any missed import of a deleted member).
+- [x] `TransactionsRepository.add`/`.remove` and `MappingProfilesRepository.getByBankAndAccount`/`.remove` no longer exist (or carry `@expected-unused` with a reason referencing a planned story).
+- [x] `describeCondition` and `DEFAULT_TEXT_DEBOUNCE_MS` are no longer exported; their in-file usages are untouched.
+- [x] `TransactionsRepository.getByAccount` is **not** removed; the CR-6.2 story text is corrected with a dated note.
+- [x] Re-running `fallow dead-code --format json --quiet` shows none of the addressed symbols; the known false-positive families from review §6.5 are the only remaining noise.
+- [x] `ng lint` + `ng test` + `ng build --configuration development` pass (the dev build is the real check here — it catches any missed import of a deleted member).
 
 ## Notes
 
