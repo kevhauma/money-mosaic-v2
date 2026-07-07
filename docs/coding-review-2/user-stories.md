@@ -27,7 +27,7 @@ Derived from [./code-review-dx-solid.md](./code-review-dx-solid.md) (DX / mainta
 
 ## 5. Testing gaps
 
-- [ ] As a developer, I want specs pinning the four untested orchestrator stores — `ImportBatchesStore.commitImport` sequencing, `CategoriesStore.removeCategory` cascade, `RulesStore.moveRule` (including the equal-priority no-op edge), and `TransfersStore` link/unlink mirroring — so the refactors elsewhere in this backlog land against a safety net ([TICKET-TEST-01](./tickets/TICKET-TEST-01-orchestrator-store-specs.md), CR2-5.1)
+- [x] As a developer, I want specs pinning the four untested orchestrator stores — `ImportBatchesStore.commitImport` sequencing, `CategoriesStore.removeCategory` cascade, `RulesStore.moveRule` (including the equal-priority no-op edge), and `TransfersStore` link/unlink mirroring — so the refactors elsewhere in this backlog land against a safety net ([TICKET-TEST-01](./tickets/TICKET-TEST-01-orchestrator-store-specs.md), CR2-5.1)
 
 ## 6. Fallow static analysis (verified findings)
 

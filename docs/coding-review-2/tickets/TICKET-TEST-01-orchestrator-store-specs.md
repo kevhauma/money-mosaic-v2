@@ -25,13 +25,13 @@ No spec file exists for:
 
 ## Acceptance criteria
 
-- [ ] `ImportBatchesStore.commitImport`: given a fake `ImportService` result and a rule that matches one added row, the store receives that row already carrying the rule's categoryId; `runAutoLink` is invoked after `addMany`; the returned result's `addedTransactions` reflect the merged categories.
-- [ ] `ImportBatchesStore.undoImport`: batch entity removed; `TransactionsStore` loses exactly the batch's rows; surviving cross-import partners get `transferId: undefined`; `TransfersStore.removeLocal` called with the severed ids.
-- [ ] `CategoriesStore.removeCategory`: referencing transactions end with `categoryId: undefined` **and** `categoryManual: false`, persisted via the repository *and* mirrored in `TransactionsStore`; non-referencing transactions untouched; category entity removed.
-- [ ] `RulesStore.moveRule`: up/down swaps priorities in both the repository and the store; first-row-up / last-row-down are no-ops; the equal-priority case is asserted with a comment recording the chosen semantics.
-- [ ] `RulesStore.createRuleFromCounterparty`: skips blank counterparty; created rule uses `equals` on the trimmed name, priority = max+10; matching uncategorised transactions get categorised while `categoryManual` rows are untouched.
-- [ ] `TransfersStore`: `link` adds the transfer and patches both transactions' `transferId`; `unlink` clears both sides; `runAutoLink` patches every linked pair and returns the count; unknown `transferId` on `unlink` is a safe no-op.
-- [ ] All specs are deterministic (no real Dexie / IndexedDB — fake the repositories and services), and `ng lint` + `ng test` + `ng build --configuration development` pass.
+- [x] `ImportBatchesStore.commitImport`: given a fake `ImportService` result and a rule that matches one added row, the store receives that row already carrying the rule's categoryId; `runAutoLink` is invoked after `addMany`; the returned result's `addedTransactions` reflect the merged categories.
+- [x] `ImportBatchesStore.undoImport`: batch entity removed; `TransactionsStore` loses exactly the batch's rows; surviving cross-import partners get `transferId: undefined`; `TransfersStore.removeLocal` called with the severed ids.
+- [x] `CategoriesStore.removeCategory`: referencing transactions end with `categoryId: undefined` **and** `categoryManual: false`, persisted via the repository *and* mirrored in `TransactionsStore`; non-referencing transactions untouched; category entity removed.
+- [x] `RulesStore.moveRule`: up/down swaps priorities in both the repository and the store; first-row-up / last-row-down are no-ops; the equal-priority case is asserted with a comment recording the chosen semantics.
+- [x] `RulesStore.createRuleFromCounterparty`: skips blank counterparty; created rule uses `equals` on the trimmed name, priority = max+10; matching uncategorised transactions get categorised while `categoryManual` rows are untouched.
+- [x] `TransfersStore`: `link` adds the transfer and patches both transactions' `transferId`; `unlink` clears both sides; `runAutoLink` patches every linked pair and returns the count; unknown `transferId` on `unlink` is a safe no-op.
+- [x] All specs are deterministic (no real Dexie / IndexedDB — fake the repositories and services), and `ng lint` + `ng test` + `ng build --configuration development` pass.
 
 ## Notes
 
