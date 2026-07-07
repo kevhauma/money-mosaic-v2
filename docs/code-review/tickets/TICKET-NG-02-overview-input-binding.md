@@ -22,13 +22,13 @@
 
 ## Acceptance criteria
 
-- [ ] `withComponentInputBinding()` is enabled on the router config (if not already) so route query params map to component inputs.
-- [ ] `TransactionsOverviewComponent` declares `accountId`/`from`/`to`/`categoryId` `input()`s (keyed to `STAT_QUERY_PARAMS`) and no longer injects `ActivatedRoute` or reads `snapshot.queryParamMap`.
-- [ ] Initial drill-down still pre-filters exactly as today (FR-STAT-6): landing from Dashboard/Categories with query params seeds account/date/category filters.
-- [ ] A same-route navigation with different query params (e.g. dashboard drill-down for category A then category B) re-applies the new pre-filter without needing a route reload.
-- [ ] Free-text/amount filters (not URL-backed) and the debounced-text + structural-filter pipeline (CR-2.4/CR-2.3) are unaffected.
-- [ ] Unit tests cover: inputs seed the form on init, and a change to the `categoryId` input re-seeds the filter. Existing transactions-overview specs still pass.
-- [ ] Verified live in the browser: two consecutive drill-downs to different categories both land pre-filtered; deep-link URL still works on first load.
+- [x] `withComponentInputBinding()` is enabled on the router config (if not already) so route query params map to component inputs.
+- [x] `TransactionsOverviewComponent` declares `accountId`/`from`/`to`/`categoryId` `input()`s (keyed to `STAT_QUERY_PARAMS`) and no longer injects `ActivatedRoute` or reads `snapshot.queryParamMap`.
+- [x] Initial drill-down still pre-filters exactly as today (FR-STAT-6): landing from Dashboard/Categories with query params seeds account/date/category filters.
+- [x] A same-route navigation with different query params (e.g. dashboard drill-down for category A then category B) re-applies the new pre-filter without needing a route reload.
+- [x] Free-text/amount filters (not URL-backed) and the debounced-text + structural-filter pipeline (CR-2.4/CR-2.3) are unaffected.
+- [x] Unit tests cover: inputs seed the form on init, and a change to the `categoryId` input re-seeds the filter. Existing transactions-overview specs still pass.
+- [x] Verified live in the browser: two consecutive drill-downs to different categories both land pre-filtered; deep-link URL still works on first load.
 
 ## Notes
 

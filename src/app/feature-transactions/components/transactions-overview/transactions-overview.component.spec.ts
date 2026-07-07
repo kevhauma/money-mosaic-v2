@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AccountsRepository, TransactionsRepository, type Transaction } from '@/core/data-access';
 import { AccountsStore } from '@/feature-accounts';
@@ -45,6 +45,14 @@ describe('TransactionsOverviewComponent', () => {
     getAll: vi.fn().mockResolvedValue([]),
   };
 
+  const setInputs = async (queryParams: Record<string, string>): Promise<void> => {
+    fixture.componentRef.setInput('accountId', queryParams['accountId']);
+    fixture.componentRef.setInput('from', queryParams['from']);
+    fixture.componentRef.setInput('to', queryParams['to']);
+    fixture.componentRef.setInput('categoryId', queryParams['categoryId']);
+    await fixture.whenStable();
+  };
+
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
@@ -53,15 +61,11 @@ describe('TransactionsOverviewComponent', () => {
         provideRouter([]),
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: AccountsRepository, useValue: accountsRepository },
-        {
-          provide: ActivatedRoute,
-          useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } },
-        },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransactionsOverviewComponent);
-    await fixture.whenStable();
+    await setInputs(queryParams);
   };
 
   const internals = (): Internals => fixture.componentInstance as unknown as Internals;
@@ -94,6 +98,24 @@ describe('TransactionsOverviewComponent', () => {
       fixture.componentInstance as unknown as { filterForm: { value: { categoryId: string } } }
     ).filterForm;
     expect(filterForm.value.categoryId).toBe('uncategorised');
+  });
+
+  it('re-seeds the filter form when a same-route drill-down changes the categoryId input (CR-7.2)', async () => {
+    await setup({ categoryId: '3' });
+    const component = internals();
+    component.filterForm.patchValue({ text: 'groceries', amountMin: '10' });
+
+    await setInputs({ categoryId: '7' });
+
+    const filterForm = (
+      fixture.componentInstance as unknown as {
+        filterForm: { value: { categoryId: string; text: string; amountMin: string } };
+      }
+    ).filterForm;
+    expect(filterForm.value.categoryId).toBe('7');
+    // Free-text/amount filters are not URL-backed, so a route-driven reseed leaves them alone (CR-2.4).
+    expect(filterForm.value.text).toBe('groceries');
+    expect(filterForm.value.amountMin).toBe('10');
   });
 
   it('selects beyond two rows and reports the count for the bulk-action bar (TICKET-TXN-01)', async () => {

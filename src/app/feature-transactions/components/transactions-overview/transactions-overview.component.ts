@@ -1,7 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
 import { distinctUntilChanged, map } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -27,12 +34,7 @@ import {
   PaginatorComponent,
   SelectComponent,
 } from '@/shared/ui';
-import {
-  createPagination,
-  debouncedTextSignal,
-  SignedAmountPipe,
-  STAT_QUERY_PARAMS,
-} from '@/shared/utils';
+import { createPagination, debouncedTextSignal, SignedAmountPipe } from '@/shared/utils';
 import { TransactionsStore } from '../../transactions.store';
 import { TransfersStore } from '../../transfers.store';
 import {
@@ -114,20 +116,35 @@ export class TransactionsOverviewComponent {
   protected readonly categoriesStore = inject(CategoriesStore);
 
   private readonly formBuilder = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute);
 
-  /** Drill-down inheritance (FR-STAT-6): a Dashboard/Categories link lands here pre-filtered via query params. */
-  private readonly initialQueryParams = this.route.snapshot.queryParamMap;
+  /** Drill-down inheritance (FR-STAT-6): bound from the route's query params via `withComponentInputBinding()`. */
+  readonly accountId = input<string>();
+  readonly from = input<string>();
+  readonly to = input<string>();
+  readonly categoryId = input<string>();
 
   protected readonly filterForm = this.formBuilder.nonNullable.group({
-    accountId: [this.initialQueryParams.get(STAT_QUERY_PARAMS.accountId) ?? ''],
-    dateFrom: [this.initialQueryParams.get(STAT_QUERY_PARAMS.from) ?? ''],
-    dateTo: [this.initialQueryParams.get(STAT_QUERY_PARAMS.to) ?? ''],
-    categoryId: [this.initialQueryParams.get(STAT_QUERY_PARAMS.categoryId) ?? ''],
+    accountId: [''],
+    dateFrom: [''],
+    dateTo: [''],
+    categoryId: [''],
     text: [''],
     amountMin: [''],
     amountMax: [''],
   });
+
+  constructor() {
+    // Re-seeds the URL-backed filters whenever a drill-down navigates to this same-route
+    // instance with new query params (FR-STAT-6) — free-text/amount stay untouched (CR-2.4).
+    effect(() => {
+      this.filterForm.patchValue({
+        accountId: this.accountId() ?? '',
+        dateFrom: this.from() ?? '',
+        dateTo: this.to() ?? '',
+        categoryId: this.categoryId() ?? '',
+      });
+    });
+  }
 
   /** Structural filters apply immediately; `distinctUntilChanged` keeps text keystrokes from re-emitting them. */
   private readonly structuralFilters = toSignal(
