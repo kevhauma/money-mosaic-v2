@@ -1,19 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   computed,
   effect,
   inject,
   input,
   model,
   output,
-  viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import type { Category, Transaction } from '@/core/data-access';
 import { CategoriesStore, RulesStore } from '@/feature-categories';
-import { ButtonComponent, SelectComponent } from '@/shared/ui';
+import { ButtonComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
 
 export type TransactionEditResult = Partial<
   Pick<Transaction, 'categoryId' | 'categoryManual' | 'notes'>
@@ -21,7 +19,7 @@ export type TransactionEditResult = Partial<
 
 @Component({
   selector: 'app-transaction-edit-form',
-  imports: [ReactiveFormsModule, ButtonComponent, SelectComponent],
+  imports: [ReactiveFormsModule, ButtonComponent, SelectComponent, MmModalComponent],
   templateUrl: './transaction-edit-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -34,7 +32,6 @@ export class TransactionEditFormComponent {
   private readonly rulesStore = inject(RulesStore);
 
   private readonly formBuilder = inject(FormBuilder);
-  private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
 
   protected readonly form = this.formBuilder.nonNullable.group({
     categoryId: [''],
@@ -44,12 +41,8 @@ export class TransactionEditFormComponent {
 
   constructor() {
     effect(() => {
-      const dialogElement = this.dialog().nativeElement;
       if (this.open()) {
         this.resetForm();
-        dialogElement.showModal?.();
-      } else {
-        dialogElement.close?.();
       }
     });
   }

@@ -27,14 +27,14 @@ Four form components each own an identical `effect()` that mirrors an `open` sig
 
 ## Acceptance criteria
 
-- [ ] A `MmModalComponent` (`app-mm-modal` / `mm-modal`) exists under `src/app/shared/ui/`, is `OnPush`, exposes a two-way `open = model(false)`, and syncs it to a native `<dialog>` in one place.
-- [ ] `account-form`, `category-form`, `rule-form`, and `transaction-edit-form` all consume `mm-modal` and no longer declare their own dialog `viewChild` or open/close `effect()`.
-- [ ] Native dialog dismissal (Esc / backdrop `cancel`/`close`) flows back into the `open` model so the parent signal and the dialog can't desync.
-- [ ] Existing behaviour is preserved for each form: form reset on open, submit/cancel closing the dialog, and validation gating on submit.
-- [ ] Accessibility hooks are present on the shared component (`aria-modal="true"`, an `aria-labelledby` slot for the title) so CR-8's focus-restore work can build on it — full focus-trap/restore may land in the CR-8 ticket, but the seam exists here.
-- [ ] Unit tests cover: `open` true → `showModal` called, `open` false → `close` called, and native `cancel`/`close` resets the `open` model. Existing form specs still pass.
-- [ ] Verified live in the browser: opening/closing each of the four dialogs still works (open, submit, cancel, Esc), no console errors.
-- [ ] The `angular.json` bundle budget is **not** raised.
+- [x] A `MmModalComponent` (`app-mm-modal` / `mm-modal`) exists under `src/app/shared/ui/`, is `OnPush`, exposes a two-way `open = model(false)`, and syncs it to a native `<dialog>` in one place.
+- [x] `account-form`, `category-form`, `rule-form`, and `transaction-edit-form` all consume `mm-modal` and no longer declare their own dialog `viewChild` or open/close `effect()`.
+- [x] Native dialog dismissal (Esc / backdrop `cancel`/`close`) flows back into the `open` model so the parent signal and the dialog can't desync.
+- [x] Existing behaviour is preserved for each form: form reset on open, submit/cancel closing the dialog, and validation gating on submit.
+- [x] Accessibility hooks are present on the shared component (`aria-modal="true"`, an `aria-labelledby` slot for the title) so CR-8's focus-restore work can build on it — full focus-trap/restore may land in the CR-8 ticket, but the seam exists here.
+- [x] Unit tests cover: `open` true → `showModal` called, `open` false → `close` called, and native `cancel`/`close` resets the `open` model. Existing form specs still pass.
+- [x] Verified live in the browser: opening/closing each of the four dialogs still works (open, submit, cancel, Esc), no console errors.
+- [x] The `angular.json` bundle budget is **not** raised.
 
 ## Notes
 

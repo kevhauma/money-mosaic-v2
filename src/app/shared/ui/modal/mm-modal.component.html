@@ -1,0 +1,18 @@
+<dialog
+  #dialog
+  class="modal"
+  aria-modal="true"
+  [attr.aria-labelledby]="titleId"
+  (close)="onDialogDismiss()"
+  (cancel)="onDialogDismiss()"
+>
+  <div [class]="boxClass()">
+    <h3 [id]="titleId" class="text-lg font-semibold">
+      <ng-content select="[mm-modal-title]" />
+    </h3>
+    <ng-content />
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button type="submit">close</button>
+  </form>
+</dialog>

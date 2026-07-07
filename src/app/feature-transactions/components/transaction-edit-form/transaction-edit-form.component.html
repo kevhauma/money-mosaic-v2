@@ -1,47 +1,42 @@
-<dialog #dialog class="modal" (close)="open.set(false)">
-  <div class="modal-box">
-    <h3 class="text-lg font-semibold">Edit transaction</h3>
-    @if (transaction(); as transaction) {
-      <p class="mt-1 text-sm text-base-content/70">{{ transaction.rawDescription }}</p>
+<mm-modal [(open)]="open">
+  <span mm-modal-title>Edit transaction</span>
+  @if (transaction(); as transaction) {
+    <p class="mt-1 text-sm text-base-content/70">{{ transaction.rawDescription }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Category</legend>
+      <mm-select formControlName="categoryId" class="w-full">
+        <option value="">Uncategorised</option>
+        @for (category of categoriesStore.activeCategories(); track category.id) {
+          <option [value]="category.id">{{ categoryLabel(category) }}</option>
+        }
+      </mm-select>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Notes</legend>
+      <textarea
+        formControlName="notes"
+        class="textarea w-full"
+        rows="3"
+        placeholder="Optional notes"
+      ></textarea>
+    </fieldset>
+
+    @if (showAlwaysCategorise()) {
+      <label class="label cursor-pointer justify-start gap-2">
+        <input type="checkbox" formControlName="alwaysCategorise" class="checkbox checkbox-sm" />
+        <span class="text-sm">
+          Always categorise "{{ transaction()?.counterpartyName }}" this way
+        </span>
+      </label>
     }
 
-    <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Category</legend>
-        <mm-select formControlName="categoryId" class="w-full">
-          <option value="">Uncategorised</option>
-          @for (category of categoriesStore.activeCategories(); track category.id) {
-            <option [value]="category.id">{{ categoryLabel(category) }}</option>
-          }
-        </mm-select>
-      </fieldset>
-
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Notes</legend>
-        <textarea
-          formControlName="notes"
-          class="textarea w-full"
-          rows="3"
-          placeholder="Optional notes"
-        ></textarea>
-      </fieldset>
-
-      @if (showAlwaysCategorise()) {
-        <label class="label cursor-pointer justify-start gap-2">
-          <input type="checkbox" formControlName="alwaysCategorise" class="checkbox checkbox-sm" />
-          <span class="text-sm">
-            Always categorise "{{ transaction()?.counterpartyName }}" this way
-          </span>
-        </label>
-      }
-
-      <div class="modal-action">
-        <mm-button (click)="cancel()">Cancel</mm-button>
-        <mm-button type="submit" color="primary">Save changes</mm-button>
-      </div>
-    </form>
-  </div>
-  <form method="dialog" class="modal-backdrop">
-    <button type="submit">close</button>
+    <div class="modal-action">
+      <mm-button (click)="cancel()">Cancel</mm-button>
+      <mm-button type="submit" color="primary">Save changes</mm-button>
+    </div>
   </form>
-</dialog>
+</mm-modal>

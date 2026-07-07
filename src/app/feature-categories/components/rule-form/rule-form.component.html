@@ -1,142 +1,137 @@
-<dialog #dialog class="modal" (close)="open.set(false)">
-  <div class="modal-box max-w-2xl">
-    <h3 class="text-lg font-semibold">{{ rule() ? 'Edit rule' : 'Add rule' }}</h3>
+<mm-modal [(open)]="open" class="max-w-2xl">
+  <span mm-modal-title>{{ rule() ? 'Edit rule' : 'Add rule' }}</span>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Name</legend>
-        <mm-input
-          type="text"
-          formControlName="name"
-          class="w-full"
-          placeholder="e.g. Netflix subscription"
-        />
-        @if (form.controls.name.invalid && form.controls.name.touched) {
-          <p class="label text-error">Name is required.</p>
-        }
-      </fieldset>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Name</legend>
+      <mm-input
+        type="text"
+        formControlName="name"
+        class="w-full"
+        placeholder="e.g. Netflix subscription"
+      />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <p class="label text-error">Name is required.</p>
+      }
+    </fieldset>
 
-      <div class="grid grid-cols-3 gap-3">
-        <fieldset class="fieldset col-span-2">
-          <legend class="fieldset-legend">Assign category</legend>
-          <mm-select formControlName="categoryId" class="w-full">
-            <option value="" disabled>Choose a category</option>
-            @for (category of categoriesStore.activeCategories(); track category.id) {
-              <option [value]="category.id">{{ category.name }}</option>
-            }
-          </mm-select>
-        </fieldset>
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Priority</legend>
-          <mm-input type="number" formControlName="priority" class="w-full" />
-        </fieldset>
-      </div>
-
-      <div class="flex items-center gap-4">
-        <label class="label cursor-pointer gap-2">
-          <input type="checkbox" formControlName="enabled" class="toggle toggle-sm" />
-          <span class="text-sm">Enabled</span>
-        </label>
-        <label class="label cursor-pointer gap-2">
-          <input type="checkbox" formControlName="continueOnMatch" class="toggle toggle-sm" />
-          <span class="text-sm">Continue to next rule after a match</span>
-        </label>
-      </div>
-
-      <div class="divider my-2">Conditions</div>
-
-      <fieldset class="fieldset mb-2 flex-row items-center gap-2">
-        <label class="fieldset-legend" for="conditionMatch">Match</label>
-        <mm-select id="conditionMatch" formControlName="conditionMatch" size="sm" class="w-auto">
-          <option value="all">ALL conditions (AND)</option>
-          <option value="any">ANY condition (OR)</option>
+    <div class="grid grid-cols-3 gap-3">
+      <fieldset class="fieldset col-span-2">
+        <legend class="fieldset-legend">Assign category</legend>
+        <mm-select formControlName="categoryId" class="w-full">
+          <option value="" disabled>Choose a category</option>
+          @for (category of categoriesStore.activeCategories(); track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
         </mm-select>
       </fieldset>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Priority</legend>
+        <mm-input type="number" formControlName="priority" class="w-full" />
+      </fieldset>
+    </div>
 
-      <div formArrayName="conditions" class="flex flex-col gap-3">
-        @for (group of conditionsArray.controls; track $index) {
-          <div [formGroup]="group" class="grid grid-cols-12 items-start gap-2">
-            <mm-select
-              formControlName="field"
-              size="sm"
-              class="col-span-3"
-              (change)="onFieldChange(group)"
-            >
-              @for (option of fieldOptions; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-              }
-            </mm-select>
+    <div class="flex items-center gap-4">
+      <label class="label cursor-pointer gap-2">
+        <input type="checkbox" formControlName="enabled" class="toggle toggle-sm" />
+        <span class="text-sm">Enabled</span>
+      </label>
+      <label class="label cursor-pointer gap-2">
+        <input type="checkbox" formControlName="continueOnMatch" class="toggle toggle-sm" />
+        <span class="text-sm">Continue to next rule after a match</span>
+      </label>
+    </div>
 
-            <mm-select formControlName="operator" size="sm" class="col-span-3">
-              @for (operator of operatorsFor(group); track operator) {
-                <option [value]="operator">{{ operatorLabels[operator] }}</option>
-              }
-            </mm-select>
+    <div class="divider my-2">Conditions</div>
 
-            @if (isAccountField(group)) {
-              <mm-select formControlName="value" size="sm" class="col-span-5">
-                <option value="" disabled>Choose an account</option>
-                @for (account of accountsStore.accounts(); track account.id) {
-                  <option [value]="account.id">{{ account.name }}</option>
-                }
-              </mm-select>
-            } @else if (isBetween(group)) {
-              <mm-input
-                type="number"
-                step="0.01"
-                formControlName="value"
-                size="sm"
-                class="col-span-2"
-                placeholder="Min"
-              />
-              <mm-input
-                type="number"
-                step="0.01"
-                formControlName="valueTo"
-                size="sm"
-                class="col-span-2"
-                placeholder="Max"
-              />
-            } @else if (isNumericField(group)) {
-              <mm-input
-                type="number"
-                step="0.01"
-                formControlName="value"
-                size="sm"
-                class="col-span-5"
-              />
-            } @else {
-              <mm-input type="text" formControlName="value" size="sm" class="col-span-5" />
+    <fieldset class="fieldset mb-2 flex-row items-center gap-2">
+      <label class="fieldset-legend" for="conditionMatch">Match</label>
+      <mm-select id="conditionMatch" formControlName="conditionMatch" size="sm" class="w-auto">
+        <option value="all">ALL conditions (AND)</option>
+        <option value="any">ANY condition (OR)</option>
+      </mm-select>
+    </fieldset>
+
+    <div formArrayName="conditions" class="flex flex-col gap-3">
+      @for (group of conditionsArray.controls; track $index) {
+        <div [formGroup]="group" class="grid grid-cols-12 items-start gap-2">
+          <mm-select
+            formControlName="field"
+            size="sm"
+            class="col-span-3"
+            (change)="onFieldChange(group)"
+          >
+            @for (option of fieldOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
             }
+          </mm-select>
 
-            <mm-button
-              variant="ghost"
-              shape="square"
+          <mm-select formControlName="operator" size="sm" class="col-span-3">
+            @for (operator of operatorsFor(group); track operator) {
+              <option [value]="operator">{{ operatorLabels[operator] }}</option>
+            }
+          </mm-select>
+
+          @if (isAccountField(group)) {
+            <mm-select formControlName="value" size="sm" class="col-span-5">
+              <option value="" disabled>Choose an account</option>
+              @for (account of accountsStore.accounts(); track account.id) {
+                <option [value]="account.id">{{ account.name }}</option>
+              }
+            </mm-select>
+          } @else if (isBetween(group)) {
+            <mm-input
+              type="number"
+              step="0.01"
+              formControlName="value"
               size="sm"
-              class="col-span-1"
-              [disabled]="conditionsArray.length === 1"
-              (click)="removeCondition($index)"
-              ariaLabel="Remove condition"
-            >
-              &times;
-            </mm-button>
-          </div>
-        }
-      </div>
+              class="col-span-2"
+              placeholder="Min"
+            />
+            <mm-input
+              type="number"
+              step="0.01"
+              formControlName="valueTo"
+              size="sm"
+              class="col-span-2"
+              placeholder="Max"
+            />
+          } @else if (isNumericField(group)) {
+            <mm-input
+              type="number"
+              step="0.01"
+              formControlName="value"
+              size="sm"
+              class="col-span-5"
+            />
+          } @else {
+            <mm-input type="text" formControlName="value" size="sm" class="col-span-5" />
+          }
 
-      <mm-button variant="ghost" size="sm" class="mt-2" (click)="addCondition()">
-        + Add condition
+          <mm-button
+            variant="ghost"
+            shape="square"
+            size="sm"
+            class="col-span-1"
+            [disabled]="conditionsArray.length === 1"
+            (click)="removeCondition($index)"
+            ariaLabel="Remove condition"
+          >
+            &times;
+          </mm-button>
+        </div>
+      }
+    </div>
+
+    <mm-button variant="ghost" size="sm" class="mt-2" (click)="addCondition()">
+      + Add condition
+    </mm-button>
+
+    <div class="modal-action">
+      <mm-button (click)="cancel()">Cancel</mm-button>
+      <mm-button type="submit" color="primary">
+        {{ rule() ? 'Save changes' : 'Add rule' }}
       </mm-button>
-
-      <div class="modal-action">
-        <mm-button (click)="cancel()">Cancel</mm-button>
-        <mm-button type="submit" color="primary">
-          {{ rule() ? 'Save changes' : 'Add rule' }}
-        </mm-button>
-      </div>
-    </form>
-  </div>
-  <form method="dialog" class="modal-backdrop">
-    <button type="submit">close</button>
+    </div>
   </form>
-</dialog>
+</mm-modal>

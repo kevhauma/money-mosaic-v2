@@ -1,13 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   effect,
   inject,
   input,
   model,
   output,
-  viewChild,
 } from '@angular/core';
 import {
   FormArray,
@@ -20,7 +18,7 @@ import {
 import type { Rule, RuleCondition } from '@/core/data-access';
 import { OPERATORS_BY_FIELD } from '@/core/categorisation';
 import { AccountsStore } from '@/feature-accounts';
-import { ButtonComponent, InputComponent, SelectComponent } from '@/shared/ui';
+import { ButtonComponent, InputComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
 import { CategoriesStore } from '../../categories.store';
 
 export type RuleFormValue = Omit<Rule, 'id'>;
@@ -36,7 +34,13 @@ const NUMERIC_FIELDS: RuleCondition['field'][] = ['amount', 'accountId'];
 
 @Component({
   selector: 'app-rule-form',
-  imports: [ReactiveFormsModule, ButtonComponent, InputComponent, SelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    ButtonComponent,
+    InputComponent,
+    SelectComponent,
+    MmModalComponent,
+  ],
   templateUrl: './rule-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -67,7 +71,6 @@ export class RuleFormComponent {
   };
 
   private readonly formBuilder = inject(FormBuilder);
-  private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
 
   protected readonly form = this.formBuilder.nonNullable.group({
     name: ['', Validators.required],
@@ -85,12 +88,8 @@ export class RuleFormComponent {
 
   constructor() {
     effect(() => {
-      const dialogElement = this.dialog().nativeElement;
       if (this.open()) {
         this.resetForm();
-        dialogElement.showModal?.();
-      } else {
-        dialogElement.close?.();
       }
     });
   }

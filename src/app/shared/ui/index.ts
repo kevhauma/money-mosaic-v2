@@ -1,6 +1,7 @@
 export * from './page-header/page-header.component';
 export * from './empty-state/empty-state.component';
 export * from './confirm-dialog/confirm-dialog.component';
+export * from './modal/mm-modal.component';
 export * from './button/button.component';
 export * from './input/input.component';
 export * from './select/select.component';
