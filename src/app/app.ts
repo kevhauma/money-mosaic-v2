@@ -15,7 +15,8 @@ import {
   tablerMenu2,
   tablerTags,
 } from '@ng-icons/tabler-icons';
-import { type Granularity, RangeStore, type RangePreset } from '@/core/stats';
+import { type Granularity, RangeStore, computeFullHistoryRange } from '@/core/stats';
+import { AccountsStore } from '@/feature-accounts';
 import { TransactionsStore } from '@/feature-transactions';
 // Imported directly (not via the @/shared/ui barrel) to keep the rest of shared/ui — and the
 // @angular/forms it drags in via InputComponent/SelectComponent — out of the eager bundle;
@@ -23,6 +24,7 @@ import { TransactionsStore } from '@/feature-transactions';
 // re-exports once anything from the barrel is imported eagerly.
 import {
   RangeGroupingSwitcherComponent,
+  type RangeGroupingPreset,
   type RangeGroupingSwitcherValue,
 } from '@/shared/ui/range-grouping-switcher/range-grouping-switcher.component';
 import { STAT_QUERY_PARAMS } from '@/shared/utils';
@@ -30,6 +32,8 @@ import { STAT_QUERY_PARAMS } from '@/shared/utils';
 const GRANULARITIES: Granularity[] = ['day', 'week', 'month', 'quarter'];
 const isGranularity = (value: string | null): value is Granularity =>
   !!value && (GRANULARITIES as string[]).includes(value);
+
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 @Component({
   selector: 'app-root',
@@ -50,6 +54,7 @@ const isGranularity = (value: string | null): value is Granularity =>
 })
 export class App {
   protected readonly transactionsStore = inject(TransactionsStore);
+  protected readonly accountsStore = inject(AccountsStore);
   protected readonly rangeStore = inject(RangeStore);
 
   private readonly route = inject(ActivatedRoute);
@@ -102,7 +107,20 @@ export class App {
     });
   }
 
-  protected onPresetChange(preset: RangePreset): void {
+  protected onPresetChange(preset: RangeGroupingPreset): void {
+    if (preset === 'custom') {
+      this.rangeStore.selectCustomPreset();
+      return;
+    }
+    if (preset === 'all-time') {
+      const range = computeFullHistoryRange(
+        this.accountsStore.activeAccounts(),
+        this.transactionsStore.transactions(),
+        todayIso(),
+      );
+      this.rangeStore.setPreset(preset, range);
+      return;
+    }
     this.rangeStore.setPreset(preset);
   }
 

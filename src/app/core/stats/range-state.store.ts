@@ -1,5 +1,11 @@
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { resolvePresetRange, type Granularity, type RangePreset } from './date-buckets';
+import {
+  defaultGranularityForPreset,
+  resolvePresetRange,
+  type Granularity,
+  type RangePreset,
+} from './date-buckets';
+import { pickGranularityForSpan } from './granularity-for-span';
 
 type RangeState = {
   preset: RangePreset | 'custom';
@@ -26,12 +32,31 @@ export const RangeStore = signalStore(
   { providedIn: 'root' },
   withState<RangeState>(defaultRangeState()),
   withMethods((store) => ({
-    setPreset: (preset: RangePreset): void => {
-      patchState(store, { preset, ...resolvePresetRange(preset, todayIso()) });
+    /**
+     * Applies a preset's range and its default grouping in one patch (TICKET-STAT-03). `all-time`
+     * depends on account/transaction data rather than just today's date, so its range can't be
+     * resolved purely here — the caller (which has access to those stores) computes it via
+     * `computeFullHistoryRange` and passes it in.
+     */
+    setPreset: (preset: RangePreset, allTimeRange?: { from: string; to: string }): void => {
+      const range =
+        preset === 'all-time'
+          ? (allTimeRange ?? { from: todayIso(), to: todayIso() })
+          : resolvePresetRange(preset, todayIso());
+      patchState(store, { preset, ...range, groupBy: defaultGranularityForPreset(preset) });
     },
 
     setCustomRange: (from: string, to: string): void => {
-      patchState(store, { preset: 'custom', from, to });
+      patchState(store, { preset: 'custom', from, to, groupBy: pickGranularityForSpan(from, to) });
+    },
+
+    /**
+     * Selecting "Custom" only flips the preset flag — it deliberately leaves from/to/groupBy
+     * untouched so the previously-active range stays as the starting point for the now-enabled
+     * date pickers (TICKET-STAT-03, folds in the TICKET-STAT-01 enable-inputs bug fix).
+     */
+    selectCustomPreset: (): void => {
+      patchState(store, { preset: 'custom' });
     },
 
     setGroupBy: (groupBy: Granularity): void => {

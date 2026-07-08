@@ -5,10 +5,17 @@
     [value]="value().preset"
     (change)="onPresetChange($any($event.target).value)"
   >
+    <option value="this-week">This week</option>
     <option value="this-month">This month</option>
     <option value="last-month">Last month</option>
+    <option value="last-31-days">Last 31 days</option>
     <option value="this-quarter">This quarter</option>
+    <option value="last-quarter">Last quarter</option>
     <option value="this-year">This year</option>
+    <option value="last-year">Last year</option>
+    <option value="last-365-days">Last 365 days</option>
+    <option value="year-to-date">Year to date</option>
+    <option value="all-time">All time</option>
     <option value="custom">Custom</option>
   </select>
 

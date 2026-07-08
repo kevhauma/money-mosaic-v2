@@ -1,6 +1,17 @@
 export type Granularity = 'day' | 'week' | 'month' | 'quarter';
 
-export type RangePreset = 'this-month' | 'last-month' | 'this-quarter' | 'this-year';
+export type RangePreset =
+  | 'this-week'
+  | 'this-month'
+  | 'last-month'
+  | 'last-31-days'
+  | 'this-quarter'
+  | 'last-quarter'
+  | 'this-year'
+  | 'last-year'
+  | 'last-365-days'
+  | 'year-to-date'
+  | 'all-time';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -109,9 +120,14 @@ export const bucketKeysInRange = (from: string, to: string, granularity: Granula
   return keys;
 };
 
-/** Resolves a named preset to concrete [from, to] ISO dates, relative to `todayIso` (injected, not read from `Date.now()`, so it stays pure/testable). */
+/**
+ * Resolves a named preset to concrete [from, to] ISO dates, relative to `todayIso` (injected, not
+ * read from `Date.now()`, so it stays pure/testable). Excludes `'all-time'`: that preset's `from`
+ * depends on account/transaction data, not just today's date, so `RangeStore` resolves it via
+ * `computeFullHistoryRange` instead of this function (TICKET-STAT-03).
+ */
 export const resolvePresetRange = (
-  preset: RangePreset,
+  preset: Exclude<RangePreset, 'all-time'>,
   todayIso: string,
 ): { from: string; to: string } => {
   const today = parseIsoDate(todayIso);
@@ -119,6 +135,12 @@ export const resolvePresetRange = (
   const month = today.getUTCMonth();
 
   switch (preset) {
+    case 'this-week': {
+      const { year: weekYear, week } = isoWeekOf(today);
+      const start = isoWeekStart(weekYear, week);
+      const end = new Date(start.getTime() + 6 * MS_PER_DAY);
+      return { from: formatIsoDate(start), to: formatIsoDate(end) };
+    }
     case 'this-month': {
       const start = new Date(Date.UTC(year, month, 1));
       const end = new Date(Date.UTC(year, month + 1, 0));
@@ -129,8 +151,18 @@ export const resolvePresetRange = (
       const end = new Date(Date.UTC(year, month, 0));
       return { from: formatIsoDate(start), to: formatIsoDate(end) };
     }
+    case 'last-31-days': {
+      const start = new Date(today.getTime() - 30 * MS_PER_DAY);
+      return { from: formatIsoDate(start), to: formatIsoDate(today) };
+    }
     case 'this-quarter': {
       const quarterStartMonth = Math.floor(month / 3) * 3;
+      const start = new Date(Date.UTC(year, quarterStartMonth, 1));
+      const end = new Date(Date.UTC(year, quarterStartMonth + 3, 0));
+      return { from: formatIsoDate(start), to: formatIsoDate(end) };
+    }
+    case 'last-quarter': {
+      const quarterStartMonth = Math.floor(month / 3) * 3 - 3;
       const start = new Date(Date.UTC(year, quarterStartMonth, 1));
       const end = new Date(Date.UTC(year, quarterStartMonth + 3, 0));
       return { from: formatIsoDate(start), to: formatIsoDate(end) };
@@ -140,5 +172,44 @@ export const resolvePresetRange = (
       const end = new Date(Date.UTC(year, 11, 31));
       return { from: formatIsoDate(start), to: formatIsoDate(end) };
     }
+    case 'last-year': {
+      const start = new Date(Date.UTC(year - 1, 0, 1));
+      const end = new Date(Date.UTC(year - 1, 11, 31));
+      return { from: formatIsoDate(start), to: formatIsoDate(end) };
+    }
+    case 'last-365-days': {
+      const start = new Date(today.getTime() - 364 * MS_PER_DAY);
+      return { from: formatIsoDate(start), to: formatIsoDate(today) };
+    }
+    case 'year-to-date': {
+      const start = new Date(Date.UTC(year, 0, 1));
+      return { from: formatIsoDate(start), to: formatIsoDate(today) };
+    }
+  }
+};
+
+/**
+ * Maps every preset to the granularity it should default to the moment it's selected
+ * (TICKET-STAT-03): week/month-wide presets default to `day`, quarter-wide presets default to
+ * `week`, year-wide presets default to `month`, and `all-time` (potentially spanning decades)
+ * defaults to `quarter`. The user can still manually override via `RangeStore.setGroupBy()`.
+ */
+export const defaultGranularityForPreset = (preset: RangePreset): Granularity => {
+  switch (preset) {
+    case 'this-week':
+    case 'this-month':
+    case 'last-month':
+    case 'last-31-days':
+      return 'day';
+    case 'this-quarter':
+    case 'last-quarter':
+      return 'week';
+    case 'this-year':
+    case 'last-year':
+    case 'last-365-days':
+    case 'year-to-date':
+      return 'month';
+    case 'all-time':
+      return 'quarter';
   }
 };

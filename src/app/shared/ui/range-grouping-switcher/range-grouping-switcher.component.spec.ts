@@ -47,4 +47,52 @@ describe('RangeGroupingSwitcherComponent', () => {
 
     expect(emitSpy).toHaveBeenCalledWith({ from: '2026-06-01', to: '2026-07-31' });
   });
+
+  it('emits presetChange for a regular preset selection', () => {
+    const emitSpy = vi.fn();
+    component.presetChange.subscribe(emitSpy);
+    fixture.detectChanges();
+
+    const select: HTMLSelectElement = fixture.nativeElement.querySelector('select');
+    select.value = 'this-year';
+    select.dispatchEvent(new Event('change'));
+
+    expect(emitSpy).toHaveBeenCalledWith('this-year');
+  });
+
+  it('emits presetChange("custom") when Custom is selected (TICKET-STAT-01 regression guard)', () => {
+    const emitSpy = vi.fn();
+    component.presetChange.subscribe(emitSpy);
+    fixture.detectChanges();
+
+    const select: HTMLSelectElement = fixture.nativeElement.querySelector('select');
+    select.value = 'custom';
+    select.dispatchEvent(new Event('change'));
+
+    expect(emitSpy).toHaveBeenCalledWith('custom');
+  });
+
+  it('disables the from/to inputs while a non-custom preset is active', () => {
+    fixture.detectChanges();
+
+    const inputs: NodeListOf<HTMLInputElement> =
+      fixture.nativeElement.querySelectorAll('input[type="date"]');
+    expect(inputs[0].disabled).toBe(true);
+    expect(inputs[1].disabled).toBe(true);
+  });
+
+  it('enables the from/to inputs once value().preset is "custom"', () => {
+    fixture.componentRef.setInput('value', {
+      preset: 'custom',
+      from: '2026-07-01',
+      to: '2026-07-31',
+      groupBy: 'month',
+    });
+    fixture.detectChanges();
+
+    const inputs: NodeListOf<HTMLInputElement> =
+      fixture.nativeElement.querySelectorAll('input[type="date"]');
+    expect(inputs[0].disabled).toBe(false);
+    expect(inputs[1].disabled).toBe(false);
+  });
 });

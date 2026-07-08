@@ -2,7 +2,9 @@ import {
   bucketDateBoundaries,
   bucketKeyForDate,
   bucketKeysInRange,
+  defaultGranularityForPreset,
   resolvePresetRange,
+  type RangePreset,
 } from './date-buckets';
 
 describe('bucketKeyForDate', () => {
@@ -128,5 +130,66 @@ describe('resolvePresetRange', () => {
       from: '2026-01-01',
       to: '2026-12-31',
     });
+  });
+
+  it('resolves "this-week" to its Monday-start ISO week', () => {
+    // 2026-07-03 is a Friday, in ISO week 27 (Mon 2026-06-29 .. Sun 2026-07-05).
+    expect(resolvePresetRange('this-week', '2026-07-03')).toEqual({
+      from: '2026-06-29',
+      to: '2026-07-05',
+    });
+  });
+
+  it('resolves "last-31-days" as a 31-day span ending today', () => {
+    expect(resolvePresetRange('last-31-days', '2026-07-15')).toEqual({
+      from: '2026-06-15',
+      to: '2026-07-15',
+    });
+  });
+
+  it('resolves "last-quarter" across a year boundary', () => {
+    expect(resolvePresetRange('last-quarter', '2026-01-15')).toEqual({
+      from: '2025-10-01',
+      to: '2025-12-31',
+    });
+  });
+
+  it('resolves "last-year"', () => {
+    expect(resolvePresetRange('last-year', '2026-08-01')).toEqual({
+      from: '2025-01-01',
+      to: '2025-12-31',
+    });
+  });
+
+  it('resolves "last-365-days" as a 365-day span ending today', () => {
+    expect(resolvePresetRange('last-365-days', '2026-07-15')).toEqual({
+      from: '2025-07-16',
+      to: '2026-07-15',
+    });
+  });
+
+  it('resolves "year-to-date" from Jan 1 through today', () => {
+    expect(resolvePresetRange('year-to-date', '2026-04-10')).toEqual({
+      from: '2026-01-01',
+      to: '2026-04-10',
+    });
+  });
+});
+
+describe('defaultGranularityForPreset', () => {
+  it.each<[RangePreset, ReturnType<typeof defaultGranularityForPreset>]>([
+    ['this-week', 'day'],
+    ['this-month', 'day'],
+    ['last-month', 'day'],
+    ['last-31-days', 'day'],
+    ['this-quarter', 'week'],
+    ['last-quarter', 'week'],
+    ['this-year', 'month'],
+    ['last-year', 'month'],
+    ['last-365-days', 'month'],
+    ['year-to-date', 'month'],
+    ['all-time', 'quarter'],
+  ])('maps %s to %s', (preset, expected) => {
+    expect(defaultGranularityForPreset(preset)).toBe(expected);
   });
 });

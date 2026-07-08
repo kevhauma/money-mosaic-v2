@@ -2,7 +2,18 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 
 export type RangeGroupingGranularity = 'day' | 'week' | 'month' | 'quarter';
 export type RangeGroupingPreset =
-  'this-month' | 'last-month' | 'this-quarter' | 'this-year' | 'custom';
+  | 'this-week'
+  | 'this-month'
+  | 'last-month'
+  | 'last-31-days'
+  | 'this-quarter'
+  | 'last-quarter'
+  | 'this-year'
+  | 'last-year'
+  | 'last-365-days'
+  | 'year-to-date'
+  | 'all-time'
+  | 'custom';
 
 export type RangeGroupingSwitcherValue = {
   preset: RangeGroupingPreset;
@@ -23,15 +34,14 @@ const GRANULARITIES: RangeGroupingGranularity[] = ['day', 'week', 'month', 'quar
 export class RangeGroupingSwitcherComponent {
   readonly value = input.required<RangeGroupingSwitcherValue>();
 
-  readonly presetChange = output<Exclude<RangeGroupingPreset, 'custom'>>();
+  readonly presetChange = output<RangeGroupingPreset>();
   readonly customRangeChange = output<{ from: string; to: string }>();
   readonly groupByChange = output<RangeGroupingGranularity>();
 
   protected readonly granularities = GRANULARITIES;
 
   protected onPresetChange(raw: string): void {
-    if (raw === 'custom') return;
-    this.presetChange.emit(raw as Exclude<RangeGroupingPreset, 'custom'>);
+    this.presetChange.emit(raw as RangeGroupingPreset);
   }
 
   protected onFromChange(from: string): void {
