@@ -1,0 +1,13 @@
+@if (accounts().length > 0) {
+  <div class="card border border-base-300 bg-base-100">
+    <div class="card-body">
+      <p class="card-title text-base">Net worth history</p>
+      <div
+        echarts
+        [options]="chartOption()"
+        (chartClick)="onChartClick($event)"
+        class="h-80 w-full"
+      ></div>
+    </div>
+  </div>
+}

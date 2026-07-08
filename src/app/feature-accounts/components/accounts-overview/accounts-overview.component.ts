@@ -24,6 +24,7 @@ import {
   AccountFormComponent,
   type AccountFormValue,
 } from '../account-form/account-form.component';
+import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-worth-history-chart.component';
 
 @Component({
   selector: 'app-accounts-overview',
@@ -35,6 +36,7 @@ import {
     ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
+    NetWorthHistoryChartComponent,
     PageHeaderComponent,
     SignedAmountPipe,
   ],

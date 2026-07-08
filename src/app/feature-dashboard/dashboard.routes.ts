@@ -1,6 +1,6 @@
 import type { Routes } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
-import { echarts } from './echarts-setup';
+import { echarts } from '@/shared/echarts';
 
 export const DASHBOARD_ROUTES: Routes = [
   {

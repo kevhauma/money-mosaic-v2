@@ -17,6 +17,7 @@ import {
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 import { AccountsStore } from '../../accounts.store';
+import { AccountBalanceChartComponent } from '../account-balance-chart/account-balance-chart.component';
 import {
   AccountFormComponent,
   type AccountFormValue,
@@ -29,6 +30,7 @@ import {
     TitleCasePipe,
     SignedAmountPipe,
     AccountFormComponent,
+    AccountBalanceChartComponent,
     ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,

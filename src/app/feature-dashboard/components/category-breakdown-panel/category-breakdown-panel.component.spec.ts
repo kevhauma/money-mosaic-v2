@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
-import { echarts } from '../../echarts-setup';
+import { echarts } from '@/shared/echarts';
 import { CategoryBreakdownPanelComponent } from './category-breakdown-panel.component';
 
 describe('CategoryBreakdownPanelComponent', () => {

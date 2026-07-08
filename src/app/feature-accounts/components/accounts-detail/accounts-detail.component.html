@@ -42,6 +42,10 @@
     </div>
   </div>
 
+  <div class="mt-6">
+    <app-account-balance-chart [account]="account" />
+  </div>
+
   <app-account-form [(open)]="formOpen" [account]="account" (saved)="saveAccount($event)" />
   <mm-confirm-dialog
     [(open)]="deleteConfirmOpen"

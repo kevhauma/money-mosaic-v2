@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
-import { echarts } from '../../echarts-setup';
+import { echarts } from '@/shared/echarts';
 import { TrendChartPanelComponent } from './trend-chart-panel.component';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.

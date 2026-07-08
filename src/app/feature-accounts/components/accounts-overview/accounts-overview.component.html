@@ -16,6 +16,10 @@
   </div>
 </mm-page-header>
 
+<div class="mb-6">
+  <app-net-worth-history-chart />
+</div>
+
 @if (visibleAccounts().length === 0) {
   <mm-empty-state
     title="No accounts yet"
