@@ -1,5 +1,7 @@
 # TICKET-STAT-01 — Enable custom range when "Custom" preset is selected (bug)
 
+> **Superseded by [TICKET-STAT-03](./TICKET-STAT-03-expanded-range-presets-default-grouping.md).** That ticket folds this exact bug fix into a broader preset/default-grouping overhaul. Implement STAT-03 instead of this ticket in isolation; kept here for traceability.
+
 - **Area:** Statistics & Dashboard
 - **Type:** Bug fix
 - **Traceability:** FR-STAT-7

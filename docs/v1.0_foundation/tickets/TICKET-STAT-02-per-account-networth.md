@@ -37,7 +37,7 @@ Give each account a **full-history balance (saldo) chart** on its detail page, a
 - [ ] A pure helper **auto-picks the granularity** (day/week/month/quarter) from a span length, so short-lived and multi-year accounts both render legibly. Thresholds recorded in the code.
 - [ ] **Account detail:** renders a full-history balance line for that account, coloured by the account's colour, spanning its whole life and independent of the topbar range/grouping.
 - [ ] **Accounts overview:** renders a stacked-area chart where each account is a band in its own colour (name in the legend) and the stacked total equals combined net worth over time; legend clicks toggle individual accounts.
-- [ ] Archived accounts are handled sensibly — **decision recorded** (see Open question 1; resolve before building).
+- [ ] Archived accounts are **excluded** from the overview stacked net-worth chart entirely (never a toggleable band) — archiving means treated as if it never existed for aggregate stats, consistent with [with-archivable.ts](../../../src/app/shared/utils/with-archivable.ts)'s `activeEntities` convention and the same policy adopted in [TICKET-STAT-03](./TICKET-STAT-03-expanded-range-presets-default-grouping.md). The account **detail** page may still render an archived account's own history when navigated to directly — that's viewing one account on its own, not an aggregate stat.
 - [ ] Drill-down (FR-STAT-6): a click still reaches the underlying transactions — the overview navigates to the clicked account (its detail or its account-filtered transactions), and the detail chart drills into that account's transactions for the clicked bucket, carrying the account filter in the query params.
 - [ ] Both charts have a **horizontal (x/time-axis) dataZoom** — an `inside` zoom plus a `slider` beneath the chart, bound to the x axis only (no y-axis zoom) — so the user can scrub into any sub-window of the full history. The default view still shows the whole timeline.
 - [ ] Both charts update reactively (FR-STAT-5) on transaction edits/imports and on adding/removing accounts, via computed signals off the existing stores — no manual invalidation.
@@ -47,8 +47,7 @@ Give each account a **full-history balance (saldo) chart** on its detail page, a
 
 ## Open questions (resolve before building)
 
-1. **Archived accounts on the overview stacked chart** — include them (their historical balances are part of past net worth) but let them be toggled off via the legend, or exclude them by default like the dashboard balance strip? Either way the detail chart should still render for an archived account. *Undecided.*
-2. **Negative-balance accounts in a stacked area** (e.g. a credit line) — stacked bands become visually ambiguous when a value goes below zero. Render such accounts as a line instead of a band, allow the stack to dip below zero, or something else? *Undecided.*
+1. **Negative-balance accounts in a stacked area** (e.g. a credit line) — stacked bands become visually ambiguous when a value goes below zero. Render such accounts as a line instead of a band, allow the stack to dip below zero, or something else? *Undecided.*
 
 ## Notes
 
