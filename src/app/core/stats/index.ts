@@ -6,4 +6,5 @@ export * from './net-worth-trend';
 export * from './account-balance-trend';
 export * from './full-history-range';
 export * from './granularity-for-span';
+export * from './chart-zoom-window';
 export * from './range-state.store';

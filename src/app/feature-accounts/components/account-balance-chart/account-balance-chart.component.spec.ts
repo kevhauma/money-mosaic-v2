@@ -49,14 +49,33 @@ describe('AccountBalanceChartComponent', () => {
 
 describe('buildAccountBalanceChartOption', () => {
   it("colours its single line series with the account's own colour and an x-axis dataZoom", () => {
-    const option = buildAccountBalanceChartOption(account, [
-      { bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1000 },
-      { bucketKey: '2026-02', bucketEnd: '2026-02-28', netWorth: 1200 },
-    ]);
+    const option = buildAccountBalanceChartOption(
+      account,
+      [
+        { bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1000 },
+        { bucketKey: '2026-02', bucketEnd: '2026-02-28', netWorth: 1200 },
+      ],
+      { startValue: 0, endValue: 1 },
+    );
 
     expect(option['series']).toEqual([{ type: 'line', data: [1000, 1200], color: '#3366ff' }]);
     const dataZoom = option['dataZoom'] as { xAxisIndex: number }[];
     expect(dataZoom).toHaveLength(2);
     expect(dataZoom.every((zoom) => zoom.xAxisIndex === 0)).toBe(true);
+  });
+
+  it('applies the given zoom window to both dataZoom entries', () => {
+    const option = buildAccountBalanceChartOption(
+      account,
+      [
+        { bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1000 },
+        { bucketKey: '2026-02', bucketEnd: '2026-02-28', netWorth: 1200 },
+        { bucketKey: '2026-03', bucketEnd: '2026-03-31', netWorth: 1300 },
+      ],
+      { startValue: 1, endValue: 2 },
+    );
+
+    const dataZoom = option['dataZoom'] as { startValue: number; endValue: number }[];
+    expect(dataZoom.every((zoom) => zoom.startValue === 1 && zoom.endValue === 2)).toBe(true);
   });
 });

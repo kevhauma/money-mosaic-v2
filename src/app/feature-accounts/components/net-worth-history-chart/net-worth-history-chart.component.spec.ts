@@ -93,7 +93,10 @@ describe('buildNetWorthHistoryChartOption', () => {
       { accountId: 2, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: -200 }] },
     ];
 
-    const option = buildNetWorthHistoryChartOption(accounts, series);
+    const option = buildNetWorthHistoryChartOption(accounts, series, {
+      startValue: 0,
+      endValue: 0,
+    });
 
     expect(option['series']).toEqual([
       {
@@ -152,7 +155,10 @@ describe('buildNetWorthHistoryChartOption', () => {
       },
     ];
 
-    const option = buildNetWorthHistoryChartOption(accounts, series);
+    const option = buildNetWorthHistoryChartOption(accounts, series, {
+      startValue: 0,
+      endValue: 1,
+    });
     const bandData = (option['series'] as { data: number[] }[]).map((s) => s.data);
 
     combined.forEach((point, bucketIndex) => {
@@ -162,5 +168,25 @@ describe('buildNetWorthHistoryChartOption', () => {
       );
       expect(stackedTotal).toBe(point.netWorth);
     });
+  });
+
+  it('applies the given zoom window to both dataZoom entries', () => {
+    const series = [
+      {
+        accountId: 1,
+        points: [
+          { bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1000 },
+          { bucketKey: '2026-02', bucketEnd: '2026-02-28', netWorth: 1100 },
+        ],
+      },
+    ];
+
+    const option = buildNetWorthHistoryChartOption([accounts[0]], series, {
+      startValue: 1,
+      endValue: 1,
+    });
+
+    const dataZoom = option['dataZoom'] as { startValue: number; endValue: number }[];
+    expect(dataZoom.every((zoom) => zoom.startValue === 1 && zoom.endValue === 1)).toBe(true);
   });
 });

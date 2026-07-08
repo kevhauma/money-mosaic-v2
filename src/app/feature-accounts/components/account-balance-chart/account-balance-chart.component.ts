@@ -7,7 +7,9 @@ import {
   bucketDateBoundaries,
   computeAccountBalanceTrends,
   computeFullHistoryRange,
-  pickGranularityForSpan,
+  computeZoomWindow,
+  RangeStore,
+  type ChartZoomWindow,
   type NetWorthPoint,
 } from '@/core/stats';
 import { TransactionsStore } from '@/feature-transactions';
@@ -19,14 +21,15 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
 export const buildAccountBalanceChartOption = (
   account: Account,
   points: NetWorthPoint[],
+  zoomWindow: ChartZoomWindow,
 ): EChartsCoreOption => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 56, right: 24, top: 24, bottom: 64 },
   xAxis: { type: 'category', data: points.map((point) => point.bucketKey) },
   yAxis: { type: 'value' },
   dataZoom: [
-    { type: 'inside', xAxisIndex: 0 },
-    { type: 'slider', xAxisIndex: 0, height: 20, bottom: 8 },
+    { type: 'inside', xAxisIndex: 0, ...zoomWindow },
+    { type: 'slider', xAxisIndex: 0, height: 20, bottom: 8, ...zoomWindow },
   ],
   series: [
     {
@@ -39,8 +42,10 @@ export const buildAccountBalanceChartOption = (
 
 /**
  * Full-history balance line for one account (TICKET-STAT-02) — spans opening-balance date/first
- * transaction through today, independent of the topbar's global range/grouping, with its own
- * auto-picked granularity and an x-axis dataZoom to scrub into a sub-window.
+ * transaction through today, so the series itself is always the account's entire history. The
+ * topbar's grouping control drives this chart's bucket granularity too, and the topbar's date
+ * range scrubs the initial zoom window (via `dataZoom`) rather than shrinking the series data
+ * (TICKET-STAT-03), so zooming out is always available without a manual preset change.
  */
 @Component({
   selector: 'app-account-balance-chart',
@@ -52,15 +57,14 @@ export class AccountBalanceChartComponent {
   readonly account = input.required<Account>();
 
   private readonly transactionsStore = inject(TransactionsStore);
+  private readonly rangeStore = inject(RangeStore);
   private readonly router = inject(Router);
 
   private readonly range = computed(() =>
     computeFullHistoryRange([this.account()], this.transactionsStore.transactions(), todayIso()),
   );
 
-  private readonly granularity = computed(() =>
-    pickGranularityForSpan(this.range().from, this.range().to),
-  );
+  private readonly granularity = computed(() => this.rangeStore.groupBy());
 
   protected readonly points = computed(
     () =>
@@ -73,8 +77,17 @@ export class AccountBalanceChartComponent {
       )[0]?.points ?? [],
   );
 
+  private readonly zoomWindow = computed(() =>
+    computeZoomWindow(
+      this.points().map((point) => point.bucketKey),
+      this.rangeStore.from(),
+      this.rangeStore.to(),
+      this.granularity(),
+    ),
+  );
+
   protected readonly chartOption = computed<EChartsCoreOption>(() =>
-    buildAccountBalanceChartOption(this.account(), this.points()),
+    buildAccountBalanceChartOption(this.account(), this.points(), this.zoomWindow()),
   );
 
   protected onChartClick(event: ECElementEvent): void {
