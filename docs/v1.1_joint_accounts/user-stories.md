@@ -6,8 +6,13 @@ Split out of the v1.5 line item in [../v2/requirements.md](../v2/requirements.md
 
 ## 1. Accounts (FR-ACC)
 
-- [ ] As someone with a shared account, I want to set my ownership/contribution share on a joint account, so the app has the input it needs to count only my part of the shared money ([TICKET-ACC-02](./tickets/TICKET-ACC-02-joint-ownership-share.md), extends FR-ACC-1)
+- [ ] As someone with a shared account, I want to set my ownership/contribution share on a joint account, so the app has the input it needs to count only my part of the shared money — pre-filled as `1 / (number of people on the account)` once co-owners are registered (e.g. 50% for 2 people, 33% for 3), staying editable and only committed once I confirm it ([TICKET-ACC-02](./tickets/TICKET-ACC-02-joint-ownership-share.md), extends FR-ACC-1)
 - [ ] As someone sharing an account with one or more other people, I want to register each co-owner and the IBAN(s) they pay in from, so the app can tell each person's contributions apart from mine and from external money ([TICKET-ACC-03](./tickets/TICKET-ACC-03-multi-owner-coowner-ibans.md), extends FR-ACC-1 / FR-ACC-4)
+
+## 3. Transactions (FR-TXN)
+
+- [ ] As someone with a shared account, I want to manually correct a transaction that landed in the wrong "personal vs. joint" bucket — a joint expense I accidentally fronted from my own account, a personal expense accidentally paid from the joint account (mine or a co-owner's) — so a one-off mistake doesn't distort my net worth or expense stats, while a co-owner reimbursing *my* personal expense into the joint pot keeps working with no extra step from me ([TICKET-TXN-03](./tickets/TICKET-TXN-03-manual-attribution-override.md), extends FR-TXN-1 / FR-TXN-2)
+- [ ] As a user, I want to mark any transaction as neither income nor expense, so a situation the app's categorisation or joint-account model doesn't support (a correction, a reversal, anything that doesn't fit) doesn't distort my stats — without having to invent a category or an ownership split for it ([TICKET-TXN-04](./tickets/TICKET-TXN-04-nullify-transaction.md), extends FR-TXN-1, changes FR-STAT-2 / FR-STAT-3)
 
 ## 4. Categorisation (FR-CAT)
 

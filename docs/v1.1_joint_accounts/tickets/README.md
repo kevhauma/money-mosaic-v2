@@ -2,7 +2,7 @@
 
 Tickets for the **joint-account refinement** user stories in [../user-stories.md](../user-stories.md). Each ticket carries a description, current situation (as-is), desired result (to-be), and detailed acceptance criteria. FR/NFR IDs trace back to [../../v1/finance-app-spec.md](../../v1/finance-app-spec.md).
 
-These five ship together as one coherent change — the net-worth contract (STAT-03) consumes the account fields (ACC-02 share + ACC-03 co-owner registry) and the contribution classification (CAT-02); TRF-03 protects the matching that CAT-02 depends on. Suggested build order: **ACC-02 + ACC-03 → CAT-02 → TRF-03 → STAT-03**.
+These seven ship together as one coherent change — the net-worth contract (STAT-03) consumes the account fields (ACC-02 share + ACC-03 co-owner registry) and the contribution classification (CAT-02); TRF-03 protects the matching that CAT-02 depends on; TXN-03 adds the manual escape hatch for one-off misattributions on top of STAT-03's classifier; TXN-04 is a smaller, independent escape hatch (account/category agnostic) that can ship any time after CAT-02 establishes the income/expense-exclusion pattern it mirrors. Suggested build order: **ACC-02 + ACC-03 → CAT-02 → TRF-03 → STAT-03 → TXN-03**, with **TXN-04** free to land in parallel once CAT-02 is in.
 
 | Ticket | Area | Title | Source story |
 |---|---|---|---|
@@ -11,6 +11,8 @@ These five ship together as one coherent change — the net-worth contract (STAT
 | [CAT-02](./TICKET-CAT-02-neutral-category-kind.md) | Categorisation | "Neutral" category kind for partner/external contributions | user-stories §4, extends FR-CAT-1 / FR-STAT-2 |
 | [STAT-03](./TICKET-STAT-03-contribution-net-worth.md) | Statistics & Dashboard | Contribution-based net worth for joint accounts | user-stories §6, changes FR-STAT-1 / FR-TRF-1 semantics |
 | [TRF-03](./TICKET-TRF-03-guard-partner-inflow-matching.md) | Transfers | Guard transfer auto-matching against one-sided partner inflows | user-stories §5, extends FR-TRF-3 / FR-TRF-5 |
+| [TXN-03](./TICKET-TXN-03-manual-attribution-override.md) | Transactions | Manual attribution override for misattributed joint/personal expenses | user-stories §3, extends FR-TXN-1 / FR-TXN-2 |
+| [TXN-04](./TICKET-TXN-04-nullify-transaction.md) | Transactions | Nullify a transaction (neither income nor expense) | user-stories §3, extends FR-TXN-1, changes FR-STAT-2 / FR-STAT-3 |
 
 ## Definition of Done (applies to every ticket)
 
