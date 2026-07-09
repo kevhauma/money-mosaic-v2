@@ -26,15 +26,15 @@ Give each account an optional `ownershipShare` (0–1, default = whole). It is o
 
 ## Acceptance criteria
 
-- [ ] `Account.ownershipShare?: number` is added to [app-db.ts](../../../src/app/core/data-access/app-db.ts) with a doc comment stating the `[0,1]` range, the "undefined ⇒ 1 (whole)" convention, and that it only applies to `joint` accounts.
-- [ ] **No Dexie version bump** is introduced for this field (it is non-indexed and optional); a version block is added only if STAT-03 or CAT-02 needs one, and if so it stays additive (next is version 6). The field is confirmed to round-trip through IndexedDB without a schema change.
-- [ ] The account form exposes the share as a percentage input, shown **only** when the selected type is `joint`, defaulting to whole (blank/undefined) on create and pre-filled from `ownershipShare` on edit; switching type away from `joint` clears it back to `undefined`.
-- [ ] The input's placeholder shows `round(100 / (1 + co-owner count))%`, recalculated whenever a co-owner is added/removed on ACC-03's sub-form (0 co-owners ⇒ `50%`, matching today's behaviour); it never overwrites a value the user already typed, and the stored `ownershipShare` stays `undefined` until the user commits a value (placeholder is display-only).
-- [ ] The percentage↔fraction conversion is centralised (one helper), validated to `0 ≤ share ≤ 1` (i.e. `0–100%`), and an out-of-range or non-numeric entry blocks submit with an inline error, consistent with the existing `openingBalance`/`iban` validation style.
-- [ ] Saving is done via `AccountsStore.addAccount` / `updateAccount` (repository-backed), never a direct `appDb.accounts` write; the emitted `AccountFormValue` carries `ownershipShare`.
-- [ ] Editing an existing joint account's share persists and reloads correctly; a checking/savings/invest account never stores a share.
-- [ ] Unit tests cover: form maps `50%` ⇄ `0.5` both directions; validation rejects `-1`, `150`, and non-numeric; the control is present only for `joint`; switching type to non-joint nulls the value; round-trip add→hydrate preserves the share; placeholder recalculates for 1/2/3 co-owners (`50%`/`33%`/`25%`) and never clobbers a user-entered value.
-- [ ] Verified live in the browser: creating/editing a joint account shows the share control, saving persists it, and reopening shows the saved percentage; no balance or net-worth figure changes as a result of this ticket alone.
+- [x] `Account.ownershipShare?: number` is added to [app-db.ts](../../../src/app/core/data-access/app-db.ts) with a doc comment stating the `[0,1]` range, the "undefined ⇒ 1 (whole)" convention, and that it only applies to `joint` accounts.
+- [x] **No Dexie version bump** is introduced for this field (it is non-indexed and optional); a version block is added only if STAT-03 or CAT-02 needs one, and if so it stays additive (next is version 6). The field is confirmed to round-trip through IndexedDB without a schema change.
+- [x] The account form exposes the share as a percentage input, shown **only** when the selected type is `joint`, defaulting to whole (blank/undefined) on create and pre-filled from `ownershipShare` on edit; switching type away from `joint` clears it back to `undefined`.
+- [x] The input's placeholder shows `round(100 / (1 + co-owner count))%`, recalculated whenever a co-owner is added/removed on ACC-03's sub-form (0 co-owners ⇒ `50%`, matching today's behaviour); it never overwrites a value the user already typed, and the stored `ownershipShare` stays `undefined` until the user commits a value (placeholder is display-only).
+- [x] The percentage↔fraction conversion is centralised (one helper), validated to `0 ≤ share ≤ 1` (i.e. `0–100%`), and an out-of-range or non-numeric entry blocks submit with an inline error, consistent with the existing `openingBalance`/`iban` validation style.
+- [x] Saving is done via `AccountsStore.addAccount` / `updateAccount` (repository-backed), never a direct `appDb.accounts` write; the emitted `AccountFormValue` carries `ownershipShare`.
+- [x] Editing an existing joint account's share persists and reloads correctly; a checking/savings/invest account never stores a share.
+- [x] Unit tests cover: form maps `50%` ⇄ `0.5` both directions; validation rejects `-1`, `150`, and non-numeric; the control is present only for `joint`; switching type to non-joint nulls the value; round-trip add→hydrate preserves the share; placeholder recalculates for 1/2/3 co-owners (`50%`/`33%`/`25%`) and never clobbers a user-entered value.
+- [x] Verified live in the browser: creating/editing a joint account shows the share control, saving persists it, and reopening shows the saved percentage; no balance or net-worth figure changes as a result of this ticket alone.
 
 ## Notes
 

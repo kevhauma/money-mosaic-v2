@@ -7,3 +7,4 @@ export * from './selection-model';
 export * from './debounced-text';
 export * from './search-params';
 export * from './iban';
+export * from './percentage';

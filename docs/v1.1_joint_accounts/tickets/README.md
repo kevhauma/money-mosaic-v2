@@ -17,3 +17,12 @@ These seven ship together as one coherent change — the net-worth contract (STA
 ## Definition of Done (applies to every ticket)
 
 Per [../../../CLAUDE.md](../../../CLAUDE.md): `ng lint` + `ng test` + `ng build --configuration development` all pass, plus a live browser check for any UI-visible change. Dexie schema changes stay additive (next version is **6** — current shipped version is 5); the production bundle budget in `angular.json` is never raised. Components/stores persist through a repository, never a direct `appDb.<table>` write. Rules never overwrite a manually-set category (`categoryManual`).
+
+
+order:
+- ACC-02 (ownership share) and ACC-03 (co-owner registry) are the foundation — no blocking dependencies, and everything else (CAT-02, TRF-03, STAT-03, TXN-03) explicitly traces back to them.
+- CAT-02 (neutral category) needs ACC-03's co-owner IBAN registry for auto-tagging.
+- TRF-03 (transfer-matching guard) needs ACC-03 too.
+- STAT-03 (contribution net worth) explicitly says "do not start until ACC-02 + ACC-03 + CAT-02 are all merged."
+- TXN-03 (manual attribution override) explicitly says "build last in the v1.1 sequence."
+- TXN-04 (nullify transaction) is independent/standalone — no joint-account dependency at all.

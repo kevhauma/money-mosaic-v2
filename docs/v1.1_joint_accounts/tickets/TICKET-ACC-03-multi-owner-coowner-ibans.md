@@ -25,15 +25,15 @@ A joint account can be shared with **more than one** other person. Let the user 
 
 ## Acceptance criteria
 
-- [ ] `JointOwner` type (`{ name: string; ibans: string[]; share?: number }`) and `Account.coOwners?: JointOwner[]` are added to [app-db.ts](../../../src/app/core/data-access/app-db.ts) with a doc comment: co-owners only apply to `joint` accounts; each `ibans` entry is a counterparty account the person pays in from; `share` is optional `[0,1]` metadata (not required for net worth, which only needs *my* `ownershipShare`).
-- [ ] **No Dexie version bump** for this field (optional, non-indexed); it is confirmed to round-trip through IndexedDB unchanged. If STAT-03/CAT-02 already introduce `.version(6)`, this field still needs no upgrade block (nothing to backfill).
-- [ ] The account form renders a **repeatable** co-owner sub-form **only** for `type === 'joint'`, supporting **≥ 2 co-owners** and **≥ 2 IBANs per co-owner**, with add/remove for both levels; switching type away from `joint` clears `coOwners`.
-- [ ] Each co-owner IBAN uses the shared `ibanValidator`; a co-owner with a blank name or zero valid IBANs blocks submit with an inline error; duplicate IBANs (across co-owners or equal to the account's own `iban`) are rejected with a clear message, since a duplicate would make attribution ambiguous.
-- [ ] A shared, tested helper resolves a `counterpartyIban` to its `JointOwner` for a given account (and exposes the flat co-owner-IBAN set), living where CAT-02/TRF-03/STAT-03 can all import it — no three parallel copies of the lookup.
-- [ ] Saving goes through `AccountsStore.addAccount` / `updateAccount` (repository-backed), never a direct `appDb.accounts` write; `coOwners` round-trips on add→hydrate and on edit.
-- [ ] A non-joint account never stores `coOwners`; an existing joint account with no co-owners is valid and behaves exactly as before.
-- [ ] Unit tests cover: add/remove multiple co-owners and multiple IBANs; per-IBAN validation and duplicate-IBAN rejection (including collision with own `iban`); `iban → co-owner` resolution returns the right person and `undefined` for an unknown IBAN; switching type to non-joint clears co-owners; round-trip persistence.
-- [ ] Verified live in the browser: a joint account can be created with two co-owners each having a distinct IBAN, saved, reopened with both intact; adding/removing rows works; invalid/duplicate IBANs are blocked.
+- [x] `JointOwner` type (`{ name: string; ibans: string[]; share?: number }`) and `Account.coOwners?: JointOwner[]` are added to [app-db.ts](../../../src/app/core/data-access/app-db.ts) with a doc comment: co-owners only apply to `joint` accounts; each `ibans` entry is a counterparty account the person pays in from; `share` is optional `[0,1]` metadata (not required for net worth, which only needs *my* `ownershipShare`).
+- [x] **No Dexie version bump** for this field (optional, non-indexed); it is confirmed to round-trip through IndexedDB unchanged. If STAT-03/CAT-02 already introduce `.version(6)`, this field still needs no upgrade block (nothing to backfill).
+- [x] The account form renders a **repeatable** co-owner sub-form **only** for `type === 'joint'`, supporting **≥ 2 co-owners** and **≥ 2 IBANs per co-owner**, with add/remove for both levels; switching type away from `joint` clears `coOwners`.
+- [x] Each co-owner IBAN uses the shared `ibanValidator`; a co-owner with a blank name or zero valid IBANs blocks submit with an inline error; duplicate IBANs (across co-owners or equal to the account's own `iban`) are rejected with a clear message, since a duplicate would make attribution ambiguous.
+- [x] A shared, tested helper resolves a `counterpartyIban` to its `JointOwner` for a given account (and exposes the flat co-owner-IBAN set), living where CAT-02/TRF-03/STAT-03 can all import it — no three parallel copies of the lookup.
+- [x] Saving goes through `AccountsStore.addAccount` / `updateAccount` (repository-backed), never a direct `appDb.accounts` write; `coOwners` round-trips on add→hydrate and on edit.
+- [x] A non-joint account never stores `coOwners`; an existing joint account with no co-owners is valid and behaves exactly as before.
+- [x] Unit tests cover: add/remove multiple co-owners and multiple IBANs; per-IBAN validation and duplicate-IBAN rejection (including collision with own `iban`); `iban → co-owner` resolution returns the right person and `undefined` for an unknown IBAN; switching type to non-joint clears co-owners; round-trip persistence.
+- [x] Verified live in the browser: a joint account can be created with two co-owners each having a distinct IBAN, saved, reopened with both intact; adding/removing rows works; invalid/duplicate IBANs are blocked.
 
 ## Notes
 

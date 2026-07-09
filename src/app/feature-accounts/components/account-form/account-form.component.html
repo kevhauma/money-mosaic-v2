@@ -1,4 +1,4 @@
-<mm-modal [(open)]="open">
+<mm-modal [(open)]="open" class="max-w-2xl">
   <span mm-modal-title>{{ account() ? 'Edit account' : 'Add account' }}</span>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
@@ -69,6 +69,121 @@
         </mm-select>
       </fieldset>
     </div>
+
+    @if (selectedType() === 'joint') {
+      <div class="divider my-2">Joint account</div>
+
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">My share</legend>
+        <mm-input
+          type="number"
+          step="1"
+          min="0"
+          formControlName="ownershipSharePercent"
+          class="w-full"
+          [placeholder]="sharePlaceholder()"
+        />
+        @if (
+          form.controls.ownershipSharePercent.invalid && form.controls.ownershipSharePercent.touched
+        ) {
+          <p class="label text-error">Enter a share between 0 and 100%.</p>
+        }
+        <p class="label text-xs text-base-content/60">
+          My percentage of joint spending and of the opening balance. <br />Left blank, the whole
+          account counts as mine.<br />Changing it later recomputes historical net worth, since
+          there's no date-effective history.
+        </p>
+      </fieldset>
+
+      <div class="flex items-center justify-between">
+        <span class="fieldset-legend">Co-owners</span>
+        <mm-button type="button" variant="ghost" size="sm" (click)="addCoOwner()">
+          + Add co-owner
+        </mm-button>
+      </div>
+
+      @if (form.hasError('duplicateIban')) {
+        <p class="label text-error">
+          An IBAN can only belong to one owner — check for a duplicate with the account's own IBAN
+          or another co-owner.
+        </p>
+      }
+
+      <div formArrayName="coOwners" class="flex flex-col gap-3">
+        @for (group of coOwnersArray.controls; track $index) {
+          <div [formGroup]="group" class="rounded-field border border-base-300 p-3">
+            <div class="grid grid-cols-12 items-start gap-2">
+              <mm-input
+                type="text"
+                formControlName="name"
+                size="sm"
+                class="col-span-5"
+                placeholder="Co-owner name"
+              />
+              @if (group.controls.name.invalid && group.controls.name.touched) {
+                <p class="label col-span-12 text-error">A co-owner needs a name.</p>
+              }
+
+              <mm-input
+                type="number"
+                step="1"
+                min="0"
+                formControlName="sharePercent"
+                size="sm"
+                class="col-span-4"
+                placeholder="Their share % (optional)"
+              />
+
+              <mm-button
+                type="button"
+                variant="ghost"
+                shape="square"
+                size="sm"
+                class="col-span-1"
+                (click)="removeCoOwner($index)"
+                ariaLabel="Remove co-owner"
+              >
+                &times;
+              </mm-button>
+            </div>
+
+            <div formArrayName="ibans" class="mt-2 flex flex-col gap-2">
+              @for (ibanControl of group.controls.ibans.controls; track $index) {
+                <div class="flex items-center gap-2">
+                  <mm-input
+                    type="text"
+                    [formControlName]="$index"
+                    size="sm"
+                    class="w-full"
+                    placeholder="BE71 0961 2345 6769"
+                  />
+                  <mm-button
+                    type="button"
+                    variant="ghost"
+                    shape="square"
+                    size="sm"
+                    [disabled]="group.controls.ibans.length === 1"
+                    (click)="removeIban(group, $index)"
+                    ariaLabel="Remove IBAN"
+                  >
+                    &times;
+                  </mm-button>
+                </div>
+                @if (ibanControl.invalid && ibanControl.touched) {
+                  <p class="label text-error">That doesn't look like a valid IBAN.</p>
+                }
+              }
+              @if (group.controls.ibans.invalid && group.controls.ibans.touched) {
+                <p class="label text-error">Add at least one IBAN this co-owner pays in from.</p>
+              }
+              <mm-button type="button" variant="ghost" size="sm" (click)="addIban(group)">
+                + Add IBAN
+              </mm-button>
+            </div>
+          </div>
+        }
+      </div>
+    }
 
     <div class="modal-action">
       <mm-button (click)="cancel()">Cancel</mm-button>

@@ -6,8 +6,8 @@ Split out of the v1.5 line item in [../v2/requirements.md](../v2/requirements.md
 
 ## 1. Accounts (FR-ACC)
 
-- [ ] As someone with a shared account, I want to set my ownership/contribution share on a joint account, so the app has the input it needs to count only my part of the shared money — pre-filled as `1 / (number of people on the account)` once co-owners are registered (e.g. 50% for 2 people, 33% for 3), staying editable and only committed once I confirm it ([TICKET-ACC-02](./tickets/TICKET-ACC-02-joint-ownership-share.md), extends FR-ACC-1)
-- [ ] As someone sharing an account with one or more other people, I want to register each co-owner and the IBAN(s) they pay in from, so the app can tell each person's contributions apart from mine and from external money ([TICKET-ACC-03](./tickets/TICKET-ACC-03-multi-owner-coowner-ibans.md), extends FR-ACC-1 / FR-ACC-4)
+- [x] As someone with a shared account, I want to set my ownership/contribution share on a joint account, so the app has the input it needs to count only my part of the shared money — pre-filled as `1 / (number of people on the account)` once co-owners are registered (e.g. 50% for 2 people, 33% for 3), staying editable and only committed once I confirm it ([TICKET-ACC-02](./tickets/TICKET-ACC-02-joint-ownership-share.md), extends FR-ACC-1)
+- [x] As someone sharing an account with one or more other people, I want to register each co-owner and the IBAN(s) they pay in from, so the app can tell each person's contributions apart from mine and from external money ([TICKET-ACC-03](./tickets/TICKET-ACC-03-multi-owner-coowner-ibans.md), extends FR-ACC-1 / FR-ACC-4)
 
 ## 3. Transactions (FR-TXN)
 

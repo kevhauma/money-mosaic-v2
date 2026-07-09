@@ -3,6 +3,13 @@ import Dexie, { type Table } from 'dexie';
 // code the shared/utils barrel also re-exports.
 import { computeFingerprint } from '@/shared/utils/fingerprint';
 
+/** A person sharing a `joint` account, and the IBAN(s) they pay in from (TICKET-ACC-03). */
+export type JointOwner = {
+  name: string;
+  ibans: string[];
+  share?: number;
+};
+
 export type Account = {
   id?: number;
   name: string;
@@ -14,6 +21,19 @@ export type Account = {
   color: string;
   icon: string;
   archived: boolean;
+  /**
+   * My share of joint spending (and of the pre-existing opening balance), a fraction in `[0, 1]`.
+   * Only meaningful for `type === 'joint'`. `undefined` means "whole account is mine" (i.e. `1`), so
+   * every existing account and every non-joint account behaves exactly as before this field existed
+   * (TICKET-ACC-02).
+   */
+  ownershipShare?: number;
+  /**
+   * Other people on a `joint` account and the IBAN(s) they pay in from, used to tell their
+   * contributions apart from mine and from external money. Only meaningful for `type === 'joint'`;
+   * `undefined`/empty means no co-owners registered (TICKET-ACC-03).
+   */
+  coOwners?: JointOwner[];
 };
 
 export type Transaction = {
