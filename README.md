@@ -1,59 +1,148 @@
 # MoneyMosaicVibe
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.18.
+A local-first personal finance app. Import bank CSV exports, categorize transactions with rules, link inter-account transfers, and view dashboard stats — **no backend, no server, no account**. All data lives in [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (via [Dexie.js](https://dexie.org/)) inside your browser.
 
-## Development server
+## Stack
 
-To start a local development server, run:
+- **Angular 21** — standalone components, Signals, zoneless-style `OnPush`
+- **@ngrx/signals** — component/feature stores
+- **Dexie 4** — IndexedDB wrapper (schema in `src/app/core/data-access/app-db.ts`)
+- **Tailwind CSS 4 + daisyUI 5** — styling
+- **ngx-echarts** — charts
+- **PapaParse** — CSV parsing, run inside a Web Worker
+- **Vitest** — unit tests
+
+## Prerequisites
+
+- Node.js — a version compatible with Angular CLI 21 (Node 20.19+ or 22.12+; check with `node -v`)
+- npm 10.x (this repo pins `packageManager: npm@10.9.2`)
+
+## Getting started
 
 ```bash
-ng serve
+git clone <repo-url>
+cd money-mosaic-vibe
+npm install
+npm start        # same as `ng serve`
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open `http://localhost:4200/`. The app rebuilds and reloads automatically as you edit source files.
+
+In development mode, if IndexedDB is empty (no accounts and no transactions), the app auto-seeds a small demo dataset — two accounts with sample transactions and a transfer pair — so the UI isn't empty on first run (`src/app/dev-seed/`). This never touches or overwrites real data; it only fires when the local database is genuinely empty.
+
+To start over with a clean database, clear IndexedDB for `localhost:4200` in your browser's DevTools (Application → IndexedDB) and reload — the seed will run again.
+
+## Everyday commands
+
+```bash
+ng serve                              # dev server on :4200 (or `npm start`)
+ng build --configuration development  # fast compile check — also catches worker-bundling issues
+ng build                              # production build, output in dist/
+ng test                               # unit tests (Vitest)
+ng test --watch                       # unit tests in watch mode
+ng lint                               # ESLint
+```
+
+### Before calling any change done
+
+Run all of:
+
+```bash
+ng lint
+ng test
+ng build --configuration development
+```
+
+...plus a live browser check for anything UI-visible. Prettier (single quotes) runs automatically on staged files via husky + lint-staged pre-commit — don't fight its formatting.
+
+## Project structure
+
+```
+src/app/
+  core/                  # cross-cutting logic: no UI
+    data-access/         #   Dexie schema + repositories (only place that touches appDb tables)
+    import/               #   CSV parsing/mapping (PapaParse Web Worker)
+    accounts/, categorisation/, stats/, transfers/
+  feature-accounts/       # feature modules — one per screen/domain
+  feature-categories/
+  feature-dashboard/
+  feature-import/
+  feature-transactions/
+  shared/                 # shared UI components, pipes, utils
+  dev-seed/               # dev-only sample-data seeding (tree-shaken from prod builds)
+```
+
+Components and stores never touch `appDb` tables directly — always go through a repository in `core/data-access/`. Cross-feature imports go through each feature's `index.ts` barrel (`@/feature-x`), never deep paths.
+
+## Where to look for more context
+
+Rather than re-deriving these by exploring the code, read:
+
+| Topic | Source |
+|---|---|
+| Coding conventions (naming, folders, styling, forms, testing) | `.claude/skills/coding-conventions/SKILL.md` |
+| Dexie schema, entities, versioning rules, repositories | `.claude/skills/data-model/SKILL.md` |
+| Feature/store/service map — what lives where | `.claude/skills/project-map/SKILL.md` |
+| Functional requirements (FR-TXN-\*, FR-CAT-\*, FR-TRF-\*, ...) | `docs/v1.0_foundation/finance-app-spec.md`, `docs/v1.0_foundation/user-stories.md` |
+| UI layout spec | `docs/v1.0_foundation/ui-layout-spec.md` |
+| v2+ backlog | `docs/v2/requirements.md` |
+| Angular / Tailwind 4 / daisyUI / Vitest guidance | skills in `.agents/skills/` (managed by `npx skills`, tracked in `skills-lock.json`) |
+
+## Ticket system
+
+Work is tracked as **user stories + tickets** per version, under `docs/<version>/`:
+
+```
+docs/v1.0_foundation/
+  user-stories.md      # one-line checkbox stories, grouped by section, linking to tickets
+  tickets/
+    README.md           # index table: ticket | area | title | source story
+    TICKET-<PREFIX>-<NN>-<slug>.md   # e.g. TICKET-IMP-03-header-mismatch-error.md
+```
+
+Each ticket has a **Description**, **Current situation (as-is)** (with clickable links into the real code), **Desired result (to-be)**, and checkbox **Acceptance criteria**. A story line is only checked off in `user-stories.md` once every acceptance criterion on its ticket is `[x]`. The same layout exists per version (`v1.0_foundation`, `v1.1_joint_accounts`, `v1.2_auto_categorise`, `v2`, ...) — don't assume `v1` is the only one.
+
+### Workflow: capture → build
+
+1. **Capture new work** with the `story-ticket` skill (`.claude/skills/story-ticket/`): run `/story-ticket` when someone reports a bug, requests a feature, or asks for a refactor. It asks which version the work belongs to, resolves a consistent area prefix (e.g. `TXN`, `IMP`, `STAT`), writes the ticket file with as-is/to-be/acceptance-criteria, and appends the linked story line to that version's `user-stories.md`.
+2. **Work an existing ticket** with the `work-ticket` skill (`.claude/skills/work-ticket/`): run `/work-ticket` (optionally naming a ticket ID like `TICKET-ACC-01`, or let it scan for open stories and ask). It reads the ticket, proposes an implementation plan mapped to the acceptance criteria and **pauses for approval** before touching code, implements against the repo's hard rules below, runs the `verifier` subagent (lint + test + dev build) plus a live browser check for UI criteria, ticks off each acceptance criterion only once verified, and finally checks off the story line in `user-stories.md`. It does not commit — that's left for you to review.
+
+The `spec-navigator` subagent answers FR-*/requirement questions from `docs/` while working a ticket, and `project-map` / `data-model` skills help locate the right code and repository/schema rules.
+
+## Hard rules
+
+- **Never raise `maximumWarning`/`maximumError` bundle budgets in `angular.json`.** Solve size problems with lazy-loading or dependency dieting instead.
+- **Dexie schema changes are additive**: add a new `.version(n + 1).stores(...)` block (+ `.upgrade()` if data must transform). Never edit a shipped version block.
+- Components/stores never touch `appDb` tables directly — always go through a repository in `core/data-access/`.
+- Rules must never overwrite a category the user set manually (the `categoryManual` flag on `Transaction`).
+- Cross-feature imports go through the feature's `index.ts` barrel (`@/feature-x`), never deep paths. One documented exception: `app.routes.ts` imports `feature-transactions/transactions.routes` directly to break a barrel cycle — that's intentional.
 
 ## Code scaffolding
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
 ```bash
 ng generate component component-name
+ng generate --help    # full list of schematics: components, directives, pipes, ...
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Testing
 
 ```bash
-ng generate --help
+ng test                 # run once
+ng test --watch         # watch mode
 ```
 
-## Building
+Unit tests use Vitest with jsdom. There is no e2e test suite configured.
 
-To build the project run:
+## Building for production
 
 ```bash
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Compiles and optimizes the app into `dist/`. Since this is a fully client-side app (IndexedDB, no backend), the `dist/` output can be deployed to any static host.
 
-## Running unit tests
+## Additional resources
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli)
+- [Dexie.js documentation](https://dexie.org/docs/)
+- [Vitest documentation](https://vitest.dev/)
