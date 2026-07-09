@@ -30,7 +30,9 @@ export function matchesTransactionFilters(
 
   if (
     filters.categoryId === 'uncategorised' &&
-    (transaction.categoryId != null || isSavingsMovement(transaction, ownSavingsIbans))
+    (transaction.categoryId != null ||
+      transaction.transferId != null ||
+      isSavingsMovement(transaction, ownSavingsIbans))
   ) {
     return false;
   }

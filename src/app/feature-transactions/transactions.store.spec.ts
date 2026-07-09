@@ -97,3 +97,31 @@ describe('TransactionsStore: uncategorised backlog excludes savings movements (T
     expect(store.uncategorisedTransactions().map((t) => t.id)).toEqual([2]);
   });
 });
+
+describe('TransactionsStore: uncategorised backlog excludes transfer-linked transactions (TICKET-TRF-01)', () => {
+  const transactionsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+    bulkUpdate: vi.fn().mockResolvedValue(0),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [{ provide: TransactionsRepository, useValue: transactionsRepository }],
+    });
+  });
+
+  it('drops a transaction linked as a transfer but keeps a genuine uncategorised spend', () => {
+    const store = TestBed.inject(TransactionsStore);
+    store.addMany([
+      // Linked as a transfer — categoryId is cleared on link and must never re-enter the backlog.
+      transaction({ id: 1, amount: -500, transferId: 42 }),
+      // Genuinely uncategorised spend.
+      transaction({ id: 2, amount: -30 }),
+    ]);
+
+    expect(store.uncategorisedCount()).toBe(1);
+    expect(store.uncategorisedTransactions().map((t) => t.id)).toEqual([2]);
+  });
+});

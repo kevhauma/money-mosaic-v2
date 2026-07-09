@@ -52,7 +52,11 @@ export const TransfersStore = signalStore(
         transactionsStore.patchMany(
           updatedTransactions.map((transaction) => ({
             id: transaction.id!,
-            changes: { transferId: transaction.transferId },
+            changes: {
+              transferId: transaction.transferId,
+              categoryId: transaction.categoryId,
+              categoryManual: transaction.categoryManual,
+            },
           })),
         );
       },
@@ -89,10 +93,25 @@ export const TransfersStore = signalStore(
           transferSettingsStore.autoLinkMediumConfidence(),
         );
         patchState(store, addEntities(linked, transferConfig));
+        // Linking always clears the category (TICKET-TRF-01), so this mirror holds unconditionally.
         transactionsStore.patchMany(
           linked.flatMap((transfer) => [
-            { id: transfer.fromTransactionId, changes: { transferId: transfer.id } },
-            { id: transfer.toTransactionId, changes: { transferId: transfer.id } },
+            {
+              id: transfer.fromTransactionId,
+              changes: {
+                transferId: transfer.id,
+                categoryId: undefined,
+                categoryManual: undefined,
+              },
+            },
+            {
+              id: transfer.toTransactionId,
+              changes: {
+                transferId: transfer.id,
+                categoryId: undefined,
+                categoryManual: undefined,
+              },
+            },
           ]),
         );
         return linked.length;

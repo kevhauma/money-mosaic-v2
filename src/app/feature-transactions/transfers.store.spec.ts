@@ -80,6 +80,34 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
     expect(byId.get(2)?.transferId).toBe(42);
   });
 
+  it('link clears categoryId/categoryManual on both sides, mirroring the cleared category from the service (TICKET-TRF-01)', async () => {
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      transaction({ id: 1, categoryId: 7, categoryManual: true }),
+      transaction({ id: 2, categoryId: 7 }),
+    ]);
+
+    const from = transaction({ id: 1, categoryId: 7, categoryManual: true });
+    const to = transaction({ id: 2, categoryId: 7 });
+    const linked = transfer({ id: 42, fromTransactionId: 1, toTransactionId: 2 });
+    transferLinkingService.linkManually.mockResolvedValue({
+      transfer: linked,
+      updatedTransactions: [
+        { ...from, transferId: 42, categoryId: undefined, categoryManual: undefined },
+        { ...to, transferId: 42, categoryId: undefined, categoryManual: undefined },
+      ],
+    });
+
+    const store = TestBed.inject(TransfersStore);
+    await store.link(from, to);
+
+    const byId = new Map(transactionsStore.transactions().map((t) => [t.id, t]));
+    expect(byId.get(1)?.categoryId).toBeUndefined();
+    expect(byId.get(1)?.categoryManual).toBeUndefined();
+    expect(byId.get(2)?.categoryId).toBeUndefined();
+    expect(byId.get(2)?.categoryManual).toBeUndefined();
+  });
+
   it('unlink clears transferId on both sides and removes the transfer entity', async () => {
     const transactionsStore = TestBed.inject(TransactionsStore);
     transactionsStore.addMany([
@@ -115,8 +143,8 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
   it('runAutoLink patches every linked pair and returns the linked count', async () => {
     const transactionsStore = TestBed.inject(TransactionsStore);
     transactionsStore.addMany([
-      transaction({ id: 1 }),
-      transaction({ id: 2 }),
+      transaction({ id: 1, categoryId: 9 }),
+      transaction({ id: 2, categoryId: 9, categoryManual: true }),
       transaction({ id: 3 }),
       transaction({ id: 4 }),
     ]);
@@ -136,5 +164,9 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
     expect(byId.get(2)?.transferId).toBe(100);
     expect(byId.get(3)?.transferId).toBe(101);
     expect(byId.get(4)?.transferId).toBe(101);
+    // Auto-linking clears category (TICKET-TRF-01) — checked here alongside side 2, which had categoryManual set.
+    expect(byId.get(1)?.categoryId).toBeUndefined();
+    expect(byId.get(2)?.categoryId).toBeUndefined();
+    expect(byId.get(2)?.categoryManual).toBeUndefined();
   });
 });

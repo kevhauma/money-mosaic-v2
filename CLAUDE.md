@@ -37,3 +37,8 @@ Subagents in `.claude/agents/`: `conventions-reviewer` (diff review against proj
 - Rules must never overwrite a category the user set manually (`categoryManual` flag on `Transaction`).
 - Cross-feature imports go through the feature's `index.ts` barrel (`@/feature-x`), never deep paths. Exception already in place: `app.routes.ts` imports `feature-transactions/transactions.routes` directly to break a barrel cycle — don't "fix" it back.
 - Prettier (single quotes) runs via husky/lint-staged pre-commit; don't fight it.
+
+
+## Verifying
+
+**In browser verification** always ask the user whether to verify in browser. if decline, continue on the task. if something is not working in browser, they will come back to correct it.

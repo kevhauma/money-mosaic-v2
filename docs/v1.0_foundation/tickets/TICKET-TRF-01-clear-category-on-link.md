@@ -23,15 +23,15 @@ When two transactions are linked as a transfer, clear any category on both sides
 
 ## Acceptance criteria
 
-- [ ] `performLink()` clears `categoryId` (and `categoryManual`, if set) on **both** transactions in the same `appDb.transaction('rw', ...)` that sets `transferId`, so the write stays atomic.
-- [ ] Applies to all link paths: manual (`linkManually`), auto-IBAN high-confidence, and auto-amount/date medium-confidence (`linkAuto` / `runAutoLink`).
-- [ ] The in-memory store update mirrors the DB: `TransfersStore.link` / `runAutoLink` patch `categoryId` (and manual flag) to cleared alongside `transferId`, so the UI updates immediately (FR-STAT-5) without a reload.
-- [ ] A linked transaction renders with no category badge in the transactions table and shows no category in the edit form.
-- [ ] Account balance still includes the transaction's amount (transfers are **not** excluded from balances) — verified unchanged.
-- [ ] Income/expense/savings-rate and category breakdown still exclude linked transactions (unchanged `transferId` behaviour).
-- [ ] Re-running the rules engine does not re-assign a category to a still-linked transaction.
-- [ ] **Decision recorded** for unlink: whether unlinking leaves the category empty (simplest) or re-runs rules to re-suggest a category. Whichever is chosen, it is documented and tested. (No pre-link category is stored today, so exact restoration is out of scope unless we add that.)
-- [ ] Unit tests cover: link clears category on both sides (manual + both auto paths), balance unchanged, income/expense still excluded, rules re-run doesn't recategorise, and the chosen unlink behaviour.
+- [x] `performLink()` clears `categoryId` (and `categoryManual`, if set) on **both** transactions in the same `appDb.transaction('rw', ...)` that sets `transferId`, so the write stays atomic.
+- [x] Applies to all link paths: manual (`linkManually`), auto-IBAN high-confidence, and auto-amount/date medium-confidence (`linkAuto` / `runAutoLink`).
+- [x] The in-memory store update mirrors the DB: `TransfersStore.link` / `runAutoLink` patch `categoryId` (and manual flag) to cleared alongside `transferId`, so the UI updates immediately (FR-STAT-5) without a reload.
+- [x] A linked transaction renders with no category badge in the transactions table and shows no category in the edit form.
+- [x] Account balance still includes the transaction's amount (transfers are **not** excluded from balances) — verified unchanged.
+- [x] Income/expense/savings-rate and category breakdown still exclude linked transactions (unchanged `transferId` behaviour).
+- [x] Re-running the rules engine does not re-assign a category to a still-linked transaction.
+- [x] **Decision recorded** for unlink: whether unlinking leaves the category empty (simplest) or re-runs rules to re-suggest a category. Whichever is chosen, it is documented and tested. (No pre-link category is stored today, so exact restoration is out of scope unless we add that.)
+- [x] Unit tests cover: link clears category on both sides (manual + both auto paths), balance unchanged, income/expense still excluded, rules re-run doesn't recategorise, and the chosen unlink behaviour.
 
 ## Notes
 

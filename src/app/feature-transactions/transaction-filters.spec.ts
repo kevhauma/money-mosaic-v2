@@ -108,6 +108,17 @@ describe('matchesTransactionFilters', () => {
         ),
       ).toBe(false);
     });
+
+    it('uncategorised sentinel rejects a transaction linked as a transfer (TICKET-TRF-01)', () => {
+      const filters = { ...noFilters, categoryId: 'uncategorised' };
+      expect(
+        matchesTransactionFilters(
+          transaction({ categoryId: undefined, transferId: 42 }),
+          filters,
+          new Set(),
+        ),
+      ).toBe(false);
+    });
   });
 
   describe('text axis', () => {

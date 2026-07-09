@@ -62,7 +62,7 @@ Create the ticket file mirroring the structure of the existing tickets in that v
 - [ ] <Specific, testable outcome.>
 - [ ] <Persistence goes through the store/repository, never direct Dexie table writes — if data is touched.>
 - [ ] <Unit tests cover: … (name the cases).>
-- [ ] <Verified live in the browser: … — for any UI-visible change.>
+- [ ] <Verified via the fallow skill and coding-conventions skill>
 
 ## Notes
 

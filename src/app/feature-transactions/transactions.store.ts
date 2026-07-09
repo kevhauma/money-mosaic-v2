@@ -30,12 +30,16 @@ export const TransactionsStore = signalStore(
   withComputed(({ entities, ownSavingsIbans }) => {
     /**
      * Surfaces the categorisation backlog so it's never quietly lost (FR-CAT-5), minus money moved
-     * into a savings account — that never needs a category (TICKET-TRF-02).
+     * into a savings account (TICKET-TRF-02) and minus transactions linked as a transfer — both never
+     * need a category (TICKET-TRF-01: linking always clears categoryId, so without this exclusion every
+     * linked transaction would otherwise leak into the backlog).
      */
     const uncategorisedTransactions = computed(() =>
       entities().filter(
         (transaction) =>
-          transaction.categoryId == null && !isSavingsMovement(transaction, ownSavingsIbans()),
+          transaction.categoryId == null &&
+          transaction.transferId == null &&
+          !isSavingsMovement(transaction, ownSavingsIbans()),
       ),
     );
     return {

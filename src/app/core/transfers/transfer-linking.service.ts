@@ -33,14 +33,17 @@ export class TransferLinkingService {
       };
       const transferId = await this.transfersRepository.add(transfer);
 
-      await this.transactionsRepository.update(fromTransaction.id!, { transferId });
-      await this.transactionsRepository.update(toTransaction.id!, { transferId });
+      // A transfer can never carry a spending/income category (TICKET-TRF-01) — clear it here,
+      // atomically with the transferId write, so a rule-assigned or manual category never survives a link.
+      const clearedCategory = { transferId, categoryId: undefined, categoryManual: undefined };
+      await this.transactionsRepository.update(fromTransaction.id!, clearedCategory);
+      await this.transactionsRepository.update(toTransaction.id!, clearedCategory);
 
       return {
         transfer: { ...transfer, id: transferId },
         updatedTransactions: [
-          { ...fromTransaction, transferId },
-          { ...toTransaction, transferId },
+          { ...fromTransaction, ...clearedCategory },
+          { ...toTransaction, ...clearedCategory },
         ],
       };
     });
@@ -60,6 +63,11 @@ export class TransferLinkingService {
   ): Promise<TransferLinkResult> =>
     this.performLink(fromTransaction, toTransaction, method, confidence);
 
+  /**
+   * Decision (TICKET-TRF-01): unlinking leaves the category empty rather than re-running the rules
+   * engine. No pre-link category is persisted, so exact restoration isn't possible; re-suggesting one
+   * via the rules engine would need a separate deliberate action (e.g. "re-run rules" or manual edit).
+   */
   unlink = (transfer: Transfer): Promise<void> =>
     appDb.transaction('rw', [appDb.transfers, appDb.transactions], async () => {
       await this.transfersRepository.remove(transfer.id!);

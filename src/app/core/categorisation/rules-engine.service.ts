@@ -14,11 +14,14 @@ export class RulesEngineService {
   private readonly rulesRepository = inject(RulesRepository);
   private readonly transactionsRepository = inject(TransactionsRepository);
 
-  /** Never touches a transaction whose category was manually set (FR-TXN-2, FR-CAT-3). */
+  /**
+   * Never touches a transaction whose category was manually set (FR-TXN-2, FR-CAT-3), nor one linked
+   * as a transfer — a transfer's category is always cleared on link and must stay that way (TICKET-TRF-01).
+   */
   applyToTransactions = (transactions: Transaction[], rules: Rule[]): RuleApplyUpdate[] => {
     const updates: RuleApplyUpdate[] = [];
     for (const transaction of transactions) {
-      if (transaction.categoryManual) continue;
+      if (transaction.categoryManual || transaction.transferId != null) continue;
       const categoryId = resolveCategoryForTransaction(transaction, rules);
       if (categoryId != null && categoryId !== transaction.categoryId) {
         updates.push({ id: transaction.id!, categoryId });
