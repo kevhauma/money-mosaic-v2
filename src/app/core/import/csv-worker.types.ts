@@ -12,4 +12,10 @@ export type CsvParseRequest = {
 };
 
 export type CsvParseResponse =
-  { headers: string[]; rows: ParsedRowResult[]; warnings: string[] } | { error: string };
+  | { headers: string[]; rows: ParsedRowResult[]; warnings: string[] }
+  | { error: string }
+  // Structural mismatch between the mapping's referenced columns and this file's actual header
+  // row — distinct from `error` (a hard parse failure) and from per-row `ParsedRowResult` errors
+  // (FR-IMP-8 malformed data), so the wizard can block the file with a specific message instead
+  // of silently mapping every row wrong.
+  | { headerMismatch: true; missingColumns: string[]; headers: string[] };

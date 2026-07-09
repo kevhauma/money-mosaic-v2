@@ -13,6 +13,9 @@ const baseRequest = (fileText: string): CsvParseRequest => ({
 
 const validRows = (response: ReturnType<typeof parseCsvText>) => {
   if ('error' in response) throw new Error(`unexpected parse error: ${response.error}`);
+  if ('headerMismatch' in response) {
+    throw new Error(`unexpected header mismatch: ${response.missingColumns.join(', ')}`);
+  }
   return { rows: response.rows.filter((row) => row.valid), warnings: response.warnings };
 };
 
@@ -68,5 +71,44 @@ describe('parseCsvText', () => {
     expect(warnings).toEqual([]);
     const descriptions = rows.map((row) => (row.valid ? row.transaction.rawDescription : ''));
     expect(descriptions).toContain('pay; day');
+  });
+});
+
+describe('parseCsvText: header/mapping mismatch (TICKET-IMP-03)', () => {
+  it('reports no mismatch when the mapping matches the file header', () => {
+    const file = ['Date;Desc;Amount', '2025-12-31;groceries;-10,00'].join('\n');
+    const response = parseCsvText(baseRequest(file));
+    expect('headerMismatch' in response).toBe(false);
+  });
+
+  it('flags a mapped column missing from the header instead of mapping every row wrong', () => {
+    // The mapping expects "Amount", but this file's amount column is named "Bedrag".
+    const file = ['Date;Desc;Bedrag', '2025-12-31;groceries;-10,00'].join('\n');
+    const response = parseCsvText(baseRequest(file));
+    expect('headerMismatch' in response && response.headerMismatch).toBe(true);
+    if ('headerMismatch' in response) {
+      expect(response.missingColumns).toEqual(['Amount']);
+    }
+  });
+
+  it('flags a mismatch when the wrong delimiter collapses the header row', () => {
+    // The request expects ';' but this file is comma-delimited, so the header parses as one field.
+    const file = ['Date,Desc,Amount', '2025-12-31,groceries,-10,00'].join('\n');
+    const response = parseCsvText(baseRequest(file));
+    expect('headerMismatch' in response && response.headerMismatch).toBe(true);
+    if ('headerMismatch' in response) {
+      expect(response.missingColumns).toEqual(expect.arrayContaining(['Date', 'Desc', 'Amount']));
+    }
+  });
+
+  it('does not let a mismatch on one file affect an independent parse of another', () => {
+    const mismatched = ['Date;Desc;Bedrag', '2025-12-31;groceries;-10,00'].join('\n');
+    const clean = ['Date;Desc;Amount', '2025-12-31;groceries;-10,00'].join('\n');
+
+    const mismatchedResponse = parseCsvText(baseRequest(mismatched));
+    const cleanResponse = parseCsvText(baseRequest(clean));
+
+    expect('headerMismatch' in mismatchedResponse).toBe(true);
+    expect('headerMismatch' in cleanResponse).toBe(false);
   });
 });

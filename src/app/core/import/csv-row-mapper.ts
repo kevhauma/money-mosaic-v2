@@ -156,3 +156,26 @@ export const mapRows = (
   mapping: MappingProfileColumns,
   opts: RowMapOptions,
 ): ParsedRowResult[] => rawRows.map((rawRow, index) => mapRow(rawRow, mapping, opts, index));
+
+// Every mapping-referenced column that isn't present in the file's actual header row — signals a
+// structural mismatch (wrong mapping, or a delimiter that mis-splits the header) rather than a
+// per-row data problem. A wrong delimiter naturally surfaces here too: it collapses the header row
+// into differently-split fields, so none of the mapped column names line up.
+export const findMissingMappedColumns = (
+  headers: string[],
+  mapping: MappingProfileColumns,
+): string[] => {
+  const headerSet = new Set(headers);
+  const referenced = [
+    mapping.date,
+    mapping.amount,
+    mapping.debit,
+    mapping.credit,
+    mapping.description,
+    mapping.counterpartyName,
+    mapping.counterpartyIban,
+    mapping.ownIban,
+    mapping.balance,
+  ].filter((column): column is string => !!column);
+  return referenced.filter((column) => !headerSet.has(column));
+};

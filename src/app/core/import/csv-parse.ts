@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { mapRows } from './csv-row-mapper';
+import { findMissingMappedColumns, mapRows } from './csv-row-mapper';
 import type { CsvParseRequest, CsvParseResponse } from './csv-worker.types';
 
 // A control char (SOH) that never occurs in decoded bank-CSV text. Passed as PapaParse's quoteChar
@@ -56,6 +56,12 @@ export const parseCsvText = (request: CsvParseRequest): CsvParseResponse => {
   }
 
   const headers = parsed.data[request.headerRows - 1] ?? [];
+
+  const missingColumns = findMissingMappedColumns(headers, request.mapping);
+  if (missingColumns.length > 0) {
+    return { headerMismatch: true, missingColumns, headers };
+  }
+
   const dataRows = parsed.data.slice(request.headerRows);
   const rawRows: Record<string, string>[] = dataRows.map((row) => {
     const rawRow: Record<string, string> = {};

@@ -1,4 +1,4 @@
-import { mapRow, type RowMapOptions } from './csv-row-mapper';
+import { findMissingMappedColumns, mapRow, type RowMapOptions } from './csv-row-mapper';
 import type { MappingProfileColumns } from '@/core/data-access';
 
 const amountMapping: MappingProfileColumns = {
@@ -217,5 +217,52 @@ describe('mapRow: debit/credit columns', () => {
       0,
     );
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('findMissingMappedColumns', () => {
+  // amountMapping references 5 columns: date, amount, description, counterpartyName, counterpartyIban.
+  const fullHeader = [
+    'Boekingsdatum',
+    'Bedrag',
+    'Omschrijving',
+    'Naam tegenpartij',
+    'Rekeningnummer tegenpartij',
+  ];
+
+  it('returns no missing columns when every mapped column is present in the header', () => {
+    const missing = findMissingMappedColumns(fullHeader, amountMapping);
+    expect(missing).toEqual([]);
+  });
+
+  it('reports a single missing mapped column', () => {
+    const missing = findMissingMappedColumns(
+      fullHeader.filter((column) => column !== 'Bedrag'),
+      amountMapping,
+    );
+    expect(missing).toEqual(['Bedrag']);
+  });
+
+  it('reports every missing mapped column', () => {
+    const missing = findMissingMappedColumns(['SomeOtherColumn'], amountMapping);
+    expect(missing).toEqual(
+      expect.arrayContaining([
+        'Boekingsdatum',
+        'Bedrag',
+        'Omschrijving',
+        'Naam tegenpartij',
+        'Rekeningnummer tegenpartij',
+      ]),
+    );
+    expect(missing).toHaveLength(5);
+  });
+
+  it('ignores optional columns that were never mapped', () => {
+    const missing = findMissingMappedColumns(['Boekingsdatum', 'Bedrag', 'Omschrijving'], {
+      date: 'Boekingsdatum',
+      amount: 'Bedrag',
+      description: 'Omschrijving',
+    });
+    expect(missing).toEqual([]);
   });
 });

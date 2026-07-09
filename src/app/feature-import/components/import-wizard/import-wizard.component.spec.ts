@@ -249,6 +249,48 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     expect(primaryButton().disabled).toBe(true);
   });
 
+  it('blocks confirm and shows a per-file message on a header/mapping mismatch', async () => {
+    parse.mockResolvedValueOnce({
+      headerMismatch: true,
+      missingColumns: ['Bedrag'],
+      headers: ['Date', 'Desc', 'Amount'],
+    });
+    enterStep2WithFile();
+
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+
+    expect(primaryButton().disabled).toBe(true);
+    expect(read<ParsedRowResult[]>('parsedRows')).toEqual([]);
+    expect(fixture.nativeElement.textContent).toContain(
+      'Expected column "Bedrag" not found in a.csv.',
+    );
+  });
+
+  it('clears the mismatch and re-enables confirm once the mapping is corrected', async () => {
+    parse.mockResolvedValueOnce({
+      headerMismatch: true,
+      missingColumns: ['Bedrag'],
+      headers: ['Date', 'Desc', 'Amount'],
+    });
+    enterStep2WithFile();
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+    expect(primaryButton().disabled).toBe(true);
+
+    parse.mockResolvedValueOnce({ headers: ['Date', 'Desc'], rows: [validRow()], warnings: [] });
+    const correctedProfile = { ...MAPPING_PROFILE, name: 'Corrected mapping' };
+    set('mapResult', { mappingProfile: correctedProfile });
+    fixture.detectChanges();
+    await settleParse();
+
+    expect(primaryButton().disabled).toBe(false);
+    expect(read<ParsedRowResult[]>('parsedRows')).toHaveLength(1);
+    expect(fixture.nativeElement.textContent).not.toContain('not found in');
+  });
+
   it('commits each file in a 2-file batch under its own account and reaches Summary', async () => {
     set('queue', [
       { file: csvFile('a.csv'), accountId: 11, autoDetected: false },
@@ -278,5 +320,140 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     expect(commitImport.mock.calls[1][0]).toMatchObject({ accountId: 22 });
     expect(read('step')).toBe(3); // Summary
     expect(read<CommitImportResult[]>('commitResults')).toHaveLength(2);
+  });
+
+  describe('batch mapping (TICKET-IMP-02)', () => {
+    const goNext = (): Promise<void> =>
+      (component as unknown as { goNext(): Promise<void> }).goNext();
+    const mapFileIndividually = (): void =>
+      (component as unknown as { mapFileIndividually(): void }).mapFileIndividually();
+
+    const enterStep2WithQueue = (accountIds: number[]): void => {
+      set(
+        'queue',
+        accountIds.map((accountId, i) => ({
+          file: csvFile(`${String.fromCharCode(97 + i)}.csv`),
+          accountId,
+          autoDetected: false,
+        })),
+      );
+      set('currentFileIndex', 0);
+      set('step', 2);
+    };
+
+    it('auto-commits the remaining files once a batch mapping is applied, with no further clicks', async () => {
+      enterStep2WithQueue([11, 22, 33]);
+
+      // File 1: mapped manually, "apply to remaining" checked before confirming — the one click
+      // this flow still requires.
+      set('mapResult', VALID_RESULT);
+      fixture.detectChanges();
+      await settleParse();
+      set('applyToRemaining', true);
+      await goNext();
+
+      expect(commitImport.mock.calls[0][0]).toMatchObject({ accountId: 11 });
+      expect(read('currentFileIndex')).toBe(1);
+      expect(read('showManualMapStep')).toBe(false); // file 2 skips the manual form
+      expect(read('mapResult')).toEqual({
+        mappingProfile: expect.objectContaining({
+          delimiter: ';',
+          columns: MAPPING_PROFILE.columns,
+        }),
+      });
+
+      // Files 2 and 3 auto-parse and auto-commit under the shared mapping — no goNext() calls.
+      await settleParse();
+      await settleParse();
+      await settleParse();
+
+      expect(commitImport).toHaveBeenCalledTimes(3);
+      expect(commitImport.mock.calls[1][0]).toMatchObject({ accountId: 22 });
+      expect(commitImport.mock.calls[2][0]).toMatchObject({ accountId: 33 });
+      expect(read('step')).toBe(3);
+      expect(read<CommitImportResult[]>('commitResults')).toHaveLength(3);
+    });
+
+    it('pauses auto-advance on a header mismatch, lets the user override, then resumes auto-advance', async () => {
+      enterStep2WithQueue([11, 22, 33]);
+
+      // File 1 establishes the batch mapping.
+      set('mapResult', VALID_RESULT);
+      fixture.detectChanges();
+      await settleParse();
+      set('applyToRemaining', true);
+      parse.mockResolvedValueOnce({
+        headerMismatch: true,
+        missingColumns: ['Bedrag'],
+        headers: ['Date', 'Desc'],
+      });
+      await goNext();
+
+      // File 2 auto-parsed under the shared mapping but its headers don't match — a mismatch never
+      // auto-commits, so the user still has to act.
+      await settleParse();
+      expect(read('headerMismatchMessage')).toContain('not found in b.csv');
+      expect(commitImport).toHaveBeenCalledTimes(1);
+      expect(read('showManualMapStep')).toBe(false);
+
+      mapFileIndividually();
+      fixture.detectChanges();
+      expect(read('showManualMapStep')).toBe(true);
+      expect(read('mapResult')).toBeNull();
+
+      // Manually remap file 2 and confirm it. An override always requires an explicit click, even
+      // though its parse comes back clean — only files under the *shared* mapping auto-commit.
+      parse.mockResolvedValueOnce({ headers: ['Date', 'Desc'], rows: [validRow()], warnings: [] });
+      const overrideProfile = { ...MAPPING_PROFILE, name: 'Override mapping' };
+      set('mapResult', { mappingProfile: overrideProfile });
+      fixture.detectChanges();
+      await settleParse();
+      expect(primaryButton().disabled).toBe(false);
+      expect(commitImport).toHaveBeenCalledTimes(1); // still not auto-committed
+
+      await goNext();
+      expect(commitImport.mock.calls[1][0]).toMatchObject({ accountId: 22 });
+      expect(read('currentFileIndex')).toBe(2);
+      // File 3 resumes the original batch mapping, not file 2's one-off override, and auto-commits.
+      expect(read('showManualMapStep')).toBe(false);
+      expect(read('mapResult')).toEqual({
+        mappingProfile: expect.objectContaining({ name: MAPPING_PROFILE.name }),
+      });
+
+      await settleParse();
+      await settleParse();
+      expect(commitImport).toHaveBeenCalledTimes(3);
+      expect(commitImport.mock.calls[2][0]).toMatchObject({ accountId: 33 });
+      expect(read('step')).toBe(3);
+      expect(read<CommitImportResult[]>('commitResults')).toHaveLength(3);
+    });
+
+    it('pauses auto-advance on a hard parse error instead of committing an unparsed file', async () => {
+      enterStep2WithQueue([11, 22]);
+
+      set('mapResult', VALID_RESULT);
+      fixture.detectChanges();
+      await settleParse();
+      set('applyToRemaining', true);
+      parse.mockResolvedValueOnce({ error: 'Unexpected end of file' });
+      await goNext();
+
+      await settleParse();
+      expect(read('parseError')).toBe('Unexpected end of file');
+      expect(commitImport).toHaveBeenCalledTimes(1); // file 2's error pauses auto-advance
+      expect(primaryButton().disabled).toBe(true);
+    });
+
+    it('never offers batch mapping for a single-file import', async () => {
+      enterStep2WithQueue([11]);
+      set('mapResult', VALID_RESULT);
+      fixture.detectChanges();
+      await settleParse();
+
+      expect(read('canOfferApplyToRemaining')).toBe(false);
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'Apply this mapping to the remaining',
+      );
+    });
   });
 });

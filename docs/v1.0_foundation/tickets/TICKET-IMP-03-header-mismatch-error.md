@@ -20,13 +20,13 @@ When a file is parsed under a mapping whose expected columns/headers don't line 
 
 ## Acceptance criteria
 
-- [ ] A header/mapping validation runs when a file is parsed with a mapping (single-file and batch modes both).
-- [ ] Mismatch is detected when the mapping's referenced columns aren't present/aligned in the file's header row (e.g. expected column name/index absent, or delimiter yields a different column count than the mapping assumes).
-- [ ] On mismatch, a visible error identifies **which file** and **what didn't match** (e.g. "expected column 'Bedrag' not found in statement.csv"), and does **not** proceed to commit that file.
-- [ ] The user can remap the offending file individually and continue; other files in the batch are unaffected.
-- [ ] A genuinely matching file shows no false-positive error.
-- [ ] The distinction between this structural mismatch and per-row malformed data (existing FR-IMP-8 handling) is preserved — malformed rows still let the user proceed with valid rows; a header mismatch blocks that file until remapped.
-- [ ] Unit tests cover: matching header (no error), missing mapped column (error), wrong delimiter/column-count (error), and that a mismatch on one batch file doesn't block the others.
+- [x] A header/mapping validation runs when a file is parsed with a mapping (single-file and batch modes both). — batch mapping (TICKET-IMP-02) hasn't shipped yet, so "both modes" means: every queued file's parse, whatever the queue size, since `ImportWizardComponent` still loops the map→parse step per file. The check lives at the shared parse boundary (`parseCsvText`), so it applies automatically once IMP-02 adds true batch mapping.
+- [x] Mismatch is detected when the mapping's referenced columns aren't present/aligned in the file's header row (e.g. expected column name/index absent, or delimiter yields a different column count than the mapping assumes).
+- [x] On mismatch, a visible error identifies **which file** and **what didn't match** (e.g. "expected column 'Bedrag' not found in statement.csv"), and does **not** proceed to commit that file.
+- [x] The user can remap the offending file individually and continue; other files in the batch are unaffected.
+- [x] A genuinely matching file shows no false-positive error.
+- [x] The distinction between this structural mismatch and per-row malformed data (existing FR-IMP-8 handling) is preserved — malformed rows still let the user proceed with valid rows; a header mismatch blocks that file until remapped.
+- [x] Unit tests cover: matching header (no error), missing mapped column (error), wrong delimiter/column-count (error), and that a mismatch on one batch file doesn't block the others.
 
 ## Notes
 
