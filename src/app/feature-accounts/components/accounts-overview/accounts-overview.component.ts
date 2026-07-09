@@ -130,4 +130,11 @@ export class AccountsOverviewComponent {
       ? (this.accountsStore.balancesById().get(account.id) ?? account.openingBalance)
       : account.openingBalance;
   }
+
+  /** My net-worth stake in a joint account (TICKET-STAT-03) — null for a non-joint account. */
+  protected shareFor(account: Account): number | null {
+    return account.type === 'joint' && account.id != null
+      ? (this.accountsStore.jointAccountStakeById().get(account.id) ?? null)
+      : null;
+  }
 }

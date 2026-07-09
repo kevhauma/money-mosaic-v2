@@ -1,4 +1,4 @@
-import type { Category, Transaction } from '@/core/data-access';
+import type { Account, Category, Transaction } from '@/core/data-access';
 import { computeCategoryBreakdown } from './category-breakdown';
 
 const category = (overrides: Partial<Category> = {}): Category => ({
@@ -161,5 +161,79 @@ describe('computeCategoryBreakdown', () => {
       '2026-07-31',
     );
     expect(expenseByCategory.map((entry) => entry.categoryId)).toEqual([2, 1]);
+  });
+});
+
+describe('computeCategoryBreakdown: joint-account share weighting (TICKET-STAT-03)', () => {
+  const jointAccount: Account = {
+    id: 1,
+    name: 'Joint',
+    type: 'joint',
+    currency: 'EUR',
+    openingBalance: 0,
+    openingBalanceDate: '2026-01-01',
+    color: '#000000',
+    icon: 'users',
+    archived: false,
+    ownershipShare: 0.5,
+    coOwners: [{ name: 'Partner', ibans: ['BE71096123456769'] }],
+  };
+  const accountsById = new Map<number, Account>([[1, jointAccount]]);
+
+  it('weights a joint account’s expense category slice by ownershipShare, reflecting my borne cost', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const transactions = [transaction({ id: 1, accountId: 1, amount: -400, categoryId: 1 })];
+
+    const { expenseByCategory } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(expenseByCategory).toEqual([
+      { categoryId: 1, total: 200, share: 1, transactionCount: 1 },
+    ]);
+  });
+
+  it('counts my income into the joint account at 100% in incomeBySource', () => {
+    const transactions = [
+      transaction({ id: 1, accountId: 1, amount: 1200, counterpartyIban: 'BE00EMPLOYER' }),
+    ];
+
+    const { incomeBySource } = computeCategoryBreakdown(
+      transactions,
+      new Map(),
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(incomeBySource).toEqual([
+      { categoryId: null, total: 1200, share: 1, transactionCount: 1 },
+    ]);
+  });
+
+  it('excludes an untagged co-owner inflow (identified only by IBAN) from both buckets', () => {
+    const transactions = [
+      transaction({ id: 1, accountId: 1, amount: 800, counterpartyIban: 'BE71096123456769' }),
+    ];
+
+    const { incomeBySource, expenseByCategory } = computeCategoryBreakdown(
+      transactions,
+      new Map(),
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(incomeBySource).toEqual([]);
+    expect(expenseByCategory).toEqual([]);
   });
 });

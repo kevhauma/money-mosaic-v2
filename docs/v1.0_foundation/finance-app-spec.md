@@ -87,7 +87,7 @@ IDs are stable references for later discussion.
 - **FR-CAT-5** Uncategorised transactions are surfaced prominently so the user can clear the backlog.
 
 ### 4.5 Transfers (internal movements)
-- **FR-TRF-1** A transfer links two transactions in two of the user's own accounts and is **excluded from income and expense aggregates** but **included in net worth** (it nets to zero).
+- **FR-TRF-1** A transfer links two transactions in two of the user's own accounts and is **excluded from income and expense aggregates** but **included in net worth** (it nets to zero). *(v1.1, TICKET-STAT-03)* For a **joint** account this still nets to zero, but the reasoning differs on the joint leg: a transfer into the joint account from one of the user's own non-joint accounts counts as a `mineIn` leg at 100% of the contribution model (see FR-STAT-1), not the account's raw balance — so moving money from checking into the joint pot still leaves combined net worth unchanged at the moment of transfer.
 - **FR-TRF-2** **Auto-linking runs across the entire dataset on every import**, not just on new rows, so a later-imported counterpart retroactively pairs and reclassifies an earlier one-sided movement.
 - **FR-TRF-3** Matching confidence:
   - **High** — counterparty IBAN equals one of the user's own account IBANs (auto-link).
@@ -97,7 +97,7 @@ IDs are stable references for later discussion.
 - **FR-TRF-5** Until matched, a one-sided movement is treated as a normal in/outflow, but if its counterparty IBAN is an own account it is flagged as "likely transfer" even before the pair arrives.
 
 ### 4.6 Statistics & Dashboard
-- **FR-STAT-1** Per-account current balance and combined **net worth**.
+- **FR-STAT-1** Per-account current balance and combined **net worth**. *(v1.1, TICKET-STAT-03)* For a **joint** account, the displayed balance is still the real bank balance, but its contribution to combined net worth is the user's **stake** under the contribution model: `share × openingBalance`, plus the user's own deposits/income into the pot at 100%, minus the user's `ownershipShare` of joint spending, minus 0% for a co-owner's contributions (see §5).
 - **FR-STAT-2** Per-period (default: current calendar month) **income**, **expense**, **net cash flow**, and **savings rate** = (income − expense) / income, with transfers excluded from both income and expense.
 - **FR-STAT-3** **Category breakdown** for the selected date range (expense-by-category, income-by-source), as totals and share-of-total.
 - **FR-STAT-4** Trends: income/expense and net-worth-over-time, bucketed at the selected grouping granularity across the selected date range.
@@ -146,6 +146,11 @@ Source-of-truth entities (persisted in IndexedDB). Everything statistical is der
 - `expense = Σ |amount| where amount < 0 AND transferId is null`
 - `savingsRate = (income − expense) / income`
 - `netWorth = Σ (account.openingBalance + Σ its transaction amounts)` — transfers net to zero and are correctly included.
+- *(v1.1, TICKET-STAT-03)* For a **joint** account (`ownershipShare = s`, undefined/1 behaves exactly as above), the account's contribution to `netWorth`, `income`, and `expense` is instead its **stake**, not its raw balance/amounts:
+  - `netWorth` contribution: `s × openingBalance + Σ mineIn − Σ mineOut − s × Σ jointSpend` (co-owner inflows contribute 0).
+  - `income` contribution: the user's own deposits/income into the pot (`mineIn`) at 100%; a co-owner's contribution is excluded.
+  - `expense` contribution: `s × Σ jointSpend` — the user's share of shared spending only.
+  - A transaction is `mineIn`/`mineOut` if it's a linked transfer to/from one of the user's own non-joint accounts (or, for `mineIn`, a positive non-transfer amount not otherwise identifiable as a co-owner's); `jointSpend` is any other negative non-transfer amount; a co-owner inflow is identified by a `neutral`-kind category **or** a registered co-owner IBAN, whichever is available first.
 
 ---
 

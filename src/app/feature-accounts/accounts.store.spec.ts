@@ -2,11 +2,16 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
+  CategoriesRepository,
   TransactionsRepository,
+  TransfersRepository,
   type Account,
+  type Category,
   type Transaction,
+  type Transfer,
 } from '@/core/data-access';
-import { TransactionsStore } from '@/feature-transactions';
+import { CategoriesStore } from '@/feature-categories';
+import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { AccountsStore } from './accounts.store';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
@@ -111,5 +116,134 @@ describe('AccountsStore: archive/unarchive round-trip (TICKET-NG-04)', () => {
     expect(accountsRepository.update).toHaveBeenCalledWith(1, { archived: false });
     expect(accountsStore.activeAccounts()).toHaveLength(1);
     expect(accountsStore.archivedAccounts()).toHaveLength(0);
+  });
+});
+
+describe('AccountsStore: contribution-based net worth for joint accounts (TICKET-STAT-03)', () => {
+  const accountsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const transfersRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const categoriesRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  const neutralCategory: Category = {
+    id: 1,
+    name: 'Partner contribution',
+    kind: 'neutral',
+    color: '#000000',
+    icon: 'users',
+    archived: false,
+    isSystem: true,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    accountsRepository.getAll.mockResolvedValue([]);
+    transactionsRepository.getAll.mockResolvedValue([]);
+    transfersRepository.getAll.mockResolvedValue([]);
+    categoriesRepository.getAll.mockResolvedValue([]);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: TransfersRepository, useValue: transfersRepository },
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+      ],
+    });
+  });
+
+  it('counts my stake, not the full balance, for a joint account (worked example: stake €800 vs balance €1600 at s=0.5)', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, type: 'joint', openingBalance: 0, ownershipShare: 0.5 }),
+      account({ id: 2, type: 'checking', openingBalance: 5000 }),
+    ]);
+    categoriesRepository.getAll.mockResolvedValue([neutralCategory]);
+    const transfer: Transfer = {
+      id: 100,
+      fromTransactionId: 2,
+      toTransactionId: 1,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-07-01T00:00:00.000Z',
+    };
+    transfersRepository.getAll.mockResolvedValue([transfer]);
+
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      // I move €1000 from checking into the joint pot (linked transfer) — mineIn at 100%.
+      transaction({
+        id: 1,
+        accountId: 1,
+        amount: 1000,
+        transferId: 100,
+        bookingDate: '2026-07-01',
+      }),
+      transaction({
+        id: 2,
+        accountId: 2,
+        amount: -1000,
+        transferId: 100,
+        bookingDate: '2026-07-01',
+      }),
+      // Partner deposits €1000, tagged as a neutral contribution — counts 0 toward my stake.
+      transaction({ id: 3, accountId: 1, amount: 1000, categoryId: 1, bookingDate: '2026-07-02' }),
+      // We spend €400 on groceries — my share only (€200).
+      transaction({ id: 4, accountId: 1, amount: -400, bookingDate: '2026-07-03' }),
+    ]);
+
+    await TestBed.inject(CategoriesStore).hydrate();
+    await TestBed.inject(TransfersStore).hydrate();
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    expect(accountsStore.jointAccountStakeById().get(1)).toBe(800);
+    expect(accountsStore.balancesById().get(1)).toBe(1600);
+    expect(accountsStore.netWorth()).toBe(800 + 4000);
+  });
+
+  it('produces byte-identical net worth to today when there are no joint accounts (regression guard)', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, type: 'checking', openingBalance: 1000 }),
+      account({ id: 2, type: 'savings', openingBalance: 500 }),
+    ]);
+
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      transaction({ id: 1, accountId: 1, amount: -100, bookingDate: '2026-07-01' }),
+      transaction({ id: 2, accountId: 2, amount: 200, bookingDate: '2026-07-01' }),
+    ]);
+
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    expect(accountsStore.netWorth()).toBe(900 + 700);
+    expect(accountsStore.jointAccountStakeById().size).toBe(0);
+  });
+
+  it('exposes a per-contributor breakdown for a joint account', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({
+        id: 1,
+        type: 'joint',
+        openingBalance: 0,
+        ownershipShare: 0.5,
+        coOwners: [{ name: 'Partner', ibans: ['BE71096123456769'] }],
+      }),
+    ]);
+
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      transaction({ id: 1, accountId: 1, amount: 300, counterpartyIban: 'BE71096123456769' }),
+      transaction({ id: 2, accountId: 1, amount: 1200, counterpartyIban: 'BE00EMPLOYER' }),
+    ]);
+
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    const breakdown = accountsStore.contributorBreakdownById().get(1);
+    expect(breakdown?.byCoOwner.get('Partner')).toBe(300);
+    expect(breakdown?.unattributed).toBe(1200);
   });
 });

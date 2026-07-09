@@ -10,10 +10,13 @@ import {
   computeZoomWindow,
   RangeStore,
   type ChartZoomWindow,
+  type JointLegContext,
   type NetWorthPoint,
 } from '@/core/stats';
-import { TransactionsStore } from '@/feature-transactions';
+import { CategoriesStore } from '@/feature-categories';
+import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
+import { AccountsStore } from '../../accounts.store';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -56,7 +59,10 @@ export const buildAccountBalanceChartOption = (
 export class AccountBalanceChartComponent {
   readonly account = input.required<Account>();
 
+  private readonly accountsStore = inject(AccountsStore);
   private readonly transactionsStore = inject(TransactionsStore);
+  private readonly transfersStore = inject(TransfersStore);
+  private readonly categoriesStore = inject(CategoriesStore);
   private readonly rangeStore = inject(RangeStore);
   private readonly router = inject(Router);
 
@@ -66,6 +72,15 @@ export class AccountBalanceChartComponent {
 
   private readonly granularity = computed(() => this.rangeStore.groupBy());
 
+  // Cross-account lookups a joint account's stake needs (TICKET-STAT-03) — `accountsById` spans
+  // every account so a linked transfer's other leg always resolves, even outside this one account.
+  private readonly jointLegContext = computed((): JointLegContext => ({
+    transactionsById: new Map(this.transactionsStore.transactions().map((t) => [t.id!, t])),
+    accountsById: this.accountsStore.accountsById(),
+    transfersById: this.transfersStore.transferByTransactionId(),
+    categoriesById: this.categoriesStore.categoriesById(),
+  }));
+
   protected readonly points = computed(
     () =>
       computeAccountBalanceTrends(
@@ -74,6 +89,7 @@ export class AccountBalanceChartComponent {
         this.range().from,
         this.range().to,
         this.granularity(),
+        this.jointLegContext(),
       )[0]?.points ?? [],
   );
 

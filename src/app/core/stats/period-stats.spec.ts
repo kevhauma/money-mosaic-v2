@@ -1,4 +1,4 @@
-import type { Category, Transaction } from '@/core/data-access';
+import type { Account, Category, Transaction } from '@/core/data-access';
 import { computePeriodStats } from './period-stats';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -180,5 +180,71 @@ describe('computePeriodStats', () => {
       computePeriodStats(transactions, '2026-07-01', '2026-07-31', new Set(), categoriesById)
         .income,
     ).toBe(1000);
+  });
+});
+
+describe('computePeriodStats: joint-account share weighting (TICKET-STAT-03)', () => {
+  const jointAccount: Account = {
+    id: 1,
+    name: 'Joint',
+    type: 'joint',
+    currency: 'EUR',
+    openingBalance: 0,
+    openingBalanceDate: '2026-01-01',
+    color: '#000000',
+    icon: 'users',
+    archived: false,
+    ownershipShare: 0.5,
+    coOwners: [{ name: 'Partner', ibans: ['BE71096123456769'] }],
+  };
+  const accountsById = new Map<number, Account>([[1, jointAccount]]);
+
+  it('weights a joint account’s shared spending by ownershipShare into expense', () => {
+    const transactions = [transaction({ id: 1, accountId: 1, amount: -400 })];
+
+    expect(
+      computePeriodStats(
+        transactions,
+        '2026-07-01',
+        '2026-07-31',
+        new Set(),
+        new Map(),
+        accountsById,
+      ),
+    ).toEqual({ income: 0, expense: 200, savings: 0, net: -200, savingsRate: null });
+  });
+
+  it('counts my income into the joint account at 100%', () => {
+    const transactions = [
+      transaction({ id: 1, accountId: 1, amount: 1200, counterpartyIban: 'BE00EMPLOYER' }),
+    ];
+
+    expect(
+      computePeriodStats(
+        transactions,
+        '2026-07-01',
+        '2026-07-31',
+        new Set(),
+        new Map(),
+        accountsById,
+      ).income,
+    ).toBe(1200);
+  });
+
+  it('excludes an untagged co-owner inflow (identified only by IBAN) from income, not just a neutral-kind one', () => {
+    const transactions = [
+      transaction({ id: 1, accountId: 1, amount: 800, counterpartyIban: 'BE71096123456769' }),
+    ];
+
+    expect(
+      computePeriodStats(
+        transactions,
+        '2026-07-01',
+        '2026-07-31',
+        new Set(),
+        new Map(),
+        accountsById,
+      ),
+    ).toEqual({ income: 0, expense: 0, savings: 0, net: 0, savingsRate: null });
   });
 });

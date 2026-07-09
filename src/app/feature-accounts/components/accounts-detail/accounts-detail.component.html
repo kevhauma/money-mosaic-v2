@@ -36,11 +36,40 @@
       <p class="text-4xl font-semibold" [class.text-error]="balance() < 0">
         {{ balance() | signedAmount }}
       </p>
+      @if (share() !== null) {
+        <p class="text-sm text-base-content/60">Your share: {{ share()! | signedAmount }}</p>
+      }
       @if (account.iban) {
         <p class="mt-2 text-sm text-base-content/60">IBAN ···· {{ account.iban.slice(-4) }}</p>
       }
     </div>
   </div>
+
+  @if (contributorBreakdown(); as breakdown) {
+    <div class="card mt-4 border border-base-300 bg-base-100">
+      <div class="card-body gap-2">
+        <p class="text-sm text-base-content/60">Contributions</p>
+        <ul class="space-y-1 text-sm">
+          <li class="flex justify-between">
+            <span>Mine</span>
+            <span>{{ breakdown.mine | signedAmount }}</span>
+          </li>
+          @for (entry of breakdown.byCoOwner | keyvalue; track entry.key) {
+            <li class="flex justify-between">
+              <span>{{ entry.key }}</span>
+              <span>{{ entry.value | signedAmount }}</span>
+            </li>
+          }
+          @if (breakdown.unattributed !== 0) {
+            <li class="flex justify-between text-base-content/60">
+              <span>Unattributed</span>
+              <span>{{ breakdown.unattributed | signedAmount }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  }
 
   <div class="mt-6">
     <app-account-balance-chart [account]="account" />

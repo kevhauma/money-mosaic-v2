@@ -1,5 +1,6 @@
-import type { Category, Transaction } from '@/core/data-access';
+import type { Account, Category, Transaction } from '@/core/data-access';
 import { isSavingsMovement } from '@/core/transfers';
+import { classifyJointLeg, jointLegStakeDelta, type JointLegContext } from './classify-joint-leg';
 
 export type PeriodStats = {
   income: number;
@@ -17,6 +18,12 @@ export type PeriodStats = {
 const inRange = (transaction: Transaction, from: string, to: string): boolean =>
   transaction.bookingDate >= from && transaction.bookingDate <= to;
 
+const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
+  transactionsById: new Map(),
+  accountsById: new Map(),
+  transfersById: new Map(),
+};
+
 /**
  * Income/expense/savings/net for [from, to]. Linked transfers between own accounts are excluded from
  * income/expense (FR-STAT-2); movements to/from an own savings account are reported under a separate
@@ -24,6 +31,13 @@ const inRange = (transaction: Transaction, from: string, to: string): boolean =>
  * A transaction assigned a `neutral`-kind category (e.g. a partner's contribution) is excluded from
  * income/expense/savingsRate too — it still moves the account balance, just not via this store's
  * derivation, which reads raw `amount` (TICKET-CAT-02).
+ *
+ * For a **joint** account (`accountsById`), each non-transfer transaction is classified via the
+ * shared `classifyJointLeg` instead: my income into the pot stays at 100%, an untagged co-owner
+ * inflow (identified by IBAN, not just a `neutral` category) is excluded like a tagged one, and
+ * shared spending contributes only my `ownershipShare` to `expense` (TICKET-STAT-03). A transfer
+ * leg never reaches classification here — it's already filtered above, exactly as for a non-joint
+ * account — so only the `mineIn`/`jointSpend`/`coOwnerIn` legs matter.
  */
 export const computePeriodStats = (
   transactions: Transaction[],
@@ -31,10 +45,12 @@ export const computePeriodStats = (
   to: string,
   ownSavingsIbans: ReadonlySet<string> = new Set(),
   categoriesById: ReadonlyMap<number, Category> = new Map(),
+  accountsById: ReadonlyMap<number, Account> = new Map(),
 ): PeriodStats => {
   let income = 0;
   let expense = 0;
   let savings = 0;
+  const jointLegContext: JointLegContext = { ...emptyJointLegContext, categoriesById };
 
   for (const transaction of transactions) {
     if (!inRange(transaction, from, to)) continue;
@@ -46,6 +62,18 @@ export const computePeriodStats = (
       continue;
     }
     if (transaction.transferId != null) continue;
+
+    const account = accountsById.get(transaction.accountId);
+    if (account?.type === 'joint') {
+      const classification = classifyJointLeg(transaction, account, jointLegContext);
+      if (classification === 'coOwnerIn') continue;
+      if (classification === 'jointSpend') {
+        expense += -jointLegStakeDelta(transaction, account, classification);
+      } else {
+        income += transaction.amount;
+      }
+      continue;
+    }
 
     const category =
       transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined;

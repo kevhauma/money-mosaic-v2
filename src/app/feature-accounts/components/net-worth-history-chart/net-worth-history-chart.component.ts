@@ -10,8 +10,10 @@ import {
   RangeStore,
   type AccountBalanceSeries,
   type ChartZoomWindow,
+  type JointLegContext,
 } from '@/core/stats';
-import { TransactionsStore } from '@/feature-transactions';
+import { CategoriesStore } from '@/feature-categories';
+import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { AccountsStore } from '../../accounts.store';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -67,6 +69,8 @@ export const buildNetWorthHistoryChartOption = (
 export class NetWorthHistoryChartComponent {
   private readonly accountsStore = inject(AccountsStore);
   private readonly transactionsStore = inject(TransactionsStore);
+  private readonly transfersStore = inject(TransfersStore);
+  private readonly categoriesStore = inject(CategoriesStore);
   private readonly rangeStore = inject(RangeStore);
   private readonly router = inject(Router);
 
@@ -78,6 +82,16 @@ export class NetWorthHistoryChartComponent {
 
   private readonly granularity = computed(() => this.rangeStore.groupBy());
 
+  // Cross-account lookups a joint account's stake needs (TICKET-STAT-03) — `accountsById` spans
+  // every account (not just the active ones charted here) so a linked transfer's other leg always
+  // resolves, even to an archived account.
+  private readonly jointLegContext = computed((): JointLegContext => ({
+    transactionsById: new Map(this.transactionsStore.transactions().map((t) => [t.id!, t])),
+    accountsById: this.accountsStore.accountsById(),
+    transfersById: this.transfersStore.transferByTransactionId(),
+    categoriesById: this.categoriesStore.categoriesById(),
+  }));
+
   protected readonly series = computed(() =>
     computeAccountBalanceTrends(
       this.transactionsStore.transactions(),
@@ -85,6 +99,7 @@ export class NetWorthHistoryChartComponent {
       this.range().from,
       this.range().to,
       this.granularity(),
+      this.jointLegContext(),
     ),
   );
 

@@ -10,7 +10,14 @@ import {
 } from '@ngrx/signals/entities';
 import { AccountsRepository, type Account } from '@/core/data-access';
 import { AccountDeletionService } from '@/core/accounts';
+import {
+  computeContributorBreakdown,
+  computeJointAccountStake,
+  type ContributorBreakdown,
+  type JointLegContext,
+} from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
+import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { withArchivable } from '@/shared/utils';
 
@@ -25,6 +32,8 @@ export const AccountsStore = signalStore(
   withArchivable<Account>(),
   withComputed(({ entities, activeEntities, archivedEntities }) => {
     const transactionsStore = inject(TransactionsStore);
+    const transfersStore = inject(TransfersStore);
+    const categoriesStore = inject(CategoriesStore);
 
     const transactionTotalsByAccountId = computed(() => {
       const totals = new Map<number, number>();
@@ -37,6 +46,8 @@ export const AccountsStore = signalStore(
       return totals;
     });
 
+    // Real bank balance (unchanged by the contribution model) — the accounts UI keeps showing
+    // this figure for every account, joint included (TICKET-STAT-03).
     const balancesById = computed(() => {
       const totals = transactionTotalsByAccountId();
       return new Map(
@@ -47,15 +58,69 @@ export const AccountsStore = signalStore(
       );
     });
 
+    const accountsById = computed(
+      () => new Map(entities().map((account) => [account.id!, account])),
+    );
+
+    // Shared lookup context for classifying a joint account's own transaction legs
+    // (TICKET-STAT-03) — reused by both the stake and the contributor-breakdown computeds below.
+    const jointLegContext = computed((): JointLegContext => ({
+      transactionsById: new Map(transactionsStore.transactions().map((t) => [t.id!, t])),
+      accountsById: accountsById(),
+      transfersById: transfersStore.transferByTransactionId(),
+      categoriesById: categoriesStore.categoriesById(),
+    }));
+
+    // My net-worth stake in each joint account (my share of the pot, not the full balance) — the
+    // "your share" figure surfaced on the accounts UI and folded into `netWorth` below.
+    const jointAccountStakeById = computed(() => {
+      const context = jointLegContext();
+      const transactions = transactionsStore.transactions();
+      const stakes = new Map<number, number>();
+      for (const account of entities()) {
+        if (account.type !== 'joint') continue;
+        stakes.set(account.id!, computeJointAccountStake(transactions, account, context));
+      }
+      return stakes;
+    });
+
+    // Per-contributor inflow breakdown for each joint account (mine / each co-owner / unattributed).
+    const contributorBreakdownById = computed(() => {
+      const context = jointLegContext();
+      const transactions = transactionsStore.transactions();
+      const breakdowns = new Map<number, ContributorBreakdown>();
+      for (const account of entities()) {
+        if (account.type !== 'joint') continue;
+        breakdowns.set(account.id!, computeContributorBreakdown(transactions, account, context));
+      }
+      return breakdowns;
+    });
+
+    // Combined net worth (FR-STAT-1): non-joint accounts count their full balance; a joint
+    // account counts only my stake. A dataset with no joint accounts sums the same balances as
+    // before, byte-identical to the pre-STAT-03 behaviour.
+    const netWorth = computed(() => {
+      const balances = balancesById();
+      const stakes = jointAccountStakeById();
+      let total = 0;
+      for (const account of entities()) {
+        total +=
+          account.type === 'joint'
+            ? (stakes.get(account.id!) ?? 0)
+            : (balances.get(account.id!) ?? 0);
+      }
+      return total;
+    });
+
     return {
       accounts: entities,
       activeAccounts: activeEntities,
       archivedAccounts: archivedEntities,
-      accountsById: computed(() => new Map(entities().map((account) => [account.id!, account]))),
+      accountsById,
       balancesById,
-      netWorth: computed(() =>
-        [...balancesById().values()].reduce((sum, balance) => sum + balance, 0),
-      ),
+      netWorth,
+      jointAccountStakeById,
+      contributorBreakdownById,
       transactionCountById: computed(() => {
         const counts = new Map<number, number>();
         for (const transaction of transactionsStore.transactions()) {

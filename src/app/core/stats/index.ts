@@ -1,4 +1,7 @@
+export * from './classify-joint-leg';
 export * from './date-buckets';
+export * from './joint-account-stake';
+export * from './joint-contributor-breakdown';
 export * from './period-stats';
 export * from './category-breakdown';
 export * from './trend-buckets';

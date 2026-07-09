@@ -1,4 +1,4 @@
-import { TitleCasePipe } from '@angular/common';
+import { KeyValuePipe, TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -28,6 +28,7 @@ import {
   imports: [
     NgIcon,
     TitleCasePipe,
+    KeyValuePipe,
     SignedAmountPipe,
     AccountFormComponent,
     AccountBalanceChartComponent,
@@ -57,6 +58,21 @@ export class AccountsDetailComponent {
     return account?.id != null
       ? (this.accountsStore.balancesById().get(account.id) ?? account.openingBalance)
       : 0;
+  });
+
+  /** My net-worth stake in this account (TICKET-STAT-03) — null for a non-joint account. */
+  protected readonly share = computed<number | null>(() => {
+    const account = this.account();
+    return account?.type === 'joint' && account.id != null
+      ? (this.accountsStore.jointAccountStakeById().get(account.id) ?? null)
+      : null;
+  });
+
+  protected readonly contributorBreakdown = computed(() => {
+    const account = this.account();
+    return account?.type === 'joint' && account.id != null
+      ? (this.accountsStore.contributorBreakdownById().get(account.id) ?? null)
+      : null;
   });
 
   protected readonly transactionCount = computed(() => {

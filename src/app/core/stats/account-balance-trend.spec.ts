@@ -1,5 +1,7 @@
-import type { Account, Transaction } from '@/core/data-access';
+import type { Account, Category, Transaction, Transfer } from '@/core/data-access';
+import type { JointLegContext } from './classify-joint-leg';
 import { computeAccountBalanceTrends } from './account-balance-trend';
+import { computeNetWorthTrend } from './net-worth-trend';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -78,5 +80,94 @@ describe('computeAccountBalanceTrends', () => {
 
   it('returns an empty array for an empty accounts list', () => {
     expect(computeAccountBalanceTrends([], [], '2026-01-01', '2026-01-31', 'month')).toEqual([]);
+  });
+});
+
+describe('computeAccountBalanceTrends: per-account joint stake sums to the combined line (TICKET-STAT-03)', () => {
+  it('sums each account’s own series to the same figure as the combined computeNetWorthTrend', () => {
+    const jointAccount: Account = {
+      id: 1,
+      name: 'Joint',
+      type: 'joint',
+      currency: 'EUR',
+      openingBalance: 0,
+      openingBalanceDate: '2026-01-01',
+      color: '#000000',
+      icon: 'users',
+      archived: false,
+      ownershipShare: 0.5,
+    };
+    const ownAccount: Account = {
+      id: 2,
+      name: 'Checking',
+      type: 'checking',
+      currency: 'EUR',
+      openingBalance: 1000,
+      openingBalanceDate: '2026-01-01',
+      color: '#000000',
+      icon: 'wallet',
+      archived: false,
+    };
+    const accounts = [jointAccount, ownAccount];
+
+    const transferIn = transaction({
+      id: 1,
+      accountId: 1,
+      amount: 500,
+      transferId: 10,
+      bookingDate: '2026-01-05',
+    });
+    const transferOut = transaction({
+      id: 2,
+      accountId: 2,
+      amount: -500,
+      transferId: 10,
+      bookingDate: '2026-01-05',
+    });
+    const groceries = transaction({ id: 3, accountId: 1, amount: -200, bookingDate: '2026-01-10' });
+    const transactions = [transferIn, transferOut, groceries];
+    const transfer: Transfer = {
+      id: 10,
+      fromTransactionId: 2,
+      toTransactionId: 1,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-01-05T00:00:00.000Z',
+    };
+    const context: JointLegContext = {
+      transactionsById: new Map(transactions.map((t) => [t.id!, t])),
+      accountsById: new Map([
+        [1, jointAccount],
+        [2, ownAccount],
+      ]),
+      transfersById: new Map([
+        [1, transfer],
+        [2, transfer],
+      ]),
+      categoriesById: new Map<number, Category>(),
+    };
+
+    const perAccountSeries = computeAccountBalanceTrends(
+      transactions,
+      accounts,
+      '2026-01-01',
+      '2026-01-31',
+      'month',
+      context,
+    );
+    const combined = computeNetWorthTrend(
+      transactions,
+      accounts,
+      '2026-01-01',
+      '2026-01-31',
+      'month',
+      context,
+    );
+
+    const summedPerAccount = perAccountSeries.reduce(
+      (sum, series) => sum + series.points[0].netWorth,
+      0,
+    );
+    expect(summedPerAccount).toBe(combined[0].netWorth);
   });
 });

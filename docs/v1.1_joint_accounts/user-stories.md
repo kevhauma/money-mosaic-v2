@@ -20,7 +20,7 @@ Split out of the v1.5 line item in [../v2/requirements.md](../v2/requirements.md
 
 ## 6. Statistics & Dashboard (FR-STAT)
 
-- [ ] As someone with a shared account, I want my net worth to count only my contribution to a joint account (my deposits and income in, minus my share of joint spending) rather than the whole shared balance, so the number reflects money that is actually mine ([TICKET-STAT-03](./tickets/TICKET-STAT-03-contribution-net-worth.md), changes FR-STAT-1 / FR-TRF-1 semantics for joint accounts)
+- [x] As someone with a shared account, I want my net worth to count only my contribution to a joint account (my deposits and income in, minus my share of joint spending) rather than the whole shared balance, so the number reflects money that is actually mine ([TICKET-STAT-03](./tickets/TICKET-STAT-03-contribution-net-worth.md), changes FR-STAT-1 / FR-TRF-1 semantics for joint accounts)
 
 ## 5. Transfers (FR-TRF)
 

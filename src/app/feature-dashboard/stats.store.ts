@@ -6,11 +6,12 @@ import {
   computePeriodStats,
   computeTrendBuckets,
   RangeStore,
+  type JointLegContext,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 
 /**
  * Range-scoped statistics for the Dashboard (FR-STAT-2..4), wiring the pure aggregation
@@ -33,9 +34,19 @@ export const StatsStore = signalStore(
     const transactionsStore = inject(TransactionsStore);
     const accountsStore = inject(AccountsStore);
     const categoriesStore = inject(CategoriesStore);
+    const transfersStore = inject(TransfersStore);
     const rangeStore = inject(RangeStore);
 
     const ownSavingsIbans = computed(() => savingsAccountIbans(accountsStore.accounts()));
+
+    // Shared lookup context for classifying a joint account's own transaction legs
+    // (TICKET-STAT-03), reused by every aggregate below so they can't disagree on the maths.
+    const jointLegContext = computed((): JointLegContext => ({
+      transactionsById: new Map(transactionsStore.transactions().map((t) => [t.id!, t])),
+      accountsById: accountsStore.accountsById(),
+      transfersById: transfersStore.transferByTransactionId(),
+      categoriesById: categoriesStore.categoriesById(),
+    }));
 
     const periodStats = computed(() =>
       computePeriodStats(
@@ -44,6 +55,7 @@ export const StatsStore = signalStore(
         rangeStore.to(),
         ownSavingsIbans(),
         categoriesStore.categoriesById(),
+        accountsStore.accountsById(),
       ),
     );
 
@@ -54,6 +66,7 @@ export const StatsStore = signalStore(
         rangeStore.from(),
         rangeStore.to(),
         ownSavingsIbans(),
+        accountsStore.accountsById(),
       ),
     );
 
@@ -73,6 +86,7 @@ export const StatsStore = signalStore(
         rangeStore.from(),
         rangeStore.to(),
         rangeStore.groupBy(),
+        jointLegContext(),
       ),
     );
 
