@@ -10,6 +10,7 @@ import {
   tablerShoppingCart,
   tablerTag,
   tablerToolsKitchen2,
+  tablerUsers,
 } from '@ng-icons/tabler-icons';
 
 export const CATEGORY_ICON_SET = {
@@ -24,6 +25,7 @@ export const CATEGORY_ICON_SET = {
   categoryCash: tablerCash,
   categoryCoin: tablerCoin,
   categoryTag: tablerTag,
+  categoryUsers: tablerUsers,
 };
 
 const ICON_NAME_BY_STORED_VALUE: Record<string, keyof typeof CATEGORY_ICON_SET> = {
@@ -38,6 +40,7 @@ const ICON_NAME_BY_STORED_VALUE: Record<string, keyof typeof CATEGORY_ICON_SET> 
   cash: 'categoryCash',
   coin: 'categoryCoin',
   tag: 'categoryTag',
+  users: 'categoryUsers',
 };
 
 export const categoryIconName = (icon: string): string =>
@@ -55,4 +58,5 @@ export const CATEGORY_ICON_OPTIONS: { value: string; label: string }[] = [
   { value: 'cash', label: 'Cash / salary' },
   { value: 'coin', label: 'Other income' },
   { value: 'tag', label: 'Generic' },
+  { value: 'users', label: 'Partner / co-owner' },
 ];

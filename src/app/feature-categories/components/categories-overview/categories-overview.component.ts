@@ -16,6 +16,7 @@ import {
   ConfirmDialogComponent,
   EmptyStateComponent,
   PageHeaderComponent,
+  type BadgeColor,
 } from '@/shared/ui';
 import { CATEGORY_ICON_SET, categoryIconName } from '../../category-icons';
 import { CategoriesStore } from '../../categories.store';
@@ -115,6 +116,17 @@ export class CategoriesOverviewComponent {
     const target = this.deleteTarget();
     if (target?.id != null) {
       void this.categoriesStore.removeCategory(target.id);
+    }
+  }
+
+  protected badgeColorFor(kind: Category['kind']): BadgeColor | undefined {
+    switch (kind) {
+      case 'income':
+        return 'success';
+      case 'neutral':
+        return 'neutral';
+      case 'expense':
+        return undefined;
     }
   }
 

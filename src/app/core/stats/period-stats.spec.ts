@@ -1,4 +1,4 @@
-import type { Transaction } from '@/core/data-access';
+import type { Category, Transaction } from '@/core/data-access';
 import { computePeriodStats } from './period-stats';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -10,6 +10,17 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   rawDescription: 'Groceries',
   fingerprint: 'fp',
   createdAt: '2026-07-15T00:00:00.000Z',
+  ...overrides,
+});
+
+const category = (overrides: Partial<Category> = {}): Category => ({
+  id: 1,
+  name: 'Partner contribution',
+  kind: 'neutral',
+  color: '#94A3B8',
+  icon: 'users',
+  archived: false,
+  isSystem: true,
   ...overrides,
 });
 
@@ -138,5 +149,36 @@ describe('computePeriodStats', () => {
   it('returns null savings rate when income is zero, rather than dividing by zero', () => {
     const transactions = [transaction({ id: 1, amount: -100 })];
     expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31').savingsRate).toBeNull();
+  });
+
+  it('excludes a neutral-kind transaction from income/expense/savingsRate — kind, not sign, drives it (TICKET-CAT-02)', () => {
+    const categoriesById = new Map<number, Category>([[1, category({ id: 1 })]]);
+    const transactions = [
+      // A partner's contribution: positive amount, but categorised neutral.
+      transaction({ id: 1, amount: 500, categoryId: 1 }),
+      transaction({ id: 2, amount: -50 }),
+    ];
+
+    expect(
+      computePeriodStats(transactions, '2026-07-01', '2026-07-31', new Set(), categoriesById),
+    ).toEqual({
+      income: 0,
+      expense: 50,
+      savings: 0,
+      net: -50,
+      savingsRate: null,
+    });
+  });
+
+  it('still counts a same-account positive income transaction as income when its category kind is income (TICKET-CAT-02)', () => {
+    const categoriesById = new Map<number, Category>([
+      [2, category({ id: 2, name: 'Salary', kind: 'income' })],
+    ]);
+    const transactions = [transaction({ id: 1, amount: 1000, categoryId: 2 })];
+
+    expect(
+      computePeriodStats(transactions, '2026-07-01', '2026-07-31', new Set(), categoriesById)
+        .income,
+    ).toBe(1000);
   });
 });

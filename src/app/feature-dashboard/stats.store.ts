@@ -43,6 +43,7 @@ export const StatsStore = signalStore(
         rangeStore.from(),
         rangeStore.to(),
         ownSavingsIbans(),
+        categoriesStore.categoriesById(),
       ),
     );
 

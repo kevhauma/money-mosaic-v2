@@ -81,7 +81,13 @@ export const DEFAULT_TRANSFER_SETTINGS: TransferSettings = {
 export type Category = {
   id?: number;
   name: string;
-  kind: 'expense' | 'income';
+  /**
+   * `expense`/`income` drive the stats sign buckets as before. `neutral` still counts toward
+   * account balance and net worth but is excluded from income, expense, savings-rate, and
+   * category-breakdown aggregates — e.g. a partner's contribution into a joint account, which
+   * affects the balance but isn't the user's own income (TICKET-CAT-02).
+   */
+  kind: 'expense' | 'income' | 'neutral';
   group?: string;
   color: string;
   icon: string;
@@ -217,6 +223,17 @@ const DEFAULT_MAPPING_PROFILE_TEMPLATES: MappingProfile[] = [
   },
 ];
 
+/** Name of the seeded `neutral`-kind system category (TICKET-CAT-02), used to find it on both first-run seeding and the `.version(6)` backfill. */
+export const PARTNER_CONTRIBUTION_CATEGORY_NAME = 'Partner contribution';
+
+/** True when no seeded "Partner contribution" category exists yet — keeps the `.version(6)` upgrade a no-op on re-run or for a user who already has one. */
+export const needsPartnerContributionSeed = (
+  categories: Pick<Category, 'isSystem' | 'name'>[],
+): boolean =>
+  !categories.some(
+    (category) => category.isSystem && category.name === PARTNER_CONTRIBUTION_CATEGORY_NAME,
+  );
+
 /**
  * Sensible out-of-the-box categories (FR-CAT-1). Seeded into `categories` on first run;
  * users can rename/archive them once the category manager ships in a later story.
@@ -301,6 +318,15 @@ const DEFAULT_CATEGORIES: Category[] = [
     group: 'Income',
     color: '#2DD4BF',
     icon: 'coin',
+    archived: false,
+    isSystem: true,
+  },
+  {
+    name: PARTNER_CONTRIBUTION_CATEGORY_NAME,
+    kind: 'neutral',
+    group: 'Contributions',
+    color: '#94A3B8',
+    icon: 'users',
     archived: false,
     isSystem: true,
   },
@@ -442,6 +468,38 @@ class AppDb extends Dexie {
           .modify((rule) => {
             rule.conditionMatch ??= 'all';
           });
+      });
+
+    // Backfills the seeded "Partner contribution" (`neutral`-kind) system category for existing
+    // users, since `populate` only runs for a fresh DB (TICKET-CAT-02). Idempotent: checks for an
+    // existing system category with the same name before adding, so re-running it (or a user who
+    // already has one) never duplicates it. No index change — `kind` widening an already-indexed
+    // field needs no migration of stored values.
+    this.version(6)
+      .stores({
+        accounts: '++id, name, type, archived',
+        transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+        transfers: '++id, fromTransactionId, toTransactionId',
+        categories: '++id, name, kind, archived',
+        rules: '++id, priority, enabled',
+        mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+        importBatches: '++id, accountId, importedAt',
+        transferSettings: 'id',
+      })
+      .upgrade(async (tx) => {
+        const categories = tx.table<Category, number>('categories');
+        const existing = await categories.toArray();
+        if (needsPartnerContributionSeed(existing)) {
+          await categories.add({
+            name: PARTNER_CONTRIBUTION_CATEGORY_NAME,
+            kind: 'neutral',
+            group: 'Contributions',
+            color: '#94A3B8',
+            icon: 'users',
+            archived: false,
+            isSystem: true,
+          });
+        }
       });
 
     this.on('populate', () => {

@@ -16,7 +16,7 @@ Split out of the v1.5 line item in [../v2/requirements.md](../v2/requirements.md
 
 ## 4. Categorisation (FR-CAT)
 
-- [ ] As someone with a shared account, I want money paid into a joint account by my partner or another person marked as a non-income "contribution" that still affects the balance but never counts as my income, so a partner's salary landing in our joint account doesn't inflate my income and savings rate ([TICKET-CAT-02](./tickets/TICKET-CAT-02-neutral-category-kind.md), extends FR-CAT-1 / FR-STAT-2)
+- [x] As someone with a shared account, I want money paid into a joint account by my partner or another person marked as a non-income "contribution" that still affects the balance but never counts as my income, so a partner's salary landing in our joint account doesn't inflate my income and savings rate ([TICKET-CAT-02](./tickets/TICKET-CAT-02-neutral-category-kind.md), extends FR-CAT-1 / FR-STAT-2)
 
 ## 6. Statistics & Dashboard (FR-STAT)
 

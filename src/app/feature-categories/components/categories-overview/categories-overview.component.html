@@ -70,7 +70,7 @@
                 variant="outline"
                 size="sm"
                 class="capitalize"
-                [color]="category.kind === 'income' ? 'success' : undefined"
+                [color]="badgeColorFor(category.kind)"
               >
                 {{ category.kind }}
               </mm-badge>

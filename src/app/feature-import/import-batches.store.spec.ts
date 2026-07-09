@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { ImportBatchesRepository, type ImportBatch, type Transaction } from '@/core/data-access';
 import { ImportService, type CommitImportInput } from '@/core/import';
-import { RulesEngineService } from '@/core/categorisation';
+import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { ImportBatchesStore } from './import-batches.store';
 
@@ -42,6 +42,7 @@ describe('ImportBatchesStore: commitImport pre-categorises rows before they land
   const importBatchesRepository = { getAll: vi.fn().mockResolvedValue([]) };
   const importService = { commitImport: vi.fn(), undoImport: vi.fn() };
   const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const coOwnerContributionService = { runAndPersist: vi.fn().mockResolvedValue([]) };
   const transactionsStore = {
     transactions: vi.fn().mockReturnValue([]),
     addMany: vi.fn(),
@@ -57,6 +58,7 @@ describe('ImportBatchesStore: commitImport pre-categorises rows before they land
         { provide: ImportBatchesRepository, useValue: importBatchesRepository },
         { provide: ImportService, useValue: importService },
         { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: CoOwnerContributionService, useValue: coOwnerContributionService },
         { provide: TransactionsStore, useValue: transactionsStore },
         { provide: TransfersStore, useValue: transfersStore },
       ],
@@ -88,12 +90,36 @@ describe('ImportBatchesStore: commitImport pre-categorises rows before they land
     );
     expect(result.addedTransactions).toEqual([{ ...added[0], categoryId: 7 }, added[1]]);
   });
+
+  it('runs the co-owner contribution registry after rules and lets it override a conflicting rule (TICKET-CAT-02)', async () => {
+    const batch = importBatch();
+    const added = [transaction({ id: 10 })];
+    importService.commitImport.mockResolvedValue({
+      batch,
+      addedTransactions: added,
+      duplicateCount: 0,
+    });
+    // A user rule matches and tags it Groceries...
+    rulesEngineService.runAndPersist.mockResolvedValue([{ id: 10, categoryId: 7 }]);
+    // ...but the co-owner IBAN registry recognises it as a partner contribution and wins.
+    coOwnerContributionService.runAndPersist.mockResolvedValue([{ id: 10, categoryId: 99 }]);
+
+    const store = TestBed.inject(ImportBatchesStore);
+    const result = await store.commitImport(commitInput);
+
+    expect(coOwnerContributionService.runAndPersist).toHaveBeenCalledWith([
+      { ...added[0], categoryId: 7 },
+    ]);
+    expect(transactionsStore.addMany).toHaveBeenCalledWith([{ ...added[0], categoryId: 99 }]);
+    expect(result.addedTransactions).toEqual([{ ...added[0], categoryId: 99 }]);
+  });
 });
 
 describe('ImportBatchesStore: undoImport mirrors removals and severed transfers into both stores (TICKET-TEST-01)', () => {
   const importBatchesRepository = { getAll: vi.fn().mockResolvedValue([]) };
   const importService = { commitImport: vi.fn(), undoImport: vi.fn() };
   const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const coOwnerContributionService = { runAndPersist: vi.fn().mockResolvedValue([]) };
   const transactionsStore = {
     transactions: vi.fn().mockReturnValue([]),
     addMany: vi.fn(),
@@ -109,6 +135,7 @@ describe('ImportBatchesStore: undoImport mirrors removals and severed transfers 
         { provide: ImportBatchesRepository, useValue: importBatchesRepository },
         { provide: ImportService, useValue: importService },
         { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: CoOwnerContributionService, useValue: coOwnerContributionService },
         { provide: TransactionsStore, useValue: transactionsStore },
         { provide: TransfersStore, useValue: transfersStore },
       ],

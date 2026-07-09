@@ -37,6 +37,8 @@ const finalizeEntries = (
  * Splits [from, to] transactions into expense-by-category and income-by-source totals with
  * share-of-total (FR-STAT-3). Linked transfers and movements to/from an own savings account are
  * excluded, so a savings movement never surfaces as an (uncategorised) expense entry (TICKET-TRF-02).
+ * A `neutral`-kind category (e.g. a partner's contribution) is excluded from both buckets — it never
+ * shows up as an income source or an expense slice (TICKET-CAT-02).
  */
 export const computeCategoryBreakdown = (
   transactions: Transaction[],
@@ -56,6 +58,7 @@ export const computeCategoryBreakdown = (
 
     const category =
       transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined;
+    if (category?.kind === 'neutral') continue;
     const isExpense = category ? category.kind === 'expense' : transaction.amount < 0;
     const totals = isExpense ? expenseTotals : incomeTotals;
     const key = category?.id ?? null;

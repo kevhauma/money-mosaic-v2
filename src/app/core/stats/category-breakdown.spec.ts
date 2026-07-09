@@ -120,6 +120,30 @@ describe('computeCategoryBreakdown', () => {
     expect(expenseByCategory).toEqual([]);
   });
 
+  it('excludes a neutral-kind category from both expenseByCategory and incomeBySource (TICKET-CAT-02)', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Partner contribution', kind: 'neutral' })],
+      [2, category({ id: 2, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const transactions = [
+      // A partner's contribution: positive amount, but must never surface as an income source.
+      transaction({ id: 1, amount: 500, categoryId: 1 }),
+      transaction({ id: 2, amount: -60, categoryId: 2 }),
+    ];
+
+    const { expenseByCategory, incomeBySource } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+    );
+
+    expect(incomeBySource).toEqual([]);
+    expect(expenseByCategory).toEqual([
+      { categoryId: 2, total: 60, share: 1, transactionCount: 1 },
+    ]);
+  });
+
   it('sorts entries by total descending', () => {
     const categoriesById = new Map<number, Category>([
       [1, category({ id: 1 })],

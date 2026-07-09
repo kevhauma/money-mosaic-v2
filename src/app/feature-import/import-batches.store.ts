@@ -7,10 +7,23 @@ import {
   setAllEntities,
   withEntities,
 } from '@ngrx/signals/entities';
-import { ImportBatchesRepository, type ImportBatch } from '@/core/data-access';
+import { ImportBatchesRepository, type ImportBatch, type Transaction } from '@/core/data-access';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { ImportService, type CommitImportInput, type CommitImportResult } from '@/core/import';
-import { RulesEngineService } from '@/core/categorisation';
+import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
+
+/** Applies `{ id, categoryId }` updates onto their matching transactions, leaving the rest untouched. */
+const applyCategoryUpdates = (
+  transactions: Transaction[],
+  updates: { id: number; categoryId: number }[],
+): Transaction[] => {
+  const categoryIdById = new Map(updates.map((update) => [update.id, update.categoryId]));
+  return transactions.map((transaction) =>
+    categoryIdById.has(transaction.id!)
+      ? { ...transaction, categoryId: categoryIdById.get(transaction.id!) }
+      : transaction,
+  );
+};
 
 const importBatchConfig = entityConfig({
   entity: type<ImportBatch>(),
@@ -27,6 +40,7 @@ export const ImportBatchesStore = signalStore(
     const transfersStore = inject(TransfersStore);
     const importService = inject(ImportService);
     const rulesEngineService = inject(RulesEngineService);
+    const coOwnerContributionService = inject(CoOwnerContributionService);
 
     return {
       hydrate: async (): Promise<void> => {
@@ -36,16 +50,28 @@ export const ImportBatchesStore = signalStore(
         );
       },
 
-      /** Runs the rules engine over freshly imported rows before they land in the store, so they show up already categorised (FR-CAT-3). */
+      /**
+       * Runs the rules engine, then the co-owner contribution registry (TICKET-CAT-02), over freshly
+       * imported rows before they land in the store, so they show up already categorised (FR-CAT-3).
+       * The registry-driven "Partner contribution" tag runs last and wins over a conflicting user
+       * Rule for the same joint-account inflow — the co-owner IBAN registry is the more specific,
+       * curated signal.
+       */
       commitImport: async (input: CommitImportInput): Promise<CommitImportResult> => {
         const result = await importService.commitImport(input);
 
-        const updates = await rulesEngineService.runAndPersist(result.addedTransactions);
-        const categoryIdById = new Map(updates.map((update) => [update.id, update.categoryId]));
-        const categorisedTransactions = result.addedTransactions.map((transaction) =>
-          categoryIdById.has(transaction.id!)
-            ? { ...transaction, categoryId: categoryIdById.get(transaction.id!) }
-            : transaction,
+        const ruleUpdates = await rulesEngineService.runAndPersist(result.addedTransactions);
+        const ruleCategorisedTransactions = applyCategoryUpdates(
+          result.addedTransactions,
+          ruleUpdates,
+        );
+
+        const contributionUpdates = await coOwnerContributionService.runAndPersist(
+          ruleCategorisedTransactions,
+        );
+        const categorisedTransactions = applyCategoryUpdates(
+          ruleCategorisedTransactions,
+          contributionUpdates,
         );
 
         patchState(store, addEntity(result.batch, importBatchConfig));

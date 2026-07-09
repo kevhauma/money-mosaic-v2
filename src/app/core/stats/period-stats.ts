@@ -1,4 +1,4 @@
-import type { Transaction } from '@/core/data-access';
+import type { Category, Transaction } from '@/core/data-access';
 import { isSavingsMovement } from '@/core/transfers';
 
 export type PeriodStats = {
@@ -21,12 +21,16 @@ const inRange = (transaction: Transaction, from: string, to: string): boolean =>
  * Income/expense/savings/net for [from, to]. Linked transfers between own accounts are excluded from
  * income/expense (FR-STAT-2); movements to/from an own savings account are reported under a separate
  * `savings` figure rather than as expense/income, whether linked or still one-sided (TICKET-TRF-02).
+ * A transaction assigned a `neutral`-kind category (e.g. a partner's contribution) is excluded from
+ * income/expense/savingsRate too — it still moves the account balance, just not via this store's
+ * derivation, which reads raw `amount` (TICKET-CAT-02).
  */
 export const computePeriodStats = (
   transactions: Transaction[],
   from: string,
   to: string,
   ownSavingsIbans: ReadonlySet<string> = new Set(),
+  categoriesById: ReadonlyMap<number, Category> = new Map(),
 ): PeriodStats => {
   let income = 0;
   let expense = 0;
@@ -42,6 +46,10 @@ export const computePeriodStats = (
       continue;
     }
     if (transaction.transferId != null) continue;
+
+    const category =
+      transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined;
+    if (category?.kind === 'neutral') continue;
 
     if (transaction.amount > 0) {
       income += transaction.amount;
