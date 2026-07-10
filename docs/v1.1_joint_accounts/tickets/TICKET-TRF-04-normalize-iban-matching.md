@@ -28,11 +28,11 @@ Savings and transfer detection compare `Transaction.counterpartyIban` against `A
 
 ## Acceptance criteria
 
-- [ ] `isSavingsMovement`, `isLikelyTransfer`, `ibanConfirms`, and `savingsAccountIbans` normalize IBANs (via `normalizeIban`) before comparing, so differing whitespace/case between a stored `Account.iban` and a transaction's `counterpartyIban` no longer breaks matching.
-- [ ] High-confidence transfer matching (`findHighConfidenceMatches`/`ibanConfirms`) benefits from the same fix — a differently-formatted IBAN pair now matches at high confidence instead of falling through to the medium-confidence fallback or missing entirely.
-- [ ] No Dexie schema change; no migration of existing stored `iban`/`counterpartyIban` values — normalization happens at comparison time only.
-- [ ] Unit tests cover: a savings movement whose transaction `counterpartyIban` differs in spacing/case from the savings account's stored `iban` is still detected as savings (reported in the savings figure, excluded from expense); the equivalent case for `isLikelyTransfer` and `ibanConfirms`.
-- [ ] Regression check: existing exact-match cases (already-consistent formatting) behave identically — no change in classification for data that was already matching.
+- [x] `isSavingsMovement`, `isLikelyTransfer`, `ibanConfirms`, and `savingsAccountIbans` normalize IBANs (via `normalizeIban`) before comparing, so differing whitespace/case between a stored `Account.iban` and a transaction's `counterpartyIban` no longer breaks matching.
+- [x] High-confidence transfer matching (`findHighConfidenceMatches`/`ibanConfirms`) benefits from the same fix — a differently-formatted IBAN pair now matches at high confidence instead of falling through to the medium-confidence fallback or missing entirely.
+- [x] No Dexie schema change; no migration of existing stored `iban`/`counterpartyIban` values — normalization happens at comparison time only.
+- [x] Unit tests cover: a savings movement whose transaction `counterpartyIban` differs in spacing/case from the savings account's stored `iban` is still detected as savings (reported in the savings figure, excluded from expense); the equivalent case for `isLikelyTransfer` and `ibanConfirms`.
+- [x] Regression check: existing exact-match cases (already-consistent formatting) behave identically — no change in classification for data that was already matching.
 - [ ] Verified live in the browser: with a savings account whose stored IBAN differs in formatting from the counterparty IBAN on an existing savings transfer, the dashboard's savings figure and savings rate reflect that transfer after the fix.
 
 ## Notes

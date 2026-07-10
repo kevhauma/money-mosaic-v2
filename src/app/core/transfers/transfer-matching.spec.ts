@@ -1,5 +1,10 @@
 import type { Account, Transaction } from '@/core/data-access';
-import { isLikelyTransfer, resolveTransferMatches } from './transfer-matching';
+import {
+  isLikelyTransfer,
+  isSavingsMovement,
+  resolveTransferMatches,
+  savingsAccountIbans,
+} from './transfer-matching';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -43,11 +48,59 @@ describe('isLikelyTransfer', () => {
     const ownIbans = new Set(['BE01']);
     expect(isLikelyTransfer(transaction({ counterpartyIban: 'BE99' }), ownIbans)).toBe(false);
   });
+
+  it('flags a match even when the counterparty IBAN differs in spacing/case (TICKET-TRF-04)', () => {
+    const ownIbans = new Set(['BE01']);
+    expect(isLikelyTransfer(transaction({ counterpartyIban: 'be 01' }), ownIbans)).toBe(true);
+  });
+});
+
+describe('isSavingsMovement / savingsAccountIbans', () => {
+  it('flags a savings movement even when the stored account IBAN and transaction counterparty IBAN differ in spacing/case (TICKET-TRF-04)', () => {
+    const accounts = [account({ id: 1, type: 'savings', iban: 'be 01 23' })];
+    const ownSavingsIbans = savingsAccountIbans(accounts);
+
+    expect(isSavingsMovement(transaction({ counterpartyIban: 'BE0123' }), ownSavingsIbans)).toBe(
+      true,
+    );
+  });
+
+  it('still matches when both sides are already formatted identically (regression)', () => {
+    const accounts = [account({ id: 1, type: 'savings', iban: 'BE0123' })];
+    const ownSavingsIbans = savingsAccountIbans(accounts);
+
+    expect(isSavingsMovement(transaction({ counterpartyIban: 'BE0123' }), ownSavingsIbans)).toBe(
+      true,
+    );
+  });
+
+  it('does not flag a counterparty that is not a known savings account', () => {
+    const accounts = [account({ id: 1, type: 'savings', iban: 'BE0123' })];
+    const ownSavingsIbans = savingsAccountIbans(accounts);
+
+    expect(isSavingsMovement(transaction({ counterpartyIban: 'BE9999' }), ownSavingsIbans)).toBe(
+      false,
+    );
+  });
 });
 
 describe('resolveTransferMatches: high confidence (IBAN)', () => {
   it('auto-links a pair whose counterparty IBAN matches the other account (FR-TRF-3)', () => {
     const accounts = [account({ id: 1, iban: 'BE01' }), account({ id: 2, iban: 'BE02' })];
+    const transactions = [
+      transaction({ id: 1, accountId: 1, amount: -100, counterpartyIban: 'BE02' }),
+      transaction({ id: 2, accountId: 2, amount: 100, bookingDate: '2026-07-02' }),
+    ];
+
+    const { autoLink, ambiguous } = resolveTransferMatches(transactions, accounts, 3, true);
+    expect(autoLink).toEqual([
+      { from: transactions[0], to: transactions[1], method: 'auto-iban', confidence: 'high' },
+    ]);
+    expect(ambiguous).toEqual([]);
+  });
+
+  it('auto-links a pair whose counterparty IBAN matches but differs in spacing/case (TICKET-TRF-04)', () => {
+    const accounts = [account({ id: 1, iban: 'BE 01' }), account({ id: 2, iban: 'be02' })];
     const transactions = [
       transaction({ id: 1, accountId: 1, amount: -100, counterpartyIban: 'BE02' }),
       transaction({ id: 2, accountId: 2, amount: 100, bookingDate: '2026-07-02' }),

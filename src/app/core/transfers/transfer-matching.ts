@@ -1,4 +1,5 @@
 import type { Account, Transaction } from '@/core/data-access';
+import { normalizeIban } from '@/shared/utils';
 
 export type TransferCandidate = {
   from: Transaction;
@@ -47,29 +48,36 @@ const ibanConfirms = (
   b: Transaction,
   accountsById: Map<number, Account>,
 ): boolean => {
-  const accountIban = (transaction: Transaction) => accountsById.get(transaction.accountId)?.iban;
-  return (
-    (!!a.counterpartyIban && a.counterpartyIban === accountIban(b)) ||
-    (!!b.counterpartyIban && b.counterpartyIban === accountIban(a))
-  );
+  const accountIban = (transaction: Transaction) =>
+    normalizeIban(accountsById.get(transaction.accountId)?.iban);
+  const aIban = normalizeIban(a.counterpartyIban);
+  const bIban = normalizeIban(b.counterpartyIban);
+  return (!!aIban && aIban === accountIban(b)) || (!!bIban && bIban === accountIban(a));
 };
 
-/** Flags a still one-sided movement whose counterparty is a known own account (FR-TRF-5). */
+/**
+ * Flags a still one-sided movement whose counterparty is a known own account (FR-TRF-5).
+ * `ownIbans` must already contain normalized IBANs (see `normalizeIban`) — the transaction's
+ * `counterpartyIban` is normalized here before the lookup.
+ */
 export const isLikelyTransfer = (
   transaction: Transaction,
   ownIbans: ReadonlySet<string>,
-): boolean =>
-  transaction.transferId == null &&
-  !!transaction.counterpartyIban &&
-  ownIbans.has(transaction.counterpartyIban);
+): boolean => {
+  const counterpartyIban = normalizeIban(transaction.counterpartyIban);
+  return transaction.transferId == null && !!counterpartyIban && ownIbans.has(counterpartyIban);
+};
 
-/** The IBANs of the user's own `savings`-type accounts — the set `isSavingsMovement` checks against. */
+/**
+ * The (normalized) IBANs of the user's own `savings`-type accounts — the set `isSavingsMovement`
+ * checks against.
+ */
 export const savingsAccountIbans = (accounts: Account[]): Set<string> =>
   new Set(
     accounts
       .filter((account) => account.type === 'savings')
-      .map((account) => account.iban)
-      .filter((iban): iban is string => !!iban),
+      .map((account) => normalizeIban(account.iban))
+      .filter((iban) => iban.length > 0),
   );
 
 /**
@@ -79,11 +87,16 @@ export const savingsAccountIbans = (accounts: Account[]): Set<string> =>
  * account as its counterparty). The savings-side leg of a linked pair points back at the spending
  * account, so it is never flagged here — keeping the pair from being counted twice. Sign/direction is
  * left to the caller (a negative amount is money moved *into* savings, a positive one a withdrawal).
+ * `ownSavingsIbans` must already contain normalized IBANs (see `savingsAccountIbans`) — the
+ * transaction's `counterpartyIban` is normalized here before the lookup.
  */
 export const isSavingsMovement = (
   transaction: Transaction,
   ownSavingsIbans: ReadonlySet<string>,
-): boolean => !!transaction.counterpartyIban && ownSavingsIbans.has(transaction.counterpartyIban);
+): boolean => {
+  const counterpartyIban = normalizeIban(transaction.counterpartyIban);
+  return !!counterpartyIban && ownSavingsIbans.has(counterpartyIban);
+};
 
 /** High confidence: counterparty IBAN corroborates the pair — linked even if more than one IBAN-confirmed candidate exists (closest by date wins). */
 const findHighConfidenceMatches = (

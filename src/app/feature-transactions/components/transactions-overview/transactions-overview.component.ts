@@ -26,7 +26,12 @@ import {
   PageHeaderComponent,
   PaginatorComponent,
 } from '@/shared/ui';
-import { createPagination, createSelectionModel, SignedAmountPipe } from '@/shared/utils';
+import {
+  createPagination,
+  createSelectionModel,
+  normalizeIban,
+  SignedAmountPipe,
+} from '@/shared/utils';
 import { TransactionsStore } from '../../transactions.store';
 import { TransfersStore } from '../../transfers.store';
 import { matchesTransactionFilters, type TransactionFilters } from '../../transaction-filters';
@@ -154,8 +159,8 @@ export class TransactionsOverviewComponent {
     const ownIbans = new Set(
       this.accountsStore
         .accounts()
-        .map((account) => account.iban)
-        .filter((iban): iban is string => !!iban),
+        .map((account) => normalizeIban(account.iban))
+        .filter((iban) => iban.length > 0),
     );
     return new Set(
       this.transactionsStore
