@@ -34,6 +34,17 @@ const parseAmount = (raw: string | undefined, decimalSeparator: string): number 
 
 const pad2 = (value: number): string => value.toString().padStart(2, '0');
 
+/**
+ * Some banks (e.g. KBC, for automatic savings sweeps) leave the counterparty-IBAN column blank
+ * but still write the IBAN into the free-text description. Matches a country code + check digits
+ * followed by 2-7 further groups of 4 alphanumeric characters, tolerant of the single spaces banks
+ * commonly format IBANs with (TICKET-IMP-05).
+ */
+const IBAN_IN_TEXT_PATTERN = /\b[A-Za-z]{2}\d{2}(?:[ ]?[A-Za-z0-9]{4}){2,7}\b/;
+
+const extractIbanFromDescription = (description: string): string | undefined =>
+  IBAN_IN_TEXT_PATTERN.exec(description)?.[0];
+
 type DateField = 'year' | 'month' | 'day';
 
 // Keyed by the full `DateFormat` union so adding a member without an entry here is a compile
@@ -127,9 +138,10 @@ export const mapRow = (
   const counterpartyName = mapping.counterpartyName
     ? rawRow[mapping.counterpartyName]?.trim() || undefined
     : undefined;
-  const counterpartyIban = mapping.counterpartyIban
+  const mappedCounterpartyIban = mapping.counterpartyIban
     ? rawRow[mapping.counterpartyIban]?.trim() || undefined
     : undefined;
+  const counterpartyIban = mappedCounterpartyIban ?? extractIbanFromDescription(rawDescription);
   const balanceRaw = mapping.balance ? rawRow[mapping.balance] : undefined;
   const balance =
     balanceRaw !== undefined

@@ -28,12 +28,12 @@ Some banks (confirmed: KBC) leave the mapped counterparty-IBAN column empty spec
 
 ## Acceptance criteria
 
-- [ ] `mapRow` in `csv-row-mapper.ts` falls back to extracting an IBAN from `rawDescription` when the mapped `counterpartyIban` column is blank or the column isn't mapped at all, and leaves a populated column value untouched.
-- [ ] The extraction pattern tolerates internal spaces (e.g. `"BE55 7310 2888 3844"`) and mixed case, returning a value that (after existing `normalizeIban` comparison-time handling) matches the corresponding account's stored IBAN.
-- [ ] When no IBAN-shaped token is found anywhere in the description, `counterpartyIban` stays `undefined` — no false positives from unrelated numeric text.
-- [ ] No Dexie schema change; no migration of previously-imported transactions.
-- [ ] Unit tests cover: blank mapped column + IBAN present in description (extracted); populated mapped column (fallback not used, column value wins); blank mapped column + no IBAN-shaped text in description (`undefined`, no false match); the real "AUTOMATISCH SPAREN VAN/NAAR <iban>" shape from this ticket's as-is section.
-- [ ] Verified live in the browser: importing a CSV whose counterparty-IBAN column is blank for a savings-sweep row, but whose description embeds the IBAN, results in that row's savings/transfer detection working (dashboard savings figure and savings rate reflect it) without any manual edit.
+- [x] `mapRow` in `csv-row-mapper.ts` falls back to extracting an IBAN from `rawDescription` when the mapped `counterpartyIban` column is blank or the column isn't mapped at all, and leaves a populated column value untouched.
+- [x] The extraction pattern tolerates internal spaces (e.g. `"BE55 7310 2888 3844"`) and mixed case, returning a value that (after existing `normalizeIban` comparison-time handling) matches the corresponding account's stored IBAN.
+- [x] When no IBAN-shaped token is found anywhere in the description, `counterpartyIban` stays `undefined` — no false positives from unrelated numeric text.
+- [x] No Dexie schema change; no migration of previously-imported transactions.
+- [x] Unit tests cover: blank mapped column + IBAN present in description (extracted); populated mapped column (fallback not used, column value wins); blank mapped column + no IBAN-shaped text in description (`undefined`, no false match); the real "AUTOMATISCH SPAREN VAN/NAAR <iban>" shape from this ticket's as-is section.
+- [x] Verified live in the browser: importing a CSV whose counterparty-IBAN column is blank for a savings-sweep row, but whose description embeds the IBAN, results in that row's savings/transfer detection working (dashboard savings figure and savings rate reflect it) without any manual edit.
 
 ## Notes
 

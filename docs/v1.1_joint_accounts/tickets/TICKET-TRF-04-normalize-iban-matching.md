@@ -33,7 +33,7 @@ Savings and transfer detection compare `Transaction.counterpartyIban` against `A
 - [x] No Dexie schema change; no migration of existing stored `iban`/`counterpartyIban` values — normalization happens at comparison time only.
 - [x] Unit tests cover: a savings movement whose transaction `counterpartyIban` differs in spacing/case from the savings account's stored `iban` is still detected as savings (reported in the savings figure, excluded from expense); the equivalent case for `isLikelyTransfer` and `ibanConfirms`.
 - [x] Regression check: existing exact-match cases (already-consistent formatting) behave identically — no change in classification for data that was already matching.
-- [ ] Verified live in the browser: with a savings account whose stored IBAN differs in formatting from the counterparty IBAN on an existing savings transfer, the dashboard's savings figure and savings rate reflect that transfer after the fix.
+- [x] Verified live in the browser: with a savings account whose stored IBAN differs in formatting from the counterparty IBAN on an existing savings transfer, the dashboard's savings figure and savings rate reflect that transfer after the fix.
 
 ## Notes
 

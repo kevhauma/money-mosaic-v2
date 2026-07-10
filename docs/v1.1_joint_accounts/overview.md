@@ -20,8 +20,8 @@ The net-worth contract (STAT-03) consumes the account fields (ACC-02 share + ACC
 
 ## QoL addendum track (impact/effort, not dependency)
 
-- [ ] [TICKET-TRF-04](./tickets/TICKET-TRF-04-normalize-iban-matching.md) — Normalize IBAN comparisons for savings/transfer detection (**bugfix**) (fixes FR-TRF-1/3/5, FR-STAT-2) — root cause already confirmed, smallest and most contained change
-- [ ] [TICKET-IMP-05](./tickets/TICKET-IMP-05-fallback-iban-from-description.md) — Fall back to extracting counterparty IBAN from the description (**bugfix**) (fixes FR-IMP-3, also breaks FR-TRF-1/3/5/FR-STAT-2 the same way TRF-04 does) — found while verifying TRF-04 against real data; needs TRF-04's normalization to be effective once the IBAN is captured
+- [x] [TICKET-TRF-04](./tickets/TICKET-TRF-04-normalize-iban-matching.md) — Normalize IBAN comparisons for savings/transfer detection (**bugfix**) (fixes FR-TRF-1/3/5, FR-STAT-2) — root cause already confirmed, smallest and most contained change
+- [x] [TICKET-IMP-05](./tickets/TICKET-IMP-05-fallback-iban-from-description.md) — Fall back to extracting counterparty IBAN from the description (**bugfix**) (fixes FR-IMP-3, also breaks FR-TRF-1/3/5/FR-STAT-2 the same way TRF-04 does) — found while verifying TRF-04 against real data; needs TRF-04's normalization to be effective once the IBAN is captured
 - [ ] [TICKET-TXN-05](./tickets/TICKET-TXN-05-inline-category-quickset.md) — Inline category quick-set on transaction rows (extends FR-TXN-2) — highest daily-friction reduction, reuses the existing bulk-assign write path
 - [ ] [TICKET-TXN-06](./tickets/TICKET-TXN-06-original-csv-line-detail.md) — Keep and show the original CSV line on a transaction (extends FR-TXN-1 / FR-IMP-1) — do before ACC-04/CAT-03 so the edit-form popup change and the new `rawLine` field aren't reviewed alongside unrelated reorder UI
 - [ ] [TICKET-ACC-04](./tickets/TICKET-ACC-04-manual-account-ordering.md) — Manual account ordering (extends FR-ACC-1) — same shape as CAT-03, build back-to-back so the reorder interaction stays consistent

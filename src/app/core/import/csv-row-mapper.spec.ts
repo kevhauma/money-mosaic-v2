@@ -122,6 +122,86 @@ describe('mapRow: single amount column', () => {
   });
 });
 
+describe('mapRow: counterpartyIban fallback to description (TICKET-IMP-05)', () => {
+  it('extracts an IBAN from the description when the mapped column is blank', () => {
+    const result = mapRow(
+      {
+        Boekingsdatum: '01/07/2026',
+        Bedrag: '500,00',
+        Omschrijving: 'AUTOMATISCH SPAREN   01-07 VAN BE55 7310 2888 3844',
+        'Rekeningnummer tegenpartij': '',
+      },
+      amountMapping,
+      baseOpts,
+      0,
+    );
+    expect(result.valid).toBe(true);
+    if (result.valid) expect(result.transaction.counterpartyIban).toBe('BE55 7310 2888 3844');
+  });
+
+  it('matches the NAAR (outgoing) shape too', () => {
+    const result = mapRow(
+      {
+        Boekingsdatum: '01/07/2026',
+        Bedrag: '-500,00',
+        Omschrijving: 'AUTOMATISCH SPAREN   01-07 NAAR BE92 7430 9521 6123',
+      },
+      amountMapping,
+      baseOpts,
+      0,
+    );
+    expect(result.valid).toBe(true);
+    if (result.valid) expect(result.transaction.counterpartyIban).toBe('BE92 7430 9521 6123');
+  });
+
+  it('does not override a populated mapped column with a description-derived guess', () => {
+    const result = mapRow(
+      {
+        Boekingsdatum: '01/07/2026',
+        Bedrag: '500,00',
+        Omschrijving: 'AUTOMATISCH SPAREN   01-07 VAN BE55 7310 2888 3844',
+        'Rekeningnummer tegenpartij': 'BE68539007547034',
+      },
+      amountMapping,
+      baseOpts,
+      0,
+    );
+    expect(result.valid).toBe(true);
+    if (result.valid) expect(result.transaction.counterpartyIban).toBe('BE68539007547034');
+  });
+
+  it('leaves counterpartyIban undefined when the description has no IBAN-shaped text', () => {
+    const result = mapRow(
+      {
+        Boekingsdatum: '01/07/2026',
+        Bedrag: '-12,34',
+        Omschrijving: 'Carrefour Market',
+        'Rekeningnummer tegenpartij': '',
+      },
+      amountMapping,
+      baseOpts,
+      0,
+    );
+    expect(result.valid).toBe(true);
+    if (result.valid) expect(result.transaction.counterpartyIban).toBeUndefined();
+  });
+
+  it('falls back to the description when counterpartyIban is not mapped at all', () => {
+    const result = mapRow(
+      {
+        Boekingsdatum: '01/07/2026',
+        Bedrag: '500,00',
+        Omschrijving: 'AUTOMATISCH SPAREN   01-07 VAN BE55 7310 2888 3844',
+      },
+      { date: 'Boekingsdatum', amount: 'Bedrag', description: 'Omschrijving' },
+      baseOpts,
+      0,
+    );
+    expect(result.valid).toBe(true);
+    if (result.valid) expect(result.transaction.counterpartyIban).toBe('BE55 7310 2888 3844');
+  });
+});
+
 describe('mapRow: date format dispatch', () => {
   it.each([
     ['YYYY-MM-DD', '2026-07-01', '2026-07-01'],
