@@ -5,7 +5,10 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Bug fix
 - **Traceability:** FR-STAT-7
-- **Source story:** user-stories.md §6 — *"As a user, I want selecting 'Custom' in the topbar date-range dropdown to actually enable the from/to date pickers, so I can pick a custom range instead of the inputs staying disabled."*
+
+## User story
+
+As a user, I want selecting 'Custom' in the topbar date-range dropdown to actually enable the from/to date pickers, so I can pick a custom range instead of the inputs staying disabled.
 
 ## Description
 

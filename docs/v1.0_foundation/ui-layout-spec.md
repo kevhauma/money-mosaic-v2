@@ -1,6 +1,6 @@
 # Money Mosaic — UI Layout Specification (v1)
 
-Companion to [finance-app-spec.md](./finance-app-spec.md) and [user-stories.md](./user-stories.md). Defines the app shell, navigation, responsive rules, and a per-page layout spec so every feature in the checklist gets built against one coherent structure instead of being designed page-by-page as we go. Angular/daisyUI implementation follows `.claude/skills/coding-conventions/SKILL.md` as usual — this doc is the visual/structural contract, not a restatement of code conventions.
+Companion to [finance-app-spec.md](./finance-app-spec.md) and [overview.md](./overview.md). Defines the app shell, navigation, responsive rules, and a per-page layout spec so every feature in the checklist gets built against one coherent structure instead of being designed page-by-page as we go. Angular/daisyUI implementation follows `.claude/skills/coding-conventions/SKILL.md` as usual — this doc is the visual/structural contract, not a restatement of code conventions.
 
 ---
 

@@ -2,7 +2,10 @@
 
 - **Area:** CSV Import
 - **Traceability:** extends FR-IMP-8
-- **Source story:** user-stories.md §2 — *"As a user, I want a visible error when a file's headers don't match the batch's chosen mapping, so I immediately know which file needs handling instead of it silently parsing wrong."*
+
+## User story
+
+As a user, I want a visible error when a file's headers don't match the batch's chosen mapping, so I immediately know which file needs handling instead of it silently parsing wrong.
 
 ## Description
 

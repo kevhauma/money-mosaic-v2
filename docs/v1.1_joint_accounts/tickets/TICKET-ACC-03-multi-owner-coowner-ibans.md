@@ -3,7 +3,10 @@
 - **Area:** Accounts
 - **Type:** Feature
 - **Traceability:** extends FR-ACC-1 / FR-ACC-4; feeds [CAT-02](./TICKET-CAT-02-neutral-category-kind.md), [TRF-03](./TICKET-TRF-03-guard-partner-inflow-matching.md), [STAT-03](./TICKET-STAT-03-contribution-net-worth.md)
-- **Source story:** user-stories.md §1 — *"As someone sharing an account with one or more other people, I want to register each co-owner and the IBAN(s) they pay in from, so the app can tell each person's contributions apart from mine and from external money."*
+
+## User story
+
+As someone sharing an account with one or more other people, I want to register each co-owner and the IBAN(s) they pay in from, so the app can tell each person's contributions apart from mine and from external money.
 
 ## Description
 

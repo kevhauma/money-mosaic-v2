@@ -2,7 +2,10 @@
 
 - **Area:** Transactions
 - **Traceability:** ui-layout-spec.md §4.3
-- **Source story:** user-stories.md §3 — *"As a user, I want to select multiple transactions and assign one category to all of them via a bulk-action bar, so clearing a backlog doesn't mean editing one row at a time."*
+
+## User story
+
+As a user, I want to select multiple transactions and assign one category to all of them via a bulk-action bar, so clearing a backlog doesn't mean editing one row at a time.
 
 ## Description
 

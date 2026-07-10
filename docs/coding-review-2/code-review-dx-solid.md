@@ -1,10 +1,10 @@
 # Code Review 2 — Developer Experience, Maintainability & SOLID
 
-Full-codebase review (2026-07-07) of `src/app` plus the project's docs/tooling, focused on **developer experience, maintainability, and coding conventions (SOLID)**. Sibling to the first review ([../code-review-optimizations.md](../code-review-optimizations.md), 2026-07-04), which covered correctness, performance, and bundle size — items already tracked there (CR-\*) or in the [code-review tickets](../code-review/tickets/README.md) (NG-\*) are cross-referenced, not re-raised. Section 6 adds a Fallow 3.2.0 static-analysis pass (dead code, duplication, complexity, hotspots) run against the manual findings, with every machine finding grep-verified before inclusion.
+Full-codebase review (2026-07-07) of `src/app` plus the project's docs/tooling, focused on **developer experience, maintainability, and coding conventions (SOLID)**. Sibling to the first review ([../code-review-optimizations.md](../code-review-optimizations.md), 2026-07-04), which covered correctness, performance, and bundle size — items already tracked there (CR-\*) or in the [code-review overview](../code-review/overview.md) (NG-\*) are cross-referenced, not re-raised. Section 6 adds a Fallow 3.2.0 static-analysis pass (dead code, duplication, complexity, hotspots) run against the manual findings, with every machine finding grep-verified before inclusion.
 
 **Overall**: the codebase holds its own conventions remarkably well. Spot checks found *zero* violations of the mechanical rules — no `@Input()`/`*ngIf`/`interface`/`styleUrls`, no component or store touching `appDb` outside `core/`, no deep cross-feature imports outside the two documented exceptions, `OnPush` + signals everywhere, strict TS + `strictTemplates` on, and pure logic (`csv-row-mapper`, `rule-matching`, `transfer-matching`, `core/stats`) consistently extracted and spec-covered without `TestBed`. The items below are about the places where duplication, type erosion, and doc drift will start taxing future changes — not about broken code today.
 
-Item IDs are `CR2-<section>.<n>` for traceability from [user-stories.md](./user-stories.md) and [tickets/](./tickets/README.md).
+Item IDs are `CR2-<section>.<n>` for traceability from [overview.md](./overview.md) and [tickets/](./tickets/).
 
 ---
 

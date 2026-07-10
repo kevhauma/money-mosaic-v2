@@ -2,7 +2,10 @@
 
 - **Area:** CSV Import
 - **Traceability:** FR-IMP §"v1 preset targets", Open Decision #5
-- **Source story:** user-stories.md §2 — *"As a developer, I want bank presets for KBC, Belfius, BNP Paribas Fortis, ING, and Argenta, prioritised by what the user actually uses."*
+
+## User story
+
+As a developer, I want bank presets for KBC, Belfius, BNP Paribas Fortis, ING, and Argenta, prioritised by what the user actually uses.
 
 ## Description
 

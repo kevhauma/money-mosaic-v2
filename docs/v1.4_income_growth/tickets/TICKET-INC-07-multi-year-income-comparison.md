@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-7 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want to compare income across a chosen multi-year span (e.g. last 3, last 5, or all-time), seeing the aggregate change from the first year in the span to the last, so I can answer 'how has my income changed over the last few years' rather than only 'vs. last year'."*
+
+## User story
+
+As a user, I want to compare income across a chosen multi-year span (e.g. last 3, last 5, or all-time), seeing the aggregate change from the first year in the span to the last, so I can answer 'how has my income changed over the last few years' rather than only 'vs. last year'.
 
 ## Description
 

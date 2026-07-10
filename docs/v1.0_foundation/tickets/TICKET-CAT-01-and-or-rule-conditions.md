@@ -2,7 +2,10 @@
 
 - **Area:** Categorisation
 - **Traceability:** extends FR-CAT-2
-- **Source story:** user-stories.md §4 — *"As a user, I want to combine a rule's conditions with AND/OR instead of an implicit AND across all of them, so one rule can express 'description contains X OR description contains Y' without duplicating rules."*
+
+## User story
+
+As a user, I want to combine a rule's conditions with AND/OR instead of an implicit AND across all of them, so one rule can express 'description contains X OR description contains Y' without duplicating rules.
 
 ## Description
 

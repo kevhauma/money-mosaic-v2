@@ -83,29 +83,28 @@ Rather than re-deriving these by exploring the code, read:
 | Coding conventions (naming, folders, styling, forms, testing) | `.claude/skills/coding-conventions/SKILL.md` |
 | Dexie schema, entities, versioning rules, repositories | `.claude/skills/data-model/SKILL.md` |
 | Feature/store/service map — what lives where | `.claude/skills/project-map/SKILL.md` |
-| Functional requirements (FR-TXN-\*, FR-CAT-\*, FR-TRF-\*, ...) | `docs/v1.0_foundation/finance-app-spec.md`, `docs/v1.0_foundation/user-stories.md` |
+| Functional requirements (FR-TXN-\*, FR-CAT-\*, FR-TRF-\*, ...) | `docs/v1.0_foundation/finance-app-spec.md`, `docs/v1.0_foundation/overview.md` |
 | UI layout spec | `docs/v1.0_foundation/ui-layout-spec.md` |
 | v2+ backlog | `docs/v2/requirements.md` |
 | Angular / Tailwind 4 / daisyUI / Vitest guidance | skills in `.agents/skills/` (managed by `npx skills`, tracked in `skills-lock.json`) |
 
 ## Ticket system
 
-Work is tracked as **user stories + tickets** per version, under `docs/<version>/`:
+Work is tracked as **tickets** per version, under `docs/<version>/`:
 
 ```
 docs/v1.0_foundation/
-  user-stories.md      # one-line checkbox stories, grouped by section, linking to tickets
+  overview.md          # title + checkbox per ticket, grouped by section, plus the recommended build order
   tickets/
-    README.md           # index table: ticket | area | title | source story
     TICKET-<PREFIX>-<NN>-<slug>.md   # e.g. TICKET-IMP-03-header-mismatch-error.md
 ```
 
-Each ticket has a **Description**, **Current situation (as-is)** (with clickable links into the real code), **Desired result (to-be)**, and checkbox **Acceptance criteria**. A story line is only checked off in `user-stories.md` once every acceptance criterion on its ticket is `[x]`. The same layout exists per version (`v1.0_foundation`, `v1.1_joint_accounts`, `v1.2_auto_categorise`, `v2`, ...) — don't assume `v1` is the only one.
+Each ticket carries its own **User story**, **Description**, **Current situation (as-is)** (with clickable links into the real code), **Desired result (to-be)**, and checkbox **Acceptance criteria** — the ticket is the single source of truth, `overview.md` is only the index + build order. A ticket's line in `overview.md` is only checked off once every acceptance criterion on the ticket is `[x]`. The same layout exists per version (`v1.0_foundation`, `v1.1_joint_accounts`, `v1.2_auto_categorise`, `v2`, ...) — don't assume `v1` is the only one.
 
 ### Workflow: capture → build
 
-1. **Capture new work** with the `story-ticket` skill (`.claude/skills/story-ticket/`): run `/story-ticket` when someone reports a bug, requests a feature, or asks for a refactor. It asks which version the work belongs to, resolves a consistent area prefix (e.g. `TXN`, `IMP`, `STAT`), writes the ticket file with as-is/to-be/acceptance-criteria, and appends the linked story line to that version's `user-stories.md`.
-2. **Work an existing ticket** with the `work-ticket` skill (`.claude/skills/work-ticket/`): run `/work-ticket` (optionally naming a ticket ID like `TICKET-ACC-01`, or let it scan for open stories and ask). It reads the ticket, proposes an implementation plan mapped to the acceptance criteria and **pauses for approval** before touching code, implements against the repo's hard rules below, runs the `verifier` subagent (lint + test + dev build) plus a live browser check for UI criteria, ticks off each acceptance criterion only once verified, and finally checks off the story line in `user-stories.md`. It does not commit — that's left for you to review.
+1. **Capture new work** with the `story-ticket` skill (`.claude/skills/story-ticket/`): run `/story-ticket` when someone reports a bug, requests a feature, or asks for a refactor. It asks which version the work belongs to, resolves a consistent area prefix (e.g. `TXN`, `IMP`, `STAT`), writes the ticket file with its user story plus as-is/to-be/acceptance-criteria, and appends a title+checkbox line to that version's `overview.md`.
+2. **Work an existing ticket** with the `work-ticket` skill (`.claude/skills/work-ticket/`): run `/work-ticket` (optionally naming a ticket ID like `TICKET-ACC-01`, or let it scan `overview.md` for open lines and ask). It reads the ticket, proposes an implementation plan mapped to the acceptance criteria and **pauses for approval** before touching code, implements against the repo's hard rules below, runs the `verifier` subagent (lint + test + dev build) plus a live browser check for UI criteria, ticks off each acceptance criterion only once verified, and finally checks off the ticket's line in `overview.md`. It does not commit — that's left for you to review.
 
 The `spec-navigator` subagent answers FR-*/requirement questions from `docs/` while working a ticket, and `project-map` / `data-model` skills help locate the right code and repository/schema rules.
 

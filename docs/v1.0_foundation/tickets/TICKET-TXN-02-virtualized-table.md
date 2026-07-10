@@ -2,7 +2,10 @@
 
 - **Area:** Transactions
 - **Traceability:** NFR-PERF-1 (supersedes the "paginate at 50 rows" note in ui-layout-spec.md §4.3)
-- **Source story:** user-stories.md §3 — *"As a developer, I want the transactions table to virtualize row rendering (e.g. CDK virtual scroll) instead of rendering every filtered row at once, so the screen stays smooth at 10k+ transactions."*
+
+## User story
+
+As a developer, I want the transactions table to virtualize row rendering (e.g. CDK virtual scroll) instead of rendering every filtered row at once, so the screen stays smooth at 10k+ transactions.
 
 ## Description
 
@@ -21,14 +24,14 @@ Render only the rows currently in view (windowed/virtual scrolling) so the trans
 
 ## Acceptance criteria
 
-- [ ] The transactions table renders only the visible row window; DOM `<tr>` count stays roughly constant regardless of filtered result size (verify at 10k+ rows).
-- [ ] Scrolling through 10k+ filtered transactions is smooth (no long frames / visible jank); the full set is reachable by scrolling.
-- [ ] The per-row view-model join stays scoped to rendered rows (no full-set `.find()` per row) — preserving the CR-2.3 optimisation.
-- [ ] All existing table behaviour is preserved: structural + debounced-text filtering, sort (newest first), row selection (incl. TICKET-TXN-01 bulk selection and transfer linking), edit, transfer link/unlink, likely-transfer badges, and drill-down query-param pre-filtering (FR-STAT-6).
-- [ ] Selection state survives scrolling (selecting a row, scrolling it out of view, and back, keeps it selected).
-- [ ] A decision is recorded on pagination: either replaced by virtual scroll or kept as an alternative — the two shouldn't silently conflict. Whichever is chosen, no dead pagination code is left wired to the template.
-- [ ] The `angular.json` bundle budget is **not** raised; if CDK scrolling adds weight, it's lazy-loaded within the transactions feature (per Hard rules).
-- [ ] Unit tests updated to reflect the rendering model (viewport-driven rows rather than paged slice), and existing transactions-overview specs still pass.
+- [x] The transactions table renders only the visible row window; DOM `<tr>` count stays roughly constant regardless of filtered result size (verify at 10k+ rows).
+- [x] Scrolling through 10k+ filtered transactions is smooth (no long frames / visible jank); the full set is reachable by scrolling.
+- [x] The per-row view-model join stays scoped to rendered rows (no full-set `.find()` per row) — preserving the CR-2.3 optimisation.
+- [x] All existing table behaviour is preserved: structural + debounced-text filtering, sort (newest first), row selection (incl. TICKET-TXN-01 bulk selection and transfer linking), edit, transfer link/unlink, likely-transfer badges, and drill-down query-param pre-filtering (FR-STAT-6).
+- [x] Selection state survives scrolling (selecting a row, scrolling it out of view, and back, keeps it selected).
+- [x] A decision is recorded on pagination: either replaced by virtual scroll or kept as an alternative — the two shouldn't silently conflict. Whichever is chosen, no dead pagination code is left wired to the template.
+- [x] The `angular.json` bundle budget is **not** raised; if CDK scrolling adds weight, it's lazy-loaded within the transactions feature (per Hard rules).
+- [x] Unit tests updated to reflect the rendering model (viewport-driven rows rather than paged slice), and existing transactions-overview specs still pass.
 
 ## Notes / open question
 

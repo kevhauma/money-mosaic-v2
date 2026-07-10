@@ -3,7 +3,10 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Feature
 - **Traceability:** adds FR-STAT-8 (new); reuses FR-STAT-3's category breakdown
-- **Source story:** user-stories.md §6 — *"As a user reviewing my spending, I want to see my top-5 expense categories for the selected range compared against the 4 nearest same-length periods (average, highest, lowest), so I can tell whether this period's spend in a category is normal or an outlier."*
+
+## User story
+
+As a user reviewing my spending, I want to see my top-5 expense categories for the selected range compared against the 4 nearest same-length periods (average, highest, lowest), so I can tell whether this period's spend in a category is normal or an outlier.
 
 ## Description
 

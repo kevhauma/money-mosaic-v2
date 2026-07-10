@@ -1,26 +1,30 @@
 ---
 name: work-ticket
-description: Work a ticket end-to-end — read it, plan the implementation, build it, tick each acceptance criterion as it verifiably passes, then check off the ticket's story in user-stories.md. Use whenever someone says "work on a ticket", "start ticket TICKET-XXX", "implement this ticket", "pick up TICKET-ACC-01", or points you at a ticket file to build.
+description: Work a ticket end-to-end — read it, plan the implementation, build it, tick each acceptance criterion as it verifiably passes, then check off the ticket's line in overview.md. Use whenever someone says "work on a ticket", "start ticket TICKET-XXX", "implement this ticket", "pick up TICKET-ACC-01", or points you at a ticket file to build.
 ---
 
 # Work a ticket to done
 
 Drive one ticket from "not started" to "story checked off". The ticket is the source of
-truth: its **Acceptance criteria** are the contract, and each maps to a story line in the
-version's `user-stories.md` that must be checked off once every criterion passes.
+truth: its **Acceptance criteria** are the contract, and each maps to that ticket's own
+**User story** section — and to the matching title+checkbox line in the version's
+`overview.md` — which must be checked off once every criterion passes.
 
 **Never assume the docs layout or which versions exist — discover it at runtime.** Tickets
-live in `docs/<version>/tickets/TICKET-<PREFIX>-<NN>-*.md`; stories in
-`docs/<version>/user-stories.md`. Mirror what you find; don't hardcode `v1`.
+live in `docs/<version>/tickets/TICKET-<PREFIX>-<NN>-*.md`; the version's `overview.md`
+carries a title+checkbox line per ticket, **listed in recommended build order top to bottom
+— not grouped by area**. Mirror what you find; don't hardcode `v1`.
 
 ## Step 1 — Locate the ticket
 
 - **If the user named a ticket** (ID like `TICKET-ACC-01`, a prefix+number, or a path),
   open that file. If only a partial ID was given, glob `docs/*/tickets/` to resolve it.
-- **If no ticket was named**, scan `docs/*/tickets/` and the version's `user-stories.md`
-  for **open** work — story lines still marked `- [ ]` that link to a ticket — and ask via
-  `AskUserQuestion` which one to work. Present the real, currently-open tickets you found;
-  don't recite a remembered list.
+- **If no ticket was named**, scan `docs/*/tickets/` and the version's `overview.md`
+  for **open** work — lines still marked `- [ ]` that link to a ticket — and ask via
+  `AskUserQuestion` which one to work. The **first open, ticketed line** in `overview.md`
+  is the suggested next ticket (the list is already in build order); check its trailing
+  note for an unmet dependency before suggesting it, and present the real, currently-open
+  tickets you found — don't recite a remembered list.
 
 Confirm you have the right file before proceeding.
 
@@ -28,6 +32,7 @@ Confirm you have the right file before proceeding.
 
 Read the **whole** ticket, not just the criteria:
 
+- **User story** — who this is for and why, in the classic "As a … I want … so …" form.
 - **Description** — what it delivers and why.
 - **Current situation (as-is)** — follow its clickable file links to the *real* code so you
   understand today's behaviour (and, for bugs, the named root cause).
@@ -87,12 +92,10 @@ catch convention drift.
 
 Once every acceptance-criteria checkbox in the ticket is `- [x]`:
 
-- Open the `user-stories.md` for the ticket's version (from its **Source story** line).
-- Find the story line whose ticket link matches this ticket ID — e.g. the line containing
-  `[TICKET-ACC-01](./tickets/…)`. **Match on the ticket link, not the story wording.**
+- Open the `overview.md` for the ticket's version.
+- Find the line whose ticket link matches this ticket ID — e.g. the line containing
+  `[TICKET-ACC-01](./tickets/…)`. **Match on the ticket link, not the title wording.**
 - Flip that line's `- [ ]` → `- [x]`.
-
-The `tickets/README.md` index has no status column, so it needs no change.
 
 ## Step 7 — Report and stop
 

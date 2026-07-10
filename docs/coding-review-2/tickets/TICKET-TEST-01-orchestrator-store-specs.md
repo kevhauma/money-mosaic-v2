@@ -4,6 +4,10 @@
 - **Type:** Test
 - **Traceability:** CR2-5.1 (enables SOLID-01/03/04 to land safely)
 
+## User story
+
+As a developer, I want specs pinning the four untested orchestrator stores — `ImportBatchesStore.commitImport` sequencing, `CategoriesStore.removeCategory` cascade, `RulesStore.moveRule` (including the equal-priority no-op edge), and `TransfersStore` link/unlink mirroring — so the refactors elsewhere in this backlog land against a safety net.
+
 ## Description
 
 Pure logic (`core/import`, `core/stats`, `rule-matching`, `transfer-matching`) and half the stores are well covered, but the four stores with the most *coordination* logic — where a wrong sequencing silently corrupts state across stores — have no specs at all. These are also exactly the files other tickets in this backlog refactor. Pin their behaviour first.
@@ -35,5 +39,5 @@ No spec file exists for:
 
 ## Notes
 
-- These specs intentionally overlap the first review's CR-9 stories (`undoImport` cross-import branch, `removeAccount` cascade) — tick those boxes in [../../code-review/user-stories.md](../../code-review/user-stories.md) if this ticket covers them.
+- These specs intentionally overlap the first review's CR-9 items (`undoImport` cross-import branch, `removeAccount` cascade) — tick those boxes in [../../code-review/overview.md](../../code-review/overview.md) if this ticket covers them.
 - Resist "fixing" anything found while pinning (e.g. the equal-priority no-op): record it in the spec and file a follow-up — this ticket is the safety net, not the surgery.

@@ -3,7 +3,10 @@
 - **Area:** Accounts
 - **Type:** Feature
 - **Traceability:** extends FR-ACC-1; display order also drives the net-worth chart (FR-STAT-1)
-- **Source story:** user-stories.md §1 — *"As a user, I want to reorder my accounts, so the accounts overview page and its net-worth chart reflect the order that matters to me instead of import order."*
+
+## User story
+
+As a user, I want to reorder my accounts, so the accounts overview page and its net-worth chart reflect the order that matters to me instead of import order.
 
 ## Description
 
@@ -36,6 +39,6 @@ Let the user choose the display order of their accounts instead of being stuck w
 
 ## Notes
 
-- Prefer move-up/move-down buttons over a drag-and-drop library — no `@angular/cdk` in the project today, so buttons keep the bundle smaller and stay keyboard-accessible by default without extra work. A full drag interaction is a reasonable follow-up if this feels clunky in practice (see "Considered, not ticketed yet" in user-stories.md).
+- Prefer move-up/move-down buttons over a drag-and-drop library — no `@angular/cdk` in the project today, so buttons keep the bundle smaller and stay keyboard-accessible by default without extra work. A full drag interaction is a reasonable follow-up if this feels clunky in practice (see "Considered, not ticketed yet" in [overview.md](../overview.md)).
 - Existing accounts get `sortOrder` backfilled lazily (e.g. assigned on first reorder) rather than via a Dexie upgrade migration — the field is additive, so no data transform is required.
 - Share the sort-by-`sortOrder`-with-fallback comparator with [TICKET-CAT-03](./TICKET-CAT-03-manual-category-ordering.md) if a natural common spot exists (e.g. `shared/utils`) rather than duplicating it.

@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-10 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want to attach a gross wage amount to each month (manual entry, editable/deletable), so I have a gross figure to compare against what actually lands in my account — something no bank CSV will ever tell me."*
+
+## User story
+
+As a user, I want to attach a gross wage amount to each month (manual entry, editable/deletable), so I have a gross figure to compare against what actually lands in my account — something no bank CSV will ever tell me.
 
 ## Description
 

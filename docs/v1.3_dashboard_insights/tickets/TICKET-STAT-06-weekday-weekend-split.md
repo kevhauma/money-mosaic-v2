@@ -3,7 +3,10 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Feature
 - **Traceability:** adds FR-STAT-10 (new)
-- **Source story:** user-stories.md §6 — *"As a user, I want to see how much I spend on weekdays vs. weekends, so I can tell whether my spending habits differ by day type."*
+
+## User story
+
+As a user, I want to see how much I spend on weekdays vs. weekends, so I can tell whether my spending habits differ by day type.
 
 ## Description
 

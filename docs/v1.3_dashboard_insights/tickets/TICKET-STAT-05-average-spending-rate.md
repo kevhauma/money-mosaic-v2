@@ -3,7 +3,10 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Feature
 - **Traceability:** adds FR-STAT-9 (new)
-- **Source story:** user-stories.md §6 — *"As a user, I want to see my average spending per day/week/month for the selected range, so I have a normalised rate I can compare across ranges of different lengths."*
+
+## User story
+
+As a user, I want to see my average spending per day/week/month for the selected range, so I have a normalised rate I can compare across ranges of different lengths.
 
 ## Description
 

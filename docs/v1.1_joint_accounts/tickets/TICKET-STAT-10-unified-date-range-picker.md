@@ -3,7 +3,10 @@
 - **Area:** Statistics & Dashboard / shared UI
 - **Type:** Feature
 - **Traceability:** extends FR-STAT-7; also touches FR-TXN-3 (transaction filters date range)
-- **Source story:** user-stories.md §6 — *"As a user, I want the from/to date fields to be a single range control, so picking a custom period takes one interaction instead of juggling two separate date inputs — in both the topbar range switcher and the transaction filters."*
+
+## User story
+
+As a user, I want the from/to date fields to be a single range control, so picking a custom period takes one interaction instead of juggling two separate date inputs — in both the topbar range switcher and the transaction filters.
 
 ## Description
 

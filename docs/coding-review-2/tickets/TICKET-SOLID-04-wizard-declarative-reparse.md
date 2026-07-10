@@ -4,6 +4,10 @@
 - **Type:** Refactor
 - **Traceability:** CR2-2.2
 
+## User story
+
+As a developer, I want the import wizard's re-parse pipeline expressed declaratively (`toObservable → debounceTime → switchMap → toSignal`) instead of a hand-rolled token counter + `setTimeout` + effect, with one `resetParseState()` replacing the three drifting reset sites, so staleness and cancellation are the framework's job.
+
 ## Description
 
 `ImportWizardComponent` coordinates live re-parsing with three manual mechanisms: a `parseToken` counter to reject stale worker results, a `reparseTimer` (`setTimeout`) for debounce, and a constructor `effect()` that must remember to cancel both and reset four signals. The conventions reserve RxJS for exactly this kind of inherently stream-shaped boundary: `debounceTime` + `switchMap` give debounce and staleness-cancellation declaratively, and `toSignal` brings the result back into the signal graph. Separately, the four parse-state signals are reset from three different call sites with overlapping subsets — one forgotten line away from a stale-state bug.

@@ -3,7 +3,10 @@
 - **Area:** Transfers
 - **Type:** Fix
 - **Traceability:** fixes FR-TRF-1 / FR-TRF-3 / FR-TRF-5; fixes FR-STAT-2 (savings rate)
-- **Source story:** user-stories.md §5 — *"As a saver, I want money I move to my savings account detected as savings even when the IBAN on the transaction and on the account are formatted differently (spaces, case), so my savings rate reflects reality instead of silently reading 0%."*
+
+## User story
+
+As a saver, I want money I move to my savings account detected as savings even when the IBAN on the transaction and on the account are formatted differently (spaces, case), so my savings rate reflects reality instead of silently reading 0%.
 
 ## Description
 

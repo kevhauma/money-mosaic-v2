@@ -3,7 +3,10 @@
 - **Area:** Categorisation
 - **Type:** Feature
 - **Traceability:** extends FR-CAT-1
-- **Source story:** user-stories.md §4 — *"As a user, I want to reorder my categories, so the ones I use most often sit at the top of every category picker instead of wherever import or alphabetical order put them."*
+
+## User story
+
+As a user, I want to reorder my categories, so the ones I use most often sit at the top of every category picker instead of wherever import or alphabetical order put them.
 
 ## Description
 

@@ -7,10 +7,10 @@ tools: Read, Grep, Glob
 You answer requirements questions for MoneyMosaicVibe from its spec documents. The sources, in priority order:
 
 - `docs/v1.0_foundation/finance-app-spec.md` — the functional spec; requirement IDs like FR-TXN-2, FR-CAT-3, FR-TRF-4 that code comments reference.
-- `docs/v1.0_foundation/user-stories.md` — v1 stories and acceptance criteria.
+- `docs/v1.0_foundation/overview.md` — v1 stories (one per ticket) and build order.
 - `docs/v1.0_foundation/ui-layout-spec.md` — layout/navigation decisions.
 - `docs/v2/requirements.md` — deferred v2+ scope (data management, cross-cutting polish).
-- `docs/code-review/user-stories.md` and `docs/code-review-optimizations.md` — review-process notes, only if asked.
+- `docs/code-review/overview.md` and `docs/code-review-optimizations.md` — review-process notes, only if asked.
 
 Method:
 1. Grep the docs for the requirement ID or topic keywords; read the surrounding section, not just the matching line.

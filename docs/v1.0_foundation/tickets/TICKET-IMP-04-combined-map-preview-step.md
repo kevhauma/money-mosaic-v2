@@ -3,7 +3,10 @@
 - **Area:** CSV Import
 - **Type:** Feature
 - **Traceability:** FR-IMP-4 (live preview), refines FR-IMP-3; UI ergonomics
-- **Source story:** user-stories.md §2 — *"As a user, I want the column mapping and the row preview on one screen with a live preview whenever the mapping is valid, and the Back/Next controls pinned at the top, so I can confirm a multi-file import without scrolling."*
+
+## User story
+
+As a user, I want the column mapping and the row preview on one screen with a live preview whenever the mapping is valid, and the Back/Next controls pinned at the top, so I can confirm a multi-file import without scrolling.
 
 ## Description
 

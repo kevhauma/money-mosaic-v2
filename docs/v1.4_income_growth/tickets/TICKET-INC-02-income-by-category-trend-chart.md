@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-2 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want an income-by-category trend chart on this page (one line/area per income category, bucketed at my chosen granularity), so I can see whether growth is coming from my salary or from elsewhere, rather than staring at one lumped-together income line."*
+
+## User story
+
+As a user, I want an income-by-category trend chart on this page (one line/area per income category, bucketed at my chosen granularity), so I can see whether growth is coming from my salary or from elsewhere, rather than staring at one lumped-together income line.
 
 ## Description
 

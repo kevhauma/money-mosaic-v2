@@ -3,7 +3,10 @@
 - **Area:** Transfers
 - **Type:** Feature
 - **Traceability:** extends FR-TRF-1 (§5 Aggregation rules); touches FR-STAT-2 / FR-STAT-3 / FR-CAT-5
-- **Source story:** user-stories.md §5 — *"As a saver, I want money I move into a savings account reported as 'savings' rather than 'expense', and never requiring a category, so putting money aside doesn't look like spending or nag me for a category."*
+
+## User story
+
+As a saver, I want money I move into a savings account reported as 'savings' rather than 'expense', and never requiring a category, so putting money aside doesn't look like spending or nag me for a category.
 
 ## Description
 

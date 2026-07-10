@@ -3,8 +3,12 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Feature (folds in a bug fix)
 - **Traceability:** extends FR-STAT-7
-- **Source story:** user-stories.md §6 — *"As a user, I want more date-range presets, each with a sensible default grouping, plus a working 'Custom' option, so I can view my finances at whatever timeframe I actually want without manually fixing the grouping every time."*
+
 - **Supersedes:** [TICKET-STAT-01](./TICKET-STAT-01-custom-range-enable.md) — its custom-range bug fix is folded into this ticket's acceptance criteria (see AC below); implement this ticket instead of STAT-01 in isolation.
+
+## User story
+
+As a user, I want more date-range presets, each with a sensible default grouping, plus a working 'Custom' option, so I can view my finances at whatever timeframe I actually want without manually fixing the grouping every time.
 
 ## Description
 

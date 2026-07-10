@@ -3,7 +3,10 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Feature (suggestion, added during v1.3 scoping)
 - **Traceability:** adds FR-STAT-13 (new)
-- **Source story:** user-stories.md §6 — *"As a user, I want to see how much of my spend in the selected range is still uncategorised (in € and as a % of expense), so I know how much of my category breakdown to trust."*
+
+## User story
+
+As a user, I want to see how much of my spend in the selected range is still uncategorised (in € and as a % of expense), so I know how much of my category breakdown to trust.
 
 ## Description
 

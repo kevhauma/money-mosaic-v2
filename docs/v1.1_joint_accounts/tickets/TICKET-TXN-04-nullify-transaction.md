@@ -3,7 +3,10 @@
 - **Area:** Transactions
 - **Type:** Feature
 - **Traceability:** extends FR-TXN-1; changes FR-STAT-2 / FR-STAT-3 aggregation; sibling to [CAT-02](./TICKET-CAT-02-neutral-category-kind.md) and [TXN-03](./TICKET-TXN-03-manual-attribution-override.md)
-- **Source story:** user-stories.md §3 — *"As a user, I want to mark any transaction as neither income nor expense, so a situation the app's categorisation or joint-account model doesn't support doesn't distort my stats, without forcing me to invent a category or an ownership split for it."*
+
+## User story
+
+As a user, I want to mark any transaction as neither income nor expense, so a situation the app's categorisation or joint-account model doesn't support doesn't distort my stats, without forcing me to invent a category or an ownership split for it.
 
 ## Description
 

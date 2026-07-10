@@ -3,7 +3,10 @@
 - **Area:** Accounts
 - **Type:** Feature
 - **Traceability:** extends FR-ACC-2 (edit/archive/delete account) and supports FR-IMP re-import; spec §"Data Model" (transactions/transfers cascade)
-- **Source story:** user-stories.md §1 — *"As a user, I want to clear a bank account of its transactions (e.g. to re-import if something's wrong) without deleting the full account, so I can start its history fresh while keeping the account, its settings, and mapping profiles."*
+
+## User story
+
+As a user, I want to clear a bank account of its transactions (e.g. to re-import if something's wrong) without deleting the full account, so I can start its history fresh while keeping the account, its settings, and mapping profiles.
 
 ## Description
 

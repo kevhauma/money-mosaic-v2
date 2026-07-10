@@ -4,6 +4,10 @@
 - **Type:** Refactor
 - **Traceability:** CR2-4.2, CR2-4.3 (dead `DeleteAccountResult` alias)
 
+## User story
+
+As a developer, I want the transfer-cleanup cascade (collect transferIds → remove transfers → clear surviving side) extracted into one `core/transfers` helper used by both `ImportService.undoImport` and `AccountDeletionService`, so the subtle "surviving side may also be doomed" invariant lives in exactly one place.
+
 ## Description
 
 When a set of transactions is about to be removed (undoing an import, deleting/clearing an account), any `Transfer` links touching them must be removed and the *surviving* side's `transferId` cleared — with the subtle invariant that the surviving side may itself be in the doomed set. That ~25-line algorithm now exists twice, character-near-identical, in two services. `AccountDeletionService` was added after the first review by copying `ImportService.undoImport`'s loop, so the duplication is fresh and will drift the first time either copy learns something new. Extract it once.

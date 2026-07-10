@@ -3,7 +3,10 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Feature
 - **Traceability:** adds FR-STAT-11 (new)
-- **Source story:** user-stories.md §6 — *"As a user looking at a month/quarter/year, I want to compare it to the same period in previous years, so I can see whether I'm trending up or down year-over-year rather than just month-over-month."*
+
+## User story
+
+As a user looking at a month/quarter/year, I want to compare it to the same period in previous years, so I can see whether I'm trending up or down year-over-year rather than just month-over-month.
 
 ## Description
 

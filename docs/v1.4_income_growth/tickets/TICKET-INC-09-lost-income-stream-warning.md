@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-9 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want to be warned when an income category that used to show up regularly has gone quiet longer than its usual cadence, so a lost income stream (job change, ended contract, lapsed side income) doesn't just silently drop out of my growth trend."*
+
+## User story
+
+As a user, I want to be warned when an income category that used to show up regularly has gone quiet longer than its usual cadence, so a lost income stream (job change, ended contract, lapsed side income) doesn't just silently drop out of my growth trend.
 
 ## Description
 

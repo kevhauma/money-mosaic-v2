@@ -5,6 +5,10 @@
 - **Traceability:** CR2-3.1, CR2-3.2 (+ the ISP fix from CR2-3.1's second bullet)
 - **Fallow evidence (2026-07-07):** `parseDate`'s format chain is a high complexity finding (cyclomatic 16), `updateResult`'s column-mapping chains rank high (cyclomatic 23 / cognitive 35), and `csv-row-mapper.ts` is a top refactoring target (5 dependents) — all three shrink under this ticket
 
+## User story
+
+As a developer, I want `MappingProfile`'s `signConvention`/`dateFormat`/`encoding` declared as the closed unions they actually are (single-sourced, with the map-step's option lists derived from them and `CsvImportService.parse` accepting `Omit<MappingProfile, 'id'>`), so adding a format/convention is one union edit the compiler propagates, and the `as` casts in `csv-import.service` and `import-wizard` disappear.
+
 ## Description
 
 The import domain is closed — three sign conventions, three date formats, two encodings — but `MappingProfile` declares them all as `string`, so the type information is invented downstream and re-asserted with casts. Supported date formats are additionally listed twice with nothing linking the copies: adding a format to the parser doesn't surface it in the mapping form, and adding it to the form makes every row silently fail as "unparseable date". Declare each union once and let the compiler propagate it.

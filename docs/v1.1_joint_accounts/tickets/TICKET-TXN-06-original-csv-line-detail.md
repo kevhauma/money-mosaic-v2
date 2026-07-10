@@ -3,7 +3,10 @@
 - **Area:** Transactions / Import
 - **Type:** Feature
 - **Traceability:** extends FR-TXN-1, FR-IMP-1
-- **Source story:** user-stories.md §3 — *"As a user, I want to see the original CSV line a transaction came from, so I can check what the bank actually sent when a mapped field looks wrong."*
+
+## User story
+
+As a user, I want to see the original CSV line a transaction came from, so I can check what the bank actually sent when a mapped field looks wrong.
 
 ## Description
 

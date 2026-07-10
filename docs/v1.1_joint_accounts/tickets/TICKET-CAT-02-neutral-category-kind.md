@@ -3,7 +3,10 @@
 - **Area:** Categorisation
 - **Type:** Feature
 - **Traceability:** extends FR-CAT-1; changes FR-STAT-2 / FR-STAT-3 aggregation; consumed by [STAT-03](./TICKET-STAT-03-contribution-net-worth.md)
-- **Source story:** user-stories.md §4 — *"As someone with a shared account, I want money paid into a joint account by my partner or another person marked as a non-income 'contribution' that still affects the balance but never counts as my income."*
+
+## User story
+
+As someone with a shared account, I want money paid into a joint account by my partner or another person marked as a non-income 'contribution' that still affects the balance but never counts as my income.
 
 ## Description
 

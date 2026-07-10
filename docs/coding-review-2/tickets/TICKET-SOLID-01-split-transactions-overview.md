@@ -5,6 +5,10 @@
 - **Traceability:** CR2-2.1 + CR2-6.2 (sequence with [TICKET-NG-02](../../code-review/tickets/TICKET-NG-02-overview-input-binding.md))
 - **Fallow evidence (2026-07-07):** #1 hotspot in the codebase (score 63.6, 10 commits — nearly double the runner-up); the `filteredTransactions` filter callback is the app's only *critical* complexity finding (cyclomatic 34, cognitive 45)
 
+## User story
+
+As a developer, I want `TransactionsOverviewComponent` split along its natural seams — a filter-bar child owning the form/debounce pipeline and a reusable selection model powering the bulk-action bar — so the 366-line component stops being the file every transactions change must touch and each concern is testable alone.
+
 ## Description
 
 The transactions overview is the app's one god component: 366 lines of TS plus a 243-line template owning the filter form + URL intake, the debounced/structural filter pipeline, pagination, the row view-model join, multi-row selection with bulk category assignment, transfer link/unlink, and edit-dialog orchestration. Every transactions-page change touches this file, and its spec must stand up the entire world to test any single concern. Extract the two seams that carry the most self-contained state — the filter bar and the selection model — leaving the parent as a thin coordinator over `filteredTransactions` + `rows`.

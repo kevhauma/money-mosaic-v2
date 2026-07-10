@@ -1,0 +1,26 @@
+# Money Mosaic — v1.3 Dashboard insights (Overview)
+
+Deeper dashboard analytics on top of the existing per-range income/expense/category stats (FR-STAT-1..7). Where v1.1 changed *what counts* for joint accounts and v1.2 automates *categorisation*, v1.3 is about giving more context to numbers the user already sees: how does this category compare to recent history, what's the underlying spending rate, and how does this period stack up against the same period last year. All of it is derived from existing `Transaction`/`Category`/`Account` data — no new Dexie tables, no new user input. Each ticketed line links to a `tickets/TICKET-*.md` file carrying its own user story, description, as-is/to-be, and acceptance criteria — this file is only the index + build order.
+
+**Two comparison mechanisms, don't conflate them:**
+- **Rolling window** (STAT-04): compares the selected range to the *n* preceding/following ranges of the same length — good for short/medium-term trend ("is this month unusual for groceries").
+- **Year-over-year** (STAT-07): compares the selected range to the *same calendar dates* one or more years back — good for long-term trend and seasonal effects ("do I always spend more in December").
+
+All six are independent of each other — each is a standalone pure aggregate in `core/stats` plus a small dashboard component/callout, and none depends on another ticket's output. They can ship in any order or in parallel; the list below is ordered by value/effort (smallest/highest-value first), not grouped by FR area.
+
+- [ ] [TICKET-STAT-09](./tickets/TICKET-STAT-09-uncategorised-spend-visibility.md) — Uncategorised spend visibility (adds FR-STAT-13) — smallest possible ticket, reuses an existing aggregate's already-computed uncategorised entry
+- [ ] [TICKET-STAT-05](./tickets/TICKET-STAT-05-average-spending-rate.md) — Average spending rate per day/week/month (adds FR-STAT-9) — small, self-contained; pairs with STAT-06 as side-by-side "rate" cards
+- [ ] [TICKET-STAT-06](./tickets/TICKET-STAT-06-weekday-weekend-split.md) — Weekday vs. weekend spending split (adds FR-STAT-10) — small, self-contained; build back-to-back with STAT-05
+- [ ] [TICKET-STAT-08](./tickets/TICKET-STAT-08-biggest-transactions.md) — Biggest individual transactions (adds FR-STAT-12) — small helper, check `feature-transactions`' existing filter/query-param support before wiring the drill-down link
+- [ ] [TICKET-STAT-07](./tickets/TICKET-STAT-07-year-over-year-comparison.md) — Year-over-year comparison (adds FR-STAT-11) — moderate: needs the leap-year-clamped date shift and the "stop before earliest transaction" guard
+- [ ] [TICKET-STAT-04](./tickets/TICKET-STAT-04-category-period-comparison.md) — Top-5 category period-over-period comparison (adds FR-STAT-8) — the largest ticket (non-trivial anchor rule); build last so the simpler tickets validate the reuse patterns first
+
+## Considered, not ticketed yet
+
+- **Top counterparties/merchants** — group expense by `counterpartyIban`/description regardless of category. Parked because bank description strings are messy free text (the v1.2 auto-categoriser design doc explicitly avoids a hand-coded per-bank normalizer for the same reason) — grouping by raw IBAN alone would fragment the same merchant across multiple IBANs and grouping by raw description text would produce noisy, near-duplicate entries. Worth a ticket once there's a normalisation story (v1.2 categoriser or a dedicated one), not before.
+- **"Biggest movers"** — which categories changed the most vs. their historical average. Folded into TICKET-STAT-04's acceptance criteria instead of a separate ticket, since it's the same comparison data re-sorted by delta rather than by total.
+- **Recurring/subscription cost total** — already tracked in [../v2/requirements.md](../v2/requirements.md) under "subscription/recurring detection"; not duplicated here.
+
+## Definition of Done (applies to every ticket)
+
+Per [../../CLAUDE.md](../../CLAUDE.md): `ng lint` + `ng test` + `ng build --configuration development` all pass, plus a live browser check for any UI-visible change. No Dexie schema changes are needed by any ticket in this set (all derive from existing `Transaction`/`Category`/`Account` data). The production bundle budget in `angular.json` is never raised. Components/stores never touch `appDb` tables directly. Every new aggregate reuses the existing transfer/savings-movement exclusion predicates (`transferId` check + `isSavingsMovement`) rather than re-implementing them — this is checked explicitly in each ticket's acceptance criteria to avoid the six tickets drifting into six slightly-different definitions of "expense."

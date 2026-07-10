@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-6 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want a yearly view — one bar per calendar year across my full history, each with its %-change vs. the previous year — so I can see my income trend at a glance without mentally averaging monthly buckets."*
+
+## User story
+
+As a user, I want a yearly view — one bar per calendar year across my full history, each with its %-change vs. the previous year — so I can see my income trend at a glance without mentally averaging monthly buckets.
 
 ## Description
 

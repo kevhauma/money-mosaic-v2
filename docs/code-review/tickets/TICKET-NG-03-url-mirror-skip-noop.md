@@ -3,7 +3,10 @@
 - **Area:** Angular patterns (App shell / routing)
 - **Type:** Refactor
 - **Traceability:** CR-7.3, FR-STAT-7 (range/grouping deep-linking)
-- **Source story:** code-review/user-stories.md §7 — *"As a developer, I want the URL-mirroring effect to skip navigating when params already match the current snapshot, so it can't ping-pong or schedule redundant navigations right after the initial read-in."*
+
+## User story
+
+As a developer, I want the URL-mirroring effect to skip navigating when params already match the current snapshot, so it can't ping-pong or schedule redundant navigations right after the initial read-in.
 
 ## Description
 

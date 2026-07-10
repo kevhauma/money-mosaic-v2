@@ -3,7 +3,10 @@
 - **Area:** Transactions
 - **Type:** Feature
 - **Traceability:** extends FR-TXN-1/FR-TXN-2; consumes [ACC-02](./TICKET-ACC-02-joint-ownership-share.md), [ACC-03](./TICKET-ACC-03-multi-owner-coowner-ibans.md), [STAT-03](./TICKET-STAT-03-contribution-net-worth.md); interacts with [TICKET-TRF-01](../../v1.0_foundation/tickets/TICKET-TRF-01-clear-category-on-link.md)'s link/unlink flow
-- **Source story:** user-stories.md §3 — *"As someone with a shared account, I want to correct a transaction that landed in the wrong 'personal vs. joint' bucket, so a one-off mistake (I fronted a joint expense from my own account, the joint account paid for something personal, or vice versa for a co-owner) doesn't distort my net worth or expense stats."*
+
+## User story
+
+As someone with a shared account, I want to correct a transaction that landed in the wrong 'personal vs. joint' bucket, so a one-off mistake (I fronted a joint expense from my own account, the joint account paid for something personal, or vice versa for a co-owner) doesn't distort my net worth or expense stats.
 
 ## Description
 

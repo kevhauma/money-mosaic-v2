@@ -2,7 +2,10 @@
 
 - **Area:** CSV Import
 - **Traceability:** extends FR-IMP-1 / FR-IMP-3
-- **Source story:** user-stories.md §2 — *"As a user, I want to select multiple CSV files, optionally link each to an account, and map the whole batch once instead of re-mapping every file."*
+
+## User story
+
+As a user, I want to select multiple CSV files, optionally link each to an account, and map the whole batch once instead of re-mapping every file.
 
 ## Description
 

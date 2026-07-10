@@ -4,6 +4,10 @@
 - **Type:** Chore
 - **Traceability:** CR2-6.4 (Fallow 3.2.0 `dead-code`, 2026-07-07, each item grep-verified); supersedes part of first-review CR-6.2/CR-6.3
 
+## User story
+
+As a developer, I want the grep-verified dead symbols removed — `TransactionsRepository.add`/`.remove`, `MappingProfilesRepository.getByBankAndAccount`/`.remove`, and the dead `export` keywords on `describeCondition`/`DEFAULT_TEXT_DEBOUNCE_MS` — and the first review's CR-6.2 story corrected so nobody deletes the now-live `getByAccount` on stale advice.
+
 ## Description
 
 A Fallow dead-code pass, manually verified item by item (16 of its 20 `unused-class-member` findings were false positives — see review §6.5), leaves a short list of genuinely dead symbols. One additional outcome: the *first* review's CR-6.2 story is now stale — it recommends deleting `TransactionsRepository.getByAccount`, which has since become load-bearing. This ticket removes what's actually dead and corrects that story so nobody deletes live code on old advice.
@@ -17,7 +21,7 @@ Grep-verified (2026-07-07) dead symbols:
 - `describeCondition` ([rule-summary.ts:20](../../../src/app/feature-categories/rule-summary.ts)) — used only within its own file; the `export` is dead.
 - `DEFAULT_TEXT_DEBOUNCE_MS` ([debounced-text.ts:7](../../../src/app/shared/utils/debounced-text.ts)) — used only as the in-file default; the `export` is dead.
 - Already tracked by CR-6.3 (do here if convenient): un-export the `AppDb` class ([app-db.ts:291](../../../src/app/core/data-access/app-db.ts); the `appDb` singleton stays exported) and the `RangeState` type ([range-state.store.ts:4](../../../src/app/core/stats/range-state.store.ts)).
-- **Stale advice:** [../../code-review/user-stories.md](../../code-review/user-stories.md) CR-6.2 lists `TransactionsRepository.getByAccount` as confirmed-unused, but `AccountDeletionService.cascadeTransactions` ([account-deletion.service.ts:61](../../../src/app/core/accounts/account-deletion.service.ts)) now calls it.
+- **Stale advice:** [../../code-review/overview.md](../../code-review/overview.md) CR-6.2 lists `TransactionsRepository.getByAccount` as confirmed-unused, but `AccountDeletionService.cascadeTransactions` ([account-deletion.service.ts:61](../../../src/app/core/accounts/account-deletion.service.ts)) now calls it.
 
 ## Desired result (to-be)
 

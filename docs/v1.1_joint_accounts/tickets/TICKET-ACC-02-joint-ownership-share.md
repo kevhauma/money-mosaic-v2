@@ -3,7 +3,10 @@
 - **Area:** Accounts
 - **Type:** Feature
 - **Traceability:** extends FR-ACC-1; consumed by [STAT-03](./TICKET-STAT-03-contribution-net-worth.md)
-- **Source story:** user-stories.md §1 — *"As someone with a shared account, I want to set my ownership/contribution share on a joint account, so the app has the input it needs to count only my part of the shared money."*
+
+## User story
+
+As someone with a shared account, I want to set my ownership/contribution share on a joint account, so the app has the input it needs to count only my part of the shared money.
 
 ## Description
 

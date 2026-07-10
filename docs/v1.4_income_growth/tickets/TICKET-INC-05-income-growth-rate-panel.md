@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-5 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want a growth-rate panel showing period-over-period and year-over-year growth % for my selected income categories (smoothed per FR-INC-4 where applicable), so I can tell 'am I actually getting ahead' apart from 'this month was an outlier'."*
+
+## User story
+
+As a user, I want a growth-rate panel showing period-over-period and year-over-year growth % for my selected income categories (smoothed per FR-INC-4 where applicable), so I can tell 'am I actually getting ahead' apart from 'this month was an outlier'.
 
 ## Description
 

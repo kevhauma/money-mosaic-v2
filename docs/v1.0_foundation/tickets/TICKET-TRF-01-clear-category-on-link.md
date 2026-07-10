@@ -2,7 +2,10 @@
 
 - **Area:** Transfers
 - **Traceability:** extends FR-TRF-1
-- **Source story:** user-stories.md §5 — *"As a user, I want a transaction linked as a transfer to have no category and be excluded from income/expense on the dashboard, while still counting normally toward its account's balance, so a transfer never gets miscategorised as spending or income."*
+
+## User story
+
+As a user, I want a transaction linked as a transfer to have no category and be excluded from income/expense on the dashboard, while still counting normally toward its account's balance, so a transfer never gets miscategorised as spending or income.
 
 ## Description
 

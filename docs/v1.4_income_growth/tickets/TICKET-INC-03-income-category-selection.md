@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-3 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want to choose which income categories count toward 'my income growth' (default: all `kind: 'income'` categories), so a one-off gift or refund I don't consider real income doesn't distort my growth trend or my gross/net ratio."*
+
+## User story
+
+As a user, I want to choose which income categories count toward 'my income growth' (default: all `kind: 'income'` categories), so a one-off gift or refund I don't consider real income doesn't distort my growth trend or my gross/net ratio.
 
 ## Description
 

@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-4 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want to optionally mark an income category as an annual lump sum (13th month, vacation pay, a holiday bonus — real income, but deposited once a year), so that single deposit doesn't read as a spike on the by-category trend, a false spurt in the growth-rate panel, or a phantom raise/step-change alert."*
+
+## User story
+
+As a user, I want to optionally mark an income category as an annual lump sum (13th month, vacation pay, a holiday bonus — real income, but deposited once a year), so that single deposit doesn't read as a spike on the by-category trend, a false spurt in the growth-rate panel, or a phantom raise/step-change alert.
 
 ## Description
 

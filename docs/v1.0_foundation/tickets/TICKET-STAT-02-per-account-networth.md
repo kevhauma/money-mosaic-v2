@@ -2,7 +2,10 @@
 
 - **Area:** Accounts (Statistics-flavoured)
 - **Traceability:** extends FR-STAT-4 (net-worth-over-time) and FR-ACC-3 (balance derived from opening balance + transactions)
-- **Source story:** user-stories.md §6 — *"As a saver, I want a full-history balance chart on each account's detail page, plus a stacked all-accounts net-worth-history chart (toggleable per account) on the accounts overview, so I can see how each account's saldo has trended over its whole life and how the accounts add up."*
+
+## User story
+
+As a saver, I want a full-history balance chart on each account's detail page, plus a stacked all-accounts net-worth-history chart (toggleable per account) on the accounts overview, so I can see how each account's saldo has trended over its whole life and how the accounts add up.
 
 ## Description
 

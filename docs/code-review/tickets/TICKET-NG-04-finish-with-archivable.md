@@ -3,7 +3,10 @@
 - **Area:** Angular patterns (shared store feature)
 - **Type:** Refactor
 - **Traceability:** CR-7.4
-- **Source story:** code-review/user-stories.md §7 — *"As a developer, I want `withArchivable` finished — either drop the unused `setArchived` or move the persist-then-patch archive flow into the feature — so the two consuming stores stop duplicating their `archiveX`/`unarchiveX` pairs."*
+
+## User story
+
+As a developer, I want `withArchivable` finished — either drop the unused `setArchived` or move the persist-then-patch archive flow into the feature — so the two consuming stores stop duplicating their `archiveX`/`unarchiveX` pairs.
 
 ## Description
 

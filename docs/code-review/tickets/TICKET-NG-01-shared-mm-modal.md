@@ -3,7 +3,10 @@
 - **Area:** Angular patterns (shared UI)
 - **Type:** Refactor
 - **Traceability:** CR-7.1 (also unblocks CR-8 dialog a11y)
-- **Source story:** code-review/user-stories.md §7 — *"As a developer, I want the repeated `<dialog>` open/close effect extracted into a shared `mm-modal` component (or a `syncDialogWithSignal` utility), so `account-form`, `category-form`, `rule-form`, and `transaction-edit-form` stop duplicating it and a11y (focus trap, `aria-modal`) lives in one place."*
+
+## User story
+
+As a developer, I want the repeated `<dialog>` open/close effect extracted into a shared `mm-modal` component (or a `syncDialogWithSignal` utility), so `account-form`, `category-form`, `rule-form`, and `transaction-edit-form` stop duplicating it and a11y (focus trap, `aria-modal`) lives in one place.
 
 ## Description
 
@@ -39,4 +42,4 @@ Four form components each own an identical `effect()` that mirrors an `open` sig
 ## Notes
 
 - Prefer a component over a bare `syncDialogWithSignal` utility so the a11y attributes and dialog markup are shared too — the story lists both but the component centralises more.
-- This ticket is a prerequisite for the CR-8 dialog-a11y story (`aria-labelledby` + focus restore) in code-review/user-stories.md §8.
+- This ticket is a prerequisite for the CR-8 dialog-a11y item (`aria-labelledby` + focus restore) in [overview.md](../overview.md) §8.

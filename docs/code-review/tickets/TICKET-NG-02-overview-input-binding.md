@@ -3,7 +3,10 @@
 - **Area:** Angular patterns (Transactions)
 - **Type:** Refactor
 - **Traceability:** CR-7.2, FR-STAT-6 (drill-down pre-filtering)
-- **Source story:** code-review/user-stories.md §7 — *"As a developer, I want `TransactionsOverviewComponent` to bind `from`/`to`/`categoryId`/`accountId` via `input()` instead of reading `route.snapshot.queryParamMap`, so it's less code and reacts to same-route navigations with new params."*
+
+## User story
+
+As a developer, I want `TransactionsOverviewComponent` to bind `from`/`to`/`categoryId`/`accountId` via `input()` instead of reading `route.snapshot.queryParamMap`, so it's less code and reacts to same-route navigations with new params.
 
 ## Description
 

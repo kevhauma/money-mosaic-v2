@@ -3,7 +3,10 @@
 - **Area:** Dev Tooling
 - **Type:** Feature
 - **Traceability:** supports §0 Foundation (bootstrap hydration) and NFR-testability; no production FR — dev-only affordance
-- **Source story:** user-stories.md §0 — *"As a developer, I want a set of sample accounts and transactions auto-seeded on dev-server startup when the database is empty, so I can test features on a fresh browser without importing a CSV first."*
+
+## User story
+
+As a developer, I want a set of sample accounts and transactions auto-seeded on dev-server startup when the database is empty, so I can test features on a fresh browser without importing a CSV first.
 
 ## Description
 

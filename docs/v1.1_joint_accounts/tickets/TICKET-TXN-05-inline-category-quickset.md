@@ -3,7 +3,10 @@
 - **Area:** Transactions
 - **Type:** Feature
 - **Traceability:** extends FR-TXN-2
-- **Source story:** user-stories.md §3 — *"As a user, I want to set a transaction's category directly from the transaction list, without opening the edit modal, so clearing a backlog of uncategorised transactions doesn't take four clicks each."*
+
+## User story
+
+As a user, I want to set a transaction's category directly from the transaction list, without opening the edit modal, so clearing a backlog of uncategorised transactions doesn't take four clicks each.
 
 ## Description
 

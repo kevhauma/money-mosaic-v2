@@ -22,7 +22,7 @@ Verification before declaring any change done: `ng lint` + `ng test` + `ng build
 | Coding conventions (naming, folders, styling, forms, testing) | `.claude/skills/coding-conventions/SKILL.md` |
 | Dexie schema, entities, versioning rules, repositories | `.claude/skills/data-model/SKILL.md` |
 | Feature/store/service map — what lives where | `.claude/skills/project-map/SKILL.md` |
-| Functional requirements (FR-TXN-*, FR-CAT-*, FR-TRF-*, ...) | `docs/v1.0_foundation/finance-app-spec.md`, `docs/v1.0_foundation/user-stories.md` |
+| Functional requirements (FR-TXN-*, FR-CAT-*, FR-TRF-*, ...) | `docs/v1.0_foundation/finance-app-spec.md`, `docs/v1.0_foundation/overview.md` |
 | UI layout spec | `docs/v1.0_foundation/ui-layout-spec.md` |
 | v2+ backlog | `docs/v2/requirements.md` |
 | Angular / Tailwind 4 / daisyUI / Vitest guidance | installed skills in `.agents/skills/` (managed by `npx skills`, tracked in `skills-lock.json`) |

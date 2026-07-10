@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-11 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want a gross/net ratio per month (my selected income categories' net total ÷ that month's entered gross wage), trended alongside the growth charts, so I can see if my take-home rate is drifting — months without a gross entry show no ratio rather than a misleading one."*
+
+## User story
+
+As a user, I want a gross/net ratio per month (my selected income categories' net total ÷ that month's entered gross wage), trended alongside the growth charts, so I can see if my take-home rate is drifting — months without a gross entry show no ratio rather than a misleading one.
 
 ## Description
 

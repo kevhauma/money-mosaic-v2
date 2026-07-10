@@ -3,7 +3,10 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Feature
 - **Traceability:** changes FR-STAT-1 and FR-TRF-1 semantics for joint accounts; touches FR-STAT-2/3/4; depends on [ACC-02](./TICKET-ACC-02-joint-ownership-share.md) + [ACC-03](./TICKET-ACC-03-multi-owner-coowner-ibans.md) + [CAT-02](./TICKET-CAT-02-neutral-category-kind.md)
-- **Source story:** user-stories.md §6 — *"As someone with a shared account, I want my net worth to count only my contribution to a joint account (my deposits and income in, minus my share of joint spending) rather than the whole shared balance."*
+
+## User story
+
+As someone with a shared account, I want my net worth to count only my contribution to a joint account (my deposits and income in, minus my share of joint spending) rather than the whole shared balance.
 
 ## Description
 

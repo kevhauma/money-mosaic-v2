@@ -3,7 +3,10 @@
 - **Area:** Statistics & Dashboard
 - **Type:** Feature (suggestion, added during v1.3 scoping)
 - **Traceability:** adds FR-STAT-12 (new)
-- **Source story:** user-stories.md §6 — *"As a user, I want to see my largest individual transactions for the selected range, so a one-off big expense doesn't hide inside a category total."*
+
+## User story
+
+As a user, I want to see my largest individual transactions for the selected range, so a one-off big expense doesn't hide inside a category total.
 
 ## Description
 

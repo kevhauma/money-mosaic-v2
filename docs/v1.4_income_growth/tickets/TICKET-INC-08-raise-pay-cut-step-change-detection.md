@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-8 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want to be notified when one of my recurring income categories has a sustained step-change in its typical amount (e.g. my salary category jumps from ~€2,500/mo to ~€2,800/mo for several consecutive periods), so a raise or pay cut is surfaced instead of buried in a chart — categories flagged per FR-INC-4 are evaluated on their smoothed series, so their annual lump sum is never mistaken for a step-change."*
+
+## User story
+
+As a user, I want to be notified when one of my recurring income categories has a sustained step-change in its typical amount (e.g. my salary category jumps from ~€2,500/mo to ~€2,800/mo for several consecutive periods), so a raise or pay cut is surfaced instead of buried in a chart — categories flagged per FR-INC-4 are evaluated on their smoothed series, so their annual lump sum is never mistaken for a step-change.
 
 ## Description
 

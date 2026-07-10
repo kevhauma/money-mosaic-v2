@@ -3,7 +3,10 @@
 - **Area:** Income
 - **Type:** Feature
 - **Traceability:** adds FR-INC-1 (new)
-- **Source story:** user-stories.md §9 — *"As a user, I want a dedicated Income page (its own nav item, its own store), so tracking how my income moves over time isn't squeezed into the general dashboard alongside expenses."*
+
+## User story
+
+As a user, I want a dedicated Income page (its own nav item, its own store), so tracking how my income moves over time isn't squeezed into the general dashboard alongside expenses.
 
 ## Description
 

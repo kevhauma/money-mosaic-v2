@@ -3,7 +3,10 @@
 - **Area:** Transfers
 - **Type:** Feature
 - **Traceability:** extends FR-TRF-3 / FR-TRF-5; protects [CAT-02](./TICKET-CAT-02-neutral-category-kind.md) + [STAT-03](./TICKET-STAT-03-contribution-net-worth.md)
-- **Source story:** user-stories.md §5 — *"As someone with a shared account, I want a partner's one-sided deposit into a joint account to not be mistaken for a transfer between my own accounts, so an unrelated same-amount transaction of mine isn't silently linked to it."*
+
+## User story
+
+As someone with a shared account, I want a partner's one-sided deposit into a joint account to not be mistaken for a transfer between my own accounts, so an unrelated same-amount transaction of mine isn't silently linked to it.
 
 ## Description
 
