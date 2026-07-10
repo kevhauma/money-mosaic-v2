@@ -19,6 +19,7 @@ type Internals = {
   selectAllFiltered: () => void;
   applyBulkCategory: (categoryId: number) => Promise<void>;
   showUncategorisedOnly: () => void;
+  onCategoryChange: (transaction: Transaction, rawCategoryId: string) => Promise<void>;
 };
 
 const noFilters: TransactionFilters = {
@@ -191,5 +192,47 @@ describe('TransactionsOverviewComponent', () => {
 
     expect(transactionsRepository.bulkUpdate).toHaveBeenCalledTimes(1);
     expect(component.selection.count()).toBe(0);
+  });
+
+  it('writes an inline category change immediately, marking it manual (TICKET-TXN-05)', async () => {
+    await setup();
+    const store = TestBed.inject(TransactionsStore);
+    store.addMany([transaction(1)]);
+    const component = internals();
+
+    await component.onCategoryChange(store.transactions()[0], '7');
+
+    expect(transactionsRepository.update).toHaveBeenCalledWith(1, {
+      categoryId: 7,
+      categoryManual: true,
+    });
+    expect(store.transactions()[0].categoryId).toBe(7);
+    expect(store.transactions()[0].categoryManual).toBe(true);
+  });
+
+  it('sets categoryId to undefined when the inline select is set back to "Uncategorised" (TICKET-TXN-05)', async () => {
+    await setup();
+    const store = TestBed.inject(TransactionsStore);
+    store.addMany([{ ...transaction(1), categoryId: 7 }]);
+    const component = internals();
+
+    await component.onCategoryChange(store.transactions()[0], '');
+
+    expect(transactionsRepository.update).toHaveBeenCalledWith(1, {
+      categoryId: undefined,
+      categoryManual: true,
+    });
+    expect(store.transactions()[0].categoryId).toBeUndefined();
+  });
+
+  it('no-ops when the inline select is set to the category the row already has (TICKET-TXN-05)', async () => {
+    await setup();
+    const store = TestBed.inject(TransactionsStore);
+    store.addMany([{ ...transaction(1), categoryId: 7 }]);
+    const component = internals();
+
+    await component.onCategoryChange(store.transactions()[0], '7');
+
+    expect(transactionsRepository.update).not.toHaveBeenCalled();
   });
 });

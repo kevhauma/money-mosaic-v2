@@ -244,4 +244,15 @@ export class TransactionsOverviewComponent {
     if (transaction?.id == null) return;
     await this.transactionsStore.updateTransaction(transaction.id, result);
   }
+
+  /** Inline category quick-set (TICKET-TXN-05) — writes immediately, no modal/save step. */
+  protected async onCategoryChange(transaction: Transaction, rawCategoryId: string): Promise<void> {
+    if (transaction.id == null) return;
+    const categoryId = rawCategoryId === '' ? undefined : Number(rawCategoryId);
+    if (categoryId === transaction.categoryId) return;
+    await this.transactionsStore.updateTransaction(transaction.id, {
+      categoryId,
+      categoryManual: true,
+    });
+  }
 }

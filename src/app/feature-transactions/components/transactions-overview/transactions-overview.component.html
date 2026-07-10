@@ -91,18 +91,18 @@
             </td>
             <td>{{ row.accountName }}</td>
             <td>
-              @if (row.category; as category) {
-                <mm-badge
-                  size="sm"
-                  class="gap-1"
-                  [style.background-color]="category.color + '33'"
-                  [style.color]="category.color"
-                >
-                  {{ category.name }}
-                </mm-badge>
-              } @else {
-                <mm-badge variant="ghost" size="sm">Uncategorised</mm-badge>
-              }
+              <select
+                class="select select-sm w-40"
+                aria-label="Category"
+                (change)="onCategoryChange(row.transaction, $any($event.target).value)"
+              >
+                <option value="" [selected]="row.category === undefined">Uncategorised</option>
+                @for (category of categoriesStore.activeCategories(); track category.id) {
+                  <option [value]="category.id" [selected]="category.id === row.category?.id">
+                    {{ category.name }}
+                  </option>
+                }
+              </select>
             </td>
             <td class="text-right" [class.text-error]="row.transaction.amount < 0">
               {{ row.transaction.amount | signedAmount }}

@@ -33,16 +33,17 @@ That's four clicks (edit icon → open select → pick option → save) for a si
 
 ## Acceptance criteria
 
-- [ ] Each transaction row's category column shows a select control with the row's current category (or an "Uncategorised" placeholder), independent of the edit-form modal.
-- [ ] Changing the inline select persists immediately via `TransactionsStore.updateTransaction`, setting `categoryManual: true`, with no additional confirm/save step.
-- [ ] The change is reflected instantly in the row and in every dependent aggregate (dashboard stats, uncategorised counters) via existing computed signals — no manual refresh.
-- [ ] The pencil-icon edit-form modal still works unchanged for notes/other fields.
-- [ ] Virtualized table performance ([TICKET-TXN-02](../../v1.0_foundation/tickets/TICKET-TXN-02-virtualized-table.md)) is not regressed — the inline select renders cheaply per row (reuse `mm-select`, not a new heavy component).
-- [ ] Keyboard-accessible: the inline select can be focused and changed without a mouse.
-- [ ] Unit tests cover the new inline-change path setting `categoryManual` correctly.
-- [ ] Verified live in the browser: picking a category inline on a transaction row updates the row and the dashboard's uncategorised count without opening the modal.
+- [x] Each transaction row's category column shows a select control with the row's current category (or an "Uncategorised" placeholder), independent of the edit-form modal.
+- [x] Changing the inline select persists immediately via `TransactionsStore.updateTransaction`, setting `categoryManual: true`, with no additional confirm/save step.
+- [x] The change is reflected instantly in the row and in every dependent aggregate (dashboard stats, uncategorised counters) via existing computed signals — no manual refresh.
+- [x] The pencil-icon edit-form modal still works unchanged for notes/other fields.
+- [x] Virtualized table performance ([TICKET-TXN-02](../../v1.0_foundation/tickets/TICKET-TXN-02-virtualized-table.md)) is not regressed — the inline select renders cheaply per row (reuse `mm-select`, not a new heavy component).
+- [x] Keyboard-accessible: the inline select can be focused and changed without a mouse.
+- [x] Unit tests cover the new inline-change path setting `categoryManual` correctly.
+- [x] Verified live in the browser: picking a category inline on a transaction row updates the row and the dashboard's uncategorised count without opening the modal.
 
 ## Notes
 
 - Mirrors `transaction-bulk-bar`'s existing "pick from inline dropdown, write immediately" pattern — reuse that write path rather than inventing a new one.
 - The virtualized table renders many rows at once; confirm this doesn't introduce expensive per-row change detection (OnPush + `trackBy` should already cover it, but worth double-checking during implementation).
+- **Implementation deviation:** used a plain native `<select>` bound via `[value]`/`(change)` instead of `mm-select`, because `mm-select` only binds through `ControlValueAccessor` (`[formControl]`/`ngModel`) — this codebase has no `ngModel` precedent (Reactive Forms only) and no precedent for per-row `FormControl`s in a virtualized table, which would churn 50 control instances on every unrelated signal change (e.g. a selection-checkbox toggle). The row's own selection `<input type="checkbox">` in this same table already uses a plain native control for the same reason, so this stays consistent with that existing precedent and satisfies the criterion's actual intent ("not a new heavy component").
