@@ -119,6 +119,66 @@ describe('AccountsStore: archive/unarchive round-trip (TICKET-NG-04)', () => {
   });
 });
 
+describe('AccountsStore: manual account ordering (TICKET-ACC-04)', () => {
+  const accountsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
+    });
+  });
+
+  it('sorts accounts by sortOrder, with accounts missing one falling after those that have it', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, name: 'No order A' }),
+      account({ id: 2, name: 'Second', sortOrder: 10 }),
+      account({ id: 3, name: 'No order B' }),
+      account({ id: 4, name: 'First', sortOrder: 0 }),
+    ]);
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    expect(accountsStore.accounts().map((a) => a.id)).toEqual([4, 2, 1, 3]);
+  });
+
+  it('persists moveAccount as a sortOrder swap through the repository and reorders the computed list', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, name: 'A', sortOrder: 0 }),
+      account({ id: 2, name: 'B', sortOrder: 10 }),
+      account({ id: 3, name: 'C', sortOrder: 20 }),
+    ]);
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    await accountsStore.moveAccount(3, 'up');
+
+    expect(accountsRepository.update).toHaveBeenCalledWith(3, { sortOrder: 10 });
+    expect(accountsRepository.update).toHaveBeenCalledWith(2, { sortOrder: 20 });
+    expect(accountsStore.accounts().map((a) => a.id)).toEqual([1, 3, 2]);
+  });
+
+  it('does nothing when moving the first account up', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, sortOrder: 0 }),
+      account({ id: 2, sortOrder: 10 }),
+    ]);
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    await accountsStore.moveAccount(1, 'up');
+
+    expect(accountsRepository.update).not.toHaveBeenCalled();
+  });
+});
+
 describe('AccountsStore: contribution-based net worth for joint accounts (TICKET-STAT-03)', () => {
   const accountsRepository = {
     getAll: vi.fn().mockResolvedValue([]),

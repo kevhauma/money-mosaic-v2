@@ -4,6 +4,8 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArchive,
   tablerArchiveOff,
+  tablerChevronDown,
+  tablerChevronUp,
   tablerDotsVertical,
   tablerPencil,
   tablerPlus,
@@ -49,6 +51,8 @@ import {
       tablerArchive,
       tablerArchiveOff,
       tablerTrash,
+      tablerChevronUp,
+      tablerChevronDown,
     }),
   ],
 })
@@ -96,6 +100,22 @@ export class CategoriesOverviewComponent {
     } else {
       await this.categoriesStore.addCategory({ ...value, archived: false, isSystem: false });
     }
+  }
+
+  protected moveCategory(category: Category, direction: 'up' | 'down'): void {
+    if (category.id == null) {
+      return;
+    }
+    void this.categoriesStore.moveCategory(category.id, direction);
+  }
+
+  protected isFirst(category: Category): boolean {
+    return this.categoriesStore.categories()[0]?.id === category.id;
+  }
+
+  protected isLast(category: Category): boolean {
+    const ordered = this.categoriesStore.categories();
+    return ordered[ordered.length - 1]?.id === category.id;
   }
 
   protected toggleArchive(category: Category): void {

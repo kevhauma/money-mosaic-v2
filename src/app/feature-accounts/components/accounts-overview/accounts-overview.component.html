@@ -43,37 +43,59 @@
                 {{ account.name }}
               </a>
             </div>
-            <div class="dropdown dropdown-end">
-              <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Account actions">
-                <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
-              </mm-button>
-              <ul
-                tabindex="0"
-                class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
+            <div class="flex items-center gap-1">
+              <mm-button
+                variant="ghost"
+                shape="square"
+                size="sm"
+                [disabled]="isFirst(account)"
+                (click)="moveAccount(account, 'up')"
+                ariaLabel="Move account up"
               >
-                <li>
-                  <button type="button" (click)="openEditForm(account)">
-                    <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
-                    Edit
-                  </button>
-                </li>
-                <li>
-                  <button type="button" (click)="toggleArchive(account)">
-                    <ng-icon
-                      [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
-                      size="14"
-                      aria-hidden="true"
-                    />
-                    {{ account.archived ? 'Unarchive' : 'Archive' }}
-                  </button>
-                </li>
-                <li>
-                  <button type="button" class="text-error" (click)="confirmDelete(account)">
-                    <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
-                    Delete
-                  </button>
-                </li>
-              </ul>
+                <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
+              </mm-button>
+              <mm-button
+                variant="ghost"
+                shape="square"
+                size="sm"
+                [disabled]="isLast(account)"
+                (click)="moveAccount(account, 'down')"
+                ariaLabel="Move account down"
+              >
+                <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
+              </mm-button>
+              <div class="dropdown dropdown-end">
+                <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Account actions">
+                  <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
+                </mm-button>
+                <ul
+                  tabindex="0"
+                  class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
+                >
+                  <li>
+                    <button type="button" (click)="openEditForm(account)">
+                      <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+                      Edit
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button" (click)="toggleArchive(account)">
+                      <ng-icon
+                        [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
+                        size="14"
+                        aria-hidden="true"
+                      />
+                      {{ account.archived ? 'Unarchive' : 'Archive' }}
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button" class="text-error" (click)="confirmDelete(account)">
+                      <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+                      Delete
+                    </button>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 

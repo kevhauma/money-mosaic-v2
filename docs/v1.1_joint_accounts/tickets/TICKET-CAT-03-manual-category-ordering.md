@@ -27,14 +27,14 @@ Let the user choose the display order of their categories. Because every categor
 
 ## Acceptance criteria
 
-- [ ] `Category` gains an optional `sortOrder?: number` field (no Dexie schema version bump).
-- [ ] `CategoriesStore` exposes `categories`/`activeCategories` sorted by `sortOrder` ascending, same fallback rule as accounts.
-- [ ] `categories-overview.component.html` offers move-up/move-down reordering; persisted through `CategoriesRepository`.
-- [ ] The new order is reflected, with no extra per-component work, in: the transaction edit form's category select, the bulk-assign category select, the transaction filters' category dropdown, and the rule form's action category select.
-- [ ] Reordering has no effect on rule matching, category `kind`, or any FR-CAT/FR-STAT behaviour — display order only.
-- [ ] Unit tests cover the sort computed, mirroring TICKET-ACC-04's approach.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser: reordering categories on `/categories` persists on reload and the new order shows up immediately in the transaction edit form's category dropdown.
+- [x] `Category` gains an optional `sortOrder?: number` field (no Dexie schema version bump).
+- [x] `CategoriesStore` exposes `categories`/`activeCategories` sorted by `sortOrder` ascending, same fallback rule as accounts.
+- [x] `categories-overview.component.html` offers move-up/move-down reordering; persisted through `CategoriesRepository`.
+- [x] The new order is reflected, with no extra per-component work, in: the transaction edit form's category select, the bulk-assign category select, the transaction filters' category dropdown, and the rule form's action category select.
+- [x] Reordering has no effect on rule matching, category `kind`, or any FR-CAT/FR-STAT behaviour — display order only.
+- [x] Unit tests cover the sort computed, mirroring TICKET-ACC-04's approach.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser: reordering categories on `/categories` persists on reload and the new order shows up immediately in the transaction edit form's category dropdown.
 
 ## Notes
 

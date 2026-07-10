@@ -74,6 +74,66 @@ describe('CategoriesStore: archive/unarchive round-trip (TICKET-NG-04)', () => {
   });
 });
 
+describe('CategoriesStore: manual category ordering (TICKET-CAT-03)', () => {
+  const categoriesRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
+    });
+  });
+
+  it('sorts categories by sortOrder, with categories missing one falling after those that have it', async () => {
+    categoriesRepository.getAll.mockResolvedValue([
+      category({ id: 1, name: 'No order A' }),
+      category({ id: 2, name: 'Second', sortOrder: 10 }),
+      category({ id: 3, name: 'No order B' }),
+      category({ id: 4, name: 'First', sortOrder: 0 }),
+    ]);
+    const categoriesStore = TestBed.inject(CategoriesStore);
+    await categoriesStore.hydrate();
+
+    expect(categoriesStore.categories().map((c) => c.id)).toEqual([4, 2, 1, 3]);
+  });
+
+  it('persists moveCategory as a sortOrder swap through the repository and reorders the computed list', async () => {
+    categoriesRepository.getAll.mockResolvedValue([
+      category({ id: 1, name: 'A', sortOrder: 0 }),
+      category({ id: 2, name: 'B', sortOrder: 10 }),
+      category({ id: 3, name: 'C', sortOrder: 20 }),
+    ]);
+    const categoriesStore = TestBed.inject(CategoriesStore);
+    await categoriesStore.hydrate();
+
+    await categoriesStore.moveCategory(3, 'up');
+
+    expect(categoriesRepository.update).toHaveBeenCalledWith(3, { sortOrder: 10 });
+    expect(categoriesRepository.update).toHaveBeenCalledWith(2, { sortOrder: 20 });
+    expect(categoriesStore.categories().map((c) => c.id)).toEqual([1, 3, 2]);
+  });
+
+  it('does nothing when moving the last category down', async () => {
+    categoriesRepository.getAll.mockResolvedValue([
+      category({ id: 1, sortOrder: 0 }),
+      category({ id: 2, sortOrder: 10 }),
+    ]);
+    const categoriesStore = TestBed.inject(CategoriesStore);
+    await categoriesStore.hydrate();
+
+    await categoriesStore.moveCategory(2, 'down');
+
+    expect(categoriesRepository.update).not.toHaveBeenCalled();
+  });
+});
+
 describe('CategoriesStore: removeCategory clears the category off referencing transactions before deleting it (TICKET-TEST-01)', () => {
   const categoriesRepository = {
     getAll: vi.fn().mockResolvedValue([]),

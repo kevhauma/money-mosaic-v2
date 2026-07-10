@@ -4,6 +4,8 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArchive,
   tablerArchiveOff,
+  tablerChevronDown,
+  tablerChevronUp,
   tablerDotsVertical,
   tablerPencil,
   tablerPlus,
@@ -51,6 +53,8 @@ import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-wo
       tablerArchive,
       tablerArchiveOff,
       tablerTrash,
+      tablerChevronUp,
+      tablerChevronDown,
     }),
   ],
 })
@@ -96,6 +100,22 @@ export class AccountsOverviewComponent {
     } else {
       await this.accountsStore.addAccount({ ...value, archived: false });
     }
+  }
+
+  protected moveAccount(account: Account, direction: 'up' | 'down'): void {
+    if (account.id == null) {
+      return;
+    }
+    void this.accountsStore.moveAccount(account.id, direction);
+  }
+
+  protected isFirst(account: Account): boolean {
+    return this.accountsStore.accounts()[0]?.id === account.id;
+  }
+
+  protected isLast(account: Account): boolean {
+    const ordered = this.accountsStore.accounts();
+    return ordered[ordered.length - 1]?.id === account.id;
   }
 
   protected toggleArchive(account: Account): void {

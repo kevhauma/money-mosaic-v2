@@ -28,14 +28,14 @@ Let the user choose the display order of their accounts instead of being stuck w
 
 ## Acceptance criteria
 
-- [ ] `Account` gains an optional `sortOrder?: number` field (no Dexie schema version bump).
-- [ ] `AccountsStore` exposes `accounts`/`activeAccounts` sorted by `sortOrder` ascending; accounts without a `sortOrder` sort after those with one, in stable `id` order.
-- [ ] `accounts-overview.component.html` offers a way to move an account up/down in the grid; the change persists through `AccountsRepository`.
-- [ ] The net-worth-history-chart's legend and stack order (and any other consumer reading `AccountsStore.accounts()`/`activeAccounts()`) reflects the new order with no additional per-component changes.
-- [ ] Reordering has no effect on balances, net worth totals, or any FR-STAT figure — display order only.
-- [ ] Unit tests cover the sort computed, including the "some accounts have no `sortOrder` yet" case, without TestBed, per the pure-logic testing convention.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser: reordering accounts on `/accounts` persists across a page reload and is reflected in the net-worth chart's legend order.
+- [x] `Account` gains an optional `sortOrder?: number` field (no Dexie schema version bump).
+- [x] `AccountsStore` exposes `accounts`/`activeAccounts` sorted by `sortOrder` ascending; accounts without a `sortOrder` sort after those with one, in stable `id` order.
+- [x] `accounts-overview.component.html` offers a way to move an account up/down in the grid; the change persists through `AccountsRepository`.
+- [x] The net-worth-history-chart's legend and stack order (and any other consumer reading `AccountsStore.accounts()`/`activeAccounts()`) reflects the new order with no additional per-component changes.
+- [x] Reordering has no effect on balances, net worth totals, or any FR-STAT figure — display order only.
+- [x] Unit tests cover the sort computed, including the "some accounts have no `sortOrder` yet" case, without TestBed, per the pure-logic testing convention.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser: reordering accounts on `/accounts` persists across a page reload and is reflected in the net-worth chart's legend order.
 
 ## Notes
 

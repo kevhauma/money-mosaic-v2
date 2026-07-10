@@ -10,7 +10,7 @@ import {
 } from '@ngrx/signals/entities';
 import { CategoriesRepository, type Category } from '@/core/data-access';
 import { TransactionsStore } from '@/feature-transactions';
-import { withArchivable } from '@/shared/utils';
+import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
 
 const categoryConfig = entityConfig({
   entity: type<Category>(),
@@ -25,8 +25,8 @@ export const CategoriesStore = signalStore(
     const transactionsStore = inject(TransactionsStore);
 
     return {
-      categories: entities,
-      activeCategories: activeEntities,
+      categories: sortedBySortOrder(entities),
+      activeCategories: sortedBySortOrder(activeEntities),
       archivedCategories: archivedEntities,
       categoriesById: computed(
         () => new Map(entities().map((category) => [category.id!, category])),
@@ -85,5 +85,13 @@ export const CategoriesStore = signalStore(
   withMethods((store) => ({
     archiveCategory: (id: number): Promise<void> => store.updateCategory(id, { archived: true }),
     unarchiveCategory: (id: number): Promise<void> => store.updateCategory(id, { archived: false }),
+
+    /** Moves a category earlier/later in display order by swapping its sortOrder with its neighbour (TICKET-CAT-03). */
+    moveCategory: async (id: number, direction: 'up' | 'down'): Promise<void> => {
+      const updates = computeReorderUpdates(store.categories(), id, direction);
+      await Promise.all(
+        updates.map((update) => store.updateCategory(update.id, { sortOrder: update.sortOrder })),
+      );
+    },
   })),
 );

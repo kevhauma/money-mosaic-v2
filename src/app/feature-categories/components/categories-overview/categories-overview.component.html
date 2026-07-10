@@ -43,6 +43,7 @@
     <table class="table">
       <thead>
         <tr>
+          <th>Order</th>
           <th>Name</th>
           <th>Kind</th>
           <th>Group</th>
@@ -53,6 +54,30 @@
       <tbody>
         @for (category of visibleCategories(); track category.id) {
           <tr [class.opacity-60]="category.archived">
+            <td>
+              <div class="flex items-center gap-1">
+                <mm-button
+                  variant="ghost"
+                  shape="square"
+                  size="xs"
+                  [disabled]="isFirst(category)"
+                  (click)="moveCategory(category, 'up')"
+                  ariaLabel="Move category up"
+                >
+                  <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
+                </mm-button>
+                <mm-button
+                  variant="ghost"
+                  shape="square"
+                  size="xs"
+                  [disabled]="isLast(category)"
+                  (click)="moveCategory(category, 'down')"
+                  ariaLabel="Move category down"
+                >
+                  <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
+                </mm-button>
+              </div>
+            </td>
             <td>
               <div class="flex items-center gap-2">
                 <span

@@ -34,6 +34,8 @@ export type Account = {
    * `undefined`/empty means no co-owners registered (TICKET-ACC-03).
    */
   coOwners?: JointOwner[];
+  /** Manual display order (TICKET-ACC-04) — `undefined` sorts after every account that has one. */
+  sortOrder?: number;
 };
 
 export type Transaction = {
@@ -101,6 +103,8 @@ export type Category = {
   icon: string;
   archived: boolean;
   isSystem: boolean;
+  /** Manual display order (TICKET-CAT-03) — `undefined` sorts after every category that has one. */
+  sortOrder?: number;
 };
 
 export type RuleCondition = {

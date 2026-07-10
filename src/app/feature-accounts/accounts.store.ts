@@ -19,7 +19,7 @@ import {
 import { savingsAccountIbans } from '@/core/transfers';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
-import { withArchivable } from '@/shared/utils';
+import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
 
 const accountConfig = entityConfig({
   entity: type<Account>(),
@@ -113,8 +113,8 @@ export const AccountsStore = signalStore(
     });
 
     return {
-      accounts: entities,
-      activeAccounts: activeEntities,
+      accounts: sortedBySortOrder(entities),
+      activeAccounts: sortedBySortOrder(activeEntities),
       archivedAccounts: archivedEntities,
       accountsById,
       balancesById,
@@ -196,6 +196,14 @@ export const AccountsStore = signalStore(
   withMethods((store) => ({
     archiveAccount: (id: number): Promise<void> => store.updateAccount(id, { archived: true }),
     unarchiveAccount: (id: number): Promise<void> => store.updateAccount(id, { archived: false }),
+
+    /** Moves an account earlier/later in display order by swapping its sortOrder with its neighbour (TICKET-ACC-04). */
+    moveAccount: async (id: number, direction: 'up' | 'down'): Promise<void> => {
+      const updates = computeReorderUpdates(store.accounts(), id, direction);
+      await Promise.all(
+        updates.map((update) => store.updateAccount(update.id, { sortOrder: update.sortOrder })),
+      );
+    },
   })),
   withHooks({
     onInit(store) {
