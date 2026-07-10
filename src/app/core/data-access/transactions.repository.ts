@@ -26,14 +26,5 @@ export class TransactionsRepository {
       .filter((transaction) => transaction.importBatchId === importBatchId)
       .toArray();
 
-  getFingerprintsByAccount = async (accountId: number): Promise<Set<string>> => {
-    const fingerprints = new Set<string>();
-    await appDb.transactions
-      .where('accountId')
-      .equals(accountId)
-      .each((transaction) => fingerprints.add(transaction.fingerprint));
-    return fingerprints;
-  };
-
   bulkRemove = (ids: number[]): Promise<void> => appDb.transactions.bulkDelete(ids);
 }

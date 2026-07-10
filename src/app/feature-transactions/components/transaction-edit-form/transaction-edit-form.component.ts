@@ -53,6 +53,12 @@ export class TransactionEditFormComponent {
 
   protected readonly showAlwaysCategorise = computed(() => !!this.transaction()?.counterpartyName);
 
+  /** Header→value pairs, in original column order, for the "Original CSV row" table (TICKET-TXN-06). */
+  protected readonly rawRowEntries = computed(() => {
+    const rawRow = this.transaction()?.rawRow;
+    return rawRow ? Object.entries(rawRow) : [];
+  });
+
   private resetForm(): void {
     const existing = this.transaction();
     this.form.reset({

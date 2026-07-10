@@ -24,6 +24,12 @@ export type CommitImportResult = {
   batch: ImportBatch;
   addedTransactions: Transaction[];
   duplicateCount: number;
+  /**
+   * Legacy transactions backfilled in place from a duplicate row in this import: `rawLine`/`rawRow`
+   * are each filled in only when the existing transaction doesn't already have one, never
+   * overwritten (TICKET-TXN-06). Shaped to feed `TransactionsStore.patchMany` directly.
+   */
+  backfilledTransactions: { id: number; changes: Pick<Transaction, 'rawLine' | 'rawRow'> }[];
 };
 
 export type UndoImportResult = {
@@ -46,21 +52,21 @@ export type UndoImportResult = {
 export const partitionByFingerprint = <T extends { fingerprint: string }>(
   rows: T[],
   existingFingerprints: Set<string>,
-): { accepted: T[]; duplicateCount: number } => {
+): { accepted: T[]; duplicates: T[]; duplicateCount: number } => {
   const accepted: T[] = [];
+  const duplicates: T[] = [];
   const occurrenceCounts = new Map<string, number>();
-  let duplicateCount = 0;
   for (const row of rows) {
     const occurrence = (occurrenceCounts.get(row.fingerprint) ?? 0) + 1;
     occurrenceCounts.set(row.fingerprint, occurrence);
     const key = `${row.fingerprint}|${occurrence}`;
     if (existingFingerprints.has(key)) {
-      duplicateCount++;
+      duplicates.push({ ...row, fingerprint: key });
     } else {
       accepted.push({ ...row, fingerprint: key });
     }
   }
-  return { accepted, duplicateCount };
+  return { accepted, duplicates, duplicateCount: duplicates.length };
 };
 
 @Injectable({ providedIn: 'root' })
@@ -70,8 +76,9 @@ export class ImportService {
   private readonly transferCleanupService = inject(TransferCleanupService);
 
   commitImport = async (input: CommitImportInput): Promise<CommitImportResult> => {
-    const existingFingerprints = await this.transactionsRepository.getFingerprintsByAccount(
-      input.accountId,
+    const existingTransactions = await this.transactionsRepository.getByAccount(input.accountId);
+    const existingByFingerprint = new Map(
+      existingTransactions.map((transaction) => [transaction.fingerprint, transaction]),
     );
 
     const candidates = input.validRows.map((row) => ({
@@ -85,7 +92,28 @@ export class ImportService {
       }),
     }));
 
-    const { accepted, duplicateCount } = partitionByFingerprint(candidates, existingFingerprints);
+    const { accepted, duplicates, duplicateCount } = partitionByFingerprint(
+      candidates,
+      new Set(existingByFingerprint.keys()),
+    );
+
+    // A duplicate row against a legacy transaction backfills whichever of rawLine/rawRow it's
+    // missing, in place, instead of just being dropped — the only backfill mechanism for existing
+    // data (TICKET-TXN-06). Each field is only ever filled in, never overwritten.
+    const backfillUpdates = duplicates
+      .map(({ row, fingerprint }) => {
+        const existing = existingByFingerprint.get(fingerprint);
+        if (!existing?.id) return null;
+        const changes: Pick<Transaction, 'rawLine' | 'rawRow'> = {};
+        if (!existing.rawLine && row.transaction.rawLine) changes.rawLine = row.transaction.rawLine;
+        if (!existing.rawRow && row.transaction.rawRow) changes.rawRow = row.transaction.rawRow;
+        if (Object.keys(changes).length === 0) return null;
+        return { id: existing.id, changes };
+      })
+      .filter(
+        (update): update is { id: number; changes: Pick<Transaction, 'rawLine' | 'rawRow'> } =>
+          update !== null,
+      );
 
     const bookingDates = input.validRows.map((row) => row.transaction.bookingDate).sort();
     const createdAt = new Date().toISOString();
@@ -119,10 +147,14 @@ export class ImportService {
         id: ids[index],
       }));
 
+      if (backfillUpdates.length > 0) {
+        await this.transactionsRepository.bulkUpdate(backfillUpdates);
+      }
+
       const batch = await this.importBatchesRepository.getById(batchId);
       if (!batch) throw new Error('Import batch failed to persist');
 
-      return { batch, addedTransactions, duplicateCount };
+      return { batch, addedTransactions, duplicateCount, backfilledTransactions: backfillUpdates };
     });
   };
 

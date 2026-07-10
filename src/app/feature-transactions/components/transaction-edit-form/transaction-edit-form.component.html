@@ -25,6 +25,31 @@
       ></textarea>
     </fieldset>
 
+    @if (rawRowEntries().length > 0) {
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Original CSV row</legend>
+        <div class="max-h-48 overflow-auto rounded-box border border-base-300">
+          <table class="table-sm table">
+            <tbody>
+              @for (entry of rawRowEntries(); track entry[0]) {
+                <tr>
+                  <th class="whitespace-nowrap text-base-content/60">{{ entry[0] }}</th>
+                  <td class="font-mono break-all">{{ entry[1] }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </fieldset>
+    } @else if (transaction()?.rawLine; as rawLine) {
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Original CSV row</legend>
+        <pre
+          class="max-h-32 overflow-auto rounded-box bg-base-200 p-2 font-mono text-xs whitespace-pre-wrap"
+          >{{ rawLine }}</pre>
+      </fieldset>
+    }
+
     @if (showAlwaysCategorise()) {
       <label class="label cursor-pointer justify-start gap-2">
         <input type="checkbox" formControlName="alwaysCategorise" class="checkbox checkbox-sm" />

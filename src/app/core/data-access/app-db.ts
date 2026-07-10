@@ -54,6 +54,14 @@ export type Transaction = {
   fingerprint: string;
   notes?: string;
   createdAt: string;
+  /**
+   * The original CSV row this transaction was imported from, when known (TICKET-TXN-06).
+   * `rawRow` (header name → cell value, in column order) is the preferred, structured form used to
+   * render the labeled "Original CSV row" table; `rawLine` is the flat original line text, kept as a
+   * fallback for transactions imported before `rawRow` was captured.
+   */
+  rawLine?: string;
+  rawRow?: Record<string, string>;
 };
 
 export type Transfer = {

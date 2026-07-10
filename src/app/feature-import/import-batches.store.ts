@@ -77,6 +77,12 @@ export const ImportBatchesStore = signalStore(
         patchState(store, addEntity(result.batch, importBatchConfig));
         transactionsStore.addMany(categorisedTransactions);
 
+        // Reflects rawLine/rawRow backfilled onto legacy duplicates so the already-loaded list
+        // updates without a reload (TICKET-TXN-06).
+        if (result.backfilledTransactions.length > 0) {
+          transactionsStore.patchMany(result.backfilledTransactions);
+        }
+
         // Re-scans the entire dataset, not just this batch, so a later import can retroactively
         // pair with an earlier one-sided movement (FR-TRF-2).
         await transfersStore.runAutoLink();

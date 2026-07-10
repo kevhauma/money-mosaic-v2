@@ -72,6 +72,7 @@ describe('ImportBatchesStore: commitImport pre-categorises rows before they land
       batch,
       addedTransactions: added,
       duplicateCount: 0,
+      backfilledTransactions: [],
     });
     // Rule matches only transaction 10.
     rulesEngineService.runAndPersist.mockResolvedValue([{ id: 10, categoryId: 7 }]);
@@ -98,6 +99,7 @@ describe('ImportBatchesStore: commitImport pre-categorises rows before they land
       batch,
       addedTransactions: added,
       duplicateCount: 0,
+      backfilledTransactions: [],
     });
     // A user rule matches and tags it Groceries...
     rulesEngineService.runAndPersist.mockResolvedValue([{ id: 10, categoryId: 7 }]);
@@ -112,6 +114,37 @@ describe('ImportBatchesStore: commitImport pre-categorises rows before they land
     ]);
     expect(transactionsStore.addMany).toHaveBeenCalledWith([{ ...added[0], categoryId: 99 }]);
     expect(result.addedTransactions).toEqual([{ ...added[0], categoryId: 99 }]);
+  });
+
+  it('patches rawLine/rawRow backfilled onto legacy duplicates into TransactionsStore (TICKET-TXN-06)', async () => {
+    const batch = importBatch();
+    const backfilledTransactions = [{ id: 42, changes: { rawLine: 'the original line' } }];
+    importService.commitImport.mockResolvedValue({
+      batch,
+      addedTransactions: [],
+      duplicateCount: 1,
+      backfilledTransactions,
+    });
+
+    const store = TestBed.inject(ImportBatchesStore);
+    await store.commitImport(commitInput);
+
+    expect(transactionsStore.patchMany).toHaveBeenCalledWith(backfilledTransactions);
+  });
+
+  it('does not call patchMany when nothing was backfilled', async () => {
+    const batch = importBatch();
+    importService.commitImport.mockResolvedValue({
+      batch,
+      addedTransactions: [],
+      duplicateCount: 0,
+      backfilledTransactions: [],
+    });
+
+    const store = TestBed.inject(ImportBatchesStore);
+    await store.commitImport(commitInput);
+
+    expect(transactionsStore.patchMany).not.toHaveBeenCalled();
   });
 });
 

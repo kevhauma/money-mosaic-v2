@@ -74,6 +74,35 @@ describe('parseCsvText', () => {
   });
 });
 
+describe('parseCsvText: original CSV row capture (TICKET-TXN-06)', () => {
+  it('captures each row original physical line as rawLine on the mapped transaction', () => {
+    const file = [
+      'Date;Desc;Amount',
+      '2025-12-31;groceries;-10,00',
+      '2025-06-11;rent;-625,00',
+    ].join('\n');
+
+    const { rows } = validRows(parseCsvText(baseRequest(file)));
+
+    expect(rows.map((row) => (row.valid ? row.transaction.rawLine : undefined))).toEqual([
+      '2025-12-31;groceries;-10,00',
+      '2025-06-11;rent;-625,00',
+    ]);
+  });
+
+  it('captures each row as a header→value rawRow, in column order', () => {
+    const file = ['Date;Desc;Amount', '2025-12-31;groceries;-10,00'].join('\n');
+
+    const { rows } = validRows(parseCsvText(baseRequest(file)));
+
+    expect(rows[0].valid && rows[0].transaction.rawRow).toEqual({
+      Date: '2025-12-31',
+      Desc: 'groceries',
+      Amount: '-10,00',
+    });
+  });
+});
+
 describe('parseCsvText: header/mapping mismatch (TICKET-IMP-03)', () => {
   it('reports no mismatch when the mapping matches the file header', () => {
     const file = ['Date;Desc;Amount', '2025-12-31;groceries;-10,00'].join('\n');

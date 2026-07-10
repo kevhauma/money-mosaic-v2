@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { findMissingMappedColumns, mapRows } from './csv-row-mapper';
+import { findMissingMappedColumns, mapRows, type ParsedRowResult } from './csv-row-mapper';
 import type { CsvParseRequest, CsvParseResponse } from './csv-worker.types';
 
 // A control char (SOH) that never occurs in decoded bank-CSV text. Passed as PapaParse's quoteChar
@@ -20,9 +20,8 @@ const NO_QUOTE_CHAR = String.fromCharCode(1);
  * silently.
  */
 export const parseCsvText = (request: CsvParseRequest): CsvParseResponse => {
-  const nonEmptyLines = request.fileText
-    .split(/\r\n|\r|\n/)
-    .filter((line) => line.trim() !== '').length;
+  const physicalLines = request.fileText.split(/\r\n|\r|\n/).filter((line) => line.trim() !== '');
+  const nonEmptyLines = physicalLines.length;
 
   const parseWith = (quoteChar?: string): Papa.ParseResult<string[]> =>
     Papa.parse<string[]>(request.fileText, {
@@ -71,11 +70,28 @@ export const parseCsvText = (request: CsvParseRequest): CsvParseResponse => {
     return rawRow;
   });
 
-  const rows = mapRows(rawRows, request.mapping, {
+  const mapped = mapRows(rawRows, request.mapping, {
     decimalSeparator: request.decimalSeparator,
     dateFormat: request.dateFormat,
     signConvention: request.signConvention,
   });
+
+  // Captures each row's original CSV data for the "Original CSV row" detail view (TICKET-TXN-06).
+  // `rawRow` (header → cell, in column order) is `rawRows[index]` — already built above, and aligned
+  // with `mapped[index]` by construction (both derive from `dataRows` directly), so it never drifts.
+  // `rawLine` reuses the physical-line split for the flat original line text; it holds the same
+  // alignment guarantee unless a quote-swallow went unrecovered, in which case it can drift for rows
+  // after it — an accepted limit, not a new failure mode, per the existing physical-line assumption
+  // this file already makes. `rawRow` is otherwise unaffected by that edge case.
+  const dataLines = physicalLines.slice(request.headerRows);
+  const rows: ParsedRowResult[] = mapped.map((row, index) =>
+    row.valid
+      ? {
+          ...row,
+          transaction: { ...row.transaction, rawLine: dataLines[index], rawRow: rawRows[index] },
+        }
+      : row,
+  );
 
   return { headers, rows, warnings };
 };

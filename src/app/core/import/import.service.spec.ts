@@ -4,10 +4,26 @@ import {
   appDb,
   ImportBatchesRepository,
   TransactionsRepository,
+  type ImportBatch,
   type Transaction,
 } from '@/core/data-access';
 import { TransferCleanupService } from '@/core/transfers';
-import { ImportService, partitionByFingerprint } from './import.service';
+import type { ParsedRowResult } from './csv-row-mapper';
+import { ImportService, partitionByFingerprint, type CommitImportInput } from './import.service';
+
+type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
+
+const validRow = (overrides: Partial<ValidParsedRow['transaction']> = {}): ValidParsedRow => ({
+  rowIndex: 0,
+  valid: true,
+  transaction: {
+    bookingDate: '2026-07-01',
+    amount: -10,
+    currency: 'EUR',
+    rawDescription: 'Carrefour Market',
+    ...overrides,
+  },
+});
 
 describe('ImportService: undoImport', () => {
   // The undo runs inside `appDb.transaction('rw', ...)`; stub it to synchronously invoke the scope
@@ -66,6 +82,169 @@ describe('ImportService: undoImport', () => {
     expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([10, 11]);
     expect(ctx.importBatchesRepository.remove).toHaveBeenCalledWith(99);
     expect(result).toEqual({ unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] });
+  });
+});
+
+describe('ImportService: commitImport rawLine/rawRow handling (TICKET-TXN-06)', () => {
+  beforeEach(() => {
+    vi.spyOn(appDb, 'transaction').mockImplementation(((...args: unknown[]) =>
+      (args[args.length - 1] as () => unknown)()) as never);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const setup = (existingTransactions: Transaction[]) => {
+    const transactionsRepository = {
+      getByAccount: vi.fn().mockResolvedValue(existingTransactions),
+      bulkAdd: vi
+        .fn()
+        .mockImplementation((rows: Transaction[]) =>
+          Promise.resolve(rows.map((_, index) => index + 100)),
+        ),
+      bulkUpdate: vi.fn().mockResolvedValue(0),
+    };
+    const importBatchesRepository = {
+      add: vi.fn().mockResolvedValue(1),
+      getById: vi.fn().mockResolvedValue({ id: 1 } as ImportBatch),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        ImportService,
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
+        { provide: TransferCleanupService, useValue: {} },
+      ],
+    });
+
+    return { service: TestBed.inject(ImportService), transactionsRepository };
+  };
+
+  const baseInput = (validRows: ValidParsedRow[]): CommitImportInput => ({
+    accountId: 1,
+    fileName: 'test.csv',
+    totalRowsRead: validRows.length,
+    validRows,
+  });
+
+  const fingerprintFor = async (row: ValidParsedRow): Promise<string> => {
+    const { computeFingerprint } = await import('@/shared/utils');
+    return `${computeFingerprint({
+      accountId: 1,
+      bookingDate: row.transaction.bookingDate,
+      amount: row.transaction.amount,
+      description: row.transaction.rawDescription,
+      counterpartyIban: row.transaction.counterpartyIban,
+    })}|1`;
+  };
+
+  it('persists rawLine and rawRow onto every newly-added transaction', async () => {
+    const { service, transactionsRepository } = setup([]);
+
+    await service.commitImport(
+      baseInput([
+        validRow({
+          rawLine: '01/07/2026;-10,00;Carrefour Market',
+          rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' },
+        }),
+      ]),
+    );
+
+    expect(transactionsRepository.bulkAdd).toHaveBeenCalledWith([
+      expect.objectContaining({
+        rawLine: '01/07/2026;-10,00;Carrefour Market',
+        rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' },
+      }),
+    ]);
+  });
+
+  it('backfills rawLine and rawRow onto a legacy duplicate transaction that has neither yet', async () => {
+    const row = validRow({
+      rawLine: '01/07/2026;-10,00;Carrefour Market',
+      rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' },
+    });
+    const legacy: Transaction = {
+      id: 42,
+      accountId: 1,
+      bookingDate: '2026-07-01',
+      amount: -10,
+      currency: 'EUR',
+      rawDescription: 'Carrefour Market',
+      fingerprint: await fingerprintFor(row),
+      createdAt: '2026-06-01T00:00:00.000Z',
+    };
+
+    const { service, transactionsRepository } = setup([legacy]);
+
+    const result = await service.commitImport(baseInput([row]));
+
+    expect(transactionsRepository.bulkAdd).toHaveBeenCalledWith([]);
+    const expectedChanges = {
+      id: 42,
+      changes: {
+        rawLine: '01/07/2026;-10,00;Carrefour Market',
+        rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' },
+      },
+    };
+    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledWith([expectedChanges]);
+    expect(result.backfilledTransactions).toEqual([expectedChanges]);
+  });
+
+  it('backfills only the field a legacy transaction is missing, leaving the other alone', async () => {
+    const row = validRow({
+      rawLine: 'new candidate line',
+      rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' },
+    });
+    const legacy: Transaction = {
+      id: 42,
+      accountId: 1,
+      bookingDate: '2026-07-01',
+      amount: -10,
+      currency: 'EUR',
+      rawDescription: 'Carrefour Market',
+      rawLine: 'already had one', // must be left untouched
+      fingerprint: await fingerprintFor(row),
+      createdAt: '2026-06-01T00:00:00.000Z',
+    };
+
+    const { service, transactionsRepository } = setup([legacy]);
+
+    const result = await service.commitImport(baseInput([row]));
+
+    const expectedChanges = {
+      id: 42,
+      changes: { rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' } },
+    };
+    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledWith([expectedChanges]);
+    expect(result.backfilledTransactions).toEqual([expectedChanges]);
+  });
+
+  it('never touches a legacy transaction that already has both rawLine and rawRow', async () => {
+    const row = validRow({
+      rawLine: 'new candidate line',
+      rawRow: { Date: '01/07/2026' },
+    });
+    const legacy: Transaction = {
+      id: 42,
+      accountId: 1,
+      bookingDate: '2026-07-01',
+      amount: -10,
+      currency: 'EUR',
+      rawDescription: 'Carrefour Market',
+      rawLine: 'already had one',
+      rawRow: { Date: 'already had one too' },
+      fingerprint: await fingerprintFor(row),
+      createdAt: '2026-06-01T00:00:00.000Z',
+    };
+
+    const { service, transactionsRepository } = setup([legacy]);
+
+    const result = await service.commitImport(baseInput([row]));
+
+    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
+    expect(result.backfilledTransactions).toEqual([]);
   });
 });
 
