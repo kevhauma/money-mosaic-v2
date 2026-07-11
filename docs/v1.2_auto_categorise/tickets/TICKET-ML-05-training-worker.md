@@ -81,16 +81,16 @@ small MLP.
 
 ## Acceptance criteria
 
-- [ ] `grep -r "@tensorflow" src/app` matches **only** `core/ml/category-model.worker.ts` (or files it alone imports) — no other file, including `category-model.worker.types.ts`, imports any `@tensorflow/*` package, not even `import type`.
-- [ ] The dynamic `import()` of tfjs happens once (memoized) and is reused across subsequent messages to the same worker instance — not re-imported per message.
-- [ ] `TRAIN` on a known small labeled dataset produces a model whose `PREDICT` on the same data returns the correct category for the large majority of samples (a basic learnability smoke test, not a strict accuracy bound).
-- [ ] `TRAIN` with `samples.length < 40` completes without a `validationSplit` and without throwing.
-- [ ] `PREDICT` called before any successful `INIT`/`TRAIN` replies with an `ErrorResponse`, not a thrown/uncaught exception that kills the worker.
-- [ ] Tensors are disposed after each `TRAIN`/`PREDICT` call — no unbounded growth in `tf.memory().numTensors` across repeated calls (asserted in a test that calls train/predict multiple times).
-- [ ] `INIT` from previously `TRAIN`-produced `SerializedArtifacts` reproduces equivalent predictions to the model that produced them (round-trip fidelity).
-- [ ] Unit tests exercise the worker's message handling logic directly (not through an actual `Worker` thread, matching how `csv-parse.worker.ts` is tested if a precedent exists, or via a thin exported handler function) for `INIT`/`TRAIN`/`PREDICT`/error paths; these tests **do** exercise real tfjs (unlike ML-07's store tests, which fake this worker entirely).
-- [ ] `ng build --configuration production` chunk table: tfjs (and its `-core`/`-layers`/`-backend-cpu` packages) appear only in this worker's own lazy/worker chunk, never in the initial bundle; no new bundle-budget warning or error.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `grep -r "@tensorflow" src/app` matches **only** `core/ml/category-model.worker.ts` (or files it alone imports) — no other file, including `category-model.worker.types.ts`, imports any `@tensorflow/*` package, not even `import type`.
+- [x] The dynamic `import()` of tfjs happens once (memoized) and is reused across subsequent messages to the same worker instance — not re-imported per message.
+- [x] `TRAIN` on a known small labeled dataset produces a model whose `PREDICT` on the same data returns the correct category for the large majority of samples (a basic learnability smoke test, not a strict accuracy bound).
+- [x] `TRAIN` with `samples.length < 40` completes without a `validationSplit` and without throwing.
+- [x] `PREDICT` called before any successful `INIT`/`TRAIN` replies with an `ErrorResponse`, not a thrown/uncaught exception that kills the worker.
+- [x] Tensors are disposed after each `TRAIN`/`PREDICT` call — no unbounded growth in `tf.memory().numTensors` across repeated calls (asserted in a test that calls train/predict multiple times).
+- [x] `INIT` from previously `TRAIN`-produced `SerializedArtifacts` reproduces equivalent predictions to the model that produced them (round-trip fidelity).
+- [x] Unit tests exercise the worker's message handling logic directly (not through an actual `Worker` thread, matching how `csv-parse.worker.ts` is tested if a precedent exists, or via a thin exported handler function) for `INIT`/`TRAIN`/`PREDICT`/error paths; these tests **do** exercise real tfjs (unlike ML-07's store tests, which fake this worker entirely).
+- [x] `ng build --configuration production` chunk table: tfjs (and its `-core`/`-layers`/`-backend-cpu` packages) appear only in this worker's own lazy/worker chunk, never in the initial bundle; no new bundle-budget warning or error.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

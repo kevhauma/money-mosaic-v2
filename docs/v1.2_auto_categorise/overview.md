@@ -40,7 +40,7 @@ not by file list order:
 - [x] [TICKET-ML-02](./tickets/TICKET-ML-02-feature-hashing.md) — Feature hashing / vectorisation (adds FR-ML-2) — needs ML-01's `FeatureConfig` type; pure, tfjs-free
 - [x] [TICKET-ML-03](./tickets/TICKET-ML-03-rule-proposal-mining.md) — Rule-proposal mining from prediction clusters (adds FR-ML-3) — needs ML-01's thresholds and the existing `matchesRule`; independent of ML-02, can run in parallel
 - [x] [TICKET-ML-04](./tickets/TICKET-ML-04-model-persistence.md) — `categoryModel` Dexie table + repository (adds FR-ML-4) — needs ML-01's schema-version const; independent of ML-02/ML-03, can run in parallel
-- [ ] [TICKET-ML-05](./tickets/TICKET-ML-05-training-worker.md) — Long-lived training/prediction Web Worker, the only tfjs consumer (adds FR-ML-5) — needs ML-01 + ML-02 (imports `extractFeatures` for in-worker feature extraction)
+- [x] [TICKET-ML-05](./tickets/TICKET-ML-05-training-worker.md) — Long-lived training/prediction Web Worker, the only tfjs consumer (adds FR-ML-5) — needs ML-01 + ML-02 (imports `extractFeatures` for in-worker feature extraction)
 - [ ] [TICKET-ML-06](./tickets/TICKET-ML-06-model-service.md) — Main-thread `CategoryModelService` owning the worker (adds FR-ML-6) — needs ML-05
 - [ ] [TICKET-ML-07](./tickets/TICKET-ML-07-model-store.md) — `CategoryModelStore`: status machine, train/predict/accept flows (adds FR-ML-7) — needs ML-04, ML-06, ML-03, and the existing `TransactionsStore`/`CategoriesStore`/`RulesStore`
 - [ ] [TICKET-ML-08](./tickets/TICKET-ML-08-suggestion-ghost-in-transactions.md) — Ghost category suggestion + Accept in the transactions table (adds FR-ML-8) — needs ML-07
