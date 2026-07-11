@@ -44,15 +44,15 @@ plain empty/"uncategorised" state. Categorised transactions and ones without a s
 
 ## Acceptance criteria
 
-- [ ] A categorised transaction never shows a suggestion chip, regardless of whether `CategoryModelStore` has a suggestion cached for it.
-- [ ] An uncategorised transaction with a matching entry in `CategoryModelStore.suggestions()` shows the ghost chip with the correct category name and a confidence rounded to a whole percent.
-- [ ] Clicking Accept calls `CategoryModelStore.acceptSuggestion(transactionId)` exactly once and the row updates (chip disappears, category cell now shows the real, non-manual-looking category) once the store's state settles.
-- [ ] An uncategorised transaction with no suggestion renders exactly as it did before this ticket (no empty chip, no layout shift).
-- [ ] Only `BadgeComponent`/`ButtonComponent` (or other existing shared UI primitives) are used for the new markup — no raw daisyUI/Tailwind classes duplicating what those components already provide.
-- [ ] `CategoryModelStore` is injected via the `@/feature-categories` barrel, not a deep path.
-- [ ] Unit tests cover: row mapping includes `suggestion` only for uncategorised rows with a matching entry; the Accept button calls `acceptSuggestion` with the correct id; a categorised row's mapped `suggestion` is always `undefined` even if the store happens to hold a stale entry for that id.
-- [ ] Verified live in the browser: an uncategorised, known-merchant transaction shows a ghost suggestion after training; clicking Accept sets its category and removes the chip; a manually-categorised transaction never shows a chip.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] A categorised transaction never shows a suggestion chip, regardless of whether `CategoryModelStore` has a suggestion cached for it.
+- [x] An uncategorised transaction with a matching entry in `CategoryModelStore.suggestions()` shows the ghost chip with the correct category name and a confidence rounded to a whole percent.
+- [x] Clicking Accept calls `CategoryModelStore.acceptSuggestion(transactionId)` exactly once and the row updates (chip disappears, category cell now shows the real, non-manual-looking category) once the store's state settles.
+- [x] An uncategorised transaction with no suggestion renders exactly as it did before this ticket (no empty chip, no layout shift).
+- [x] Only `BadgeComponent`/`ButtonComponent` (or other existing shared UI primitives) are used for the new markup — no raw daisyUI/Tailwind classes duplicating what those components already provide.
+- [x] `CategoryModelStore` is injected via the `@/feature-categories` barrel, not a deep path.
+- [x] Unit tests cover: row mapping includes `suggestion` only for uncategorised rows with a matching entry; the Accept button calls `acceptSuggestion` with the correct id; a categorised row's mapped `suggestion` is always `undefined` even if the store happens to hold a stale entry for that id.
+- [x] Verified live in the browser: an uncategorised, known-merchant transaction shows a ghost suggestion after training; clicking Accept sets its category and removes the chip; a manually-categorised transaction never shows a chip.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

@@ -114,6 +114,7 @@ describe('CategoryModelStore', () => {
 
     it('sets ready and refreshes suggestions when the persisted signature matches the active categories', async () => {
       categoriesRepository.getAll.mockResolvedValue([category({ id: 1, name: 'Groceries' })]);
+      transactionsRepository.getAll.mockResolvedValue([transaction({ id: 5 })]);
       const signature = taxonomySignature([{ id: 1, name: 'Groceries' }]);
       categoryModelRepository.get.mockResolvedValue(artifact({ taxonomySignature: signature }));
       await hydrateCollaborators();
@@ -124,6 +125,21 @@ describe('CategoryModelStore', () => {
       expect(store.status()).toBe('ready');
       expect(categoryModelService.init).toHaveBeenCalledTimes(1);
       expect(categoryModelService.predict).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips the predict round-trip and clears suggestions/proposals when there are zero uncategorised transactions — the worker throws on a zero-row batch', async () => {
+      categoriesRepository.getAll.mockResolvedValue([category({ id: 1, name: 'Groceries' })]);
+      const signature = taxonomySignature([{ id: 1, name: 'Groceries' }]);
+      categoryModelRepository.get.mockResolvedValue(artifact({ taxonomySignature: signature }));
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+
+      await store.hydrate();
+
+      expect(store.status()).toBe('ready');
+      expect(categoryModelService.predict).not.toHaveBeenCalled();
+      expect(store.suggestions().size).toBe(0);
+      expect(store.ruleProposals()).toEqual([]);
     });
 
     it('sets stale and still initialises the worker, but does not refresh suggestions, when the signature no longer matches', async () => {
@@ -176,7 +192,13 @@ describe('CategoryModelStore', () => {
         category({ id: 1 }),
         category({ id: 2, name: 'Rent' }),
       ]);
-      transactionsRepository.getAll.mockResolvedValue(labeledTransactions());
+      // Plus one genuinely uncategorised transaction, so the post-train refreshSuggestions()
+      // round-trip actually has a candidate to predict on (an all-labeled set is a legitimate
+      // zero-candidate case, covered separately by the guard test above).
+      transactionsRepository.getAll.mockResolvedValue([
+        ...labeledTransactions(),
+        transaction({ id: MIN_TRAINING_LABELS + 1, fingerprint: 'fp-uncategorised' }),
+      ]);
       categoryModelService.train.mockResolvedValue({
         type: 'TRAIN_OK',
         artifacts: {

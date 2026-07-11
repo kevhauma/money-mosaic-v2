@@ -7,6 +7,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArrowsExchange,
@@ -15,7 +16,7 @@ import {
   tablerUnlink,
 } from '@ng-icons/tabler-icons';
 import { AccountsStore } from '@/feature-accounts';
-import { CategoriesStore } from '@/feature-categories';
+import { CategoriesStore, CategoryModelStore } from '@/feature-categories';
 import type { Category, Transaction, Transfer } from '@/core/data-access';
 import { isLikelyTransfer, savingsAccountIbans } from '@/core/transfers';
 import {
@@ -61,6 +62,7 @@ type TransactionRow = {
   transaction: Transaction;
   accountName: string;
   category: Category | undefined;
+  suggestion: { categoryId: number; categoryName: string; confidence: number } | undefined;
   transfer: Transfer | undefined;
   likelyTransfer: boolean;
   selected: boolean;
@@ -69,6 +71,7 @@ type TransactionRow = {
 @Component({
   selector: 'app-transactions-overview',
   imports: [
+    DecimalPipe,
     NgIcon,
     SignedAmountPipe,
     AlertComponent,
@@ -98,6 +101,7 @@ export class TransactionsOverviewComponent {
   protected readonly transfersStore = inject(TransfersStore);
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly categoriesStore = inject(CategoriesStore);
+  protected readonly categoryModelStore = inject(CategoryModelStore);
 
   /** Drill-down inheritance (FR-STAT-6): bound from the route's query params via `withComponentInputBinding()`. */
   readonly accountId = input<string>();
@@ -178,6 +182,7 @@ export class TransactionsOverviewComponent {
   protected readonly rows = computed<TransactionRow[]>(() => {
     const accountsById = this.accountsStore.accountsById();
     const categoriesById = this.categoriesStore.categoriesById();
+    const suggestions = this.categoryModelStore.suggestions();
     const transferByTransactionId = this.transfersStore.transferByTransactionId();
     const likelyTransferIds = this.likelyTransferIds();
     const selectedIds = this.selection.selectedIds();
@@ -187,11 +192,34 @@ export class TransactionsOverviewComponent {
       accountName: accountsById.get(transaction.accountId)?.name ?? '—',
       category:
         transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined,
+      suggestion: this.resolveSuggestion(transaction, suggestions, categoriesById),
       transfer: transferByTransactionId.get(transaction.id!),
       likelyTransfer: likelyTransferIds.has(transaction.id!),
       selected: selectedIds.has(transaction.id!),
     }));
   });
+
+  /**
+   * A suggestion only ever surfaces for a still-uncategorised row (FR-ML-8) — checked against
+   * `transaction.categoryId` directly rather than the row's resolved `category`, so a stale
+   * cached entry the store hasn't cleared yet can never re-appear once the transaction has a
+   * category.
+   */
+  private resolveSuggestion(
+    transaction: Transaction,
+    suggestions: Map<number, { categoryId: number; confidence: number }>,
+    categoriesById: Map<number, Category>,
+  ): TransactionRow['suggestion'] {
+    if (transaction.categoryId != null) return undefined;
+
+    const suggestion = suggestions.get(transaction.id!);
+    if (!suggestion) return undefined;
+
+    const categoryName = categoriesById.get(suggestion.categoryId)?.name;
+    if (!categoryName) return undefined;
+
+    return { categoryId: suggestion.categoryId, categoryName, confidence: suggestion.confidence };
+  }
 
   protected readonly formOpen = signal(false);
   protected readonly editingTransaction = signal<Transaction | null>(null);
@@ -232,6 +260,11 @@ export class TransactionsOverviewComponent {
 
   protected unlink(transferId: number): void {
     void this.transfersStore.unlink(transferId);
+  }
+
+  /** Accepts a ghost suggestion (FR-ML-8) — delegates to the store, never sets a category itself. */
+  protected acceptSuggestion(transactionId: number): void {
+    void this.categoryModelStore.acceptSuggestion(transactionId);
   }
 
   protected openEdit(transaction: Transaction): void {

@@ -67,6 +67,13 @@ export const CategoryModelStore = signalStore(
       if (store.status() !== 'ready') return;
 
       const candidates = transactionsStore.uncategorisedTransactions();
+      if (candidates.length === 0) {
+        // The worker's tfjs backend throws on a zero-row batch ("Pass at least one tensor to
+        // concat") — skip the round-trip entirely rather than surface that as an app error.
+        patchState(store, { suggestions: new Map(), ruleProposals: [] });
+        return;
+      }
+
       const predictions = await service.predict(
         candidates.map((transaction) => ({
           id: transaction.id!,

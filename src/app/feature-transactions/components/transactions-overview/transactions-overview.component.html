@@ -106,6 +106,18 @@
                   </option>
                 }
               </select>
+              @if (row.suggestion; as suggestion) {
+                <div class="mt-1 flex items-center gap-1">
+                  <mm-badge variant="outline" size="sm" class="opacity-60">
+                    Suggested: {{ suggestion.categoryName }} ({{
+                      suggestion.confidence * 100 | number: '1.0-0'
+                    }}%)
+                  </mm-badge>
+                  <mm-button size="xs" (click)="acceptSuggestion(row.transaction.id!)">
+                    Accept
+                  </mm-button>
+                </div>
+              }
             </td>
             <td class="text-right" [class.text-error]="row.transaction.amount < 0">
               {{ row.transaction.amount | signedAmount }}

@@ -1,12 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { AccountsRepository, TransactionsRepository, type Transaction } from '@/core/data-access';
+import {
+  AccountsRepository,
+  CategoriesRepository,
+  TransactionsRepository,
+  type Category,
+  type Transaction,
+} from '@/core/data-access';
 import { AccountsStore } from '@/feature-accounts';
+import { CategoriesStore, CategoryModelStore } from '@/feature-categories';
 import type { SelectionModel } from '@/shared/utils';
 import type { TransactionFilters } from '../../transaction-filters';
 import { TransactionsStore } from '../../transactions.store';
 import { TransactionsOverviewComponent } from './transactions-overview.component';
+
+type RowSuggestion = { categoryId: number; categoryName: string; confidence: number } | undefined;
 
 /** Protected surface we reach into for selection/bulk/filter assertions. */
 type Internals = {
@@ -16,11 +26,28 @@ type Internals = {
   filteredTransactions: () => Transaction[];
   filters: { set: (value: TransactionFilters) => void };
   pagination: { pagedItems: () => Transaction[] };
+  rows: () => {
+    transaction: Transaction;
+    category: Category | undefined;
+    suggestion: RowSuggestion;
+  }[];
   selectAllFiltered: () => void;
   applyBulkCategory: (categoryId: number) => Promise<void>;
   showUncategorisedOnly: () => void;
   onCategoryChange: (transaction: Transaction, rawCategoryId: string) => Promise<void>;
+  acceptSuggestion: (transactionId: number) => void;
 };
+
+const category = (overrides: Partial<Category> = {}): Category => ({
+  id: 1,
+  name: 'Groceries',
+  kind: 'expense',
+  color: '#ffffff',
+  icon: 'cart',
+  archived: false,
+  isSystem: false,
+  ...overrides,
+});
 
 const noFilters: TransactionFilters = {
   accountId: '',
@@ -56,14 +83,31 @@ describe('TransactionsOverviewComponent', () => {
     getAll: vi.fn().mockResolvedValue([]),
   };
 
+  const categoriesRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+  };
+
+  /**
+   * Faked at the `CategoryModelStore` boundary (not `CategoryModelService`) so the component spec
+   * never triggers the real service's eager `new Worker(...)` construction — see
+   * `category-model.store.spec.ts` for that store's own isolated coverage.
+   */
+  const categoryModelStore = {
+    suggestions: signal(new Map<number, { categoryId: number; confidence: number }>()),
+    acceptSuggestion: vi.fn().mockResolvedValue(undefined),
+  };
+
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {
     vi.clearAllMocks();
+    categoryModelStore.suggestions.set(new Map());
     await TestBed.configureTestingModule({
       imports: [TransactionsOverviewComponent],
       providers: [
         provideRouter([]),
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+        { provide: CategoryModelStore, useValue: categoryModelStore },
       ],
     }).compileComponents();
 
@@ -234,5 +278,52 @@ describe('TransactionsOverviewComponent', () => {
     await component.onCategoryChange(store.transactions()[0], '7');
 
     expect(transactionsRepository.update).not.toHaveBeenCalled();
+  });
+
+  describe('ghost category suggestion (TICKET-ML-08)', () => {
+    it('maps a suggestion only for an uncategorised row with a matching store entry, and never for a categorised row even with a stale cached entry', async () => {
+      await setup();
+      categoriesRepository.getAll.mockResolvedValue([category({ id: 7, name: 'Groceries' })]);
+      await TestBed.inject(CategoriesStore).hydrate();
+      TestBed.inject(TransactionsStore).addMany([
+        transaction(1),
+        { ...transaction(2), categoryId: 7 },
+      ]);
+      categoryModelStore.suggestions.set(
+        new Map([
+          [1, { categoryId: 7, confidence: 0.842 }],
+          // Row 2 already has a category — a stale suggestion entry for it must never surface.
+          [2, { categoryId: 7, confidence: 0.9 }],
+        ]),
+      );
+      const component = internals();
+
+      const rowsById = new Map(component.rows().map((row) => [row.transaction.id, row]));
+
+      expect(rowsById.get(1)?.suggestion).toEqual({
+        categoryId: 7,
+        categoryName: 'Groceries',
+        confidence: 0.842,
+      });
+      expect(rowsById.get(2)?.suggestion).toBeUndefined();
+    });
+
+    it('leaves an uncategorised row with no matching suggestion unaffected', async () => {
+      await setup();
+      TestBed.inject(TransactionsStore).addMany([transaction(1)]);
+      categoryModelStore.suggestions.set(new Map());
+      const component = internals();
+
+      expect(component.rows()[0].suggestion).toBeUndefined();
+    });
+
+    it('acceptSuggestion delegates to CategoryModelStore.acceptSuggestion with the correct id, exactly once', async () => {
+      await setup();
+      const component = internals();
+
+      component.acceptSuggestion(42);
+
+      expect(categoryModelStore.acceptSuggestion).toHaveBeenCalledExactlyOnceWith(42);
+    });
   });
 });
