@@ -14,7 +14,13 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerFilterOff } from '@ng-icons/tabler-icons';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
-import { ButtonComponent, InputComponent, SelectComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  DateRangeInputComponent,
+  InputComponent,
+  SelectComponent,
+  type DateRangeValue,
+} from '@/shared/ui';
 import { debouncedTextSignal } from '@/shared/utils';
 import type { TransactionFilters } from '../../transaction-filters';
 
@@ -39,7 +45,14 @@ function structuralFiltersOf(value: Partial<TransactionFilters>): StructuralFilt
 
 @Component({
   selector: 'app-transaction-filters',
-  imports: [ReactiveFormsModule, NgIcon, ButtonComponent, InputComponent, SelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    NgIcon,
+    ButtonComponent,
+    DateRangeInputComponent,
+    InputComponent,
+    SelectComponent,
+  ],
   templateUrl: './transaction-filters.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerFilterOff })],
@@ -106,6 +119,20 @@ export class TransactionFiltersComponent {
   /** Free-text needle, debounced so typing doesn't re-run the filter/render pipeline on every keystroke (CR-2.4). */
   private readonly debouncedText = debouncedTextSignal(this.filterForm.controls.text);
 
+  /** Bridges the `dateFrom`/`dateTo` form controls to the single `mm-date-range-input` value, same toSignal pattern as `structuralFilters`. */
+  protected readonly dateRangeValue = toSignal(
+    this.filterForm.valueChanges.pipe(
+      map((value): DateRangeValue => ({ from: value.dateFrom ?? '', to: value.dateTo ?? '' })),
+      distinctUntilChanged((a, b) => a.from === b.from && a.to === b.to),
+    ),
+    {
+      initialValue: {
+        from: this.filterForm.getRawValue().dateFrom,
+        to: this.filterForm.getRawValue().dateTo,
+      },
+    },
+  );
+
   /** Single key that changes on either a structural change or a settled text change. */
   private readonly filterKey = computed<TransactionFilters>(() => ({
     ...this.structuralFilters(),
@@ -117,6 +144,10 @@ export class TransactionFiltersComponent {
       this.debouncedText() !== '' ||
       Object.values(this.structuralFilters()).some((value) => value !== ''),
   );
+
+  protected onDateRangeChange(range: DateRangeValue): void {
+    this.filterForm.patchValue({ dateFrom: range.from, dateTo: range.to });
+  }
 
   /** Called by the parent (e.g. the "still need a category" banner) to jump straight to the uncategorised filter. */
   showUncategorisedOnly(): void {

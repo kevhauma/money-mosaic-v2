@@ -1,4 +1,8 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  DateRangeInputComponent,
+  type DateRangeValue,
+} from '../date-range-input/date-range-input.component';
 
 export type RangeGroupingGranularity = 'day' | 'week' | 'month' | 'quarter';
 export type RangeGroupingPreset =
@@ -27,7 +31,7 @@ const GRANULARITIES: RangeGroupingGranularity[] = ['day', 'week', 'month', 'quar
 /** Presentational range + grouping control (FR-STAT-7) — holds no state of its own; the caller owns the value and reacts to the outputs. */
 @Component({
   selector: 'mm-range-grouping-switcher',
-  imports: [],
+  imports: [DateRangeInputComponent],
   templateUrl: './range-grouping-switcher.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -44,12 +48,8 @@ export class RangeGroupingSwitcherComponent {
     this.presetChange.emit(raw as RangeGroupingPreset);
   }
 
-  protected onFromChange(from: string): void {
-    this.customRangeChange.emit({ from, to: this.value().to });
-  }
-
-  protected onToChange(to: string): void {
-    this.customRangeChange.emit({ from: this.value().from, to });
+  protected onRangeChange(range: DateRangeValue): void {
+    this.customRangeChange.emit(range);
   }
 
   protected granularityLabel(granularity: RangeGroupingGranularity): string {

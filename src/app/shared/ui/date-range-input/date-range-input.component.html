@@ -1,0 +1,13 @@
+<div class="dropdown">
+  <button type="button" tabindex="0" [class]="triggerClasses()" [disabled]="disabled()">
+    {{ displayLabel() }}
+  </button>
+  <div
+    tabindex="0"
+    class="dropdown-content z-10 mt-1 rounded-box border border-base-300 bg-base-100 p-3 shadow-lg"
+  >
+    <calendar-range [attr.value]="calendarValue()" (change)="onCalendarChange($event)">
+      <calendar-month></calendar-month>
+    </calendar-range>
+  </div>
+</div>

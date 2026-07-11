@@ -12,14 +12,14 @@
     </mm-select>
   </fieldset>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">From</legend>
-    <mm-input type="date" formControlName="dateFrom" size="sm" class="w-full" />
-  </fieldset>
-
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">To</legend>
-    <mm-input type="date" formControlName="dateTo" size="sm" class="w-full" />
+  <fieldset class="fieldset col-span-2">
+    <legend class="fieldset-legend">Date range</legend>
+    <mm-date-range-input
+      [value]="dateRangeValue()"
+      (valueChange)="onDateRangeChange($event)"
+      size="sm"
+      class="w-full"
+    />
   </fieldset>
 
   <fieldset class="fieldset">

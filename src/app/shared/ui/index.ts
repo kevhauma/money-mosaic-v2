@@ -10,3 +10,4 @@ export * from './alert/alert.component';
 export * from './stat-card/stat-card.component';
 export * from './range-grouping-switcher/range-grouping-switcher.component';
 export * from './paginator/paginator.component';
+export * from './date-range-input/date-range-input.component';

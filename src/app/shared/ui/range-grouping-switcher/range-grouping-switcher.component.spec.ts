@@ -43,7 +43,7 @@ describe('RangeGroupingSwitcherComponent', () => {
     component.customRangeChange.subscribe(emitSpy);
     fixture.detectChanges();
 
-    component['onFromChange']('2026-06-01');
+    component['onRangeChange']({ from: '2026-06-01', to: '2026-07-31' });
 
     expect(emitSpy).toHaveBeenCalledWith({ from: '2026-06-01', to: '2026-07-31' });
   });
@@ -72,16 +72,16 @@ describe('RangeGroupingSwitcherComponent', () => {
     expect(emitSpy).toHaveBeenCalledWith('custom');
   });
 
-  it('disables the from/to inputs while a non-custom preset is active', () => {
+  it('disables the date-range trigger while a non-custom preset is active', () => {
     fixture.detectChanges();
 
-    const inputs: NodeListOf<HTMLInputElement> =
-      fixture.nativeElement.querySelectorAll('input[type="date"]');
-    expect(inputs[0].disabled).toBe(true);
-    expect(inputs[1].disabled).toBe(true);
+    const trigger: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'mm-date-range-input button',
+    );
+    expect(trigger.disabled).toBe(true);
   });
 
-  it('enables the from/to inputs once value().preset is "custom"', () => {
+  it('enables the date-range trigger once value().preset is "custom"', () => {
     fixture.componentRef.setInput('value', {
       preset: 'custom',
       from: '2026-07-01',
@@ -90,9 +90,9 @@ describe('RangeGroupingSwitcherComponent', () => {
     });
     fixture.detectChanges();
 
-    const inputs: NodeListOf<HTMLInputElement> =
-      fixture.nativeElement.querySelectorAll('input[type="date"]');
-    expect(inputs[0].disabled).toBe(false);
-    expect(inputs[1].disabled).toBe(false);
+    const trigger: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'mm-date-range-input button',
+    );
+    expect(trigger.disabled).toBe(false);
   });
 });

@@ -26,7 +26,7 @@ The net-worth contract (STAT-03) consumes the account fields (ACC-02 share + ACC
 - [x] [TICKET-TXN-06](./tickets/TICKET-TXN-06-original-csv-line-detail.md) — Keep and show the original CSV line on a transaction (extends FR-TXN-1 / FR-IMP-1) — do before ACC-04/CAT-03 so the edit-form popup change and the new `rawLine` field aren't reviewed alongside unrelated reorder UI
 - [x] [TICKET-ACC-04](./tickets/TICKET-ACC-04-manual-account-ordering.md) — Manual account ordering (extends FR-ACC-1) — same shape as CAT-03, build back-to-back so the reorder interaction stays consistent
 - [x] [TICKET-CAT-03](./tickets/TICKET-CAT-03-manual-category-ordering.md) — Manual category ordering (extends FR-CAT-1) — same shape as ACC-04, build back-to-back
-- [ ] [TICKET-STAT-10](./tickets/TICKET-STAT-10-unified-date-range-picker.md) — Unified from/to date-range field (extends FR-STAT-7, touches FR-TXN-3) — touches two existing call sites, do last since it has the widest visual surface to verify
+- [x] [TICKET-STAT-10](./tickets/TICKET-STAT-10-unified-date-range-picker.md) — Unified from/to date-range field (extends FR-STAT-7, touches FR-TXN-3) — touches two existing call sites, do last since it has the widest visual surface to verify
 
 ## Considered, not ticketed yet
 

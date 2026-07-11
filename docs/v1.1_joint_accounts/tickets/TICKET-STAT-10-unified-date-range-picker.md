@@ -23,21 +23,24 @@ Three separate two-input implementations exist, and `shared/ui` has no date-rang
 ## Desired result (to-be)
 
 - A new `shared/ui` component (e.g. `mm-date-range-input`) exposing a single `{ from, to }` value, following the existing `mm-`-prefixed wrapper-primitive convention (variant-driven, no raw daisyUI classes exposed to consumers).
+- The control renders as **one field** — a single trigger showing the formatted `from – to` label — that opens **one calendar popover** for picking both the start and end date in a single connected interaction, rather than two separate linked date inputs. Implemented with the [Cally](https://wicky.nillia.ms/cally/) `<calendar-range>` web component (daisyUI's own recommended calendar library — ~9KB min/gzip, zero framework dependencies), inside a daisyUI CSS-focus dropdown (the same pattern already used by `accounts-overview.component.html`'s row-action menu).
 - `range-grouping-switcher.component` uses the new component in place of its two raw date inputs; the existing `RangeStore` wiring (`onFromChange`/`onToChange` or equivalent) and the "disabled unless preset is custom" rule are preserved.
 - `transaction-filters.component` uses the same shared component in place of its two `mm-input` date fields, wired to the existing `dateFrom`/`dateTo` form controls (or a single range form control, whichever is the cleaner fit).
 - No change to existing validation behaviour (e.g. `from` ≤ `to`) beyond the interaction model itself.
 
 ## Acceptance criteria
 
-- [ ] A new `shared/ui` date-range component exists, taking/emitting a single `{ from, to }` value, following the `mm-` wrapper-primitive convention.
-- [ ] `range-grouping-switcher.component` uses the new component instead of two separate `<input type="date">` elements; `RangeStore` wiring is preserved.
-- [ ] `transaction-filters.component` uses the same shared component instead of its two `mm-input` date fields.
-- [ ] The "custom range only editable when preset is custom" disable behaviour is preserved.
-- [ ] The component has a spec covering rendering and value emission, consistent with `shared/ui` testing conventions.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser: picking a custom range in the topbar and in the transaction filters both work through the new single control, at desktop and mobile widths.
+- [x] A new `shared/ui` date-range component exists, taking/emitting a single `{ from, to }` value, following the `mm-` wrapper-primitive convention.
+- [x] The component renders as a single field/trigger that opens one calendar popover (Cally `calendar-range`) for picking both the start and end date, not two linked native date inputs.
+- [x] `range-grouping-switcher.component` uses the new component instead of two separate `<input type="date">` elements; `RangeStore` wiring is preserved.
+- [x] `transaction-filters.component` uses the same shared component instead of its two `mm-input` date fields.
+- [x] The "custom range only editable when preset is custom" disable behaviour is preserved (the trigger is disabled, so the popover cannot be opened).
+- [x] The component has a spec covering rendering and value emission, consistent with `shared/ui` testing conventions.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser: picking a custom range via the popover calendar in the topbar and in the transaction filters both work, at desktop and mobile widths.
 
 ## Notes
 
 - This is a `shared/ui` primitive, not a feature-specific one — both consumers should end up calling the exact same component rather than two similar-looking ones.
-- The exact interaction (two linked native date inputs presented as one compact control vs. a calendar popover) is an implementation-time UI call; the contract above — one component, one value, same two call sites — is what matters.
+- Superseded decision: the first pass of this ticket shipped two linked native date inputs presented as one compact control. Corrected per user feedback — the field must be a single control that opens one popover calendar, not two adjacent inputs.
+- `cally` is a new runtime dependency (added to `package.json`), justified as the smallest available way to get real range-picker UX; it has exactly one dependency of its own and ships pre-built web components, so it doesn't need any Angular-specific wiring beyond `CUSTOM_ELEMENTS_SCHEMA` and a side-effect import.

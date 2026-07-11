@@ -19,22 +19,11 @@
     <option value="custom">Custom</option>
   </select>
 
-  <input
-    type="date"
-    class="input input-sm w-36"
-    aria-label="Range start"
-    [value]="value().from"
+  <mm-date-range-input
+    [value]="{ from: value().from, to: value().to }"
     [disabled]="value().preset !== 'custom'"
-    (change)="onFromChange($any($event.target).value)"
-  />
-  <span class="text-base-content/50">–</span>
-  <input
-    type="date"
-    class="input input-sm w-36"
-    aria-label="Range end"
-    [value]="value().to"
-    [disabled]="value().preset !== 'custom'"
-    (change)="onToChange($any($event.target).value)"
+    size="sm"
+    (valueChange)="onRangeChange($event)"
   />
 
   <div class="join">
