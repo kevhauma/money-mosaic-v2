@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerRefresh } from '@ng-icons/tabler-icons';
 import { AccountsStore } from '@/feature-accounts';
+import { CategoriesStore } from '@/feature-categories';
 import { resolveTransferMatches, type TransferCandidate } from '@/core/transfers';
 import { ButtonComponent, InputComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
@@ -20,6 +21,7 @@ import { TransferSettingsStore } from '../../transfer-settings.store';
 export class TransferReviewComponent {
   protected readonly transactionsStore = inject(TransactionsStore);
   protected readonly accountsStore = inject(AccountsStore);
+  protected readonly categoriesStore = inject(CategoriesStore);
   protected readonly transfersStore = inject(TransfersStore);
   protected readonly settingsStore = inject(TransferSettingsStore);
 
@@ -39,6 +41,7 @@ export class TransferReviewComponent {
     return resolveTransferMatches(
       this.transactionsStore.transactions(),
       this.accountsStore.accounts(),
+      this.categoriesStore.categories(),
       this.settingsStore.matchWindowDays(),
       this.settingsStore.autoLinkMediumConfidence(),
     ).ambiguous;

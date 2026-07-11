@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { resolveTransferMatches } from '@/core/transfers';
 import { AccountsStore } from '@/feature-accounts';
+import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransferSettingsStore } from '@/feature-transactions';
 import { UNCATEGORISED_SENTINEL } from '@/shared/utils';
 
@@ -15,6 +16,7 @@ import { UNCATEGORISED_SENTINEL } from '@/shared/utils';
 export class ActionQueuePanelComponent {
   protected readonly transactionsStore = inject(TransactionsStore);
   private readonly accountsStore = inject(AccountsStore);
+  private readonly categoriesStore = inject(CategoriesStore);
   private readonly transferSettingsStore = inject(TransferSettingsStore);
 
   protected readonly uncategorisedSentinel = UNCATEGORISED_SENTINEL;
@@ -25,6 +27,7 @@ export class ActionQueuePanelComponent {
       resolveTransferMatches(
         this.transactionsStore.transactions(),
         this.accountsStore.accounts(),
+        this.categoriesStore.categories(),
         this.transferSettingsStore.matchWindowDays(),
         this.transferSettingsStore.autoLinkMediumConfidence(),
       ).ambiguous.length,

@@ -1,4 +1,7 @@
-import type { Account, Transaction } from '@/core/data-access';
+import type { Account, Category, Transaction } from '@/core/data-access';
+// Deep import (not the `@/core/accounts` barrel) avoids a barrel cycle: that barrel's
+// account-deletion.service.ts imports `@/core/transfers` for TransferCleanupService.
+import { resolveCoOwnerByIban } from '@/core/accounts/joint-owner-lookup';
 import { normalizeIban } from '@/shared/utils';
 
 export type TransferCandidate = {
@@ -79,6 +82,37 @@ export const savingsAccountIbans = (accounts: Account[]): Set<string> =>
       .map((account) => normalizeIban(account.iban))
       .filter((iban) => iban.length > 0),
   );
+
+/** The (normalized) IBANs of all of the user's own accounts, regardless of type. */
+export const ownAccountIbans = (accounts: Account[]): Set<string> =>
+  new Set(accounts.map((account) => normalizeIban(account.iban)).filter((iban) => iban.length > 0));
+
+/**
+ * True when a transaction should be treated as an **external contribution** rather than a
+ * transfer candidate (TICKET-TRF-03): either it's already tagged with a `neutral`-kind category
+ * (CAT-02 — the user has said "this is a contribution"), or it's a one-sided inflow into a
+ * `joint` account whose counterparty is a registered co-owner (ACC-03) or simply isn't a known
+ * own IBAN at all (fallback for a contributor not yet registered). Reuses `resolveCoOwnerByIban`,
+ * the same lookup CAT-02/STAT-03 use, so matching and stats agree on what counts as a
+ * contribution. `ownIbans` must already contain normalized IBANs (see `ownAccountIbans`).
+ */
+export const isExternalContribution = (
+  transaction: Transaction,
+  account: Account | undefined,
+  categoriesById: ReadonlyMap<number, Category>,
+  ownIbans: ReadonlySet<string>,
+): boolean => {
+  const category =
+    transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined;
+  if (category?.kind === 'neutral') return true;
+
+  if (!account || account.type !== 'joint') return false;
+  if (transaction.transferId != null || transaction.amount <= 0) return false;
+
+  if (resolveCoOwnerByIban(account, transaction.counterpartyIban)) return true;
+
+  return !ownIbans.has(normalizeIban(transaction.counterpartyIban));
+};
 
 /**
  * Flags a movement whose counterparty is one of the user's own **savings** accounts (TICKET-TRF-02,
@@ -179,19 +213,35 @@ const findMediumConfidenceMatches = (
 /**
  * Finds transfer pairs among unlinked transactions (FR-TRF-3): high-confidence IBAN matches first,
  * then medium-confidence amount/date matches among what's left. Everything not mutually unique is
- * surfaced for manual confirmation rather than guessed at.
+ * surfaced for manual confirmation rather than guessed at. Suspected external contributions
+ * (TICKET-TRF-03) are pulled out of the medium-confidence pool before that pass runs, so a
+ * partner's one-sided inflow can't be guessed onto an unrelated same-amount transaction — a
+ * genuine own-account transfer is unaffected since high confidence already runs on everyone.
  */
 export const resolveTransferMatches = (
   transactions: Transaction[],
   accounts: Account[],
+  categories: Category[],
   windowDays: number,
   autoLinkMediumConfidence: boolean,
 ): TransferMatchResult => {
   const accountsById = new Map(accounts.map((account) => [account.id!, account]));
+  const categoriesById = new Map(categories.map((category) => [category.id!, category]));
+  const ownIbans = ownAccountIbans(accounts);
   const unlinked = transactions.filter((transaction) => transaction.transferId == null);
 
   const highConfidence = findHighConfidenceMatches(unlinked, accountsById, windowDays);
-  const remaining = unlinked.filter((transaction) => !highConfidence.consumed.has(transaction.id!));
+  const remaining = unlinked
+    .filter((transaction) => !highConfidence.consumed.has(transaction.id!))
+    .filter(
+      (transaction) =>
+        !isExternalContribution(
+          transaction,
+          accountsById.get(transaction.accountId),
+          categoriesById,
+          ownIbans,
+        ),
+    );
   const mediumConfidence = findMediumConfidenceMatches(
     remaining,
     windowDays,

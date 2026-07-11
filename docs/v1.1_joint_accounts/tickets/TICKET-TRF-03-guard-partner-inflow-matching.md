@@ -32,14 +32,14 @@ A partner's deposit into a joint account has no counterpart in the app (the part
 
 ## Acceptance criteria
 
-- [ ] `resolveTransferMatches()` excludes from the **medium-confidence** candidate pool any transaction that is (a) already `neutral`-kind, (b) a one-sided inflow into a `joint` account whose `counterpartyIban` matches a registered co-owner IBAN (ACC-03), or (c) a one-sided inflow into a `joint` account whose counterparty IBAN is not a known own IBAN. High-confidence IBAN matching is left intact for all transactions.
-- [ ] A co-owner IBAN that (mis)configuration has also listed as an own account IBAN resolves in favour of the **high-confidence own-account** path (real transfer wins over contribution guard), and this precedence is asserted in a test.
-- [ ] The "own IBAN" set and category-kind lookup are threaded in without breaking the existing signature contract used by callers; if new inputs are needed they are passed explicitly (accounts already flow in; add categories/own-IBAN set as needed) — no reach into `appDb`.
-- [ ] The exclusion is expressed via a shared predicate (reusing/adjacent to `isLikelyTransfer` and CAT-02's neutral check) rather than a bespoke inline condition, so matching and stats agree on what "external contribution" means.
-- [ ] A genuine own-account transfer into a joint account (counterparty IBAN = my own account) is **still** linked (high-confidence path unaffected).
-- [ ] `autoLinkMediumConfidence` semantics are otherwise unchanged for non-joint / non-neutral transactions.
-- [ ] No Dexie change; no stored data mutated by the matcher beyond the existing linking behaviour (which still goes through the transfers store/repository).
-- [ ] Unit tests cover: a co-owner `+500` into a joint account (counterparty = a registered co-owner IBAN) + an unrelated own `−500` are **not** auto-linked (previously would be); the same for an inflow from an unregistered non-own IBAN; a `neutral`-tagged inflow is excluded from all matches; a real own-checking→own-joint transfer with matching IBAN **is** still linked (high confidence); two genuine own non-joint accounts still medium-match as before (regression).
+- [x] `resolveTransferMatches()` excludes from the **medium-confidence** candidate pool any transaction that is (a) already `neutral`-kind, (b) a one-sided inflow into a `joint` account whose `counterpartyIban` matches a registered co-owner IBAN (ACC-03), or (c) a one-sided inflow into a `joint` account whose counterparty IBAN is not a known own IBAN. High-confidence IBAN matching is left intact for all transactions.
+- [x] A co-owner IBAN that (mis)configuration has also listed as an own account IBAN resolves in favour of the **high-confidence own-account** path (real transfer wins over contribution guard), and this precedence is asserted in a test.
+- [x] The "own IBAN" set and category-kind lookup are threaded in without breaking the existing signature contract used by callers; if new inputs are needed they are passed explicitly (accounts already flow in; add categories/own-IBAN set as needed) — no reach into `appDb`.
+- [x] The exclusion is expressed via a shared predicate (reusing/adjacent to `isLikelyTransfer` and CAT-02's neutral check) rather than a bespoke inline condition, so matching and stats agree on what "external contribution" means.
+- [x] A genuine own-account transfer into a joint account (counterparty IBAN = my own account) is **still** linked (high-confidence path unaffected).
+- [x] `autoLinkMediumConfidence` semantics are otherwise unchanged for non-joint / non-neutral transactions.
+- [x] No Dexie change; no stored data mutated by the matcher beyond the existing linking behaviour (which still goes through the transfers store/repository).
+- [x] Unit tests cover: a co-owner `+500` into a joint account (counterparty = a registered co-owner IBAN) + an unrelated own `−500` are **not** auto-linked (previously would be); the same for an inflow from an unregistered non-own IBAN; a `neutral`-tagged inflow is excluded from all matches; a real own-checking→own-joint transfer with matching IBAN **is** still linked (high confidence); two genuine own non-joint accounts still medium-match as before (regression).
 - [ ] Verified live in the browser: importing a partner deposit into a joint account leaves it unlinked and taggable as "Partner contribution"; it does not silently consume an unrelated same-amount transaction; a real inter-account transfer still auto-links.
 
 ## Notes
