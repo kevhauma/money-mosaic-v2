@@ -48,15 +48,15 @@ features are noise; this ticket only produces the vector.
 
 ## Acceptance criteria
 
-- [ ] `extractFeatures` always returns a `Float32Array` of exactly `config.dim` length, for any input text (including empty strings).
-- [ ] `vec[config.dim - 1]` always equals `Math.sign(amount)` (`-1`, `0`, or `1`) and is never touched by token/n-gram hashing.
-- [ ] `extractFeatures` is deterministic: identical input + config always produces an identical vector (needed later so the worker's PREDICT results are reproducible and testable).
-- [ ] `tokenize` lowercases and splits on non-alphanumeric boundaries; `charNgrams` produces every substring of each length in `[min, max]`.
-- [ ] `hashToken` is a pure function with no external dependency (no `crypto`, no tfjs) — same string always hashes to the same number.
-- [ ] No import of `@tensorflow/*` anywhere in this file.
-- [ ] Unit tests (`feature-hashing.spec.ts`) cover: determinism (same input twice), the fixed `dim` length regardless of input length, the amount-sign slot for positive/negative/zero amounts, n-gram generation at the configured min/max, and that two transactions with completely different text hash to different vectors (basic collision sanity, not a formal proof).
-- [ ] No TestBed — pure functions, co-located `feature-hashing.spec.ts`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `extractFeatures` always returns a `Float32Array` of exactly `config.dim` length, for any input text (including empty strings).
+- [x] `vec[config.dim - 1]` always equals `Math.sign(amount)` (`-1`, `0`, or `1`) and is never touched by token/n-gram hashing.
+- [x] `extractFeatures` is deterministic: identical input + config always produces an identical vector (needed later so the worker's PREDICT results are reproducible and testable).
+- [x] `tokenize` lowercases and splits on non-alphanumeric boundaries; `charNgrams` produces every substring of each length in `[min, max]`.
+- [x] `hashToken` is a pure function with no external dependency (no `crypto`, no tfjs) — same string always hashes to the same number.
+- [x] No import of `@tensorflow/*` anywhere in this file.
+- [x] Unit tests (`feature-hashing.spec.ts`) cover: determinism (same input twice), the fixed `dim` length regardless of input length, the amount-sign slot for positive/negative/zero amounts, n-gram generation at the configured min/max, and that two transactions with completely different text hash to different vectors (basic collision sanity, not a formal proof).
+- [x] No TestBed — pure functions, co-located `feature-hashing.spec.ts`.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
