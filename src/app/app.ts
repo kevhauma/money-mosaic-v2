@@ -16,7 +16,12 @@ import {
   tablerTags,
 } from '@ng-icons/tabler-icons';
 import { type Granularity, RangeStore, computeFullHistoryRange } from '@/core/stats';
-import { AccountsStore } from '@/feature-accounts';
+// Imported directly (not via the @/feature-accounts barrel) — the barrel's ./components
+// re-export pulls in the account/net-worth chart components, which statically import echarts.
+// Angular's @Component decorator has side effects, so esbuild can't tree-shake that barrel
+// re-export once anything else from it is imported eagerly (same reasoning as the
+// RangeGroupingSwitcherComponent import above).
+import { AccountsStore } from '@/feature-accounts/accounts.store';
 import { TransactionsStore } from '@/feature-transactions';
 // Imported directly (not via the @/shared/ui barrel) to keep the rest of shared/ui — and the
 // @angular/forms it drags in via InputComponent/SelectComponent — out of the eager bundle;

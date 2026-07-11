@@ -28,13 +28,15 @@ As a developer, I want `ng build --configuration production` to respect the init
 
 ## Acceptance criteria
 
-- [ ] `ng build --configuration production` completes without a budget warning or error.
-- [ ] The production chunk table shows `echarts` only inside lazy/route chunks (Dashboard, Accounts), never in `main`/initial chunks.
-- [ ] `app.ts`'s import of `AccountsStore` no longer traverses `@/feature-accounts`'s `./components` barrel path.
-- [ ] `ng lint` and `ng test` continue to pass unchanged.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `ng build --configuration production` completes without a budget warning or error. — *Completes without error (initial bundle 1.54 MB → 848.72 kB, under the 1 MB error threshold). A 348.72 kB budget **warning** remains, but it comes from pre-existing framework/CSS weight (Angular/Router/`@ngrx/signals`/Dexie/tabler-icons JS, plus 327.62 kB of Tailwind/daisyUI CSS) unrelated to `echarts` — see caveat note below.*
+- [x] The production chunk table shows `echarts` only inside lazy/route chunks (Dashboard, Accounts), never in `main`/initial chunks. — verified: `echarts` string only appears in lazy chunks in the production output; zero occurrences in any initial chunk.
+- [x] `app.ts`'s import of `AccountsStore` no longer traverses `@/feature-accounts`'s `./components` barrel path.
+- [x] `ng lint` and `ng test` continue to pass unchanged.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
 - Discovered while working [TICKET-ML-05](./TICKET-ML-05-training-worker.md) (the auto-categorisation training worker); it is unrelated to tfjs or auto-categorisation — tfjs was independently confirmed to isolate correctly into its own worker chunk.
 - Watch for the same barrel-eagerness pattern recurring elsewhere: any future eager import through `@/feature-accounts` (or any feature barrel whose `components` re-export includes a chart/heavy-dependency component) will reintroduce this regression. A longer-term option worth considering separately: split `feature-accounts/index.ts` so `accounts.store` is importable without also pulling in `./components`.
+- **Root cause was one level deeper than described above:** `app.ts`'s direct `AccountsStore` import (as originally described) was *not* the only leak. `feature-accounts/accounts.store.ts` — itself eagerly loaded via `app.config.ts` regardless of `app.ts` — imported `CategoriesStore` from the `@/feature-categories` barrel, which re-exports `rule-form`/`rules-overview` components that import `AccountsStore` back from the `@/feature-accounts` barrel, closing a circular path into the same chart components. Both `app.ts` and `accounts.store.ts` now import their respective stores by direct file path instead of through a barrel.
+- **Caveat on the "no warning" criterion:** after this fix, `echarts` is fully out of the initial bundle and the hard budget *error* is gone, but a budget *warning* remains (848.72 kB vs. the 500 kB threshold). That residual weight is unrelated to this ticket's root cause (core Angular/Router/ngrx-signals/Dexie/icons JS plus Tailwind/daisyUI CSS) and reducing it further is a separate dependency-dieting/CSS-trimming effort, not an echarts-bundling bug. Flagging here rather than opening a new ticket, per discussion with the user when this was found.
