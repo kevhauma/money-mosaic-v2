@@ -15,6 +15,7 @@ import { TransfersStore } from './feature-transactions/transfers.store';
 import { TransferSettingsStore } from './feature-transactions/transfer-settings.store';
 import { CategoriesStore } from './feature-categories/categories.store';
 import { RulesStore } from './feature-categories/rules.store';
+import { CategoryModelStore } from './feature-categories/category-model.store';
 import { MappingProfilesStore } from './feature-import/mapping-profiles.store';
 import { ImportBatchesStore } from './feature-import/import-batches.store';
 import { routes } from './app.routes';
@@ -33,6 +34,7 @@ export const appConfig: ApplicationConfig = {
       const transferSettingsStore = inject(TransferSettingsStore);
       const categoriesStore = inject(CategoriesStore);
       const rulesStore = inject(RulesStore);
+      const categoryModelStore = inject(CategoryModelStore);
       const mappingProfilesStore = inject(MappingProfilesStore);
       const importBatchesStore = inject(ImportBatchesStore);
       return appDb
@@ -49,6 +51,7 @@ export const appConfig: ApplicationConfig = {
             importBatchesStore.hydrate(),
           ]),
         )
+        .then(() => categoryModelStore.hydrate())
         .then(async () => {
           // Dev-only sample-data seed (TICKET-DEV-01). The dynamic import keeps the seed module and
           // its dataset in a separate chunk that a production build never references or loads, and

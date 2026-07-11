@@ -66,19 +66,19 @@ existing `TransactionsStore`/`RulesStore` methods.
 
 ## Acceptance criteria
 
-- [ ] `hydrate()` sets `'untrained'` when no artifact is persisted, `'ready'` when the persisted signature matches the current active categories, `'stale'` when it doesn't — and calls `refreshSuggestions()` only in the `'ready'` case.
-- [ ] `train()` sets `'not-enough-data'` (without invoking `service.train`) when labeled samples are below `MIN_TRAINING_LABELS` or active categories are below `MIN_CATEGORIES`.
-- [ ] A successful `train()` persists artifacts via `CategoryModelRepository`, transitions `training → ready`, and triggers `refreshSuggestions()`.
-- [ ] A failed `train()` (service rejects) transitions to `'error'` without leaving `status` stuck at `'training'`.
-- [ ] `refreshSuggestions()` is a no-op (does not call `service.predict`) when `status !== 'ready'`.
-- [ ] `acceptSuggestion` calls `TransactionsStore.bulkAssignCategory` with exactly `[transactionId]` and the suggested `categoryId`, and never calls `appDb` or any repository directly.
-- [ ] `acceptProposal` calls `RulesStore.createRuleFromCounterparty` with the proposal's sample transaction and category, and never constructs a `Rule` object itself.
-- [ ] `dismissSuggestion`/`dismissProposal` mutate only local store state — no repository or worker call.
-- [ ] The store never calls `TransactionsStore.bulkAssignCategory` or any category-setting method except in direct response to `acceptSuggestion`/`acceptProposal` — no automatic/silent category assignment anywhere.
-- [ ] Unit tests use a **fake `CategoryModelService`** (canned `init`/`train`/`predict` responses, no real tfjs) and a fake/in-memory `CategoryModelRepository`, covering: hydrate's three branches, the cold-start guard, the training success/failure transitions, suggestion mapping via `categoryIdByIndex`, and that accept/dismiss flows delegate correctly and never touch `appDb`.
-- [ ] No TestBed dependency on `@tensorflow/*` anywhere in this ticket's tests — the worker is fully faked.
-- [ ] `CategoryModelStore` is never imported back by `TransactionsStore`, `CategoriesStore`, or `RulesStore` (one-directional dependency, checked via the fallow skill's boundary check).
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `hydrate()` sets `'untrained'` when no artifact is persisted, `'ready'` when the persisted signature matches the current active categories, `'stale'` when it doesn't — and calls `refreshSuggestions()` only in the `'ready'` case.
+- [x] `train()` sets `'not-enough-data'` (without invoking `service.train`) when labeled samples are below `MIN_TRAINING_LABELS` or active categories are below `MIN_CATEGORIES`.
+- [x] A successful `train()` persists artifacts via `CategoryModelRepository`, transitions `training → ready`, and triggers `refreshSuggestions()`.
+- [x] A failed `train()` (service rejects) transitions to `'error'` without leaving `status` stuck at `'training'`.
+- [x] `refreshSuggestions()` is a no-op (does not call `service.predict`) when `status !== 'ready'`.
+- [x] `acceptSuggestion` calls `TransactionsStore.bulkAssignCategory` with exactly `[transactionId]` and the suggested `categoryId`, and never calls `appDb` or any repository directly.
+- [x] `acceptProposal` calls `RulesStore.createRuleFromCounterparty` with the proposal's sample transaction and category, and never constructs a `Rule` object itself.
+- [x] `dismissSuggestion`/`dismissProposal` mutate only local store state — no repository or worker call.
+- [x] The store never calls `TransactionsStore.bulkAssignCategory` or any category-setting method except in direct response to `acceptSuggestion`/`acceptProposal` — no automatic/silent category assignment anywhere.
+- [x] Unit tests use a **fake `CategoryModelService`** (canned `init`/`train`/`predict` responses, no real tfjs) and a fake/in-memory `CategoryModelRepository`, covering: hydrate's three branches, the cold-start guard, the training success/failure transitions, suggestion mapping via `categoryIdByIndex`, and that accept/dismiss flows delegate correctly and never touch `appDb`.
+- [x] No TestBed dependency on `@tensorflow/*` anywhere in this ticket's tests — the worker is fully faked.
+- [x] `CategoryModelStore` is never imported back by `TransactionsStore`, `CategoriesStore`, or `RulesStore` (one-directional dependency, checked via the fallow skill's boundary check).
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
