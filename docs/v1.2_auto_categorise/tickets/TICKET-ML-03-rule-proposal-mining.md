@@ -58,16 +58,16 @@ editable rule.
 
 ## Acceptance criteria
 
-- [ ] `mineRuleProposals` groups strictly by exact raw `counterpartyName` string (not normalized/lowercased) — matches how rule `equals`/`contains` conditions already compare it.
-- [ ] A cluster below `minSupport` or `minConfidence` is excluded.
-- [ ] A cluster where every member transaction already matches at least one enabled rule is excluded entirely, using the existing `matchesRule` helper — no reimplementation of rule-matching logic.
-- [ ] A cluster where only *some* members match an existing rule is still proposed (the cluster isn't fully covered yet) — document this boundary case explicitly in a test.
-- [ ] Transactions with an empty/missing `counterpartyName` never form or contribute to a proposal.
-- [ ] Output is sorted by support desc, then mean confidence desc.
-- [ ] Each `RuleProposal` includes a `sampleTransactionId` usable directly as the `sampleTxn` argument the existing `createRuleFromCounterparty` expects.
-- [ ] Unit tests (`rule-proposal-mining.spec.ts`) cover: a cluster meeting both thresholds is proposed; one below either threshold is excluded; a cluster fully covered by an enabled rule is excluded; a partially-covered cluster is still proposed; empty-counterparty predictions are ignored; sort order; modal-category tie-breaking is deterministic (e.g. lowest `categoryId` wins a tie).
-- [ ] No TestBed — pure function, co-located `rule-proposal-mining.spec.ts`; no import of `@tensorflow/*`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `mineRuleProposals` groups strictly by exact raw `counterpartyName` string (not normalized/lowercased) — matches how rule `equals`/`contains` conditions already compare it.
+- [x] A cluster below `minSupport` or `minConfidence` is excluded.
+- [x] A cluster where every member transaction already matches at least one enabled rule is excluded entirely, using the existing `matchesRule` helper — no reimplementation of rule-matching logic.
+- [x] A cluster where only *some* members match an existing rule is still proposed (the cluster isn't fully covered yet) — document this boundary case explicitly in a test.
+- [x] Transactions with an empty/missing `counterpartyName` never form or contribute to a proposal.
+- [x] Output is sorted by support desc, then mean confidence desc.
+- [x] Each `RuleProposal` includes a `sampleTransactionId` usable directly as the `sampleTxn` argument the existing `createRuleFromCounterparty` expects.
+- [x] Unit tests (`rule-proposal-mining.spec.ts`) cover: a cluster meeting both thresholds is proposed; one below either threshold is excluded; a cluster fully covered by an enabled rule is excluded; a partially-covered cluster is still proposed; empty-counterparty predictions are ignored; sort order; modal-category tie-breaking is deterministic (e.g. lowest `categoryId` wins a tie).
+- [x] No TestBed — pure function, co-located `rule-proposal-mining.spec.ts`; no import of `@tensorflow/*`.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
