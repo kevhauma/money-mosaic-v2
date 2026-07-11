@@ -12,7 +12,11 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import type { Category, Transaction, Transfer } from '@/core/data-access';
-import { reimbursementCandidates, validateAttributionOverride } from '@/core/transactions';
+import {
+  reimbursementCandidates,
+  validateAttributionOverride,
+  validateNullified,
+} from '@/core/transactions';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore, RulesStore } from '@/feature-categories';
 import { ButtonComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
@@ -22,7 +26,7 @@ import { TransferSettingsStore } from '../../transfer-settings.store';
 import { TransfersStore } from '../../transfers.store';
 
 export type TransactionEditResult = Partial<
-  Pick<Transaction, 'categoryId' | 'categoryManual' | 'notes' | 'attributionOverride'>
+  Pick<Transaction, 'categoryId' | 'categoryManual' | 'notes' | 'attributionOverride' | 'nullified'>
 >;
 
 @Component({
@@ -58,9 +62,14 @@ export class TransactionEditFormComponent {
     attributionMode: [''],
     attributionJointAccountId: [''],
     attributionReimbursementTransferId: [''],
+    nullified: [false],
   });
 
   protected readonly attributionError = signal<string | null>(null);
+  protected readonly nullifiedError = signal<string | null>(null);
+
+  /** A linked transfer leg is already excluded from income/expense and has no category — the toggle is hidden for it (TICKET-TXN-04). */
+  protected readonly isTransferLeg = computed(() => this.transaction()?.transferId != null);
 
   constructor() {
     effect(() => {
@@ -161,8 +170,10 @@ export class TransactionEditFormComponent {
         override?.jointAccountId != null ? String(override.jointAccountId) : '',
       attributionReimbursementTransferId:
         override?.reimbursementTransferId != null ? String(override.reimbursementTransferId) : '',
+      nullified: existing?.nullified ?? false,
     });
     this.attributionError.set(null);
+    this.nullifiedError.set(null);
   }
 
   private buildAttributionOverride(existing: Transaction): Transaction['attributionOverride'] {
@@ -226,7 +237,19 @@ export class TransactionEditFormComponent {
       }
     }
 
+    const nullified = value.nullified;
+    try {
+      validateNullified(existing, nullified);
+    } catch (error) {
+      this.nullifiedError.set(
+        error instanceof Error ? error.message : 'This transaction cannot be nullified.',
+      );
+      return;
+    }
+    result.nullified = nullified;
+
     this.attributionError.set(null);
+    this.nullifiedError.set(null);
     this.saved.emit(result);
     this.open.set(false);
 

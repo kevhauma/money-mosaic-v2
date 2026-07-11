@@ -40,7 +40,9 @@ const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
  * account — so only the `mineIn`/`jointSpend`/`coOwnerIn` legs matter. A transaction carrying a
  * manual `attributionOverride` is also routed through `resolveContribution`, regardless of its
  * account's type, so a `personal`/`shared`/`notMine` flag on an own-account transaction reweights
- * income/expense the same way it reweights net worth (TICKET-TXN-03).
+ * income/expense the same way it reweights net worth (TICKET-TXN-03). A `nullified` transaction is
+ * skipped outright regardless of which path above would otherwise apply — it still moved money (net
+ * worth is untouched, computed elsewhere), it just never counts as income or expense (TICKET-TXN-04).
  */
 export const computePeriodStats = (
   transactions: Transaction[],
@@ -69,6 +71,7 @@ export const computePeriodStats = (
       continue;
     }
     if (transaction.transferId != null) continue;
+    if (transaction.nullified) continue;
 
     const account = accountsById.get(transaction.accountId);
     if (account && (account.type === 'joint' || transaction.attributionOverride)) {

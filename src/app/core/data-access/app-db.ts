@@ -85,6 +85,14 @@ export type Transaction = {
     jointAccountId?: number;
     reimbursementTransferId?: number;
   };
+  /**
+   * Manually excluded from income/expense/savings-rate/category-breakdown; still counts toward
+   * balance and net worth; independent of category and of `attributionOverride`'s weight
+   * (TICKET-TXN-04). Mutually exclusive with `transferId` — a linked transfer leg is already
+   * excluded from income/expense (FR-TRF-1) and has no category, so nullifying it would be
+   * redundant. Never set/cleared by the rules engine.
+   */
+  nullified?: boolean;
 };
 
 export type Transfer = {

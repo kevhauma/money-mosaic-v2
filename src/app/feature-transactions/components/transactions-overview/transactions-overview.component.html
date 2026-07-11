@@ -82,6 +82,9 @@
                 @if (row.likelyTransfer) {
                   <mm-badge variant="outline" size="sm">Likely transfer</mm-badge>
                 }
+                @if (row.transaction.nullified) {
+                  <mm-badge variant="outline" color="warning" size="sm">Nullified</mm-badge>
+                }
               </div>
               @if (row.transaction.counterpartyName) {
                 <div class="text-xs text-base-content/60">

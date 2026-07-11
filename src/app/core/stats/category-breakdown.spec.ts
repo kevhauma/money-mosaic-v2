@@ -323,3 +323,39 @@ describe('computeCategoryBreakdown: manual attributionOverride (TICKET-TXN-03)',
     expect(expenseByCategory).toEqual([]);
   });
 });
+
+describe('computeCategoryBreakdown: nullified exclusion (TICKET-TXN-04)', () => {
+  it('excludes a nullified transaction from expenseByCategory even when categorised', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const groceries = transaction({ id: 1, amount: -60, categoryId: 1, nullified: true });
+
+    const { expenseByCategory, incomeBySource } = computeCategoryBreakdown(
+      [groceries],
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+    );
+
+    expect(expenseByCategory).toEqual([]);
+    expect(incomeBySource).toEqual([]);
+  });
+
+  it('excludes a nullified transaction from incomeBySource even when categorised', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Salary', kind: 'income' })],
+    ]);
+    const salary = transaction({ id: 1, amount: 2000, categoryId: 1, nullified: true });
+
+    const { expenseByCategory, incomeBySource } = computeCategoryBreakdown(
+      [salary],
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+    );
+
+    expect(expenseByCategory).toEqual([]);
+    expect(incomeBySource).toEqual([]);
+  });
+});

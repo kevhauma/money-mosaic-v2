@@ -343,4 +343,51 @@ describe('computePeriodStats: manual attributionOverride (TICKET-TXN-03)', () =>
       ),
     ).toEqual({ income: 0, expense: 0, savings: 0, net: 0, savingsRate: null });
   });
+
+  it('a shared-overridden and nullified transaction is excluded from income/expense (net worth is computed elsewhere, unaffected)', () => {
+    const groceries = transaction({
+      id: 1,
+      accountId: jointAccountId,
+      amount: -100,
+      attributionOverride: { mode: 'personal' },
+      nullified: true,
+    });
+
+    expect(
+      computePeriodStats(
+        [groceries],
+        '2026-07-01',
+        '2026-07-31',
+        new Set(),
+        new Map(),
+        accountsById,
+      ),
+    ).toEqual({ income: 0, expense: 0, savings: 0, net: 0, savingsRate: null });
+  });
+});
+
+describe('computePeriodStats: nullified exclusion (TICKET-TXN-04)', () => {
+  it('excludes a nullified transaction from income, expense, and savingsRate', () => {
+    const transactions = [
+      transaction({ id: 1, amount: 1000 }),
+      transaction({ id: 2, amount: -300, nullified: true }),
+    ];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31')).toEqual({
+      income: 1000,
+      expense: 0,
+      savings: 0,
+      net: 1000,
+      savingsRate: 0,
+    });
+  });
+
+  it('keeps its category (if any) but still excludes it from income/expense', () => {
+    const categoriesById = new Map([[1, category({ id: 1, kind: 'expense' })]]);
+    const transactions = [transaction({ id: 1, amount: -50, categoryId: 1, nullified: true })];
+
+    expect(
+      computePeriodStats(transactions, '2026-07-01', '2026-07-31', new Set(), categoriesById),
+    ).toEqual({ income: 0, expense: 0, savings: 0, net: 0, savingsRate: null });
+  });
 });

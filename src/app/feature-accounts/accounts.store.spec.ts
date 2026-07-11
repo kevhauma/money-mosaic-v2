@@ -400,3 +400,68 @@ describe('AccountsStore: manual attributionOverride reweights net worth (TICKET-
     expect(accountsStore.netWorth()).toBe(-100);
   });
 });
+
+describe('AccountsStore: nullified transactions do not affect net worth (TICKET-TXN-04)', () => {
+  const accountsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transactionsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transfersRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const categoriesRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    accountsRepository.getAll.mockResolvedValue([]);
+    transactionsRepository.getAll.mockResolvedValue([]);
+    transfersRepository.getAll.mockResolvedValue([]);
+    categoriesRepository.getAll.mockResolvedValue([]);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: TransfersRepository, useValue: transfersRepository },
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+      ],
+    });
+  });
+
+  it('produces byte-identical net worth whether a plain transaction is nullified or not', async () => {
+    accountsRepository.getAll.mockResolvedValue([account({ id: 1, openingBalance: 1000 })]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([transaction({ id: 1, accountId: 1, amount: -100 })]);
+
+    const withoutNullified = TestBed.inject(AccountsStore);
+    await withoutNullified.hydrate();
+    expect(withoutNullified.netWorth()).toBe(900);
+
+    await transactionsStore.updateTransaction(1, { nullified: true });
+    expect(withoutNullified.netWorth()).toBe(900);
+  });
+
+  it('a shared-overridden and nullified joint expense still hits net worth at its weighted amount', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, type: 'joint', openingBalance: 0, ownershipShare: 0.5 }),
+    ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      transaction({
+        id: 1,
+        accountId: 1,
+        amount: -100,
+        attributionOverride: { mode: 'personal' },
+        nullified: true,
+      }),
+    ]);
+
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    // Same result as the equivalent non-nullified personal-mode override test above: nullified
+    // only ever affects income/expense, never net worth.
+    expect(accountsStore.netWorth()).toBe(-100);
+  });
+});

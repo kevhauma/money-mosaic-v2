@@ -62,7 +62,8 @@ const addTotal = (
  * spending's category slice reflects only my `ownershipShare` — so category shares are my borne
  * cost, not the pot's full spend (TICKET-STAT-03). A transaction carrying a manual
  * `attributionOverride` is also routed through `resolveContribution` regardless of account type
- * (TICKET-TXN-03).
+ * (TICKET-TXN-03). A `nullified` transaction is skipped outright, even when categorised — it never
+ * shows up in either bucket (TICKET-TXN-04).
  */
 export const computeCategoryBreakdown = (
   transactions: Transaction[],
@@ -82,6 +83,7 @@ export const computeCategoryBreakdown = (
 
   for (const transaction of transactions) {
     if (transaction.transferId != null) continue;
+    if (transaction.nullified) continue;
     if (isSavingsMovement(transaction, ownSavingsIbans)) continue;
     if (!inRange(transaction, from, to)) continue;
     if (transaction.amount === 0) continue;

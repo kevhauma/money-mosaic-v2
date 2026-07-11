@@ -16,7 +16,7 @@ The net-worth contract (STAT-03) consumes the account fields (ACC-02 share + ACC
 - [ ] [TICKET-TRF-03](./tickets/TICKET-TRF-03-guard-partner-inflow-matching.md) — Guard transfer auto-matching against one-sided partner inflows (extends FR-TRF-3 / FR-TRF-5, needs ACC-03; protects the matching CAT-02 depends on)
 - [x] [TICKET-STAT-03](./tickets/TICKET-STAT-03-contribution-net-worth.md) — Contribution-based net worth for joint accounts (changes FR-STAT-1 / FR-TRF-1 semantics; do not start until ACC-02 + ACC-03 + CAT-02 are merged)
 - [x] [TICKET-TXN-03](./tickets/TICKET-TXN-03-manual-attribution-override.md) — Manual attribution override for misattributed joint/personal expenses (extends FR-TXN-1 / FR-TXN-2; build last in this track)
-- [ ] [TICKET-TXN-04](./tickets/TICKET-TXN-04-nullify-transaction.md) — Nullify a transaction, neither income nor expense (extends FR-TXN-1, changes FR-STAT-2 / FR-STAT-3; independent/standalone, free to land any time in parallel)
+- [x] [TICKET-TXN-04](./tickets/TICKET-TXN-04-nullify-transaction.md) — Nullify a transaction, neither income nor expense (extends FR-TXN-1, changes FR-STAT-2 / FR-STAT-3; independent/standalone, free to land any time in parallel)
 
 ## QoL addendum track (impact/effort, not dependency)
 

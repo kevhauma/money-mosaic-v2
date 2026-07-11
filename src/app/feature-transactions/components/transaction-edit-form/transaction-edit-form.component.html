@@ -61,6 +61,16 @@
       ></textarea>
     </fieldset>
 
+    @if (!isTransferLeg()) {
+      <label class="label cursor-pointer justify-start gap-2">
+        <input type="checkbox" formControlName="nullified" class="checkbox checkbox-sm" />
+        <span class="text-sm">Exclude from income/expense</span>
+      </label>
+      @if (nullifiedError(); as error) {
+        <p class="mt-1 text-sm text-error">{{ error }}</p>
+      }
+    }
+
     @if (rawRowEntries().length > 0) {
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Original CSV row</legend>

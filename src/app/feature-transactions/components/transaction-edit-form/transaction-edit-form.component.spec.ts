@@ -220,3 +220,79 @@ describe('TransactionEditFormComponent: manual attribution override (TICKET-TXN-
     expect(fixture.nativeElement.textContent).toContain('Select which joint account');
   });
 });
+
+type NullifyInternals = {
+  form: FormGroup<{
+    categoryId: FormControl<string>;
+    notes: FormControl<string>;
+    alwaysCategorise: FormControl<boolean>;
+    attributionMode: FormControl<string>;
+    attributionJointAccountId: FormControl<string>;
+    attributionReimbursementTransferId: FormControl<string>;
+    nullified: FormControl<boolean>;
+  }>;
+};
+
+describe('TransactionEditFormComponent: nullify toggle (TICKET-TXN-04)', () => {
+  let fixture: ComponentFixture<TransactionEditFormComponent>;
+  let component: TransactionEditFormComponent;
+  const internals = (): NullifyInternals => component as unknown as NullifyInternals;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TransactionEditFormComponent],
+      providers: [
+        { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        { provide: RulesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TransactionEditFormComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('shows the toggle, unconditionally, for a plain non-transfer transaction', async () => {
+    fixture.componentRef.setInput('transaction', transaction());
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Exclude from income/expense');
+  });
+
+  it('hides the toggle for a transaction linked as a transfer', async () => {
+    fixture.componentRef.setInput('transaction', transaction({ transferId: 42 }));
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Exclude from income/expense');
+  });
+
+  it('emits nullified on save without touching categoryId', async () => {
+    fixture.componentRef.setInput('transaction', transaction({ categoryId: 5 }));
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    internals().form.controls.nullified.setValue(true);
+
+    const emitted: { nullified?: boolean; categoryId?: number }[] = [];
+    component.saved.subscribe((result) => emitted.push(result));
+    await (component as unknown as { submit: () => Promise<void> }).submit();
+
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].nullified).toBe(true);
+    expect(emitted[0].categoryId).toBeUndefined();
+  });
+
+  it('pre-fills the toggle from an already-nullified transaction', async () => {
+    fixture.componentRef.setInput('transaction', transaction({ nullified: true }));
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(internals().form.controls.nullified.value).toBe(true);
+  });
+});

@@ -125,3 +125,41 @@ describe('TransactionsStore: uncategorised backlog excludes transfer-linked tran
     expect(store.uncategorisedTransactions().map((t) => t.id)).toEqual([2]);
   });
 });
+
+describe('TransactionsStore: nullify toggle leaves other fields untouched (TICKET-TXN-04)', () => {
+  const transactionsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+    bulkUpdate: vi.fn().mockResolvedValue(0),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [{ provide: TransactionsRepository, useValue: transactionsRepository }],
+    });
+  });
+
+  it('setting nullified persists and reflects only that field, leaving category/attributionOverride as-is', async () => {
+    const store = TestBed.inject(TransactionsStore);
+    store.addMany([
+      transaction({
+        id: 1,
+        categoryId: 3,
+        categoryManual: true,
+        attributionOverride: { mode: 'personal' },
+      }),
+    ]);
+
+    await store.updateTransaction(1, { nullified: true });
+
+    expect(transactionsRepository.update).toHaveBeenCalledWith(1, { nullified: true });
+    const updated = store.transactions().find((t) => t.id === 1);
+    expect(updated).toMatchObject({
+      nullified: true,
+      categoryId: 3,
+      categoryManual: true,
+      attributionOverride: { mode: 'personal' },
+    });
+  });
+});
