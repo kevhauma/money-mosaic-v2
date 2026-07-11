@@ -13,6 +13,8 @@ import { AccountDeletionService } from '@/core/accounts';
 import {
   computeContributorBreakdown,
   computeJointAccountStake,
+  reimbursedTransferLegIds,
+  resolveContribution,
   type ContributorBreakdown,
   type JointLegContext,
 } from '@/core/stats';
@@ -97,17 +99,26 @@ export const AccountsStore = signalStore(
     });
 
     // Combined net worth (FR-STAT-1): non-joint accounts count their full balance; a joint
-    // account counts only my stake. A dataset with no joint accounts sums the same balances as
-    // before, byte-identical to the pre-STAT-03 behaviour.
+    // account counts only my stake. Walked per-transaction (rather than summing `balancesById`/
+    // `jointAccountStakeById`) so a manual `attributionOverride` on a *non-joint* account's
+    // transaction is honoured too (TICKET-TXN-03) — `resolveContribution` falls back to the raw
+    // amount for an unaffected transaction, so a dataset with no joint accounts and no overrides
+    // still sums to the same net worth as before (byte-identical to the pre-STAT-03 behaviour).
     const netWorth = computed(() => {
-      const balances = balancesById();
-      const stakes = jointAccountStakeById();
-      let total = 0;
-      for (const account of entities()) {
-        total +=
-          account.type === 'joint'
-            ? (stakes.get(account.id!) ?? 0)
-            : (balances.get(account.id!) ?? 0);
+      const context = jointLegContext();
+      const transactions = transactionsStore.transactions();
+      const suppressed = reimbursedTransferLegIds(transactions, context.transfersById);
+
+      let total = entities().reduce(
+        (sum, account) =>
+          sum +
+          account.openingBalance * (account.type === 'joint' ? (account.ownershipShare ?? 1) : 1),
+        0,
+      );
+      for (const transaction of transactions) {
+        const account = context.accountsById.get(transaction.accountId);
+        if (!account) continue;
+        total += resolveContribution(transaction, account, context, suppressed).weight;
       }
       return total;
     });

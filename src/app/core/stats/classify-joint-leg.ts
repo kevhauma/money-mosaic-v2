@@ -79,3 +79,89 @@ export const jointLegStakeDelta = (
       return 0;
   }
 };
+
+export type ContributionResult = {
+  /** The weighted amount this transaction contributes to net worth / income-expense magnitude. */
+  weight: number;
+  /** True when the transaction must be skipped entirely by income/expense/category-breakdown aggregation (as opposed to counted at a genuine zero). */
+  excluded: boolean;
+};
+
+const EMPTY_SUPPRESSED: ReadonlySet<number> = new Set();
+
+/**
+ * The single override-aware weighting decision (TICKET-TXN-03), reused by `AccountsStore.netWorth`,
+ * `computeNetWorthTrend`, `computePeriodStats`, and `computeCategoryBreakdown` so they can't
+ * disagree. Resolution order:
+ * 1. A transaction referenced by another transaction's `attributionOverride.reimbursementTransferId`
+ *    (see `reimbursedTransferLegIds`) contributes zero and is excluded everywhere.
+ * 2. `transaction.attributionOverride`, when present: `personal` ⇒ full amount; `notMine` ⇒ zero,
+ *    excluded; `shared` ⇒ amount weighted by the referenced `jointAccountId` account's
+ *    `ownershipShare` (falling back to weight 1 if the account can't be resolved).
+ * 3. Falls back to `classifyJointLeg`/`jointLegStakeDelta` for a `joint`-type account (a `coOwnerIn`
+ *    leg is excluded), or the raw amount for a plain own account — exactly today's behaviour.
+ */
+export const resolveContribution = (
+  transaction: Transaction,
+  account: Account,
+  context: JointLegContext,
+  suppressedTransactionIds: ReadonlySet<number> = EMPTY_SUPPRESSED,
+): ContributionResult => {
+  if (transaction.id != null && suppressedTransactionIds.has(transaction.id)) {
+    return { weight: 0, excluded: true };
+  }
+
+  const override = transaction.attributionOverride;
+  if (override) {
+    if (override.mode === 'personal') {
+      return { weight: transaction.amount, excluded: false };
+    }
+    if (override.mode === 'notMine') {
+      return { weight: 0, excluded: true };
+    }
+    const jointAccount =
+      override.jointAccountId != null
+        ? context.accountsById.get(override.jointAccountId)
+        : undefined;
+    const share = jointAccount?.ownershipShare ?? 1;
+    return { weight: transaction.amount * share, excluded: false };
+  }
+
+  if (account.type === 'joint') {
+    const classification = classifyJointLeg(transaction, account, context);
+    return {
+      weight: jointLegStakeDelta(transaction, account, classification),
+      excluded: classification === 'coOwnerIn',
+    };
+  }
+
+  return { weight: transaction.amount, excluded: false };
+};
+
+/**
+ * Transaction ids that must contribute zero everywhere (TICKET-TXN-03): the two legs of any
+ * `Transfer` referenced by some transaction's `attributionOverride.reimbursementTransferId` — the
+ * flagged expense's own `shared`-weighted amount already accounts for the reimbursement, so the
+ * transfer that paid it back must not also count. `transfersById` is keyed by transaction id (either
+ * leg resolves to the same `Transfer`), matching `JointLegContext.transfersById`.
+ */
+export const reimbursedTransferLegIds = (
+  transactions: Iterable<Transaction>,
+  transfersById: ReadonlyMap<number, Transfer>,
+): ReadonlySet<number> => {
+  const transfersByOwnId = new Map<number, Transfer>();
+  for (const transfer of transfersById.values()) {
+    if (transfer.id != null) transfersByOwnId.set(transfer.id, transfer);
+  }
+
+  const result = new Set<number>();
+  for (const transaction of transactions) {
+    const transferId = transaction.attributionOverride?.reimbursementTransferId;
+    if (transferId == null) continue;
+    const transfer = transfersByOwnId.get(transferId);
+    if (!transfer) continue;
+    result.add(transfer.fromTransactionId);
+    result.add(transfer.toTransactionId);
+  }
+  return result;
+};

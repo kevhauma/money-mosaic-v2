@@ -117,7 +117,7 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
     transfersRepository.getAll.mockResolvedValue([
       transfer({ id: 42, fromTransactionId: 1, toTransactionId: 2 }),
     ]);
-    transferLinkingService.unlink.mockResolvedValue(undefined);
+    transferLinkingService.unlink.mockResolvedValue({ clearedAttributionOverrides: [] });
 
     const store = TestBed.inject(TransfersStore);
     await store.hydrate();
@@ -129,6 +129,34 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
     const byId = new Map(transactionsStore.transactions().map((t) => [t.id, t]));
     expect(byId.get(1)?.transferId).toBeUndefined();
     expect(byId.get(2)?.transferId).toBeUndefined();
+  });
+
+  it('unlink mirrors a cleared dangling reimbursementTransferId into TransactionsStore (TICKET-TXN-03)', async () => {
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      transaction({ id: 1, transferId: 42 }),
+      transaction({ id: 2, transferId: 42 }),
+      transaction({
+        id: 5,
+        attributionOverride: { mode: 'shared', jointAccountId: 1, reimbursementTransferId: 42 },
+      }),
+    ]);
+    transfersRepository.getAll.mockResolvedValue([
+      transfer({ id: 42, fromTransactionId: 1, toTransactionId: 2 }),
+    ]);
+    transferLinkingService.unlink.mockResolvedValue({
+      clearedAttributionOverrides: [
+        { id: 5, attributionOverride: { mode: 'shared', jointAccountId: 1 } },
+      ],
+    });
+
+    const store = TestBed.inject(TransfersStore);
+    await store.hydrate();
+
+    await store.unlink(42);
+
+    const byId = new Map(transactionsStore.transactions().map((t) => [t.id, t]));
+    expect(byId.get(5)?.attributionOverride).toEqual({ mode: 'shared', jointAccountId: 1 });
   });
 
   it('unlink is a safe no-op for an unknown transferId', async () => {

@@ -1,6 +1,6 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { isSavingsMovement } from '@/core/transfers';
-import { classifyJointLeg, jointLegStakeDelta, type JointLegContext } from './classify-joint-leg';
+import { resolveContribution, type JointLegContext } from './classify-joint-leg';
 
 export type CategoryBreakdownEntry = {
   /** null = uncategorised entry (no category assigned, bucketed by amount sign). */
@@ -57,10 +57,12 @@ const addTotal = (
  * shows up as an income source or an expense slice (TICKET-CAT-02).
  *
  * For a **joint** account (`accountsById`), each transaction is classified via the shared
- * `classifyJointLeg` instead: my income into the pot counts at 100%, an untagged co-owner inflow
+ * `resolveContribution` instead: my income into the pot counts at 100%, an untagged co-owner inflow
  * (identified by IBAN, not just a `neutral` category) is excluded like a tagged one, and shared
  * spending's category slice reflects only my `ownershipShare` — so category shares are my borne
- * cost, not the pot's full spend (TICKET-STAT-03).
+ * cost, not the pot's full spend (TICKET-STAT-03). A transaction carrying a manual
+ * `attributionOverride` is also routed through `resolveContribution` regardless of account type
+ * (TICKET-TXN-03).
  */
 export const computeCategoryBreakdown = (
   transactions: Transaction[],
@@ -72,7 +74,11 @@ export const computeCategoryBreakdown = (
 ): CategoryBreakdown => {
   const expenseTotals = new Map<number | null, { total: number; count: number }>();
   const incomeTotals = new Map<number | null, { total: number; count: number }>();
-  const jointLegContext: JointLegContext = { ...emptyJointLegContext, categoriesById };
+  const jointLegContext: JointLegContext = {
+    ...emptyJointLegContext,
+    categoriesById,
+    accountsById,
+  };
 
   for (const transaction of transactions) {
     if (transaction.transferId != null) continue;
@@ -85,14 +91,11 @@ export const computeCategoryBreakdown = (
     const key = category?.id ?? null;
 
     const account = accountsById.get(transaction.accountId);
-    if (account?.type === 'joint') {
-      const classification = classifyJointLeg(transaction, account, jointLegContext);
-      if (classification === 'coOwnerIn') continue;
-      if (classification === 'jointSpend') {
-        addTotal(expenseTotals, key, jointLegStakeDelta(transaction, account, classification));
-      } else {
-        addTotal(incomeTotals, key, transaction.amount);
-      }
+    if (account && (account.type === 'joint' || transaction.attributionOverride)) {
+      const { weight, excluded } = resolveContribution(transaction, account, jointLegContext);
+      if (excluded) continue;
+      if (weight > 0) addTotal(incomeTotals, key, weight);
+      else if (weight < 0) addTotal(expenseTotals, key, weight);
       continue;
     }
 

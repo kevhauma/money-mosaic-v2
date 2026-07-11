@@ -1,6 +1,6 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { isSavingsMovement } from '@/core/transfers';
-import { classifyJointLeg, jointLegStakeDelta, type JointLegContext } from './classify-joint-leg';
+import { resolveContribution, type JointLegContext } from './classify-joint-leg';
 
 export type PeriodStats = {
   income: number;
@@ -33,11 +33,14 @@ const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
  * derivation, which reads raw `amount` (TICKET-CAT-02).
  *
  * For a **joint** account (`accountsById`), each non-transfer transaction is classified via the
- * shared `classifyJointLeg` instead: my income into the pot stays at 100%, an untagged co-owner
+ * shared `resolveContribution` instead: my income into the pot stays at 100%, an untagged co-owner
  * inflow (identified by IBAN, not just a `neutral` category) is excluded like a tagged one, and
  * shared spending contributes only my `ownershipShare` to `expense` (TICKET-STAT-03). A transfer
  * leg never reaches classification here — it's already filtered above, exactly as for a non-joint
- * account — so only the `mineIn`/`jointSpend`/`coOwnerIn` legs matter.
+ * account — so only the `mineIn`/`jointSpend`/`coOwnerIn` legs matter. A transaction carrying a
+ * manual `attributionOverride` is also routed through `resolveContribution`, regardless of its
+ * account's type, so a `personal`/`shared`/`notMine` flag on an own-account transaction reweights
+ * income/expense the same way it reweights net worth (TICKET-TXN-03).
  */
 export const computePeriodStats = (
   transactions: Transaction[],
@@ -50,7 +53,11 @@ export const computePeriodStats = (
   let income = 0;
   let expense = 0;
   let savings = 0;
-  const jointLegContext: JointLegContext = { ...emptyJointLegContext, categoriesById };
+  const jointLegContext: JointLegContext = {
+    ...emptyJointLegContext,
+    categoriesById,
+    accountsById,
+  };
 
   for (const transaction of transactions) {
     if (!inRange(transaction, from, to)) continue;
@@ -64,14 +71,11 @@ export const computePeriodStats = (
     if (transaction.transferId != null) continue;
 
     const account = accountsById.get(transaction.accountId);
-    if (account?.type === 'joint') {
-      const classification = classifyJointLeg(transaction, account, jointLegContext);
-      if (classification === 'coOwnerIn') continue;
-      if (classification === 'jointSpend') {
-        expense += -jointLegStakeDelta(transaction, account, classification);
-      } else {
-        income += transaction.amount;
-      }
+    if (account && (account.type === 'joint' || transaction.attributionOverride)) {
+      const { weight, excluded } = resolveContribution(transaction, account, jointLegContext);
+      if (excluded) continue;
+      if (weight > 0) income += weight;
+      else if (weight < 0) expense += -weight;
       continue;
     }
 

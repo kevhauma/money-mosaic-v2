@@ -237,3 +237,89 @@ describe('computeCategoryBreakdown: joint-account share weighting (TICKET-STAT-0
     expect(expenseByCategory).toEqual([]);
   });
 });
+
+describe('computeCategoryBreakdown: manual attributionOverride (TICKET-TXN-03)', () => {
+  const jointAccountId = 1;
+  const checkingAccountId = 2;
+  const accountsById = new Map<number, Account>([
+    [
+      jointAccountId,
+      {
+        id: jointAccountId,
+        name: 'Joint',
+        type: 'joint',
+        currency: 'EUR',
+        openingBalance: 0,
+        openingBalanceDate: '2026-01-01',
+        color: '#000000',
+        icon: 'users',
+        archived: false,
+        ownershipShare: 0.5,
+      },
+    ],
+    [
+      checkingAccountId,
+      {
+        id: checkingAccountId,
+        name: 'Checking',
+        type: 'checking',
+        currency: 'EUR',
+        openingBalance: 0,
+        openingBalanceDate: '2026-01-01',
+        color: '#000000',
+        icon: 'wallet',
+        archived: false,
+      },
+    ],
+  ]);
+
+  it('weights a shared-flagged personal expense’s category slice by the referenced joint account’s share', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const groceries = transaction({
+      id: 1,
+      accountId: checkingAccountId,
+      amount: -100,
+      categoryId: 1,
+      attributionOverride: { mode: 'shared', jointAccountId },
+    });
+
+    const { expenseByCategory } = computeCategoryBreakdown(
+      [groceries],
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(expenseByCategory).toEqual([
+      { categoryId: 1, total: 50, share: 1, transactionCount: 1 },
+    ]);
+  });
+
+  it('excludes a notMine-flagged joint expense from the breakdown entirely', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const groceries = transaction({
+      id: 1,
+      accountId: jointAccountId,
+      amount: -100,
+      categoryId: 1,
+      attributionOverride: { mode: 'notMine' },
+    });
+
+    const { expenseByCategory } = computeCategoryBreakdown(
+      [groceries],
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(expenseByCategory).toEqual([]);
+  });
+});

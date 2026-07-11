@@ -64,6 +64,27 @@ export type Transaction = {
    */
   rawLine?: string;
   rawRow?: Record<string, string>;
+  /**
+   * Manual reweighting of this transaction's contribution to net worth and income/expense stats,
+   * overriding the account-based default from `classifyJointLeg` (TICKET-TXN-03):
+   * - `personal` — counts 100% regardless of account (a personal-only expense accidentally paid
+   *   from the joint account).
+   * - `notMine` — counts 0% (a co-owner's personal-only expense paid from the joint account).
+   * - `shared` — weighted by the referenced `jointAccountId` account's `ownershipShare` instead of
+   *   this transaction's own account's default weighting (a joint/shared expense accidentally paid
+   *   from my own account). `jointAccountId` is required whenever more than one joint account
+   *   exists; auto-inferred when there's exactly one.
+   * `reimbursementTransferId` only applies to `shared`: when set, both legs of that `Transfer` are
+   * excluded from net worth and income/expense stats, since this transaction's own weighted amount
+   * already accounts for the reimbursed expense.
+   * Mutually exclusive with `transferId` — a linked transfer leg's contribution is governed by its
+   * own mineIn/mineOut classification, not a per-leg override. Independent of `categoryId`/`categoryManual`.
+   */
+  attributionOverride?: {
+    mode: 'personal' | 'shared' | 'notMine';
+    jointAccountId?: number;
+    reimbursementTransferId?: number;
+  };
 };
 
 export type Transfer = {

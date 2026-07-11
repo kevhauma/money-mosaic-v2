@@ -23,6 +23,7 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
 const setup = () => {
   const transactionsRepository = {
     update: vi.fn().mockResolvedValue(1),
+    getByReimbursementTransferId: vi.fn().mockResolvedValue([]),
   };
   const transfersRepository = {
     add: vi.fn().mockResolvedValue(42),
@@ -143,6 +144,63 @@ describe('TransferLinkingService: category is cleared on link (TICKET-TRF-01)', 
     expect(
       ctx.transactionsRepository.update.mock.calls.every(
         ([, changes]) => !('categoryId' in changes),
+      ),
+    ).toBe(true);
+  });
+
+  it('unlink clears a dangling reimbursementTransferId on any transaction that referenced this transfer (TICKET-TXN-03)', async () => {
+    const ctx = setup();
+    const referencing = transaction({
+      id: 5,
+      attributionOverride: { mode: 'shared', jointAccountId: 1, reimbursementTransferId: 42 },
+    });
+    ctx.transactionsRepository.getByReimbursementTransferId.mockResolvedValue([referencing]);
+
+    const result = await ctx.service.unlink({
+      id: 42,
+      fromTransactionId: 1,
+      toTransactionId: 2,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-06-01T00:00:00.000Z',
+    });
+
+    expect(ctx.transactionsRepository.getByReimbursementTransferId).toHaveBeenCalledWith(42);
+    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(5, {
+      attributionOverride: {
+        mode: 'shared',
+        jointAccountId: 1,
+        reimbursementTransferId: undefined,
+      },
+    });
+    expect(result.clearedAttributionOverrides).toEqual([
+      {
+        id: 5,
+        attributionOverride: {
+          mode: 'shared',
+          jointAccountId: 1,
+          reimbursementTransferId: undefined,
+        },
+      },
+    ]);
+  });
+
+  it('unlink leaves other transactions’ attributionOverride untouched when nothing referenced this transfer', async () => {
+    const ctx = setup();
+
+    const result = await ctx.service.unlink({
+      id: 42,
+      fromTransactionId: 1,
+      toTransactionId: 2,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-06-01T00:00:00.000Z',
+    });
+
+    expect(result.clearedAttributionOverrides).toEqual([]);
+    expect(
+      ctx.transactionsRepository.update.mock.calls.every(
+        ([, changes]) => !('attributionOverride' in changes),
       ),
     ).toBe(true);
   });

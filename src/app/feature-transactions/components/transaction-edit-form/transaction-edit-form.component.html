@@ -15,6 +15,42 @@
       </mm-select>
     </fieldset>
 
+    @if (showAttribution()) {
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend">Attribution</legend>
+        <mm-select formControlName="attributionMode" class="w-full">
+          <option value="">Default (based on account)</option>
+          <option value="personal">Personal (100% mine)</option>
+          <option value="shared">Shared (my share)</option>
+          <option value="notMine">Not mine (0%)</option>
+        </mm-select>
+
+        @if (showJointAccountPicker()) {
+          <mm-select formControlName="attributionJointAccountId" class="mt-2 w-full">
+            <option value="">Select joint account…</option>
+            @for (account of jointAccounts(); track account.id) {
+              <option [value]="account.id">{{ account.name }}</option>
+            }
+          </mm-select>
+        }
+
+        @if (showReimbursementPicker()) {
+          <mm-select formControlName="attributionReimbursementTransferId" class="mt-2 w-full">
+            <option value="">Not reimbursed</option>
+            @for (transfer of reimbursementCandidateTransfers(); track transfer.id) {
+              <option [value]="transfer.id">
+                {{ transferDate(transfer) }} — {{ transferAmount(transfer) | signedAmount }}
+              </option>
+            }
+          </mm-select>
+        }
+
+        @if (attributionError(); as error) {
+          <p class="mt-1 text-sm text-error">{{ error }}</p>
+        }
+      </fieldset>
+    }
+
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Notes</legend>
       <textarea

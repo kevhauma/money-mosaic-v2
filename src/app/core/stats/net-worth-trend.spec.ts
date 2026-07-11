@@ -282,3 +282,179 @@ describe('computeNetWorthTrend: joint account stake (TICKET-STAT-03)', () => {
     expect(points).toEqual([{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1000 }]);
   });
 });
+
+describe('computeNetWorthTrend: manual attributionOverride (TICKET-TXN-03)', () => {
+  const jointAccount = (overrides: Partial<Account> = {}): Account => ({
+    id: 1,
+    name: 'Joint',
+    type: 'joint',
+    currency: 'EUR',
+    openingBalance: 0,
+    openingBalanceDate: '2026-01-01',
+    color: '#000000',
+    icon: 'users',
+    archived: false,
+    ownershipShare: 0.5,
+    ...overrides,
+  });
+
+  const checkingAccount: Account = {
+    id: 2,
+    name: 'Checking',
+    type: 'checking',
+    currency: 'EUR',
+    openingBalance: 0,
+    openingBalanceDate: '2026-01-01',
+    color: '#000000',
+    icon: 'wallet',
+    archived: false,
+  };
+
+  it('worked example: shared expense + reimbursement transfer suppression nets to my share, not the full amount', () => {
+    // I front €100 of groceries from checking, flagged `shared` against the joint account and
+    // pointed at the reimbursement transfer; the joint pot pays me back in full.
+    const groceries = transaction({
+      id: 1,
+      accountId: 2,
+      amount: -100,
+      bookingDate: '2026-01-05',
+      attributionOverride: { mode: 'shared', jointAccountId: 1, reimbursementTransferId: 100 },
+    });
+    const jointReimbursesLeg = transaction({
+      id: 2,
+      accountId: 1,
+      amount: -100,
+      bookingDate: '2026-01-06',
+      transferId: 100,
+    });
+    const checkingReceivesLeg = transaction({
+      id: 3,
+      accountId: 2,
+      amount: 100,
+      bookingDate: '2026-01-06',
+      transferId: 100,
+    });
+    const transactions = [groceries, jointReimbursesLeg, checkingReceivesLeg];
+    const reimbursementTransfer: Transfer = {
+      id: 100,
+      fromTransactionId: 2,
+      toTransactionId: 3,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-01-06T00:00:00.000Z',
+    };
+    const context: JointLegContext = {
+      transactionsById: new Map(transactions.map((t) => [t.id!, t])),
+      accountsById: new Map([
+        [1, jointAccount()],
+        [2, checkingAccount],
+      ]),
+      transfersById: new Map([
+        [2, reimbursementTransfer],
+        [3, reimbursementTransfer],
+      ]),
+      categoriesById: new Map(),
+    };
+
+    const points = computeNetWorthTrend(
+      transactions,
+      [jointAccount(), checkingAccount],
+      '2026-01-01',
+      '2026-01-31',
+      'month',
+      context,
+    );
+
+    // Groceries weighted at s=0.5 (-50); both reimbursement legs suppressed to 0 instead of their
+    // natural ∓100 (which would otherwise net to 0 anyway, but the point is the joint account's own
+    // stake isn't dinged -100 for a withdrawal that's now accounted for on the expense line).
+    expect(points).toEqual([{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: -50 }]);
+  });
+
+  it('regression: shared mode without a reimbursementTransferId weights only the expense line and leaves an unrelated transfer classified normally', () => {
+    // I front €100 of groceries, flagged shared but never reimbursed — only this line is weighted.
+    const groceries = transaction({
+      id: 1,
+      accountId: 2,
+      amount: -100,
+      bookingDate: '2026-01-05',
+      attributionOverride: { mode: 'shared', jointAccountId: 1 },
+    });
+    // A separate, unrelated deposit into the joint account, linked as a normal transfer.
+    const depositOut = transaction({
+      id: 2,
+      accountId: 2,
+      amount: -500,
+      bookingDate: '2026-01-10',
+      transferId: 200,
+    });
+    const depositIn = transaction({
+      id: 3,
+      accountId: 1,
+      amount: 500,
+      bookingDate: '2026-01-10',
+      transferId: 200,
+    });
+    const transactions = [groceries, depositOut, depositIn];
+    const depositTransfer: Transfer = {
+      id: 200,
+      fromTransactionId: 2,
+      toTransactionId: 3,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-01-10T00:00:00.000Z',
+    };
+    const context: JointLegContext = {
+      transactionsById: new Map(transactions.map((t) => [t.id!, t])),
+      accountsById: new Map([
+        [1, jointAccount()],
+        [2, checkingAccount],
+      ]),
+      transfersById: new Map([
+        [2, depositTransfer],
+        [3, depositTransfer],
+      ]),
+      categoriesById: new Map(),
+    };
+
+    const points = computeNetWorthTrend(
+      transactions,
+      [jointAccount(), checkingAccount],
+      '2026-01-01',
+      '2026-01-31',
+      'month',
+      context,
+    );
+
+    // Groceries weighted at s=0.5 (-50); the unrelated transfer nets to zero as always (checking
+    // -500 + joint mineIn +500), untouched by the override.
+    expect(points).toEqual([{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: -50 }]);
+  });
+
+  it('personal-mode override on a joint expense counts 100% instead of my share', () => {
+    const groceries = transaction({
+      id: 1,
+      accountId: 1,
+      amount: -100,
+      bookingDate: '2026-01-05',
+      attributionOverride: { mode: 'personal' },
+    });
+    const context: JointLegContext = {
+      transactionsById: new Map([[1, groceries]]),
+      accountsById: new Map([[1, jointAccount()]]),
+      transfersById: new Map(),
+      categoriesById: new Map(),
+    };
+
+    const points = computeNetWorthTrend(
+      [groceries],
+      [jointAccount()],
+      '2026-01-01',
+      '2026-01-31',
+      'month',
+      context,
+    );
+
+    expect(points).toEqual([{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: -100 }]);
+  });
+});

@@ -67,8 +67,20 @@ export class TransferLinkingService {
    * Decision (TICKET-TRF-01): unlinking leaves the category empty rather than re-running the rules
    * engine. No pre-link category is persisted, so exact restoration isn't possible; re-suggesting one
    * via the rules engine would need a separate deliberate action (e.g. "re-run rules" or manual edit).
+   *
+   * Also clears any transaction's dangling `attributionOverride.reimbursementTransferId` that
+   * pointed at this transfer (TICKET-TXN-03) — the reference would otherwise point at nothing,
+   * silently un-suppressing a leg that was never re-checked. `mode`/`jointAccountId` are kept; only
+   * the stale transfer reference is dropped, atomically with the unlink itself.
    */
-  unlink = (transfer: Transfer): Promise<void> =>
+  unlink = (
+    transfer: Transfer,
+  ): Promise<{
+    clearedAttributionOverrides: {
+      id: number;
+      attributionOverride: Transaction['attributionOverride'];
+    }[];
+  }> =>
     appDb.transaction('rw', [appDb.transfers, appDb.transactions], async () => {
       await this.transfersRepository.remove(transfer.id!);
       await this.transactionsRepository.update(transfer.fromTransactionId, {
@@ -77,5 +89,23 @@ export class TransferLinkingService {
       await this.transactionsRepository.update(transfer.toTransactionId, {
         transferId: undefined,
       });
+
+      const danglingReferences = await this.transactionsRepository.getByReimbursementTransferId(
+        transfer.id!,
+      );
+      const clearedAttributionOverrides: {
+        id: number;
+        attributionOverride: Transaction['attributionOverride'];
+      }[] = [];
+      for (const t of danglingReferences) {
+        const attributionOverride = {
+          ...t.attributionOverride!,
+          reimbursementTransferId: undefined,
+        };
+        await this.transactionsRepository.update(t.id!, { attributionOverride });
+        clearedAttributionOverrides.push({ id: t.id!, attributionOverride });
+      }
+
+      return { clearedAttributionOverrides };
     });
 }

@@ -248,3 +248,99 @@ describe('computePeriodStats: joint-account share weighting (TICKET-STAT-03)', (
     ).toEqual({ income: 0, expense: 0, savings: 0, net: 0, savingsRate: null });
   });
 });
+
+describe('computePeriodStats: manual attributionOverride (TICKET-TXN-03)', () => {
+  const jointAccountId = 1;
+  const checkingAccountId = 2;
+  const accountsById = new Map<number, Account>([
+    [
+      jointAccountId,
+      {
+        id: jointAccountId,
+        name: 'Joint',
+        type: 'joint',
+        currency: 'EUR',
+        openingBalance: 0,
+        openingBalanceDate: '2026-01-01',
+        color: '#000000',
+        icon: 'users',
+        archived: false,
+        ownershipShare: 0.5,
+      },
+    ],
+    [
+      checkingAccountId,
+      {
+        id: checkingAccountId,
+        name: 'Checking',
+        type: 'checking',
+        currency: 'EUR',
+        openingBalance: 0,
+        openingBalanceDate: '2026-01-01',
+        color: '#000000',
+        icon: 'wallet',
+        archived: false,
+      },
+    ],
+  ]);
+
+  it('worked example: a shared-flagged personal expense drops expense by only my share, not the full amount', () => {
+    const groceries = transaction({
+      id: 1,
+      accountId: checkingAccountId,
+      amount: -100,
+      attributionOverride: { mode: 'shared', jointAccountId },
+    });
+
+    expect(
+      computePeriodStats(
+        [groceries],
+        '2026-07-01',
+        '2026-07-31',
+        new Set(),
+        new Map(),
+        accountsById,
+      ),
+    ).toEqual({ income: 0, expense: 50, savings: 0, net: -50, savingsRate: null });
+  });
+
+  it('personal-mode joint expense counts 100% instead of the account’s default share', () => {
+    const groceries = transaction({
+      id: 1,
+      accountId: jointAccountId,
+      amount: -100,
+      attributionOverride: { mode: 'personal' },
+    });
+
+    expect(
+      computePeriodStats(
+        [groceries],
+        '2026-07-01',
+        '2026-07-31',
+        new Set(),
+        new Map(),
+        accountsById,
+      ).expense,
+    ).toBe(100);
+  });
+
+  it('notMine-mode joint expense is excluded entirely instead of counting the account’s default share', () => {
+    const groceries = transaction({
+      id: 1,
+      accountId: jointAccountId,
+      amount: -100,
+      attributionOverride: { mode: 'notMine' },
+    });
+
+    expect(
+      computePeriodStats(
+        [groceries],
+        '2026-07-01',
+        '2026-07-31',
+        new Set(),
+        new Map(),
+        accountsById,
+      ),
+    ).toEqual({ income: 0, expense: 0, savings: 0, net: 0, savingsRate: null });
+  });
+});

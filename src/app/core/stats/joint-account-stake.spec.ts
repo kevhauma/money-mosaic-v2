@@ -166,6 +166,71 @@ describe('computeJointAccountStake', () => {
     expect(computeJointAccountStake([untaggedCoOwnerInflow], account, context)).toBe(0);
   });
 
+  it('personal-mode override on a joint expense counts it at 100% instead of my share (TICKET-TXN-03)', () => {
+    const account = jointAccount({ ownershipShare: 0.5 });
+    const groceries = transaction({
+      id: 1,
+      accountId: 1,
+      amount: -400,
+      attributionOverride: { mode: 'personal' },
+    });
+    const context: JointLegContext = {
+      transactionsById: new Map([[1, groceries]]),
+      accountsById: new Map([[1, account]]),
+      transfersById: new Map(),
+      categoriesById: new Map(),
+    };
+
+    expect(computeJointAccountStake([groceries], account, context)).toBe(-400);
+  });
+
+  it('excludes the joint leg of a reimbursed transfer from the stake (TICKET-TXN-03)', () => {
+    const account = jointAccount({ ownershipShare: 0.5 });
+    const groceries = transaction({
+      id: 1,
+      accountId: 2,
+      amount: -100,
+      attributionOverride: { mode: 'shared', jointAccountId: 1, reimbursementTransferId: 100 },
+    });
+    const jointReimbursesLeg = transaction({
+      id: 2,
+      accountId: 1,
+      amount: -100,
+      transferId: 100,
+    });
+    const checkingReceivesLeg = transaction({
+      id: 3,
+      accountId: 2,
+      amount: 100,
+      transferId: 100,
+    });
+    const reimbursementTransfer: Transfer = {
+      id: 100,
+      fromTransactionId: 2,
+      toTransactionId: 3,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-07-01T00:00:00.000Z',
+    };
+    const transactions = [groceries, jointReimbursesLeg, checkingReceivesLeg];
+    const context: JointLegContext = {
+      transactionsById: new Map(transactions.map((t) => [t.id!, t])),
+      accountsById: new Map([
+        [1, account],
+        [2, ownAccount],
+      ]),
+      transfersById: new Map([
+        [2, reimbursementTransfer],
+        [3, reimbursementTransfer],
+      ]),
+      categoriesById: new Map(),
+    };
+
+    // The joint account's own withdrawal (jointReimbursesLeg, normally a mineOut at -100) is
+    // suppressed instead — the flagged expense's own weighted amount already accounts for it.
+    expect(computeJointAccountStake(transactions, account, context)).toBe(0);
+  });
+
   it('accumulates jointSpend across many small transactions with no rounding drift', () => {
     const account = jointAccount({ ownershipShare: 1 / 3 });
     const transactions = Array.from({ length: 100 }, (_, index) =>

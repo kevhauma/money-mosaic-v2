@@ -1,11 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { FormControl, FormGroup } from '@angular/forms';
 import { vi } from 'vitest';
 import {
+  AccountsRepository,
   CategoriesRepository,
   RulesRepository,
   TransactionsRepository,
+  TransfersRepository,
+  type Account,
   type Transaction,
 } from '@/core/data-access';
+import { AccountsStore } from '@/feature-accounts';
 import { TransactionEditFormComponent } from './transaction-edit-form.component';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -19,6 +24,34 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   createdAt: '2026-07-01T00:00:00.000Z',
   ...overrides,
 });
+
+const jointAccount = (overrides: Partial<Account> = {}): Account => ({
+  id: 1,
+  name: 'Joint',
+  type: 'joint',
+  currency: 'EUR',
+  openingBalance: 0,
+  openingBalanceDate: '2026-01-01',
+  color: '#fff',
+  icon: 'users',
+  archived: false,
+  ownershipShare: 0.5,
+  ...overrides,
+});
+
+/** Protected surface we reach into for attribution-control assertions. */
+type Internals = {
+  form: FormGroup<{
+    categoryId: FormControl<string>;
+    notes: FormControl<string>;
+    alwaysCategorise: FormControl<boolean>;
+    attributionMode: FormControl<string>;
+    attributionJointAccountId: FormControl<string>;
+    attributionReimbursementTransferId: FormControl<string>;
+  }>;
+  showJointAccountPicker: () => boolean;
+  showReimbursementPicker: () => boolean;
+};
 
 describe('TransactionEditFormComponent: original CSV row (TICKET-TXN-06)', () => {
   let fixture: ComponentFixture<TransactionEditFormComponent>;
@@ -81,5 +114,109 @@ describe('TransactionEditFormComponent: original CSV row (TICKET-TXN-06)', () =>
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('Original CSV row');
+  });
+});
+
+describe('TransactionEditFormComponent: manual attribution override (TICKET-TXN-03)', () => {
+  let fixture: ComponentFixture<TransactionEditFormComponent>;
+  let component: TransactionEditFormComponent;
+  const internals = (): Internals => component as unknown as Internals;
+
+  const accountsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const transfersRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  const setup = async (accounts: Account[]): Promise<void> => {
+    vi.clearAllMocks();
+    accountsRepository.getAll.mockResolvedValue(accounts);
+    transfersRepository.getAll.mockResolvedValue([]);
+
+    await TestBed.configureTestingModule({
+      imports: [TransactionEditFormComponent],
+      providers: [
+        { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        { provide: RulesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransfersRepository, useValue: transfersRepository },
+      ],
+    }).compileComponents();
+
+    await TestBed.inject(AccountsStore).hydrate();
+
+    fixture = TestBed.createComponent(TransactionEditFormComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('transaction', transaction());
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  it('hides the attribution section entirely when there are no joint accounts', async () => {
+    await setup([]);
+    expect(fixture.nativeElement.textContent).not.toContain('Attribution');
+  });
+
+  it('shows the attribution mode picker once a joint account exists', async () => {
+    await setup([jointAccount()]);
+    expect(fixture.nativeElement.textContent).toContain('Attribution');
+  });
+
+  it('shows the joint-account picker only once shared is chosen and more than one joint account exists', async () => {
+    await setup([jointAccount({ id: 1 }), jointAccount({ id: 2, name: 'Parent joint' })]);
+    expect(internals().showJointAccountPicker()).toBe(false);
+
+    internals().form.controls.attributionMode.setValue('shared');
+    fixture.detectChanges();
+
+    expect(internals().showJointAccountPicker()).toBe(true);
+  });
+
+  it('does not show the joint-account picker for shared mode when only one joint account exists (auto-inferred)', async () => {
+    await setup([jointAccount()]);
+
+    internals().form.controls.attributionMode.setValue('shared');
+    fixture.detectChanges();
+
+    expect(internals().showJointAccountPicker()).toBe(false);
+  });
+
+  it('shows the reimbursement-transfer picker only once shared is chosen', async () => {
+    await setup([jointAccount()]);
+    expect(internals().showReimbursementPicker()).toBe(false);
+
+    internals().form.controls.attributionMode.setValue('shared');
+    fixture.detectChanges();
+
+    expect(internals().showReimbursementPicker()).toBe(true);
+
+    internals().form.controls.attributionMode.setValue('personal');
+    fixture.detectChanges();
+
+    expect(internals().showReimbursementPicker()).toBe(false);
+  });
+
+  it('emits attributionOverride on save and leaves categoryId untouched', async () => {
+    await setup([jointAccount()]);
+    internals().form.controls.attributionMode.setValue('personal');
+
+    const emitted: { attributionOverride?: Transaction['attributionOverride'] }[] = [];
+    component.saved.subscribe((result) => emitted.push(result));
+    await (component as unknown as { submit: () => Promise<void> }).submit();
+
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].attributionOverride).toEqual({ mode: 'personal' });
+  });
+
+  it('rejects saving shared mode with more than one joint account and no jointAccountId picked, surfacing an error', async () => {
+    await setup([jointAccount({ id: 1 }), jointAccount({ id: 2, name: 'Parent joint' })]);
+    internals().form.controls.attributionMode.setValue('shared');
+
+    const emitted: unknown[] = [];
+    component.saved.subscribe((result) => emitted.push(result));
+    await (component as unknown as { submit: () => Promise<void> }).submit();
+
+    expect(emitted).toHaveLength(0);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Select which joint account');
   });
 });

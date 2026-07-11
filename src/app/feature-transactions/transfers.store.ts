@@ -32,6 +32,8 @@ export const TransfersStore = signalStore(
       }
       return map;
     }),
+    /** Keyed by the transfer's own id, for resolving a `attributionOverride.reimbursementTransferId` (TICKET-TXN-03). */
+    transfersById: computed(() => new Map(entities().map((transfer) => [transfer.id!, transfer]))),
   })),
   withMethods((store) => {
     const transfersRepository = inject(TransfersRepository);
@@ -65,12 +67,16 @@ export const TransfersStore = signalStore(
         const transfer = store.transfers().find((candidate) => candidate.id === transferId);
         if (!transfer) return;
 
-        await transferLinkingService.unlink(transfer);
+        const { clearedAttributionOverrides } = await transferLinkingService.unlink(transfer);
 
         patchState(store, removeEntity(transferId));
         transactionsStore.patchMany([
           { id: transfer.fromTransactionId, changes: { transferId: undefined } },
           { id: transfer.toTransactionId, changes: { transferId: undefined } },
+          ...clearedAttributionOverrides.map(({ id, attributionOverride }) => ({
+            id,
+            changes: { attributionOverride },
+          })),
         ]);
       },
 

@@ -307,3 +307,96 @@ describe('AccountsStore: contribution-based net worth for joint accounts (TICKET
     expect(breakdown?.unattributed).toBe(1200);
   });
 });
+
+describe('AccountsStore: manual attributionOverride reweights net worth (TICKET-TXN-03)', () => {
+  const accountsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const transfersRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const categoriesRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    accountsRepository.getAll.mockResolvedValue([]);
+    transactionsRepository.getAll.mockResolvedValue([]);
+    transfersRepository.getAll.mockResolvedValue([]);
+    categoriesRepository.getAll.mockResolvedValue([]);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: TransfersRepository, useValue: transfersRepository },
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+      ],
+    });
+  });
+
+  it('worked example: a shared expense fronted from checking and reimbursed by the joint account drops net worth by only my share', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, type: 'joint', openingBalance: 0, ownershipShare: 0.5 }),
+      account({ id: 2, type: 'checking', openingBalance: 5000 }),
+    ]);
+    const reimbursementTransfer: Transfer = {
+      id: 100,
+      fromTransactionId: 2,
+      toTransactionId: 3,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-07-02T00:00:00.000Z',
+    };
+    transfersRepository.getAll.mockResolvedValue([reimbursementTransfer]);
+
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      // I front €100 of groceries from checking, flagged shared against the joint account and
+      // pointed at the reimbursement transfer below.
+      transaction({
+        id: 1,
+        accountId: 2,
+        amount: -100,
+        bookingDate: '2026-07-01',
+        attributionOverride: { mode: 'shared', jointAccountId: 1, reimbursementTransferId: 100 },
+      }),
+      // The joint pot pays me back in full — a normal linked transfer.
+      transaction({
+        id: 2,
+        accountId: 1,
+        amount: -100,
+        transferId: 100,
+        bookingDate: '2026-07-02',
+      }),
+      transaction({ id: 3, accountId: 2, amount: 100, transferId: 100, bookingDate: '2026-07-02' }),
+    ]);
+
+    await TestBed.inject(TransfersStore).hydrate();
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    // Real balances are untouched: checking nets 5000-100+100=5000, joint stays 0.
+    expect(accountsStore.balancesById().get(2)).toBe(5000);
+    // Net worth reflects only my €50 share of the groceries, not the full €100.
+    expect(accountsStore.netWorth()).toBe(5000 - 50);
+  });
+
+  it('a personal-mode override on a joint expense counts it at 100% in net worth', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, type: 'joint', openingBalance: 0, ownershipShare: 0.5 }),
+    ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      transaction({
+        id: 1,
+        accountId: 1,
+        amount: -100,
+        attributionOverride: { mode: 'personal' },
+      }),
+    ]);
+
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    expect(accountsStore.netWorth()).toBe(-100);
+  });
+});
