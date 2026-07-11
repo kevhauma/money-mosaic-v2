@@ -36,7 +36,7 @@ is the next free version number at implementation time if another version's tick
 Like v1.5's set, these tickets are **not** mutually independent, so the list below is ordered by dependency,
 not by file list order:
 
-- [ ] [TICKET-ML-01](./tickets/TICKET-ML-01-model-config-and-types.md) — Shared ML config, types, and taxonomy signature (adds FR-ML-1) — prerequisite for every other ticket; no tfjs, no dependencies
+- [x] [TICKET-ML-01](./tickets/TICKET-ML-01-model-config-and-types.md) — Shared ML config, types, and taxonomy signature (adds FR-ML-1) — prerequisite for every other ticket; no tfjs, no dependencies
 - [ ] [TICKET-ML-02](./tickets/TICKET-ML-02-feature-hashing.md) — Feature hashing / vectorisation (adds FR-ML-2) — needs ML-01's `FeatureConfig` type; pure, tfjs-free
 - [ ] [TICKET-ML-03](./tickets/TICKET-ML-03-rule-proposal-mining.md) — Rule-proposal mining from prediction clusters (adds FR-ML-3) — needs ML-01's thresholds and the existing `matchesRule`; independent of ML-02, can run in parallel
 - [ ] [TICKET-ML-04](./tickets/TICKET-ML-04-model-persistence.md) — `categoryModel` Dexie table + repository (adds FR-ML-4) — needs ML-01's schema-version const; independent of ML-02/ML-03, can run in parallel

@@ -55,12 +55,12 @@ ticket.
 
 ## Acceptance criteria
 
-- [ ] `model-config.ts` exports exactly the types/consts above with no import of `@tensorflow/*` anywhere in the file or its transitive imports.
-- [ ] `taxonomySignature` returns the same string for the same category set regardless of input array order, and a different string when any id, name, or the set's membership changes.
-- [ ] `core/ml/index.ts` exists and re-exports `model-config.ts`'s surface; it does not export anything from a worker file (none exists yet in this ticket).
-- [ ] Unit tests (`model-config.spec.ts`) cover: signature stability under reordering, signature change on rename/add/remove, and that the exported thresholds match the documented values.
-- [ ] No TestBed — pure functions/consts, co-located `model-config.spec.ts`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `model-config.ts` exports exactly the types/consts above with no import of `@tensorflow/*` anywhere in the file or its transitive imports.
+- [x] `taxonomySignature` returns the same string for the same category set regardless of input array order, and a different string when any id, name, or the set's membership changes.
+- [x] `core/ml/index.ts` exists and re-exports `model-config.ts`'s surface; it does not export anything from a worker file (none exists yet in this ticket).
+- [x] Unit tests (`model-config.spec.ts`) cover: signature stability under reordering, signature change on rename/add/remove, and that the exported thresholds match the documented values.
+- [x] No TestBed — pure functions/consts, co-located `model-config.spec.ts`.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
