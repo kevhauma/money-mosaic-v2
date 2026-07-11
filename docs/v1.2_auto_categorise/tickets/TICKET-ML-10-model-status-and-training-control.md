@@ -43,16 +43,16 @@ categories page (there is no dedicated settings page for this app).
 
 ## Acceptance criteria
 
-- [ ] Each of the six statuses renders distinct, accurate copy and tone (no shared generic fallback text that fails to distinguish `'error'` from `'not-enough-data'`, for instance).
-- [ ] The Train/Retrain button is disabled (or hidden) while `status() === 'training'`, preventing a second concurrent `train()` call.
-- [ ] `'ready'` state displays `lastTrainedAt` in a human-readable format and `metrics.accuracy` as a whole percent.
-- [ ] `'stale'` state's button reads "Retrain" (not "Train"), per the design's staleness-relabelling requirement.
-- [ ] Clicking the button calls `CategoryModelStore.train()` exactly once per click, regardless of current status (as long as it isn't disabled).
-- [ ] Only existing shared UI primitives (`AlertComponent`, `BadgeComponent`, `ButtonComponent`) are used for tone/layout — no new raw Tailwind color classes hand-picked per status.
-- [ ] Mounted on `categories-overview.component.html` and added to its `imports` array.
-- [ ] Unit tests cover: each status renders its expected copy/tone/button-disabled-state; clicking Train/Retrain calls `train()`; the button is inert during `'training'`.
-- [ ] Verified live in the browser: with too little categorised data, the component shows the actionable "not enough data" copy; after categorising enough data and clicking Train, it shows a spinner then a success/accuracy state; renaming or removing a category flips it to the "stale"/"Retrain" state.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Each of the six statuses renders distinct, accurate copy and tone (no shared generic fallback text that fails to distinguish `'error'` from `'not-enough-data'`, for instance).
+- [x] The Train/Retrain button is disabled (or hidden) while `status() === 'training'`, preventing a second concurrent `train()` call.
+- [x] `'ready'` state displays `lastTrainedAt` in a human-readable format and `metrics.accuracy` as a whole percent.
+- [x] `'stale'` state's button reads "Retrain" (not "Train"), per the design's staleness-relabelling requirement.
+- [x] Clicking the button calls `CategoryModelStore.train()` exactly once per click, regardless of current status (as long as it isn't disabled).
+- [x] Only existing shared UI primitives (`AlertComponent`, `BadgeComponent`, `ButtonComponent`) are used for tone/layout — no new raw Tailwind color classes hand-picked per status.
+- [x] Mounted on `categories-overview.component.html` and added to its `imports` array.
+- [x] Unit tests cover: each status renders its expected copy/tone/button-disabled-state; clicking Train/Retrain calls `train()`; the button is inert during `'training'`.
+- [x] Verified live in the browser: with too little categorised data, the component shows the actionable "not enough data" copy; after categorising enough data and clicking Train, it shows a spinner then a success/accuracy state; renaming or removing a category flips it to the "stale"/"Retrain" state.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

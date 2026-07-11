@@ -46,7 +46,7 @@ not by file list order:
 - [x] [TICKET-ML-07](./tickets/TICKET-ML-07-model-store.md) — `CategoryModelStore`: status machine, train/predict/accept flows (adds FR-ML-7) — needs ML-04, ML-06, ML-03, and the existing `TransactionsStore`/`CategoriesStore`/`RulesStore`
 - [x] [TICKET-ML-08](./tickets/TICKET-ML-08-suggestion-ghost-in-transactions.md) — Ghost category suggestion + Accept in the transactions table (adds FR-ML-8) — needs ML-07
 - [ ] [TICKET-ML-09](./tickets/TICKET-ML-09-rule-proposal-inbox.md) — Rule-proposal inbox on the rules page (adds FR-ML-9) — needs ML-07; independent of ML-08, can run in parallel
-- [ ] [TICKET-ML-10](./tickets/TICKET-ML-10-model-status-and-training-control.md) — Model status chip + Train/Retrain control (adds FR-ML-10) — needs ML-07; independent of ML-08/ML-09, can run in parallel
+- [x] [TICKET-ML-10](./tickets/TICKET-ML-10-model-status-and-training-control.md) — Model status chip + Train/Retrain control (adds FR-ML-10) — needs ML-07; independent of ML-08/ML-09, can run in parallel
 
 ## Considered, not ticketed yet
 
