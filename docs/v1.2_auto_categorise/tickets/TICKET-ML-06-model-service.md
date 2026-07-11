@@ -50,13 +50,13 @@ dependency chain touches `postMessage` directly.
 
 ## Acceptance criteria
 
-- [ ] The worker is constructed exactly once per service instance (in the constructor or on first use, memoized) — not re-created inside `init`/`train`/`predict`.
-- [ ] `init`/`train`/`predict` each return a `Promise` that resolves with the corresponding typed response payload and rejects on an `ErrorResponse` or worker error.
-- [ ] Calling `train()` and `predict()` back-to-back without awaiting the first does not interleave their worker messages — the second request's message is posted only after the first's response arrives (sequenced via an internal queue).
-- [ ] No component or store constructs `Worker(...)` directly for this feature — `CategoryModelService` is the sole owner.
-- [ ] Unit tests use a fake/mocked `Worker` (matching how `csv-import.service.spec.ts` mocks `csv-parse.worker.ts` if such a precedent exists, or a hand-rolled `postMessage`/`onmessage` stub) to verify: request/response matching, sequencing under concurrent calls, and error propagation — no real tfjs execution in this ticket's tests.
-- [ ] `grep -r "@tensorflow" src/app/feature-categories/category-model.service.ts` returns no matches — the service only imports ML-05's structural protocol types, never tfjs itself.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] The worker is constructed exactly once per service instance (in the constructor or on first use, memoized) — not re-created inside `init`/`train`/`predict`.
+- [x] `init`/`train`/`predict` each return a `Promise` that resolves with the corresponding typed response payload and rejects on an `ErrorResponse` or worker error.
+- [x] Calling `train()` and `predict()` back-to-back without awaiting the first does not interleave their worker messages — the second request's message is posted only after the first's response arrives (sequenced via an internal queue).
+- [x] No component or store constructs `Worker(...)` directly for this feature — `CategoryModelService` is the sole owner.
+- [x] Unit tests use a fake/mocked `Worker` (matching how `csv-import.service.spec.ts` mocks `csv-parse.worker.ts` if such a precedent exists, or a hand-rolled `postMessage`/`onmessage` stub) to verify: request/response matching, sequencing under concurrent calls, and error propagation — no real tfjs execution in this ticket's tests.
+- [x] `grep -r "@tensorflow" src/app/feature-categories/category-model.service.ts` returns no matches — the service only imports ML-05's structural protocol types, never tfjs itself.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
