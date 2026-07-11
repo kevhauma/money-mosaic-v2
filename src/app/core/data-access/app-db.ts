@@ -2,6 +2,9 @@ import Dexie, { type Table } from 'dexie';
 // Deep import (not the barrel) keeps this framework-agnostic Dexie module free of the Angular/ngrx
 // code the shared/utils barrel also re-exports.
 import { computeFingerprint } from '@/shared/utils/fingerprint';
+// Deep import (not the `core/ml` barrel) for the same reason as above — the barrel's
+// rule-proposal-mining module pulls in an `@Injectable` service transitively.
+import type { FeatureConfig } from '@/core/ml/model-config';
 
 /** A person sharing a `joint` account, and the IBAN(s) they pay in from (TICKET-ACC-03). */
 export type JointOwner = {
@@ -387,6 +390,22 @@ export type ImportBatch = {
   dateTo: string;
 };
 
+/** Singleton row (id always 1) persisting the trained auto-categoriser model (FR-ML-4) so it survives a reload. */
+export type CategoryModelArtifact = {
+  id: 1;
+  modelTopology: ArrayBuffer;
+  weightSpecs: ArrayBuffer;
+  weightData: ArrayBuffer;
+  categoryIdByIndex: number[];
+  featureConfig: FeatureConfig;
+  /** `taxonomySignature()` at training time — flips the model `stale` once categories change (ML-07). */
+  taxonomySignature: string;
+  metrics: { accuracy: number; trainedSampleCount: number };
+  trainedAt: string;
+  /** `MODEL_SCHEMA_VERSION` at training time, distinct from this table's own Dexie schema version. */
+  schemaVersion: number;
+};
+
 class AppDb extends Dexie {
   accounts!: Table<Account, number>;
   transactions!: Table<Transaction, number>;
@@ -396,6 +415,7 @@ class AppDb extends Dexie {
   mappingProfiles!: Table<MappingProfile, number>;
   importBatches!: Table<ImportBatch, number>;
   transferSettings!: Table<TransferSettings, number>;
+  categoryModel!: Table<CategoryModelArtifact, 1>;
 
   constructor() {
     super('money-mosaic');
@@ -542,6 +562,20 @@ class AppDb extends Dexie {
           });
         }
       });
+
+    // Adds the `categoryModel` singleton-row table for the trained auto-categoriser (ML-04). Purely
+    // additive — a brand-new, empty table — so no `.upgrade()` is needed.
+    this.version(7).stores({
+      accounts: '++id, name, type, archived',
+      transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+      transfers: '++id, fromTransactionId, toTransactionId',
+      categories: '++id, name, kind, archived',
+      rules: '++id, priority, enabled',
+      mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+      importBatches: '++id, accountId, importedAt',
+      transferSettings: 'id',
+      categoryModel: 'id',
+    });
 
     this.on('populate', () => {
       this.mappingProfiles.bulkAdd(DEFAULT_MAPPING_PROFILE_TEMPLATES);

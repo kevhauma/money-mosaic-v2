@@ -65,14 +65,14 @@ ticket — it only stores/retrieves whatever `SerializedArtifacts` shape ML-05 p
 
 ## Acceptance criteria
 
-- [ ] `CategoryModelArtifact` type defined in `app-db.ts` with the fields above.
-- [ ] New `.version(7)` block (or next free number) is additive — no edits to the `.version(6)` block — and repeats the full existing table map.
-- [ ] `categoryModel` table indexed on `id` only (singleton row, no query indexes needed).
-- [ ] `CategoryModelRepository` implements `get`/`save`/`clear`; no component or store touches `appDb.categoryModel` directly.
-- [ ] Both are exported through `core/data-access/index.ts`.
-- [ ] Unit tests cover: repository round-trip (save then get returns the same artifact, including `ArrayBuffer` fields) against a real (fake-indexeddb-backed) `appDb` instance, matching how existing repository specs are structured; `clear` removes the row; `get` returns `undefined` before anything is saved.
-- [ ] No import of `@tensorflow/*` anywhere in this file — the repository only moves opaque `ArrayBuffer`s, never interprets them.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `CategoryModelArtifact` type defined in `app-db.ts` with the fields above.
+- [x] New `.version(7)` block (or next free number) is additive — no edits to the `.version(6)` block — and repeats the full existing table map.
+- [x] `categoryModel` table indexed on `id` only (singleton row, no query indexes needed).
+- [x] `CategoryModelRepository` implements `get`/`save`/`clear`; no component or store touches `appDb.categoryModel` directly.
+- [x] Both are exported through `core/data-access/index.ts`.
+- [x] Unit tests cover: repository round-trip (save then get returns the same artifact, including `ArrayBuffer` fields) against a real (fake-indexeddb-backed) `appDb` instance, matching how existing repository specs are structured; `clear` removes the row; `get` returns `undefined` before anything is saved.
+- [x] No import of `@tensorflow/*` anywhere in this file — the repository only moves opaque `ArrayBuffer`s, never interprets them.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

@@ -7,3 +7,4 @@ export * from './categories.repository';
 export * from './rules.repository';
 export * from './transfers.repository';
 export * from './transfer-settings.repository';
+export * from './category-model.repository';
