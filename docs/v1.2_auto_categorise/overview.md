@@ -48,6 +48,17 @@ not by file list order:
 - [x] [TICKET-ML-09](./tickets/TICKET-ML-09-rule-proposal-inbox.md) — Rule-proposal inbox on the rules page (adds FR-ML-9) — needs ML-07; independent of ML-08, can run in parallel
 - [x] [TICKET-ML-10](./tickets/TICKET-ML-10-model-status-and-training-control.md) — Model status chip + Train/Retrain control (adds FR-ML-10) — needs ML-07; independent of ML-08/ML-09, can run in parallel
 
+### UX revision — consolidated `/learning` page
+
+Raised in [revision-and-feedback.md](./revision-and-feedback.md): the ML-08/09/10 UI landed correct but
+scattered (a chip in the transactions table, an inbox on the rules page, a status card on the categories
+page) and unclear. These four tickets consolidate everything onto a new `/learning` page:
+
+- [x] [TICKET-ML-11](./tickets/TICKET-ML-11-learning-route-and-page-shell.md) — `/learning` route, page shell, and nav entry (adds FR-ML-11) — prerequisite for ML-12/13/14; no dependency on ML-08/09/10 beyond them already existing
+- [ ] [TICKET-ML-12](./tickets/TICKET-ML-12-model-status-detail-on-learning-page.md) — Model status + training detail moved and expanded onto the Learning page (extends FR-ML-10, adds FR-ML-12) — needs ML-11; independent of ML-13/ML-14, can run in parallel
+- [ ] [TICKET-ML-13](./tickets/TICKET-ML-13-suggestions-table-on-learning-page.md) — Dedicated suggestions table on the Learning page, replacing the transactions-table ghost chip (supersedes part of FR-ML-8, adds FR-ML-13) — needs ML-11; independent of ML-12/ML-14, can run in parallel
+- [ ] [TICKET-ML-14](./tickets/TICKET-ML-14-rule-proposals-on-learning-page.md) — Rule-proposal inbox moved from the rules page to the Learning page (relocates FR-ML-9) — needs ML-11; independent of ML-12/ML-13, can run in parallel
+
 ## Considered, not ticketed yet
 
 - **Auto-retrain after N new labels** — v1.2 ships a manual "Train model" / "Retrain" button only, so CPU

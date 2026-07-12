@@ -10,6 +10,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArrowsExchange,
   tablerBuildingBank,
+  tablerBulb,
   tablerFileImport,
   tablerHome,
   tablerMenu2,
@@ -54,6 +55,7 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
       tablerFileImport,
       tablerArrowsExchange,
       tablerTags,
+      tablerBulb,
     }),
   ],
 })
