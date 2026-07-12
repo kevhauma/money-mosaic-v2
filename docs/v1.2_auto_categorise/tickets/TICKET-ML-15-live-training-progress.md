@@ -63,31 +63,31 @@ card renders the live epoch/loss/accuracy while `status === 'training'`.
 
 ## Acceptance criteria
 
-- [ ] `processTrain` posts one `TRAIN_PROGRESS` message per completed epoch during `model.fit`, each
+- [x] `processTrain` posts one `TRAIN_PROGRESS` message per completed epoch during `model.fit`, each
       carrying the epoch index, the 120-epoch cap, and the current loss (accuracy/valLoss when tf.js
       reports them).
-- [ ] `CategoryModelService.train(..., onProgress)` invokes `onProgress` for every `TRAIN_PROGRESS` message
+- [x] `CategoryModelService.train(..., onProgress)` invokes `onProgress` for every `TRAIN_PROGRESS` message
       received before the terminal response, without resolving or detaching listeners early.
-- [ ] `CategoryModelService`'s `init`/`predict` round-trips are unaffected — unmodified ML-06 unit tests
+- [x] `CategoryModelService`'s `init`/`predict` round-trips are unaffected — unmodified ML-06 unit tests
       still pass; the listener-lifetime change doesn't alter their single-response behaviour.
-- [ ] `CategoryModelStore.train()`'s `trainingProgress` signal updates on every progress callback (verified
+- [x] `CategoryModelStore.train()`'s `trainingProgress` signal updates on every progress callback (verified
       with a fake service that emits several progress calls before resolving) and is `null` once `status`
       is no longer `'training'`.
-- [ ] A run that finishes before the 120-epoch cap (early stopping fires) reports `metrics.epochsRun` below
+- [x] A run that finishes before the 120-epoch cap (early stopping fires) reports `metrics.epochsRun` below
       120, distinguishable from a full run — without any extra worker round-trip.
-- [ ] `ModelStatusComponent` shows live epoch/loss (and accuracy, when present) while training, updating as
+- [x] `ModelStatusComponent` shows live epoch/loss (and accuracy, when present) while training, updating as
       `trainingProgress` changes, and reads the plain "Training…" copy only when `trainingProgress` is
       still `null`.
-- [ ] `grep -r "@tensorflow" src/app` still matches only `category-model.worker.ts` — no new tfjs import
+- [x] `grep -r "@tensorflow" src/app` still matches only `category-model.worker.ts` — no new tfjs import
       anywhere else.
-- [ ] Unit tests cover: the worker posts progress messages across a multi-epoch fit (small synthetic
+- [x] Unit tests cover: the worker posts progress messages across a multi-epoch fit (small synthetic
       dataset, asserted via a mocked `self.postMessage`/`onEpochEnd` invocation count); the service
       distinguishes non-terminal `TRAIN_PROGRESS` from the terminal response; the store's
       `trainingProgress` signal transitions correctly across a canned progress→success sequence and a
       canned progress→error sequence.
-- [ ] Verified live in the browser: training on enough labelled data to run several epochs shows the
+- [x] Verified live in the browser: training on enough labelled data to run several epochs shows the
       epoch/loss updating in real time on `/learning` before settling into `'ready'`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

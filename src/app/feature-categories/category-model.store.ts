@@ -22,13 +22,22 @@ export type CategoryModelStatus =
 
 type Suggestion = { categoryId: number; confidence: number };
 
+/** Live per-epoch snapshot (ML-15) — `null` whenever `status !== 'training'`. */
+export type TrainingProgress = {
+  epoch: number;
+  totalEpochs: number;
+  loss: number;
+  accuracy: number | null;
+};
+
 type CategoryModelState = {
   status: CategoryModelStatus;
-  metrics: { accuracy: number; trainedSampleCount: number } | null;
+  metrics: { accuracy: number; trainedSampleCount: number; epochsRun?: number } | null;
   lastTrainedAt: string | null;
   categoryIdByIndex: number[];
   suggestions: Map<number, Suggestion>;
   ruleProposals: RuleProposal[];
+  trainingProgress: TrainingProgress | null;
 };
 
 const initialState: CategoryModelState = {
@@ -38,6 +47,7 @@ const initialState: CategoryModelState = {
   categoryIdByIndex: [],
   suggestions: new Map(),
   ruleProposals: [],
+  trainingProgress: null,
 };
 
 /**
@@ -162,10 +172,16 @@ export const CategoryModelStore = signalStore(
           return;
         }
 
-        patchState(store, { status: 'training' });
+        patchState(store, { status: 'training', trainingProgress: null });
 
         try {
-          const response = await service.train(samples, DEFAULT_FEATURE_CONFIG);
+          const response = await service.train(
+            samples,
+            DEFAULT_FEATURE_CONFIG,
+            ({ epoch, totalEpochs, loss, accuracy }) => {
+              patchState(store, { trainingProgress: { epoch, totalEpochs, loss, accuracy } });
+            },
+          );
           const trainedAt = new Date().toISOString();
 
           const artifact: CategoryModelArtifact = {
@@ -187,11 +203,12 @@ export const CategoryModelStore = signalStore(
             metrics: response.metrics,
             lastTrainedAt: trainedAt,
             categoryIdByIndex: response.artifacts.categoryIdByIndex,
+            trainingProgress: null,
           });
 
           await refreshSuggestions();
         } catch {
-          patchState(store, { status: 'error' });
+          patchState(store, { status: 'error', trainingProgress: null });
         }
       },
 

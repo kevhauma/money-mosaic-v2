@@ -5,6 +5,7 @@ import {
   CategoriesStore,
   CategoryModelStore,
   type CategoryModelStatus,
+  type TrainingProgress,
 } from '@/feature-categories';
 import { TransactionsStore } from '@/feature-transactions';
 import type { Category, Transaction } from '@/core/data-access';
@@ -48,6 +49,7 @@ describe('ModelStatusComponent', () => {
     metrics: signal<{ accuracy: number; trainedSampleCount: number } | null>(null),
     lastTrainedAt: signal<string | null>(null),
     categoryIdByIndex: signal<number[]>([]),
+    trainingProgress: signal<TrainingProgress | null>(null),
     train: vi.fn().mockResolvedValue(undefined),
   };
 
@@ -65,6 +67,7 @@ describe('ModelStatusComponent', () => {
     categoryModelStore.metrics.set(null);
     categoryModelStore.lastTrainedAt.set(null);
     categoryModelStore.categoryIdByIndex.set([]);
+    categoryModelStore.trainingProgress.set(null);
     categoriesStore.activeCategories.set([]);
     transactionsStore.transactions.set([]);
     await TestBed.configureTestingModule({
@@ -132,6 +135,50 @@ describe('ModelStatusComponent', () => {
 
     expect(component.statusCopy()).toBe('Training…');
     expect(component.trainDisabled()).toBe(true);
+  });
+
+  it('falls back to the plain "Training…" copy while trainingProgress is still null (ML-15)', async () => {
+    await setup();
+    categoryModelStore.status.set('training');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent as string).toContain('Training…');
+  });
+
+  it('shows live epoch/loss/accuracy once trainingProgress is populated (ML-15)', async () => {
+    await setup();
+    categoryModelStore.status.set('training');
+    categoryModelStore.trainingProgress.set({
+      epoch: 12,
+      totalEpochs: 120,
+      loss: 0.4567,
+      accuracy: 0.812,
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('epoch 12/120');
+    expect(text).toContain('loss 0.457');
+    expect(text).toContain('81% accuracy');
+  });
+
+  it('omits the accuracy segment while trainingProgress.accuracy is still null (ML-15)', async () => {
+    await setup();
+    categoryModelStore.status.set('training');
+    categoryModelStore.trainingProgress.set({
+      epoch: 1,
+      totalEpochs: 120,
+      loss: 1.2,
+      accuracy: null,
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('epoch 1/120');
+    expect(text).not.toContain('accuracy');
   });
 
   it('renders "ready" with success tone, formatted accuracy, and trained-sample/category counts', async () => {

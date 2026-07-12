@@ -85,6 +85,29 @@ describe('category-model.worker: message handling', () => {
     expect(correct / samples.length).toBeGreaterThanOrEqual(0.8);
   }, 20000);
 
+  it('posts a TRAIN_PROGRESS message per completed epoch, and TRAIN_OK reports epochsRun (ML-15)', async () => {
+    const postedProgress: { type: string; epoch: number; totalEpochs: number }[] = [];
+    const { handleRequest } = createCategoryModelWorkerHandler((message) =>
+      postedProgress.push(message),
+    );
+    const samples = buildSamples(30);
+
+    const trainResponse = (await handleRequest({
+      type: 'TRAIN',
+      samples,
+      featureConfig,
+    })) as TrainResponse;
+
+    expect(postedProgress.length).toBeGreaterThan(0);
+    expect(postedProgress[0]).toMatchObject({ type: 'TRAIN_PROGRESS', epoch: 1, totalEpochs: 120 });
+    const epochs = postedProgress.map((message) => message.epoch);
+    expect(epochs).toEqual([...epochs].sort((a, b) => a - b)); // strictly increasing, in order
+
+    expect(trainResponse.metrics.epochsRun).toBeGreaterThan(0);
+    expect(trainResponse.metrics.epochsRun).toBeLessThanOrEqual(120);
+    expect(postedProgress.length).toBe(trainResponse.metrics.epochsRun);
+  }, 20000);
+
   it('completes TRAIN with fewer than 40 samples without a validationSplit and without throwing', async () => {
     const { handleRequest } = createCategoryModelWorkerHandler();
     const samples = buildSamples(20);

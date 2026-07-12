@@ -236,6 +236,87 @@ describe('CategoryModelStore', () => {
       expect(store.status()).toBe('error');
       expect(categoryModelRepository.save).not.toHaveBeenCalled();
     });
+
+    it('trainingProgress updates live on every progress callback and resets to null once training finishes (ML-15)', async () => {
+      categoriesRepository.getAll.mockResolvedValue([
+        category({ id: 1 }),
+        category({ id: 2, name: 'Rent' }),
+      ]);
+      transactionsRepository.getAll.mockResolvedValue(labeledTransactions());
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+
+      const progressSnapshots: unknown[] = [];
+      categoryModelService.train.mockImplementation(
+        async (
+          _samples: unknown,
+          _config: unknown,
+          onProgress?: (progress: {
+            epoch: number;
+            totalEpochs: number;
+            loss: number;
+            accuracy: number | null;
+          }) => void,
+        ) => {
+          onProgress?.({ epoch: 1, totalEpochs: 120, loss: 0.9, accuracy: 0.4 });
+          progressSnapshots.push(store.trainingProgress());
+          onProgress?.({ epoch: 2, totalEpochs: 120, loss: 0.7, accuracy: 0.55 });
+          progressSnapshots.push(store.trainingProgress());
+          return {
+            type: 'TRAIN_OK',
+            artifacts: {
+              modelTopology: new ArrayBuffer(0),
+              weightSpecs: new ArrayBuffer(0),
+              weightData: new ArrayBuffer(0),
+              categoryIdByIndex: [1, 2],
+            },
+            metrics: { accuracy: 0.92, trainedSampleCount: MIN_TRAINING_LABELS, epochsRun: 2 },
+          };
+        },
+      );
+
+      expect(store.trainingProgress()).toBeNull();
+
+      await store.train();
+
+      expect(progressSnapshots).toEqual([
+        { epoch: 1, totalEpochs: 120, loss: 0.9, accuracy: 0.4 },
+        { epoch: 2, totalEpochs: 120, loss: 0.7, accuracy: 0.55 },
+      ]);
+      expect(store.trainingProgress()).toBeNull();
+      expect(store.status()).toBe('ready');
+    });
+
+    it('trainingProgress resets to null when the worker rejects, even after progress arrived (ML-15)', async () => {
+      categoriesRepository.getAll.mockResolvedValue([
+        category({ id: 1 }),
+        category({ id: 2, name: 'Rent' }),
+      ]);
+      transactionsRepository.getAll.mockResolvedValue(labeledTransactions());
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+
+      categoryModelService.train.mockImplementation(
+        async (
+          _samples: unknown,
+          _config: unknown,
+          onProgress?: (progress: {
+            epoch: number;
+            totalEpochs: number;
+            loss: number;
+            accuracy: number | null;
+          }) => void,
+        ) => {
+          onProgress?.({ epoch: 1, totalEpochs: 120, loss: 1.1, accuracy: null });
+          throw new Error('training failed');
+        },
+      );
+
+      await store.train();
+
+      expect(store.status()).toBe('error');
+      expect(store.trainingProgress()).toBeNull();
+    });
   });
 
   describe('refreshSuggestions', () => {

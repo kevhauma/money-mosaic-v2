@@ -56,7 +56,7 @@ page) and unclear. These four tickets consolidate everything onto a new `/learni
 
 - [x] [TICKET-ML-11](./tickets/TICKET-ML-11-learning-route-and-page-shell.md) — `/learning` route, page shell, and nav entry (adds FR-ML-11) — prerequisite for ML-12/13/14; no dependency on ML-08/09/10 beyond them already existing
 - [x] [TICKET-ML-12](./tickets/TICKET-ML-12-model-status-detail-on-learning-page.md) — Model status + training detail moved and expanded onto the Learning page (extends FR-ML-10, adds FR-ML-12) — needs ML-11; independent of ML-13/ML-14, can run in parallel
-- [ ] [TICKET-ML-15](./tickets/TICKET-ML-15-live-training-progress.md) — Live per-epoch training progress streamed from the worker (adds FR-ML-15) — needs ML-12 (edits the same status rendering it relocates); sequenced after it, not parallel
+- [x] [TICKET-ML-15](./tickets/TICKET-ML-15-live-training-progress.md) — Live per-epoch training progress streamed from the worker (adds FR-ML-15) — needs ML-12 (edits the same status rendering it relocates); sequenced after it, not parallel
 - [x] [TICKET-ML-13](./tickets/TICKET-ML-13-suggestions-table-on-learning-page.md) — Dedicated suggestions table on the Learning page, replacing the transactions-table ghost chip (supersedes part of FR-ML-8, adds FR-ML-13) — needs ML-11; independent of ML-12/ML-14, can run in parallel
 - [x] [TICKET-ML-14](./tickets/TICKET-ML-14-rule-proposals-on-learning-page.md) — Rule-proposal inbox moved from the rules page to the Learning page (relocates FR-ML-9) — needs ML-11; independent of ML-12/ML-13, can run in parallel
 

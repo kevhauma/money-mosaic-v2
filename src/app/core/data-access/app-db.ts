@@ -400,7 +400,8 @@ export type CategoryModelArtifact = {
   featureConfig: FeatureConfig;
   /** `taxonomySignature()` at training time — flips the model `stale` once categories change (ML-07). */
   taxonomySignature: string;
-  metrics: { accuracy: number; trainedSampleCount: number };
+  /** `epochsRun` is optional — absent on artifacts persisted before ML-15 added it. */
+  metrics: { accuracy: number; trainedSampleCount: number; epochsRun?: number };
   trainedAt: string;
   /** `MODEL_SCHEMA_VERSION` at training time, distinct from this table's own Dexie schema version. */
   schemaVersion: number;

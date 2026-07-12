@@ -36,7 +36,11 @@ export type InitResponse = { type: 'INIT_OK' };
 export type TrainResponse = {
   type: 'TRAIN_OK';
   artifacts: SerializedArtifacts;
-  metrics: { accuracy: number; trainedSampleCount: number };
+  /**
+   * `epochsRun` is optional because it's absent on artifacts persisted before this field existed —
+   * a freshly-completed TRAIN always sets it, but a reloaded old artifact's `metrics` won't have it.
+   */
+  metrics: { accuracy: number; trainedSampleCount: number; epochsRun?: number };
 };
 
 export type PredictResponse = {
@@ -47,3 +51,16 @@ export type PredictResponse = {
 export type ErrorResponse = { type: 'ERROR'; message: string };
 
 export type WorkerResponse = InitResponse | TrainResponse | PredictResponse | ErrorResponse;
+
+/** Posted mid-`TRAIN` from inside `model.fit`'s epoch callback (ML-15) — never a terminal response. */
+export type TrainProgress = {
+  type: 'TRAIN_PROGRESS';
+  epoch: number;
+  totalEpochs: number;
+  loss: number;
+  accuracy: number | null;
+  valLoss: number | null;
+};
+
+/** Every message shape a worker can post — terminal `WorkerResponse`s plus the non-terminal progress event. */
+export type WorkerMessage = WorkerResponse | TrainProgress;

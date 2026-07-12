@@ -6,8 +6,8 @@ import type {
   PredictResponse,
   SerializedArtifacts,
   TrainResponse,
+  WorkerMessage,
   WorkerRequest,
-  WorkerResponse,
 } from '@/core/ml';
 import { CategoryModelService } from './category-model.service';
 
@@ -18,7 +18,7 @@ class FakeWorker {
 
   postedMessages: WorkerRequest[] = [];
   terminated = false;
-  private messageListeners: Listener<MessageEvent<WorkerResponse>>[] = [];
+  private messageListeners: Listener<MessageEvent<WorkerMessage>>[] = [];
   private errorListeners: Listener<ErrorEvent>[] = [];
 
   constructor(public readonly url: URL | string) {
@@ -27,10 +27,10 @@ class FakeWorker {
 
   addEventListener(
     type: 'message' | 'error',
-    listener: Listener<MessageEvent<WorkerResponse>> | Listener<ErrorEvent>,
+    listener: Listener<MessageEvent<WorkerMessage>> | Listener<ErrorEvent>,
   ): void {
     if (type === 'message') {
-      this.messageListeners.push(listener as Listener<MessageEvent<WorkerResponse>>);
+      this.messageListeners.push(listener as Listener<MessageEvent<WorkerMessage>>);
     } else {
       this.errorListeners.push(listener as Listener<ErrorEvent>);
     }
@@ -38,7 +38,7 @@ class FakeWorker {
 
   removeEventListener(
     type: 'message' | 'error',
-    listener: Listener<MessageEvent<WorkerResponse>> | Listener<ErrorEvent>,
+    listener: Listener<MessageEvent<WorkerMessage>> | Listener<ErrorEvent>,
   ): void {
     if (type === 'message') {
       this.messageListeners = this.messageListeners.filter((l) => l !== listener);
@@ -55,7 +55,7 @@ class FakeWorker {
     this.terminated = true;
   }
 
-  emitMessage(data: WorkerResponse): void {
+  emitMessage(data: WorkerMessage): void {
     this.messageListeners.slice().forEach((listener) => listener({ data } as MessageEvent));
   }
 
@@ -158,6 +158,99 @@ describe('CategoryModelService: init/train/predict request-response matching', (
     } satisfies PredictResponse);
 
     await expect(promise).resolves.toEqual([{ id: 1, categoryId: 7, confidence: 0.8 }]);
+  });
+});
+
+describe('CategoryModelService: train() progress callback (ML-15)', () => {
+  let service: CategoryModelService;
+  let worker: FakeWorker;
+
+  beforeEach(() => {
+    FakeWorker.instances = [];
+    vi.stubGlobal('Worker', FakeWorker);
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(CategoryModelService);
+    worker = FakeWorker.instances[0];
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('invokes onProgress for every TRAIN_PROGRESS message without resolving early', async () => {
+    const onProgress = vi.fn();
+    const promise = service.train([], featureConfig, onProgress);
+    await flushMicrotasks();
+
+    worker.emitMessage({
+      type: 'TRAIN_PROGRESS',
+      epoch: 1,
+      totalEpochs: 120,
+      loss: 0.9,
+      accuracy: 0.4,
+      valLoss: null,
+    });
+    worker.emitMessage({
+      type: 'TRAIN_PROGRESS',
+      epoch: 2,
+      totalEpochs: 120,
+      loss: 0.7,
+      accuracy: 0.55,
+      valLoss: null,
+    });
+
+    expect(onProgress).toHaveBeenCalledTimes(2);
+    expect(onProgress).toHaveBeenNthCalledWith(1, {
+      epoch: 1,
+      totalEpochs: 120,
+      loss: 0.9,
+      accuracy: 0.4,
+      valLoss: null,
+    });
+
+    const trainResponse: TrainResponse = {
+      type: 'TRAIN_OK',
+      artifacts,
+      metrics: { accuracy: 0.55, trainedSampleCount: 0, epochsRun: 2 },
+    };
+    worker.emitMessage(trainResponse);
+
+    await expect(promise).resolves.toEqual(trainResponse);
+  });
+
+  it('resolves correctly even when TRAIN_PROGRESS messages arrive but no onProgress callback was given', async () => {
+    const promise = service.train([], featureConfig);
+    await flushMicrotasks();
+
+    worker.emitMessage({
+      type: 'TRAIN_PROGRESS',
+      epoch: 1,
+      totalEpochs: 120,
+      loss: 0.9,
+      accuracy: null,
+      valLoss: null,
+    });
+
+    const trainResponse: TrainResponse = {
+      type: 'TRAIN_OK',
+      artifacts,
+      metrics: { accuracy: 0.9, trainedSampleCount: 0, epochsRun: 1 },
+    };
+    worker.emitMessage(trainResponse);
+
+    await expect(promise).resolves.toEqual(trainResponse);
+  });
+
+  it('does not treat TRAIN_PROGRESS as terminal — init()/predict() still resolve on their single expected response', async () => {
+    const initPromise = service.init(artifacts, featureConfig);
+    await flushMicrotasks();
+    worker.emitMessage({ type: 'INIT_OK' } satisfies InitResponse);
+    await expect(initPromise).resolves.toBeUndefined();
+
+    const predictPromise = service.predict([]);
+    await flushMicrotasks();
+    worker.emitMessage({ type: 'PREDICT_OK', predictions: [] } satisfies PredictResponse);
+    await expect(predictPromise).resolves.toEqual([]);
   });
 });
 

@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import {
   CategoriesStore,
@@ -51,7 +51,7 @@ const BADGE_COLOR: Partial<Record<CategoryModelStatus, BadgeColor>> = {
 /** Model status chip + diagnostic detail + Train/Retrain control (FR-ML-10, expanded by FR-ML-12), mounted on the Learning page. */
 @Component({
   selector: 'app-model-status',
-  imports: [DatePipe, AlertComponent, BadgeComponent, ButtonComponent],
+  imports: [DatePipe, DecimalPipe, AlertComponent, BadgeComponent, ButtonComponent],
   templateUrl: './model-status.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

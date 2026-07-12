@@ -3,7 +3,17 @@
     @switch (categoryModelStore.status()) {
       @case ('training') {
         <span class="loading loading-spinner loading-sm"></span>
-        <span>{{ statusCopy() }}</span>
+        @if (categoryModelStore.trainingProgress(); as progress) {
+          <span>
+            Training… epoch {{ progress.epoch }}/{{ progress.totalEpochs }} · loss
+            {{ progress.loss | number: '1.3-3' }}
+            @if (progress.accuracy !== null) {
+              · {{ progress.accuracy * 100 | number: '1.0-0' }}% accuracy
+            }
+          </span>
+        } @else {
+          <span>{{ statusCopy() }}</span>
+        }
       }
       @case ('ready') {
         <mm-badge [color]="badgeColor()" size="sm">{{ statusLabel() }}</mm-badge>

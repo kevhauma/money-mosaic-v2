@@ -5,8 +5,10 @@ import type {
   PredictRequest,
   PredictResponse,
   SerializedArtifacts,
+  TrainProgress,
   TrainRequest,
   TrainResponse,
+  WorkerMessage,
   WorkerRequest,
   WorkerResponse,
 } from '@/core/ml';
@@ -31,8 +33,9 @@ export class CategoryModelService {
   train = (
     samples: TrainRequest['samples'],
     featureConfig: FeatureConfig,
+    onProgress?: (progress: Omit<TrainProgress, 'type'>) => void,
   ): Promise<TrainResponse> =>
-    this.sendRequest<TrainResponse>({ type: 'TRAIN', samples, featureConfig });
+    this.sendRequest<TrainResponse>({ type: 'TRAIN', samples, featureConfig }, onProgress);
 
   predict = (
     transactions: PredictRequest['transactions'],
@@ -43,6 +46,7 @@ export class CategoryModelService {
 
   private sendRequest<TResponse extends WorkerResponse>(
     request: WorkerRequest,
+    onProgress?: (progress: Omit<TrainProgress, 'type'>) => void,
   ): Promise<Exclude<TResponse, { type: 'ERROR' }>> {
     const response = this.queue.then(
       () =>
@@ -51,7 +55,14 @@ export class CategoryModelService {
             this.worker.removeEventListener('message', handleMessage);
             this.worker.removeEventListener('error', handleError);
           };
-          const handleMessage = (event: MessageEvent<WorkerResponse>) => {
+          const handleMessage = (event: MessageEvent<WorkerMessage>) => {
+            if (event.data.type === 'TRAIN_PROGRESS') {
+              // Non-terminal — more messages (eventually a terminal one) are still coming for this
+              // request, so the listeners stay attached.
+              const { epoch, totalEpochs, loss, accuracy, valLoss } = event.data;
+              onProgress?.({ epoch, totalEpochs, loss, accuracy, valLoss });
+              return;
+            }
             cleanup();
             if (event.data.type === 'ERROR') {
               reject(new Error(event.data.message));

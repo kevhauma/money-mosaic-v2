@@ -7,6 +7,7 @@ import type {
   PredictRequest,
   PredictResponse,
   SerializedArtifacts,
+  TrainProgress,
   TrainRequest,
   TrainResponse,
   WorkerRequest,
@@ -22,6 +23,9 @@ const LARGE_SAMPLE_THRESHOLD = 200;
 
 /** Below this sample count `validationSplit` is skipped — too few rows to hold any out. */
 const VALIDATION_SPLIT_MIN_SAMPLES = 40;
+
+/** Hard cap on training epochs — early stopping usually ends a run well before this (ML-15). */
+const MAX_EPOCHS = 120;
 
 // Memoized at module scope (not per-handler-instance): loading + registering the CPU backend is
 // expensive and safe to share across every handler instance in this worker/process.
@@ -79,8 +83,16 @@ const stackFeatures = (rows: Float32Array[], dim: number): Float32Array => {
  * config) plus a FIFO queue so overlapping messages never train/predict concurrently. A factory
  * rather than bare module state so tests can spin up isolated instances instead of sharing one
  * mutable model across cases.
+ *
+ * `postProgress` defaults to a no-op — the real worker (module scope, bottom of this file) wires it
+ * up to the actual `self.postMessage` explicitly. Tests either leave it a no-op (they don't care
+ * about progress messages) or inject their own mock to assert on posted `TRAIN_PROGRESS` messages;
+ * either way they never touch `self.postMessage`, whose `Window` overload (jsdom's `self`) has a
+ * different, incompatible signature from a real Worker's.
  */
-export const createCategoryModelWorkerHandler = () => {
+export const createCategoryModelWorkerHandler = (
+  postProgress: (message: TrainProgress) => void = () => {},
+) => {
   let currentModel: LayersModelInstance | undefined;
   // Tracked separately from `currentModel`: `LayersModel.dispose()` frees the model's own weight
   // tensors but leaves the Adam optimizer's per-variable moment-accumulator tensors alive, so the
@@ -170,18 +182,35 @@ export const createCategoryModelWorkerHandler = () => {
     const xs = core.tensor2d(stackFeatures(featureRows, config.dim), [samples.length, config.dim]);
     const ys = core.tensor1d(labelIndices);
 
+    // Non-terminal — posted per epoch, alongside (never instead of) the eventual TRAIN_OK response.
+    const progressCallback = new layers.CustomCallback({
+      onEpochEnd: async (epoch, logs) => {
+        postProgress({
+          type: 'TRAIN_PROGRESS',
+          epoch: epoch + 1,
+          totalEpochs: MAX_EPOCHS,
+          loss: logs?.['loss'] ?? 0,
+          accuracy: logs?.['acc'] ?? logs?.['accuracy'] ?? null,
+          valLoss: logs?.['val_loss'] ?? null,
+        });
+      },
+    });
+
     let history;
     try {
       history = await model.fit(xs, ys, {
-        epochs: 120,
+        epochs: MAX_EPOCHS,
         batchSize: Math.min(32, samples.length),
         verbose: 0,
         classWeight,
         ...(useValidationSplit ? { validationSplit: 0.2 } : {}),
-        callbacks: layers.callbacks.earlyStopping({
-          monitor: useValidationSplit ? 'val_loss' : 'loss',
-          patience: 10,
-        }),
+        callbacks: [
+          layers.callbacks.earlyStopping({
+            monitor: useValidationSplit ? 'val_loss' : 'loss',
+            patience: 10,
+          }),
+          progressCallback,
+        ],
       });
     } finally {
       xs.dispose();
@@ -191,6 +220,7 @@ export const createCategoryModelWorkerHandler = () => {
     const accuracyHistory = (history.history['acc'] ?? history.history['accuracy']) as
       number[] | undefined;
     const accuracy = accuracyHistory?.at(-1) ?? 0;
+    const epochsRun = history.epoch.length;
 
     const capturedArtifacts = await captureArtifacts(core, model);
 
@@ -201,7 +231,7 @@ export const createCategoryModelWorkerHandler = () => {
     return {
       type: 'TRAIN_OK',
       artifacts: { ...capturedArtifacts, categoryIdByIndex: sortedCategoryIds },
-      metrics: { accuracy, trainedSampleCount: samples.length },
+      metrics: { accuracy, trainedSampleCount: samples.length, epochsRun },
     };
   };
 
@@ -271,7 +301,7 @@ export const createCategoryModelWorkerHandler = () => {
 export const getTensorCount = async (): Promise<number> =>
   (await loadTf()).core.memory().numTensors;
 
-const { handleRequest } = createCategoryModelWorkerHandler();
+const { handleRequest } = createCategoryModelWorkerHandler((message) => self.postMessage(message));
 
 self.onmessage = ({ data: request }: MessageEvent<WorkerRequest>) => {
   handleRequest(request).then((response) => self.postMessage(response));
