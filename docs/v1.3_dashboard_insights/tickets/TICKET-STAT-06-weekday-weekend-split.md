@@ -24,12 +24,12 @@ Split the selected range's expense into **weekday** (Mon–Fri) and **weekend** 
 
 ## Acceptance criteria
 
-- [ ] `computeWeekdayWeekendSplit()` correctly classifies Sat/Sun as weekend across a range that starts/ends mid-week; unit tests cover a range with an uneven weekday/weekend day count (e.g. 9 days spanning 6 weekdays + 3 weekend days) and assert both the totals and the per-day averages.
-- [ ] `dayCount` counts calendar days regardless of transaction presence (a weekday with no spend still lowers `avgPerDay`) — asserted directly.
-- [ ] Transfers and savings movements are excluded using the same predicates as `computePeriodStats`, not a re-implementation.
-- [ ] Ranges shorter than 2 calendar days (or `all-time` with insufficient history) fall back to a documented behaviour (e.g. hide the panel rather than divide by a 0/1 day count) — asserted in a test.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser on a range spanning at least one full week: weekday/weekend totals and the ratio render and drill-down-link (via `buildTransactionDrilldownParams`, filtered by the range) to `/transactions`.
+- [x] `computeWeekdayWeekendSplit()` correctly classifies Sat/Sun as weekend across a range that starts/ends mid-week; unit tests cover a range with an uneven weekday/weekend day count (e.g. 9 days spanning 6 weekdays + 3 weekend days) and assert both the totals and the per-day averages.
+- [x] `dayCount` counts calendar days regardless of transaction presence (a weekday with no spend still lowers `avgPerDay`) — asserted directly.
+- [x] Transfers and savings movements are excluded using the same predicates as `computePeriodStats`, not a re-implementation.
+- [x] Ranges shorter than 2 calendar days (or `all-time` with insufficient history) fall back to a documented behaviour (e.g. hide the panel rather than divide by a 0/1 day count) — asserted in a test.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser on a range spanning at least one full week: weekday/weekend totals and the ratio render and drill-down-link (via `buildTransactionDrilldownParams`, filtered by the range) to `/transactions`.
 
 ## Notes
 

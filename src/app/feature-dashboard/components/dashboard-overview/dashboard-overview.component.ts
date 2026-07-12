@@ -9,6 +9,7 @@ import { ActionQueuePanelComponent } from '../action-queue-panel/action-queue-pa
 import { CategoryBreakdownPanelComponent } from '../category-breakdown-panel/category-breakdown-panel.component';
 import { NetWorthHeaderComponent } from '../net-worth-header/net-worth-header.component';
 import { TrendChartPanelComponent } from '../trend-chart-panel/trend-chart-panel.component';
+import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-panel/weekday-weekend-split-panel.component';
 
 const EUR_FORMATTER = new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' });
 const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
@@ -24,6 +25,7 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
     NetWorthHeaderComponent,
     CategoryBreakdownPanelComponent,
     TrendChartPanelComponent,
+    WeekdayWeekendSplitPanelComponent,
     ActionQueuePanelComponent,
     AccountBalanceStripComponent,
   ],
@@ -64,4 +66,18 @@ export class DashboardOverviewComponent {
   protected readonly savingsSubLabel = computed(
     () => `${EUR_FORMATTER.format(this.statsStore.periodStats().savings)} to savings`,
   );
+
+  protected readonly spendingRateValue = computed(
+    () => `${EUR_FORMATTER.format(this.statsStore.spendingRate().avgPerDay)}/day`,
+  );
+
+  /** Coarser units past day, only when the range is long enough for them to be a genuine average rather than the total (FR-STAT-9). */
+  protected readonly spendingRateSubLabel = computed(() => {
+    const { avgPerWeek, avgPerMonth } = this.statsStore.spendingRate();
+    const parts = [
+      avgPerWeek != null ? `${EUR_FORMATTER.format(avgPerWeek)}/week` : null,
+      avgPerMonth != null ? `${EUR_FORMATTER.format(avgPerMonth)}/month` : null,
+    ].filter((part): part is string => part != null);
+    return parts.length > 0 ? parts.join(' · ') : undefined;
+  });
 }

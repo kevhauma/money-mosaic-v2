@@ -20,11 +20,10 @@ export class TrendChartPanelComponent {
 
   protected readonly chartOption = computed<EChartsCoreOption>(() => {
     const buckets = this.statsStore.trendBuckets();
-    const netWorthPoints = this.statsStore.netWorthTrend();
 
     return {
       tooltip: { trigger: 'axis' },
-      legend: { data: ['Income', 'Expense', 'Net worth'] },
+      legend: { data: ['Income', 'Expense'] },
       grid: { left: 48, right: 48, top: 32, bottom: 24 },
       xAxis: { type: 'category', data: buckets.map((bucket) => bucket.bucketKey) },
       yAxis: [
@@ -34,12 +33,6 @@ export class TrendChartPanelComponent {
       series: [
         { name: 'Income', type: 'bar', data: buckets.map((bucket) => bucket.income) },
         { name: 'Expense', type: 'bar', data: buckets.map((bucket) => -bucket.expense) },
-        {
-          name: 'Net worth',
-          type: 'line',
-          yAxisIndex: 1,
-          data: netWorthPoints.map((point) => point.netWorth),
-        },
       ],
     };
   });

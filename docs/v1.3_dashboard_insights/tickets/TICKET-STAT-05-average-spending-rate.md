@@ -26,12 +26,12 @@ Show a normalised spending rate for the selected range — average expense per d
 
 ## Acceptance criteria
 
-- [ ] `computeSpendingRate()` returns `{ avgPerDay: number; avgPerWeek: number | null; avgPerMonth: number | null }`, gated per the ≥2-buckets rule above; unit tests cover a 3-day range (day only), an 10-day range (day + week), a 2-month range (day + week + month), and `all-time` with a short real history (day only, since week/month buckets may not reach 2).
-- [ ] Values are computed from the same `expense` figure as `computePeriodStats()` (no divergent expense definition) — a shared test asserts `avgPerDay * bucketKeysInRange(..., 'day').length ≈ periodStats.expense` (within rounding).
-- [ ] Savings movements are excluded exactly as in `computePeriodStats`/`computeCategoryBreakdown` (shared `ownSavingsIbans` set, no duplicated exclusion logic).
-- [ ] Dashboard renders the applicable rate(s) next to the existing stat-card row; hidden units (gated out) simply don't render — no "—" placeholder clutter.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser: "This month" shows day+week rates; "This year" shows day+week+month rates; "This week" shows day rate only.
+- [x] `computeSpendingRate()` returns `{ avgPerDay: number; avgPerWeek: number | null; avgPerMonth: number | null }`, gated per the ≥2-buckets rule above; unit tests cover a 3-day range (day only), an 10-day range (day + week), a 2-month range (day + week + month), and `all-time` with a short real history (day only, since week/month buckets may not reach 2).
+- [x] Values are computed from the same `expense` figure as `computePeriodStats()` (no divergent expense definition) — a shared test asserts `avgPerDay * bucketKeysInRange(..., 'day').length ≈ periodStats.expense` (within rounding).
+- [x] Savings movements are excluded exactly as in `computePeriodStats`/`computeCategoryBreakdown` (shared `ownSavingsIbans` set, no duplicated exclusion logic).
+- [x] Dashboard renders the applicable rate(s) next to the existing stat-card row; hidden units (gated out) simply don't render — no "—" placeholder clutter.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser: "This month" shows day+week rates; "This year" shows day+week+month rates; "This week" shows day rate only.
 
 ## Notes
 

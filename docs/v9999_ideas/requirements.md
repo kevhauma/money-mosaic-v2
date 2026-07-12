@@ -7,6 +7,12 @@
 - go over every screen and list what is wrong
 - all numbers should in the UI be rounded to 2 decimal points, focus on the graph hover popups
 
+## Food voucher support
+- ability to add food vouchers to an account, counts as income,
+- being able to set active date range, with linked expense category expense (eg. groceries)
+- 
+
+
 ## Public Ready
 - Home page with explanation about the app, with click through to the dashboard
 - How-to's for using the app

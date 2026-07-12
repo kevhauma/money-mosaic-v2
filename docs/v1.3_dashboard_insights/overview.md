@@ -9,8 +9,8 @@ Deeper dashboard analytics on top of the existing per-range income/expense/categ
 All six are independent of each other — each is a standalone pure aggregate in `core/stats` plus a small dashboard component/callout, and none depends on another ticket's output. They can ship in any order or in parallel; the list below is ordered by value/effort (smallest/highest-value first), not grouped by FR area.
 
 - [x] [TICKET-STAT-09](./tickets/TICKET-STAT-09-uncategorised-spend-visibility.md) — Uncategorised spend visibility (adds FR-STAT-13) — smallest possible ticket, reuses an existing aggregate's already-computed uncategorised entry
-- [ ] [TICKET-STAT-05](./tickets/TICKET-STAT-05-average-spending-rate.md) — Average spending rate per day/week/month (adds FR-STAT-9) — small, self-contained; pairs with STAT-06 as side-by-side "rate" cards
-- [ ] [TICKET-STAT-06](./tickets/TICKET-STAT-06-weekday-weekend-split.md) — Weekday vs. weekend spending split (adds FR-STAT-10) — small, self-contained; build back-to-back with STAT-05
+- [x] [TICKET-STAT-05](./tickets/TICKET-STAT-05-average-spending-rate.md) — Average spending rate per day/week/month (adds FR-STAT-9) — small, self-contained; pairs with STAT-06 as side-by-side "rate" cards
+- [x] [TICKET-STAT-06](./tickets/TICKET-STAT-06-weekday-weekend-split.md) — Weekday vs. weekend spending split (adds FR-STAT-10) — small, self-contained; build back-to-back with STAT-05
 - [ ] [TICKET-STAT-08](./tickets/TICKET-STAT-08-biggest-transactions.md) — Biggest individual transactions (adds FR-STAT-12) — small helper, check `feature-transactions`' existing filter/query-param support before wiring the drill-down link
 - [ ] [TICKET-STAT-07](./tickets/TICKET-STAT-07-year-over-year-comparison.md) — Year-over-year comparison (adds FR-STAT-11) — moderate: needs the leap-year-clamped date shift and the "stop before earliest transaction" guard
 - [ ] [TICKET-STAT-04](./tickets/TICKET-STAT-04-category-period-comparison.md) — Top-5 category period-over-period comparison (adds FR-STAT-8) — the largest ticket (non-trivial anchor rule); build last so the simpler tickets validate the reuse patterns first

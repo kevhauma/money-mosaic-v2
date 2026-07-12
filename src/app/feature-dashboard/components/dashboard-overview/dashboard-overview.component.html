@@ -25,6 +25,15 @@
     [queryParams]="drilldownParams()"
   />
   <mm-stat-card label="Savings rate" [value]="savingsRateValue()" [subLabel]="savingsSubLabel()" />
+  <mm-stat-card
+    label="Spending rate"
+    [value]="spendingRateValue()"
+    [subLabel]="spendingRateSubLabel()"
+  />
+</div>
+
+<div class="mb-6">
+  <app-weekday-weekend-split-panel />
 </div>
 
 <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

@@ -4,7 +4,9 @@ import {
   computeCategoryBreakdown,
   computeNetWorthTrend,
   computePeriodStats,
+  computeSpendingRate,
   computeTrendBuckets,
+  computeWeekdayWeekendSplit,
   RangeStore,
   type JointLegContext,
 } from '@/core/stats';
@@ -70,6 +72,28 @@ export const StatsStore = signalStore(
       ),
     );
 
+    const spendingRate = computed(() =>
+      computeSpendingRate(
+        transactionsStore.transactions(),
+        rangeStore.from(),
+        rangeStore.to(),
+        ownSavingsIbans(),
+        categoriesStore.categoriesById(),
+        accountsStore.accountsById(),
+      ),
+    );
+
+    const weekdayWeekendSplit = computed(() =>
+      computeWeekdayWeekendSplit(
+        transactionsStore.transactions(),
+        rangeStore.from(),
+        rangeStore.to(),
+        ownSavingsIbans(),
+        categoriesStore.categoriesById(),
+        accountsStore.accountsById(),
+      ),
+    );
+
     const trendBuckets = computed(() =>
       computeTrendBuckets(
         transactionsStore.transactions(),
@@ -90,6 +114,13 @@ export const StatsStore = signalStore(
       ),
     );
 
-    return { periodStats, categoryBreakdown, trendBuckets, netWorthTrend };
+    return {
+      periodStats,
+      categoryBreakdown,
+      spendingRate,
+      weekdayWeekendSplit,
+      trendBuckets,
+      netWorthTrend,
+    };
   }),
 );
