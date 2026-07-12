@@ -32,16 +32,16 @@ Two stats functions currently disagree on what decides income vs. expense. `comp
 
 ## Acceptance criteria
 
-- [ ] `addTotal` (or an equivalent netting step in `computeCategoryBreakdown`) sums the transaction's **signed contribution towards its category's kind** — for an expense category, a negative `amount` (spend) adds to the total and a positive `amount` (refund/payback) subtracts; mirrored for income categories.
-- [ ] A category's net total in the breakdown is clamped to 0 when refunds/paybacks exceed spend in the selected range, rather than going negative or moving the category into the other bucket.
-- [ ] `computePeriodStats()` routes any transaction with a resolvable, non-`neutral` category through the same kind-driven, signed-netting rule (expense-kind → nets into `expense`; income-kind → nets into `income`), instead of branching on raw amount sign.
-- [ ] `computePeriodStats()` still falls back to raw amount sign only for transactions with **no resolvable category** (uncategorised).
-- [ ] The joint-account/`resolveContribution` path (lines 76-83 in period-stats, 95-102 in category-breakdown) and the `neutral`-kind exclusion are both unchanged by this ticket.
-- [ ] `share` in the breakdown continues to be computed as a fraction of its bucket's (now netted) grand total.
-- [ ] Persistence/derivation stays in `core/stats` — no component or store computes this locally.
-- [ ] Unit tests cover, for **both** `computeCategoryBreakdown` and `computePeriodStats`: an expense category with only spends nets to the simple sum; an expense category with a spend and a smaller payback nets to `spend - payback`; an expense category where paybacks exceed spend clamps to 0 in the breakdown; an income category with a spend-side correction (e.g. a salary clawback) nets down symmetrically; an uncategorised transaction still buckets by raw sign; a `neutral`-kind category is still excluded entirely; a transaction categorised as expense with a positive amount is reflected in `expense`, not `income`, in `computePeriodStats()` (the specific regression this ticket fixes).
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: booking a positive-amount transaction under an existing expense category (e.g. a payback) visibly reduces that category's total/share in the dashboard category breakdown panel *and* reduces the dashboard's overall expense figure, rather than adding to income in either.
+- [x] `addTotal` (or an equivalent netting step in `computeCategoryBreakdown`) sums the transaction's **signed contribution towards its category's kind** — for an expense category, a negative `amount` (spend) adds to the total and a positive `amount` (refund/payback) subtracts; mirrored for income categories.
+- [x] A category's net total in the breakdown is clamped to 0 when refunds/paybacks exceed spend in the selected range, rather than going negative or moving the category into the other bucket.
+- [x] `computePeriodStats()` routes any transaction with a resolvable, non-`neutral` category through the same kind-driven, signed-netting rule (expense-kind → nets into `expense`; income-kind → nets into `income`), instead of branching on raw amount sign.
+- [x] `computePeriodStats()` still falls back to raw amount sign only for transactions with **no resolvable category** (uncategorised).
+- [x] The joint-account/`resolveContribution` path (lines 76-83 in period-stats, 95-102 in category-breakdown) and the `neutral`-kind exclusion are both unchanged by this ticket.
+- [x] `share` in the breakdown continues to be computed as a fraction of its bucket's (now netted) grand total.
+- [x] Persistence/derivation stays in `core/stats` — no component or store computes this locally.
+- [x] Unit tests cover, for **both** `computeCategoryBreakdown` and `computePeriodStats`: an expense category with only spends nets to the simple sum; an expense category with a spend and a smaller payback nets to `spend - payback`; an expense category where paybacks exceed spend clamps to 0 in the breakdown; an income category with a spend-side correction (e.g. a salary clawback) nets down symmetrically; an uncategorised transaction still buckets by raw sign; a `neutral`-kind category is still excluded entirely; a transaction categorised as expense with a positive amount is reflected in `expense`, not `income`, in `computePeriodStats()` (the specific regression this ticket fixes).
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: booking a positive-amount transaction under an existing expense category (e.g. a payback) visibly reduces that category's total/share in the dashboard category breakdown panel *and* reduces the dashboard's overall expense figure, rather than adding to income in either.
 
 ## Notes
 

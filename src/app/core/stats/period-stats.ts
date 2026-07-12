@@ -1,5 +1,6 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { isSavingsMovement } from '@/core/transfers';
+import { categoryKindContribution } from './category-kind-contribution';
 import { resolveContribution, type JointLegContext } from './classify-joint-leg';
 
 export type PeriodStats = {
@@ -30,7 +31,11 @@ const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
  * `savings` figure rather than as expense/income, whether linked or still one-sided (TICKET-TRF-02).
  * A transaction assigned a `neutral`-kind category (e.g. a partner's contribution) is excluded from
  * income/expense/savingsRate too — it still moves the account balance, just not via this store's
- * derivation, which reads raw `amount` (TICKET-CAT-02).
+ * derivation, which reads raw `amount` (TICKET-CAT-02). A categorised transaction always contributes
+ * to the bucket matching its category's `kind`, netted by signed amount via `categoryKindContribution`
+ * — a refund/payback on an expense category nets that total down instead of counting as income, so
+ * these totals stay consistent with the category breakdown's own netting (TICKET-STAT-11). Only an
+ * uncategorised transaction falls back to raw amount sign.
  *
  * For a **joint** account (`accountsById`), each non-transfer transaction is classified via the
  * shared `resolveContribution` instead: my income into the pot stays at 100%, an untagged co-owner
@@ -40,9 +45,16 @@ const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
  * account — so only the `mineIn`/`jointSpend`/`coOwnerIn` legs matter. A transaction carrying a
  * manual `attributionOverride` is also routed through `resolveContribution`, regardless of its
  * account's type, so a `personal`/`shared`/`notMine` flag on an own-account transaction reweights
- * income/expense the same way it reweights net worth (TICKET-TXN-03). A `nullified` transaction is
- * skipped outright regardless of which path above would otherwise apply — it still moved money (net
- * worth is untouched, computed elsewhere), it just never counts as income or expense (TICKET-TXN-04).
+ * income/expense the same way it reweights net worth (TICKET-TXN-03). Bucketing for a joint/override
+ * leg is by raw `weight` sign, not by category kind — with two exceptions: a `personal`-flagged leg,
+ * whose `weight` already carries the full unshared amount, is netted by category kind exactly like a
+ * non-joint transaction (a payback on a personal-flagged joint expense reduces `expense` rather than
+ * counting as `income`); and an *untagged* positive-amount transaction under an expense category on a
+ * joint account (no override) is treated as a refund of shared spending rather than new income — only
+ * my `ownershipShare` of it is deducted from `expense`, mirroring how a negative-amount shared spend
+ * is weighted. A `nullified` transaction is skipped outright regardless of which path above would
+ * otherwise apply — it still moved money (net worth is untouched, computed elsewhere), it just never
+ * counts as income or expense (TICKET-TXN-04).
  */
 export const computePeriodStats = (
   transactions: Transaction[],
@@ -73,24 +85,45 @@ export const computePeriodStats = (
     if (transaction.transferId != null) continue;
     if (transaction.nullified) continue;
 
+    const category =
+      transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined;
+
     const account = accountsById.get(transaction.accountId);
     if (account && (account.type === 'joint' || transaction.attributionOverride)) {
       const { weight, excluded } = resolveContribution(transaction, account, jointLegContext);
       if (excluded) continue;
+      if (transaction.attributionOverride?.mode === 'personal') {
+        // A `personal`-flagged leg already carries the full, unshared amount — net it by category
+        // kind exactly like a non-joint transaction, so a payback on a personal-flagged joint
+        // expense reduces expense instead of counting as income.
+        const contribution = categoryKindContribution(weight, category?.kind);
+        if (!contribution) continue;
+        if (contribution.bucket === 'income') income += contribution.amount;
+        else expense += contribution.amount;
+        continue;
+      }
+      if (
+        !transaction.attributionOverride &&
+        category?.kind === 'expense' &&
+        transaction.amount > 0
+      ) {
+        // An untagged positive-amount transaction under an expense category on a joint account is a
+        // refund/payback of shared spending, not new income — net my `ownershipShare` of it down
+        // against expense, mirroring how a negative-amount shared spend is weighted (`jointSpend`).
+        const share = account.ownershipShare ?? 1;
+        expense -= transaction.amount * share;
+        continue;
+      }
       if (weight > 0) income += weight;
       else if (weight < 0) expense += -weight;
       continue;
     }
 
-    const category =
-      transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined;
-    if (category?.kind === 'neutral') continue;
+    const contribution = categoryKindContribution(transaction.amount, category?.kind);
+    if (!contribution) continue;
 
-    if (transaction.amount > 0) {
-      income += transaction.amount;
-    } else if (transaction.amount < 0) {
-      expense += -transaction.amount;
-    }
+    if (contribution.bucket === 'income') income += contribution.amount;
+    else expense += contribution.amount;
   }
 
   return {

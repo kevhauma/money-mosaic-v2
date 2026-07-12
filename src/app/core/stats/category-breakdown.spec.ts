@@ -164,6 +164,84 @@ describe('computeCategoryBreakdown', () => {
   });
 });
 
+describe('computeCategoryBreakdown: signed netting by category kind (TICKET-STAT-11)', () => {
+  it('nets an expense category with only spends to their simple sum', () => {
+    const categoriesById = new Map<number, Category>([[1, category({ id: 1, kind: 'expense' })]]);
+    const transactions = [
+      transaction({ id: 1, amount: -30, categoryId: 1 }),
+      transaction({ id: 2, amount: -20, categoryId: 1 }),
+    ];
+
+    const { expenseByCategory } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+    );
+
+    expect(expenseByCategory).toEqual([
+      { categoryId: 1, total: 50, share: 1, transactionCount: 2 },
+    ]);
+  });
+
+  it('nets a spend and a smaller payback on the same expense category down to spend - payback', () => {
+    const categoriesById = new Map<number, Category>([[1, category({ id: 1, kind: 'expense' })]]);
+    const transactions = [
+      transaction({ id: 1, amount: -30, categoryId: 1 }),
+      // A payback booked to the same expense category — must reduce the total, not inflate it.
+      transaction({ id: 2, amount: 10, categoryId: 1 }),
+    ];
+
+    const { expenseByCategory } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+    );
+
+    expect(expenseByCategory).toEqual([
+      { categoryId: 1, total: 20, share: 1, transactionCount: 2 },
+    ]);
+  });
+
+  it('clamps an expense category to 0 when paybacks exceed spend in the range', () => {
+    const categoriesById = new Map<number, Category>([[1, category({ id: 1, kind: 'expense' })]]);
+    const transactions = [
+      transaction({ id: 1, amount: -10, categoryId: 1 }),
+      transaction({ id: 2, amount: 30, categoryId: 1 }),
+    ];
+
+    const { expenseByCategory } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+    );
+
+    expect(expenseByCategory).toEqual([{ categoryId: 1, total: 0, share: 0, transactionCount: 2 }]);
+  });
+
+  it('nets an income category with a spend-side correction (e.g. a salary clawback) down symmetrically', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Salary', kind: 'income' })],
+    ]);
+    const transactions = [
+      transaction({ id: 1, amount: 2000, categoryId: 1 }),
+      // A correction/clawback on the same income category — must reduce income, not add expense.
+      transaction({ id: 2, amount: -300, categoryId: 1 }),
+    ];
+
+    const { incomeBySource } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+    );
+
+    expect(incomeBySource).toEqual([{ categoryId: 1, total: 1700, share: 1, transactionCount: 2 }]);
+  });
+});
+
 describe('computeCategoryBreakdown: joint-account share weighting (TICKET-STAT-03)', () => {
   const jointAccount: Account = {
     id: 1,
@@ -227,6 +305,89 @@ describe('computeCategoryBreakdown: joint-account share weighting (TICKET-STAT-0
     const { incomeBySource, expenseByCategory } = computeCategoryBreakdown(
       transactions,
       new Map(),
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(incomeBySource).toEqual([]);
+    expect(expenseByCategory).toEqual([]);
+  });
+
+  it('nets an unflagged positive-amount joint expense-category transaction by my ownershipShare against expense, not into income', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const spend = transaction({ id: 1, accountId: 1, amount: -400, categoryId: 1 });
+    const payback = transaction({
+      id: 2,
+      accountId: 1,
+      amount: 40,
+      categoryId: 1,
+      counterpartyIban: 'BE00OTHER',
+    });
+
+    const { incomeBySource, expenseByCategory } = computeCategoryBreakdown(
+      [spend, payback],
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    // spend nets to 400 * 0.5 = 200; payback nets down by 40 * 0.5 = 20 -> 180.
+    expect(expenseByCategory).toEqual([
+      { categoryId: 1, total: 180, share: 1, transactionCount: 2 },
+    ]);
+    expect(incomeBySource).toEqual([]);
+  });
+
+  it('still counts an unflagged positive-amount joint transaction under an income-kind category fully as income', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Salary', kind: 'income' })],
+    ]);
+    const transactions = [
+      transaction({
+        id: 1,
+        accountId: 1,
+        amount: 1200,
+        categoryId: 1,
+        counterpartyIban: 'BE00EMPLOYER',
+      }),
+    ];
+
+    const { incomeBySource } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(incomeBySource).toEqual([{ categoryId: 1, total: 1200, share: 1, transactionCount: 1 }]);
+  });
+
+  it('excludes a co-owner-tagged positive-amount transaction from the expense-share netting too (still excluded entirely)', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const transactions = [
+      // counterpartyIban matches the joint account's registered co-owner IBAN.
+      transaction({
+        id: 1,
+        accountId: 1,
+        amount: 40,
+        categoryId: 1,
+        counterpartyIban: 'BE71096123456769',
+      }),
+    ];
+
+    const { incomeBySource, expenseByCategory } = computeCategoryBreakdown(
+      transactions,
+      categoriesById,
       '2026-07-01',
       '2026-07-31',
       new Set(),
@@ -321,6 +482,65 @@ describe('computeCategoryBreakdown: manual attributionOverride (TICKET-TXN-03)',
     );
 
     expect(expenseByCategory).toEqual([]);
+  });
+
+  it('nets a personal-flagged positive-amount payback fully against its expense category, not into income', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const spend = transaction({
+      id: 1,
+      accountId: jointAccountId,
+      amount: -100,
+      categoryId: 1,
+      attributionOverride: { mode: 'personal' },
+    });
+    const payback = transaction({
+      id: 2,
+      accountId: jointAccountId,
+      amount: 30,
+      categoryId: 1,
+      attributionOverride: { mode: 'personal' },
+    });
+
+    const { expenseByCategory, incomeBySource } = computeCategoryBreakdown(
+      [spend, payback],
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(expenseByCategory).toEqual([
+      { categoryId: 1, total: 70, share: 1, transactionCount: 2 },
+    ]);
+    expect(incomeBySource).toEqual([]);
+  });
+
+  it('does not net a shared-flagged positive-amount payback — it still buckets by weight sign into income', () => {
+    const categoriesById = new Map<number, Category>([
+      [1, category({ id: 1, name: 'Groceries', kind: 'expense' })],
+    ]);
+    const payback = transaction({
+      id: 1,
+      accountId: checkingAccountId,
+      amount: 30,
+      categoryId: 1,
+      attributionOverride: { mode: 'shared', jointAccountId },
+    });
+
+    const { expenseByCategory, incomeBySource } = computeCategoryBreakdown(
+      [payback],
+      categoriesById,
+      '2026-07-01',
+      '2026-07-31',
+      new Set(),
+      accountsById,
+    );
+
+    expect(expenseByCategory).toEqual([]);
+    expect(incomeBySource).toEqual([{ categoryId: 1, total: 15, share: 1, transactionCount: 1 }]);
   });
 });
 

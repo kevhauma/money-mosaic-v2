@@ -1,3 +1,4 @@
+export * from './category-kind-contribution';
 export * from './classify-joint-leg';
 export * from './date-buckets';
 export * from './joint-account-stake';
