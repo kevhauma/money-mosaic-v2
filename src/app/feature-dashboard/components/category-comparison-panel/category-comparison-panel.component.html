@@ -1,0 +1,108 @@
+@if (comparison(); as c) {
+  <div class="card h-full bg-base-100 shadow-sm">
+    <div class="card-body">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="card-title text-base">Category period comparison</h2>
+
+        @if (excludableCategories().length > 0) {
+          <div class="dropdown dropdown-end">
+            <mm-button variant="ghost" size="sm">
+              Exclude categories
+              @if (excludedCount() > 0) {
+                ({{ excludedCount() }})
+              }
+            </mm-button>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu z-10 w-56 rounded-box bg-base-100 p-2 shadow"
+            >
+              @for (category of excludableCategories(); track category.id) {
+                <li>
+                  <label class="label cursor-pointer justify-start gap-2">
+                    <input
+                      type="checkbox"
+                      class="checkbox checkbox-sm"
+                      [checked]="category.excluded"
+                      (change)="toggleExcluded(category.id, !category.excluded)"
+                    />
+                    <span class="text-sm">{{ category.name }}</span>
+                  </label>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      @if (c.hasEnoughData) {
+        <p class="text-sm text-base-content/60">
+          Top {{ categories().length }} expense categories vs. the nearest same-length periods.
+        </p>
+
+        @if (biggestIncrease(); as inc) {
+          <mm-alert status="warning" variant="soft" class="mt-2">
+            <span class="text-sm">{{ inc.name }} is up {{ inc.deltaLabel }} vs. its average.</span>
+          </mm-alert>
+        }
+        @if (biggestDecrease(); as dec) {
+          <mm-alert status="success" variant="soft" class="mt-2">
+            <span class="text-sm"
+              >{{ dec.name }} is down {{ dec.deltaLabel }} vs. its average.</span
+            >
+          </mm-alert>
+        }
+
+        <div class="mt-4 grid grid-cols-[repeat(auto-fit,minmax(275px,1fr))] gap-4">
+          @for (category of categories(); track category.categoryId) {
+            <div class="rounded-box border border-base-300 p-3">
+              <div class="mb-2 flex items-center justify-between gap-2">
+                <span class="flex min-w-0 items-center gap-2 text-sm font-medium">
+                  <span
+                    class="h-2 w-2 shrink-0 rounded-full"
+                    [style.background-color]="category.color"
+                  ></span>
+                  <span class="truncate">{{ category.name }}</span>
+                </span>
+                @if (category.deltaLabel; as label) {
+                  <mm-badge [color]="category.deltaTone" variant="soft" size="sm">{{
+                    label
+                  }}</mm-badge>
+                }
+              </div>
+
+              <div class="h-16">
+                <div class="relative flex h-full items-end gap-1">
+                  @for (bar of category.bars; track bar.key) {
+                    <a
+                      [routerLink]="['/transactions']"
+                      [queryParams]="bar.queryParams"
+                      class="tooltip group flex h-full flex-1 flex-col items-end justify-end"
+                      [attr.data-tip]="bar.formattedTotal"
+                    >
+                      <div
+                        class="w-full min-h-[2px] rounded-t transition group-hover:opacity-80"
+                        [class.bg-primary]="bar.isSelected"
+                        [class.bg-base-300]="!bar.isSelected"
+                        [style.height.%]="bar.heightPercent"
+                      ></div>
+                    </a>
+                  }
+                </div>
+              </div>
+
+              <div class="mt-2 flex justify-between text-xs text-base-content/60">
+                <span>Avg {{ category.formattedAverage }}</span>
+                <span>High {{ category.formattedHighest }}</span>
+                <span>Low {{ category.formattedLowest }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="py-6 text-center text-sm text-base-content/60">
+          Not enough history yet to compare periods for this range.
+        </p>
+      }
+    </div>
+  </div>
+}

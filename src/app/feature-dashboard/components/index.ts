@@ -1,6 +1,7 @@
 export * from './dashboard-overview/dashboard-overview.component';
 export * from './net-worth-header/net-worth-header.component';
 export * from './category-breakdown-panel/category-breakdown-panel.component';
+export * from './category-comparison-panel/category-comparison-panel.component';
 export * from './trend-chart-panel/trend-chart-panel.component';
 export * from './weekday-weekend-split-panel/weekday-weekend-split-panel.component';
 export * from './top-transactions-panel/top-transactions-panel.component';

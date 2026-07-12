@@ -2,6 +2,8 @@ import { computed, inject } from '@angular/core';
 import { signalStore, withComputed } from '@ngrx/signals';
 import {
   computeCategoryBreakdown,
+  computeCategoryPeriodComparison,
+  computeComparisonWindow,
   computeNetWorthTrend,
   computePeriodStats,
   computeSpendingRate,
@@ -16,6 +18,9 @@ import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { CategoryComparisonSettingsStore } from './category-comparison-settings.store';
+
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 /**
  * Range-scoped statistics for the Dashboard (FR-STAT-2..4), wiring the pure aggregation
@@ -40,6 +45,7 @@ export const StatsStore = signalStore(
     const categoriesStore = inject(CategoriesStore);
     const transfersStore = inject(TransfersStore);
     const rangeStore = inject(RangeStore);
+    const categoryComparisonSettingsStore = inject(CategoryComparisonSettingsStore);
 
     const ownSavingsIbans = computed(() => savingsAccountIbans(accountsStore.accounts()));
 
@@ -136,6 +142,27 @@ export const StatsStore = signalStore(
       ),
     );
 
+    const comparisonWindow = computed(() =>
+      computeComparisonWindow(
+        { preset: rangeStore.preset(), from: rangeStore.from(), to: rangeStore.to() },
+        todayIso(),
+      ),
+    );
+
+    const categoryPeriodComparison = computed(() => {
+      const window = comparisonWindow();
+      if (!window) return null;
+
+      return computeCategoryPeriodComparison(
+        transactionsStore.transactions(),
+        categoriesStore.categoriesById(),
+        window,
+        ownSavingsIbans(),
+        accountsStore.accountsById(),
+        new Set(categoryComparisonSettingsStore.excludedCategoryIds()),
+      );
+    });
+
     return {
       periodStats,
       categoryBreakdown,
@@ -145,6 +172,7 @@ export const StatsStore = signalStore(
       trendBuckets,
       netWorthTrend,
       yearOverYear,
+      categoryPeriodComparison,
     };
   }),
 );

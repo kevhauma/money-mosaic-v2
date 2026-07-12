@@ -43,15 +43,15 @@ Worked examples (matches the product ask verbatim): selecting **this month** →
 
 ## Acceptance criteria
 
-- [ ] `computeComparisonWindow()` implements the anchor rule exactly as specified above; unit tests cover: selecting the current period (trailing-only window), selecting the immediately-preceding period (1 forward + 3 back), selecting a period > 4 periods old (plain trailing), and each preset family (calendar-unit vs. day-count shifting), including a month-length-drift check (e.g. selecting a 31-day month doesn't misalign when shifted to a 28/29-day February).
-- [ ] `all-time` never produces a window (returns `null`/empty and the UI hides the panel).
-- [ ] `computeCategoryPeriodComparison()` selects its 5 categories from the **selected period's** top expense categories (not the window average's), so the set of categories shown doesn't change just because a neighbouring period happened to spend more elsewhere.
-- [ ] Average/highest/lowest are computed only over periods that have data (a genuinely empty period — e.g. before the account existed — contributes a `0`/is-excluded per a documented, consistent choice; tests assert whichever is chosen).
-- [ ] "Biggest movers" (folded in from the parked suggestion): the panel additionally surfaces which of the 5 categories has the largest positive and largest negative delta vs. its own average, each rendered as a callout the deltas are already computed, this is just a sort — no new aggregate).
-- [ ] No stored data is mutated; `computeCategoryBreakdown()` is reused per window period rather than reimplementing category totals.
-- [ ] Every bar/period in the panel is drill-down-linked to `/transactions` with the right `categoryId` + that period's `from`/`to`.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser: selecting "This month" shows the top-5 categories with 4 trailing comparison periods; selecting "Last month" shows 1 forward (this month) + 3 trailing periods; switching to "All-time" hides the panel without an error.
+- [x] `computeComparisonWindow()` implements the anchor rule exactly as specified above; unit tests cover: selecting the current period (trailing-only window), selecting the immediately-preceding period (1 forward + 3 back), selecting a period > 4 periods old (plain trailing), and each preset family (calendar-unit vs. day-count shifting), including a month-length-drift check (e.g. selecting a 31-day month doesn't misalign when shifted to a 28/29-day February).
+- [x] `all-time` never produces a window (returns `null`/empty and the UI hides the panel).
+- [x] `computeCategoryPeriodComparison()` selects its 5 categories from the **selected period's** top expense categories (not the window average's), so the set of categories shown doesn't change just because a neighbouring period happened to spend more elsewhere.
+- [x] Average/highest/lowest are computed only over periods that have data (a genuinely empty period — e.g. before the account existed — contributes a `0`/is-excluded per a documented, consistent choice; tests assert whichever is chosen).
+- [x] "Biggest movers" (folded in from the parked suggestion): the panel additionally surfaces which of the 5 categories has the largest positive and largest negative delta vs. its own average, each rendered as a callout the deltas are already computed, this is just a sort — no new aggregate).
+- [x] No stored data is mutated; `computeCategoryBreakdown()` is reused per window period rather than reimplementing category totals.
+- [x] Every bar/period in the panel is drill-down-linked to `/transactions` with the right `categoryId` + that period's `from`/`to`.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser: selecting "This month" shows the top-5 categories with 4 trailing comparison periods; selecting "Last month" shows 1 forward (this month) + 3 trailing periods; switching to "All-time" hides the panel without an error.
 
 ## Notes
 

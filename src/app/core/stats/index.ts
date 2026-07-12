@@ -14,4 +14,6 @@ export * from './chart-zoom-window';
 export * from './weekday-weekend-split';
 export * from './top-transactions';
 export * from './year-over-year';
+export * from './period-window';
+export * from './category-period-comparison';
 export * from './range-state.store';

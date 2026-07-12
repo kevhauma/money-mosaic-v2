@@ -18,6 +18,7 @@ import { RulesStore } from './feature-categories/rules.store';
 import { CategoryModelStore } from './feature-categories/category-model.store';
 import { MappingProfilesStore } from './feature-import/mapping-profiles.store';
 import { ImportBatchesStore } from './feature-import/import-batches.store';
+import { CategoryComparisonSettingsStore } from './feature-dashboard/category-comparison-settings.store';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -37,6 +38,7 @@ export const appConfig: ApplicationConfig = {
       const categoryModelStore = inject(CategoryModelStore);
       const mappingProfilesStore = inject(MappingProfilesStore);
       const importBatchesStore = inject(ImportBatchesStore);
+      const categoryComparisonSettingsStore = inject(CategoryComparisonSettingsStore);
       return appDb
         .open()
         .then(() =>
@@ -49,6 +51,7 @@ export const appConfig: ApplicationConfig = {
             accountsStore.hydrate(),
             mappingProfilesStore.hydrate(),
             importBatchesStore.hydrate(),
+            categoryComparisonSettingsStore.hydrate(),
           ]),
         )
         .then(() => categoryModelStore.hydrate())

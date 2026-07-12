@@ -188,6 +188,51 @@ export const resolvePresetRange = (
   }
 };
 
+export type CalendarUnit = 'week' | 'month' | 'quarter' | 'year';
+
+/**
+ * Shifts a calendar-aligned `[from, to]` range back `count` whole `unit`s, recomputing that unit's
+ * real boundaries at the target position rather than shifting by a fixed day-count — so a shifted
+ * month is a full different-length month (e.g. 31-day March shifted to 28/29-day February), not
+ * "30 days back" (TICKET-STAT-04). `count` may be negative to shift forward. Assumes `from`/`to`
+ * are already that unit's true start/end (true of every calendar-aligned `RangePreset`); callers
+ * with an unaligned range should use a day-count shift instead.
+ */
+export const shiftRangeByCalendarUnit = (
+  from: string,
+  to: string,
+  unit: CalendarUnit,
+  count: number,
+): { from: string; to: string } => {
+  const start = parseIsoDate(from);
+  const year = start.getUTCFullYear();
+
+  switch (unit) {
+    case 'week': {
+      const shiftedStart = new Date(start.getTime() - count * 7 * MS_PER_DAY);
+      const shiftedEnd = new Date(shiftedStart.getTime() + 6 * MS_PER_DAY);
+      return { from: formatIsoDate(shiftedStart), to: formatIsoDate(shiftedEnd) };
+    }
+    case 'month': {
+      const month = start.getUTCMonth();
+      const shiftedStart = new Date(Date.UTC(year, month - count, 1));
+      const shiftedEnd = new Date(Date.UTC(year, month - count + 1, 0));
+      return { from: formatIsoDate(shiftedStart), to: formatIsoDate(shiftedEnd) };
+    }
+    case 'quarter': {
+      const quarterStartMonth = start.getUTCMonth();
+      const shiftedStart = new Date(Date.UTC(year, quarterStartMonth - count * 3, 1));
+      const shiftedEnd = new Date(Date.UTC(year, quarterStartMonth - count * 3 + 3, 0));
+      return { from: formatIsoDate(shiftedStart), to: formatIsoDate(shiftedEnd) };
+    }
+    case 'year': {
+      const shiftedStart = new Date(Date.UTC(year - count, 0, 1));
+      const shiftedEnd = new Date(Date.UTC(year - count, 11, 31));
+      return { from: formatIsoDate(shiftedStart), to: formatIsoDate(shiftedEnd) };
+    }
+  }
+};
+
 /**
  * Maps every preset to the granularity it should default to the moment it's selected
  * (TICKET-STAT-03): week/month-wide presets default to `day`, quarter-wide presets default to

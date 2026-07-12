@@ -376,6 +376,17 @@ const DEFAULT_CATEGORIES: Category[] = [
   },
 ];
 
+/** Singleton row (id always 1) of category ids the user has opted to exclude from the dashboard's category period comparison panel (TICKET-STAT-04 follow-up). Absent row / empty list = nothing excluded. */
+export type CategoryComparisonSettings = {
+  id?: number;
+  excludedCategoryIds: number[];
+};
+
+export const DEFAULT_CATEGORY_COMPARISON_SETTINGS: CategoryComparisonSettings = {
+  id: 1,
+  excludedCategoryIds: [],
+};
+
 export type ImportBatch = {
   id?: number;
   accountId: number;
@@ -417,6 +428,7 @@ class AppDb extends Dexie {
   importBatches!: Table<ImportBatch, number>;
   transferSettings!: Table<TransferSettings, number>;
   categoryModel!: Table<CategoryModelArtifact, 1>;
+  categoryComparisonSettings!: Table<CategoryComparisonSettings, number>;
 
   constructor() {
     super('money-mosaic');
@@ -576,6 +588,23 @@ class AppDb extends Dexie {
       importBatches: '++id, accountId, importedAt',
       transferSettings: 'id',
       categoryModel: 'id',
+    });
+
+    // Adds the `categoryComparisonSettings` singleton-row table for the category period comparison
+    // panel's optional category exclusion list (TICKET-STAT-04 follow-up). Purely additive — a
+    // brand-new, empty table — so no `.upgrade()` is needed; the repository's `get()` falls back to
+    // `DEFAULT_CATEGORY_COMPARISON_SETTINGS` when the row hasn't been written yet, same as `categoryModel`.
+    this.version(8).stores({
+      accounts: '++id, name, type, archived',
+      transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+      transfers: '++id, fromTransactionId, toTransactionId',
+      categories: '++id, name, kind, archived',
+      rules: '++id, priority, enabled',
+      mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+      importBatches: '++id, accountId, importedAt',
+      transferSettings: 'id',
+      categoryModel: 'id',
+      categoryComparisonSettings: 'id',
     });
 
     this.on('populate', () => {

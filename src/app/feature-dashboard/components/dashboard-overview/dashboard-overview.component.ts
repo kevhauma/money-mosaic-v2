@@ -7,6 +7,7 @@ import { StatsStore } from '../../stats.store';
 import { AccountBalanceStripComponent } from '../account-balance-strip/account-balance-strip.component';
 import { ActionQueuePanelComponent } from '../action-queue-panel/action-queue-panel.component';
 import { CategoryBreakdownPanelComponent } from '../category-breakdown-panel/category-breakdown-panel.component';
+import { CategoryComparisonPanelComponent } from '../category-comparison-panel/category-comparison-panel.component';
 import { NetWorthHeaderComponent } from '../net-worth-header/net-worth-header.component';
 import { TopTransactionsPanelComponent } from '../top-transactions-panel/top-transactions-panel.component';
 import { TrendChartPanelComponent } from '../trend-chart-panel/trend-chart-panel.component';
@@ -32,6 +33,7 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' })
     StatCardComponent,
     NetWorthHeaderComponent,
     CategoryBreakdownPanelComponent,
+    CategoryComparisonPanelComponent,
     TrendChartPanelComponent,
     WeekdayWeekendSplitPanelComponent,
     TopTransactionsPanelComponent,
