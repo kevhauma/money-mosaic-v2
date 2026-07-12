@@ -5,7 +5,7 @@
 
 ## UX improvements
 - go over every screen and list what is wrong
-- all numbers should in the UI be rounded to 2 decimal points, focus on the graph hover popups
+- make dashboard more flexible, optional hiding/settings in certain panels
 
 ## Food voucher support
 - ability to add food vouchers to an account, counts as income,
