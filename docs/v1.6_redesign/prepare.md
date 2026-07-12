@@ -19,3 +19,32 @@
 - "divider"
 
 these is by far a comprehensive list of classes that could be moved to a component so changing styles stays confined to shared/ui
+
+
+
+
+## design ideas
+
+### Feelings
+- Playful
+- Curious
+- Premium
+- Insightful
+- Delightful
+- Approachable
+
+### Terms
+- Dashboard-first UX (the overview is the primary experience)
+- Information Visualization (make the charts the hero)
+- Visual Hierarchy (make important insights immediately obvious)
+- Data Storytelling (turn raw numbers into narratives)
+
+### Styles
+- Bento Box Grid → layout foundation
+- Swiss Modernism 2.0 → typography, spacing, hierarchy
+- Gradient Mesh / Aurora Evolved → vibrant accents and graph colors
+- Dimensional Layering → depth without clutter
+- Motion-Driven → animated charts and transitions
+- Aurora UI → soft lighting and atmosphere
+- Vibrant & Block-based → category identity through color
+- Dark Mode (OLED) → optional theme where colorful data really stands out
