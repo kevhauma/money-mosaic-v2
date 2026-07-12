@@ -1,0 +1,39 @@
+<div class="card h-full bg-base-100 shadow-sm">
+  <div class="card-body">
+    <h2 class="card-title text-base">Biggest transactions</h2>
+
+    @if (entries().length > 0) {
+      <ul class="mt-2 divide-y divide-base-300">
+        @for (entry of entries(); track entry.id) {
+          <li>
+            <a
+              [routerLink]="['/transactions']"
+              [queryParams]="entry.queryParams"
+              class="flex items-center justify-between gap-3 py-2 transition hover:bg-base-200"
+            >
+              <span class="flex min-w-0 items-center gap-2">
+                <span
+                  class="h-2 w-2 shrink-0 rounded-full"
+                  [style.background-color]="entry.categoryColor"
+                ></span>
+                <span class="min-w-0">
+                  <span class="block truncate">{{ entry.description }}</span>
+                  <span class="text-xs text-base-content/60">
+                    {{ entry.bookingDate }} · {{ entry.categoryName }}
+                  </span>
+                </span>
+              </span>
+              <span class="shrink-0 text-sm font-medium text-error">{{
+                entry.formattedAmount
+              }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="py-6 text-center text-sm text-base-content/60">
+        No expense transactions for this range.
+      </p>
+    }
+  </div>
+</div>

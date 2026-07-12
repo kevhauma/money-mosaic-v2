@@ -24,12 +24,12 @@ A category total can hide a single large outlier (e.g. one €800 appliance purc
 
 ## Acceptance criteria
 
-- [ ] `computeTopTransactions()` excludes transfers and savings movements using the same predicates as `computePeriodStats`/`computeCategoryBreakdown` — no re-implementation.
-- [ ] Sorted strictly by absolute amount descending; ties broken by date (documented, tested).
-- [ ] `limit` is a named constant/parameter, not a hard-coded `5` scattered across the component.
-- [ ] Each row links to the underlying transaction using only existing transactions-list filter/query-param capability (confirm what the transactions list already supports before adding new filter params — check [feature-transactions](../../../src/app/feature-transactions) rather than assuming).
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser: the top-5 list matches manual inspection of the largest expense transactions in the selected range, and each row navigates correctly.
+- [x] `computeTopTransactions()` excludes transfers and savings movements using the same predicates as `computePeriodStats`/`computeCategoryBreakdown` — no re-implementation.
+- [x] Sorted strictly by absolute amount descending; ties broken by date (documented, tested).
+- [x] `limit` is a named constant/parameter, not a hard-coded `5` scattered across the component.
+- [x] Each row links to the underlying transaction using only existing transactions-list filter/query-param capability (confirm what the transactions list already supports before adding new filter params — check [feature-transactions](../../../src/app/feature-transactions) rather than assuming).
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser: the top-5 list matches manual inspection of the largest expense transactions in the selected range, and each row navigates correctly.
 
 ## Notes
 

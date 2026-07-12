@@ -8,6 +8,7 @@ import { AccountBalanceStripComponent } from '../account-balance-strip/account-b
 import { ActionQueuePanelComponent } from '../action-queue-panel/action-queue-panel.component';
 import { CategoryBreakdownPanelComponent } from '../category-breakdown-panel/category-breakdown-panel.component';
 import { NetWorthHeaderComponent } from '../net-worth-header/net-worth-header.component';
+import { TopTransactionsPanelComponent } from '../top-transactions-panel/top-transactions-panel.component';
 import { TrendChartPanelComponent } from '../trend-chart-panel/trend-chart-panel.component';
 import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-panel/weekday-weekend-split-panel.component';
 
@@ -26,6 +27,7 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
     CategoryBreakdownPanelComponent,
     TrendChartPanelComponent,
     WeekdayWeekendSplitPanelComponent,
+    TopTransactionsPanelComponent,
     ActionQueuePanelComponent,
     AccountBalanceStripComponent,
   ],

@@ -5,6 +5,7 @@ import {
   computeNetWorthTrend,
   computePeriodStats,
   computeSpendingRate,
+  computeTopTransactions,
   computeTrendBuckets,
   computeWeekdayWeekendSplit,
   RangeStore,
@@ -94,6 +95,15 @@ export const StatsStore = signalStore(
       ),
     );
 
+    const topTransactions = computed(() =>
+      computeTopTransactions(
+        transactionsStore.transactions(),
+        rangeStore.from(),
+        rangeStore.to(),
+        ownSavingsIbans(),
+      ),
+    );
+
     const trendBuckets = computed(() =>
       computeTrendBuckets(
         transactionsStore.transactions(),
@@ -119,6 +129,7 @@ export const StatsStore = signalStore(
       categoryBreakdown,
       spendingRate,
       weekdayWeekendSplit,
+      topTransactions,
       trendBuckets,
       netWorthTrend,
     };
