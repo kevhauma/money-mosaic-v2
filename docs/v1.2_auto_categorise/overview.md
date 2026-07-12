@@ -59,6 +59,7 @@ page) and unclear. These four tickets consolidate everything onto a new `/learni
 - [x] [TICKET-ML-15](./tickets/TICKET-ML-15-live-training-progress.md) — Live per-epoch training progress streamed from the worker (adds FR-ML-15) — needs ML-12 (edits the same status rendering it relocates); sequenced after it, not parallel
 - [x] [TICKET-ML-13](./tickets/TICKET-ML-13-suggestions-table-on-learning-page.md) — Dedicated suggestions table on the Learning page, replacing the transactions-table ghost chip (supersedes part of FR-ML-8, adds FR-ML-13) — needs ML-11; independent of ML-12/ML-14, can run in parallel
 - [x] [TICKET-ML-14](./tickets/TICKET-ML-14-rule-proposals-on-learning-page.md) — Rule-proposal inbox moved from the rules page to the Learning page (relocates FR-ML-9) — needs ML-11; independent of ML-12/ML-13, can run in parallel
+- [ ] [TICKET-ML-16](./tickets/TICKET-ML-16-confidence-gradient-badge.md) — Colour the suggestions table's suggestion badge on a red-to-green gradient by confidence (extends FR-ML-13, adds FR-ML-16) — needs ML-13; purely presentational, independent of everything else, can ship any time
 
 ## Considered, not ticketed yet
 
