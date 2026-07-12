@@ -296,3 +296,64 @@ describe('TransactionEditFormComponent: nullify toggle (TICKET-TXN-04)', () => {
     expect(internals().form.controls.nullified.value).toBe(true);
   });
 });
+
+describe('TransactionEditFormComponent: delete', () => {
+  let fixture: ComponentFixture<TransactionEditFormComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TransactionEditFormComponent],
+      providers: [
+        { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        { provide: RulesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TransactionEditFormComponent);
+  });
+
+  it('requires confirmation before emitting deleteRequested and closing the popup', async () => {
+    fixture.componentRef.setInput('transaction', transaction());
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    let deleteCount = 0;
+    fixture.componentInstance.deleteRequested.subscribe(() => deleteCount++);
+
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    [...nativeElement.querySelectorAll('button')]
+      .find((b) => b.textContent?.trim() === 'Delete')
+      ?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Clicking the popup's own Delete button only opens the confirm dialog — nothing emitted yet.
+    expect(deleteCount).toBe(0);
+    expect(fixture.componentInstance.open()).toBe(true);
+    expect(nativeElement.textContent).toContain('permanently deletes this transaction');
+
+    [...nativeElement.querySelectorAll('button')]
+      .find((b) => b.textContent?.trim() === 'Delete permanently')
+      ?.click();
+
+    expect(deleteCount).toBe(1);
+    expect(fixture.componentInstance.open()).toBe(false);
+  });
+
+  it('warns that the linked transfer will also be removed for a transfer leg', async () => {
+    fixture.componentRef.setInput('transaction', transaction({ transferId: 42 }));
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    [...nativeElement.querySelectorAll('button')]
+      .find((b) => b.textContent?.trim() === 'Delete')
+      ?.click();
+    fixture.detectChanges();
+
+    expect(nativeElement.textContent).toContain('Its linked transfer will also be removed');
+  });
+});

@@ -59,4 +59,26 @@ describe('TransactionBulkBarComponent', () => {
     expect(selectAllCount).toBe(1);
     expect(clearCount).toBe(1);
   });
+
+  it('requires confirmation before emitting deleteRequested', async () => {
+    let deleteCount = 0;
+    fixture.componentInstance.deleteRequested.subscribe(() => deleteCount++);
+
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    [...nativeElement.querySelectorAll('button')]
+      .find((b) => b.textContent?.trim() === 'Delete')
+      ?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Clicking the bar's own Delete button only opens the confirm dialog — nothing emitted yet.
+    expect(deleteCount).toBe(0);
+    expect(nativeElement.textContent).toContain('Delete 2 transactions?');
+
+    [...nativeElement.querySelectorAll('button')]
+      .find((b) => b.textContent?.trim() === 'Delete permanently')
+      ?.click();
+
+    expect(deleteCount).toBe(1);
+  });
 });

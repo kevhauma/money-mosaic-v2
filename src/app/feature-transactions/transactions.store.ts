@@ -9,6 +9,7 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
+import { TransactionDeletionService, type RemoveTransactionsResult } from '@/core/transactions';
 import { isSavingsMovement } from '@/core/transfers';
 
 const transactionConfig = entityConfig({
@@ -87,6 +88,7 @@ export const TransactionsStore = signalStore(
   }),
   withMethods((store) => {
     const transactionsRepository = inject(TransactionsRepository);
+    const transactionDeletionService = inject(TransactionDeletionService);
 
     return {
       updateTransaction: async (id: number, changes: Partial<Transaction>): Promise<void> => {
@@ -104,6 +106,27 @@ export const TransactionsStore = signalStore(
         const changes: Partial<Transaction> = { categoryId, categoryManual: true };
         await transactionsRepository.bulkUpdate(ids.map((id) => ({ id, changes })));
         store.patchMany(ids.map((id) => ({ id, changes })));
+      },
+
+      /**
+       * Permanently deletes the given transactions and unlinks any transfer touching them, in one
+       * atomic write. Powers user-initiated deletion from the bulk-action bar and the transaction edit
+       * popup. Returns the removed-transfer ids so the caller (which also holds `TransfersStore`) can
+       * mirror the unlink — this store can't inject `TransfersStore` itself without a DI cycle, since
+       * `TransfersStore` already depends on `TransactionsStore`.
+       */
+      deleteTransactions: async (
+        transactions: Transaction[],
+      ): Promise<RemoveTransactionsResult> => {
+        const result = await transactionDeletionService.removeMany(transactions);
+        patchState(store, removeEntities(result.removedTransactionIds));
+        store.patchMany(
+          result.clearedTransferTransactionIds.map((id) => ({
+            id,
+            changes: { transferId: undefined },
+          })),
+        );
+        return result;
       },
     };
   }),

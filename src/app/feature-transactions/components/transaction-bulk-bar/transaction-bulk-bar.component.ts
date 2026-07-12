@@ -1,16 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerTag, tablerX } from '@ng-icons/tabler-icons';
+import { tablerTag, tablerTrash, tablerX } from '@ng-icons/tabler-icons';
 import { CategoriesStore } from '@/feature-categories';
-import { ButtonComponent, SelectComponent } from '@/shared/ui';
+import { ButtonComponent, ConfirmDialogComponent, SelectComponent } from '@/shared/ui';
 
 @Component({
   selector: 'app-transaction-bulk-bar',
-  imports: [ReactiveFormsModule, NgIcon, ButtonComponent, SelectComponent],
+  imports: [ReactiveFormsModule, NgIcon, ButtonComponent, ConfirmDialogComponent, SelectComponent],
   templateUrl: './transaction-bulk-bar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerTag, tablerX })],
+  viewProviders: [provideIcons({ tablerTag, tablerTrash, tablerX })],
 })
 export class TransactionBulkBarComponent {
   protected readonly categoriesStore = inject(CategoriesStore);
@@ -22,13 +22,23 @@ export class TransactionBulkBarComponent {
   readonly applyCategory = output<number>();
   readonly selectAllRequested = output<void>();
   readonly clearRequested = output<void>();
+  readonly deleteRequested = output<void>();
 
   protected readonly categoryControl = inject(FormBuilder).nonNullable.control('');
+  protected readonly deleteConfirmOpen = signal(false);
 
   protected apply(): void {
     const rawCategoryId = this.categoryControl.value;
     if (rawCategoryId === '') return;
     this.applyCategory.emit(Number(rawCategoryId));
     this.categoryControl.setValue('');
+  }
+
+  protected confirmDelete(): void {
+    this.deleteConfirmOpen.set(true);
+  }
+
+  protected deleteConfirmed(): void {
+    this.deleteRequested.emit();
   }
 }

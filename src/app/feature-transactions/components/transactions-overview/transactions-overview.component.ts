@@ -245,6 +245,23 @@ export class TransactionsOverviewComponent {
     await this.transactionsStore.updateTransaction(transaction.id, result);
   }
 
+  /** Deletes the transaction currently open in the edit popup (confirmed there before this fires). */
+  protected async deleteEditingTransaction(): Promise<void> {
+    const transaction = this.editingTransaction();
+    if (transaction?.id == null) return;
+    const { unlinkedTransferIds } = await this.transactionsStore.deleteTransactions([transaction]);
+    this.transfersStore.removeLocal(unlinkedTransferIds);
+  }
+
+  /** Deletes every selected transaction (confirmed in the bulk bar before this fires), then clears the selection. */
+  protected async deleteSelection(): Promise<void> {
+    const transactions = this.selectedTransactions();
+    if (transactions.length === 0) return;
+    const { unlinkedTransferIds } = await this.transactionsStore.deleteTransactions(transactions);
+    this.transfersStore.removeLocal(unlinkedTransferIds);
+    this.selection.clear();
+  }
+
   /** Inline category quick-set (TICKET-TXN-05) — writes immediately, no modal/save step. */
   protected async onCategoryChange(transaction: Transaction, rawCategoryId: string): Promise<void> {
     if (transaction.id == null) return;

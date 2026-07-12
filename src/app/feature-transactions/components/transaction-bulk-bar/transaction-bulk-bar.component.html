@@ -27,9 +27,22 @@
     <mm-button variant="ghost" size="sm" (click)="selectAllRequested.emit()">
       Select all {{ filteredCount() }}
     </mm-button>
+    <mm-button color="error" variant="outline" size="sm" (click)="confirmDelete()">
+      <ng-icon name="tablerTrash" size="16" aria-hidden="true" />
+      Delete
+    </mm-button>
     <mm-button variant="ghost" size="sm" (click)="clearRequested.emit()">
       <ng-icon name="tablerX" size="16" aria-hidden="true" />
       Clear
     </mm-button>
   </div>
 </div>
+
+<mm-confirm-dialog
+  [(open)]="deleteConfirmOpen"
+  title="Delete {{ count() }} transaction{{ count() === 1 ? '' : 's' }}?"
+  message="This permanently deletes the selected transactions and cannot be undone. Any transfer links touching them will also be removed."
+  confirmLabel="Delete permanently"
+  [danger]="true"
+  (confirmed)="deleteConfirmed()"
+/>

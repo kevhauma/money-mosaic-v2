@@ -33,6 +33,7 @@
     (applyCategory)="applyBulkCategory($event)"
     (selectAllRequested)="selectAllFiltered()"
     (clearRequested)="selection.clear()"
+    (deleteRequested)="deleteSelection()"
   />
 }
 
@@ -153,4 +154,5 @@
   [(open)]="formOpen"
   [transaction]="editingTransaction()"
   (saved)="saveEdit($event)"
+  (deleteRequested)="deleteEditingTransaction()"
 />

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
+import { TransactionDeletionService } from '@/core/transactions';
 import { TransactionsStore } from './transactions.store';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -123,6 +124,47 @@ describe('TransactionsStore: uncategorised backlog excludes transfer-linked tran
 
     expect(store.uncategorisedCount()).toBe(1);
     expect(store.uncategorisedTransactions().map((t) => t.id)).toEqual([2]);
+  });
+});
+
+describe('TransactionsStore: deleteTransactions', () => {
+  const transactionsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+    bulkUpdate: vi.fn().mockResolvedValue(0),
+  };
+  const transactionDeletionService = {
+    removeMany: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: TransactionDeletionService, useValue: transactionDeletionService },
+      ],
+    });
+  });
+
+  it('removes the deleted transactions from local state and clears any unlinked transferId', async () => {
+    const store = TestBed.inject(TransactionsStore);
+    store.addMany([
+      transaction({ id: 1 }),
+      transaction({ id: 2, transferId: 5 }),
+      transaction({ id: 3, transferId: 5 }),
+    ]);
+    transactionDeletionService.removeMany.mockResolvedValue({
+      removedTransactionIds: [1],
+      unlinkedTransferIds: [5],
+      clearedTransferTransactionIds: [2],
+    });
+
+    const result = await store.deleteTransactions([store.transactions()[0]]);
+
+    expect(store.transactions().map((t) => t.id)).toEqual([2, 3]);
+    expect(store.transactions().find((t) => t.id === 2)?.transferId).toBeUndefined();
+    expect(result.unlinkedTransferIds).toEqual([5]);
   });
 });
 

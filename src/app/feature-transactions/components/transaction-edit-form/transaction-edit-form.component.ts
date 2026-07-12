@@ -19,7 +19,12 @@ import {
 } from '@/core/transactions';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore, RulesStore } from '@/feature-categories';
-import { ButtonComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  ConfirmDialogComponent,
+  MmModalComponent,
+  SelectComponent,
+} from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 import { TransactionsStore } from '../../transactions.store';
 import { TransferSettingsStore } from '../../transfer-settings.store';
@@ -34,6 +39,7 @@ export type TransactionEditResult = Partial<
   imports: [
     ReactiveFormsModule,
     ButtonComponent,
+    ConfirmDialogComponent,
     SelectComponent,
     MmModalComponent,
     SignedAmountPipe,
@@ -45,6 +51,7 @@ export class TransactionEditFormComponent {
   readonly open = model(false);
   readonly transaction = input<Transaction | null>(null);
   readonly saved = output<TransactionEditResult>();
+  readonly deleteRequested = output<void>();
 
   protected readonly categoriesStore = inject(CategoriesStore);
   private readonly rulesStore = inject(RulesStore);
@@ -70,6 +77,15 @@ export class TransactionEditFormComponent {
 
   /** A linked transfer leg is already excluded from income/expense and has no category — the toggle is hidden for it (TICKET-TXN-04). */
   protected readonly isTransferLeg = computed(() => this.transaction()?.transferId != null);
+
+  protected readonly deleteConfirmOpen = signal(false);
+
+  /** Stern, deletion-specific warning — calls out the transfer-unlink side effect when it applies. */
+  protected readonly deleteMessage = computed(() =>
+    this.isTransferLeg()
+      ? 'This permanently deletes this transaction and cannot be undone. Its linked transfer will also be removed.'
+      : 'This permanently deletes this transaction and cannot be undone.',
+  );
 
   constructor() {
     effect(() => {
@@ -259,6 +275,15 @@ export class TransactionEditFormComponent {
   }
 
   protected cancel(): void {
+    this.open.set(false);
+  }
+
+  protected confirmDelete(): void {
+    this.deleteConfirmOpen.set(true);
+  }
+
+  protected deleteConfirmed(): void {
+    this.deleteRequested.emit();
     this.open.set(false);
   }
 }

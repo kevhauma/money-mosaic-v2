@@ -106,8 +106,22 @@
     }
 
     <div class="modal-action">
-      <mm-button (click)="cancel()">Cancel</mm-button>
-      <mm-button type="submit" color="primary">Save changes</mm-button>
+      <mm-button color="error" variant="outline" type="button" (click)="confirmDelete()">
+        Delete
+      </mm-button>
+      <div class="ms-auto flex gap-2">
+        <mm-button (click)="cancel()">Cancel</mm-button>
+        <mm-button type="submit" color="primary">Save changes</mm-button>
+      </div>
     </div>
   </form>
 </mm-modal>
+
+<mm-confirm-dialog
+  [(open)]="deleteConfirmOpen"
+  title="Delete this transaction?"
+  [message]="deleteMessage()"
+  confirmLabel="Delete permanently"
+  [danger]="true"
+  (confirmed)="deleteConfirmed()"
+/>
