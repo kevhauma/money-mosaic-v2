@@ -25,9 +25,9 @@ As a user, I want to see how much of my spend in the selected range is still unc
 
 ## Acceptance criteria
 
-- [ ] Reuses the existing `computeCategoryBreakdown()` uncategorised entry — no new pure function, no duplicated exclusion logic.
-- [ ] Callout shows €-total, %-of-expense, and transaction count; hidden when the uncategorised total is 0.
-- [ ] Drill-down link reuses `UNCATEGORISED_SENTINEL` + `buildTransactionDrilldownParams`, matching the pattern already in `category-breakdown-panel.component.ts`.
-- [ ] Does not duplicate or replace the existing global action-queue count ([action-queue-panel.component.ts](../../../src/app/feature-dashboard/components/action-queue-panel/action-queue-panel.component.ts)) — that one stays app-wide/all-time by design (it's a to-do queue, not a range stat); this ticket adds a range-scoped, monetary sibling, not a redesign.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser: a range with some uncategorised transactions shows the callout with correct €/%/count and the drill-down link filters to exactly those transactions; a fully-categorised range shows nothing extra.
+- [x] Reuses the existing `computeCategoryBreakdown()` uncategorised entry — no new pure function, no duplicated exclusion logic.
+- [x] Callout shows €-total, %-of-expense, and transaction count; hidden when the uncategorised total is 0.
+- [x] Drill-down link reuses `UNCATEGORISED_SENTINEL` + `buildTransactionDrilldownParams`, matching the pattern already in `category-breakdown-panel.component.ts`.
+- [x] Does not duplicate or replace the existing global action-queue count ([action-queue-panel.component.ts](../../../src/app/feature-dashboard/components/action-queue-panel/action-queue-panel.component.ts)) — that one stays app-wide/all-time by design (it's a to-do queue, not a range stat); this ticket adds a range-scoped, monetary sibling, not a redesign.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser: a range with some uncategorised transactions shows the callout with correct €/%/count and the drill-down link filters to exactly those transactions; a fully-categorised range shows nothing extra.

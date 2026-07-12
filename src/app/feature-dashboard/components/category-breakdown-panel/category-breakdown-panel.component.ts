@@ -4,6 +4,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { RangeStore } from '@/core/stats';
 import { CategoriesStore } from '@/feature-categories';
+import { AlertComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
@@ -28,7 +29,7 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
 /** Donut + top-5 list for the selected range's expense-by-category or income-by-source (FR-STAT-3). */
 @Component({
   selector: 'app-category-breakdown-panel',
-  imports: [RouterLink, NgxEchartsDirective],
+  imports: [RouterLink, NgxEchartsDirective, AlertComponent],
   templateUrl: './category-breakdown-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -58,6 +59,21 @@ export class CategoryBreakdownPanelComponent {
   });
 
   protected readonly topEntries = computed(() => this.entries().slice(0, 5));
+
+  /** Range-scoped, monetary read of the uncategorised entry already computed by categoryBreakdown (TICKET-STAT-09). Hidden outside the expense tab or when nothing is uncategorised. */
+  protected readonly uncategorisedCallout = computed(() => {
+    if (this.kind() !== 'expense') return null;
+    const entry = this.statsStore
+      .categoryBreakdown()
+      .expenseByCategory.find((e) => e.categoryId === null);
+    if (!entry || entry.total === 0) return null;
+
+    return {
+      formattedTotal: EUR_FORMATTER.format(entry.total),
+      formattedShare: PERCENT_FORMATTER.format(entry.share),
+      transactionCount: entry.transactionCount,
+    };
+  });
 
   protected readonly chartOption = computed<EChartsCoreOption>(() => ({
     tooltip: { trigger: 'item' },

@@ -8,7 +8,7 @@ Deeper dashboard analytics on top of the existing per-range income/expense/categ
 
 All six are independent of each other — each is a standalone pure aggregate in `core/stats` plus a small dashboard component/callout, and none depends on another ticket's output. They can ship in any order or in parallel; the list below is ordered by value/effort (smallest/highest-value first), not grouped by FR area.
 
-- [ ] [TICKET-STAT-09](./tickets/TICKET-STAT-09-uncategorised-spend-visibility.md) — Uncategorised spend visibility (adds FR-STAT-13) — smallest possible ticket, reuses an existing aggregate's already-computed uncategorised entry
+- [x] [TICKET-STAT-09](./tickets/TICKET-STAT-09-uncategorised-spend-visibility.md) — Uncategorised spend visibility (adds FR-STAT-13) — smallest possible ticket, reuses an existing aggregate's already-computed uncategorised entry
 - [ ] [TICKET-STAT-05](./tickets/TICKET-STAT-05-average-spending-rate.md) — Average spending rate per day/week/month (adds FR-STAT-9) — small, self-contained; pairs with STAT-06 as side-by-side "rate" cards
 - [ ] [TICKET-STAT-06](./tickets/TICKET-STAT-06-weekday-weekend-split.md) — Weekday vs. weekend spending split (adds FR-STAT-10) — small, self-contained; build back-to-back with STAT-05
 - [ ] [TICKET-STAT-08](./tickets/TICKET-STAT-08-biggest-transactions.md) — Biggest individual transactions (adds FR-STAT-12) — small helper, check `feature-transactions`' existing filter/query-param support before wiring the drill-down link

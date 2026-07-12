@@ -49,6 +49,16 @@
       >
         View all categories
       </a>
+
+      @if (uncategorisedCallout(); as callout) {
+        <mm-alert status="warning" variant="soft" class="mt-2">
+          <a [routerLink]="['/transactions']" [queryParams]="drilldownParams(null)" class="text-sm">
+            {{ callout.formattedTotal }} uncategorised ({{ callout.formattedShare }} of expense,
+            {{ callout.transactionCount }}
+            transaction{{ callout.transactionCount === 1 ? '' : 's' }})
+          </a>
+        </mm-alert>
+      }
     } @else {
       <p class="py-6 text-center text-sm text-base-content/60">
         No {{ kind() }} data for this range.
