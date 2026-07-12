@@ -1,7 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { vi } from 'vitest';
-import { CategoryModelStore, type CategoryModelStatus } from '../../category-model.store';
+import {
+  CategoriesStore,
+  CategoryModelStore,
+  type CategoryModelStatus,
+} from '@/feature-categories';
+import { TransactionsStore } from '@/feature-transactions';
+import type { Category, Transaction } from '@/core/data-access';
 import { ModelStatusComponent } from './model-status.component';
 
 /** Protected surface we reach into for status-mapping assertions. */
@@ -11,10 +17,28 @@ type Internals = {
   statusLabel: () => string;
   statusCopy: () => string;
   accuracyPercent: () => number;
+  trainedSampleCount: () => number | null;
+  modelCategoryCount: () => number;
+  activeCategoryCount: () => number;
+  labelledTransactionCount: () => number;
   buttonLabel: () => string;
   trainDisabled: () => boolean;
   train: () => void;
 };
+
+const activeCategory = (id: number): Category => ({
+  id,
+  name: `Category ${id}`,
+  kind: 'expense',
+  color: '#000000',
+  icon: 'tablerTag',
+  sortOrder: id,
+  archived: false,
+  isSystem: false,
+});
+
+const labelledTransaction = (id: number, categoryId: number | undefined): Transaction =>
+  ({ id, categoryId }) as Transaction;
 
 describe('ModelStatusComponent', () => {
   let fixture: ComponentFixture<ModelStatusComponent>;
@@ -23,7 +47,16 @@ describe('ModelStatusComponent', () => {
     status: signal<CategoryModelStatus>('untrained'),
     metrics: signal<{ accuracy: number; trainedSampleCount: number } | null>(null),
     lastTrainedAt: signal<string | null>(null),
+    categoryIdByIndex: signal<number[]>([]),
     train: vi.fn().mockResolvedValue(undefined),
+  };
+
+  const categoriesStore = {
+    activeCategories: signal<Category[]>([]),
+  };
+
+  const transactionsStore = {
+    transactions: signal<Transaction[]>([]),
   };
 
   const setup = async (): Promise<void> => {
@@ -31,9 +64,16 @@ describe('ModelStatusComponent', () => {
     categoryModelStore.status.set('untrained');
     categoryModelStore.metrics.set(null);
     categoryModelStore.lastTrainedAt.set(null);
+    categoryModelStore.categoryIdByIndex.set([]);
+    categoriesStore.activeCategories.set([]);
+    transactionsStore.transactions.set([]);
     await TestBed.configureTestingModule({
       imports: [ModelStatusComponent],
-      providers: [{ provide: CategoryModelStore, useValue: categoryModelStore }],
+      providers: [
+        { provide: CategoryModelStore, useValue: categoryModelStore },
+        { provide: CategoriesStore, useValue: categoriesStore },
+        { provide: TransactionsStore, useValue: transactionsStore },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ModelStatusComponent);
@@ -54,9 +94,15 @@ describe('ModelStatusComponent', () => {
     expect(component.trainDisabled()).toBe(false);
   });
 
-  it('renders distinct, accurate copy and tone for "not-enough-data"', async () => {
+  it('renders distinct, accurate copy and tone for "not-enough-data", with real labelled/category counts', async () => {
     await setup();
     categoryModelStore.status.set('not-enough-data');
+    categoriesStore.activeCategories.set([activeCategory(1)]);
+    transactionsStore.transactions.set([
+      labelledTransaction(1, 1),
+      labelledTransaction(2, 1),
+      labelledTransaction(3, undefined),
+    ]);
     const component = internals();
 
     expect(component.alertStatus()).toBe('info');
@@ -64,8 +110,19 @@ describe('ModelStatusComponent', () => {
     expect(component.statusCopy()).toBe(
       'Categorise a few more transactions across at least two categories before training.',
     );
+    expect(component.labelledTransactionCount()).toBe(2);
+    expect(component.activeCategoryCount()).toBe(1);
     expect(component.buttonLabel()).toBe('Train');
     expect(component.trainDisabled()).toBe(false);
+  });
+
+  it('excludes transactions categorised outside the active category set from the labelled count', async () => {
+    await setup();
+    categoriesStore.activeCategories.set([activeCategory(1)]);
+    transactionsStore.transactions.set([labelledTransaction(1, 1), labelledTransaction(2, 99)]);
+    const component = internals();
+
+    expect(component.labelledTransactionCount()).toBe(1);
   });
 
   it('renders distinct, accurate copy and tone for "training", and disables the button', async () => {
@@ -77,24 +134,29 @@ describe('ModelStatusComponent', () => {
     expect(component.trainDisabled()).toBe(true);
   });
 
-  it('renders "ready" with success tone, formatted accuracy, and keeps the "Train" label', async () => {
+  it('renders "ready" with success tone, formatted accuracy, and trained-sample/category counts', async () => {
     await setup();
     categoryModelStore.status.set('ready');
     categoryModelStore.metrics.set({ accuracy: 0.923, trainedSampleCount: 40 });
     categoryModelStore.lastTrainedAt.set('2026-07-01T12:00:00.000Z');
+    categoryModelStore.categoryIdByIndex.set([1, 2, 3]);
     const component = internals();
 
     expect(component.alertStatus()).toBe('success');
     expect(component.badgeColor()).toBe('success');
     expect(component.statusLabel()).toBe('Ready');
     expect(component.accuracyPercent()).toBe(92);
+    expect(component.trainedSampleCount()).toBe(40);
+    expect(component.modelCategoryCount()).toBe(3);
     expect(component.buttonLabel()).toBe('Train');
     expect(component.trainDisabled()).toBe(false);
   });
 
-  it('renders "stale" with warning tone and relabels the button to "Retrain"', async () => {
+  it('renders "stale" with warning tone, relabels the button to "Retrain", and keeps last-known counts', async () => {
     await setup();
     categoryModelStore.status.set('stale');
+    categoryModelStore.metrics.set({ accuracy: 0.8, trainedSampleCount: 30 });
+    categoryModelStore.categoryIdByIndex.set([1, 2]);
     const component = internals();
 
     expect(component.alertStatus()).toBe('warning');
@@ -103,6 +165,8 @@ describe('ModelStatusComponent', () => {
     expect(component.statusCopy()).toBe(
       'Categories changed since training — retrain to refresh suggestions.',
     );
+    expect(component.trainedSampleCount()).toBe(30);
+    expect(component.modelCategoryCount()).toBe(2);
     expect(component.buttonLabel()).toBe('Retrain');
     expect(component.trainDisabled()).toBe(false);
   });

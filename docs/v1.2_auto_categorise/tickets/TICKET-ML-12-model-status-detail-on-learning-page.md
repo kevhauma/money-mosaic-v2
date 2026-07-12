@@ -60,25 +60,25 @@ feedback that "the model status is not clear at all."
 
 ## Acceptance criteria
 
-- [ ] `ModelStatusComponent` no longer renders on `/categories`; it renders on `/learning` instead.
-- [ ] Each of the six statuses still renders distinct, accurate copy and tone (no regression from ML-10's
+- [x] `ModelStatusComponent` no longer renders on `/categories`; it renders on `/learning` instead.
+- [x] Each of the six statuses still renders distinct, accurate copy and tone (no regression from ML-10's
       original acceptance criteria).
-- [ ] `'ready'`/`'stale'` states additionally show trained-sample count and category count from
+- [x] `'ready'`/`'stale'` states additionally show trained-sample count and category count from
       `metrics.trainedSampleCount`/`categoryIdByIndex.length`.
-- [ ] `'not-enough-data'` shows the current labelled-transaction count and active-category count against the
+- [x] `'not-enough-data'` shows the current labelled-transaction count and active-category count against the
       `MIN_TRAINING_LABELS`/`MIN_CATEGORIES` thresholds, not just generic copy.
-- [ ] The Train/Retrain button's existing behaviour (disabled during `'training'`, relabelled "Retrain" only
+- [x] The Train/Retrain button's existing behaviour (disabled during `'training'`, relabelled "Retrain" only
       when `'stale'`, calls `CategoryModelStore.train()` exactly once per click) is unchanged.
-- [ ] Only existing shared UI primitives (`AlertComponent`, `BadgeComponent`, `ButtonComponent`) are used —
+- [x] Only existing shared UI primitives (`AlertComponent`, `BadgeComponent`, `ButtonComponent`) are used —
       no new raw Tailwind colour classes hand-picked per status.
-- [ ] `CategoryModelStore` is injected via the `@/feature-categories` barrel from the component's new
+- [x] `CategoryModelStore` is injected via the `@/feature-categories` barrel from the component's new
       location, not a relative path reaching back into `feature-categories`.
-- [ ] Unit tests (moved + extended) cover: each status's copy/tone/button-disabled-state as before, plus the
+- [x] Unit tests (moved + extended) cover: each status's copy/tone/button-disabled-state as before, plus the
       new sample/category-count display in `'ready'`/`'stale'`/`'not-enough-data'`.
-- [ ] Verified live in the browser: `/categories` no longer shows the model status card; `/learning` shows
+- [x] Verified live in the browser: `/categories` no longer shows the model status card; `/learning` shows
       it with the expanded detail in each reachable status (untrained, not-enough-data, ready after
       training).
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

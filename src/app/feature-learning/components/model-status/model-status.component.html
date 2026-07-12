@@ -1,0 +1,42 @@
+<mm-alert [status]="alertStatus()" class="mb-4 flex items-center justify-between gap-3">
+  <div class="flex items-center gap-2">
+    @switch (categoryModelStore.status()) {
+      @case ('training') {
+        <span class="loading loading-spinner loading-sm"></span>
+        <span>{{ statusCopy() }}</span>
+      }
+      @case ('ready') {
+        <mm-badge [color]="badgeColor()" size="sm">{{ statusLabel() }}</mm-badge>
+        <span>
+          {{ statusCopy() }} {{ categoryModelStore.lastTrainedAt() | date: 'medium' }} ·
+          {{ accuracyPercent() }}% accuracy · trained on {{ trainedSampleCount() }} labelled
+          transactions across {{ modelCategoryCount() }} categories
+        </span>
+      }
+      @case ('stale') {
+        <mm-badge [color]="badgeColor()" size="sm">{{ statusLabel() }}</mm-badge>
+        <span>
+          {{ statusCopy() }}
+          @if (trainedSampleCount(); as count) {
+            Last trained on {{ count }} labelled transactions across
+            {{ modelCategoryCount() }} categories.
+          }
+        </span>
+      }
+      @case ('not-enough-data') {
+        <mm-badge [color]="badgeColor()" size="sm">{{ statusLabel() }}</mm-badge>
+        <span>
+          {{ statusCopy() }} ({{ labelledTransactionCount() }}/{{ minTrainingLabels }} labelled ·
+          {{ activeCategoryCount() }}/{{ minCategories }} categories)
+        </span>
+      }
+      @default {
+        <mm-badge [color]="badgeColor()" size="sm">{{ statusLabel() }}</mm-badge>
+        <span>{{ statusCopy() }}</span>
+      }
+    }
+  </div>
+  <mm-button size="sm" [disabled]="trainDisabled()" (click)="train()">
+    {{ buttonLabel() }}
+  </mm-button>
+</mm-alert>

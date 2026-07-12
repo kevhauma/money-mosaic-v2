@@ -26,7 +26,6 @@ import {
   CategoryFormComponent,
   type CategoryFormValue,
 } from '../category-form/category-form.component';
-import { ModelStatusComponent } from '../model-status/model-status.component';
 
 @Component({
   selector: 'app-categories-overview',
@@ -35,7 +34,6 @@ import { ModelStatusComponent } from '../model-status/model-status.component';
     RouterLinkActive,
     NgIcon,
     CategoryFormComponent,
-    ModelStatusComponent,
     BadgeComponent,
     ButtonComponent,
     ConfirmDialogComponent,
