@@ -65,32 +65,32 @@ Accept button from the transactions table, per the feedback that they aren't cle
 
 ## Acceptance criteria
 
-- [ ] The suggestions table shows exactly one row per transaction present in `CategoryModelStore.suggestions()`
+- [x] The suggestions table shows exactly one row per transaction present in `CategoryModelStore.suggestions()`
       (and still uncategorised), with correct category name and confidence rounded to a whole percent.
-- [ ] Changing the row's category `<select>` calls `TransactionsStore.updateTransaction` with
+- [x] Changing the row's category `<select>` calls `TransactionsStore.updateTransaction` with
       `categoryManual: true` (mirroring the transactions table's existing `onCategoryChange`) — a corrected
       row drops out of the table once the transaction is categorised (`suggestions` no longer has an entry,
       since `acceptSuggestion`/manual set both lead to a categorised transaction).
-- [ ] Clicking Accept calls `CategoryModelStore.acceptSuggestion(transactionId)` exactly once; the row
+- [x] Clicking Accept calls `CategoryModelStore.acceptSuggestion(transactionId)` exactly once; the row
       disappears once the store settles.
-- [ ] Clicking Dismiss calls `CategoryModelStore.dismissSuggestion(transactionId)` exactly once; the row
+- [x] Clicking Dismiss calls `CategoryModelStore.dismissSuggestion(transactionId)` exactly once; the row
       disappears without setting any category.
-- [ ] No live suggestions renders `mm-empty-state`, not an empty table shell.
-- [ ] `transactions-overview.component.html`/`.ts` no longer reference `CategoryModelStore`, `suggestion`,
+- [x] No live suggestions renders `mm-empty-state`, not an empty table shell.
+- [x] `transactions-overview.component.html`/`.ts` no longer reference `CategoryModelStore`, `suggestion`,
       or `acceptSuggestion` anywhere — `grep -n "CategoryModelStore\|suggestion" src/app/feature-transactions/components/transactions-overview` returns no matches.
-- [ ] `TransactionsOverviewComponent`'s existing unit tests for row mapping/Accept are removed or updated to
+- [x] `TransactionsOverviewComponent`'s existing unit tests for row mapping/Accept are removed or updated to
       no longer assert suggestion behaviour (moved to this ticket's new spec instead).
-- [ ] Only `BadgeComponent`/`ButtonComponent`/`EmptyStateComponent` (or other existing shared UI primitives)
+- [x] Only `BadgeComponent`/`ButtonComponent`/`EmptyStateComponent` (or other existing shared UI primitives)
       are used — no raw daisyUI/Tailwind classes duplicating what those components provide.
-- [ ] Unit tests for the new component cover: row derivation from `suggestions()` ∩ uncategorised
+- [x] Unit tests for the new component cover: row derivation from `suggestions()` ∩ uncategorised
       transactions, category-select override calling `updateTransaction` with `categoryManual: true`,
       Accept delegating to `acceptSuggestion`, Dismiss delegating to `dismissSuggestion`, empty state when
       there are no suggestions.
-- [ ] Verified live in the browser: after training, `/learning` lists every uncategorised transaction with a
+- [x] Verified live in the browser: after training, `/learning` lists every uncategorised transaction with a
       suggestion; correcting one via the select changes its category and removes it from the list; Accept
       and Dismiss each remove the row via their own path; the transactions table no longer shows any
       suggestion chip.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
@@ -101,3 +101,9 @@ Accept button from the transactions table, per the feedback that they aren't cle
   that the in-table version "is not clear."
 - No change to `CategoryModelStore` itself — `dismissSuggestion` already existed (ML-07) but had no caller
   until this ticket.
+- **Post-merge follow-up feedback**, addressed in the same working tree: the category `<select>` used to be
+  pre-filled with the suggested category, which made an untouched row visually read as "already
+  categorised" — it now always starts at "Uncategorised". The suggestion badge and the select were split
+  into two separate table columns ("Suggested" / "Category") instead of stacked in one. The table is now
+  paged via the shared `createPagination`/`mm-paginator` (`PAGE_SIZE = 50`, matching the transactions
+  table).

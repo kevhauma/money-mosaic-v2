@@ -3,13 +3,12 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerChevronDown, tablerChevronUp } from '@ng-icons/tabler-icons';
 import type { Transaction } from '@/core/data-access';
 import type { RuleProposal } from '@/core/ml';
+import { CategoriesStore, CategoryModelStore } from '@/feature-categories';
 import { TransactionsStore } from '@/feature-transactions';
 import { BadgeComponent, ButtonComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
-import { CategoriesStore } from '../../categories.store';
-import { CategoryModelStore } from '../../category-model.store';
 
-/** Rule-proposal inbox on the rules page (FR-ML-9) — a thin UI consumer of `CategoryModelStore` (ML-07). */
+/** Rule-proposal inbox on the Learning page (FR-ML-9) — a thin UI consumer of `CategoryModelStore` (ML-07). */
 @Component({
   selector: 'app-rule-proposals',
   imports: [NgIcon, SignedAmountPipe, BadgeComponent, ButtonComponent],

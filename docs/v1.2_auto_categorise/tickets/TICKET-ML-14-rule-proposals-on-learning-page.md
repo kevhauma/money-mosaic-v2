@@ -47,24 +47,24 @@ the feedback that "the rule suggestion usage is fine, but will need to be moved.
 
 ## Acceptance criteria
 
-- [ ] `RuleProposalsComponent` no longer renders on `/categories/rules`; it renders on `/learning` instead,
+- [x] `RuleProposalsComponent` no longer renders on `/categories/rules`; it renders on `/learning` instead,
       in its own section.
-- [ ] All of ML-09's original acceptance criteria still hold unmodified at the new location: one row per
+- [x] All of ML-09's original acceptance criteria still hold unmodified at the new location: one row per
       `ruleProposals()` entry with counterparty/category/support/confidence; Accept calls `acceptProposal`
       and removes the entry once a real rule exists; Dismiss calls `dismissProposal` and removes the entry
       without creating a rule; empty list renders no visible content.
-- [ ] `CategoryModelStore`/`CategoriesStore` are injected via the `@/feature-categories` barrel from the
+- [x] `CategoryModelStore`/`CategoriesStore` are injected via the `@/feature-categories` barrel from the
       component's new location, not a relative path reaching back into `feature-categories`.
-- [ ] `rules-overview.component.html`/`.ts` no longer reference `RuleProposalsComponent` anywhere —
+- [x] `rules-overview.component.html`/`.ts` no longer reference `RuleProposalsComponent` anywhere —
       `grep -n "RuleProposals\|app-rule-proposals" src/app/feature-categories/components/rules-overview`
       returns no matches.
-- [ ] `feature-categories/components/index.ts` no longer exports `rule-proposals`; `feature-learning/components/index.ts` does.
-- [ ] Unit tests (moved unmodified, only import paths updated) still pass at the new location.
-- [ ] Verified live in the browser: `/categories/rules` no longer shows the proposal inbox; `/learning`
+- [x] `feature-categories/components/index.ts` no longer exports `rule-proposals`; `feature-learning/components/index.ts` does.
+- [x] Unit tests (moved unmodified, only import paths updated) still pass at the new location.
+- [x] Verified live in the browser: `/categories/rules` no longer shows the proposal inbox; `/learning`
       shows it in its own section; after training on data with a strong counterparty pattern, a proposal
       appears there; Accept creates a real rule visible on `/categories/rules`; Dismiss removes it without
       creating anything.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
