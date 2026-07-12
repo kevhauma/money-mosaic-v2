@@ -1,0 +1,49 @@
+@if (categoryModelStore.ruleProposals().length > 0) {
+  <div class="mb-4 flex flex-col gap-2 rounded-box border border-base-300 bg-base-100 p-3">
+    @for (proposal of categoryModelStore.ruleProposals(); track proposal.counterpartyName) {
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <mm-button
+              variant="ghost"
+              shape="square"
+              size="xs"
+              [ariaLabel]="
+                isExpanded(proposal) ? 'Hide matched transactions' : 'Show matched transactions'
+              "
+              (click)="toggleExpanded(proposal)"
+            >
+              <ng-icon
+                [name]="isExpanded(proposal) ? 'tablerChevronUp' : 'tablerChevronDown'"
+                size="14"
+                aria-hidden="true"
+              />
+            </mm-button>
+            <span class="font-medium">{{ proposal.counterpartyName }}</span>
+            <mm-badge variant="ghost" size="sm">{{ categoryNameFor(proposal) }}</mm-badge>
+            <span class="text-xs text-base-content/60">
+              {{ proposal.support }} matches · {{ confidencePercent(proposal) }}% confident
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <mm-button size="xs" color="primary" (click)="accept(proposal)">Accept</mm-button>
+            <mm-button size="xs" variant="ghost" (click)="dismiss(proposal)">Dismiss</mm-button>
+          </div>
+        </div>
+        @if (isExpanded(proposal)) {
+          <div class="mt-2 ml-8 flex flex-col gap-1 border-l border-base-300 pl-3">
+            @for (transaction of matchedTransactions(proposal); track transaction.id) {
+              <div class="flex items-center justify-between gap-3 text-xs text-base-content/70">
+                <span class="whitespace-nowrap">{{ transaction.bookingDate }}</span>
+                <span class="flex-1 truncate">{{ transaction.rawDescription }}</span>
+                <span [class.text-error]="transaction.amount < 0">
+                  {{ transaction.amount | signedAmount }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+}

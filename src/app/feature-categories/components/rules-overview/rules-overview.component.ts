@@ -23,6 +23,7 @@ import { CategoriesStore } from '../../categories.store';
 import { RulesStore } from '../../rules.store';
 import { describeRule } from '../../rule-summary';
 import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.component';
+import { RuleProposalsComponent } from '../rule-proposals/rule-proposals.component';
 
 @Component({
   selector: 'app-rules-overview',
@@ -31,6 +32,7 @@ import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.co
     RouterLinkActive,
     NgIcon,
     RuleFormComponent,
+    RuleProposalsComponent,
     AlertComponent,
     BadgeComponent,
     ButtonComponent,

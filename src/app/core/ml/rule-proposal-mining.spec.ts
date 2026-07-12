@@ -46,6 +46,7 @@ describe('mineRuleProposals', () => {
     });
     expect(proposals[0].meanConfidence).toBeCloseTo(0.9, 5);
     expect([1, 2, 3]).toContain(proposals[0].sampleTransactionId);
+    expect(proposals[0].transactionIds).toEqual([1, 2, 3]);
   });
 
   it('excludes a cluster below minSupport', () => {
@@ -106,6 +107,8 @@ describe('mineRuleProposals', () => {
 
     expect(proposals).toHaveLength(1);
     expect(proposals[0].counterpartyName).toBe('Carrefour');
+    // The already-covered member (id 1) still appears — only a FULLY covered cluster is excluded.
+    expect(proposals[0].transactionIds).toEqual([1, 2, 3]);
   });
 
   it('ignores predictions for transactions with an empty or missing counterpartyName', () => {

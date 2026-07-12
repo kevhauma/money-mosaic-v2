@@ -39,15 +39,15 @@ showing the counterparty, the proposed category, its support/confidence, and Acc
 
 ## Acceptance criteria
 
-- [ ] The component renders one row per entry in `CategoryModelStore.ruleProposals()`, showing counterparty, category name/badge, support count, and confidence as a whole percent.
-- [ ] Accept calls `acceptProposal` with the exact proposal object and, once the store settles, that proposal is removed from the list (a real rule now exists, per ML-07's flow).
-- [ ] Dismiss calls `dismissProposal` and removes the entry from the visible list without creating a rule.
-- [ ] When there are no proposals, the component renders no visible content (no empty-state card) so the rules page looks unchanged for a user who hasn't trained a model yet.
-- [ ] Only `BadgeComponent`/`ButtonComponent` (or other existing shared UI primitives) are used — no raw daisyUI/Tailwind duplicating existing components.
-- [ ] Mounted at the top of `rules-overview.component.html`, added to its `imports` array and to `components/index.ts`.
-- [ ] Unit tests cover: rendering N proposals with correct fields, Accept delegates to the store with the right argument, Dismiss removes without accepting, empty-list renders nothing extra.
-- [ ] Verified live in the browser: after training on categorised data with a strong counterparty pattern, a proposal appears on the rules page; Accept creates a real, visible rule in the list below; Dismiss removes it without creating anything.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] The component renders one row per entry in `CategoryModelStore.ruleProposals()`, showing counterparty, category name/badge, support count, and confidence as a whole percent.
+- [x] Accept calls `acceptProposal` with the exact proposal object and, once the store settles, that proposal is removed from the list (a real rule now exists, per ML-07's flow).
+- [x] Dismiss calls `dismissProposal` and removes the entry from the visible list without creating a rule.
+- [x] When there are no proposals, the component renders no visible content (no empty-state card) so the rules page looks unchanged for a user who hasn't trained a model yet.
+- [x] Only `BadgeComponent`/`ButtonComponent` (or other existing shared UI primitives) are used — no raw daisyUI/Tailwind duplicating existing components.
+- [x] Mounted at the top of `rules-overview.component.html`, added to its `imports` array and to `components/index.ts`.
+- [x] Unit tests cover: rendering N proposals with correct fields, Accept delegates to the store with the right argument, Dismiss removes without accepting, empty-list renders nothing extra.
+- [x] Verified live in the browser: after training on categorised data with a strong counterparty pattern, a proposal appears on the rules page; Accept creates a real, visible rule in the list below; Dismiss removes it without creating anything.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

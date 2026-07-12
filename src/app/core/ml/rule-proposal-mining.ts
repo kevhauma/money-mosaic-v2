@@ -11,6 +11,8 @@ export type RuleProposal = {
   meanConfidence: number;
   /** Representative transaction for `createRuleFromCounterparty`. */
   sampleTransactionId: number;
+  /** Every cluster member, so a caller can show exactly which transactions would match. */
+  transactionIds: number[];
 };
 
 type ClusterMember = { transaction: Transaction; prediction: Prediction };
@@ -74,6 +76,7 @@ export const mineRuleProposals = (
       support,
       meanConfidence,
       sampleTransactionId: members[0].transaction.id!,
+      transactionIds: members.map((member) => member.transaction.id!),
     });
   }
 
