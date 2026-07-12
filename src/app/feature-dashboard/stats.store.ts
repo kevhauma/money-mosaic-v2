@@ -8,6 +8,7 @@ import {
   computeTopTransactions,
   computeTrendBuckets,
   computeWeekdayWeekendSplit,
+  computeYearOverYearComparison,
   RangeStore,
   type JointLegContext,
 } from '@/core/stats';
@@ -124,6 +125,17 @@ export const StatsStore = signalStore(
       ),
     );
 
+    const yearOverYear = computed(() =>
+      computeYearOverYearComparison(
+        transactionsStore.transactions(),
+        rangeStore.from(),
+        rangeStore.to(),
+        ownSavingsIbans(),
+        categoriesStore.categoriesById(),
+        accountsStore.accountsById(),
+      ),
+    );
+
     return {
       periodStats,
       categoryBreakdown,
@@ -132,6 +144,7 @@ export const StatsStore = signalStore(
       topTransactions,
       trendBuckets,
       netWorthTrend,
+      yearOverYear,
     };
   }),
 );

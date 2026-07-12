@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RangeStore } from '@/core/stats';
+import { RangeStore, type PeriodStats } from '@/core/stats';
 import { AccountsStore } from '@/feature-accounts';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
 import { PageHeaderComponent, StatCardComponent } from '@/shared/ui';
@@ -17,6 +17,13 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
   style: 'percent',
   maximumFractionDigits: 1,
 });
+/** `signDisplay: 'exceptZero'` so a year-over-year delta always shows its sign (e.g. "+12%"), unlike the plain PERCENT_FORMATTER used for the (always non-negative) savings rate. */
+const YOY_PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
+  style: 'percent',
+  maximumFractionDigits: 1,
+  signDisplay: 'exceptZero',
+});
+const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' });
 
 @Component({
   selector: 'app-dashboard-overview',
@@ -58,6 +65,49 @@ export class DashboardOverviewComponent {
   protected readonly netColor = computed<'success' | 'error'>(() =>
     this.statsStore.periodStats().net >= 0 ? 'success' : 'error',
   );
+
+  /** Hidden for `all-time` (no meaningful "same period" to shift) and whenever less than a year of history exists (TICKET-STAT-07). */
+  protected readonly showYearOverYear = computed(
+    () => this.rangeStore.preset() !== 'all-time' && this.statsStore.yearOverYear().delta != null,
+  );
+
+  protected readonly incomeYoySubLabel = computed(() =>
+    this.yoySubLabel(this.statsStore.yearOverYear().delta?.income ?? null),
+  );
+
+  protected readonly expenseYoySubLabel = computed(() =>
+    this.yoySubLabel(this.statsStore.yearOverYear().delta?.expense ?? null),
+  );
+
+  protected readonly netYoySubLabel = computed(() =>
+    this.yoySubLabel(this.statsStore.yearOverYear().delta?.net ?? null),
+  );
+
+  private yoySubLabel(deltaPct: number | null): string | undefined {
+    if (!this.showYearOverYear() || deltaPct == null) return undefined;
+    return `${YOY_PERCENT_FORMATTER.format(deltaPct)} vs. last year`;
+  }
+
+  protected readonly incomeYoyTooltip = computed(() =>
+    this.yoyTooltip('Earned', (stats) => stats.income),
+  );
+
+  protected readonly expenseYoyTooltip = computed(() =>
+    this.yoyTooltip('Spent', (stats) => stats.expense),
+  );
+
+  protected readonly netYoyTooltip = computed(() => this.yoyTooltip('Saved', (stats) => stats.net));
+
+  /** Spells out the figure behind the delta badge — the prior year's amount and the exact dates it was compared against. */
+  private yoyTooltip(verb: string, pick: (stats: PeriodStats) => number): string | undefined {
+    if (!this.showYearOverYear()) return undefined;
+    const priorYear = this.statsStore.yearOverYear().priorYears[0];
+    if (!priorYear) return undefined;
+    const amount = EUR_FORMATTER.format(pick(priorYear.stats));
+    const from = DATE_FORMATTER.format(new Date(`${priorYear.from}T00:00:00Z`));
+    const to = DATE_FORMATTER.format(new Date(`${priorYear.to}T00:00:00Z`));
+    return `${verb} ${amount}\nbetween ${from} and ${to}`;
+  }
 
   protected readonly savingsRateValue = computed(() => {
     const rate = this.statsStore.periodStats().savingsRate;

@@ -26,14 +26,15 @@ Compare the selected range's income/expense/net to the **same calendar dates**, 
 
 ## Acceptance criteria
 
-- [ ] `shiftRangeByYears()` correctly clamps Feb 29 in a leap-year range to Feb 28 in a non-leap target year; unit tests cover a leap-day range, a plain month, and a range spanning New Year's Eve.
-- [ ] `computeYearOverYearComparison()` stops requesting years earlier than the dataset's earliest transaction (via the same helper `full-history-range.ts`'s `computeFullHistoryRange` already uses to bound `all-time`), so it never returns a "prior year" of all-zero data pretending to be real.
-- [ ] Delta badges render on Income/Expense/Net stat cards only when ≥1 valid prior year exists; a fresh dataset with <1 year of history shows no badges (not a "+∞%"/misleading figure).
-- [ ] `all-time` never triggers this comparison (panel/badges hidden).
-- [ ] Reuses `computePeriodStats()` per shifted range rather than reimplementing income/expense math.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified live in the browser on a dataset spanning 2+ years: selecting "This year" shows a delta badge comparing to last year; selecting a custom range inside the first tracked year shows no badge.
+- [x] `shiftRangeByYears()` correctly clamps Feb 29 in a leap-year range to Feb 28 in a non-leap target year; unit tests cover a leap-day range, a plain month, and a range spanning New Year's Eve.
+- [x] `computeYearOverYearComparison()` stops requesting years earlier than the dataset's earliest transaction (via the same helper `full-history-range.ts`'s `computeFullHistoryRange` already uses to bound `all-time`), so it never returns a "prior year" of all-zero data pretending to be real.
+- [x] Delta badges render on Income/Expense/Net stat cards only when ≥1 valid prior year exists; a fresh dataset with <1 year of history shows no badges (not a "+∞%"/misleading figure).
+- [x] `all-time` never triggers this comparison (panel/badges hidden).
+- [x] Reuses `computePeriodStats()` per shifted range rather than reimplementing income/expense math.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified live in the browser on a dataset spanning 2+ years: selecting "This year" shows a delta badge comparing to last year; selecting a custom range inside the first tracked year shows no badge.
 
 ## Notes
 
 - `yearsBack = 3` is a soft cap on how many prior years to compute/display, not a requirement to always show 3 — most datasets won't have that much history yet, and the acceptance criteria already require truncating to what's available.
+- Implementation adds a `tooltip` input to the shared `mm-stat-card` (daisyUI `tooltip`/`data-tip`, requested during implementation, not in the original spec above) so hovering a delta badge spells out the figure behind it, e.g. "Earned €1,000.00 between 01 Jul 2025 and 31 Jul 2025".

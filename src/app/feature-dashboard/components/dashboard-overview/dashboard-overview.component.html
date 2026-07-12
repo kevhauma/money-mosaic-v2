@@ -4,22 +4,28 @@
   </div>
 </mm-page-header>
 
-<div class="stats stats-vertical mb-6 w-full shadow lg:stats-horizontal">
+<div class="stats stats-vertical mb-6 w-full overflow-visible shadow lg:stats-horizontal">
   <mm-stat-card
     label="Income"
     [value]="incomeValue()"
+    [subLabel]="incomeYoySubLabel()"
+    [tooltip]="incomeYoyTooltip()"
     link="/transactions"
     [queryParams]="drilldownParams()"
   />
   <mm-stat-card
     label="Expense"
     [value]="expenseValue()"
+    [subLabel]="expenseYoySubLabel()"
+    [tooltip]="expenseYoyTooltip()"
     link="/transactions"
     [queryParams]="drilldownParams()"
   />
   <mm-stat-card
     label="Net cash flow"
     [value]="netValue()"
+    [subLabel]="netYoySubLabel()"
+    [tooltip]="netYoyTooltip()"
     [color]="netColor()"
     link="/transactions"
     [queryParams]="drilldownParams()"
