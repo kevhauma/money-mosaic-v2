@@ -32,17 +32,17 @@ The Rules screen ([rules-overview.component.html](../../../src/app/feature-categ
 
 ## Acceptance criteria
 
-- [ ] A new pure predicate (e.g. `matchesRuleFilters`) lives alongside `rule-summary.ts` in `feature-categories/`, is unit-tested independently of the component/store, and takes the same shape of inputs as `matchesTransactionFilters` (rule + filter state).
-- [ ] Filter bar UI added above the rules table: text search, category dropdown, enabled/disabled filter — styled consistently with the existing `transaction-filters` component (daisyUI form controls, same spacing conventions).
-- [ ] Search matches on rule `name` and the `describeRule()` condition summary, case-insensitive.
-- [ ] Category filter matches `action.setCategoryId`; enabled filter matches `rule.enabled`.
-- [ ] `moveRule` (up/down reordering) behaviour while a filter is active is explicitly decided and documented in the component (either disabled during filtering, or correctly scoped) — not left as an accidental side effect.
-- [ ] A distinct empty state renders when filters produce zero matches (e.g. "No rules match your search"), separate from the existing zero-rules empty state.
-- [ ] No new Dexie table or repository method — this is a client-side, in-memory filter over already-hydrated rules.
-- [ ] Unit tests cover: text search matches name; text search matches condition summary; category filter isolates rules for one category; enabled filter isolates enabled-only and disabled-only; combined filters (text + category + enabled) all apply together (AND, not OR); empty-result state.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: typing a search term narrows the rules table live, selecting a category/enabled filter narrows it further, clearing filters restores the full list, and reordering behaves as documented while filtered.
+- [x] A new pure predicate (e.g. `matchesRuleFilters`) lives alongside `rule-summary.ts` in `feature-categories/`, is unit-tested independently of the component/store, and takes the same shape of inputs as `matchesTransactionFilters` (rule + filter state).
+- [x] Filter bar UI added above the rules table: text search, category dropdown, enabled/disabled filter — styled consistently with the existing `transaction-filters` component (daisyUI form controls, same spacing conventions).
+- [x] Search matches on rule `name` and the `describeRule()` condition summary, case-insensitive.
+- [x] Category filter matches `action.setCategoryId`; enabled filter matches `rule.enabled`.
+- [x] `moveRule` (up/down reordering) behaviour while a filter is active is explicitly decided and documented in the component (either disabled during filtering, or correctly scoped) — not left as an accidental side effect.
+- [x] A distinct empty state renders when filters produce zero matches (e.g. "No rules match your search"), separate from the existing zero-rules empty state.
+- [x] No new Dexie table or repository method — this is a client-side, in-memory filter over already-hydrated rules.
+- [x] Unit tests cover: text search matches name; text search matches condition summary; category filter isolates rules for one category; enabled filter isolates enabled-only and disabled-only; combined filters (text + category + enabled) all apply together (AND, not OR); empty-result state.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: typing a search term narrows the rules table live, selecting a category/enabled filter narrows it further, clearing filters restores the full list, and reordering behaves as documented while filtered.
 
 ## Notes
 

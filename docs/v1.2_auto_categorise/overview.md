@@ -60,6 +60,7 @@ page) and unclear. These four tickets consolidate everything onto a new `/learni
 - [x] [TICKET-ML-13](./tickets/TICKET-ML-13-suggestions-table-on-learning-page.md) — Dedicated suggestions table on the Learning page, replacing the transactions-table ghost chip (supersedes part of FR-ML-8, adds FR-ML-13) — needs ML-11; independent of ML-12/ML-14, can run in parallel
 - [x] [TICKET-ML-14](./tickets/TICKET-ML-14-rule-proposals-on-learning-page.md) — Rule-proposal inbox moved from the rules page to the Learning page (relocates FR-ML-9) — needs ML-11; independent of ML-12/ML-13, can run in parallel
 - [ ] [TICKET-ML-16](./tickets/TICKET-ML-16-confidence-gradient-badge.md) — Colour the suggestions table's suggestion badge on a red-to-green gradient by confidence (extends FR-ML-13, adds FR-ML-16) — needs ML-13; purely presentational, independent of everything else, can ship any time
+- [ ] [TICKET-ML-17](./tickets/TICKET-ML-17-training-date-range-filter.md) — Restrict model training to a selectable date range of transactions, so stale historical categorisation habits don't muddy training data (extends FR-ML-5/FR-ML-7/FR-ML-10, adds FR-ML-17) — needs ML-05, ML-07, ML-12 (edits `train()` and the Learning page's model-status control); independent of ML-16, can ship any time
 
 ## Considered, not ticketed yet
 

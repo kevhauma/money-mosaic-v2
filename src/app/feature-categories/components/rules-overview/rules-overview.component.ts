@@ -22,6 +22,8 @@ import {
 import { CategoriesStore } from '../../categories.store';
 import { RulesStore } from '../../rules.store';
 import { describeRule } from '../../rule-summary';
+import { matchesRuleFilters, type RuleFilters } from '../../rule-filters';
+import { RuleFiltersComponent } from '../rule-filters/rule-filters.component';
 import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.component';
 
 @Component({
@@ -30,6 +32,7 @@ import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.co
     RouterLink,
     RouterLinkActive,
     NgIcon,
+    RuleFiltersComponent,
     RuleFormComponent,
     AlertComponent,
     BadgeComponent,
@@ -67,6 +70,36 @@ export class RulesOverviewComponent {
   );
 
   protected readonly running = signal(false);
+
+  protected readonly filters = signal<RuleFilters>({ text: '', categoryId: '', enabled: '' });
+
+  /** True while any search/filter axis is active (TICKET-CAT-04). */
+  protected readonly filtersActive = computed(
+    () =>
+      this.filters().text !== '' ||
+      this.filters().categoryId !== '' ||
+      this.filters().enabled !== '',
+  );
+
+  /**
+   * `moveRule` swaps priority with the neighbour in the full, unfiltered `rulesByPriority()`
+   * list — while a filter hides rows in between, "move up/down" would jump across them in a
+   * confusing way. Reordering is disabled while any filter is active rather than trying to
+   * scope it to the filtered view (TICKET-CAT-04).
+   */
+  protected readonly filteredRules = computed(() =>
+    this.rulesStore
+      .rulesByPriority()
+      .filter((rule) => matchesRuleFilters(rule, this.filters(), this.resolveAccountName)),
+  );
+
+  protected onFiltersChange(filters: RuleFilters): void {
+    this.filters.set(filters);
+  }
+
+  private readonly resolveAccountName = (accountId: number): string =>
+    this.accountsStore.accounts().find((account) => account.id === accountId)?.name ??
+    `#${accountId}`;
 
   protected openAddForm(): void {
     this.editingRule.set(null);
@@ -124,12 +157,7 @@ export class RulesOverviewComponent {
   }
 
   protected conditionSummary(rule: Rule): string {
-    return describeRule(
-      rule,
-      (accountId) =>
-        this.accountsStore.accounts().find((account) => account.id === accountId)?.name ??
-        `#${accountId}`,
-    );
+    return describeRule(rule, this.resolveAccountName);
   }
 
   protected async runRules(): Promise<void> {
