@@ -30,17 +30,17 @@ As a user reviewing my category breakdown, I want to see my income and expense c
 
 ## Acceptance criteria
 
-- [ ] Expense and income breakdowns render simultaneously, side by side on `lg`+ (stacked on mobile/tablet), with no button/tab required to switch between them.
-- [ ] Each column's list defaults to top-5 (reusing the existing pre-sorted order from `computeCategoryBreakdown()` — no new sort logic), with an independent "Show more" control revealing the remaining categories for that column only.
-- [ ] "Show more"/"Show less" state is tracked per column (expanding expense does not expand or affect income, and vice versa) and does not persist across a range change in a way that hides newly-relevant data — resets to collapsed when the selected range changes (component reacts to `RangeStore` the same way `entries()` already does).
-- [ ] The donut chart for each column continues to reflect the **full** category list for that column regardless of the list's expanded/collapsed state (unchanged from today).
-- [ ] Drill-down links (`buildTransactionDrilldownParams`, `UNCATEGORISED_SENTINEL`) keep working identically for both columns, expanded or collapsed.
-- [ ] `dashboard-overview.component.html`'s grid is updated so the now-wider `category-breakdown-panel` doesn't cramp against `trend-chart-panel` — verified visually, not just that it compiles.
-- [ ] No new pure aggregate is added; `computeCategoryBreakdown()` is unchanged.
-- [ ] Unit tests cover: both columns render with independent data; expanding one column's "show more" does not change the other column's rendered row count; the expanded/collapsed count label matches the actual number of remaining categories; an empty column (no transactions in that bucket) shows its own empty state while the other column still renders normally; expand state resets on range change.
-- [ ] `angular.json` bundle budgets are not raised.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: both columns visible at once on desktop width, "Show more" reveals categories beyond the top 5 in one column without affecting the other, and the layout stacks cleanly on a mobile viewport.
+- [x] Expense and income breakdowns render simultaneously, side by side on `lg`+ (stacked on mobile/tablet), with no button/tab required to switch between them.
+- [x] Each column's list defaults to top-5 (reusing the existing pre-sorted order from `computeCategoryBreakdown()` — no new sort logic), with an independent "Show more" control revealing the remaining categories for that column only.
+- [x] "Show more"/"Show less" state is tracked per column (expanding expense does not expand or affect income, and vice versa) and does not persist across a range change in a way that hides newly-relevant data — resets to collapsed when the selected range changes (component reacts to `RangeStore` the same way `entries()` already does).
+- [x] The donut chart for each column continues to reflect the **full** category list for that column regardless of the list's expanded/collapsed state (unchanged from today).
+- [x] Drill-down links (`buildTransactionDrilldownParams`, `UNCATEGORISED_SENTINEL`) keep working identically for both columns, expanded or collapsed.
+- [x] `dashboard-overview.component.html`'s grid is updated so the now-wider `category-breakdown-panel` doesn't cramp against `trend-chart-panel` — verified visually, not just that it compiles.
+- [x] No new pure aggregate is added; `computeCategoryBreakdown()` is unchanged.
+- [x] Unit tests cover: both columns render with independent data; expanding one column's "show more" does not change the other column's rendered row count; the expanded/collapsed count label matches the actual number of remaining categories; an empty column (no transactions in that bucket) shows its own empty state while the other column still renders normally; expand state resets on range change.
+- [x] `angular.json` bundle budgets are not raised.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: both columns visible at once on desktop width, "Show more" reveals categories beyond the top 5 in one column without affecting the other, and the layout stacks cleanly on a mobile viewport.
 
 ## Notes
 
