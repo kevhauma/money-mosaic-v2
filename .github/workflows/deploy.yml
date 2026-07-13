@@ -1,5 +1,5 @@
 name: Deploy
-
+runs-on: self-hosted
 # Runs on the self-hosted runner installed on the same machine as Caddy — build output is
 # copied straight into the Caddy webroot on disk, no SSH/network transfer involved.
 on:
