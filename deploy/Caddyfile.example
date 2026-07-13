@@ -1,0 +1,17 @@
+
+
+:80 {
+	root * /var/www/money-mosaic-vibe
+	encode zstd gzip
+
+	# Angular SPA: unknown paths fall back to index.html so client-side routing works
+	# on hard refresh / deep links (e.g. /transactions, /learning).
+	try_files {path} /index.html
+	file_server
+
+	# Long-cache hashed build assets (outputHashing: all -> main.[hash].js etc.),
+	# but never cache index.html itself so deploys are picked up immediately.
+	@immutable path *.js *.css *.woff2
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	header /index.html Cache-Control "no-cache"
+}

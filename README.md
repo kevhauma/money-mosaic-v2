@@ -138,7 +138,7 @@ Unit tests use Vitest with jsdom. There is no e2e test suite configured.
 ng build
 ```
 
-Compiles and optimizes the app into `dist/`. Since this is a fully client-side app (IndexedDB, no backend), the `dist/` output can be deployed to any static host.
+Compiles and optimizes the app into `dist/`. Since this is a fully client-side app (IndexedDB, no backend), the `dist/` output can be deployed to any static host. This repo auto-deploys to a Caddy-served host via GitHub Actions on every push to `main` — see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Additional resources
 
