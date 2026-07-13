@@ -14,6 +14,7 @@ import {
 } from '@/core/stats';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { formatAxisTooltip } from '@/shared/echarts';
 import { AccountsStore } from '../../accounts.store';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -28,7 +29,7 @@ export const buildNetWorthHistoryChartOption = (
   const bucketKeys = series[0]?.points.map((point) => point.bucketKey) ?? [];
 
   return {
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
     legend: { data: accounts.map((account) => account.name) },
     grid: { left: 56, right: 24, top: 48, bottom: 64 },
     xAxis: { type: 'category', data: bucketKeys },

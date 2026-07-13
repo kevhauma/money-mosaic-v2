@@ -78,4 +78,19 @@ describe('buildAccountBalanceChartOption', () => {
     const dataZoom = option['dataZoom'] as { startValue: number; endValue: number }[];
     expect(dataZoom.every((zoom) => zoom.startValue === 1 && zoom.endValue === 2)).toBe(true);
   });
+
+  it('renders the hovered point as 2-decimal EUR through the shared tooltip formatter (TICKET-STAT-12)', () => {
+    const option = buildAccountBalanceChartOption(
+      account,
+      [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1234.5600000000002 }],
+      { startValue: 0, endValue: 1 },
+    );
+
+    const tooltip = option['tooltip'] as { formatter: (params: unknown) => string };
+    const result = tooltip.formatter([
+      { axisValueLabel: '2026-01', marker: '●', seriesName: 'Checking', value: 1234.5600000000002 },
+    ]);
+
+    expect(result).toBe('2026-01<br/>●Checking: €1,234.56');
+  });
 });

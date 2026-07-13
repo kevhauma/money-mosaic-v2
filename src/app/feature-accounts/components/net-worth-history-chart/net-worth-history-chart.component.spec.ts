@@ -189,4 +189,24 @@ describe('buildNetWorthHistoryChartOption', () => {
     const dataZoom = option['dataZoom'] as { startValue: number; endValue: number }[];
     expect(dataZoom.every((zoom) => zoom.startValue === 1 && zoom.endValue === 1)).toBe(true);
   });
+
+  it('renders every hovered band as 2-decimal EUR through the shared tooltip formatter (TICKET-STAT-12)', () => {
+    const series = [
+      { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1100 }] },
+      { accountId: 2, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: -200 }] },
+    ];
+
+    const option = buildNetWorthHistoryChartOption(accounts, series, {
+      startValue: 0,
+      endValue: 0,
+    });
+
+    const tooltip = option['tooltip'] as { formatter: (params: unknown) => string };
+    const result = tooltip.formatter([
+      { axisValueLabel: '2026-01', marker: '●', seriesName: 'Checking', value: 1234.5600000000002 },
+      { axisValueLabel: '2026-01', marker: '●', seriesName: 'Credit line', value: -200 },
+    ]);
+
+    expect(result).toBe('2026-01<br/>●Checking: €1,234.56<br/>●Credit line: -€200.00');
+  });
 });

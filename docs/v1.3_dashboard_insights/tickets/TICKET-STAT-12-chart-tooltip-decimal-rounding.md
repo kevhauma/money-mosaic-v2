@@ -30,16 +30,16 @@ Every one of the app's four `ngx-echarts` chart components sets `tooltip: { trig
 
 ## Acceptance criteria
 
-- [ ] `shared/utils/currency-format.ts` exists, is exported from `shared/utils/index.ts`, and is the single place that constructs the EUR `Intl.NumberFormat`.
-- [ ] `SignedAmountPipe`, `category-breakdown-panel.component.ts`'s formatter, and `dashboard-overview.component.ts`'s formatter all delegate to the shared util instead of each declaring their own `Intl.NumberFormat`.
-- [ ] `net-worth-history-chart.component.ts`, `account-balance-chart.component.ts`, `trend-chart-panel.component.ts`, and `category-breakdown-panel.component.ts` each set a `tooltip.formatter` that renders every value through the shared formatter — verified for both axis-trigger (multi-series) and item-trigger (pie) tooltip shapes.
-- [ ] `category-breakdown-panel`'s tooltip formatter reuses the entry's existing `formattedTotal` rather than reformatting `total` independently.
-- [ ] `import-preview-step.component.html:26` renders `row.transaction.amount` through `| signedAmount` instead of raw interpolation.
-- [ ] No chart's underlying data values change — only the tooltip's rendered text; axis labels, legends, and drill-down behaviour are unaffected.
-- [ ] Persistence/derivation is untouched — this is display-only formatting, no store or repository changes.
-- [ ] Unit tests cover: `formatCurrency` (or equivalent) rounds to exactly 2 decimals for values with more precision (e.g. `1234.5600000000002` → `€1,234.56`), formats negative values correctly, and (for the signed variant) always shows a sign; each chart-option builder's `tooltip.formatter` output is asserted for a sample data point in its `.spec.ts`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: hovering a point on the dashboard trend chart, the account balance/net-worth history charts, and the category breakdown donut each shows a value rounded to 2 decimals; the import CSV preview step shows amounts formatted like the rest of the app.
+- [x] `shared/utils/currency-format.ts` exists, is exported from `shared/utils/index.ts`, and is the single place that constructs the EUR `Intl.NumberFormat`.
+- [x] `SignedAmountPipe`, `category-breakdown-panel.component.ts`'s formatter, and `dashboard-overview.component.ts`'s formatter all delegate to the shared util instead of each declaring their own `Intl.NumberFormat`.
+- [x] `net-worth-history-chart.component.ts`, `account-balance-chart.component.ts`, `trend-chart-panel.component.ts`, and `category-breakdown-panel.component.ts` each set a `tooltip.formatter` that renders every value through the shared formatter — verified for both axis-trigger (multi-series) and item-trigger (pie) tooltip shapes.
+- [x] `category-breakdown-panel`'s tooltip formatter reuses the entry's existing `formattedTotal` rather than reformatting `total` independently.
+- [x] `import-preview-step.component.html:26` renders `row.transaction.amount` through `| signedAmount` instead of raw interpolation.
+- [x] No chart's underlying data values change — only the tooltip's rendered text; axis labels, legends, and drill-down behaviour are unaffected.
+- [x] Persistence/derivation is untouched — this is display-only formatting, no store or repository changes.
+- [x] Unit tests cover: `formatCurrency` (or equivalent) rounds to exactly 2 decimals for values with more precision (e.g. `1234.5600000000002` → `€1,234.56`), formats negative values correctly, and (for the signed variant) always shows a sign; each chart-option builder's `tooltip.formatter` output is asserted for a sample data point in its `.spec.ts`.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: hovering a point on the dashboard trend chart, the account balance/net-worth history charts, and the category breakdown donut each shows a value rounded to 2 decimals; the import CSV preview step shows amounts formatted like the rest of the app.
 
 ## Notes
 

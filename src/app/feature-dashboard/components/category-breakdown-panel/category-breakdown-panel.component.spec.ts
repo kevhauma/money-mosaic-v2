@@ -55,6 +55,38 @@ describe('CategoryBreakdownPanelComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('No expense data for this range.');
   });
 
+  it("reuses the entry's formattedTotal in the pie tooltip instead of reformatting total (TICKET-STAT-12)", async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-07-05',
+        amount: -1234.5600000000002,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-1',
+        createdAt: '2026-07-05T00:00:00.000Z',
+        categoryId: 1,
+      },
+    ]);
+    fixture.detectChanges();
+
+    const option = fixture.componentInstance['chartOption']();
+    const tooltip = option['tooltip'] as { formatter: (params: unknown) => string };
+    const series = option['series'] as { data: { name: string; formattedTotal: string }[] }[];
+    const groceriesSlice = series[0].data.find((d) => d.name === 'Groceries')!;
+
+    const result = tooltip.formatter({
+      marker: '●',
+      name: groceriesSlice.name,
+      data: groceriesSlice,
+    });
+
+    expect(result).toBe(`●Groceries: ${groceriesSlice.formattedTotal}`);
+    expect(groceriesSlice.formattedTotal).toBe('€1,234.56');
+  });
+
   describe('uncategorised spend callout (TICKET-STAT-09)', () => {
     it('shows the €/%/count callout on the expense tab when some spend is uncategorised', async () => {
       await TestBed.inject(CategoriesStore).addCategory(groceries);

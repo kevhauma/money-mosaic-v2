@@ -23,7 +23,9 @@
           @if (row.valid) {
             <td><mm-badge color="success" size="sm">valid</mm-badge></td>
             <td>{{ row.transaction.bookingDate }}</td>
-            <td [class.text-error]="row.transaction.amount < 0">{{ row.transaction.amount }}</td>
+            <td [class.text-error]="row.transaction.amount < 0">
+              {{ row.transaction.amount | signedAmount }}
+            </td>
             <td>{{ row.transaction.rawDescription }}</td>
             <td>{{ row.transaction.counterpartyName }}</td>
           } @else {

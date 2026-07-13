@@ -5,7 +5,11 @@ import { NgxEchartsDirective } from 'ngx-echarts';
 import { RangeStore } from '@/core/stats';
 import { CategoriesStore } from '@/feature-categories';
 import { AlertComponent } from '@/shared/ui';
-import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
+import {
+  buildTransactionDrilldownParams,
+  formatCurrency,
+  UNCATEGORISED_SENTINEL,
+} from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
 type BreakdownKind = 'expense' | 'income';
@@ -20,11 +24,29 @@ type BreakdownEntryVm = {
   formattedShare: string;
 };
 
-const EUR_FORMATTER = new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' });
+/** Shape of an item-trigger tooltip callback param echarts actually passes — only the fields the pie formatter reads. */
+type PieTooltipParam = {
+  marker?: string;
+  name: string;
+  data: { formattedTotal: string };
+};
+
 const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
   style: 'percent',
   maximumFractionDigits: 1,
 });
+
+/**
+ * Item-trigger (`trigger: 'item'`) pie tooltip formatter (TICKET-STAT-12): reuses the hovered
+ * slice's already-formatted total instead of re-formatting `entry.total`, so the tooltip can't
+ * drift from the list rendered below the chart. Extracted to a standalone, explicitly-typed
+ * function (rather than an inline arrow) because echarts' overloaded `TooltipFormatterCallback`
+ * type can't be contextually inferred, which otherwise leaves `params` an implicit `any`.
+ */
+const formatPieTooltip = (params: PieTooltipParam): string => {
+  const { marker, name, data } = params;
+  return `${marker ?? ''}${name}: ${data.formattedTotal}`;
+};
 
 /** Donut + top-5 list for the selected range's expense-by-category or income-by-source (FR-STAT-3). */
 @Component({
@@ -52,7 +74,7 @@ export class CategoryBreakdownPanelComponent {
         total: entry.total,
         name: entry.categoryId != null ? (category?.name ?? 'Unknown') : 'Uncategorised',
         color: entry.categoryId != null ? (category?.color ?? '#9ca3af') : '#9ca3af',
-        formattedTotal: EUR_FORMATTER.format(entry.total),
+        formattedTotal: formatCurrency(entry.total),
         formattedShare: PERCENT_FORMATTER.format(entry.share),
       };
     });
@@ -69,14 +91,14 @@ export class CategoryBreakdownPanelComponent {
     if (!entry || entry.total === 0) return null;
 
     return {
-      formattedTotal: EUR_FORMATTER.format(entry.total),
+      formattedTotal: formatCurrency(entry.total),
       formattedShare: PERCENT_FORMATTER.format(entry.share),
       transactionCount: entry.transactionCount,
     };
   });
 
   protected readonly chartOption = computed<EChartsCoreOption>(() => ({
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', formatter: formatPieTooltip },
     series: [
       {
         type: 'pie',
@@ -85,6 +107,7 @@ export class CategoryBreakdownPanelComponent {
           name: entry.name,
           value: entry.total,
           itemStyle: { color: entry.color },
+          formattedTotal: entry.formattedTotal,
         })),
       },
     ],

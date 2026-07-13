@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { bucketDateBoundaries, RangeStore } from '@/core/stats';
+import { formatAxisTooltip } from '@/shared/echarts';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
@@ -22,7 +23,7 @@ export class TrendChartPanelComponent {
     const buckets = this.statsStore.trendBuckets();
 
     return {
-      tooltip: { trigger: 'axis' },
+      tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
       legend: { data: ['Income', 'Expense'] },
       grid: { left: 48, right: 48, top: 32, bottom: 24 },
       xAxis: { type: 'category', data: buckets.map((bucket) => bucket.bucketKey) },

@@ -28,4 +28,16 @@ describe('TrendChartPanelComponent', () => {
   it('should create', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
+
+  it('renders income/expense as 2-decimal EUR through the shared tooltip formatter (TICKET-STAT-12)', () => {
+    const option = fixture.componentInstance['chartOption']();
+    const tooltip = option['tooltip'] as { formatter: (params: unknown) => string };
+
+    const result = tooltip.formatter([
+      { axisValueLabel: '2026-07', marker: '●', seriesName: 'Income', value: 1234.5600000000002 },
+      { axisValueLabel: '2026-07', marker: '●', seriesName: 'Expense', value: -50 },
+    ]);
+
+    expect(result).toBe('2026-07<br/>●Income: €1,234.56<br/>●Expense: -€50.00');
+  });
 });

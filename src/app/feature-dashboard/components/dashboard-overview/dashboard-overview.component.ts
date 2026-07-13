@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RangeStore, type PeriodStats } from '@/core/stats';
 import { AccountsStore } from '@/feature-accounts';
-import { buildTransactionDrilldownParams } from '@/shared/utils';
+import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
 import { PageHeaderComponent, StatCardComponent } from '@/shared/ui';
 import { StatsStore } from '../../stats.store';
 import { AccountBalanceStripComponent } from '../account-balance-strip/account-balance-strip.component';
@@ -13,7 +13,6 @@ import { TopTransactionsPanelComponent } from '../top-transactions-panel/top-tra
 import { TrendChartPanelComponent } from '../trend-chart-panel/trend-chart-panel.component';
 import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-panel/weekday-weekend-split-panel.component';
 
-const EUR_FORMATTER = new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' });
 const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
   style: 'percent',
   maximumFractionDigits: 1,
@@ -53,16 +52,14 @@ export class DashboardOverviewComponent {
   );
 
   protected readonly incomeValue = computed(() =>
-    EUR_FORMATTER.format(this.statsStore.periodStats().income),
+    formatCurrency(this.statsStore.periodStats().income),
   );
 
   protected readonly expenseValue = computed(() =>
-    EUR_FORMATTER.format(this.statsStore.periodStats().expense),
+    formatCurrency(this.statsStore.periodStats().expense),
   );
 
-  protected readonly netValue = computed(() =>
-    EUR_FORMATTER.format(this.statsStore.periodStats().net),
-  );
+  protected readonly netValue = computed(() => formatCurrency(this.statsStore.periodStats().net));
 
   protected readonly netColor = computed<'success' | 'error'>(() =>
     this.statsStore.periodStats().net >= 0 ? 'success' : 'error',
@@ -105,7 +102,7 @@ export class DashboardOverviewComponent {
     if (!this.showYearOverYear()) return undefined;
     const priorYear = this.statsStore.yearOverYear().priorYears[0];
     if (!priorYear) return undefined;
-    const amount = EUR_FORMATTER.format(pick(priorYear.stats));
+    const amount = formatCurrency(pick(priorYear.stats));
     const from = DATE_FORMATTER.format(new Date(`${priorYear.from}T00:00:00Z`));
     const to = DATE_FORMATTER.format(new Date(`${priorYear.to}T00:00:00Z`));
     return `${verb} ${amount}\nbetween ${from} and ${to}`;
@@ -118,19 +115,19 @@ export class DashboardOverviewComponent {
 
   /** The absolute savings figure behind the rate — money moved into savings this period (TICKET-TRF-02). */
   protected readonly savingsSubLabel = computed(
-    () => `${EUR_FORMATTER.format(this.statsStore.periodStats().savings)} to savings`,
+    () => `${formatCurrency(this.statsStore.periodStats().savings)} to savings`,
   );
 
   protected readonly spendingRateValue = computed(
-    () => `${EUR_FORMATTER.format(this.statsStore.spendingRate().avgPerDay)}/day`,
+    () => `${formatCurrency(this.statsStore.spendingRate().avgPerDay)}/day`,
   );
 
   /** Coarser units past day, only when the range is long enough for them to be a genuine average rather than the total (FR-STAT-9). */
   protected readonly spendingRateSubLabel = computed(() => {
     const { avgPerWeek, avgPerMonth } = this.statsStore.spendingRate();
     const parts = [
-      avgPerWeek != null ? `${EUR_FORMATTER.format(avgPerWeek)}/week` : null,
-      avgPerMonth != null ? `${EUR_FORMATTER.format(avgPerMonth)}/month` : null,
+      avgPerWeek != null ? `${formatCurrency(avgPerWeek)}/week` : null,
+      avgPerMonth != null ? `${formatCurrency(avgPerMonth)}/month` : null,
     ].filter((part): part is string => part != null);
     return parts.length > 0 ? parts.join(' · ') : undefined;
   });

@@ -15,6 +15,7 @@ import {
 } from '@/core/stats';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { formatAxisTooltip } from '@/shared/echarts';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
 import { AccountsStore } from '../../accounts.store';
 
@@ -26,7 +27,7 @@ export const buildAccountBalanceChartOption = (
   points: NetWorthPoint[],
   zoomWindow: ChartZoomWindow,
 ): EChartsCoreOption => ({
-  tooltip: { trigger: 'axis' },
+  tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
   grid: { left: 56, right: 24, top: 24, bottom: 64 },
   xAxis: { type: 'category', data: points.map((point) => point.bucketKey) },
   yAxis: { type: 'value' },
