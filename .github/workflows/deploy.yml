@@ -45,4 +45,4 @@ jobs:
           set -euo pipefail
           target="${DEPLOY_PATH:-/var/www/money-mosaic}"
           mkdir -p "$target"
-          rsync -a --delete dist/money-mosaic-vibe/browser/ "$target/"
+          rsync -a --omit-dir-times --delete dist/money-mosaic-vibe/browser/ "$target/"
