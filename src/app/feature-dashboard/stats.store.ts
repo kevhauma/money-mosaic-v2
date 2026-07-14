@@ -12,9 +12,7 @@ import {
   RangeStore,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-import { AccountsStore } from '@/feature-accounts';
-import { CategoriesStore } from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from './category-comparison-settings.store';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -30,9 +28,9 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
  * incremental caching is intentionally not implemented here — it's overkill for realistic v1
  * dataset sizes (a full grouping pass over 10k transactions is sub-millisecond work).
  *
- * Lives in `feature-dashboard` rather than `core/stats` because it depends on feature-level
- * entity stores (`TransactionsStore`/`AccountsStore`/`CategoriesStore`) — `core/` stays UI/feature-free,
- * matching the rest of this codebase (no existing `core/*` file imports from a `feature-*` module).
+ * Lives in `feature-dashboard` rather than `core/stats` because it's dashboard-specific composition
+ * (range-scoped, wires `RangeStore` + `CategoryComparisonSettingsStore` together); the entity stores
+ * it injects (`TransactionsStore`/`AccountsStore`/`CategoriesStore`) live in `core/state` themselves.
  */
 export const StatsStore = signalStore(
   { providedIn: 'root' },

@@ -2,9 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { AccountsRepository, TransactionsRepository } from '@/core/data-access';
 import { TransferLinkingService } from '@/core/transfers';
-import { AccountsStore } from '@/feature-accounts';
-import { TransactionsStore, TransfersStore } from '@/feature-transactions';
-import { CategoriesStore } from '@/feature-categories';
+import { AccountsStore, TransactionsStore, TransfersStore, CategoriesStore } from '@/core/state';
 import { DevSeedService } from './dev-seed.service';
 
 const SEED_CATEGORIES = [

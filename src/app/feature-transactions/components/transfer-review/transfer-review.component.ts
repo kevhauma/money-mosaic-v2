@@ -2,14 +2,16 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerRefresh } from '@ng-icons/tabler-icons';
-import { AccountsStore } from '@/feature-accounts';
-import { CategoriesStore } from '@/feature-categories';
+import {
+  AccountsStore,
+  CategoriesStore,
+  TransactionsStore,
+  TransfersStore,
+  TransferSettingsStore,
+} from '@/core/state';
 import { resolveTransferMatches, type TransferCandidate } from '@/core/transfers';
 import { ButtonComponent, InputComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
-import { TransactionsStore } from '../../transactions.store';
-import { TransfersStore } from '../../transfers.store';
-import { TransferSettingsStore } from '../../transfer-settings.store';
 
 @Component({
   selector: 'app-transfer-review',

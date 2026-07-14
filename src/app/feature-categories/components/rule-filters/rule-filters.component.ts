@@ -13,7 +13,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerFilterOff } from '@ng-icons/tabler-icons';
 import { ButtonComponent, InputComponent, SelectComponent } from '@/shared/ui';
 import { debouncedTextSignal } from '@/shared/utils';
-import { CategoriesStore } from '../../categories.store';
+import { CategoriesStore } from '@/core/state';
 import type { RuleFilters } from '../../rule-filters';
 
 /** The structural (non-text) filter fields — applied immediately, unlike the debounced text needle. */

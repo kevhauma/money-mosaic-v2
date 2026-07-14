@@ -10,7 +10,8 @@ import {
   type Account,
   type Transaction,
 } from '@/core/data-access';
-import { AccountsStore } from '@/feature-accounts';
+import { AccountsStore } from '@/core/state';
+import type { AttributionOverrideFieldsetComponent } from '../attribution-override-fieldset/attribution-override-fieldset.component';
 import { TransactionEditFormComponent } from './transaction-edit-form.component';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -45,12 +46,8 @@ type Internals = {
     categoryId: FormControl<string>;
     notes: FormControl<string>;
     alwaysCategorise: FormControl<boolean>;
-    attributionMode: FormControl<string>;
-    attributionJointAccountId: FormControl<string>;
-    attributionReimbursementTransferId: FormControl<string>;
   }>;
-  showJointAccountPicker: () => boolean;
-  showReimbursementPicker: () => boolean;
+  attributionFieldset: () => AttributionOverrideFieldsetComponent | undefined;
 };
 
 describe('TransactionEditFormComponent: original CSV row (TICKET-TXN-06)', () => {
@@ -161,43 +158,22 @@ describe('TransactionEditFormComponent: manual attribution override (TICKET-TXN-
     expect(fixture.nativeElement.textContent).toContain('Attribution');
   });
 
-  it('shows the joint-account picker only once shared is chosen and more than one joint account exists', async () => {
+  it('wires the fieldset with this transaction and its joint accounts', async () => {
     await setup([jointAccount({ id: 1 }), jointAccount({ id: 2, name: 'Parent joint' })]);
-    expect(internals().showJointAccountPicker()).toBe(false);
+    const fieldset = internals().attributionFieldset();
 
-    internals().form.controls.attributionMode.setValue('shared');
-    fixture.detectChanges();
-
-    expect(internals().showJointAccountPicker()).toBe(true);
-  });
-
-  it('does not show the joint-account picker for shared mode when only one joint account exists (auto-inferred)', async () => {
-    await setup([jointAccount()]);
-
-    internals().form.controls.attributionMode.setValue('shared');
-    fixture.detectChanges();
-
-    expect(internals().showJointAccountPicker()).toBe(false);
-  });
-
-  it('shows the reimbursement-transfer picker only once shared is chosen', async () => {
-    await setup([jointAccount()]);
-    expect(internals().showReimbursementPicker()).toBe(false);
-
-    internals().form.controls.attributionMode.setValue('shared');
-    fixture.detectChanges();
-
-    expect(internals().showReimbursementPicker()).toBe(true);
-
-    internals().form.controls.attributionMode.setValue('personal');
-    fixture.detectChanges();
-
-    expect(internals().showReimbursementPicker()).toBe(false);
+    expect(fieldset).toBeDefined();
+    expect(
+      (fieldset as unknown as { jointAccounts: () => Account[] }).jointAccounts(),
+    ).toHaveLength(2);
   });
 
   it('emits attributionOverride on save and leaves categoryId untouched', async () => {
     await setup([jointAccount()]);
-    internals().form.controls.attributionMode.setValue('personal');
+    const fieldset = internals().attributionFieldset() as unknown as {
+      form: FormGroup<{ mode: FormControl<string> }>;
+    };
+    fieldset.form.controls.mode.setValue('personal');
 
     const emitted: { attributionOverride?: Transaction['attributionOverride'] }[] = [];
     component.saved.subscribe((result) => emitted.push(result));
@@ -209,7 +185,10 @@ describe('TransactionEditFormComponent: manual attribution override (TICKET-TXN-
 
   it('rejects saving shared mode with more than one joint account and no jointAccountId picked, surfacing an error', async () => {
     await setup([jointAccount({ id: 1 }), jointAccount({ id: 2, name: 'Parent joint' })]);
-    internals().form.controls.attributionMode.setValue('shared');
+    const fieldset = internals().attributionFieldset() as unknown as {
+      form: FormGroup<{ mode: FormControl<string> }>;
+    };
+    fieldset.form.controls.mode.setValue('shared');
 
     const emitted: unknown[] = [];
     component.saved.subscribe((result) => emitted.push(result));

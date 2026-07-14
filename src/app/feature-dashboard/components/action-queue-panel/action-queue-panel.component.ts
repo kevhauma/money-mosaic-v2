@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { resolveTransferMatches } from '@/core/transfers';
-import { AccountsStore } from '@/feature-accounts';
-import { CategoriesStore } from '@/feature-categories';
-import { TransactionsStore, TransferSettingsStore } from '@/feature-transactions';
+import {
+  AccountsStore,
+  CategoriesStore,
+  TransactionsStore,
+  TransferSettingsStore,
+} from '@/core/state';
 import { UNCATEGORISED_SENTINEL } from '@/shared/utils';
 
 /** Uncategorised-backlog and transfers-needing-review action cards, each hidden when its count is zero. */

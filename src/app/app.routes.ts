@@ -11,9 +11,10 @@ export const routes: Routes = [
     loadChildren: () => import('@/feature-accounts').then((m) => m.ACCOUNTS_ROUTES),
   },
   {
-    // Imported directly (not via the @/feature-transactions barrel) to avoid a circular import:
-    // the lazy-loaded overview component pulls in AccountsStore, which imports TransactionsStore
-    // from that same barrel.
+    // Imported directly (not via the @/feature-transactions barrel). TICKET-SOLID-05 moved the
+    // entity stores that used to create a cycle here (AccountsStore/TransactionsStore) into
+    // core/state, so the barrel itself is cycle-free now — but this deep import is a deliberate,
+    // already-decided exception per CLAUDE.md and stays as-is rather than being "fixed" back.
     path: 'transactions',
     loadChildren: () =>
       import('./feature-transactions/transactions.routes').then((m) => m.TRANSACTIONS_ROUTES),

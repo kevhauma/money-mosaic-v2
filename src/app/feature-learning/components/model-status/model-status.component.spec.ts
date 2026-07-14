@@ -2,12 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { vi } from 'vitest';
 import {
-  CategoriesStore,
   CategoryModelStore,
   type CategoryModelStatus,
   type TrainingProgress,
 } from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { CategoriesStore, TransactionsStore } from '@/core/state';
 import type { Category, Transaction } from '@/core/data-access';
 import { ModelStatusComponent } from './model-status.component';
 

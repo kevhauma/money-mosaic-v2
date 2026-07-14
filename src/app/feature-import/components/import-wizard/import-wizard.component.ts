@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { from, of, startWith, switchMap, timer, map as rxMap, type Observable } from 'rxjs';
-import { AccountsStore } from '@/feature-accounts';
+import { AccountsStore } from '@/core/state';
 import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
 import { AlertComponent, ButtonComponent } from '@/shared/ui';

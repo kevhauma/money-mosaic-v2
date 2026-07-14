@@ -91,7 +91,7 @@ Apply SOLID as it maps onto this codebase's existing tiers — don't import Java
 
 ## State Management (signals-first)
 
-- **Source signals are the source of truth**, held inside injectable `providedIn: 'root'` store services — one per aggregate (`AccountsStore`, `TransactionsStore`, `CategoriesStore`, `RulesStore`, `TransfersStore`, ...)
+- **Source signals are the source of truth**, held inside injectable `providedIn: 'root'` store services — one per aggregate. Entity stores consumed across 2+ features (`AccountsStore`, `CategoriesStore`, `TransactionsStore`, `TransfersStore`, `TransferSettingsStore`) live in `core/state/` and are imported via `@/core/state`; stores only one feature touches (`RulesStore`, `CategoryModelStore`, `StatsStore`, ...) stay in that feature folder — see the **project-map** skill.
 - **Every statistic is a `computed()` derivation** of source signals — never a manually maintained/mutated field
 - **Persistence via `effect()`** — each store service's constructor registers an `effect()` that mirrors signal writes into IndexedDB through the matching repository; app bootstrap hydrates source signals from IndexedDB before the app renders
 - **Memoize expensive aggregates** (e.g. per `(accountId, yearMonth)`) with a `computed()` backed by a `Map` cache, so a single edit invalidates only the touched bucket, not all history

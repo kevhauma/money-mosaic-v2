@@ -5,7 +5,7 @@ import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler
 import { formatAlignedRangeLabel } from '@/core/stats';
 import { ButtonComponent, formatDisplayDate } from '@/shared/ui';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
-import { CategoriesStore } from '@/feature-categories';
+import { CategoriesStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { StatsStore } from '../../stats.store';
 

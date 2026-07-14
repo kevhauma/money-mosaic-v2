@@ -8,10 +8,9 @@ import {
   type Category,
   type Transaction,
 } from '@/core/data-access';
-import { AccountsStore } from '@/feature-accounts';
+import { AccountsStore, TransactionsStore } from '@/core/state';
 import type { SelectionModel } from '@/shared/utils';
 import type { TransactionFilters } from '../../transaction-filters';
-import { TransactionsStore } from '../../transactions.store';
 import { TransactionsOverviewComponent } from './transactions-overview.component';
 
 /** Protected surface we reach into for selection/bulk/filter assertions. */

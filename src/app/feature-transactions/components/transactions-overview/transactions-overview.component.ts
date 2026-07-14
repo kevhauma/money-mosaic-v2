@@ -14,8 +14,7 @@ import {
   tablerPencil,
   tablerUnlink,
 } from '@ng-icons/tabler-icons';
-import { AccountsStore } from '@/feature-accounts';
-import { CategoriesStore } from '@/feature-categories';
+import { AccountsStore, CategoriesStore, TransactionsStore, TransfersStore } from '@/core/state';
 import type { Category, Transaction, Transfer } from '@/core/data-access';
 import { isLikelyTransfer, savingsAccountIbans } from '@/core/transfers';
 import {
@@ -32,8 +31,6 @@ import {
   normalizeIban,
   SignedAmountPipe,
 } from '@/shared/utils';
-import { TransactionsStore } from '../../transactions.store';
-import { TransfersStore } from '../../transfers.store';
 import { matchesTransactionFilters, type TransactionFilters } from '../../transaction-filters';
 import { TransactionBulkBarComponent } from '../transaction-bulk-bar/transaction-bulk-bar.component';
 import {

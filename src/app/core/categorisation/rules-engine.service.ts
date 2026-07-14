@@ -5,7 +5,7 @@ import {
   type Rule,
   type Transaction,
 } from '@/core/data-access';
-import { resolveCategoryForTransaction } from './rule-matching';
+import { prepareRules, resolveCategoryForPreparedRules } from './rule-matching';
 
 export type RuleApplyUpdate = { id: number; categoryId: number };
 
@@ -17,12 +17,15 @@ export class RulesEngineService {
   /**
    * Never touches a transaction whose category was manually set (FR-TXN-2, FR-CAT-3), nor one linked
    * as a transfer — a transfer's category is always cleared on link and must stay that way (TICKET-TRF-01).
+   * Rules are prepared (filtered, sorted, regexes compiled) once for the whole pass rather than once
+   * per transaction (TICKET-PERF-02).
    */
   applyToTransactions = (transactions: Transaction[], rules: Rule[]): RuleApplyUpdate[] => {
+    const preparedRules = prepareRules(rules);
     const updates: RuleApplyUpdate[] = [];
     for (const transaction of transactions) {
       if (transaction.categoryManual || transaction.transferId != null) continue;
-      const categoryId = resolveCategoryForTransaction(transaction, rules);
+      const categoryId = resolveCategoryForPreparedRules(transaction, preparedRules);
       if (categoryId != null && categoryId !== transaction.categoryId) {
         updates.push({ id: transaction.id!, categoryId });
       }

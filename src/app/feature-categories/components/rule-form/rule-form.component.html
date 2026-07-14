@@ -66,7 +66,12 @@
             }
           </mm-select>
 
-          <mm-select formControlName="operator" size="sm" class="col-span-3">
+          <mm-select
+            formControlName="operator"
+            size="sm"
+            class="col-span-3"
+            (change)="onOperatorChange(group)"
+          >
             @for (operator of operatorsFor(group); track operator) {
               <option [value]="operator">{{ operatorLabels[operator] }}</option>
             }
@@ -106,6 +111,11 @@
             />
           } @else {
             <mm-input type="text" formControlName="value" size="sm" class="col-span-5" />
+            @if (group.controls.value.hasError('regexPatternMaxLength')) {
+              <p class="label text-error col-span-12">
+                Pattern is too long (max {{ maxRegexPatternLength }} characters).
+              </p>
+            }
           }
 
           <mm-button

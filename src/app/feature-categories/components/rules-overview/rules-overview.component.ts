@@ -10,7 +10,7 @@ import {
   tablerTrash,
 } from '@ng-icons/tabler-icons';
 import type { Rule } from '@/core/data-access';
-import { AccountsStore } from '@/feature-accounts';
+import { AccountsStore, CategoriesStore } from '@/core/state';
 import {
   AlertComponent,
   BadgeComponent,
@@ -19,7 +19,6 @@ import {
   EmptyStateComponent,
   PageHeaderComponent,
 } from '@/shared/ui';
-import { CategoriesStore } from '../../categories.store';
 import { RulesStore } from '../../rules.store';
 import { describeRule } from '../../rule-summary';
 import { matchesRuleFilters, type RuleFilters } from '../../rule-filters';

@@ -27,13 +27,19 @@ The edit form class is in decent shape — the weight is the TICKET-TXN-03 attri
 
 ## Acceptance criteria
 
-- [ ] Edit-form behaviour is unchanged: category/notes/nullified editing, attribution set/clear for `personal`/`shared`/`notMine`, joint-account auto-pick when only one exists, reimbursement candidate list, validation errors shown inline — all verified live in the browser.
-- [ ] `transferAmount`/`transferDate` no longer call `.find()` over the full transactions array (map lookup instead).
-- [ ] Existing `transaction-edit-form.component.spec.ts` cases pass (updated for the new component boundary where selectors moved); the fieldset gains its own spec covering mode switching, sole-joint-account defaulting, and a validation failure surfacing.
-- [ ] Fallow re-run: `transaction-edit-form.component` leaves the critical component-rollup findings.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Edit-form behaviour is unchanged: category/notes/nullified editing, attribution set/clear for `personal`/`shared`/`notMine`, joint-account auto-pick when only one exists, reimbursement candidate list, validation errors shown inline — verified via the full spec suite (all 890 tests green); live browser verification skipped per explicit user instruction this run.
+- [x] `transferAmount`/`transferDate` no longer call `.find()` over the full transactions array (map lookup instead).
+- [x] Existing `transaction-edit-form.component.spec.ts` cases pass (updated for the new component boundary where selectors moved); the fieldset gains its own spec covering mode switching, sole-joint-account defaulting, and a validation failure surfacing.
+- [x] Fallow re-run: `transaction-edit-form.component` leaves the critical component-rollup findings.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
 - Same medicine applies to `rule-form` (27/26) and `import-map-step` (24/37) later — out of scope here; keep this ticket to one component so the pattern is reviewable.
 - Categories are involved only as pass-through values — no rule evaluation is touched, so `categoryManual` semantics can't regress; still, keep the "manual category" spec case green.
+
+## Execution notes (2026-07-14)
+
+- New component: `AttributionOverrideFieldsetComponent` in `feature-transactions/components/attribution-override-fieldset/`. It owns its own `FormGroup` (`mode`/`jointAccountId`/`reimbursementTransferId`), resets on the same `open`-transition `effect()` pattern as the parent, and exposes `buildOverride()` — called by the parent's `submit()` via `viewChild` — which validates and either returns the built override or sets its own `error` signal and returns `undefined` (parent aborts submission on `undefined`, mirroring the prior try/catch contract without an `attributionError` field on the parent).
+- `transferAmount`/`transferDate` now read a `transactionsById` computed `Map` (shared with `reimbursementCandidateTransfers`) instead of `.find()`-ing the full transactions array per row.
+- `jointAccounts`/`showAttribution` stayed on the parent (cheap, and needed to decide whether to render the child at all via `@if`); passed down as a plain input rather than re-injecting `AccountsStore` in the child.

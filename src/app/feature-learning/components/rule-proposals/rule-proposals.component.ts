@@ -3,8 +3,8 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerChevronDown, tablerChevronUp } from '@ng-icons/tabler-icons';
 import type { Transaction } from '@/core/data-access';
 import type { RuleProposal } from '@/core/ml';
-import { CategoriesStore, CategoryModelStore } from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { CategoryModelStore } from '@/feature-categories';
+import { CategoriesStore, TransactionsStore } from '@/core/state';
 import { BadgeComponent, ButtonComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 

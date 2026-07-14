@@ -1,0 +1,33 @@
+<fieldset class="fieldset" [formGroup]="form">
+  <legend class="fieldset-legend">Attribution</legend>
+  <mm-select formControlName="mode" class="w-full">
+    <option value="">Default (based on account)</option>
+    <option value="personal">Personal (100% mine)</option>
+    <option value="shared">Shared (my share)</option>
+    <option value="notMine">Not mine (0%)</option>
+  </mm-select>
+
+  @if (showJointAccountPicker()) {
+    <mm-select formControlName="jointAccountId" class="mt-2 w-full">
+      <option value="">Select joint account…</option>
+      @for (account of jointAccounts(); track account.id) {
+        <option [value]="account.id">{{ account.name }}</option>
+      }
+    </mm-select>
+  }
+
+  @if (showReimbursementPicker()) {
+    <mm-select formControlName="reimbursementTransferId" class="mt-2 w-full">
+      <option value="">Not reimbursed</option>
+      @for (transfer of reimbursementCandidateTransfers(); track transfer.id) {
+        <option [value]="transfer.id">
+          {{ transferDate(transfer) }} — {{ transferAmount(transfer) | signedAmount }}
+        </option>
+      }
+    </mm-select>
+  }
+
+  @if (error(); as message) {
+    <p class="mt-1 text-sm text-error">{{ message }}</p>
+  }
+</fieldset>

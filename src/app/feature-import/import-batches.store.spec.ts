@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import { ImportBatchesRepository, type ImportBatch, type Transaction } from '@/core/data-access';
 import { ImportService, type CommitImportInput } from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
-import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { TransactionsStore, TransfersStore } from '@/core/state';
 import { ImportBatchesStore } from './import-batches.store';
 
 const importBatch = (overrides: Partial<ImportBatch> = {}): ImportBatch => ({

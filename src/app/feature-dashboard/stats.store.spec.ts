@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { RangeStore } from '@/core/stats';
 import type { Transaction } from '@/core/data-access';
-import { TransactionsStore } from '@/feature-transactions';
+import { TransactionsStore } from '@/core/state';
 import { StatsStore } from './stats.store';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({

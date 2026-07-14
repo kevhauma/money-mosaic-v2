@@ -11,8 +11,9 @@ import {
   type Transfer,
 } from '@/core/data-access';
 import { AccountDeletionService } from '@/core/accounts';
-import { CategoriesStore } from '@/feature-categories';
-import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { CategoriesStore } from './categories.store';
+import { TransactionsStore } from './transactions.store';
+import { TransfersStore } from './transfers.store';
 import { AccountsStore } from './accounts.store';
 
 const account = (overrides: Partial<Account> = {}): Account => ({

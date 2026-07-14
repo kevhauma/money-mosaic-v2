@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RangeStore } from '@/core/stats';
-import { CategoriesStore } from '@/feature-categories';
+import { CategoriesStore } from '@/core/state';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 

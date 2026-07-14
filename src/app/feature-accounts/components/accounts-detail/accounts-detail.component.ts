@@ -16,7 +16,7 @@ import {
   PageHeaderComponent,
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
-import { AccountsStore } from '../../accounts.store';
+import { AccountsStore } from '@/core/state';
 import { AccountBalanceChartComponent } from '../account-balance-chart/account-balance-chart.component';
 import {
   AccountFormComponent,

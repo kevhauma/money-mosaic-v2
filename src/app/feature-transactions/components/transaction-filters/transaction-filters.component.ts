@@ -12,8 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, map } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerFilterOff } from '@ng-icons/tabler-icons';
-import { AccountsStore } from '@/feature-accounts';
-import { CategoriesStore } from '@/feature-categories';
+import { AccountsStore, CategoriesStore } from '@/core/state';
 import {
   ButtonComponent,
   DateRangeInputComponent,

@@ -10,7 +10,7 @@ import {
 } from '@ngrx/signals/entities';
 import { RulesRepository, type Rule, type Transaction } from '@/core/data-access';
 import { RulesEngineService } from '@/core/categorisation';
-import { TransactionsStore } from '@/feature-transactions';
+import { TransactionsStore } from '@/core/state';
 
 const ruleConfig = entityConfig({
   entity: type<Rule>(),

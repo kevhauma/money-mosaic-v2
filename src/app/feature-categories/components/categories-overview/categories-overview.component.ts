@@ -21,7 +21,7 @@ import {
   type BadgeColor,
 } from '@/shared/ui';
 import { CATEGORY_ICON_SET, categoryIconName } from '../../category-icons';
-import { CategoriesStore } from '../../categories.store';
+import { CategoriesStore } from '@/core/state';
 import {
   CategoryFormComponent,
   type CategoryFormValue,

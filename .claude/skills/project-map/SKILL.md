@@ -5,23 +5,24 @@ description: Map of the MoneyMosaicVibe codebase — which feature, store, servi
 
 # Project Map
 
-`src/app/` tiers: `core/` (domain logic + persistence), `feature-*/` (routed UI + signal stores), `shared/` (UI primitives + utils). Routes in `app.routes.ts` lazy-load each feature; `app.config.ts` opens the DB and hydrates every store before render.
+`src/app/` tiers: `core/` (domain logic + persistence + shared entity stores), `feature-*/` (routed UI + feature-specific signal stores), `shared/` (UI primitives + utils). Routes in `app.routes.ts` lazy-load each feature; `app.config.ts` opens the DB and hydrates every store before render.
 
 ## Features (routed, lazy)
 
 | Route | Folder | Store(s) | Key components |
 |---|---|---|---|
 | `/dashboard` (default) | `feature-dashboard/` | `stats.store.ts`, `category-comparison-settings.store.ts`, `dashboard-layout-settings.store.ts` | dashboard-overview, net-worth-header, account-balance-strip, category-breakdown-panel, category-comparison-panel, trend-chart-panel, weekday-weekend-split-panel, top-transactions-panel, action-queue-panel, dashboard-customize-panel (drag-to-reorder rows, `@angular/cdk/drag-drop`, lazy-`@defer`-loaded); `dashboard-row-order.ts`; `shared/echarts/echarts-setup.ts` registers ECharts modules |
-| `/accounts` | `feature-accounts/` | `accounts.store.ts` | accounts-overview, accounts-detail, account-form, account-balance-chart, net-worth-history-chart; `account-icons.ts` |
-| `/transactions` | `feature-transactions/` | `transactions.store.ts`, `transfers.store.ts`, `transfer-settings.store.ts` | transactions-overview, transaction-edit-form, transaction-filters, transaction-bulk-bar, transfer-review; `transaction-filters.ts` |
+| `/accounts` | `feature-accounts/` | *(consumes `AccountsStore` from `@/core/state`)* | accounts-overview, accounts-detail, account-form, account-balance-chart, net-worth-history-chart; `account-icons.ts` |
+| `/transactions` | `feature-transactions/` | *(consumes `TransactionsStore`/`TransfersStore`/`TransferSettingsStore` from `@/core/state`)* | transactions-overview, transaction-edit-form, transaction-filters, transaction-bulk-bar, transfer-review; `transaction-filters.ts` |
 | `/import` | `feature-import/` | `mapping-profiles.store.ts`, `import-batches.store.ts` | import-wizard steps: import-select-step, import-map-step, import-preview-step, import-summary-step |
-| `/categories` | `feature-categories/` | `categories.store.ts`, `rules.store.ts`, `category-model.store.ts` | categories-overview, category-form, rules-overview, rule-form, rule-filters; `category-icons.ts`, `rule-summary.ts`, `rule-filters.ts`; also owns the trained auto-categoriser model state (`category-model.store.ts` + `category-model.service.ts`, backed by `core/ml`) even though its UI lives under `/learning` |
-| `/learning` | `feature-learning/` | *(consumes `CategoryModelStore` from `@/feature-categories`)* | learning-overview, model-status, suggestions-table, rule-proposals — surfaces the ML auto-categoriser: model status/training control, per-transaction category suggestions, and mined rule proposals |
+| `/categories` | `feature-categories/` | `rules.store.ts`, `category-model.store.ts` *(consumes `CategoriesStore` from `@/core/state`)* | categories-overview, category-form, rules-overview, rule-form, rule-filters; `category-icons.ts`, `rule-summary.ts`, `rule-filters.ts`; also owns the trained auto-categoriser model state (`category-model.store.ts` + `category-model.service.ts`, backed by `core/ml`) even though its UI lives under `/learning` |
+| `/learning` | `feature-learning/` | *(consumes `CategoryModelStore` from `@/feature-categories`, entity stores from `@/core/state`)* | learning-overview, model-status, suggestions-table, rule-proposals — surfaces the ML auto-categoriser: model status/training control, per-transaction category suggestions, and mined rule proposals |
 
-Each feature: `{feature}.routes.ts`, `*.store.ts`, `index.ts` barrel, `components/` (one folder per component). Import cross-feature via `@/feature-x` barrel only. `feature-learning` importing `CategoryModelStore`/types from `@/feature-categories` is the intentional shape here — the model lives with the category domain, its dedicated review UI lives under `/learning`.
+Each feature: `{feature}.routes.ts`, feature-specific `*.store.ts` (if any), `index.ts` barrel, `components/` (one folder per component). Import cross-feature via `@/feature-x` barrel only. `feature-learning` importing `CategoryModelStore`/types from `@/feature-categories` is the intentional shape here — the model lives with the category domain, its dedicated review UI lives under `/learning`.
 
 ## Core domain logic (`core/`)
 
+- `core/state/` — the shared entity stores consumed across 2+ features: `AccountsStore`, `CategoriesStore`, `TransactionsStore`, `TransfersStore`, `TransferSettingsStore`. A store belongs here once components/stores in more than one feature need it directly (the original signal was the `feature-accounts` ↔ `feature-categories` barrel cycle these used to create); a store only one feature touches (`RulesStore`, `CategoryModelStore`, `StatsStore`, `ImportBatchesStore`, ...) stays in that feature folder. Own `index.ts` barrel, consumed via `@/core/state` like any other `core` module.
 - `core/data-access/` — Dexie `AppDb` + one repository per entity → see the **data-model** skill.
 - `core/import/` — CSV pipeline: `csv-parse.worker.ts` (PapaParse Web Worker) + `csv-worker.types.ts`, `csv-parse.ts`, `csv-import.service.ts`, `csv-row-mapper.ts`, `delimiter-guess.ts`, `account-detection.ts` (ownIban → account), `import.service.ts` (orchestrates insert + dedupe + batch record).
 - `core/categorisation/` — `rule-matching.ts` (pure predicate logic), `rules-engine.service.ts` (applies rules; respects `categoryManual`), `co-owner-contribution.ts` + `co-owner-contribution.service.ts` (attributes a joint-account transaction to a registered co-owner IBAN).

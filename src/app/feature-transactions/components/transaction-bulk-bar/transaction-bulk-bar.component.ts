@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerTag, tablerTrash, tablerX } from '@ng-icons/tabler-icons';
-import { CategoriesStore } from '@/feature-categories';
+import { CategoriesStore } from '@/core/state';
 import { ButtonComponent, ConfirmDialogComponent, SelectComponent } from '@/shared/ui';
 
 @Component({

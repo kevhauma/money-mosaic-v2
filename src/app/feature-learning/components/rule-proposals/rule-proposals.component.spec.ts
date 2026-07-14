@@ -4,8 +4,8 @@ import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
 import type { Transaction } from '@/core/data-access';
 import type { RuleProposal } from '@/core/ml';
-import { CategoriesStore, CategoryModelStore } from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { CategoryModelStore } from '@/feature-categories';
+import { CategoriesStore, TransactionsStore } from '@/core/state';
 import { RuleProposalsComponent } from './rule-proposals.component';
 
 const makeProposal = (overrides: Partial<RuleProposal> = {}): RuleProposal => ({

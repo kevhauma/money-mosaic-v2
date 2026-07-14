@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerCheck, tablerPencil } from '@ng-icons/tabler-icons';
 import { RangeStore, type PeriodStats } from '@/core/stats';
-import { AccountsStore } from '@/feature-accounts';
+import { AccountsStore } from '@/core/state';
 import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
 import { ButtonComponent, PageHeaderComponent, StatCardComponent } from '@/shared/ui';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';

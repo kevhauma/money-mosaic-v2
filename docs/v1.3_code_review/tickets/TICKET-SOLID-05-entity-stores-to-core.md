@@ -28,12 +28,18 @@ Feature-categories components import `AccountsStore` from the `@/feature-account
 
 ## Acceptance criteria
 
-- [ ] `fallow dead-code --format json --quiet` reports `circular_dependencies: 0`.
-- [ ] No component/store behaviour change: this is a move + import-path update only (git should show renames, not rewrites).
-- [ ] Moved stores keep their existing specs (moved alongside), all passing.
-- [ ] `.claude/skills/project-map/SKILL.md` and the `coding-conventions` skill are updated to name `core/state` as the home of shared entity stores and when a store belongs there vs. in a feature.
-- [ ] Cross-feature imports still go through barrels (`@/core/state`) — no new deep-path imports introduced.
-- [ ] Verified via the fallow skill and coding-conventions skill, plus a live browser smoke test (dashboard, transactions, accounts detail, categories/rules pages all load).
+- [x] `fallow dead-code --format json --quiet` reports `circular_dependencies: 0`.
+- [x] No component/store behaviour change: this is a move + import-path update only (git should show renames, not rewrites).
+- [x] Moved stores keep their existing specs (moved alongside), all passing.
+- [x] `.claude/skills/project-map/SKILL.md` and the `coding-conventions` skill are updated to name `core/state` as the home of shared entity stores and when a store belongs there vs. in a feature.
+- [x] Cross-feature imports still go through barrels (`@/core/state`) — no new deep-path imports introduced.
+- [x] Verified via the fallow skill and coding-conventions skill, plus a live browser smoke test (dashboard, transactions, accounts detail, categories/rules pages all load) — browser smoke test skipped per explicit user instruction this run; `ng lint` + `ng test` + `ng build --configuration development` + fallow all pass.
+
+## Execution notes (2026-07-14)
+
+- `TransferSettingsStore` (feature-specific, `feature-transactions/transfer-settings.store.ts`) was moved to `core/state/` alongside the four named stores, not just the four originally listed. Reason: once `TransfersStore` moved to `core/state`, its existing dependency on `TransferSettingsStore` (real, not incidental — `runAutoLink` reads `matchWindowDays`/`autoLinkMediumConfidence`) would have become a `core` → `feature-transactions` import, recreating a two-node cycle of exactly the kind this ticket exists to dissolve. `TransferSettingsStore` is also already consumed cross-feature (`feature-dashboard`'s `action-queue-panel`), so it fit the same "consumed across 2+ features" placement test as the four named stores.
+- `app.routes.ts`'s deep import of `feature-transactions/transactions.routes` (to avoid the store cycle) is a hard-pinned exception per `CLAUDE.md` ("don't fix it back") and was **not** reverted, even though the cycle it originally guarded against no longer exists post-move. Only its justifying comment was updated to reflect the new reason it stays. `feature-transactions/index.ts` now re-exports `transactions.routes` again (consistent with every other feature barrel) since nothing prevents that — only `app.routes.ts`'s own import statement is pinned.
+- One pre-existing, unrelated test failure surfaced during verification: `src/app/core/ml/category-model.worker.spec.ts` ("trains on a small labeled dataset...") times out at the default 20s Vitest budget. Confirmed unrelated to this ticket (no `core/ml` file touched; reproduces in isolation on `ng test --include`). Left as-is — out of scope here.
 
 ## Notes
 

@@ -21,7 +21,7 @@ import {
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
-import { AccountsStore } from '../../accounts.store';
+import { AccountsStore } from '@/core/state';
 import {
   AccountFormComponent,
   type AccountFormValue,

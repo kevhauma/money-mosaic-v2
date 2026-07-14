@@ -10,7 +10,7 @@ import {
 } from '@/core/data-access';
 import { computeNetWorthTrend, pickGranularityForSpan, RangeStore } from '@/core/stats';
 import { echarts } from '@/shared/echarts';
-import { AccountsStore } from '../../accounts.store';
+import { AccountsStore } from '@/core/state';
 import {
   buildNetWorthHistoryChartOption,
   NetWorthHistoryChartComponent,

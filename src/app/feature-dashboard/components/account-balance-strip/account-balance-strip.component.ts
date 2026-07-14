@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AccountsStore } from '@/feature-accounts';
+import { AccountsStore } from '@/core/state';
 import { SignedAmountPipe } from '@/shared/utils';
 
 /** Compact per-account balance strip (FR-STAT-1), each entry drilling down to its account detail. */

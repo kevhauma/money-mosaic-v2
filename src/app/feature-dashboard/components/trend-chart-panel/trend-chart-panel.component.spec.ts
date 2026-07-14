@@ -3,8 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { CategoriesRepository, type Category } from '@/core/data-access';
 import { pickGranularityForSpan, RangeStore } from '@/core/stats';
-import { CategoriesStore } from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { CategoriesStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import { TrendChartPanelComponent } from './trend-chart-panel.component';
 

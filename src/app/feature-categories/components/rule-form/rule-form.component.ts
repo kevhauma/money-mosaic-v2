@@ -8,18 +8,19 @@ import {
   output,
 } from '@angular/core';
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormControl,
   FormGroup,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import type { Rule, RuleCondition } from '@/core/data-access';
 import { OPERATORS_BY_FIELD } from '@/core/categorisation';
-import { AccountsStore } from '@/feature-accounts';
+import { AccountsStore, CategoriesStore } from '@/core/state';
 import { ButtonComponent, InputComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
-import { CategoriesStore } from '../../categories.store';
 
 export type RuleFormValue = Omit<Rule, 'id'>;
 
@@ -31,6 +32,21 @@ type ConditionGroup = FormGroup<{
 }>;
 
 const NUMERIC_FIELDS: RuleCondition['field'][] = ['amount', 'accountId'];
+
+/** Cheap ReDoS damage limitation on user-authored regex patterns (TICKET-PERF-02) — not a safety analysis. */
+export const MAX_REGEX_PATTERN_LENGTH = 200;
+
+/** Only applies to a condition whose sibling `operator` control is currently `regex`. */
+const regexPatternMaxLength = (control: AbstractControl): ValidationErrors | null => {
+  const group = control.parent;
+  if (!(group instanceof FormGroup) || group.get('operator')?.value !== 'regex') {
+    return null;
+  }
+  const length = String(control.value ?? '').length;
+  return length > MAX_REGEX_PATTERN_LENGTH
+    ? { regexPatternMaxLength: { requiredLength: MAX_REGEX_PATTERN_LENGTH, actualLength: length } }
+    : null;
+};
 
 @Component({
   selector: 'app-rule-form',
@@ -52,6 +68,7 @@ export class RuleFormComponent {
 
   protected readonly categoriesStore = inject(CategoriesStore);
   protected readonly accountsStore = inject(AccountsStore);
+  protected readonly maxRegexPatternLength = MAX_REGEX_PATTERN_LENGTH;
 
   protected readonly fieldOptions: { value: RuleCondition['field']; label: string }[] = [
     { value: 'description', label: 'Description' },
@@ -115,6 +132,12 @@ export class RuleFormComponent {
     if (!validOperators.includes(group.controls.operator.value)) {
       group.controls.operator.setValue(validOperators[0]);
     }
+    group.controls.value.updateValueAndValidity();
+  }
+
+  /** The pattern-length cap only applies for `regex`, so switching operator can flip the value control's validity. */
+  protected onOperatorChange(group: ConditionGroup): void {
+    group.controls.value.updateValueAndValidity();
   }
 
   protected addCondition(): void {
@@ -134,7 +157,7 @@ export class RuleFormComponent {
       operator: this.formBuilder.nonNullable.control<RuleCondition['operator']>(
         condition?.operator ?? 'contains',
       ),
-      value: [value, Validators.required],
+      value: [value, [Validators.required, regexPatternMaxLength]],
       valueTo: [valueTo],
     });
   }

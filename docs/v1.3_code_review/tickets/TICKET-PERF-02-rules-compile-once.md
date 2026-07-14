@@ -27,14 +27,22 @@ As a user with many rules and thousands of transactions, I want a "run rules" pa
 
 ## Acceptance criteria
 
-- [ ] `resolveCategoryForTransaction` (or its replacement) performs no `.sort()` and no `new RegExp()` per transaction — verified by the code shape and a spec that counts compilations via a spy/wrapper or asserts on the prepared structure.
-- [ ] Rule semantics unchanged: priority order, `enabled` filtering, `continueOnMatch` override, `conditionMatch: 'any'|'all'`, case-insensitive matching — existing `rule-matching.spec.ts` and `rules-engine.service` specs pass unchanged.
-- [ ] Rules still never overwrite `categoryManual` transactions (existing spec stays green — this pass must not touch that logic).
-- [ ] Pattern-length cap: entering an over-limit regex in the rule form shows a validation error; existing stored longer patterns (if any) still evaluate (cap is input-side only, no migration).
-- [ ] Fallow security re-run: the finding either disappears (if the compile moves behind a literal-safe helper) or is suppressed with `// fallow-ignore-next-line security-sink` plus a comment citing this ticket's mitigation.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `resolveCategoryForTransaction` (or its replacement) performs no `.sort()` and no `new RegExp()` per transaction — verified by the code shape and a spec that counts compilations via a spy/wrapper or asserts on the prepared structure.
+- [x] Rule semantics unchanged: priority order, `enabled` filtering, `continueOnMatch` override, `conditionMatch: 'any'|'all'`, case-insensitive matching — existing `rule-matching.spec.ts` and `rules-engine.service` specs pass unchanged.
+- [x] Rules still never overwrite `categoryManual` transactions (existing spec stays green — this pass must not touch that logic).
+- [x] Pattern-length cap: entering an over-limit regex in the rule form shows a validation error; existing stored longer patterns (if any) still evaluate (cap is input-side only, no migration).
+- [x] Fallow security re-run: the finding either disappears (if the compile moves behind a literal-safe helper) or is suppressed with `// fallow-ignore-next-line security-sink` plus a comment citing this ticket's mitigation.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
 - Entry points to route through the prepared pass: `RulesEngineService.runAndPersist` (import flow) and the "run rules" action in the rules UI.
 - Do not attempt regex *safety analysis* (backtracking detection) — out of scope and unreliable; the cap + once-per-pass compile is the agreed mitigation.
+
+## Execution notes (2026-07-14)
+
+- Added `prepareRules(rules): PreparedRule[]` (filter `enabled` + sort by priority + pre-compile each regex condition once) and `resolveCategoryForPreparedRules` to `rule-matching.ts`. `resolveCategoryForTransaction` is kept as a convenience wrapper (`resolveCategoryForPreparedRules(transaction, prepareRules(rules))`) so its existing spec passes unchanged; `RulesEngineService.applyToTransactions` now calls `prepareRules` once per pass instead of going through the wrapper per transaction.
+- `matchesRule`/`conditionMatches` (used directly by `core/ml/rule-proposal-mining.ts` and existing specs) were left compiling on demand — out of scope per the ticket's named entry points (only `RulesEngineService.runAndPersist` and the rules UI "run rules" action).
+- Verified "compiles once" with a `toString()`-counting fake pattern rather than `vi.spyOn(globalThis, 'RegExp')` — spying the native `RegExp` constructor breaks its own `.test()`/`instanceof` semantics in this environment, so the count is taken via `String(condition.value)` calls instead (the same value the real compile step stringifies).
+- `MAX_REGEX_PATTERN_LENGTH = 200` cap added as a conditional validator (`regexPatternMaxLength`) on the shared `value` control in `rule-form.component.ts`, active only while its sibling `operator` control is `regex`; re-validated via `(change)` handlers on both the field and operator selects.
+- Fallow security finding `f3f188c9d91b5d51` (rule-matching.ts, dynamic-regex/CWE-1333) persisted after the once-per-pass change (still reachable, blast radius dropped 55 → 32) — suppressed with `// fallow-ignore-next-line security-sink` directly above the `new RegExp(...)` call, citing this ticket's mitigation.

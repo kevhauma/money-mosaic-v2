@@ -19,12 +19,9 @@ import {
   type JointLegContext,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-// Imported directly (not via the @/feature-categories barrel) — that barrel's ./components
-// re-export includes rule-form/rules-overview, which import AccountsStore back from the
-// @/feature-accounts barrel, dragging its chart components (and echarts) into this eagerly
-// loaded store's dependency graph.
-import { CategoriesStore } from '@/feature-categories/categories.store';
-import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { CategoriesStore } from './categories.store';
+import { TransactionsStore } from './transactions.store';
+import { TransfersStore } from './transfers.store';
 import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
 
 const accountConfig = entityConfig({

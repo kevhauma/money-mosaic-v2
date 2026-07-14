@@ -7,7 +7,7 @@ import {
   type Transaction,
 } from '@/core/data-access';
 import { RulesEngineService } from '@/core/categorisation';
-import { TransactionsStore } from '@/feature-transactions';
+import { TransactionsStore } from '@/core/state';
 import { RulesStore } from './rules.store';
 
 const rule = (overrides: Partial<Rule> = {}): Rule => ({

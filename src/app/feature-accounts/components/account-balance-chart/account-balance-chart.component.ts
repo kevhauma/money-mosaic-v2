@@ -15,12 +15,10 @@ import {
   type JointLegContext,
   type NetWorthPoint,
 } from '@/core/stats';
-import { CategoriesStore } from '@/feature-categories';
-import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { CategoriesStore, TransactionsStore, TransfersStore, AccountsStore } from '@/core/state';
 import { formatAxisTooltip } from '@/shared/echarts';
 import { GranularityPickerComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
-import { AccountsStore } from '../../accounts.store';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 

@@ -3,8 +3,7 @@ import { ActivatedRoute, convertToParamMap, Router, provideRouter } from '@angul
 import { vi } from 'vitest';
 import { AccountsRepository, type Account, type Transaction } from '@/core/data-access';
 import { RangeStore, resolvePresetRange } from '@/core/stats';
-import { AccountsStore } from '@/feature-accounts';
-import { TransactionsStore } from '@/feature-transactions';
+import { AccountsStore, TransactionsStore } from '@/core/state';
 import { STAT_QUERY_PARAMS } from '@/shared/utils';
 import { App } from './app';
 

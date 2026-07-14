@@ -9,11 +9,13 @@ import {
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { appDb } from './core/data-access';
-import { AccountsStore } from './feature-accounts/accounts.store';
-import { TransactionsStore } from './feature-transactions/transactions.store';
-import { TransfersStore } from './feature-transactions/transfers.store';
-import { TransferSettingsStore } from './feature-transactions/transfer-settings.store';
-import { CategoriesStore } from './feature-categories/categories.store';
+import {
+  AccountsStore,
+  CategoriesStore,
+  TransactionsStore,
+  TransferSettingsStore,
+  TransfersStore,
+} from './core/state';
 import { RulesStore } from './feature-categories/rules.store';
 import { CategoryModelStore } from './feature-categories/category-model.store';
 import { MappingProfilesStore } from './feature-import/mapping-profiles.store';

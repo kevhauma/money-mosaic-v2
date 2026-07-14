@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { vi, type Mock } from 'vitest';
 import type { CommitImportResult, ParsedRowResult } from '@/core/import';
 import { CsvImportService } from '@/core/import';
-import { AccountsStore } from '@/feature-accounts';
+import { AccountsStore } from '@/core/state';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportBatchesStore } from '../../import-batches.store';
 import { ImportWizardComponent } from './import-wizard.component';

@@ -58,6 +58,31 @@ describe('RulesEngineService: applyToTransactions', () => {
     expect(updates).toEqual([{ id: 1, categoryId: 1 }]);
   });
 
+  it('prepares rules (regex compile included) once for the whole pass, not once per transaction (TICKET-PERF-02)', () => {
+    const { service } = setup();
+    // `new RegExp(String(value), ...)` stringifies its pattern — count `toString()` calls as a
+    // proxy for compilation, since a real `RegExp` spy can't be swapped in without losing `.test`.
+    let toStringCalls = 0;
+    const trackedPattern = {
+      toString: (): string => {
+        toStringCalls++;
+        return '^CARREFOUR';
+      },
+    };
+    const regexRule = rule({
+      conditions: [
+        { field: 'description', operator: 'regex', value: trackedPattern as unknown as string },
+      ],
+    });
+
+    service.applyToTransactions(
+      [transaction({ id: 1 }), transaction({ id: 2 }), transaction({ id: 3 })],
+      [regexRule],
+    );
+
+    expect(toStringCalls).toBe(1);
+  });
+
   it('never touches a transaction whose category was manually set (FR-TXN-2, FR-CAT-3)', () => {
     const { service } = setup();
 

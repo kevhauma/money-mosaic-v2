@@ -13,8 +13,7 @@ import {
   taxonomySignature,
   type RuleProposal,
 } from '@/core/ml';
-import { TransactionsStore } from '@/feature-transactions';
-import { CategoriesStore } from './categories.store';
+import { TransactionsStore, CategoriesStore } from '@/core/state';
 import { RulesStore } from './rules.store';
 import { CategoryModelService } from './category-model.service';
 

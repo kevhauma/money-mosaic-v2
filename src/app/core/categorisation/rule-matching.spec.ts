@@ -1,5 +1,11 @@
 import type { Rule, Transaction } from '@/core/data-access';
-import { conditionMatches, matchesRule, resolveCategoryForTransaction } from './rule-matching';
+import {
+  conditionMatches,
+  matchesRule,
+  prepareRules,
+  resolveCategoryForPreparedRules,
+  resolveCategoryForTransaction,
+} from './rule-matching';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -236,5 +242,67 @@ describe('resolveCategoryForTransaction: priority and continueOnMatch', () => {
       rule({ conditions: [{ field: 'description', operator: 'contains', value: 'delhaize' }] }),
     ];
     expect(resolveCategoryForTransaction(transaction(), rules)).toBeUndefined();
+  });
+});
+
+describe('prepareRules + resolveCategoryForPreparedRules: prepared once per pass (TICKET-PERF-02)', () => {
+  it('compiles each regex condition exactly once, regardless of how many transactions are evaluated', () => {
+    // `new RegExp(String(value), ...)` stringifies its pattern — count `toString()` calls as a
+    // proxy for compilation, since a real `RegExp` spy can't be swapped in without losing `.test`.
+    let toStringCalls = 0;
+    const trackedPattern = {
+      toString: (): string => {
+        toStringCalls++;
+        return '^CARREFOUR';
+      },
+    };
+    const rules = [
+      rule({
+        conditions: [
+          { field: 'description', operator: 'regex', value: trackedPattern as unknown as string },
+        ],
+      }),
+    ];
+
+    const prepared = prepareRules(rules);
+    expect(toStringCalls).toBe(1);
+
+    resolveCategoryForPreparedRules(transaction(), prepared);
+    resolveCategoryForPreparedRules(transaction({ id: 2 }), prepared);
+    resolveCategoryForPreparedRules(transaction({ id: 3, rawDescription: 'ALDI STORE' }), prepared);
+    expect(toStringCalls).toBe(1);
+  });
+
+  it('excludes disabled rules and sorts the rest by ascending priority', () => {
+    const rules = [
+      rule({ priority: 20, enabled: true, action: { setCategoryId: 2 } }),
+      rule({ priority: 5, enabled: false, action: { setCategoryId: 99 } }),
+      rule({ priority: 10, enabled: true, action: { setCategoryId: 1 } }),
+    ];
+
+    const prepared = prepareRules(rules);
+
+    expect(prepared.map((p) => p.rule.action.setCategoryId)).toEqual([1, 2]);
+  });
+
+  it('an invalid regex compiles to a null pattern once, and the condition evaluates false thereafter', () => {
+    const rules = [
+      rule({ conditions: [{ field: 'description', operator: 'regex', value: '(unterminated' }] }),
+    ];
+
+    const prepared = prepareRules(rules);
+
+    expect(resolveCategoryForPreparedRules(transaction(), prepared)).toBeUndefined();
+  });
+
+  it('produces the same result as resolveCategoryForTransaction for the same rules', () => {
+    const rules = [
+      rule({ priority: 10, continueOnMatch: true, action: { setCategoryId: 1 } }),
+      rule({ priority: 20, action: { setCategoryId: 2 } }),
+    ];
+
+    expect(resolveCategoryForPreparedRules(transaction(), prepareRules(rules))).toBe(
+      resolveCategoryForTransaction(transaction(), rules),
+    );
   });
 });

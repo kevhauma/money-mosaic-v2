@@ -1,11 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import {
-  CategoriesStore,
-  CategoryModelStore,
-  type CategoryModelStatus,
-} from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { CategoryModelStore, type CategoryModelStatus } from '@/feature-categories';
+import { CategoriesStore, TransactionsStore } from '@/core/state';
 import { isWithinTrainingWindow, MIN_CATEGORIES, MIN_TRAINING_LABELS } from '@/core/ml';
 import {
   AlertComponent,

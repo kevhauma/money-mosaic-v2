@@ -11,9 +11,7 @@ import {
   type Granularity,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-import { AccountsStore } from '@/feature-accounts';
-import { CategoriesStore } from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { formatAxisTooltip } from '@/shared/echarts';
 import { GranularityPickerComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';

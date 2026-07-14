@@ -1,9 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import type { Transaction } from '@/core/data-access';
-import { AccountsStore } from '@/feature-accounts';
-import { CategoriesStore, CategoryModelStore } from '@/feature-categories';
-import { TransactionsStore } from '@/feature-transactions';
+import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import { CategoryModelStore } from '@/feature-categories';
 import {
   BadgeComponent,
   ButtonComponent,

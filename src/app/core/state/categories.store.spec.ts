@@ -6,7 +6,7 @@ import {
   type Category,
   type Transaction,
 } from '@/core/data-access';
-import { TransactionsStore } from '@/feature-transactions';
+import { TransactionsStore } from './transactions.store';
 import { CategoriesStore } from './categories.store';
 
 const category = (overrides: Partial<Category> = {}): Category => ({

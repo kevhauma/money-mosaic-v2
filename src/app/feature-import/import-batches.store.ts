@@ -8,7 +8,7 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { ImportBatchesRepository, type ImportBatch, type Transaction } from '@/core/data-access';
-import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { TransactionsStore, TransfersStore } from '@/core/state';
 import { ImportService, type CommitImportInput, type CommitImportResult } from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
 

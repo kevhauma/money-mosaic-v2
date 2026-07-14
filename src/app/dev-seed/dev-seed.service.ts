@@ -2,9 +2,7 @@ import { Injectable, inject, isDevMode } from '@angular/core';
 import { AccountsRepository, TransactionsRepository, type Transaction } from '@/core/data-access';
 import { partitionByFingerprint } from '@/core/import';
 import { TransferLinkingService } from '@/core/transfers';
-import { AccountsStore } from '@/feature-accounts';
-import { TransactionsStore, TransfersStore } from '@/feature-transactions';
-import { CategoriesStore } from '@/feature-categories';
+import { AccountsStore, TransactionsStore, TransfersStore, CategoriesStore } from '@/core/state';
 import {
   buildSeedAccounts,
   buildSeedTransactions,

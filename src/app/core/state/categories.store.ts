@@ -9,7 +9,7 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { CategoriesRepository, type Category } from '@/core/data-access';
-import { TransactionsStore } from '@/feature-transactions';
+import { TransactionsStore } from './transactions.store';
 import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
 
 const categoryConfig = entityConfig({
