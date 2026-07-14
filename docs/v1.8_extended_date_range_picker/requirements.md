@@ -206,6 +206,7 @@ Hover shows a subtle darker shade.
 
 # Interaction Model
 
+* Previous/next buttons step the current range backward/forward by its own length (e.g. "This month" steps a calendar month at a time, a 7-day custom range steps 7 days at a time). Stepping away from a preset switches the selection to **Custom**, since the shifted range no longer matches that preset's definition. Delivered early against the current lightweight switcher by [TICKET-STAT-16](../v1.3_dashboard_insights/tickets/TICKET-STAT-16-date-range-prev-next-navigation.md); this rebuild should preserve that behaviour rather than reinvent it.
 * Clicking a quick range immediately updates the selection.
 * Manual edits are staged until **Apply time range** is pressed.
 * Relative expressions (`now-6h`, `now-7d`, `now/M`, etc.) are preserved rather than converted to absolute timestamps.
