@@ -4,7 +4,6 @@ import {
   type DateRangeValue,
 } from '../date-range-input/date-range-input.component';
 
-export type RangeGroupingGranularity = 'day' | 'week' | 'month' | 'quarter';
 export type RangeGroupingPreset =
   | 'this-week'
   | 'this-month'
@@ -23,12 +22,13 @@ export type RangeGroupingSwitcherValue = {
   preset: RangeGroupingPreset;
   from: string;
   to: string;
-  groupBy: RangeGroupingGranularity;
 };
 
-const GRANULARITIES: RangeGroupingGranularity[] = ['day', 'week', 'month', 'quarter'];
-
-/** Presentational range + grouping control (FR-STAT-7) — holds no state of its own; the caller owns the value and reacts to the outputs. */
+/**
+ * Presentational date-range switcher (FR-STAT-7) — holds no state of its own; the caller owns the
+ * value and reacts to the outputs. Bucket-granularity is chart-local state, not part of this
+ * global switcher (TICKET-STAT-15) — see `mm-granularity-picker`.
+ */
 @Component({
   selector: 'mm-range-grouping-switcher',
   imports: [DateRangeInputComponent],
@@ -40,9 +40,6 @@ export class RangeGroupingSwitcherComponent {
 
   readonly presetChange = output<RangeGroupingPreset>();
   readonly customRangeChange = output<{ from: string; to: string }>();
-  readonly groupByChange = output<RangeGroupingGranularity>();
-
-  protected readonly granularities = GRANULARITIES;
 
   protected onPresetChange(raw: string): void {
     this.presetChange.emit(raw as RangeGroupingPreset);
@@ -50,9 +47,5 @@ export class RangeGroupingSwitcherComponent {
 
   protected onRangeChange(range: DateRangeValue): void {
     this.customRangeChange.emit(range);
-  }
-
-  protected granularityLabel(granularity: RangeGroupingGranularity): string {
-    return granularity.charAt(0).toUpperCase() + granularity.slice(1);
   }
 }

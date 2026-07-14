@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
+import { pickGranularityForSpan, RangeStore } from '@/core/stats';
 import { echarts } from '@/shared/echarts';
 import { TrendChartPanelComponent } from './trend-chart-panel.component';
 
@@ -39,5 +40,27 @@ describe('TrendChartPanelComponent', () => {
     ]);
 
     expect(result).toBe('2026-07<br/>●Income: €1,234.56<br/>●Expense: -€50.00');
+  });
+
+  it('defaults its local granularity control from pickGranularityForSpan for the current shared date range (TICKET-STAT-15)', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    const expected = pickGranularityForSpan(rangeStore.from(), rangeStore.to());
+
+    expect(fixture.componentInstance['granularity']()).toBe(expected);
+  });
+
+  it("changing its local granularity control changes only its own chart's buckets (TICKET-STAT-15)", () => {
+    fixture.componentInstance['granularity'].set('day');
+    const bucketCountAsDay = (
+      fixture.componentInstance['chartOption']()['xAxis'] as { data: string[] }
+    ).data.length;
+
+    fixture.componentInstance['granularity'].set('month');
+    const bucketCountAsMonth = (
+      fixture.componentInstance['chartOption']()['xAxis'] as { data: string[] }
+    ).data.length;
+
+    expect(bucketCountAsMonth).toBe(1);
+    expect(bucketCountAsMonth).not.toBe(bucketCountAsDay);
   });
 });

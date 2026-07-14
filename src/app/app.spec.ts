@@ -42,7 +42,6 @@ const defaultQueryParams = (): Record<string, string> => {
   return {
     [STAT_QUERY_PARAMS.from]: from,
     [STAT_QUERY_PARAMS.to]: to,
-    [STAT_QUERY_PARAMS.groupBy]: 'month',
   };
 };
 
@@ -74,7 +73,7 @@ describe('App', () => {
     expect(navigateSpy).not.toHaveBeenCalled();
   });
 
-  it('navigates exactly once when groupBy changes', async () => {
+  it('navigates exactly once when the range changes', async () => {
     TestBed.overrideProvider(ActivatedRoute, {
       useValue: { snapshot: { queryParamMap: convertToParamMap(defaultQueryParams()) } },
     });
@@ -87,7 +86,7 @@ describe('App', () => {
     expect(navigateSpy).not.toHaveBeenCalled();
 
     const rangeStore = TestBed.inject(RangeStore);
-    rangeStore.setGroupBy('week');
+    rangeStore.setCustomRange('2026-02-01', '2026-02-15');
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -95,7 +94,7 @@ describe('App', () => {
     expect(navigateSpy).toHaveBeenCalledWith(
       [],
       expect.objectContaining({
-        queryParams: expect.objectContaining({ [STAT_QUERY_PARAMS.groupBy]: 'week' }),
+        queryParams: expect.objectContaining({ [STAT_QUERY_PARAMS.from]: '2026-02-01' }),
       }),
     );
   });
@@ -126,7 +125,6 @@ describe('App', () => {
     const rangeStore = TestBed.inject(RangeStore);
     expect(rangeStore.preset()).toBe('all-time');
     expect(rangeStore.from()).toBe('2018-05-01');
-    expect(rangeStore.groupBy()).toBe('quarter');
   });
 
   it('selecting "custom" flips the preset without altering the current from/to', async () => {

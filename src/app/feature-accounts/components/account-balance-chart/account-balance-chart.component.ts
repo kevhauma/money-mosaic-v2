@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -8,14 +8,17 @@ import {
   computeAccountBalanceTrends,
   computeFullHistoryRange,
   computeZoomWindow,
+  pickGranularityForSpan,
   RangeStore,
   type ChartZoomWindow,
+  type Granularity,
   type JointLegContext,
   type NetWorthPoint,
 } from '@/core/stats';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { formatAxisTooltip } from '@/shared/echarts';
+import { GranularityPickerComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
 import { AccountsStore } from '../../accounts.store';
 
@@ -46,14 +49,15 @@ export const buildAccountBalanceChartOption = (
 
 /**
  * Full-history balance line for one account (TICKET-STAT-02) — spans opening-balance date/first
- * transaction through today, so the series itself is always the account's entire history. The
- * topbar's grouping control drives this chart's bucket granularity too, and the topbar's date
- * range scrubs the initial zoom window (via `dataZoom`) rather than shrinking the series data
- * (TICKET-STAT-03), so zooming out is always available without a manual preset change.
+ * transaction through today, so the series itself is always the account's entire history. This
+ * chart owns its own local granularity control (TICKET-STAT-15), independent of every other
+ * chart's, and the topbar's date range scrubs the initial zoom window (via `dataZoom`) rather than
+ * shrinking the series data (TICKET-STAT-03), so zooming out is always available without a manual
+ * preset change.
  */
 @Component({
   selector: 'app-account-balance-chart',
-  imports: [NgxEchartsDirective],
+  imports: [NgxEchartsDirective, GranularityPickerComponent],
   templateUrl: './account-balance-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -71,7 +75,10 @@ export class AccountBalanceChartComponent {
     computeFullHistoryRange([this.account()], this.transactionsStore.transactions(), todayIso()),
   );
 
-  private readonly granularity = computed(() => this.rangeStore.groupBy());
+  /** Defaults from the current shared date range on first render (TICKET-STAT-15); independent of every other chart's control thereafter. */
+  protected readonly granularity = signal<Granularity>(
+    pickGranularityForSpan(this.rangeStore.from(), this.rangeStore.to()),
+  );
 
   // Cross-account lookups a joint account's stake needs (TICKET-STAT-03) — `accountsById` spans
   // every account so a linked transfer's other leg always resolves, even outside this one account.

@@ -31,18 +31,19 @@ The day/week/month/quarter granularity buttons live in the app-wide topbar switc
 
 ## Acceptance criteria
 
-- [ ] Day/week/month/quarter buttons removed from `mm-range-grouping-switcher`; only the preset dropdown and custom date-range input remain in the global topbar.
-- [ ] `app-trend-chart-panel` renders its own granularity control; its chart bucket size responds only to that local control.
-- [ ] `app-net-worth-history-chart` renders its own granularity control, independent of the trend-chart-panel's; its chart bucket size responds only to that local control.
-- [ ] Each local control defaults to `pickGranularityForSpan(from, to)` for the currently selected date range on first render, and updates immediately (no other panel re-renders differently) when changed.
-- [ ] `RangeStore`'s `groupBy` field/`setGroupBy` method removed (or narrowed) now that granularity is chart-local state, not global range state; `RangeState`/`RangeGroupingSwitcherValue` types updated accordingly.
-- [ ] `STAT_QUERY_PARAMS.groupBy` and its read/write in `app.ts`'s constructor and URL-mirroring effect are removed to match — no dangling references to a global `groupBy` query param.
-- [ ] Unit tests cover: trend-chart-panel's local control changes only its own buckets; net-worth-history-chart's local control changes only its own series; each control's default value derives from `pickGranularityForSpan`; `RangeStore`/`range-grouping-switcher` specs updated to drop `groupBy` assertions.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: changing the Dashboard trend chart's bucket size doesn't move any other Dashboard panel; changing the Accounts net-worth chart's bucket size doesn't move the Dashboard trend chart; the topbar no longer shows a granularity control.
+- [x] Day/week/month/quarter buttons removed from `mm-range-grouping-switcher`; only the preset dropdown and custom date-range input remain in the global topbar.
+- [x] `app-trend-chart-panel` renders its own granularity control; its chart bucket size responds only to that local control.
+- [x] `app-net-worth-history-chart` renders its own granularity control, independent of the trend-chart-panel's; its chart bucket size responds only to that local control.
+- [x] Each local control defaults to `pickGranularityForSpan(from, to)` for the currently selected date range on first render, and updates immediately (no other panel re-renders differently) when changed.
+- [x] `RangeStore`'s `groupBy` field/`setGroupBy` method removed (or narrowed) now that granularity is chart-local state, not global range state; `RangeState`/`RangeGroupingSwitcherValue` types updated accordingly.
+- [x] `STAT_QUERY_PARAMS.groupBy` and its read/write in `app.ts`'s constructor and URL-mirroring effect are removed to match — no dangling references to a global `groupBy` query param.
+- [x] Unit tests cover: trend-chart-panel's local control changes only its own buckets; net-worth-history-chart's local control changes only its own series; each control's default value derives from `pickGranularityForSpan`; `RangeStore`/`range-grouping-switcher` specs updated to drop `groupBy` assertions.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: changing the Dashboard trend chart's bucket size doesn't move any other Dashboard panel; changing the Accounts net-worth chart's bucket size doesn't move the Dashboard trend chart; the topbar no longer shows a granularity control.
 
 ## Notes
 
 - Scope is limited to the two existing `groupBy` consumers (trend-chart-panel, net-worth-history-chart) — no new charts are added by this ticket.
+- **Scope correction found during implementation:** a third consumer, `app-account-balance-chart` (per-account detail page at `feature-accounts/components/accounts-detail`), also read `rangeStore.groupBy()` — the as-is section above missed it. Since removing `RangeStore.groupBy` entirely would have broken this chart, it was given the same local-control treatment as the other two.
 - The bucket button-group markup in `range-grouping-switcher.component.html` can be extracted into a small shared presentational component so both charts don't duplicate the `@for` loop, but that's an implementation detail, not a hard requirement.
 - Dropping `?groupBy=` means a stale bookmarked/shared link containing it simply has the param ignored going forward — acceptable since it was never meaningfully shareable state to begin with (it silently applied to whichever of the two charts happened to be in view).

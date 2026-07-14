@@ -232,29 +232,3 @@ export const shiftRangeByCalendarUnit = (
     }
   }
 };
-
-/**
- * Maps every preset to the granularity it should default to the moment it's selected
- * (TICKET-STAT-03): week/month-wide presets default to `day`, quarter-wide presets default to
- * `week`, year-wide presets default to `month`, and `all-time` (potentially spanning decades)
- * defaults to `quarter`. The user can still manually override via `RangeStore.setGroupBy()`.
- */
-export const defaultGranularityForPreset = (preset: RangePreset): Granularity => {
-  switch (preset) {
-    case 'this-week':
-    case 'this-month':
-    case 'last-month':
-    case 'last-31-days':
-      return 'day';
-    case 'this-quarter':
-    case 'last-quarter':
-      return 'week';
-    case 'this-year':
-    case 'last-year':
-    case 'last-365-days':
-    case 'year-to-date':
-      return 'month';
-    case 'all-time':
-      return 'quarter';
-  }
-};

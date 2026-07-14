@@ -25,17 +25,4 @@
     size="sm"
     (valueChange)="onRangeChange($event)"
   />
-
-  <div class="join">
-    @for (granularity of granularities; track granularity) {
-      <button
-        type="button"
-        class="btn btn-sm join-item"
-        [class.btn-active]="value().groupBy === granularity"
-        (click)="groupByChange.emit(granularity)"
-      >
-        {{ granularityLabel(granularity) }}
-      </button>
-    }
-  </div>
 </div>

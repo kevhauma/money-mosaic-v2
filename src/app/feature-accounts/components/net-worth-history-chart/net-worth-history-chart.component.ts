@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -7,14 +7,17 @@ import {
   computeAccountBalanceTrends,
   computeFullHistoryRange,
   computeZoomWindow,
+  pickGranularityForSpan,
   RangeStore,
   type AccountBalanceSeries,
   type ChartZoomWindow,
+  type Granularity,
   type JointLegContext,
 } from '@/core/stats';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { formatAxisTooltip } from '@/shared/echarts';
+import { GranularityPickerComponent } from '@/shared/ui';
 import { AccountsStore } from '../../accounts.store';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -55,15 +58,15 @@ export const buildNetWorthHistoryChartOption = (
 /**
  * Stacked-area net-worth-history chart (TICKET-STAT-02): one band per active account (archived
  * accounts never appear, consistent with `activeAccounts`), stacked so the top edge is combined
- * net worth over the full history of every active account. The topbar's grouping control drives
- * this chart's bucket granularity too, and the topbar's date range scrubs the initial zoom window
- * (via `dataZoom`) rather than shrinking the series data (TICKET-STAT-03), so zooming out is
- * always available without a manual preset change. Legend clicks toggle individual bands (native
- * echarts behaviour).
+ * net worth over the full history of every active account. This chart owns its own local
+ * granularity control (TICKET-STAT-15), independent of every other chart's, and the topbar's date
+ * range scrubs the initial zoom window (via `dataZoom`) rather than shrinking the series data
+ * (TICKET-STAT-03), so zooming out is always available without a manual preset change. Legend
+ * clicks toggle individual bands (native echarts behaviour).
  */
 @Component({
   selector: 'app-net-worth-history-chart',
-  imports: [NgxEchartsDirective],
+  imports: [NgxEchartsDirective, GranularityPickerComponent],
   templateUrl: './net-worth-history-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -81,7 +84,10 @@ export class NetWorthHistoryChartComponent {
     computeFullHistoryRange(this.accounts(), this.transactionsStore.transactions(), todayIso()),
   );
 
-  private readonly granularity = computed(() => this.rangeStore.groupBy());
+  /** Defaults from the current shared date range on first render (TICKET-STAT-15); independent of every other chart's control thereafter. */
+  protected readonly granularity = signal<Granularity>(
+    pickGranularityForSpan(this.rangeStore.from(), this.rangeStore.to()),
+  );
 
   // Cross-account lookups a joint account's stake needs (TICKET-STAT-03) — `accountsById` spans
   // every account (not just the active ones charted here) so a linked transfer's other leg always

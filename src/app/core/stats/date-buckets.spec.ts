@@ -2,9 +2,7 @@ import {
   bucketDateBoundaries,
   bucketKeyForDate,
   bucketKeysInRange,
-  defaultGranularityForPreset,
   resolvePresetRange,
-  type RangePreset,
 } from './date-buckets';
 
 describe('bucketKeyForDate', () => {
@@ -173,23 +171,5 @@ describe('resolvePresetRange', () => {
       from: '2026-01-01',
       to: '2026-04-10',
     });
-  });
-});
-
-describe('defaultGranularityForPreset', () => {
-  it.each<[RangePreset, ReturnType<typeof defaultGranularityForPreset>]>([
-    ['this-week', 'day'],
-    ['this-month', 'day'],
-    ['last-month', 'day'],
-    ['last-31-days', 'day'],
-    ['this-quarter', 'week'],
-    ['last-quarter', 'week'],
-    ['this-year', 'month'],
-    ['last-year', 'month'],
-    ['last-365-days', 'month'],
-    ['year-to-date', 'month'],
-    ['all-time', 'quarter'],
-  ])('maps %s to %s', (preset, expected) => {
-    expect(defaultGranularityForPreset(preset)).toBe(expected);
   });
 });

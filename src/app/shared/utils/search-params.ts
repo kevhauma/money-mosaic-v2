@@ -1,7 +1,6 @@
 export const STAT_QUERY_PARAMS = {
   from: 'from',
   to: 'to',
-  groupBy: 'groupBy',
   categoryId: 'categoryId',
   accountId: 'accountId',
 } as const;
@@ -16,7 +15,7 @@ export type TransactionDrilldownParams = {
   accountId?: number;
 };
 
-/** Builds the `/transactions` query params for a drill-down link — deliberately omits `groupBy` since a flat list has nothing to bucket. */
+/** Builds the `/transactions` query params for a drill-down link. */
 export const buildTransactionDrilldownParams = (
   params: TransactionDrilldownParams,
 ): Record<string, string> => {

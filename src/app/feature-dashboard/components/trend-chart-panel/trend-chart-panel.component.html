@@ -1,6 +1,9 @@
 <div class="card h-full bg-base-100 shadow-sm">
   <div class="card-body">
-    <h2 class="card-title text-base">Trend</h2>
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="card-title text-base">Trend</h2>
+      <mm-granularity-picker [value]="granularity()" (valueChange)="granularity.set($event)" />
+    </div>
     <div
       echarts
       [options]="chartOption()"

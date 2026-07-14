@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
+import { pickGranularityForSpan, RangeStore } from '@/core/stats';
 import { echarts } from '@/shared/echarts';
 import {
   AccountBalanceChartComponent,
@@ -44,6 +45,23 @@ describe('AccountBalanceChartComponent', () => {
 
   it('should create', () => {
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('defaults its local granularity control from pickGranularityForSpan for the current shared date range (TICKET-STAT-15)', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    const expected = pickGranularityForSpan(rangeStore.from(), rangeStore.to());
+
+    expect(fixture.componentInstance['granularity']()).toBe(expected);
+  });
+
+  it("changing its local granularity control changes only its own chart's points (TICKET-STAT-15)", () => {
+    fixture.componentInstance['granularity'].set('day');
+    const pointsAsDay = fixture.componentInstance['points']().length;
+
+    fixture.componentInstance['granularity'].set('quarter');
+    const pointsAsQuarter = fixture.componentInstance['points']().length;
+
+    expect(pointsAsQuarter).toBeLessThan(pointsAsDay);
   });
 });
 

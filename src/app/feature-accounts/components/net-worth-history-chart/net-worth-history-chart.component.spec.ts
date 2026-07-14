@@ -8,7 +8,7 @@ import {
   type Account,
   type Transaction,
 } from '@/core/data-access';
-import { computeNetWorthTrend } from '@/core/stats';
+import { computeNetWorthTrend, pickGranularityForSpan, RangeStore } from '@/core/stats';
 import { echarts } from '@/shared/echarts';
 import { AccountsStore } from '../../accounts.store';
 import {
@@ -66,6 +66,23 @@ describe('NetWorthHistoryChartComponent', () => {
   it('should create, wired to only the active (non-archived) accounts', () => {
     expect(fixture.componentInstance).toBeTruthy();
     expect(TestBed.inject(AccountsStore).activeAccounts()).toHaveLength(1);
+  });
+
+  it('defaults its local granularity control from pickGranularityForSpan for the current shared date range (TICKET-STAT-15)', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    const expected = pickGranularityForSpan(rangeStore.from(), rangeStore.to());
+
+    expect(fixture.componentInstance['granularity']()).toBe(expected);
+  });
+
+  it("changing its local granularity control changes only its own chart's series (TICKET-STAT-15)", () => {
+    fixture.componentInstance['granularity'].set('day');
+    const pointsAsDay = fixture.componentInstance['series']()[0]?.points.length ?? 0;
+
+    fixture.componentInstance['granularity'].set('quarter');
+    const pointsAsQuarter = fixture.componentInstance['series']()[0]?.points.length ?? 0;
+
+    expect(pointsAsQuarter).toBeLessThan(pointsAsDay);
   });
 });
 

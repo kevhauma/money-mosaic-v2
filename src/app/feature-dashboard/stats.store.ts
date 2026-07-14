@@ -4,20 +4,17 @@ import {
   computeCategoryBreakdown,
   computeCategoryPeriodComparison,
   computeComparisonWindow,
-  computeNetWorthTrend,
   computePeriodStats,
   computeSpendingRate,
   computeTopTransactions,
-  computeTrendBuckets,
   computeWeekdayWeekendSplit,
   computeYearOverYearComparison,
   RangeStore,
-  type JointLegContext,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore } from '@/feature-categories';
-import { TransactionsStore, TransfersStore } from '@/feature-transactions';
+import { TransactionsStore } from '@/feature-transactions';
 import { CategoryComparisonSettingsStore } from './category-comparison-settings.store';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -43,20 +40,10 @@ export const StatsStore = signalStore(
     const transactionsStore = inject(TransactionsStore);
     const accountsStore = inject(AccountsStore);
     const categoriesStore = inject(CategoriesStore);
-    const transfersStore = inject(TransfersStore);
     const rangeStore = inject(RangeStore);
     const categoryComparisonSettingsStore = inject(CategoryComparisonSettingsStore);
 
     const ownSavingsIbans = computed(() => savingsAccountIbans(accountsStore.accounts()));
-
-    // Shared lookup context for classifying a joint account's own transaction legs
-    // (TICKET-STAT-03), reused by every aggregate below so they can't disagree on the maths.
-    const jointLegContext = computed((): JointLegContext => ({
-      transactionsById: new Map(transactionsStore.transactions().map((t) => [t.id!, t])),
-      accountsById: accountsStore.accountsById(),
-      transfersById: transfersStore.transferByTransactionId(),
-      categoriesById: categoriesStore.categoriesById(),
-    }));
 
     const periodStats = computed(() =>
       computePeriodStats(
@@ -111,26 +98,6 @@ export const StatsStore = signalStore(
       ),
     );
 
-    const trendBuckets = computed(() =>
-      computeTrendBuckets(
-        transactionsStore.transactions(),
-        rangeStore.from(),
-        rangeStore.to(),
-        rangeStore.groupBy(),
-      ),
-    );
-
-    const netWorthTrend = computed(() =>
-      computeNetWorthTrend(
-        transactionsStore.transactions(),
-        accountsStore.accounts(),
-        rangeStore.from(),
-        rangeStore.to(),
-        rangeStore.groupBy(),
-        jointLegContext(),
-      ),
-    );
-
     const yearOverYear = computed(() =>
       computeYearOverYearComparison(
         transactionsStore.transactions(),
@@ -169,8 +136,6 @@ export const StatsStore = signalStore(
       spendingRate,
       weekdayWeekendSplit,
       topTransactions,
-      trendBuckets,
-      netWorthTrend,
       yearOverYear,
       categoryPeriodComparison,
     };

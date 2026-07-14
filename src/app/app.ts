@@ -16,7 +16,7 @@ import {
   tablerMenu2,
   tablerTags,
 } from '@ng-icons/tabler-icons';
-import { type Granularity, RangeStore, computeFullHistoryRange } from '@/core/stats';
+import { RangeStore, computeFullHistoryRange } from '@/core/stats';
 // Imported directly (not via the @/feature-accounts barrel) — the barrel's ./components
 // re-export pulls in the account/net-worth chart components, which statically import echarts.
 // Angular's @Component decorator has side effects, so esbuild can't tree-shake that barrel
@@ -34,10 +34,6 @@ import {
   type RangeGroupingSwitcherValue,
 } from '@/shared/ui/range-grouping-switcher/range-grouping-switcher.component';
 import { STAT_QUERY_PARAMS } from '@/shared/utils';
-
-const GRANULARITIES: Granularity[] = ['day', 'week', 'month', 'quarter'];
-const isGranularity = (value: string | null): value is Granularity =>
-  !!value && (GRANULARITIES as string[]).includes(value);
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -71,29 +67,23 @@ export class App {
     preset: this.rangeStore.preset(),
     from: this.rangeStore.from(),
     to: this.rangeStore.to(),
-    groupBy: this.rangeStore.groupBy(),
   }));
 
   constructor() {
     const initialParams = this.route.snapshot.queryParamMap;
     const from = initialParams.get(STAT_QUERY_PARAMS.from);
     const to = initialParams.get(STAT_QUERY_PARAMS.to);
-    const groupBy = initialParams.get(STAT_QUERY_PARAMS.groupBy);
 
     if (from && to) {
       this.rangeStore.setCustomRange(from, to);
     }
-    if (isGranularity(groupBy)) {
-      this.rangeStore.setGroupBy(groupBy);
-    }
 
-    // Mirrors the range/grouping state back into the URL (FR-STAT-7 deep-linking) so Dashboard
-    // and Transactions can read it regardless of which lazy route is currently active.
+    // Mirrors the range state back into the URL (FR-STAT-7 deep-linking) so Dashboard and
+    // Transactions can read it regardless of which lazy route is currently active.
     effect(() => {
       const queryParams = {
         [STAT_QUERY_PARAMS.from]: this.rangeStore.from(),
         [STAT_QUERY_PARAMS.to]: this.rangeStore.to(),
-        [STAT_QUERY_PARAMS.groupBy]: this.rangeStore.groupBy(),
       };
 
       // Skip navigating when the URL already mirrors this state — otherwise the initial
@@ -133,9 +123,5 @@ export class App {
 
   protected onCustomRangeChange({ from, to }: { from: string; to: string }): void {
     this.rangeStore.setCustomRange(from, to);
-  }
-
-  protected onGroupByChange(groupBy: Granularity): void {
-    this.rangeStore.setGroupBy(groupBy);
   }
 }

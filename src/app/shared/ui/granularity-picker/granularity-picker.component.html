@@ -1,0 +1,12 @@
+<div class="join" role="group" aria-label="Bucket size">
+  @for (granularity of granularities; track granularity) {
+    <button
+      type="button"
+      class="btn btn-sm join-item"
+      [class.btn-active]="value() === granularity"
+      (click)="valueChange.emit(granularity)"
+    >
+      {{ granularityLabel(granularity) }}
+    </button>
+  }
+</div>

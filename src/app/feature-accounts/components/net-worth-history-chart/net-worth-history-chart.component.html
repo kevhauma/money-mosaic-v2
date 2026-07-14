@@ -1,7 +1,10 @@
 @if (accounts().length > 0) {
   <div class="card border border-base-300 bg-base-100">
     <div class="card-body">
-      <p class="card-title text-base">Net worth history</p>
+      <div class="flex items-center justify-between gap-2">
+        <p class="card-title text-base">Net worth history</p>
+        <mm-granularity-picker [value]="granularity()" (valueChange)="granularity.set($event)" />
+      </div>
       <div
         echarts
         [options]="chartOption()"
