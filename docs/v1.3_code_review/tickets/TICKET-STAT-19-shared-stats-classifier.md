@@ -28,11 +28,11 @@ As a developer, I want the per-transaction classification pipeline (exclusions +
 
 ## Acceptance criteria
 
-- [ ] Exactly one implementation of the exclusion order and the joint/override special cases exists in `core/stats` (grep for `attributionOverride?.mode === 'personal'` outside the classifier returns no stats-aggregation hits).
-- [ ] All existing specs for `period-stats`, `category-breakdown`, `weekday-weekend-split`, and `spending-rate` pass **unchanged** — this is a pure refactor of shipped semantics (with TICKET-STAT-18 already merged).
-- [ ] The classifier has its own spec covering: transfer leg, nullified, savings movement (incl. nullified-savings), neutral category, joint `mineIn`/`jointSpend`/`coOwnerIn`, `personal`/`shared`/`notMine` overrides, and the untagged expense-category refund rule.
-- [ ] Fallow re-run: `computeCategoryBreakdown` and `computePeriodStats` drop out of the critical complexity findings; `dup:a29a2c00` and `dup:edea22f4` no longer appear.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Exactly one implementation of the exclusion order and the joint/override special cases exists in `core/stats` (grep for `attributionOverride?.mode === 'personal'` outside the classifier returns no stats-aggregation hits).
+- [x] All existing specs for `period-stats`, `category-breakdown`, `weekday-weekend-split`, and `spending-rate` pass **unchanged** — this is a pure refactor of shipped semantics (with TICKET-STAT-18 already merged).
+- [x] The classifier has its own spec covering: transfer leg, nullified, savings movement (incl. nullified-savings), neutral category, joint `mineIn`/`jointSpend`/`coOwnerIn`, `personal`/`shared`/`notMine` overrides, and the untagged expense-category refund rule.
+- [x] Fallow re-run: `computeCategoryBreakdown` and `computePeriodStats` drop out of the critical complexity findings; `dup:a29a2c00` and `dup:edea22f4` no longer appear.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

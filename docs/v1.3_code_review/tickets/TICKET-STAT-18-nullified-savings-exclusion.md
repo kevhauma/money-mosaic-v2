@@ -25,11 +25,11 @@ As a user who nullified a savings movement (e.g. a mistaken or reversed deposit)
 
 ## Acceptance criteria
 
-- [ ] A nullified transaction with an own-savings-IBAN counterparty contributes 0 to `savings`, `savingsRate`, `income`, and `expense`.
-- [ ] A *linked transfer leg* to a savings account (not nullified) still contributes to `savings` — regression-guarded, since it depends on the check order this ticket touches.
-- [ ] Unit tests cover: nullified savings deposit (excluded), nullified savings withdrawal (excluded), non-nullified savings deposit (still counted), linked savings transfer leg (still counted).
-- [ ] Existing `period-stats.spec.ts` cases pass unchanged.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] A nullified transaction with an own-savings-IBAN counterparty contributes 0 to `savings`, `savingsRate`, `income`, and `expense`.
+- [x] A *linked transfer leg* to a savings account (not nullified) still contributes to `savings` — regression-guarded, since it depends on the check order this ticket touches.
+- [x] Unit tests cover: nullified savings deposit (excluded), nullified savings withdrawal (excluded), non-nullified savings deposit (still counted), linked savings transfer leg (still counted).
+- [x] Existing `period-stats.spec.ts` cases pass unchanged.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

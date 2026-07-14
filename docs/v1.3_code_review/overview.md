@@ -4,9 +4,9 @@ Derived from [./code-review-fallow.md](./code-review-fallow.md) (Fallow-grounded
 
 The list is in recommended build order: the correctness fix and test safety net first, then the extraction that removes the app's complexity peak while its files are hot, then structure, performance, cleanups, and the decision/process tickets (parallelizable any time).
 
-- [ ] [TICKET-STAT-18](./tickets/TICKET-STAT-18-nullified-savings-exclusion.md) — Exclude nullified transactions from `savings`/`savingsRate` (bug fix, CR3-1.1, violates TICKET-TXN-04 — savings check runs before the nullified check) — small, do first
-- [ ] [TICKET-TEST-02](./tickets/TICKET-TEST-02-first-review-spec-gaps.md) — Close the first review's remaining spec gaps (CR-9) — test-only, cheapest ticket here; safety net for PERF-04/PERF-05/IMP-06 below
-- [ ] [TICKET-STAT-19](./tickets/TICKET-STAT-19-shared-stats-classifier.md) — Extract the shared per-transaction stats classifier (CR3-2.1, Fallow `dup:a29a2c00`/`dup:edea22f4`; both files accelerating hotspots) — needs TICKET-STAT-18; the review's main event
+- [x] [TICKET-STAT-18](./tickets/TICKET-STAT-18-nullified-savings-exclusion.md) — Exclude nullified transactions from `savings`/`savingsRate` (bug fix, CR3-1.1, violates TICKET-TXN-04 — savings check runs before the nullified check) — small, do first
+- [x] [TICKET-TEST-02](./tickets/TICKET-TEST-02-first-review-spec-gaps.md) — Close the first review's remaining spec gaps (CR-9) — test-only, cheapest ticket here; safety net for PERF-04/PERF-05/IMP-06 below
+- [x] [TICKET-STAT-19](./tickets/TICKET-STAT-19-shared-stats-classifier.md) — Extract the shared per-transaction stats classifier (CR3-2.1, Fallow `dup:a29a2c00`/`dup:edea22f4`; both files accelerating hotspots) — needs TICKET-STAT-18; the review's main event
 - [ ] [TICKET-SOLID-05](./tickets/TICKET-SOLID-05-entity-stores-to-core.md) — Move shared entity stores to `core/state`, breaking all 20 barrel cycles (CR3-3; executes CR-6.1/CR2-4.1) — moderate, mostly mechanical, land in a quiet window
 - [ ] [TICKET-PERF-05](./tickets/TICKET-PERF-05-hydrate-on-demand.md) — Hydrate stores on demand instead of all upfront (CR-3.4 + CR-5.1 carried over) — largest-risk item, needs TICKET-SOLID-05 and TICKET-TEST-01's specs green
 - [ ] [TICKET-SOLID-06](./tickets/TICKET-SOLID-06-attribution-fieldset-extraction.md) — Extract the attribution-override fieldset from `transaction-edit-form` (+ O(1) transfer lookups) (CR3-2.2) — moderate, independent

@@ -1,6 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
-import { isSavingsMovement } from '@/core/transfers';
-import { resolveContribution, type JointLegContext } from './classify-joint-leg';
+import { classifyForStats } from './classify-for-stats';
 import { bucketKeysInRange } from './date-buckets';
 
 export type DayTypeSpend = {
@@ -17,19 +16,10 @@ export type WeekdayWeekendSplit = {
 /** Below this many calendar days, a weekday/weekend split can't be meaningful (one side may have zero days). */
 const MIN_DAYS_FOR_SPLIT = 2;
 
-const inRange = (transaction: Transaction, from: string, to: string): boolean =>
-  transaction.bookingDate >= from && transaction.bookingDate <= to;
-
 /** Sat/Sun on the UTC calendar date, same convention as the rest of `core/stats` (see `bucketKeyForDate`'s ISO-week math). */
 const isWeekendDate = (isoDate: string): boolean => {
   const day = new Date(`${isoDate}T00:00:00Z`).getUTCDay();
   return day === 0 || day === 6;
-};
-
-const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
-  transactionsById: new Map(),
-  accountsById: new Map(),
-  transfersById: new Map(),
 };
 
 /**
@@ -38,10 +28,9 @@ const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
  * a quiet weekday still pulls its average down (FR-STAT-10). Returns `null` when the range spans
  * fewer than 2 calendar days, since one side could otherwise have a zero day count.
  *
- * Expense classification mirrors `computePeriodStats` exactly (same `isSavingsMovement`/`transferId`/
- * `nullified` exclusions, same `resolveContribution` routing for joint/attribution-override accounts,
- * same `neutral`-category exclusion) so this can't drift into a fourth definition of "expense" —
- * only income-vs-expense sign selection differs, since this aggregate only cares about spend.
+ * Every per-transaction exclusion/routing/bucketing decision is delegated to the shared
+ * `classifyForStats` pipeline (CR3-2.1) — this aggregation only accumulates `expense`-classified
+ * amounts into the weekday/weekend bucket for the transaction's own `bookingDate`.
  */
 export const computeWeekdayWeekendSplit = (
   transactions: Transaction[],
@@ -63,36 +52,22 @@ export const computeWeekdayWeekendSplit = (
 
   let weekdayTotal = 0;
   let weekendTotal = 0;
-  const jointLegContext: JointLegContext = {
-    ...emptyJointLegContext,
-    categoriesById,
-    accountsById,
-  };
 
   for (const transaction of transactions) {
-    if (!inRange(transaction, from, to)) continue;
-    if (isSavingsMovement(transaction, ownSavingsIbans)) continue;
-    if (transaction.transferId != null) continue;
-    if (transaction.nullified) continue;
-
-    let expenseAmount: number;
-    const account = accountsById.get(transaction.accountId);
-    if (account && (account.type === 'joint' || transaction.attributionOverride)) {
-      const { weight, excluded } = resolveContribution(transaction, account, jointLegContext);
-      if (excluded || weight >= 0) continue;
-      expenseAmount = -weight;
-    } else {
-      const category =
-        transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined;
-      if (category?.kind === 'neutral') continue;
-      if (transaction.amount >= 0) continue;
-      expenseAmount = -transaction.amount;
-    }
+    const result = classifyForStats(
+      transaction,
+      from,
+      to,
+      ownSavingsIbans,
+      categoriesById,
+      accountsById,
+    );
+    if (result.kind !== 'expense') continue;
 
     if (isWeekendDate(transaction.bookingDate)) {
-      weekendTotal += expenseAmount;
+      weekendTotal += result.amount;
     } else {
-      weekdayTotal += expenseAmount;
+      weekdayTotal += result.amount;
     }
   }
 

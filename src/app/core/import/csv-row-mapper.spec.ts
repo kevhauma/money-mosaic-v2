@@ -1,6 +1,9 @@
 import { findMissingMappedColumns, mapRow, type RowMapOptions } from './csv-row-mapper';
 import type { MappingProfileColumns } from '@/core/data-access';
 
+// Convention (CR-9/TICKET-TEST-02): a new date format or amount/sign convention gets its table
+// entry here test-first, in the relevant `it.each` block below, before the parser supports it.
+
 const amountMapping: MappingProfileColumns = {
   date: 'Boekingsdatum',
   amount: 'Bedrag',

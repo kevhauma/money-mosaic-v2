@@ -10,6 +10,7 @@ import {
   type Transaction,
   type Transfer,
 } from '@/core/data-access';
+import { AccountDeletionService } from '@/core/accounts';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore, TransfersStore } from '@/feature-transactions';
 import { AccountsStore } from './accounts.store';
@@ -463,5 +464,78 @@ describe('AccountsStore: nullified transactions do not affect net worth (TICKET-
     // Same result as the equivalent non-nullified personal-mode override test above: nullified
     // only ever affects income/expense, never net worth.
     expect(accountsStore.netWorth()).toBe(-100);
+  });
+});
+
+describe('AccountsStore: removeAccount cascades to entities, transactions, and transfers stores (CR-1.1)', () => {
+  const accountsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const transfersRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const categoriesRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const accountDeletionService = { deleteAccount: vi.fn() };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    accountsRepository.getAll.mockResolvedValue([]);
+    transactionsRepository.getAll.mockResolvedValue([]);
+    transfersRepository.getAll.mockResolvedValue([]);
+    categoriesRepository.getAll.mockResolvedValue([]);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: TransfersRepository, useValue: transfersRepository },
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+        { provide: AccountDeletionService, useValue: accountDeletionService },
+      ],
+    });
+  });
+
+  it("removes the account row, its own transactions, and unlinks a cross-account transfer survivor — mirroring the delete-confirmation's promise", async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, name: 'Checking' }),
+      account({ id: 2, name: 'Savings' }),
+    ]);
+    const survivingTransfer: Transfer = {
+      id: 5,
+      fromTransactionId: 10,
+      toTransactionId: 20,
+      method: 'manual',
+      confidence: 'manual',
+      linkedAt: '2026-07-01T00:00:00.000Z',
+    };
+    transfersRepository.getAll.mockResolvedValue([survivingTransfer]);
+    accountDeletionService.deleteAccount.mockResolvedValue({
+      removedTransactionIds: [10, 11],
+      unlinkedTransferIds: [5],
+      clearedTransferTransactionIds: [20],
+    });
+
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    transactionsStore.addMany([
+      transaction({ id: 10, accountId: 1, transferId: 5 }),
+      transaction({ id: 11, accountId: 1 }),
+      // Cross-account survivor: belongs to account 2, was linked to a transaction on account 1.
+      transaction({ id: 20, accountId: 2, transferId: 5 }),
+    ]);
+    const transfersStore = TestBed.inject(TransfersStore);
+    await transfersStore.hydrate();
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    await accountsStore.removeAccount(1);
+
+    expect(accountDeletionService.deleteAccount).toHaveBeenCalledWith(1);
+    // Account row gone.
+    expect(accountsStore.accounts().map((a) => a.id)).toEqual([2]);
+    // Its own transactions gone; the cross-account survivor remains.
+    expect(transactionsStore.transactions().map((t) => t.id)).toEqual([20]);
+    // The survivor's transferId is cleared rather than left dangling.
+    expect(transactionsStore.transactions()[0].transferId).toBeUndefined();
+    // The transfer row itself is gone from the store.
+    expect(transfersStore.transfers()).toEqual([]);
   });
 });

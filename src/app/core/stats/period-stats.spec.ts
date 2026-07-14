@@ -599,4 +599,75 @@ describe('computePeriodStats: nullified exclusion (TICKET-TXN-04)', () => {
       computePeriodStats(transactions, '2026-07-01', '2026-07-31', new Set(), categoriesById),
     ).toEqual({ income: 0, expense: 0, savings: 0, net: 0, savingsRate: null });
   });
+
+  it('excludes a nullified savings deposit from savings/savingsRate too (CR3-1.1)', () => {
+    const transactions = [
+      transaction({ id: 1, amount: 1000 }),
+      transaction({
+        id: 2,
+        amount: -200,
+        counterpartyIban: SAVINGS_IBAN,
+        nullified: true,
+      }),
+    ];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31', ownSavings)).toEqual({
+      income: 1000,
+      expense: 0,
+      savings: 0,
+      net: 1000,
+      savingsRate: 0,
+    });
+  });
+
+  it('excludes a nullified savings withdrawal from savings/savingsRate too (CR3-1.1)', () => {
+    const transactions = [
+      transaction({ id: 1, amount: 1000 }),
+      transaction({
+        id: 2,
+        amount: 200,
+        counterpartyIban: SAVINGS_IBAN,
+        nullified: true,
+      }),
+    ];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31', ownSavings)).toEqual({
+      income: 1000,
+      expense: 0,
+      savings: 0,
+      net: 1000,
+      savingsRate: 0,
+    });
+  });
+
+  it('a non-nullified savings deposit is still counted (regression guard for the nullified/savings check order)', () => {
+    const transactions = [
+      transaction({ id: 1, amount: 1000 }),
+      transaction({ id: 2, amount: -200, counterpartyIban: SAVINGS_IBAN }),
+    ];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31', ownSavings)).toEqual({
+      income: 1000,
+      expense: 0,
+      savings: 200,
+      net: 1000,
+      savingsRate: 0.2,
+    });
+  });
+
+  it('a linked transfer leg to savings (not nullified) is still counted (regression guard, TICKET-TRF-02)', () => {
+    const transactions = [
+      transaction({ id: 1, amount: 1000 }),
+      transaction({ id: 2, amount: -200, transferId: 9, counterpartyIban: SAVINGS_IBAN }),
+      transaction({ id: 3, amount: 200, transferId: 9, counterpartyIban: 'BE00CHECKING' }),
+    ];
+
+    expect(computePeriodStats(transactions, '2026-07-01', '2026-07-31', ownSavings)).toEqual({
+      income: 1000,
+      expense: 0,
+      savings: 200,
+      net: 1000,
+      savingsRate: 0.2,
+    });
+  });
 });

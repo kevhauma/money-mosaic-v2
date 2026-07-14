@@ -4,6 +4,7 @@ import {
   appDb,
   ImportBatchesRepository,
   TransactionsRepository,
+  TransfersRepository,
   type ImportBatch,
   type Transaction,
 } from '@/core/data-access';
@@ -81,6 +82,43 @@ describe('ImportService: undoImport', () => {
     );
     expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([10, 11]);
     expect(ctx.importBatchesRepository.remove).toHaveBeenCalledWith(99);
+    expect(result).toEqual({ unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] });
+  });
+
+  it('undoImport unlinks a transfer whose other leg belongs to a different import batch', async () => {
+    // Batch 99's transaction (id 10) was auto-linked to transaction 20, which was imported in a
+    // different batch entirely — wired with the *real* TransferCleanupService (not a stub) so this
+    // test proves the surviving leg is actually found and unlinked, not just delegated to.
+    const removedTransactions: Partial<Transaction>[] = [{ id: 10, transferId: 5 }];
+    const transactionsRepository = {
+      getByImportBatch: vi.fn().mockResolvedValue(removedTransactions),
+      bulkRemove: vi.fn().mockResolvedValue(undefined),
+      update: vi.fn().mockResolvedValue(1),
+    };
+    const importBatchesRepository = {
+      remove: vi.fn().mockResolvedValue(undefined),
+    };
+    const transfersRepository = {
+      getByIds: vi.fn().mockResolvedValue([{ id: 5, fromTransactionId: 10, toTransactionId: 20 }]),
+      remove: vi.fn().mockResolvedValue(undefined),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        ImportService,
+        TransferCleanupService,
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
+        { provide: TransfersRepository, useValue: transfersRepository },
+      ],
+    });
+    const service = TestBed.inject(ImportService);
+
+    const result = await service.undoImport(99);
+
+    expect(transfersRepository.remove).toHaveBeenCalledWith(5);
+    expect(transactionsRepository.update).toHaveBeenCalledWith(20, { transferId: undefined });
+    expect(transactionsRepository.bulkRemove).toHaveBeenCalledWith([10]);
     expect(result).toEqual({ unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] });
   });
 });
@@ -296,5 +334,22 @@ describe('partitionByFingerprint: dedupe partitioning', () => {
     const { accepted, duplicateCount } = partitionByFingerprint(rows, new Set(['same|1']));
     expect(accepted).toEqual([{ fingerprint: 'same|2' }]);
     expect(duplicateCount).toBe(1);
+  });
+
+  // CR-9/TICKET-TEST-02: the occurrence-keyed dedupe has exactly two directions worth naming
+  // explicitly — same-fingerprint-twice-in-one-file, and re-import of an overlapping export. Both
+  // are already exercised above under other names; these pin the two directions by name.
+  it('direction 1 — same fingerprint twice in one file: both occurrences are accepted when neither is pre-existing', () => {
+    const rows = [{ fingerprint: 'dup' }, { fingerprint: 'dup' }];
+    const { accepted, duplicateCount } = partitionByFingerprint(rows, new Set());
+    expect(accepted).toEqual([{ fingerprint: 'dup|1' }, { fingerprint: 'dup|2' }]);
+    expect(duplicateCount).toBe(0);
+  });
+
+  it('direction 2 — re-import of an overlapping export: only the occurrences already stored are dropped, later ones in the same file are accepted', () => {
+    const rows = [{ fingerprint: 'dup' }, { fingerprint: 'dup' }, { fingerprint: 'dup' }];
+    const { accepted, duplicateCount } = partitionByFingerprint(rows, new Set(['dup|1', 'dup|2']));
+    expect(accepted).toEqual([{ fingerprint: 'dup|3' }]);
+    expect(duplicateCount).toBe(2);
   });
 });

@@ -25,12 +25,12 @@ Four spec gaps named by CR-9 remain open. They're pure test additions — no pro
 
 ## Acceptance criteria
 
-- [ ] `import.service.spec.ts` gains: "undoImport unlinks a transfer whose other leg belongs to a different import batch" (asserting the survivor's `transferId` is cleared and the transfer row removed).
-- [ ] A store-level spec pins `removeAccount`: account row gone, its transactions gone, cross-account transfer survivors unlinked, stores patched to match — mirroring the delete-confirmation's promise.
-- [ ] `partitionByFingerprint` (or its host's) spec names both duplicate-semantics cases explicitly.
-- [ ] Convention comment added to the `csv-row-mapper` spec tables ("add new formats here test-first").
-- [ ] All new specs use the existing fake-indexeddb global setup (`src/test-setup.ts`) where they touch Dexie — no per-spec polyfill wiring.
-- [ ] `ng test` passes; no production code changed (`git diff src/app --stat` shows spec/comment files only).
+- [x] `import.service.spec.ts` gains: "undoImport unlinks a transfer whose other leg belongs to a different import batch" (asserting the survivor's `transferId` is cleared and the transfer row removed).
+- [x] A store-level spec pins `removeAccount`: account row gone, its transactions gone, cross-account transfer survivors unlinked, stores patched to match — mirroring the delete-confirmation's promise.
+- [x] `partitionByFingerprint` (or its host's) spec names both duplicate-semantics cases explicitly.
+- [x] Convention comment added to the `csv-row-mapper` spec tables ("add new formats here test-first").
+- [x] All new specs use the existing fake-indexeddb global setup (`src/test-setup.ts`) where they touch Dexie — no per-spec polyfill wiring.
+- [x] `ng test` passes; no production code changed (`git diff src/app --stat` shows spec/comment files only).
 
 ## Notes
 
