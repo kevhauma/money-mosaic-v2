@@ -15,7 +15,7 @@ export type DateRangeInputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export const formatDisplayDate = (iso: string): string => {
   const [year, month, day] = iso.split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString();
+  return new Date(year, month - 1, day).toLocaleDateString('en-GB');
 };
 
 /** Presentational single-field date-range picker (a Cally `calendar-range` popover) — holds no state of its own; the caller owns the value and reacts to `valueChange`. */
