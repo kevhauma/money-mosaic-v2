@@ -1,11 +1,12 @@
 # MoneyMosaicVibe
 
-A local-first personal finance app. Import bank CSV exports, categorize transactions with rules, link inter-account transfers, and view dashboard stats — **no backend, no server, no account**. All data lives in [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (via [Dexie.js](https://dexie.org/)) inside your browser.
+A local-first personal finance app. Import bank CSV exports, categorize transactions with rules (or a trained auto-categoriser), link inter-account transfers, track joint/shared accounts, and view dashboard insights — **no backend, no server, no account**. All data lives in [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (via [Dexie.js](https://dexie.org/)) inside your browser.
 
 ## Stack
 
 - **Angular 21** — standalone components, Signals, zoneless-style `OnPush`
 - **@ngrx/signals** — component/feature stores
+- **@angular/cdk** — drag-drop (used for the dashboard's customizable row order)
 - **Dexie 4** — IndexedDB wrapper (schema in `src/app/core/data-access/app-db.ts`)
 - **Tailwind CSS 4 + daisyUI 5** — styling
 - **ngx-echarts** — charts
@@ -62,13 +63,17 @@ src/app/
   core/                  # cross-cutting logic: no UI
     data-access/         #   Dexie schema + repositories (only place that touches appDb tables)
     import/               #   CSV parsing/mapping (PapaParse Web Worker)
-    accounts/, categorisation/, stats/, transfers/
-  feature-accounts/       # feature modules — one per screen/domain
-  feature-categories/
+    ml/                    #   auto-categoriser: feature hashing, training worker, rule-proposal mining
+    accounts/, categorisation/, stats/, transactions/, transfers/
+  feature-accounts/       # feature modules — one per screen/domain (routed via app.routes.ts)
+  feature-categories/      #   also owns the trained category-model store/service
   feature-dashboard/
   feature-import/
+  feature-learning/        # /learning — auto-categoriser review UI (model status, suggestions, rule proposals)
   feature-transactions/
   shared/                 # shared UI components, pipes, utils
+    ui/                    #   mm-prefixed daisyUI wrapper primitives
+    echarts/               #   ECharts module registration + tooltip formatting
   dev-seed/               # dev-only sample-data seeding (tree-shaken from prod builds)
 ```
 
@@ -85,7 +90,7 @@ Rather than re-deriving these by exploring the code, read:
 | Feature/store/service map — what lives where | `.claude/skills/project-map/SKILL.md` |
 | Functional requirements (FR-TXN-\*, FR-CAT-\*, FR-TRF-\*, ...) | `docs/v1.0_foundation/finance-app-spec.md`, `docs/v1.0_foundation/overview.md` |
 | UI layout spec | `docs/v1.0_foundation/ui-layout-spec.md` |
-| v2+ backlog | `docs/v2/requirements.md` |
+| Requirements for other versions (joint accounts, auto-categorise, dashboard insights — all shipped; income growth, loan tracker, data management, v2+ — backlog) | `docs/<version>/overview.md`, one folder per version — see [Ticket system](#ticket-system) below |
 | Angular / Tailwind 4 / daisyUI / Vitest guidance | skills in `.agents/skills/` (managed by `npx skills`, tracked in `skills-lock.json`) |
 
 ## Ticket system
