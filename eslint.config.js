@@ -33,7 +33,7 @@ module.exports = defineConfig([
           style: 'kebab-case',
         },
       ],
-      '@angular-eslint/no-input-rename': ['error', { allowedNames: ['class'] }],
+      '@angular-eslint/no-input-rename': ['error', { allowedNames: ['class', 'style'] }],
     },
   },
   {

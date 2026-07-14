@@ -45,16 +45,16 @@ is unchanged; only the badge's colour becomes confidence-driven.
 
 ## Acceptance criteria
 
-- [ ] A pure function (unit-testable in isolation) maps a `0..1` confidence value to a red→green colour,
+- [x] A pure function (unit-testable in isolation) maps a `0..1` confidence value to a red→green colour,
       verified at `0`, `1`, and at least one midpoint.
 - [ ] The suggestions-table badge's colour visibly changes with `row.confidence` — a low-confidence row (e.g.
       near 0.5, the acceptance-threshold floor) reads visibly redder than a high-confidence row (e.g. near
       1.0), verified live in the browser with rows spanning the range.
 - [ ] Badge text stays legible against the interpolated colour at both the low and high ends of the range, in
       both light and dark theme.
-- [ ] No other badge usage in the app (e.g. `rule-proposals` or elsewhere) is affected — the gradient applies
+- [x] No other badge usage in the app (e.g. `rule-proposals` or elsewhere) is affected — the gradient applies
       only to the suggestions-table suggested-category badge.
-- [ ] Unit tests cover: the colour-interpolation function's boundary and midpoint values; the suggestions-table
+- [x] Unit tests cover: the colour-interpolation function's boundary and midpoint values; the suggestions-table
       component passing the correct computed colour/style per row.
 - [ ] Verified live in the browser: `/learning`'s suggestions table shows a visible red-to-green spread across
       rows of differing confidence.
