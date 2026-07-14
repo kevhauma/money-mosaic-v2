@@ -1,10 +1,21 @@
 <mm-page-header title="Dashboard">
+  <mm-button
+    title-adornment
+    #customizeToggle
+    variant="ghost"
+    size="sm"
+    shape="circle"
+    [ariaLabel]="customizeMode() ? 'Done customizing dashboard' : 'Customize dashboard'"
+    (click)="toggleCustomizeMode()"
+  >
+    <ng-icon
+      [name]="customizeMode() ? 'tablerCheck' : 'tablerPencil'"
+      size="16"
+      aria-hidden="true"
+    />
+  </mm-button>
   <div actions>
     <app-net-worth-header />
-    <mm-button #customizeToggle variant="outline" size="sm" (click)="toggleCustomizeMode()">
-      <ng-icon name="tablerAdjustments" size="16" aria-hidden="true" />
-      {{ customizeMode() ? 'Done' : 'Customize dashboard' }}
-    </mm-button>
   </div>
 </mm-page-header>
 

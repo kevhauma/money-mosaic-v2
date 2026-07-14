@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerAdjustments } from '@ng-icons/tabler-icons';
+import { tablerCheck, tablerPencil } from '@ng-icons/tabler-icons';
 import { RangeStore, type PeriodStats } from '@/core/stats';
 import { AccountsStore } from '@/feature-accounts';
 import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
@@ -49,7 +49,7 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' })
   ],
   templateUrl: './dashboard-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerAdjustments })],
+  viewProviders: [provideIcons({ tablerCheck, tablerPencil })],
 })
 export class DashboardOverviewComponent {
   protected readonly statsStore = inject(StatsStore);
