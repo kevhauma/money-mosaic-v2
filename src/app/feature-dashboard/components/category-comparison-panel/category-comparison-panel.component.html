@@ -39,19 +39,6 @@
           Top {{ categories().length }} expense categories vs. the nearest same-length periods.
         </p>
 
-        @if (biggestIncrease(); as inc) {
-          <mm-alert status="warning" variant="soft" class="mt-2">
-            <span class="text-sm">{{ inc.name }} is up {{ inc.deltaLabel }} vs. its average.</span>
-          </mm-alert>
-        }
-        @if (biggestDecrease(); as dec) {
-          <mm-alert status="success" variant="soft" class="mt-2">
-            <span class="text-sm"
-              >{{ dec.name }} is down {{ dec.deltaLabel }} vs. its average.</span
-            >
-          </mm-alert>
-        }
-
         <div class="mt-4 grid grid-cols-[repeat(auto-fit,minmax(275px,1fr))] gap-4">
           @for (category of categories(); track category.categoryId) {
             <div class="rounded-box border border-base-300 p-3">
@@ -64,9 +51,22 @@
                   <span class="truncate">{{ category.name }}</span>
                 </span>
                 @if (category.deltaLabel; as label) {
-                  <mm-badge [color]="category.deltaTone" variant="soft" size="sm">{{
-                    label
-                  }}</mm-badge>
+                  <span
+                    class="flex items-center gap-1 text-base font-bold"
+                    [class.text-warning]="category.deltaTone === 'warning'"
+                    [class.text-success]="category.deltaTone === 'success'"
+                  >
+                    <ng-icon
+                      [name]="
+                        category.deltaDirection === 'up'
+                          ? 'tablerTriangleFill'
+                          : 'tablerTriangleInvertedFill'
+                      "
+                      size="10"
+                      aria-hidden="true"
+                    />
+                    {{ label }}
+                  </span>
                 }
               </div>
 

@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { BadgeColor } from '@/shared/ui';
-import { AlertComponent, BadgeComponent, ButtonComponent } from '@/shared/ui';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler-icons/fill';
+import { ButtonComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
 import { CategoriesStore } from '@/feature-categories';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
@@ -26,9 +27,8 @@ type CategoryComparisonVm = {
   formattedHighest: string;
   formattedLowest: string;
   deltaLabel: string | null;
-  deltaTone: BadgeColor | undefined;
-  isBiggestIncrease: boolean;
-  isBiggestDecrease: boolean;
+  deltaTone: 'warning' | 'success' | undefined;
+  deltaDirection: 'up' | 'down' | null;
 };
 
 /** One row in the "exclude categories" checklist. */
@@ -39,10 +39,11 @@ type ExcludableCategoryVm = {
 };
 
 const EUR_FORMATTER = new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' });
+/** Sign is conveyed by the up/down triangle next to the number, not by the number itself. */
 const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
   style: 'percent',
   maximumFractionDigits: 0,
-  signDisplay: 'always',
+  signDisplay: 'never',
 });
 
 /**
@@ -56,9 +57,10 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
  */
 @Component({
   selector: 'app-category-comparison-panel',
-  imports: [RouterLink, AlertComponent, BadgeComponent, ButtonComponent],
+  imports: [RouterLink, NgIcon, ButtonComponent],
   templateUrl: './category-comparison-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ tablerTriangleFill, tablerTriangleInvertedFill })],
 })
 export class CategoryComparisonPanelComponent {
   private readonly statsStore = inject(StatsStore);
@@ -89,7 +91,7 @@ export class CategoryComparisonPanelComponent {
         };
       });
 
-      const deltaTone: BadgeColor | undefined =
+      const deltaTone: 'warning' | 'success' | undefined =
         entry.deltaVsAveragePct == null || entry.deltaVsAveragePct === 0
           ? undefined
           : entry.deltaVsAveragePct > 0
@@ -109,23 +111,15 @@ export class CategoryComparisonPanelComponent {
             ? null
             : PERCENT_FORMATTER.format(entry.deltaVsAveragePct),
         deltaTone,
-        isBiggestIncrease:
-          entry.categoryId === comparison.biggestIncreaseCategoryId &&
-          entry.deltaVsAveragePct != null,
-        isBiggestDecrease:
-          entry.categoryId === comparison.biggestDecreaseCategoryId &&
-          entry.deltaVsAveragePct != null,
+        deltaDirection:
+          entry.deltaVsAveragePct == null || entry.deltaVsAveragePct === 0
+            ? null
+            : entry.deltaVsAveragePct > 0
+              ? 'up'
+              : 'down',
       };
     });
   });
-
-  protected readonly biggestIncrease = computed(
-    () => this.categories().find((category) => category.isBiggestIncrease) ?? null,
-  );
-
-  protected readonly biggestDecrease = computed(
-    () => this.categories().find((category) => category.isBiggestDecrease) ?? null,
-  );
 
   private readonly excludedCategoryIds = computed(
     () => new Set(this.categoryComparisonSettingsStore.excludedCategoryIds()),
