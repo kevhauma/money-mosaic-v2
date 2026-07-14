@@ -21,7 +21,7 @@ Each bar in the category comparison panel's mini chart currently only shows its 
 ## Desired result (to-be)
 
 - `ComparisonBarVm` gains a `periodLabel: string` field, computed per bar as `formatAlignedRangeLabel(period.from, period.to) ?? \`${formatDisplayDate(period.from)} – ${formatDisplayDate(period.to)}\`` — reusing the exact same helper and fallback the global date-range picker already uses, so the two surfaces stay visually consistent (e.g. a monthly comparison window shows "July 2026" bars, matching what the topbar would show if you navigated to that month).
-- The tooltip (`data-tip`) shows both pieces of information, e.g. `"July 2026 · €120.00"`, so the amount is still the primary, most-scannable part of the tooltip.
+- The tooltip (`data-tip`) shows both pieces of information, e.g. `"July 2026 <br/> €120.00"`, so the amount is still the primary, most-scannable part of the tooltip.
 - No visual change to the bars themselves (height, colour, selected/unselected styling) — only the tooltip content changes.
 
 ## Acceptance criteria

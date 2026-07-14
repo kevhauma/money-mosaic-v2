@@ -60,26 +60,26 @@ validation (from ≤ to, etc.), and reads clearly on the Learning page ("Trainin
 
 ## Acceptance criteria
 
-- [ ] `CategoryModelStore` exposes `trainingWindowYears` (signal) and `setTrainingWindowYears()`; default is
+- [x] `CategoryModelStore` exposes `trainingWindowYears` (signal) and `setTrainingWindowYears()`; default is
       `null` (unrestricted, matching today's behaviour exactly — no regression for users who never touch
       this control).
-- [ ] `train()` excludes transactions older than `trainingWindowYears` years before "now" (when set) from
+- [x] `train()` excludes transactions older than `trainingWindowYears` years before "now" (when set) from
       `samples`, using an inclusive cutoff comparison on `transaction.date`.
-- [ ] The chosen window is persisted through `CategoryModelRepository` (not a direct `appDb` write) and
+- [x] The chosen window is persisted through `CategoryModelRepository` (not a direct `appDb` write) and
       restored on app reload.
-- [ ] `ModelStatusComponent`'s training-window control renders on the Learning page with preset options
+- [x] `ModelStatusComponent`'s training-window control renders on the Learning page with preset options
       (e.g. 1/2/3/5 years plus "All time"), updates the store on change, and "All time" clears back to
       unrestricted (`null`).
-- [ ] `labelledTransactionCount` / the "not enough data" copy use the same window-filtered sample count as
+- [x] `labelledTransactionCount` / the "not enough data" copy use the same window-filtered sample count as
       `train()` would, verified by a test that sets a narrow window and confirms both the displayed count and
       the eligibility gate (`MIN_TRAINING_LABELS`) move together.
-- [ ] Unit tests cover: `train()` with `trainingWindowYears = null` (unchanged all-history behaviour), `train()`
+- [x] Unit tests cover: `train()` with `trainingWindowYears = null` (unchanged all-history behaviour), `train()`
       with a window that excludes some but not all labelled transactions, a window that drops the sample count
       below `MIN_TRAINING_LABELS` (falls back to `'not-enough-data'`), and window persistence round-trip
       through the repository.
-- [ ] `categoryManual` and every other existing training/suggestion behaviour is unaffected when
+- [x] `categoryManual` and every other existing training/suggestion behaviour is unaffected when
       `trainingWindowYears` is `null`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

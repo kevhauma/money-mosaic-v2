@@ -17,6 +17,8 @@ export class BadgeComponent {
   readonly variant = input<BadgeVariant>('solid');
   readonly size = input<BadgeSize>('md');
   readonly class = input('', { alias: 'class' });
+  /** Opt-in inline style passthrough (e.g. a computed confidence gradient) — empty by default, no effect on existing callers. */
+  readonly style = input('', { alias: 'style' });
 
   protected readonly classes = computed(() =>
     daisyClasses(

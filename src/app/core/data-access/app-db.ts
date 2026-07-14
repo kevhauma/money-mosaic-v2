@@ -451,6 +451,22 @@ export type CategoryModelArtifact = {
   schemaVersion: number;
 };
 
+/**
+ * Singleton row (id always 1) for the user's chosen training-window preset (ML-17). Kept in its
+ * own table rather than as a field on `CategoryModelArtifact` because the preference must persist
+ * (and be changeable) even before a model has ever been trained, when no artifact row exists yet.
+ */
+export type CategoryModelSettings = {
+  id?: number;
+  /** `null` = unrestricted, train on the user's entire categorised history. */
+  trainingWindowYears: number | null;
+};
+
+export const DEFAULT_CATEGORY_MODEL_SETTINGS: CategoryModelSettings = {
+  id: 1,
+  trainingWindowYears: null,
+};
+
 class AppDb extends Dexie {
   accounts!: Table<Account, number>;
   transactions!: Table<Transaction, number>;
@@ -463,6 +479,7 @@ class AppDb extends Dexie {
   categoryModel!: Table<CategoryModelArtifact, 1>;
   categoryComparisonSettings!: Table<CategoryComparisonSettings, number>;
   dashboardLayoutSettings!: Table<DashboardLayoutSettings, number>;
+  categoryModelSettings!: Table<CategoryModelSettings, number>;
 
   constructor() {
     super('money-mosaic');
@@ -657,6 +674,25 @@ class AppDb extends Dexie {
       categoryModel: 'id',
       categoryComparisonSettings: 'id',
       dashboardLayoutSettings: 'id',
+    });
+
+    // Adds the `categoryModelSettings` singleton-row table for the training-window preset
+    // (TICKET-ML-17). Purely additive — a brand-new, empty table — so no `.upgrade()` is needed;
+    // the repository's `getSettings()` falls back to `DEFAULT_CATEGORY_MODEL_SETTINGS` when the
+    // row hasn't been written yet, same as `categoryComparisonSettings`/`dashboardLayoutSettings`.
+    this.version(10).stores({
+      accounts: '++id, name, type, archived',
+      transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+      transfers: '++id, fromTransactionId, toTransactionId',
+      categories: '++id, name, kind, archived',
+      rules: '++id, priority, enabled',
+      mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+      importBatches: '++id, accountId, importedAt',
+      transferSettings: 'id',
+      categoryModel: 'id',
+      categoryComparisonSettings: 'id',
+      dashboardLayoutSettings: 'id',
+      categoryModelSettings: 'id',
     });
 
     this.on('populate', () => {

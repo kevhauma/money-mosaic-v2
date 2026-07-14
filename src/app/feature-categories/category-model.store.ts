@@ -8,6 +8,7 @@ import {
   MODEL_SCHEMA_VERSION,
   RULE_PROPOSAL_MIN_CONFIDENCE,
   RULE_PROPOSAL_MIN_SUPPORT,
+  isWithinTrainingWindow,
   mineRuleProposals,
   taxonomySignature,
   type RuleProposal,
@@ -38,6 +39,8 @@ type CategoryModelState = {
   suggestions: Map<number, Suggestion>;
   ruleProposals: RuleProposal[];
   trainingProgress: TrainingProgress | null;
+  /** `null` = unrestricted (ML-17) — trains on the user's entire categorised history. */
+  trainingWindowYears: number | null;
 };
 
 const initialState: CategoryModelState = {
@@ -48,6 +51,7 @@ const initialState: CategoryModelState = {
   suggestions: new Map(),
   ruleProposals: [],
   trainingProgress: null,
+  trainingWindowYears: null,
 };
 
 /**
@@ -120,6 +124,9 @@ export const CategoryModelStore = signalStore(
     return {
       /** Loads a persisted model on app start (`app.config.ts`) and flips `ready`/`stale` per the current taxonomy. */
       hydrate: async (): Promise<void> => {
+        const settings = await repository.getSettings();
+        patchState(store, { trainingWindowYears: settings.trainingWindowYears });
+
         const artifact = await repository.get();
         if (!artifact) {
           patchState(store, { status: 'untrained' });
@@ -154,11 +161,14 @@ export const CategoryModelStore = signalStore(
         const activeCategoryIds = new Set(
           categoriesStore.activeCategories().map((category) => category.id!),
         );
+        const trainingWindowYears = store.trainingWindowYears();
         const samples = transactionsStore
           .transactions()
           .filter(
             (transaction) =>
-              transaction.categoryId != null && activeCategoryIds.has(transaction.categoryId),
+              transaction.categoryId != null &&
+              activeCategoryIds.has(transaction.categoryId) &&
+              isWithinTrainingWindow(transaction.bookingDate, trainingWindowYears),
           )
           .map((transaction) => ({
             rawDescription: transaction.rawDescription,
@@ -213,6 +223,12 @@ export const CategoryModelStore = signalStore(
       },
 
       refreshSuggestions,
+
+      /** Only affects the *next* Train/Retrain click (ML-17) — never auto-retrains on change. */
+      setTrainingWindowYears: async (trainingWindowYears: number | null): Promise<void> => {
+        patchState(store, { trainingWindowYears });
+        await repository.setTrainingWindowYears(trainingWindowYears);
+      },
 
       acceptSuggestion: async (transactionId: number): Promise<void> => {
         const suggestion = store.suggestions().get(transactionId);

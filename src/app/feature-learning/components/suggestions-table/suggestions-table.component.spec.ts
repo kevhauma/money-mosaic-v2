@@ -6,6 +6,7 @@ import type { Account, Category, Transaction } from '@/core/data-access';
 import { AccountsStore } from '@/feature-accounts';
 import { CategoriesStore, CategoryModelStore } from '@/feature-categories';
 import { TransactionsStore } from '@/feature-transactions';
+import { confidenceToColor } from '@/shared/utils';
 import { SuggestionsTableComponent } from './suggestions-table.component';
 
 const activeCategory = (id: number, name: string): Category => ({
@@ -143,6 +144,37 @@ describe('SuggestionsTableComponent', () => {
       .textContent;
     expect(badgeText).toContain('Groceries');
     expect(badgeText).toContain('84%');
+  });
+
+  it('colours the suggestion badge on a red-to-green gradient by confidence (FR-ML-16)', async () => {
+    await setup();
+    seedGroceries();
+    transactionsStore.uncategorisedTransactions.set([
+      uncategorisedTransaction(1),
+      uncategorisedTransaction(2),
+    ]);
+    categoryModelStore.suggestions.set(
+      new Map([
+        [1, { categoryId: 7, confidence: 0.5 }],
+        [2, { categoryId: 7, confidence: 1 }],
+      ]),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const badgeSpans = fixture.debugElement.queryAll(By.css('mm-badge span'));
+    const lowConfidenceBg = (badgeSpans[0].nativeElement as HTMLElement).style.backgroundColor;
+    const highConfidenceBg = (badgeSpans[1].nativeElement as HTMLElement).style.backgroundColor;
+
+    // Compare against the same colour run through the browser's own CSSOM normalisation, rather
+    // than a hand-computed hsl()→rgb() literal, so the assertion isn't coupled to jsdom's specific
+    // colour-serialisation format.
+    const reference = document.createElement('span');
+    reference.style.backgroundColor = confidenceToColor(0.5);
+    expect(lowConfidenceBg).toBe(reference.style.backgroundColor);
+    reference.style.backgroundColor = confidenceToColor(1);
+    expect(highConfidenceBg).toBe(reference.style.backgroundColor);
+    expect(lowConfidenceBg).not.toBe(highConfidenceBg);
   });
 
   it('the category select always starts at "Uncategorised", never pre-filled with the suggestion (FR-ML-13 feedback)', async () => {

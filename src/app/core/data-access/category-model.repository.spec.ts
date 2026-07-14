@@ -61,4 +61,36 @@ describe('CategoryModelRepository', () => {
     expect((await repository.get())?.metrics.accuracy).toBe(0.99);
     expect(await appDb.categoryModel.count()).toBe(1);
   });
+
+  describe('training window settings (ML-17)', () => {
+    afterEach(async () => {
+      await appDb.categoryModelSettings.clear();
+    });
+
+    it('getSettings falls back to the unrestricted default before anything is saved', async () => {
+      expect(await repository.getSettings()).toEqual({ id: 1, trainingWindowYears: null });
+    });
+
+    it('round-trips a chosen training window, independent of whether an artifact has ever been trained', async () => {
+      await repository.setTrainingWindowYears(2);
+
+      expect(await repository.getSettings()).toEqual({ id: 1, trainingWindowYears: 2 });
+      expect(await repository.get()).toBeUndefined();
+    });
+
+    it('setTrainingWindowYears overwrites the singleton row rather than adding a second one', async () => {
+      await repository.setTrainingWindowYears(1);
+      await repository.setTrainingWindowYears(5);
+
+      expect((await repository.getSettings()).trainingWindowYears).toBe(5);
+      expect(await appDb.categoryModelSettings.count()).toBe(1);
+    });
+
+    it('clears back to unrestricted (null)', async () => {
+      await repository.setTrainingWindowYears(3);
+      await repository.setTrainingWindowYears(null);
+
+      expect(await repository.getSettings()).toEqual({ id: 1, trainingWindowYears: null });
+    });
+  });
 });

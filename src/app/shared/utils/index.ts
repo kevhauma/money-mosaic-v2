@@ -10,3 +10,4 @@ export * from './search-params';
 export * from './iban';
 export * from './percentage';
 export * from './sortable';
+export * from './confidence-color';

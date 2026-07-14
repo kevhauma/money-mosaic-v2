@@ -25,6 +25,8 @@ type Internals = {
   buttonLabel: () => string;
   trainDisabled: () => boolean;
   train: () => void;
+  trainingWindowOptions: { years: number | null; label: string }[];
+  setTrainingWindow: (years: number | null) => void;
 };
 
 const activeCategory = (id: number): Category => ({
@@ -38,8 +40,11 @@ const activeCategory = (id: number): Category => ({
   isSystem: false,
 });
 
-const labelledTransaction = (id: number, categoryId: number | undefined): Transaction =>
-  ({ id, categoryId }) as Transaction;
+const labelledTransaction = (
+  id: number,
+  categoryId: number | undefined,
+  bookingDate = '2026-06-01',
+): Transaction => ({ id, categoryId, bookingDate }) as Transaction;
 
 describe('ModelStatusComponent', () => {
   let fixture: ComponentFixture<ModelStatusComponent>;
@@ -50,7 +55,9 @@ describe('ModelStatusComponent', () => {
     lastTrainedAt: signal<string | null>(null),
     categoryIdByIndex: signal<number[]>([]),
     trainingProgress: signal<TrainingProgress | null>(null),
+    trainingWindowYears: signal<number | null>(null),
     train: vi.fn().mockResolvedValue(undefined),
+    setTrainingWindowYears: vi.fn().mockResolvedValue(undefined),
   };
 
   const categoriesStore = {
@@ -68,6 +75,7 @@ describe('ModelStatusComponent', () => {
     categoryModelStore.lastTrainedAt.set(null);
     categoryModelStore.categoryIdByIndex.set([]);
     categoryModelStore.trainingProgress.set(null);
+    categoryModelStore.trainingWindowYears.set(null);
     categoriesStore.activeCategories.set([]);
     transactionsStore.transactions.set([]);
     await TestBed.configureTestingModule({
@@ -239,5 +247,78 @@ describe('ModelStatusComponent', () => {
     component.train();
 
     expect(categoryModelStore.train).toHaveBeenCalledExactlyOnceWith();
+  });
+
+  describe('training window (ML-17)', () => {
+    it('excludes labelled transactions older than the training window from labelledTransactionCount', async () => {
+      await setup();
+      categoriesStore.activeCategories.set([activeCategory(1)]);
+      categoryModelStore.trainingWindowYears.set(2);
+      transactionsStore.transactions.set([
+        labelledTransaction(1, 1, '2026-01-01'), // within the last 2 years
+        labelledTransaction(2, 1, '2010-01-01'), // well outside the window
+      ]);
+      const component = internals();
+
+      expect(component.labelledTransactionCount()).toBe(1);
+    });
+
+    it('labelledTransactionCount is unaffected when trainingWindowYears is null (unrestricted, no regression)', async () => {
+      await setup();
+      categoriesStore.activeCategories.set([activeCategory(1)]);
+      categoryModelStore.trainingWindowYears.set(null);
+      transactionsStore.transactions.set([
+        labelledTransaction(1, 1, '2026-01-01'),
+        labelledTransaction(2, 1, '2010-01-01'),
+      ]);
+      const component = internals();
+
+      expect(component.labelledTransactionCount()).toBe(2);
+    });
+
+    it('renders a training-window control with 1/2/3/5-year and "All time" options', async () => {
+      await setup();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const component = internals();
+      expect(component.trainingWindowOptions.map((option) => option.label)).toEqual([
+        '1y',
+        '2y',
+        '3y',
+        '5y',
+        'All time',
+      ]);
+
+      const buttons = fixture.nativeElement.querySelectorAll(
+        '[aria-label="Training window"] button',
+      ) as NodeListOf<HTMLButtonElement>;
+      expect(Array.from(buttons).map((button) => button.textContent?.trim())).toEqual([
+        '1y',
+        '2y',
+        '3y',
+        '5y',
+        'All time',
+      ]);
+    });
+
+    it('setTrainingWindow(years) calls CategoryModelStore.setTrainingWindowYears with that value', async () => {
+      await setup();
+      const component = internals();
+
+      component.setTrainingWindow(3);
+
+      expect(categoryModelStore.setTrainingWindowYears).toHaveBeenCalledExactlyOnceWith(3);
+    });
+
+    it('"All time" clears the window back to null', async () => {
+      await setup();
+      categoryModelStore.trainingWindowYears.set(5);
+      const component = internals();
+
+      component.setTrainingWindow(null);
+
+      expect(categoryModelStore.setTrainingWindowYears).toHaveBeenCalledExactlyOnceWith(null);
+    });
   });
 });

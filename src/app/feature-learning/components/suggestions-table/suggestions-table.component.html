@@ -47,7 +47,7 @@
               </select>
             </td>
             <td>
-              <mm-badge variant="outline" size="sm">
+              <mm-badge variant="outline" size="sm" [style]="confidenceBadgeStyle(row.confidence)">
                 {{ row.suggestedCategoryName }} ({{ row.confidence * 100 | number: '1.0-0' }}%)
               </mm-badge>
             </td>

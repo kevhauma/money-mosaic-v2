@@ -10,7 +10,12 @@ import {
   type Transaction,
 } from '@/core/data-access';
 import { RulesEngineService } from '@/core/categorisation';
-import { MIN_CATEGORIES, MIN_TRAINING_LABELS, taxonomySignature } from '@/core/ml';
+import {
+  MIN_CATEGORIES,
+  MIN_TRAINING_LABELS,
+  isWithinTrainingWindow,
+  taxonomySignature,
+} from '@/core/ml';
 import { TransactionsStore } from '@/feature-transactions';
 import { CategoriesStore } from './categories.store';
 import { RulesStore } from './rules.store';
@@ -62,7 +67,13 @@ const labeledTransactions = (): Transaction[] =>
   );
 
 describe('CategoryModelStore', () => {
-  const categoryModelRepository = { get: vi.fn(), save: vi.fn(), clear: vi.fn() };
+  const categoryModelRepository = {
+    get: vi.fn(),
+    save: vi.fn(),
+    clear: vi.fn(),
+    getSettings: vi.fn(),
+    setTrainingWindowYears: vi.fn(),
+  };
   const categoryModelService = { init: vi.fn(), train: vi.fn(), predict: vi.fn() };
   const categoriesRepository = { getAll: vi.fn() };
   const transactionsRepository = { getAll: vi.fn(), update: vi.fn(), bulkUpdate: vi.fn() };
@@ -72,6 +83,8 @@ describe('CategoryModelStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     categoryModelRepository.get.mockResolvedValue(undefined);
+    categoryModelRepository.getSettings.mockResolvedValue({ id: 1, trainingWindowYears: null });
+    categoryModelRepository.setTrainingWindowYears.mockResolvedValue(1);
     categoryModelService.init.mockResolvedValue(undefined);
     categoryModelService.predict.mockResolvedValue([]);
     categoriesRepository.getAll.mockResolvedValue([]);
@@ -316,6 +329,153 @@ describe('CategoryModelStore', () => {
 
       expect(store.status()).toBe('error');
       expect(store.trainingProgress()).toBeNull();
+    });
+  });
+
+  describe('training window (ML-17)', () => {
+    it('hydrate() loads the persisted trainingWindowYears setting', async () => {
+      categoryModelRepository.getSettings.mockResolvedValue({ id: 1, trainingWindowYears: 3 });
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+
+      await store.hydrate();
+
+      expect(store.trainingWindowYears()).toBe(3);
+    });
+
+    it('setTrainingWindowYears updates the signal and persists through the repository, not appDb directly', async () => {
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+
+      await store.setTrainingWindowYears(2);
+
+      expect(store.trainingWindowYears()).toBe(2);
+      expect(categoryModelRepository.setTrainingWindowYears).toHaveBeenCalledExactlyOnceWith(2);
+    });
+
+    it('train() with trainingWindowYears null trains on the entire labelled history, unchanged from pre-ML-17 behaviour', async () => {
+      categoriesRepository.getAll.mockResolvedValue([
+        category({ id: 1 }),
+        category({ id: 2, name: 'Rent' }),
+      ]);
+      const oldAndNew = [
+        ...labeledTransactions(),
+        transaction({
+          id: MIN_TRAINING_LABELS + 1,
+          categoryId: 1,
+          bookingDate: '2010-01-01',
+          fingerprint: 'fp-old',
+        }),
+      ];
+      transactionsRepository.getAll.mockResolvedValue(oldAndNew);
+      categoryModelService.train.mockResolvedValue({
+        type: 'TRAIN_OK',
+        artifacts: {
+          modelTopology: new ArrayBuffer(0),
+          weightSpecs: new ArrayBuffer(0),
+          weightData: new ArrayBuffer(0),
+          categoryIdByIndex: [1, 2],
+        },
+        metrics: { accuracy: 0.9, trainedSampleCount: oldAndNew.length },
+      });
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+
+      await store.train();
+
+      expect(categoryModelService.train).toHaveBeenCalledTimes(1);
+      const [samples] = categoryModelService.train.mock.calls[0];
+      expect(samples).toHaveLength(oldAndNew.length);
+    });
+
+    it('train() excludes labelled transactions older than the window from the built samples', async () => {
+      categoriesRepository.getAll.mockResolvedValue([
+        category({ id: 1 }),
+        category({ id: 2, name: 'Rent' }),
+      ]);
+      const recent = labeledTransactions(); // all bookingDate '2026-06-01', within any 1+ year window
+      const old = Array.from({ length: 5 }, (_, i) =>
+        transaction({
+          id: MIN_TRAINING_LABELS + i + 1,
+          categoryId: 1,
+          bookingDate: '2010-01-01',
+          fingerprint: `fp-old-${i}`,
+        }),
+      );
+      transactionsRepository.getAll.mockResolvedValue([...recent, ...old]);
+      categoryModelService.train.mockResolvedValue({
+        type: 'TRAIN_OK',
+        artifacts: {
+          modelTopology: new ArrayBuffer(0),
+          weightSpecs: new ArrayBuffer(0),
+          weightData: new ArrayBuffer(0),
+          categoryIdByIndex: [1, 2],
+        },
+        metrics: { accuracy: 0.9, trainedSampleCount: recent.length },
+      });
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+      await store.setTrainingWindowYears(1);
+
+      await store.train();
+
+      expect(categoryModelService.train).toHaveBeenCalledTimes(1);
+      const [samples] = categoryModelService.train.mock.calls[0];
+      expect(samples).toHaveLength(recent.length);
+    });
+
+    it('train() falls back to not-enough-data when the window excludes enough samples to drop below MIN_TRAINING_LABELS', async () => {
+      categoriesRepository.getAll.mockResolvedValue([
+        category({ id: 1 }),
+        category({ id: 2, name: 'Rent' }),
+      ]);
+      const allOld = labeledTransactions().map((t) => ({ ...t, bookingDate: '2010-01-01' }));
+      transactionsRepository.getAll.mockResolvedValue(allOld);
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+      await store.setTrainingWindowYears(1);
+
+      await store.train();
+
+      expect(store.status()).toBe('not-enough-data');
+      expect(categoryModelService.train).not.toHaveBeenCalled();
+    });
+
+    it("the window-filtered sample count (what ModelStatusComponent.labelledTransactionCount displays) and train()'s eligibility gate move together", async () => {
+      categoriesRepository.getAll.mockResolvedValue([
+        category({ id: 1 }),
+        category({ id: 2, name: 'Rent' }),
+      ]);
+      // One short of MIN_TRAINING_LABELS within the window, plus enough old ones that the
+      // *unfiltered* total clears the floor — proving the gate reacts to the filtered count, not
+      // the raw one.
+      const recent = Array.from({ length: MIN_TRAINING_LABELS - 1 }, (_, i) =>
+        transaction({ id: i + 1, categoryId: (i % 2) + 1, fingerprint: `fp-recent-${i}` }),
+      );
+      const old = Array.from({ length: 10 }, (_, i) =>
+        transaction({
+          id: MIN_TRAINING_LABELS + i + 1,
+          categoryId: 1,
+          bookingDate: '2010-01-01',
+          fingerprint: `fp-old-${i}`,
+        }),
+      );
+      const all = [...recent, ...old];
+      transactionsRepository.getAll.mockResolvedValue(all);
+      await hydrateCollaborators();
+      const store = TestBed.inject(CategoryModelStore);
+      await store.setTrainingWindowYears(1);
+
+      // The same filter ModelStatusComponent.labelledTransactionCount applies.
+      const displayedCount = all.filter(
+        (t) => t.categoryId != null && isWithinTrainingWindow(t.bookingDate, 1),
+      ).length;
+      expect(displayedCount).toBe(MIN_TRAINING_LABELS - 1);
+
+      await store.train();
+
+      expect(store.status()).toBe('not-enough-data');
+      expect(categoryModelService.train).not.toHaveBeenCalled();
     });
   });
 

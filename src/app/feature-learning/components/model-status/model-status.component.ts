@@ -6,7 +6,7 @@ import {
   type CategoryModelStatus,
 } from '@/feature-categories';
 import { TransactionsStore } from '@/feature-transactions';
-import { MIN_CATEGORIES, MIN_TRAINING_LABELS } from '@/core/ml';
+import { isWithinTrainingWindow, MIN_CATEGORIES, MIN_TRAINING_LABELS } from '@/core/ml';
 import {
   AlertComponent,
   BadgeComponent,
@@ -47,6 +47,15 @@ const BADGE_COLOR: Partial<Record<CategoryModelStatus, BadgeColor>> = {
   stale: 'warning',
   error: 'error',
 };
+
+/** Training-window presets (FR-ML-17) — `null` = "All time", the pre-ML-17 unrestricted default. */
+const TRAINING_WINDOW_OPTIONS: { years: number | null; label: string }[] = [
+  { years: 1, label: '1y' },
+  { years: 2, label: '2y' },
+  { years: 3, label: '3y' },
+  { years: 5, label: '5y' },
+  { years: null, label: 'All time' },
+];
 
 /** Model status chip + diagnostic detail + Train/Retrain control (FR-ML-10, expanded by FR-ML-12), mounted on the Learning page. */
 @Component({
@@ -96,20 +105,30 @@ export class ModelStatusComponent {
   );
 
   /**
-   * Categorised transactions in an active category right now — mirrors `CategoryModelStore.train()`'s
-   * own sample-counting logic so the `'not-enough-data'` copy shows the same numbers training would use.
+   * Categorised transactions in an active category right now, within the current training window
+   * (ML-17) — mirrors `CategoryModelStore.train()`'s own sample-counting logic so the
+   * `'not-enough-data'` copy shows the same numbers training would use.
    */
   protected readonly labelledTransactionCount = computed(() => {
     const activeCategoryIds = new Set(
       this.categoriesStore.activeCategories().map((category) => category.id!),
     );
+    const trainingWindowYears = this.categoryModelStore.trainingWindowYears();
     return this.transactionsStore
       .transactions()
       .filter(
         (transaction) =>
-          transaction.categoryId != null && activeCategoryIds.has(transaction.categoryId),
+          transaction.categoryId != null &&
+          activeCategoryIds.has(transaction.categoryId) &&
+          isWithinTrainingWindow(transaction.bookingDate, trainingWindowYears),
       ).length;
   });
+
+  protected readonly trainingWindowOptions = TRAINING_WINDOW_OPTIONS;
+
+  protected setTrainingWindow(years: number | null): void {
+    void this.categoryModelStore.setTrainingWindowYears(years);
+  }
 
   /** Only `'stale'` relabels the button to "Retrain" — every other status, including `'ready'`, keeps "Train". */
   protected readonly buttonLabel = computed(() =>

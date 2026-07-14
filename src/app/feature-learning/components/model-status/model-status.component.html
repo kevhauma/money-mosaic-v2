@@ -1,4 +1,4 @@
-<mm-alert [status]="alertStatus()" class="mb-4 flex items-center justify-between gap-3">
+<mm-alert [status]="alertStatus()" class="mb-3 flex items-center gap-3">
   <div class="flex items-center gap-2">
     @switch (categoryModelStore.status()) {
       @case ('training') {
@@ -46,7 +46,28 @@
       }
     }
   </div>
-  <mm-button size="sm" [disabled]="trainDisabled()" (click)="train()">
+</mm-alert>
+
+<div
+  class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-box border border-base-300 bg-base-100 px-4 py-3"
+>
+  <div class="flex items-center gap-2">
+    <span class="text-sm text-base-content/60">Training window</span>
+    <div class="join" role="group" aria-label="Training window">
+      @for (option of trainingWindowOptions; track option.years) {
+        <button
+          type="button"
+          class="btn btn-sm join-item"
+          [class.btn-primary]="categoryModelStore.trainingWindowYears() === option.years"
+          [class.btn-outline]="categoryModelStore.trainingWindowYears() !== option.years"
+          (click)="setTrainingWindow(option.years)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </div>
+  <mm-button [disabled]="trainDisabled()" (click)="train()">
     {{ buttonLabel() }}
   </mm-button>
-</mm-alert>
+</div>

@@ -10,7 +10,7 @@ import {
   EmptyStateComponent,
   PaginatorComponent,
 } from '@/shared/ui';
-import { createPagination, SignedAmountPipe } from '@/shared/utils';
+import { confidenceToColor, createPagination, SignedAmountPipe } from '@/shared/utils';
 
 /** Rows rendered per page — same size as the transactions table (CR-2.1). */
 const PAGE_SIZE = 50;
@@ -85,6 +85,17 @@ export class SuggestionsTableComponent {
   /** Dismisses the suggestion without categorising the transaction — the first UI caller of this ML-07 method. */
   protected dismissSuggestion(transactionId: number): void {
     this.categoryModelStore.dismissSuggestion(transactionId);
+  }
+
+  /**
+   * Red→green gradient by confidence (FR-ML-16). Fixed `white` text (not a daisyUI token —
+   * intentional exception, same rationale as `confidenceToColor`'s computed background: a
+   * continuous data-driven value can't be expressed as a discrete theme token) keeps both ends
+   * of the gradient legible.
+   */
+  protected confidenceBadgeStyle(confidence: number): string {
+    const color = confidenceToColor(confidence);
+    return `background-color: ${color}; border-color: ${color}; color: white;`;
   }
 
   /**
