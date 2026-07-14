@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
+import { CategoriesRepository, type Category } from '@/core/data-access';
 import { pickGranularityForSpan, RangeStore } from '@/core/stats';
+import { CategoriesStore } from '@/feature-categories';
+import { TransactionsStore } from '@/feature-transactions';
 import { echarts } from '@/shared/echarts';
 import { TrendChartPanelComponent } from './trend-chart-panel.component';
 
@@ -13,14 +16,40 @@ class ResizeObserverStub {
 }
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
 
+const groceries: Category = {
+  id: 1,
+  name: 'Groceries',
+  kind: 'expense',
+  color: '#ff0000',
+  icon: 'shopping-cart',
+  archived: false,
+  isSystem: false,
+};
+
+const salary: Category = {
+  id: 2,
+  name: 'Salary',
+  kind: 'income',
+  color: '#00ff00',
+  icon: 'cash',
+  archived: false,
+  isSystem: false,
+};
+
 describe('TrendChartPanelComponent', () => {
   let fixture: ComponentFixture<TrendChartPanelComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TrendChartPanelComponent],
-      providers: [provideRouter([]), provideEchartsCore({ echarts })],
+      providers: [
+        provideRouter([]),
+        provideEchartsCore({ echarts }),
+        { provide: CategoriesRepository, useValue: { add: vi.fn().mockResolvedValue(1) } },
+      ],
     }).compileComponents();
+
+    TestBed.inject(RangeStore).setCustomRange('2026-01-01', '2026-02-28');
 
     fixture = TestBed.createComponent(TrendChartPanelComponent);
     await fixture.whenStable();
@@ -30,18 +59,6 @@ describe('TrendChartPanelComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders income/expense as 2-decimal EUR through the shared tooltip formatter (TICKET-STAT-12)', () => {
-    const option = fixture.componentInstance['chartOption']();
-    const tooltip = option['tooltip'] as { formatter: (params: unknown) => string };
-
-    const result = tooltip.formatter([
-      { axisValueLabel: '2026-07', marker: '●', seriesName: 'Income', value: 1234.5600000000002 },
-      { axisValueLabel: '2026-07', marker: '●', seriesName: 'Expense', value: -50 },
-    ]);
-
-    expect(result).toBe('2026-07<br/>●Income: €1,234.56<br/>●Expense: -€50.00');
-  });
-
   it('defaults its local granularity control from pickGranularityForSpan for the current shared date range (TICKET-STAT-15)', () => {
     const rangeStore = TestBed.inject(RangeStore);
     const expected = pickGranularityForSpan(rangeStore.from(), rangeStore.to());
@@ -49,18 +66,128 @@ describe('TrendChartPanelComponent', () => {
     expect(fixture.componentInstance['granularity']()).toBe(expected);
   });
 
-  it("changing its local granularity control changes only its own chart's buckets (TICKET-STAT-15)", () => {
+  it("changing its local granularity control changes both charts' buckets (TICKET-STAT-15)", async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-01-10',
+        amount: -50,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-1',
+        createdAt: '2026-01-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+    ]);
+
     fixture.componentInstance['granularity'].set('day');
-    const bucketCountAsDay = (
-      fixture.componentInstance['chartOption']()['xAxis'] as { data: string[] }
+    const dayBucketCount = (
+      fixture.componentInstance['expenseChartOption']()['xAxis'] as { data: string[] }
     ).data.length;
 
     fixture.componentInstance['granularity'].set('month');
-    const bucketCountAsMonth = (
-      fixture.componentInstance['chartOption']()['xAxis'] as { data: string[] }
+    const monthBucketCount = (
+      fixture.componentInstance['expenseChartOption']()['xAxis'] as { data: string[] }
+    ).data.length;
+    const incomeMonthBucketCount = (
+      fixture.componentInstance['incomeChartOption']()['xAxis'] as { data: string[] }
     ).data.length;
 
-    expect(bucketCountAsMonth).toBe(1);
-    expect(bucketCountAsMonth).not.toBe(bucketCountAsDay);
+    expect(monthBucketCount).toBe(2);
+    expect(incomeMonthBucketCount).toBe(2);
+    expect(monthBucketCount).not.toBe(dayBucketCount);
+  });
+
+  it('renders one stacked bar series per top-N category, coloured with the category color', async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-01-10',
+        amount: -50,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-1',
+        createdAt: '2026-01-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+    ]);
+
+    const option = fixture.componentInstance['expenseChartOption']() as {
+      series: { name: string; stack: string; itemStyle: { color: string } }[];
+    };
+
+    expect(option.series).toHaveLength(1);
+    expect(option.series[0].name).toBe('Groceries');
+    expect(option.series[0].stack).toBe('expense');
+    expect(option.series[0].itemStyle.color).toBe('#ff0000');
+  });
+
+  it('renders both charts on the same shared y-axis max', async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    await TestBed.inject(CategoriesStore).addCategory(salary);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-01-10',
+        amount: -50,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-1',
+        createdAt: '2026-01-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+      {
+        id: 2,
+        accountId: 1,
+        bookingDate: '2026-01-15',
+        amount: 3000,
+        currency: 'EUR',
+        rawDescription: 'Payroll',
+        fingerprint: 'fp-2',
+        createdAt: '2026-01-15T00:00:00.000Z',
+        categoryId: 2,
+      },
+    ]);
+
+    const expenseMax = (
+      fixture.componentInstance['expenseChartOption']()['yAxis'] as { max: number }
+    ).max;
+    const incomeMax = (fixture.componentInstance['incomeChartOption']()['yAxis'] as { max: number })
+      .max;
+
+    expect(expenseMax).toBe(3000);
+    expect(incomeMax).toBe(3000);
+  });
+
+  it('clicking a stacked segment navigates to /transactions filtered by that bucket range and category', async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-01-10',
+        amount: -50,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-1',
+        createdAt: '2026-01-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+    ]);
+    fixture.componentInstance['granularity'].set('month');
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    fixture.componentInstance['onExpenseChartClick']({ seriesIndex: 0, dataIndex: 0 } as never);
+
+    expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/transactions'], {
+      queryParams: { from: '2026-01-01', to: '2026-01-31', categoryId: '1' },
+    });
   });
 });

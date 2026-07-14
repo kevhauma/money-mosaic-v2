@@ -13,7 +13,7 @@ import { daisyClasses } from '@/shared/utils';
 export type DateRangeValue = { from: string; to: string };
 export type DateRangeInputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-const formatDisplayDate = (iso: string): string => {
+export const formatDisplayDate = (iso: string): string => {
   const [year, month, day] = iso.split('-').map(Number);
   return new Date(year, month - 1, day).toLocaleDateString();
 };

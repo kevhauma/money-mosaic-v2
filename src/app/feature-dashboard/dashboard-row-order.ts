@@ -5,7 +5,8 @@ export const DASHBOARD_ROW_LABELS: Record<DashboardRowId, string> = {
   'weekday-weekend': 'Weekday vs. weekend split',
   'category-breakdown': 'Category breakdown',
   'category-comparison': 'Category period comparison',
-  'trend-top-transactions': 'Trend chart & biggest transactions',
+  'trend-chart': 'Trend chart',
+  'top-transactions': 'Biggest transactions',
   'action-queue': 'Action queue',
   'account-balance': 'Account balances',
 };

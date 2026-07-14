@@ -4,11 +4,27 @@
       <h2 class="card-title text-base">Trend</h2>
       <mm-granularity-picker [value]="granularity()" (valueChange)="granularity.set($event)" />
     </div>
-    <div
-      echarts
-      [options]="chartOption()"
-      (chartClick)="onChartClick($event)"
-      class="h-72 w-full"
-    ></div>
+
+    <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div>
+        <h3 class="text-sm font-medium text-base-content/70">Income</h3>
+        <div
+          echarts
+          [options]="incomeChartOption()"
+          (chartClick)="onIncomeChartClick($event)"
+          class="h-72 w-full"
+        ></div>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-medium text-base-content/70">Expense</h3>
+        <div
+          echarts
+          [options]="expenseChartOption()"
+          (chartClick)="onExpenseChartClick($event)"
+          class="h-72 w-full"
+        ></div>
+      </div>
+    </div>
   </div>
 </div>

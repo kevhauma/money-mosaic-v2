@@ -26,12 +26,12 @@ Each bar in the category comparison panel's mini chart currently only shows its 
 
 ## Acceptance criteria
 
-- [ ] `category-comparison-panel.component.ts` computes `periodLabel` per bar using `formatAlignedRangeLabel` (falling back to formatted `from`–`to` dates), not a re-implementation of the week/month formatting logic.
-- [ ] The bar's `data-tip` includes the period label alongside the existing formatted total.
-- [ ] Unit tests in `category-comparison-panel.component.spec.ts` cover: a week-aligned window period renders `"W<n> <year>"` in the label, a month-aligned window period renders `"<Month> <year>"`, and a non-calendar-aligned (day-count/rolling) window period falls back to the formatted date range.
-- [ ] No change to `computeComparisonWindow()` or `computeCategoryPeriodComparison()` — this is presentation-only, reusing the window periods' existing `from`/`to`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: hovering a bar in the category comparison panel for a monthly range shows the month/year in the tooltip; for a weekly range shows `W<n> <year>`.
+- [x] `category-comparison-panel.component.ts` computes `periodLabel` per bar using `formatAlignedRangeLabel` (falling back to formatted `from`–`to` dates), not a re-implementation of the week/month formatting logic.
+- [x] The bar's `data-tip` includes the period label alongside the existing formatted total.
+- [x] Unit tests in `category-comparison-panel.component.spec.ts` cover: a week-aligned window period renders `"W<n> <year>"` in the label, a month-aligned window period renders `"<Month> <year>"`, and a non-calendar-aligned (day-count/rolling) window period falls back to the formatted date range.
+- [x] No change to `computeComparisonWindow()` or `computeCategoryPeriodComparison()` — this is presentation-only, reusing the window periods' existing `from`/`to`.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: hovering a bar in the category comparison panel for a monthly range shows the month/year in the tooltip; for a weekly range shows `W<n> <year>`.
 
 ## Notes
 

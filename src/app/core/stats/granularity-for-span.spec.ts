@@ -14,7 +14,11 @@ describe('pickGranularityForSpan', () => {
   });
 
   it('picks quarter for a multi-year span', () => {
-    expect(pickGranularityForSpan('2010-01-01', '2026-01-01')).toBe('quarter');
+    expect(pickGranularityForSpan('2019-01-01', '2026-01-01')).toBe('quarter');
+  });
+
+  it('picks year for a decades-long span', () => {
+    expect(pickGranularityForSpan('2000-01-01', '2026-01-01')).toBe('year');
   });
 
   it('stays inclusive at the day/week threshold boundary (120 days)', () => {
@@ -30,5 +34,10 @@ describe('pickGranularityForSpan', () => {
   it('stays inclusive at the month/quarter threshold boundary (1826 days)', () => {
     expect(pickGranularityForSpan('2020-01-01', '2024-12-31')).toBe('month');
     expect(pickGranularityForSpan('2020-01-01', '2025-01-01')).toBe('quarter');
+  });
+
+  it('stays inclusive at the quarter/year threshold boundary (3653 days)', () => {
+    expect(pickGranularityForSpan('2016-01-01', '2026-01-01')).toBe('quarter');
+    expect(pickGranularityForSpan('2016-01-01', '2026-01-02')).toBe('year');
   });
 });

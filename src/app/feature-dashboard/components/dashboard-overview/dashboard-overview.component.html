@@ -71,11 +71,11 @@
         @case ('category-comparison') {
           <app-category-comparison-panel />
         }
-        @case ('trend-top-transactions') {
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <app-trend-chart-panel />
-            <app-top-transactions-panel />
-          </div>
+        @case ('trend-chart') {
+          <app-trend-chart-panel />
+        }
+        @case ('top-transactions') {
+          <app-top-transactions-panel />
         }
         @case ('action-queue') {
           <app-action-queue-panel />

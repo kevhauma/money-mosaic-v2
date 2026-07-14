@@ -44,4 +44,31 @@ describe('GranularityPickerComponent', () => {
     expect(monthButton?.classList.contains('btn-active')).toBe(true);
     expect(dayButton?.classList.contains('btn-active')).toBe(false);
   });
+
+  it('offers a Year bucket option alongside day/week/month/quarter', () => {
+    fixture.detectChanges();
+
+    const buttons: HTMLButtonElement[] = [
+      ...fixture.nativeElement.querySelectorAll('.join button'),
+    ];
+    expect(buttons.map((button) => button.textContent.trim())).toEqual([
+      'Day',
+      'Week',
+      'Month',
+      'Quarter',
+      'Year',
+    ]);
+  });
+
+  it('emits "year" when the Year button is clicked', () => {
+    const emitSpy = vi.fn();
+    component.valueChange.subscribe(emitSpy);
+    fixture.detectChanges();
+
+    const buttons = fixture.nativeElement.querySelectorAll('.join button');
+    const yearButton = [...buttons].find((button) => button.textContent.trim() === 'Year');
+    yearButton.click();
+
+    expect(emitSpy).toHaveBeenCalledWith('year');
+  });
 });

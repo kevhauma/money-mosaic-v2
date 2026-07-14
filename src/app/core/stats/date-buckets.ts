@@ -1,4 +1,4 @@
-export type Granularity = 'day' | 'week' | 'month' | 'quarter';
+export type Granularity = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 export type RangePreset =
   | 'this-week'
@@ -46,6 +46,7 @@ const isoWeekStart = (year: number, week: number): Date => {
  *   week:    ISO-8601 week, YYYY-Www (e.g. 2026-W27), Monday-start
  *   month:   YYYY-MM (e.g. 2026-07)
  *   quarter: YYYY-Qn (e.g. 2026-Q3)
+ *   year:    YYYY (e.g. 2026)
  */
 export const bucketKeyForDate = (isoDate: string, granularity: Granularity): string => {
   const date = parseIsoDate(isoDate);
@@ -64,6 +65,8 @@ export const bucketKeyForDate = (isoDate: string, granularity: Granularity): str
       const quarter = Math.floor(date.getUTCMonth() / 3) + 1;
       return `${year}-Q${quarter}`;
     }
+    case 'year':
+      return `${date.getUTCFullYear()}`;
   }
 };
 
@@ -96,6 +99,12 @@ export const bucketDateBoundaries = (
       const startMonth = (quarter - 1) * 3;
       const start = new Date(Date.UTC(year, startMonth, 1));
       const end = new Date(Date.UTC(year, startMonth + 3, 0));
+      return { start: formatIsoDate(start), end: formatIsoDate(end) };
+    }
+    case 'year': {
+      const year = Number(bucketKey);
+      const start = new Date(Date.UTC(year, 0, 1));
+      const end = new Date(Date.UTC(year, 11, 31));
       return { start: formatIsoDate(start), end: formatIsoDate(end) };
     }
   }

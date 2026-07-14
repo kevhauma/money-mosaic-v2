@@ -43,20 +43,20 @@ As a user reviewing my dashboard trend, I want income and expense shown as two s
 
 ## Acceptance criteria
 
-- [ ] `computeCategoryCompositionTrend()` exists in `core/stats/category-composition-trend.ts`, exported via `core/stats`'s barrel, and reuses `computeCategoryBreakdown()` internally (one whole-range call for top-N selection + one call per bucket) rather than reimplementing any transfer/nullified/savings-movement/joint-ownership/signed-netting logic.
-- [ ] Top-N category selection (expense and income independently) is stable across buckets — the same set of categories/colours is plotted in every bucket for a given render, even when a category has zero activity in some buckets (series values stay aligned to `bucketKeys` length, `0` not a missing entry).
-- [ ] A category outside the top-N never appears in any bucket's series; the aggregate produces identical per-bucket totals to calling `computeCategoryBreakdown()` directly for that bucket's `[from, to]` (no drift between the two).
-- [ ] `trend-chart-panel` shows two independent **stacked bar** charts (Income, Expense) side by side on desktop (`≥1024px`), stacked to 1 column on mobile/tablet, each bar segmented by category.
-- [ ] Both charts render on the **same y-axis scale** (shared `max`, not independently auto-scaled) so bar heights are visually comparable between the two.
-- [ ] Each stacked segment uses the same category colour shown elsewhere on the dashboard (`category.color`, with the existing uncategorised grey fallback for the `categoryId === null` entry when it ranks in the top-N).
-- [ ] The dead, unused second `yAxis` ("Net worth") from the old combined chart is removed.
-- [ ] The existing single shared `mm-granularity-picker` still drives both charts' bucketing (no duplicate/second picker).
-- [ ] Clicking a segment in either chart navigates to `/transactions` filtered to that bucket's date range **and** that category.
-- [ ] `computeTrendBuckets()` and its spec are removed (confirmed dead by `fallow dead-code --trace` prior to this ticket — its only consumer was `trend-chart-panel`); `fallow dead-code` re-run clean afterward with no residual unused export.
-- [ ] Unit tests cover `computeCategoryCompositionTrend()`: top-N selection is by whole-range total (not per-bucket), a category outside the top-N never appears in any bucket's series, a bucket with no activity for a selected category yields `0`, and per-bucket totals match `computeCategoryBreakdown()` called directly. Component-level tests cover: each column renders one stacked series per top-N category, the shared y-axis `max` is identical across both columns, and segment clicks resolve the correct bucket/date-range **and** categoryId.
-- [ ] [dashboard-layout.md](../dashboard-layout.md) row 6 updated to note the trend chart is now two side-by-side, same-scale, category-stacked bar charts within its existing grid cell (no row/column-count change at the dashboard-grid level — the split is internal to the panel).
-- [ ] Verified live in the browser (both charts render, stacking looks correct, shared scale looks correct, drilldown works for a stacked segment, responsive collapse works) — ask the user before doing this verification per this repo's `CLAUDE.md` browser-check rule.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `computeCategoryCompositionTrend()` exists in `core/stats/category-composition-trend.ts`, exported via `core/stats`'s barrel, and reuses `computeCategoryBreakdown()` internally (one whole-range call for top-N selection + one call per bucket) rather than reimplementing any transfer/nullified/savings-movement/joint-ownership/signed-netting logic.
+- [x] Top-N category selection (expense and income independently) is stable across buckets — the same set of categories/colours is plotted in every bucket for a given render, even when a category has zero activity in some buckets (series values stay aligned to `bucketKeys` length, `0` not a missing entry).
+- [x] A category outside the top-N never appears in any bucket's series; the aggregate produces identical per-bucket totals to calling `computeCategoryBreakdown()` directly for that bucket's `[from, to]` (no drift between the two).
+- [x] `trend-chart-panel` shows two independent **stacked bar** charts (Income, Expense) side by side on desktop (`≥1024px`), stacked to 1 column on mobile/tablet, each bar segmented by category.
+- [x] Both charts render on the **same y-axis scale** (shared `max`, not independently auto-scaled) so bar heights are visually comparable between the two.
+- [x] Each stacked segment uses the same category colour shown elsewhere on the dashboard (`category.color`, with the existing uncategorised grey fallback for the `categoryId === null` entry when it ranks in the top-N).
+- [x] The dead, unused second `yAxis` ("Net worth") from the old combined chart is removed.
+- [x] The existing single shared `mm-granularity-picker` still drives both charts' bucketing (no duplicate/second picker).
+- [x] Clicking a segment in either chart navigates to `/transactions` filtered to that bucket's date range **and** that category.
+- [x] `computeTrendBuckets()` and its spec are removed (confirmed dead by `fallow dead-code --trace` prior to this ticket — its only consumer was `trend-chart-panel`); `fallow dead-code` re-run clean afterward with no residual unused export.
+- [x] Unit tests cover `computeCategoryCompositionTrend()`: top-N selection is by whole-range total (not per-bucket), a category outside the top-N never appears in any bucket's series, a bucket with no activity for a selected category yields `0`, and per-bucket totals match `computeCategoryBreakdown()` called directly. Component-level tests cover: each column renders one stacked series per top-N category, the shared y-axis `max` is identical across both columns, and segment clicks resolve the correct bucket/date-range **and** categoryId.
+- [x] [dashboard-layout.md](../dashboard-layout.md) row 6 updated to note the trend chart is now two side-by-side, same-scale, category-stacked bar charts within its existing grid cell (no row/column-count change at the dashboard-grid level — the split is internal to the panel). *(Already described this target state pre-emptively — no edit needed.)*
+- [x] Verified live in the browser (both charts render, stacking looks correct, shared scale looks correct, drilldown works for a stacked segment, responsive collapse works) — ask the user before doing this verification per this repo's `CLAUDE.md` browser-check rule.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

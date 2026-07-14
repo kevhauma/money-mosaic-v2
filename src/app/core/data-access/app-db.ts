@@ -387,13 +387,14 @@ export const DEFAULT_CATEGORY_COMPARISON_SETTINGS: CategoryComparisonSettings = 
   excludedCategoryIds: [],
 };
 
-/** The seven Dashboard content rows a user can reorder/hide (TICKET-STAT-14) — matches `dashboard-overview.component.html`'s row structure 1:1. */
+/** The eight Dashboard content rows a user can reorder/hide (TICKET-STAT-14) — matches `dashboard-overview.component.html`'s row structure 1:1. */
 export type DashboardRowId =
   | 'stats'
   | 'weekday-weekend'
   | 'category-breakdown'
   | 'category-comparison'
-  | 'trend-top-transactions'
+  | 'trend-chart'
+  | 'top-transactions'
   | 'action-queue'
   | 'account-balance';
 
@@ -402,7 +403,8 @@ export const DEFAULT_DASHBOARD_ROW_ORDER: DashboardRowId[] = [
   'weekday-weekend',
   'category-breakdown',
   'category-comparison',
-  'trend-top-transactions',
+  'trend-chart',
+  'top-transactions',
   'action-queue',
   'account-balance',
 ];

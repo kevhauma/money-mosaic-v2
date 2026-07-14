@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler-icons/fill';
-import { ButtonComponent } from '@/shared/ui';
+import { formatAlignedRangeLabel } from '@/core/stats';
+import { ButtonComponent, formatDisplayDate } from '@/shared/ui';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
 import { CategoriesStore } from '@/feature-categories';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
@@ -12,6 +13,8 @@ import { StatsStore } from '../../stats.store';
 type ComparisonBarVm = {
   key: string;
   formattedTotal: string;
+  periodLabel: string;
+  tooltipLabel: string;
   heightPercent: number;
   isSelected: boolean;
   queryParams: Record<string, string>;
@@ -78,9 +81,15 @@ export class CategoryComparisonPanelComponent {
 
       const bars: ComparisonBarVm[] = entry.perPeriod.map((total, index) => {
         const period = comparison.window[index];
+        const formattedTotal = EUR_FORMATTER.format(total);
+        const periodLabel =
+          formatAlignedRangeLabel(period.from, period.to) ??
+          `${formatDisplayDate(period.from)} – ${formatDisplayDate(period.to)}`;
         return {
           key: period.from,
-          formattedTotal: EUR_FORMATTER.format(total),
+          formattedTotal,
+          periodLabel,
+          tooltipLabel: `${periodLabel}\n${formattedTotal}`,
           heightPercent: max === 0 ? 0 : (total / max) * 100,
           isSelected: period.isSelected,
           queryParams: buildTransactionDrilldownParams({

@@ -10,7 +10,8 @@ const DEFAULT_ORDER: DashboardRowId[] = [
   'weekday-weekend',
   'category-breakdown',
   'category-comparison',
-  'trend-top-transactions',
+  'trend-chart',
+  'top-transactions',
   'action-queue',
   'account-balance',
 ];
@@ -35,7 +36,8 @@ describe('resolveDashboardRowOrder', () => {
       'stats',
       'category-breakdown',
       'category-comparison',
-      'trend-top-transactions',
+      'trend-chart',
+      'top-transactions',
       'action-queue',
       'account-balance',
     ]);
@@ -50,7 +52,8 @@ describe('visibleDashboardRows', () => {
       'stats',
       'weekday-weekend',
       'category-breakdown',
-      'trend-top-transactions',
+      'trend-chart',
+      'top-transactions',
       'account-balance',
     ]);
   });
@@ -67,7 +70,8 @@ describe('moveDashboardRow', () => {
       'category-breakdown',
       'weekday-weekend',
       'category-comparison',
-      'trend-top-transactions',
+      'trend-chart',
+      'top-transactions',
       'action-queue',
       'account-balance',
     ]);
@@ -79,7 +83,8 @@ describe('moveDashboardRow', () => {
       'stats',
       'category-breakdown',
       'category-comparison',
-      'trend-top-transactions',
+      'trend-chart',
+      'top-transactions',
       'action-queue',
       'account-balance',
     ]);

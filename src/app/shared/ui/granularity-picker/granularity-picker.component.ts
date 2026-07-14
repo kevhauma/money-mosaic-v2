@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-export type GranularityPickerValue = 'day' | 'week' | 'month' | 'quarter';
+export type GranularityPickerValue = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
-const GRANULARITIES: GranularityPickerValue[] = ['day', 'week', 'month', 'quarter'];
+const GRANULARITIES: GranularityPickerValue[] = ['day', 'week', 'month', 'quarter', 'year'];
 
 /**
- * Presentational day/week/month/quarter bucket-size toggle (TICKET-STAT-15), extracted so each
- * trend chart can own its own instance instead of duplicating the button-group markup. Holds no
- * state of its own — the caller owns the value and reacts to `valueChange`.
+ * Presentational day/week/month/quarter/year bucket-size toggle (TICKET-STAT-15), extracted so
+ * each trend chart can own its own instance instead of duplicating the button-group markup. Holds
+ * no state of its own — the caller owns the value and reacts to `valueChange`.
  */
 @Component({
   selector: 'mm-granularity-picker',

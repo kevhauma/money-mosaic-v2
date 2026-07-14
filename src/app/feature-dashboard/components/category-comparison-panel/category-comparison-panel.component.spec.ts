@@ -4,6 +4,7 @@ import { appDb, CategoriesRepository, type Category } from '@/core/data-access';
 import { RangeStore } from '@/core/stats';
 import { CategoriesStore } from '@/feature-categories';
 import { TransactionsStore } from '@/feature-transactions';
+import { formatDisplayDate } from '@/shared/ui';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { CategoryComparisonPanelComponent } from './category-comparison-panel.component';
 
@@ -96,6 +97,112 @@ describe('CategoryComparisonPanelComponent', () => {
 
     const link = fixture.nativeElement.querySelector('a[href*="categoryId=1"]');
     expect(link).toBeTruthy();
+  });
+
+  describe('bar tooltip period label', () => {
+    it('shows "<Month> <year>" for a month-aligned window period', async () => {
+      TestBed.inject(RangeStore).setPreset('this-month');
+      await TestBed.inject(CategoriesStore).addCategory(groceries);
+      TestBed.inject(TransactionsStore).addMany([
+        {
+          id: 1,
+          accountId: 1,
+          bookingDate: '2026-06-10',
+          amount: -40,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-1',
+          createdAt: '2026-06-10T00:00:00.000Z',
+          categoryId: 1,
+        },
+        {
+          id: 2,
+          accountId: 1,
+          bookingDate: '2026-07-10',
+          amount: -60,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-2',
+          createdAt: '2026-07-10T00:00:00.000Z',
+          categoryId: 1,
+        },
+      ]);
+      fixture.detectChanges();
+
+      const selectedBar = fixture.nativeElement.querySelector('.bg-primary') as HTMLElement;
+      const selectedAnchor = selectedBar.closest('a.tooltip') as HTMLElement;
+      expect(selectedAnchor.getAttribute('data-tip')?.split('\n')[0]).toBe('July 2026');
+    });
+
+    it('shows "W<n> <year>" for a week-aligned window period', async () => {
+      TestBed.inject(RangeStore).setPreset('this-week');
+      await TestBed.inject(CategoriesStore).addCategory(groceries);
+      TestBed.inject(TransactionsStore).addMany([
+        {
+          id: 1,
+          accountId: 1,
+          bookingDate: '2026-06-30',
+          amount: -40,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-1',
+          createdAt: '2026-06-30T00:00:00.000Z',
+          categoryId: 1,
+        },
+        {
+          id: 2,
+          accountId: 1,
+          bookingDate: '2026-07-10',
+          amount: -60,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-2',
+          createdAt: '2026-07-10T00:00:00.000Z',
+          categoryId: 1,
+        },
+      ]);
+      fixture.detectChanges();
+
+      const selectedBar = fixture.nativeElement.querySelector('.bg-primary') as HTMLElement;
+      const selectedAnchor = selectedBar.closest('a.tooltip') as HTMLElement;
+      expect(selectedAnchor.getAttribute('data-tip')?.split('\n')[0]).toMatch(/^W\d+ 2026$/);
+    });
+
+    it('falls back to the formatted date range for a non-calendar-aligned (custom rolling) window period', async () => {
+      TestBed.inject(RangeStore).setCustomRange('2026-06-15', '2026-06-24');
+      await TestBed.inject(CategoriesStore).addCategory(groceries);
+      TestBed.inject(TransactionsStore).addMany([
+        {
+          id: 1,
+          accountId: 1,
+          bookingDate: '2026-06-08',
+          amount: -40,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-1',
+          createdAt: '2026-06-08T00:00:00.000Z',
+          categoryId: 1,
+        },
+        {
+          id: 2,
+          accountId: 1,
+          bookingDate: '2026-06-20',
+          amount: -60,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-2',
+          createdAt: '2026-06-20T00:00:00.000Z',
+          categoryId: 1,
+        },
+      ]);
+      fixture.detectChanges();
+
+      const selectedBar = fixture.nativeElement.querySelector('.bg-primary') as HTMLElement;
+      const selectedAnchor = selectedBar.closest('a.tooltip') as HTMLElement;
+      expect(selectedAnchor.getAttribute('data-tip')?.split('\n')[0]).toBe(
+        `${formatDisplayDate('2026-06-15')} – ${formatDisplayDate('2026-06-24')}`,
+      );
+    });
   });
 
   it('hides the panel entirely for the all-time preset', () => {

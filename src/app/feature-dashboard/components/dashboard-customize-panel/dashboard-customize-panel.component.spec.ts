@@ -8,7 +8,8 @@ const DEFAULT_ORDER: DashboardRowId[] = [
   'weekday-weekend',
   'category-breakdown',
   'category-comparison',
-  'trend-top-transactions',
+  'trend-chart',
+  'top-transactions',
   'action-queue',
   'account-balance',
 ];
@@ -47,7 +48,8 @@ describe('DashboardCustomizePanelComponent', () => {
       'stats',
       'category-breakdown',
       'category-comparison',
-      'trend-top-transactions',
+      'trend-chart',
+      'top-transactions',
       'action-queue',
       'account-balance',
     ]);
@@ -77,7 +79,8 @@ describe('DashboardCustomizePanelComponent', () => {
       'category-breakdown',
       'stats',
       'category-comparison',
-      'trend-top-transactions',
+      'trend-chart',
+      'top-transactions',
       'action-queue',
       'account-balance',
     ]);

@@ -38,6 +38,10 @@ describe('bucketKeyForDate', () => {
     // 2027-01-01 is a Friday; the Thursday of that week (Dec 31 2026) falls in 2026, so it's week 53 of 2026.
     expect(bucketKeyForDate('2027-01-01', 'week')).toBe('2026-W53');
   });
+
+  it('formats a year bucket as YYYY', () => {
+    expect(bucketKeyForDate('2026-07-03', 'year')).toBe('2026');
+  });
 });
 
 describe('bucketDateBoundaries', () => {
@@ -75,6 +79,13 @@ describe('bucketDateBoundaries', () => {
       end: '2026-07-05',
     });
   });
+
+  it('round-trips a year bucket to Jan 1..Dec 31', () => {
+    expect(bucketDateBoundaries('2026', 'year')).toEqual({
+      start: '2026-01-01',
+      end: '2026-12-31',
+    });
+  });
 });
 
 describe('bucketKeysInRange', () => {
@@ -101,6 +112,10 @@ describe('bucketKeysInRange', () => {
       '2026-Q3',
       '2026-Q4',
     ]);
+  });
+
+  it('fills gaps so every year in the range appears even with no data', () => {
+    expect(bucketKeysInRange('2024-06-01', '2026-03-01', 'year')).toEqual(['2024', '2025', '2026']);
   });
 });
 

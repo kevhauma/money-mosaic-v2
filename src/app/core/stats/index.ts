@@ -6,7 +6,7 @@ export * from './joint-contributor-breakdown';
 export * from './period-stats';
 export * from './spending-rate';
 export * from './category-breakdown';
-export * from './trend-buckets';
+export * from './category-composition-trend';
 export * from './net-worth-trend';
 export * from './account-balance-trend';
 export * from './full-history-range';

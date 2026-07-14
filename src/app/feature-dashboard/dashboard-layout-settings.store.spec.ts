@@ -8,7 +8,8 @@ const DEFAULT_ORDER: DashboardRowId[] = [
   'weekday-weekend',
   'category-breakdown',
   'category-comparison',
-  'trend-top-transactions',
+  'trend-chart',
+  'top-transactions',
   'action-queue',
   'account-balance',
 ];
@@ -57,7 +58,8 @@ describe('DashboardLayoutSettingsStore', () => {
       'stats',
       'category-breakdown',
       'category-comparison',
-      'trend-top-transactions',
+      'trend-chart',
+      'top-transactions',
       'action-queue',
       'account-balance',
     ];
