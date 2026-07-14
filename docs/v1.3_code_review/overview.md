@@ -1,0 +1,38 @@
+# Money Mosaic — Code Review 3 Backlog (Overview)
+
+Derived from [./code-review-fallow.md](./code-review-fallow.md) (Fallow-grounded health review, 2026-07-14). Sibling to the [first review's backlog](../code-review/overview.md) (correctness/performance) and the [second's](../coding-review-2/overview.md) (DX/SOLID); `CR3-*` IDs trace back to the review doc, `CR-*`/`CR2-*` IDs to the earlier reviews. **This folder's tickets consolidate everything still open**: the CR3 findings plus every unfinished item carried over from the two earlier backlogs (their overview lines link here). During ticketing, three previously-open items were verified already done and checked off in their own backlogs (CR-6.3, CR2-2.3, CR2-1.1); two items already had tickets there and are not duplicated ([TICKET-CLEANUP-01](../coding-review-2/tickets/TICKET-CLEANUP-01-fallow-verified-dead-code.md), [TICKET-SOLID-01](../coding-review-2/tickets/TICKET-SOLID-01-split-transactions-overview.md)).
+
+The list is in recommended build order: the correctness fix and test safety net first, then the extraction that removes the app's complexity peak while its files are hot, then structure, performance, cleanups, and the decision/process tickets (parallelizable any time).
+
+- [ ] [TICKET-STAT-18](./tickets/TICKET-STAT-18-nullified-savings-exclusion.md) — Exclude nullified transactions from `savings`/`savingsRate` (bug fix, CR3-1.1, violates TICKET-TXN-04 — savings check runs before the nullified check) — small, do first
+- [ ] [TICKET-TEST-02](./tickets/TICKET-TEST-02-first-review-spec-gaps.md) — Close the first review's remaining spec gaps (CR-9) — test-only, cheapest ticket here; safety net for PERF-04/PERF-05/IMP-06 below
+- [ ] [TICKET-STAT-19](./tickets/TICKET-STAT-19-shared-stats-classifier.md) — Extract the shared per-transaction stats classifier (CR3-2.1, Fallow `dup:a29a2c00`/`dup:edea22f4`; both files accelerating hotspots) — needs TICKET-STAT-18; the review's main event
+- [ ] [TICKET-SOLID-05](./tickets/TICKET-SOLID-05-entity-stores-to-core.md) — Move shared entity stores to `core/state`, breaking all 20 barrel cycles (CR3-3; executes CR-6.1/CR2-4.1) — moderate, mostly mechanical, land in a quiet window
+- [ ] [TICKET-PERF-05](./tickets/TICKET-PERF-05-hydrate-on-demand.md) — Hydrate stores on demand instead of all upfront (CR-3.4 + CR-5.1 carried over) — largest-risk item, needs TICKET-SOLID-05 and TICKET-TEST-01's specs green
+- [ ] [TICKET-SOLID-06](./tickets/TICKET-SOLID-06-attribution-fieldset-extraction.md) — Extract the attribution-override fieldset from `transaction-edit-form` (+ O(1) transfer lookups) (CR3-2.2) — moderate, independent
+- [ ] [TICKET-NG-05](./tickets/TICKET-NG-05-shared-balance-trend-scaffolding.md) — Share the balance-trend signal scaffolding between the two history charts (CR3-2.3, Fallow `dup:db831d48`) — small, sequence loosely after SOLID-05
+- [ ] [TICKET-NG-06](./tickets/TICKET-NG-06-confirm-dialog-on-mm-modal.md) — Rebuild `ConfirmDialogComponent` on `mm-modal`, completing TICKET-NG-01 (CR3-2.4, Fallow `dup:42bf7346`) — small, independent
+- [ ] [TICKET-NG-09](./tickets/TICKET-NG-09-mm-modal-focus-restore.md) — `mm-modal` restores focus to its trigger on close (CR-8 carried over; `aria-labelledby` half already shipped) — small; NG-06's rebuild inherits it, so pair them
+- [ ] [TICKET-NG-07](./tickets/TICKET-NG-07-create-confirm-state.md) — Extract `createConfirmState<T>()` for the overview delete-confirm scaffolding (CR2-6.3 carried over, Fallow `dup:edd1ec44`) — small, pairs naturally with NG-06
+- [ ] [TICKET-PERF-02](./tickets/TICKET-PERF-02-rules-compile-once.md) — Sort rules and compile regexes once per run-rules pass + pattern length cap (CR-3.2 carried over + CR3-4, Fallow security `f3f50dc9`) — small, independent
+- [ ] [TICKET-PERF-04](./tickets/TICKET-PERF-04-batch-hot-write-paths.md) — Batch the hot write paths (rules persistence, transfer auto-link, category removal) into bulk transactions (CR-3.1 carried over) — small, pairs with PERF-02 on the rules path
+- [ ] [TICKET-PERF-03](./tickets/TICKET-PERF-03-import-batch-id-index.md) — Index `importBatchId` and `attributionOverride.reimbursementTransferId` via additive `.version(11)` (CR-3.3 carried over) — small, independent
+- [ ] [TICKET-IMP-06](./tickets/TICKET-IMP-06-csv-decode-pipeline.md) — Decode CSV files once, slice previews, move decoding into the worker (CR-4.1/4.2/4.3 carried over) — moderate, after TEST-02
+- [ ] [TICKET-PERF-06](./tickets/TICKET-PERF-06-defer-dashboard-panels.md) — Defer below-fold dashboard panels with `@defer (on viewport)` (CR-5.3 carried over; customize panel already deferred) — small, independent
+- [ ] [TICKET-STAT-20](./tickets/TICKET-STAT-20-trend-chart-accessible-numbers.md) — Expose the trend chart's key numbers as DOM text (CR-8 carried over) — small; coordinate with PERF-06 (same panel)
+- [ ] [TICKET-TXN-07](./tickets/TICKET-TXN-07-row-checkbox-accessible-name.md) — Accessible name for transaction row-selection checkboxes (CR-8 carried over; header checkbox already fixed) — tiny, independent; coordinate with TICKET-SOLID-01 if that lands first
+- [ ] [TICKET-CAT-05](./tickets/TICKET-CAT-05-rule-label-single-source.md) — Single-source the rule field/operator display labels (CR2-3.3 carried over) — small, independent
+- [ ] [TICKET-CLEANUP-02](./tickets/TICKET-CLEANUP-02-fallow-config.md) — Codify the verified fallow false-positive families in `.fallowrc.json` + baseline (CR3-6; closes CR2-6.5) — small, independent, do before any fallow CI gate
+- [ ] [TICKET-CLEANUP-04](./tickets/TICKET-CLEANUP-04-dexie-minimal-version-declarations.md) — Future Dexie versions declare only changed tables; convention documented, shipped blocks untouched (CR-6.4 carried over) — docs-only, coordinate with PERF-03
+- [ ] [TICKET-NG-08](./tickets/TICKET-NG-08-with-persisted-crud-decision.md) — Decide yes/no on a `withPersistedCrud` store feature, outcome recorded (CR2-4.4 carried over) — standalone decision
+- [ ] [TICKET-CLEANUP-03](./tickets/TICKET-CLEANUP-03-residual-clones.md) — Fold the residual verified clones: structural-filters block + deletion-cascade glue (CR3-2.5, Fallow `dup:f868aa89`/`dup:99b7c535`/`dup:dc1fd0b3`) — low priority, opportunistic
+- [ ] [TICKET-DX-02](./tickets/TICKET-DX-02-commitlint-conventional-commits.md) — Enforce conventional commit messages with commitlint on the existing husky hook (CR2-1.2 carried over) — process, independent, any time
+- [ ] [TICKET-DX-03](./tickets/TICKET-DX-03-version-folder-naming-scheme.md) — Decide and document the docs version-folder naming scheme (CR2-1.3 carried over; now includes the `v1.3_*` collision this folder created) — process, independent, decide before the next milestone folder
+
+Not ticketed by design: CR-5.2 ("keep existing bundle wins intact") is a guardrail, not a work item — it's covered by the Definition of Done below and the bundle-budget hard rule.
+
+**Deliberate non-actions** (review §2.6/§5 — do not "fix"): `matchesTransactionFilters`' cyclomatic score (flat, specced guard list), the csv-row-mapper dispatch functions, all 19 flagged "unused exports" (in-file/spec-used), all 23 "unused class members" (DI-invoked, verified), `tailwindcss` staying in `devDependencies`, and `dup:d9247208`/`dup:fbfaad2e` (small, cross-domain).
+
+## Definition of Done (applies to every item)
+
+Per [../../CLAUDE.md](../../CLAUDE.md): `ng lint` + `ng test` + `ng build --configuration development` all pass, plus a live browser check for any UI-visible change. Dexie schema changes stay additive; the production bundle budget in `angular.json` is never raised; existing bundle wins (tree-shaken ECharts, non-barrel `app.ts` imports, per-component `provideIcons`) stay intact (CR-5.2).
