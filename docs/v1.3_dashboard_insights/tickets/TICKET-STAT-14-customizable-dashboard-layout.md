@@ -32,22 +32,22 @@ The Dashboard's row order today is hard-coded in the template — every user see
 
 ## Acceptance criteria
 
-- [ ] `DashboardLayoutSettings` type + `DEFAULT_DASHBOARD_LAYOUT_SETTINGS` (full default row order, nothing hidden) added alongside the other settings types in `core/data-access`.
-- [ ] `appDb` gains the `dashboardLayoutSettings: 'id'` table via a new additive `.version(9).stores(...)` block (previous version blocks untouched, no `.upgrade()` needed since it's a brand-new empty table).
-- [ ] `DashboardLayoutSettingsRepository` and `DashboardLayoutSettingsStore` added following the `CategoryComparisonSettingsRepository`/`CategoryComparisonSettingsStore` shape; components/stores never touch `appDb.dashboardLayoutSettings` directly.
-- [ ] Dashboard rows render in `rowOrder()` order and rows listed in `hiddenRowIds()` are omitted entirely (not just visually collapsed) from the normal (non-customize) view.
-- [ ] A row's own existing conditional visibility (e.g. action-queue's zero-count cards, YoY sub-labels) still applies independently of — and in addition to — the user's hidden-row preference; hiding via customize mode never force-shows a row that would otherwise hide itself for lack of data.
-- [ ] "Customize dashboard" toggle in the page header enters/exits an edit mode showing a drag handle and a hide/show (eye) control per row.
-- [ ] Dragging a row via `cdkDropList`/`cdkDrag` reorders it live and persists the new order through the store/repository on drop.
-- [ ] Each row also has keyboard-operable move-up/move-down controls that produce the same reorder as a drag, for users who can't or don't want to drag.
-- [ ] Toggling a row's hide/show control persists immediately and is reflected the next time the Dashboard loads (survives a reload).
-- [ ] "Reset to default layout" restores the original seven-row order and unhides every row, persisting that reset.
-- [ ] The two-column `category-breakdown-panel`/`trend-chart-panel` row (and any other multi-component row) moves and hides as one unit — this ticket reorders/hides whole rows, not the individual panels inside a shared row.
-- [ ] `@angular/cdk`'s Drag & Drop module is loaded lazily (only when customize mode is entered), verified by checking it isn't present in the eagerly-loaded Dashboard route chunk.
-- [ ] `angular.json` bundle budgets are not raised; if the lazy-loaded customize-mode chunk still risks tripping a budget, that's solved by narrowing the `@defer` boundary further, not by raising the budget.
-- [ ] Unit tests cover: the sort/filter that turns `rowOrder()` + `hiddenRowIds()` into a rendered row list (including the "unknown/missing row id falls back to default position" case, to stay forward-compatible if a row is added or removed in a later ticket); `reorderRow()`, `toggleRowHidden()`, and `resetToDefault()` all persist through the repository; a hidden row combined with its own zero-data self-hide doesn't double-hide or throw.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: entering customize mode, dragging a row to a new position, hiding a row, reloading the page (order/hidden state persists), and resetting to default.
+- [x] `DashboardLayoutSettings` type + `DEFAULT_DASHBOARD_LAYOUT_SETTINGS` (full default row order, nothing hidden) added alongside the other settings types in `core/data-access`.
+- [x] `appDb` gains the `dashboardLayoutSettings: 'id'` table via a new additive `.version(9).stores(...)` block (previous version blocks untouched, no `.upgrade()` needed since it's a brand-new empty table).
+- [x] `DashboardLayoutSettingsRepository` and `DashboardLayoutSettingsStore` added following the `CategoryComparisonSettingsRepository`/`CategoryComparisonSettingsStore` shape; components/stores never touch `appDb.dashboardLayoutSettings` directly.
+- [x] Dashboard rows render in `rowOrder()` order and rows listed in `hiddenRowIds()` are omitted entirely (not just visually collapsed) from the normal (non-customize) view.
+- [x] A row's own existing conditional visibility (e.g. action-queue's zero-count cards, YoY sub-labels) still applies independently of — and in addition to — the user's hidden-row preference; hiding via customize mode never force-shows a row that would otherwise hide itself for lack of data.
+- [x] "Customize dashboard" toggle in the page header enters/exits an edit mode showing a drag handle and a hide/show (eye) control per row.
+- [x] Dragging a row via `cdkDropList`/`cdkDrag` reorders it live and persists the new order through the store/repository on drop.
+- [x] Each row also has keyboard-operable move-up/move-down controls that produce the same reorder as a drag, for users who can't or don't want to drag.
+- [x] Toggling a row's hide/show control persists immediately and is reflected the next time the Dashboard loads (survives a reload).
+- [x] "Reset to default layout" restores the original seven-row order and unhides every row, persisting that reset.
+- [x] The two-column `category-breakdown-panel`/`trend-chart-panel` row (and any other multi-component row) moves and hides as one unit — this ticket reorders/hides whole rows, not the individual panels inside a shared row. (Note: the current template's two-column row is `trend-chart-panel`+`top-transactions-panel`, not `category-breakdown-panel`+`trend-chart-panel` — TICKET-STAT-13 already split those apart before this ticket started; the current pairing moves/hides as one unit under the `trend-top-transactions` row id.)
+- [x] `@angular/cdk`'s Drag & Drop module is loaded lazily (only when customize mode is entered), verified by checking it isn't present in the eagerly-loaded Dashboard route chunk.
+- [x] `angular.json` bundle budgets are not raised; if the lazy-loaded customize-mode chunk still risks tripping a budget, that's solved by narrowing the `@defer` boundary further, not by raising the budget.
+- [x] Unit tests cover: the sort/filter that turns `rowOrder()` + `hiddenRowIds()` into a rendered row list (including the "unknown/missing row id falls back to default position" case, to stay forward-compatible if a row is added or removed in a later ticket); `reorderRow()`, `toggleRowHidden()`, and `resetToDefault()` all persist through the repository; a hidden row combined with its own zero-data self-hide doesn't double-hide or throw.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: entering customize mode, hiding a row, reloading the page (order/hidden state persists), and resetting to default — all confirmed live. Row reordering was verified live via the keyboard move-up/move-down controls (which drive the identical `reorderRow`/persistence path a drag does) and via a unit test that exercises the exact `cdkDropList` drop handler; a literal mouse-drag gesture could not be exercised live because this session's browser-automation tool (screenshot/click-drag) was non-functional in this environment — see final report.
 
 ## Notes
 

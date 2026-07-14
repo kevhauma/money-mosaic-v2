@@ -1,62 +1,86 @@
 <mm-page-header title="Dashboard">
   <div actions>
     <app-net-worth-header />
+    <mm-button #customizeToggle variant="outline" size="sm" (click)="toggleCustomizeMode()">
+      <ng-icon name="tablerAdjustments" size="16" aria-hidden="true" />
+      {{ customizeMode() ? 'Done' : 'Customize dashboard' }}
+    </mm-button>
   </div>
 </mm-page-header>
 
-<div class="stats stats-vertical mb-6 w-full overflow-visible shadow lg:stats-horizontal">
-  <mm-stat-card
-    label="Income"
-    [value]="incomeValue()"
-    [subLabel]="incomeYoySubLabel()"
-    [tooltip]="incomeYoyTooltip()"
-    link="/transactions"
-    [queryParams]="drilldownParams()"
-  />
-  <mm-stat-card
-    label="Expense"
-    [value]="expenseValue()"
-    [subLabel]="expenseYoySubLabel()"
-    [tooltip]="expenseYoyTooltip()"
-    link="/transactions"
-    [queryParams]="drilldownParams()"
-  />
-  <mm-stat-card
-    label="Net cash flow"
-    [value]="netValue()"
-    [subLabel]="netYoySubLabel()"
-    [tooltip]="netYoyTooltip()"
-    [color]="netColor()"
-    link="/transactions"
-    [queryParams]="drilldownParams()"
-  />
-  <mm-stat-card label="Savings rate" [value]="savingsRateValue()" [subLabel]="savingsSubLabel()" />
-  <mm-stat-card
-    label="Spending rate"
-    [value]="spendingRateValue()"
-    [subLabel]="spendingRateSubLabel()"
-  />
-</div>
+@if (!customizeMode()) {
+  @for (rowId of visibleRows(); track rowId) {
+    <div class="mb-6">
+      @switch (rowId) {
+        @case ('stats') {
+          <div class="stats stats-vertical w-full overflow-visible shadow lg:stats-horizontal">
+            <mm-stat-card
+              label="Income"
+              [value]="incomeValue()"
+              [subLabel]="incomeYoySubLabel()"
+              [tooltip]="incomeYoyTooltip()"
+              link="/transactions"
+              [queryParams]="drilldownParams()"
+            />
+            <mm-stat-card
+              label="Expense"
+              [value]="expenseValue()"
+              [subLabel]="expenseYoySubLabel()"
+              [tooltip]="expenseYoyTooltip()"
+              link="/transactions"
+              [queryParams]="drilldownParams()"
+            />
+            <mm-stat-card
+              label="Net cash flow"
+              [value]="netValue()"
+              [subLabel]="netYoySubLabel()"
+              [tooltip]="netYoyTooltip()"
+              [color]="netColor()"
+              link="/transactions"
+              [queryParams]="drilldownParams()"
+            />
+            <mm-stat-card
+              label="Savings rate"
+              [value]="savingsRateValue()"
+              [subLabel]="savingsSubLabel()"
+            />
+            <mm-stat-card
+              label="Spending rate"
+              [value]="spendingRateValue()"
+              [subLabel]="spendingRateSubLabel()"
+            />
+          </div>
+        }
+        @case ('weekday-weekend') {
+          <app-weekday-weekend-split-panel />
+        }
+        @case ('category-breakdown') {
+          <app-category-breakdown-panel />
+        }
+        @case ('category-comparison') {
+          <app-category-comparison-panel />
+        }
+        @case ('trend-top-transactions') {
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <app-trend-chart-panel />
+            <app-top-transactions-panel />
+          </div>
+        }
+        @case ('action-queue') {
+          <app-action-queue-panel />
+        }
+        @case ('account-balance') {
+          <app-account-balance-strip />
+        }
+      }
+    </div>
+  }
+}
 
-<div class="mb-6">
-  <app-weekday-weekend-split-panel />
-</div>
-
-<div class="mb-6">
-  <app-category-breakdown-panel />
-</div>
-
-<div class="mb-6">
-  <app-category-comparison-panel />
-</div>
-
-<div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-  <app-trend-chart-panel />
-  <app-top-transactions-panel />
-</div>
-
-<div class="mb-6">
-  <app-action-queue-panel />
-</div>
-
-<app-account-balance-strip />
+@defer (on interaction(customizeToggle)) {
+  @if (customizeMode()) {
+    <app-dashboard-customize-panel />
+  }
+} @loading {
+  <div class="mb-6 text-sm text-base-content/60">Loading customize tools…</div>
+}

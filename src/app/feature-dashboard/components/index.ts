@@ -7,3 +7,4 @@ export * from './weekday-weekend-split-panel/weekday-weekend-split-panel.compone
 export * from './top-transactions-panel/top-transactions-panel.component';
 export * from './action-queue-panel/action-queue-panel.component';
 export * from './account-balance-strip/account-balance-strip.component';
+export * from './dashboard-customize-panel/dashboard-customize-panel.component';

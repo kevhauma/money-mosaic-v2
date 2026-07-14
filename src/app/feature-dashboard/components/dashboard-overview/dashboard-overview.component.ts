@@ -1,13 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { tablerAdjustments } from '@ng-icons/tabler-icons';
 import { RangeStore, type PeriodStats } from '@/core/stats';
 import { AccountsStore } from '@/feature-accounts';
 import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
-import { PageHeaderComponent, StatCardComponent } from '@/shared/ui';
+import { ButtonComponent, PageHeaderComponent, StatCardComponent } from '@/shared/ui';
+import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
+import { visibleDashboardRows } from '../../dashboard-row-order';
 import { StatsStore } from '../../stats.store';
 import { AccountBalanceStripComponent } from '../account-balance-strip/account-balance-strip.component';
 import { ActionQueuePanelComponent } from '../action-queue-panel/action-queue-panel.component';
 import { CategoryBreakdownPanelComponent } from '../category-breakdown-panel/category-breakdown-panel.component';
 import { CategoryComparisonPanelComponent } from '../category-comparison-panel/category-comparison-panel.component';
+import { DashboardCustomizePanelComponent } from '../dashboard-customize-panel/dashboard-customize-panel.component';
 import { NetWorthHeaderComponent } from '../net-worth-header/net-worth-header.component';
 import { TopTransactionsPanelComponent } from '../top-transactions-panel/top-transactions-panel.component';
 import { TrendChartPanelComponent } from '../trend-chart-panel/trend-chart-panel.component';
@@ -28,6 +33,8 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' })
 @Component({
   selector: 'app-dashboard-overview',
   imports: [
+    NgIcon,
+    ButtonComponent,
     PageHeaderComponent,
     StatCardComponent,
     NetWorthHeaderComponent,
@@ -38,14 +45,30 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' })
     TopTransactionsPanelComponent,
     ActionQueuePanelComponent,
     AccountBalanceStripComponent,
+    DashboardCustomizePanelComponent,
   ],
   templateUrl: './dashboard-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ tablerAdjustments })],
 })
 export class DashboardOverviewComponent {
   protected readonly statsStore = inject(StatsStore);
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly rangeStore = inject(RangeStore);
+  protected readonly dashboardLayoutSettingsStore = inject(DashboardLayoutSettingsStore);
+
+  protected readonly customizeMode = signal(false);
+
+  protected readonly visibleRows = computed(() =>
+    visibleDashboardRows(
+      this.dashboardLayoutSettingsStore.rowOrder(),
+      this.dashboardLayoutSettingsStore.hiddenRowIds(),
+    ),
+  );
+
+  protected toggleCustomizeMode(): void {
+    this.customizeMode.set(!this.customizeMode());
+  }
 
   protected readonly drilldownParams = computed(() =>
     buildTransactionDrilldownParams({ from: this.rangeStore.from(), to: this.rangeStore.to() }),

@@ -1,0 +1,56 @@
+<div class="mb-6 rounded-box border border-base-300 bg-base-100 p-4 shadow">
+  <div class="mb-3 flex items-center justify-between gap-3">
+    <h2 class="text-sm font-semibold text-base-content/70">Customize dashboard layout</h2>
+    <mm-button variant="ghost" size="sm" (click)="reset()">
+      <ng-icon name="tablerRestore" size="16" aria-hidden="true" />
+      Reset to default
+    </mm-button>
+  </div>
+
+  <div cdkDropList class="flex flex-col gap-2" (cdkDropListDropped)="onDrop($event)">
+    @for (rowId of rows(); track rowId; let first = $first; let last = $last) {
+      <div
+        cdkDrag
+        class="flex items-center gap-2 rounded-box border border-base-300 bg-base-200/50 p-2"
+        [class.opacity-50]="isHidden(rowId)"
+      >
+        <span cdkDragHandle class="cursor-grab text-base-content/50" aria-hidden="true">
+          <ng-icon name="tablerGripVertical" size="18" />
+        </span>
+        <span class="flex-1 text-sm">{{ rowLabels[rowId] }}</span>
+        <div class="flex items-center gap-1">
+          <mm-button
+            variant="ghost"
+            size="sm"
+            [disabled]="first"
+            [ariaLabel]="'Move ' + rowLabels[rowId] + ' up'"
+            (click)="moveRow(rowId, 'up')"
+          >
+            <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
+          </mm-button>
+          <mm-button
+            variant="ghost"
+            size="sm"
+            [disabled]="last"
+            [ariaLabel]="'Move ' + rowLabels[rowId] + ' down'"
+            (click)="moveRow(rowId, 'down')"
+          >
+            <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
+          </mm-button>
+          <mm-button
+            variant="ghost"
+            size="sm"
+            [ariaLabel]="(isHidden(rowId) ? 'Show ' : 'Hide ') + rowLabels[rowId]"
+            (click)="toggleHidden(rowId)"
+          >
+            <ng-icon
+              [name]="isHidden(rowId) ? 'tablerEyeOff' : 'tablerEye'"
+              size="16"
+              aria-hidden="true"
+            />
+          </mm-button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

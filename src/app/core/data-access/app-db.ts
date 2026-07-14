@@ -387,6 +387,39 @@ export const DEFAULT_CATEGORY_COMPARISON_SETTINGS: CategoryComparisonSettings = 
   excludedCategoryIds: [],
 };
 
+/** The seven Dashboard content rows a user can reorder/hide (TICKET-STAT-14) — matches `dashboard-overview.component.html`'s row structure 1:1. */
+export type DashboardRowId =
+  | 'stats'
+  | 'weekday-weekend'
+  | 'category-breakdown'
+  | 'category-comparison'
+  | 'trend-top-transactions'
+  | 'action-queue'
+  | 'account-balance';
+
+export const DEFAULT_DASHBOARD_ROW_ORDER: DashboardRowId[] = [
+  'stats',
+  'weekday-weekend',
+  'category-breakdown',
+  'category-comparison',
+  'trend-top-transactions',
+  'action-queue',
+  'account-balance',
+];
+
+/** Singleton row (id always 1) persisting the user's Dashboard row order and hidden rows (TICKET-STAT-14). */
+export type DashboardLayoutSettings = {
+  id?: number;
+  rowOrder: DashboardRowId[];
+  hiddenRowIds: DashboardRowId[];
+};
+
+export const DEFAULT_DASHBOARD_LAYOUT_SETTINGS: DashboardLayoutSettings = {
+  id: 1,
+  rowOrder: DEFAULT_DASHBOARD_ROW_ORDER,
+  hiddenRowIds: [],
+};
+
 export type ImportBatch = {
   id?: number;
   accountId: number;
@@ -429,6 +462,7 @@ class AppDb extends Dexie {
   transferSettings!: Table<TransferSettings, number>;
   categoryModel!: Table<CategoryModelArtifact, 1>;
   categoryComparisonSettings!: Table<CategoryComparisonSettings, number>;
+  dashboardLayoutSettings!: Table<DashboardLayoutSettings, number>;
 
   constructor() {
     super('money-mosaic');
@@ -605,6 +639,24 @@ class AppDb extends Dexie {
       transferSettings: 'id',
       categoryModel: 'id',
       categoryComparisonSettings: 'id',
+    });
+
+    // Adds the `dashboardLayoutSettings` singleton-row table for the Dashboard's customizable
+    // row order/visibility (TICKET-STAT-14). Purely additive — a brand-new, empty table — so no
+    // `.upgrade()` is needed; the repository's `get()` falls back to
+    // `DEFAULT_DASHBOARD_LAYOUT_SETTINGS` when the row hasn't been written yet, same as `categoryModel`.
+    this.version(9).stores({
+      accounts: '++id, name, type, archived',
+      transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint',
+      transfers: '++id, fromTransactionId, toTransactionId',
+      categories: '++id, name, kind, archived',
+      rules: '++id, priority, enabled',
+      mappingProfiles: '++id, name, bankPreset, defaultAccountId',
+      importBatches: '++id, accountId, importedAt',
+      transferSettings: 'id',
+      categoryModel: 'id',
+      categoryComparisonSettings: 'id',
+      dashboardLayoutSettings: 'id',
     });
 
     this.on('populate', () => {
