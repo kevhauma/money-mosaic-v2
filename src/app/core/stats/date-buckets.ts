@@ -232,3 +232,93 @@ export const shiftRangeByCalendarUnit = (
     }
   }
 };
+
+/**
+ * Shifts an unaligned `[from, to]` range back `count` whole spans of its own length (in days) — for
+ * rolling-window presets (`last-31-days`, `last-365-days`) and `custom` ranges, which have no
+ * calendar-unit alignment for `shiftRangeByCalendarUnit` to use. `count` may be negative to shift
+ * forward, matching that function's sign convention.
+ */
+export const shiftRangeByDayCount = (
+  from: string,
+  to: string,
+  count: number,
+): { from: string; to: string } => {
+  const spanDays =
+    Math.round((parseIsoDate(to).getTime() - parseIsoDate(from).getTime()) / MS_PER_DAY) + 1;
+  const shiftMs = count * spanDays * MS_PER_DAY;
+  return {
+    from: formatIsoDate(new Date(parseIsoDate(from).getTime() - shiftMs)),
+    to: formatIsoDate(new Date(parseIsoDate(to).getTime() - shiftMs)),
+  };
+};
+
+const MONTH_NAME_FORMATTER = new Intl.DateTimeFormat('en-BE', { month: 'long', timeZone: 'UTC' });
+
+const isFullCalendarYear = (from: string, to: string): boolean => {
+  const start = parseIsoDate(from);
+  const end = parseIsoDate(to);
+  return (
+    start.getUTCMonth() === 0 &&
+    start.getUTCDate() === 1 &&
+    end.getUTCMonth() === 11 &&
+    end.getUTCDate() === 31 &&
+    start.getUTCFullYear() === end.getUTCFullYear()
+  );
+};
+
+type CalendarAlignment = { unit: CalendarUnit; label: string };
+
+/**
+ * Detects whether `[from, to]` exactly matches a single calendar week/month/quarter/year —
+ * reusing the same bucket boundaries `bucketKeyForDate`/`bucketDateBoundaries` already use for
+ * chart bucketing, so "aligned" here means the identical definition of a bucket elsewhere in the
+ * app. Returns `null` for any range that doesn't land exactly on one of these boundaries (a
+ * custom/arbitrary span).
+ */
+const detectCalendarAlignment = (from: string, to: string): CalendarAlignment | null => {
+  if (isFullCalendarYear(from, to)) {
+    return { unit: 'year', label: `${parseIsoDate(from).getUTCFullYear()}` };
+  }
+
+  for (const granularity of ['quarter', 'month', 'week'] as const) {
+    const key = bucketKeyForDate(from, granularity);
+    const boundaries = bucketDateBoundaries(key, granularity);
+    if (boundaries.start !== from || boundaries.end !== to) {
+      continue;
+    }
+
+    const year = parseIsoDate(from).getUTCFullYear();
+    switch (granularity) {
+      case 'quarter':
+        return { unit: 'quarter', label: `Q${key.split('-Q')[1]} ${year}` };
+      case 'month':
+        return {
+          unit: 'month',
+          label: `${MONTH_NAME_FORMATTER.format(parseIsoDate(from))} ${year}`,
+        };
+      case 'week':
+        return { unit: 'week', label: `W${key.split('-W')[1]} ${year}` };
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Compact label ("W27 2026", "July 2026", "Q3 2026", "2026") for a range that exactly matches a
+ * calendar week/month/quarter/year, or `null` for an arbitrary span — the caller should fall back
+ * to formatting the raw dates in that case.
+ */
+export const formatAlignedRangeLabel = (from: string, to: string): string | null =>
+  detectCalendarAlignment(from, to)?.label ?? null;
+
+/**
+ * The `CalendarUnit` a range is aligned to, or `null` if it's an arbitrary/rolling span. Lets
+ * prev/next navigation (TICKET-STAT-16) keep shifting by whole calendar units even after the
+ * range's preset has flipped to `'custom'` — e.g. repeatedly stepping "previous" from a year-aligned
+ * range should keep landing on real year boundaries, not drift by fixed day-counts across
+ * leap years.
+ */
+export const alignedCalendarUnit = (from: string, to: string): CalendarUnit | null =>
+  detectCalendarAlignment(from, to)?.unit ?? null;

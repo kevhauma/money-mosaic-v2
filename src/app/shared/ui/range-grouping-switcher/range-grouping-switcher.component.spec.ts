@@ -81,4 +81,67 @@ describe('RangeGroupingSwitcherComponent', () => {
     );
     expect(trigger.disabled).toBe(false);
   });
+
+  it('disables the previous/next buttons while "year-to-date" is selected', () => {
+    fixture.componentRef.setInput('value', {
+      preset: 'year-to-date',
+      from: '2026-01-01',
+      to: '2026-07-14',
+    });
+    fixture.detectChanges();
+
+    const buttons: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('mm-button button'),
+    );
+    expect(buttons.every((button) => button.disabled)).toBe(true);
+  });
+
+  it('disables the previous/next buttons while "all-time" is selected', () => {
+    fixture.componentRef.setInput('value', {
+      preset: 'all-time',
+      from: '2015-01-01',
+      to: '2026-07-14',
+    });
+    fixture.detectChanges();
+
+    const buttons: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('mm-button button'),
+    );
+    expect(buttons.every((button) => button.disabled)).toBe(true);
+  });
+
+  it('enables the previous/next buttons for a regular preset', () => {
+    fixture.detectChanges();
+
+    const buttons: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('mm-button button'),
+    );
+    expect(buttons.every((button) => !button.disabled)).toBe(true);
+  });
+
+  it('emits rangeShift(-1) when the previous button is clicked', () => {
+    const emitSpy = vi.fn();
+    component.rangeShift.subscribe(emitSpy);
+    fixture.detectChanges();
+
+    const [previousButton]: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('mm-button button'),
+    );
+    previousButton.click();
+
+    expect(emitSpy).toHaveBeenCalledWith(-1);
+  });
+
+  it('emits rangeShift(1) when the next button is clicked', () => {
+    const emitSpy = vi.fn();
+    component.rangeShift.subscribe(emitSpy);
+    fixture.detectChanges();
+
+    const buttons: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('mm-button button'),
+    );
+    buttons[1].click();
+
+    expect(emitSpy).toHaveBeenCalledWith(1);
+  });
 });

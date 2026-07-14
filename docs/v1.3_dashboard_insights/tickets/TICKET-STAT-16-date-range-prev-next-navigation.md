@@ -33,13 +33,13 @@ Adds a "◀ / ▶" control flanking the preset dropdown in the global topbar swi
 
 ## Acceptance criteria
 
-- [ ] Previous/next buttons render in `mm-range-grouping-switcher`, next to the preset dropdown, both `disabled` when the current preset is `year-to-date` or `all-time`.
-- [ ] Clicking next/previous while a calendar-aligned preset (`this-month`, `this-quarter`, `this-year`, `this-week`, `last-month`, `last-quarter`, `last-year`) is selected shifts `from`/`to` by that preset's calendar unit (via `shiftRangeByCalendarUnit`) and flips `preset` to `custom`.
-- [ ] Clicking next/previous while `last-31-days`, `last-365-days`, or `custom` is selected shifts `from`/`to` by the current span's day-count (new helper in `date-buckets.ts`) and sets/keeps `preset` as `custom`.
-- [ ] `RangeStore` gains a `shiftRange(direction: -1 | 1): void` method that performs the shift described above using the store's current `preset`/`from`/`to`, and patches state via `patchState` like the existing methods.
-- [ ] Shifting never touches `appDb` — this is pure `RangeStore`/`date-buckets.ts` state, no repository involved.
-- [ ] Unit tests cover: new day-count shift helper in `date-buckets.spec.ts` (forward and backward, span length preserved); `RangeStore.shiftRange` in `range-state.store.spec.ts` for a calendar-aligned preset, a rolling-window preset, and an already-custom range, each asserting `preset` becomes `'custom'`; `range-grouping-switcher.component.spec.ts` asserts the buttons are disabled for `year-to-date`/`all-time` and emit the new output otherwise.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Previous/next buttons render in `mm-range-grouping-switcher`, next to the preset dropdown, both `disabled` when the current preset is `year-to-date` or `all-time`.
+- [x] Clicking next/previous while a calendar-aligned preset (`this-month`, `this-quarter`, `this-year`, `this-week`, `last-month`, `last-quarter`, `last-year`) is selected shifts `from`/`to` by that preset's calendar unit (via `shiftRangeByCalendarUnit`) and flips `preset` to `custom`.
+- [x] Clicking next/previous while `last-31-days`, `last-365-days`, or `custom` is selected shifts `from`/`to` by the current span's day-count (new helper in `date-buckets.ts`) and sets/keeps `preset` as `custom`.
+- [x] `RangeStore` gains a `shiftRange(direction: -1 | 1): void` method that performs the shift described above using the store's current `preset`/`from`/`to`, and patches state via `patchState` like the existing methods.
+- [x] Shifting never touches `appDb` — this is pure `RangeStore`/`date-buckets.ts` state, no repository involved.
+- [x] Unit tests cover: new day-count shift helper in `date-buckets.spec.ts` (forward and backward, span length preserved); `RangeStore.shiftRange` in `range-state.store.spec.ts` for a calendar-aligned preset, a rolling-window preset, and an already-custom range, each asserting `preset` becomes `'custom'`; `range-grouping-switcher.component.spec.ts` asserts the buttons are disabled for `year-to-date`/`all-time` and emit the new output otherwise.
+- [x] Verified via the fallow skill and coding-conventions skill.
 - [ ] Verified live in the browser: with "This month" selected, clicking next moves the range to next calendar month and the dropdown shows "Custom"; with "Last 31 days" selected, clicking previous moves the 31-day window back by 31 days; with "Year to date" or "All time" selected, both buttons are disabled.
 
 ## Notes

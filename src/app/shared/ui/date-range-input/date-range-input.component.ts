@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 import 'cally';
+import { formatAlignedRangeLabel } from '@/core/stats/date-buckets';
 import { daisyClasses } from '@/shared/utils';
 
 export type DateRangeValue = { from: string; to: string };
@@ -49,9 +50,12 @@ export class DateRangeInputComponent {
 
   protected readonly displayLabel = computed(() => {
     const { from, to } = this.value();
-    return from && to
-      ? `${formatDisplayDate(from)} – ${formatDisplayDate(to)}`
-      : 'Select date range';
+    if (!from || !to) {
+      return 'Select date range';
+    }
+    return (
+      formatAlignedRangeLabel(from, to) ?? `${formatDisplayDate(from)} – ${formatDisplayDate(to)}`
+    );
   });
 
   protected onCalendarChange(event: Event): void {

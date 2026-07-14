@@ -1,8 +1,11 @@
 import {
+  alignedCalendarUnit,
   bucketDateBoundaries,
   bucketKeyForDate,
   bucketKeysInRange,
+  formatAlignedRangeLabel,
   resolvePresetRange,
+  shiftRangeByDayCount,
 } from './date-buckets';
 
 describe('bucketKeyForDate', () => {
@@ -171,5 +174,72 @@ describe('resolvePresetRange', () => {
       from: '2026-01-01',
       to: '2026-04-10',
     });
+  });
+});
+
+describe('shiftRangeByDayCount', () => {
+  it('shifts a range backward by its own span length (positive count)', () => {
+    expect(shiftRangeByDayCount('2026-06-15', '2026-07-15', 1)).toEqual({
+      from: '2026-05-15',
+      to: '2026-06-14',
+    });
+  });
+
+  it('shifts a range forward by its own span length (negative count)', () => {
+    expect(shiftRangeByDayCount('2026-06-15', '2026-07-15', -1)).toEqual({
+      from: '2026-07-16',
+      to: '2026-08-15',
+    });
+  });
+
+  it('preserves the span length across the shift', () => {
+    const shifted = shiftRangeByDayCount('2026-06-15', '2026-07-15', 1);
+    const originalSpanDays =
+      (Date.parse('2026-07-15') - Date.parse('2026-06-15')) / (24 * 60 * 60 * 1000);
+    const shiftedSpanDays =
+      (Date.parse(shifted.to) - Date.parse(shifted.from)) / (24 * 60 * 60 * 1000);
+    expect(shiftedSpanDays).toBe(originalSpanDays);
+  });
+});
+
+describe('formatAlignedRangeLabel', () => {
+  it('formats a range matching a full ISO week as "W<week> <year>"', () => {
+    // Mon 2026-06-29 .. Sun 2026-07-05 is ISO week 27 of 2026 (see resolvePresetRange tests above).
+    expect(formatAlignedRangeLabel('2026-06-29', '2026-07-05')).toBe('W27 2026');
+  });
+
+  it('formats a range matching a full calendar month as "<Month> <year>"', () => {
+    expect(formatAlignedRangeLabel('2026-07-01', '2026-07-31')).toBe('July 2026');
+  });
+
+  it('formats a range matching a full calendar quarter as "Q<n> <year>"', () => {
+    expect(formatAlignedRangeLabel('2026-07-01', '2026-09-30')).toBe('Q3 2026');
+  });
+
+  it('formats a range matching a full calendar year as "<year>"', () => {
+    expect(formatAlignedRangeLabel('2026-01-01', '2026-12-31')).toBe('2026');
+  });
+
+  it('returns null for an arbitrary range matching no calendar boundary', () => {
+    expect(formatAlignedRangeLabel('2026-07-05', '2026-07-20')).toBeNull();
+  });
+
+  it('handles a non-leap-year February with its shorter length', () => {
+    expect(formatAlignedRangeLabel('2026-02-01', '2026-02-28')).toBe('February 2026');
+  });
+});
+
+describe('alignedCalendarUnit', () => {
+  it.each([
+    ['2026-06-29', '2026-07-05', 'week'],
+    ['2026-07-01', '2026-07-31', 'month'],
+    ['2026-07-01', '2026-09-30', 'quarter'],
+    ['2026-01-01', '2026-12-31', 'year'],
+  ] as const)('returns "%s" for the matching span', (from, to, expectedUnit) => {
+    expect(alignedCalendarUnit(from, to)).toBe(expectedUnit);
+  });
+
+  it('returns null for an arbitrary range matching no calendar boundary', () => {
+    expect(alignedCalendarUnit('2026-07-05', '2026-07-20')).toBeNull();
   });
 });

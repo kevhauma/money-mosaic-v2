@@ -30,6 +30,46 @@ describe('DateRangeInputComponent', () => {
     expect(buttons[0].textContent).not.toContain('Select date range');
   });
 
+  it('shows a compact "<Month> <year>" label when the range is a full calendar month', () => {
+    fixture.componentRef.setInput('value', { from: '2026-07-01', to: '2026-07-31' });
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(button.textContent?.trim()).toBe('July 2026');
+  });
+
+  it('shows a compact "Q<n> <year>" label when the range is a full calendar quarter', () => {
+    fixture.componentRef.setInput('value', { from: '2026-07-01', to: '2026-09-30' });
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(button.textContent?.trim()).toBe('Q3 2026');
+  });
+
+  it('shows a compact "W<week> <year>" label when the range is a full ISO week', () => {
+    fixture.componentRef.setInput('value', { from: '2026-06-29', to: '2026-07-05' });
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(button.textContent?.trim()).toBe('W27 2026');
+  });
+
+  it('shows a compact "<year>" label when the range is a full calendar year', () => {
+    fixture.componentRef.setInput('value', { from: '2026-01-01', to: '2026-12-31' });
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(button.textContent?.trim()).toBe('2026');
+  });
+
+  it('falls back to raw formatted dates for a range matching no calendar boundary', () => {
+    fixture.componentRef.setInput('value', { from: '2026-07-05', to: '2026-07-20' });
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    expect(button.textContent?.trim()).toBe('05/07/2026 – 20/07/2026');
+  });
+
   it('shows a placeholder label when no range is set', () => {
     fixture.componentRef.setInput('value', { from: '', to: '' });
     fixture.detectChanges();

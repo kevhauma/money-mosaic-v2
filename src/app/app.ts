@@ -124,4 +124,8 @@ export class App {
   protected onCustomRangeChange({ from, to }: { from: string; to: string }): void {
     this.rangeStore.setCustomRange(from, to);
   }
+
+  protected onRangeShift(direction: -1 | 1): void {
+    this.rangeStore.shiftRange(direction);
+  }
 }

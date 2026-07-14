@@ -1,4 +1,21 @@
-<div class="flex flex-wrap items-center gap-2">
+<div class="flex items-center gap-2">
+  <mm-date-range-input
+    [value]="{ from: value().from, to: value().to }"
+    [disabled]="value().preset !== 'custom'"
+    size="sm"
+    (valueChange)="onRangeChange($event)"
+  />
+  <mm-button
+    variant="ghost"
+    size="sm"
+    shape="square"
+    ariaLabel="Previous period"
+    [disabled]="navigationDisabled()"
+    (click)="onPrevious()"
+  >
+    <ng-icon name="tablerChevronLeft" size="16" aria-hidden="true" />
+  </mm-button>
+
   <select
     class="select select-sm"
     aria-label="Date range preset"
@@ -19,10 +36,14 @@
     <option value="custom">Custom</option>
   </select>
 
-  <mm-date-range-input
-    [value]="{ from: value().from, to: value().to }"
-    [disabled]="value().preset !== 'custom'"
+  <mm-button
+    variant="ghost"
     size="sm"
-    (valueChange)="onRangeChange($event)"
-  />
+    shape="square"
+    ariaLabel="Next period"
+    [disabled]="navigationDisabled()"
+    (click)="onNext()"
+  >
+    <ng-icon name="tablerChevronRight" size="16" aria-hidden="true" />
+  </mm-button>
 </div>

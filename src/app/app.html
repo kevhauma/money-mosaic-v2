@@ -9,11 +9,12 @@
         </label>
         <span class="ml-2 text-lg font-semibold">Money Mosaic</span>
       </div>
-      <div class="ml-auto flex items-center">
+      <div class="ml-2 flex items-center">
         <mm-range-grouping-switcher
           [value]="switcherValue()"
           (presetChange)="onPresetChange($event)"
           (customRangeChange)="onCustomRangeChange($event)"
+          (rangeShift)="onRangeShift($event)"
         />
       </div>
     </div>

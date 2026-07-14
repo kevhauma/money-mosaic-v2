@@ -1,5 +1,12 @@
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { resolvePresetRange, type RangePreset } from './date-buckets';
+import {
+  alignedCalendarUnit,
+  resolvePresetRange,
+  shiftRangeByCalendarUnit,
+  shiftRangeByDayCount,
+  type CalendarUnit,
+  type RangePreset,
+} from './date-buckets';
 
 type RangeState = {
   preset: RangePreset | 'custom';
@@ -8,6 +15,17 @@ type RangeState = {
 };
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
+/** Calendar-aligned presets shift by their matching whole unit; every other preset (rolling-window or custom) shifts by its own day-count instead (TICKET-STAT-16). */
+const CALENDAR_UNIT_BY_PRESET: Partial<Record<RangePreset, CalendarUnit>> = {
+  'this-week': 'week',
+  'this-month': 'month',
+  'last-month': 'month',
+  'this-quarter': 'quarter',
+  'last-quarter': 'quarter',
+  'this-year': 'year',
+  'last-year': 'year',
+};
 
 const defaultRangeState = (): RangeState => ({
   preset: 'this-month',
@@ -48,6 +66,37 @@ export const RangeStore = signalStore(
      */
     selectCustomPreset: (): void => {
       patchState(store, { preset: 'custom' });
+    },
+
+    /**
+     * Steps the active range back/forward by its own length: `-1` (previous) shifts backward in
+     * time, `1` (next) shifts forward. `year-to-date`/`all-time` have no fixed, repeatable length
+     * so they're a no-op here (the topbar also disables the buttons in that state). Every shift
+     * flips `preset` to `'custom'`, since a shifted range generally no longer matches the named
+     * preset's semantics.
+     *
+     * Once `preset` is already `'custom'` (i.e. this isn't the first shift), the named preset is
+     * gone, so whether to keep shifting by whole calendar units is decided from the *actual*
+     * from/to boundaries instead (`alignedCalendarUnit`) — otherwise a chain of "previous" clicks
+     * on a year/month/quarter range would silently degrade to a fixed day-count shift after the
+     * first click and drift off the real boundaries (e.g. across a leap year).
+     */
+    shiftRange: (direction: -1 | 1): void => {
+      const { preset, from, to } = store;
+      const currentPreset = preset();
+      if (currentPreset === 'year-to-date' || currentPreset === 'all-time') {
+        return;
+      }
+
+      const unit =
+        currentPreset === 'custom'
+          ? alignedCalendarUnit(from(), to())
+          : CALENDAR_UNIT_BY_PRESET[currentPreset];
+      const range = unit
+        ? shiftRangeByCalendarUnit(from(), to(), unit, -direction)
+        : shiftRangeByDayCount(from(), to(), -direction);
+
+      patchState(store, { preset: 'custom', ...range });
     },
   })),
 );
