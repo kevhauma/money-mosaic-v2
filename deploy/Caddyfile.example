@@ -1,7 +1,7 @@
 
 
 :80 {
-	root * /var/www/money-mosaic-vibe
+	root * /var/www/money-mosaic
 	encode zstd gzip
 
 	# Angular SPA: unknown paths fall back to index.html so client-side routing works

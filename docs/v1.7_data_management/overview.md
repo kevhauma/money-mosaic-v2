@@ -1,0 +1,17 @@
+# Money Mosaic — v1.7 Data Management (Overview)
+
+Full-database backup/restore, "delete all data", and a persistent-storage request were spec'd from day one as FR-DAT-1..4 ([finance-app-spec.md §4.7](../v1.0_foundation/finance-app-spec.md)) and restated as user stories in [data_management.md](./data_management.md), but never broken into tickets or built — today the only way to move data between browsers/devices is manually copying IndexedDB, and the only way to wipe it is browser devtools. This gap surfaced again while scoping v2's "public ready" work, whose privacy messaging ("your data never leaves the browser") is only honest once there's a real, discoverable way to get data *out* — so this version finally ships it. Each ticketed line links to a `tickets/TICKET-*.md` file carrying its own user story, description, as-is/to-be, and acceptance criteria — this file is only the index + build order.
+
+- [ ] [TICKET-DAT-01](./tickets/TICKET-DAT-01-full-data-export-import.md) — Full data export & import (JSON backup/restore, replace-vs-merge) (adds FR-DAT-1, FR-DAT-2, NFR-STORE-1) — the core mechanism; build first since DAT-03's confirmation copy and v2's [TICKET-PUB-04](../v2/tickets/TICKET-PUB-04-local-data-migration-messaging.md) both reference it
+- [ ] [TICKET-DAT-02](./tickets/TICKET-DAT-02-persistent-storage-request.md) — Request persistent browser storage (adds FR-DAT-4) — independent, no dependency on DAT-01/DAT-03, safe to build in parallel
+- [ ] [TICKET-DAT-03](./tickets/TICKET-DAT-03-delete-all-data.md) — Delete all data, with confirmation (adds FR-DAT-3) — build last so its confirmation dialog can point at DAT-01's Export as a "back up first" suggestion
+
+## Considered, not ticketed yet
+
+- **Scheduled/automatic backups** (e.g. periodic export reminders, or auto-download on an interval) — DAT-01 is manual export only; an automated nudge is a reasonable follow-up once manual export has shipped and its UX is proven, not part of this version.
+- **Partial export/import** (e.g. export a single account's history, or import-merge with per-row conflict resolution UI) — DAT-01 is whole-database only; scoping down to partial export is a larger feature with its own conflict-resolution questions, deferred.
+- **Cloud/remote backup targets** (Google Drive, Dropbox, etc.) — would require network access and an OAuth-style integration, in direct tension with NFR-PRIV-1 ("no network transmission of financial data"); explicitly out of scope for a local-first app unless that principle changes.
+
+## Definition of Done (applies to every ticket)
+
+Per [../../CLAUDE.md](../../CLAUDE.md): `ng lint` + `ng test` + `ng build --configuration development` all pass, plus a live browser check for any UI-visible change. **No new Dexie tables are added by this version** — DAT-01/DAT-02/DAT-03 all operate on the existing table set (`appDb.tables`), so no schema version bump is expected; if implementation surfaces a genuine need for one (e.g. tracking last-export timestamp), it must be a new additive `.version(n + 1).stores(...)` block, never an edit to a shipped version. Components/stores never touch `appDb.<table>` directly — always through a repository/service in `core/data-access/`. Import (DAT-01) and delete (DAT-03) are both transactional per NFR-RESIL-1: a failure partway through must leave the database exactly as it was before the operation started. The production bundle budget in `angular.json` is never raised.

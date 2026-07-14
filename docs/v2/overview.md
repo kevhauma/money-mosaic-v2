@@ -1,0 +1,37 @@
+# Money Mosaic — v2 Public Ready (Overview)
+
+Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v9999_ideas/requirements.md), which also lists a handful of other rough ideas (dashboard flexibility — already shipped as [v1.3 TICKET-STAT-14](../v1.3_dashboard_insights/tickets/TICKET-STAT-14-customizable-dashboard-layout.md); food voucher support; a UX audit pass; a code-review process tweak) that are deliberately **not** part of this version — this version tickets the "Public Ready" ideas only. The through-line across all nine tickets: today the app is a personal dev tool with no theming, no settings, no help content, and a straight redirect into the Dashboard — this version makes it presentable and legible to someone encountering it for the first time, without adding a backend or changing any of the app's local-first guarantees. Each ticketed line links to a `tickets/TICKET-*.md` file carrying its own user story, description, as-is/to-be, and acceptance criteria — this file is only the index + build order.
+
+**One cross-version dependency:** [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) needs [v1.7 TICKET-DAT-01](../v1.7_data_management/tickets/TICKET-DAT-01-full-data-export-import.md) (full data export/import) to exist before it has anything real to point users at — that's the one place this version's build order reaches outside itself.
+
+## Settings track (SET-01 first, everything else in this track extends it)
+
+- [ ] [TICKET-SET-01](./tickets/TICKET-SET-01-theme-settings.md) — Settings page shell + dark/light/system theme (new capability) — builds the `appSettings` table, repository, store, and `/settings` page every other SET/PRIV ticket extends; build first
+- [ ] [TICKET-SET-02](./tickets/TICKET-SET-02-primary-color-setting.md) — Primary accent color setting (new capability) — needs SET-01; independent of SET-03/SET-04
+- [ ] [TICKET-SET-03](./tickets/TICKET-SET-03-currency-setting.md) — Currency setting (new capability) — needs SET-01; build before SET-04, which extends the same formatter refactor
+- [ ] [TICKET-SET-04](./tickets/TICKET-SET-04-locale-setting.md) — Locale setting for number/date formatting (new capability) — needs SET-01 + SET-03
+- [ ] [TICKET-PRIV-01](./tickets/TICKET-PRIV-01-privacy-mode-dashboard.md) — Privacy mode: blur amounts on the Dashboard (new capability) — needs SET-01; independent of SET-02/03/04
+
+## Public content track (independent of the Settings track and of each other)
+
+- [ ] [TICKET-PUB-01](./tickets/TICKET-PUB-01-home-landing-page.md) — Public home/landing page with click-through to Dashboard (new capability) — fully independent, safe to build any time
+- [ ] [TICKET-PUB-02](./tickets/TICKET-PUB-02-how-to-guides.md) — How-to guides for core workflows (new capability) — independent; pairs naturally with PUB-03's shared content-page pattern
+- [ ] [TICKET-PUB-03](./tickets/TICKET-PUB-03-faq.md) — FAQ for complex/non-obvious features (new capability) — independent; pairs naturally with PUB-02
+- [ ] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Local-data & migration messaging, surfaced in-app (new capability) — **blocked on v1.7 TICKET-DAT-01**; build last among the PUB tickets
+
+## Changelog track (independent)
+
+- [ ] [TICKET-CHG-01](./tickets/TICKET-CHG-01-changelog-page.md) — Changelog page, kept current via the `work-ticket`/`story-ticket` skill workflow (new capability) — independent of every other ticket in this version; also updates two `.claude/skills/` files, not just app code
+
+## Considered, not ticketed yet
+
+- **Dashboard flexibility (hide/reorder panels)** — this was the other concrete idea in v9999's "Public Ready" adjacent "UX improvements" section, but it's already shipped as [v1.3 TICKET-STAT-14](../v1.3_dashboard_insights/tickets/TICKET-STAT-14-customizable-dashboard-layout.md); no duplicate ticket here.
+- **Food voucher support, a full UX audit pass, and a code-review process tweak** — the other three items in v9999's backlog, deliberately left unticketed for this version since the scoping decision was "Public Ready only." They remain in [v9999_ideas/requirements.md](../v9999_ideas/requirements.md) for a future version to pick up.
+- **Freeform primary-color picker** — SET-02 ships a fixed preset palette instead; a true color picker needs live contrast-checking that's a bigger feature on its own (see SET-02's Notes).
+- **Full i18n / translated UI copy** — SET-04 only covers number/date formatting locale, not translating labels/copy; explicitly out of scope (see SET-04's Notes).
+- **Automated changelog generation** (a build/deploy-time script parsing `overview.md`) — CHG-01 deliberately went with a skill-driven manual-entry workflow instead; an automated generator is a reasonable later replacement if entries are found to go stale in practice (see CHG-01's Notes).
+- **Privacy mode beyond the Dashboard** (Transactions, Accounts, other screens) — PRIV-01 is Dashboard-only by scoping decision; extending the same `mm-privacy-blur` pattern to other screens is explicit follow-up scope, not part of this version.
+
+## Definition of Done (applies to every ticket)
+
+Per [../../CLAUDE.md](../../CLAUDE.md): `ng lint` + `ng test` + `ng build --configuration development` all pass, plus a live browser check for any UI-visible change (every ticket in this version is UI-visible). **This version adds exactly one new Dexie table**: `appSettings` at schema **`.version(10)`** (SET-01, additive, no `.upgrade()` needed). SET-02, SET-03, SET-04, and PRIV-01 each add a new *field* to that same table (`primaryColor`, `currency`, `locale`, `privacyMode`) without a further version bump, the same additive-field pattern already used elsewhere (e.g. `Category.smoothAnnually`). No other ticket in this version touches the schema. Components/stores never touch `appDb.appSettings` directly — always through `AppSettingsRepository`/`AppSettingsStore`. The production bundle budget in `angular.json` is never raised; new routed content (Settings, Home, How-to's, FAQ, Changelog) is lazy-loaded like every existing feature. CHG-01 is the one ticket in this version whose acceptance criteria include non-code (`.claude/skills/`) changes alongside app code — see its Notes for how that's verified differently.
