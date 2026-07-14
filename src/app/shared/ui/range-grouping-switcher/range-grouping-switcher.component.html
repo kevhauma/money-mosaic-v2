@@ -1,10 +1,4 @@
 <div class="flex items-center gap-2">
-  <mm-date-range-input
-    [value]="{ from: value().from, to: value().to }"
-    [disabled]="value().preset !== 'custom'"
-    size="sm"
-    (valueChange)="onRangeChange($event)"
-  />
   <mm-button
     variant="ghost"
     size="sm"
@@ -46,4 +40,10 @@
   >
     <ng-icon name="tablerChevronRight" size="16" aria-hidden="true" />
   </mm-button>
+  <mm-date-range-input
+    [value]="{ from: value().from, to: value().to }"
+    [disabled]="value().preset !== 'custom'"
+    size="sm"
+    (valueChange)="onRangeChange($event)"
+  />
 </div>

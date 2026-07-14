@@ -23,6 +23,7 @@ All six are independent of each other — each is a standalone pure aggregate in
 - [x] [TICKET-STAT-16](./tickets/TICKET-STAT-16-date-range-prev-next-navigation.md) — Previous/next navigation buttons on the global date-range picker (extends FR-STAT-7; precursor to the v1.8 date-range-picker rebuild) — independent, small; reuses STAT-04's `shiftRangeByCalendarUnit` helper, can ship any time
 - [ ] [TICKET-STAT-17](./tickets/TICKET-STAT-17-split-trend-chart-income-expense.md) — Split trend chart into independent income/expense charts side by side (extends FR-STAT-4, adds FR-STAT-14 — mirrors the two-independent-charts-in-one-panel pattern STAT-13 established) — independent, small-to-moderate UI restructuring, no aggregate change, can ship any time
 - [ ] [TICKET-STAT-18](./tickets/TICKET-STAT-18-category-composition-trend.md) — New "category composition over time" panel: two stacked-area charts (expense/income top categories per bucket), reusing the stacked-band technique from the Accounts net-worth history chart (extends FR-STAT-3/FR-STAT-4, adds FR-STAT-15) — independent, moderate (new aggregate + new panel), can ship any time; no shared files with STAT-17
+- [ ] [TICKET-STAT-19](./tickets/TICKET-STAT-19-comparison-bar-tooltip-date-range.md) — Show period date range in category comparison bar tooltips, e.g. "W27 2026"/"July 2026" (extends FR-STAT-8, reuses STAT-04's comparison panel and the global date-range picker's `formatAlignedRangeLabel`) — independent, tiny presentation-only change, can ship any time
 
 ## Considered, not ticketed yet
 
