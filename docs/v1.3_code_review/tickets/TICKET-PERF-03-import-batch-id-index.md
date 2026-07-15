@@ -24,11 +24,11 @@ As a user undoing an import on a large dataset, I want the batch's transactions 
 
 ## Acceptance criteria
 
-- [ ] `getByImportBatch` and `getByReimbursementTransferId` use indexed `where` queries; no `.filter(` full-table scan remains in [transactions.repository.ts](../../../src/app/core/data-access/transactions.repository.ts).
-- [ ] Schema change is a new `.version(11)` block only — `git diff` on `app-db.ts` shows no modification to versions 1–10.
-- [ ] Undo-import works on a database created *before* the upgrade (open an existing seeded/dev DB, upgrade happens, undo an old batch) — verified live in the browser.
-- [ ] Unit tests cover: `getByImportBatch` returns exactly the batch's rows post-upgrade (fake-indexeddb setup per the ML-04 pattern in `src/test-setup.ts`); reimbursement lookup returns the overriding transaction.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `getByImportBatch` and `getByReimbursementTransferId` use indexed `where` queries; no `.filter(` full-table scan remains in [transactions.repository.ts](../../../src/app/core/data-access/transactions.repository.ts).
+- [x] Schema change is a new `.version(11)` block only — `git diff` on `app-db.ts` shows no modification to versions 1–10.
+- [x] Undo-import works on a database created *before* the upgrade (open an existing seeded/dev DB, upgrade happens, undo an old batch) — verified live in the browser.
+- [x] Unit tests cover: `getByImportBatch` returns exactly the batch's rows post-upgrade (fake-indexeddb setup per the ML-04 pattern in `src/test-setup.ts`); reimbursement lookup returns the overriding transaction.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

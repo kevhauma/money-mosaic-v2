@@ -12,7 +12,7 @@ Everything lives in `src/app/core/data-access/`. The single source of truth is [
 | Entity | Table | Indexes | Notes |
 |---|---|---|---|
 | `Account` | `accounts` | `++id, name, type, archived` | type: checking/savings/joint/invest; currency fixed `'EUR'`; openingBalance + openingBalanceDate anchor balance math; `ownershipShare` (my fraction of a joint account, default 1); `coOwners: JointOwner[]` (name + IBANs + optional share for others on a joint account, TICKET-ACC-03); `sortOrder` for manual display ordering (TICKET-ACC-04) |
-| `Transaction` | `transactions` | `++id, accountId, bookingDate, categoryId, transferId, fingerprint` | `fingerprint` = dedupe hash (`shared/utils/fingerprint.ts`); `categoryManual: true` ⇒ rules must never overwrite the category (FR-TXN-2, FR-CAT-3); `rawLine`/`rawRow` retain the original CSV row (TICKET-TXN-06); `attributionOverride` reweights a single transaction's contribution to net worth/income-expense for joint-account edge cases (TICKET-TXN-03); `nullified: true` excludes it from income/expense/savings-rate/category-breakdown while still counting toward balance (TICKET-TXN-04) |
+| `Transaction` | `transactions` | `++id, accountId, bookingDate, categoryId, transferId, fingerprint, importBatchId, attributionOverride.reimbursementTransferId` | `fingerprint` = dedupe hash (`shared/utils/fingerprint.ts`); `categoryManual: true` ⇒ rules must never overwrite the category (FR-TXN-2, FR-CAT-3); `rawLine`/`rawRow` retain the original CSV row (TICKET-TXN-06); `attributionOverride` reweights a single transaction's contribution to net worth/income-expense for joint-account edge cases (TICKET-TXN-03); `nullified: true` excludes it from income/expense/savings-rate/category-breakdown while still counting toward balance (TICKET-TXN-04) |
 | `Transfer` | `transfers` | `++id, fromTransactionId, toTransactionId` | method: auto-iban / auto-amountdate / manual; confidence: high / medium / manual |
 | `TransferSettings` | `transferSettings` | `id` (singleton, id=1) | matchWindowDays (default 3), autoLinkMediumConfidence (default true) |
 | `Category` | `categories` | `++id, name, kind, archived` | kind: expense/income/**neutral** (neutral counts toward balance/net worth but is excluded from income/expense/savings-rate/breakdown — e.g. a partner's contribution, TICKET-CAT-02); `isSystem` marks seeded defaults; `sortOrder` for manual ordering (TICKET-CAT-03) |
@@ -26,9 +26,15 @@ Everything lives in `src/app/core/data-access/`. The single source of truth is [
 
 ## Versioning rules (critical)
 
-- Current schema version: **10**. History: v2 added `transferSettings`; v3 backfilled `columns.ownIban` on seeded KBC/Belfius profiles; v4 backfilled fingerprint occurrence suffixes; v5 backfilled `Rule.conditionMatch`; v6 seeded the "Partner contribution" neutral category; v7 added `categoryModel`; v8 added `categoryComparisonSettings`; v9 added `dashboardLayoutSettings`; v10 added `categoryModelSettings`.
-- **Only additive changes**: add `.version(11).stores({ ...full table map... })` and an `.upgrade(async (tx) => ...)` block if existing data needs transforming. Never edit a shipped version block in place. A brand-new, empty singleton-settings table needs no `.upgrade()` at all if its repository's `get()` falls back to a `DEFAULT_*` constant (the established pattern — see `categoryModel`/`categoryComparisonSettings`/`dashboardLayoutSettings`/`categoryModelSettings`).
-- Each `.stores()` call must repeat the **complete** table map, not just the changed table.
+- Current schema version: **11**. History: v2 added `transferSettings`; v3 backfilled `columns.ownIban` on seeded KBC/Belfius profiles; v4 backfilled fingerprint occurrence suffixes; v5 backfilled `Rule.conditionMatch`; v6 seeded the "Partner contribution" neutral category; v7 added `categoryModel`; v8 added `categoryComparisonSettings`; v9 added `dashboardLayoutSettings`; v10 added `categoryModelSettings`; v11 indexed `transactions.importBatchId` and `transactions.attributionOverride.reimbursementTransferId`.
+- **Only additive changes**: add `.version(n + 1).stores({...})` and an `.upgrade(async (tx) => ...)` block if existing data needs transforming. Never edit a shipped version block in place. A brand-new, empty singleton-settings table needs no `.upgrade()` at all if its repository's `get()` falls back to a `DEFAULT_*` constant (the established pattern — see `categoryModel`/`categoryComparisonSettings`/`dashboardLayoutSettings`/`categoryModelSettings`).
+- **Minimal declaration (from `.version(11)` onward)**: a new `.stores({...})` call lists only the tables that are new or have an index change — Dexie carries forward the schema of every table you omit. Versions 1–10 predate this convention and repeat the full table map each time; they are shipped and stay as-is (never rewritten retroactively — see the hard rule above). Add a one-line comment above each new block naming what changed and why. Example:
+  ```ts
+  // Adds importBatchId index for undo-import lookups (TICKET-PERF-03).
+  this.version(11).stores({
+    transactions: '++id, accountId, bookingDate, categoryId, transferId, fingerprint, importBatchId',
+  });
+  ```
 - `this.on('populate')` seeds first-run data only: KBC + Belfius mapping-profile templates, ~10 default categories, default transfer settings. `populate` does NOT run for existing users — they need an `.upgrade()` block.
 
 ## Repository layer

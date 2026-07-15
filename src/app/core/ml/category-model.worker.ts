@@ -297,6 +297,7 @@ export const createCategoryModelWorkerHandler = (
 /**
  * Test-only escape hatch so specs can assert bounded tensor growth without importing tfjs
  * themselves — the bundle-budget grep gate only allows this file to reference `@tensorflow/*`.
+ * @expected-unused Only referenced from specs — deliberate leak-detection hook (TICKET-CLEANUP-02).
  */
 export const getTensorCount = async (): Promise<number> =>
   (await loadTf()).core.memory().numTensors;

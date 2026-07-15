@@ -1,5 +1,21 @@
 {
+  // Verified false-positive families for this repo — see docs/v1.3_code_review/code-review-fallow.md §5
+  // (TICKET-CLEANUP-02) before changing or removing any of these.
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
   "ignorePatterns": ["**/*.spec.ts", "**/*.d.ts"],
-  "production": false
+  "production": false,
+  "ignoreExportsUsedInFile": true, // clears the in-file/spec-used "unused export" family (§5.1)
+  "ignoreDependencies": ["tailwindcss"], // build-time-only Tailwind 4 dep, correct in devDependencies (§5.3)
+  "rules": {
+    "unused-class-members": "off" // DI-invoked repository members, all verified in use (§5.2)
+  },
+  // Small pure utilities exported so their spec can import them directly (same family as §5.1, not
+  // used in-file so ignoreExportsUsedInFile doesn't clear them) — verified 2026-07-15, post-review.
+  "ignoreExports": [
+    { "file": "src/app/core/accounts/joint-owner-lookup.ts", "exports": ["coOwnerIbanSet"] },
+    {
+      "file": "src/app/core/categorisation/rule-matching.ts",
+      "exports": ["resolveCategoryForTransaction"]
+    }
+  ]
 }

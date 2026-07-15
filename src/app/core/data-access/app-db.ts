@@ -697,6 +697,22 @@ class AppDb extends Dexie {
       categoryModelSettings: 'id',
     });
 
+    // Versions 1-10 above are shipped and must never be edited (Dexie replays every user's
+    // upgrade chain from their current version forward). They predate the minimal-declaration
+    // convention below and stay as full table-map copies for that reason alone.
+    //
+    // From .version(11) onward: declare only the tables that are new or have an index change.
+    // Dexie carries forward the schema of every table you omit — you do not need to repeat it.
+
+    // Indexes `importBatchId` (undo-import lookup) and the dotted keypath
+    // `attributionOverride.reimbursementTransferId` (reimbursement-leg lookup) on `transactions` —
+    // both were full-table filter scans (TICKET-PERF-03). Purely additive index changes on an
+    // existing table; no `.upgrade()` needed, Dexie backfills indexes from existing row data.
+    this.version(11).stores({
+      transactions:
+        '++id, accountId, bookingDate, categoryId, transferId, fingerprint, importBatchId, attributionOverride.reimbursementTransferId',
+    });
+
     this.on('populate', () => {
       this.mappingProfiles.bulkAdd(DEFAULT_MAPPING_PROFILE_TEMPLATES);
       this.categories.bulkAdd(DEFAULT_CATEGORIES);

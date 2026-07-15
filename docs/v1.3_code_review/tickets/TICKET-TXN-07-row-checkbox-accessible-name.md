@@ -22,10 +22,10 @@ The header select-all checkbox gained `aria-label="Select all filtered transacti
 
 ## Acceptance criteria
 
-- [ ] Every row checkbox has a non-empty, row-specific accessible name (assert in the component spec via `getAttribute('aria-label')` on two rows differing in content).
-- [ ] Selection behaviour unchanged (toggle, select-all interplay) — existing specs pass.
-- [ ] Live browser check: inspect the accessibility tree (DevTools) for a row checkbox and confirm the computed name.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Every row checkbox has a non-empty, row-specific accessible name (assert in the component spec via `getAttribute('aria-label')` on two rows differing in content).
+- [x] Selection behaviour unchanged (toggle, select-all interplay) — existing specs pass.
+- [x] Live browser check: inspect the accessibility tree (DevTools) for a row checkbox and confirm the computed name.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

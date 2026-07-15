@@ -26,6 +26,7 @@ Verification before declaring any change done: `ng lint` + `ng test` + `ng build
 | UI layout spec | `docs/v1.0_foundation/ui-layout-spec.md` |
 | Requirements for every other shipped/backlog version (joint accounts, auto-categorise, dashboard insights, income, loans, data management, v2+, ...) | `docs/<version>/overview.md` — don't hardcode a version list here, ask the `spec-navigator` subagent or list `docs/` |
 | Angular / Tailwind 4 / daisyUI / Vitest guidance | installed skills in `.agents/skills/` (managed by `npx skills`, tracked in `skills-lock.json`) |
+| `docs/` folder naming scheme (feature milestone vs. review, grandfathered exceptions) | `docs/README.md` |
 
 Subagents in `.claude/agents/`: `conventions-reviewer` (diff review against project rules), `verifier` (lint/test/build runner), `spec-navigator` (answers requirement/spec questions from `docs/`).
 

@@ -1,21 +1,5 @@
 import type { Rule, RuleCondition } from '@/core/data-access';
-
-const FIELD_LABELS: Record<RuleCondition['field'], string> = {
-  description: 'Description',
-  counterpartyName: 'Counterparty name',
-  counterpartyIban: 'Counterparty IBAN',
-  amount: 'Amount',
-  accountId: 'Account',
-};
-
-const OPERATOR_LABELS: Record<RuleCondition['operator'], string> = {
-  contains: 'contains',
-  equals: 'equals',
-  regex: 'matches',
-  '>': '>',
-  '<': '<',
-  between: 'between',
-};
+import { FIELD_LABELS, OPERATOR_LABELS } from './rule-labels';
 
 const describeCondition = (
   condition: RuleCondition,

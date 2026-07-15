@@ -24,10 +24,10 @@ The current tree mixes three schemes: `vX.Y_name` feature milestones, unnumbered
 
 ## Acceptance criteria
 
-- [ ] The rule is written down in exactly one discoverable place and covers both folder kinds (milestone, review).
-- [ ] `spec-navigator` and `project-map` skills still resolve everything they reference (run their referenced paths through a link check / grep after any rename).
-- [ ] If renamed: zero broken relative links (`grep -rn "coding-review-2\|docs/code-review" docs .claude CLAUDE.md` reflects the new reality); if grandfathered: the note names the grandfathered folders explicitly so they don't read as counter-examples.
-- [ ] No code changes; no lint/test/build impact.
+- [x] The rule is written down in exactly one discoverable place and covers both folder kinds (milestone, review).
+- [x] `spec-navigator` and `project-map` skills still resolve everything they reference (run their referenced paths through a link check / grep after any rename).
+- [x] If renamed: zero broken relative links (`grep -rn "coding-review-2\|docs/code-review" docs .claude CLAUDE.md` reflects the new reality); if grandfathered: the note names the grandfathered folders explicitly so they don't read as counter-examples.
+- [x] No code changes; no lint/test/build impact.
 
 ## Notes
 

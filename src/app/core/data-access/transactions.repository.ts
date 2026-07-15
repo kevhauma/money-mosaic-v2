@@ -20,19 +20,13 @@ export class TransactionsRepository {
   bulkAdd = (transactions: Transaction[]): Promise<number[]> =>
     appDb.transactions.bulkAdd(transactions, { allKeys: true });
 
-  // `importBatchId` has no Dexie index (added after v1 shipped), so this is a full-table filter scan.
   getByImportBatch = (importBatchId: number): Promise<Transaction[]> =>
-    appDb.transactions
-      .filter((transaction) => transaction.importBatchId === importBatchId)
-      .toArray();
+    appDb.transactions.where('importBatchId').equals(importBatchId).toArray();
 
-  // `attributionOverride.reimbursementTransferId` has no Dexie index — full-table filter scan, same
-  // as `getByImportBatch` (TICKET-TXN-03).
   getByReimbursementTransferId = (transferId: number): Promise<Transaction[]> =>
     appDb.transactions
-      .filter(
-        (transaction) => transaction.attributionOverride?.reimbursementTransferId === transferId,
-      )
+      .where('attributionOverride.reimbursementTransferId')
+      .equals(transferId)
       .toArray();
 
   bulkRemove = (ids: number[]): Promise<void> => appDb.transactions.bulkDelete(ids);

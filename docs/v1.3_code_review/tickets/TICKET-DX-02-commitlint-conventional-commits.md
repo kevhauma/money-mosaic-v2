@@ -23,10 +23,10 @@ The repo already writes conventional-style messages by convention (`feat:`, `doc
 
 ## Acceptance criteria
 
-- [ ] `git commit -m "bad message"` is rejected; `git commit -m "docs: update tickets"` passes — demonstrated locally.
-- [ ] A multi-line message with the `Co-Authored-By` trailer passes.
-- [ ] The allowed type set is documented (default conventional types are fine; if the repo wants `chore`/`refactor`/`perf` — all already in use in history — the default set covers them).
-- [ ] No change to app code or bundles; `ng lint`/`ng test`/`ng build` unaffected.
+- [x] `git commit -m "bad message"` is rejected; `git commit -m "docs: update tickets"` passes — demonstrated locally.
+- [x] A multi-line message with the `Co-Authored-By` trailer passes.
+- [x] The allowed type set is documented (default conventional types are fine; if the repo wants `chore`/`refactor`/`perf` — all already in use in history — the default set covers them).
+- [x] No change to app code or bundles; `ng lint`/`ng test`/`ng build` unaffected.
 
 ## Notes
 

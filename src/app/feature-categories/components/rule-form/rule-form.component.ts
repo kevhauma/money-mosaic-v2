@@ -21,6 +21,7 @@ import type { Rule, RuleCondition } from '@/core/data-access';
 import { OPERATORS_BY_FIELD } from '@/core/categorisation';
 import { AccountsStore, CategoriesStore } from '@/core/state';
 import { ButtonComponent, InputComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
+import { FIELD_LABELS, OPERATOR_LABELS } from '../../rule-labels';
 
 export type RuleFormValue = Omit<Rule, 'id'>;
 
@@ -70,22 +71,13 @@ export class RuleFormComponent {
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly maxRegexPatternLength = MAX_REGEX_PATTERN_LENGTH;
 
-  protected readonly fieldOptions: { value: RuleCondition['field']; label: string }[] = [
-    { value: 'description', label: 'Description' },
-    { value: 'counterpartyName', label: 'Counterparty name' },
-    { value: 'counterpartyIban', label: 'Counterparty IBAN' },
-    { value: 'amount', label: 'Amount' },
-    { value: 'accountId', label: 'Account' },
-  ];
+  protected readonly fieldOptions: { value: RuleCondition['field']; label: string }[] =
+    Object.entries(FIELD_LABELS).map(([value, label]) => ({
+      value: value as RuleCondition['field'],
+      label,
+    }));
 
-  protected readonly operatorLabels: Record<RuleCondition['operator'], string> = {
-    contains: 'contains',
-    equals: 'equals',
-    regex: 'matches regex',
-    '>': 'is greater than',
-    '<': 'is less than',
-    between: 'is between',
-  };
+  protected readonly operatorLabels = OPERATOR_LABELS;
 
   private readonly formBuilder = inject(FormBuilder);
 

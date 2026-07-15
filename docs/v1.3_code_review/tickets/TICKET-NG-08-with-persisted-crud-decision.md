@@ -33,3 +33,6 @@ Five entity stores (`AccountsStore`, `CategoriesStore`, `RulesStore`, `MappingPr
 ## Notes
 
 - Divergences to check before deciding: `AccountsStore.removeAccount` cascades via `AccountDeletionService` (not a plain repo call); `CategoriesStore.removeCategory` clears `categoryId`/`categoryManual` on referencing transactions; `MappingProfilesStore` upserts. If most "CRUD" methods turn out to be orchestrations, that's the "no" answer.
+
+## Decision
+- go ahead with the withPersistedCrud feature store

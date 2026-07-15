@@ -28,11 +28,11 @@ CR3 §5 manually traced fallow's raw dead-code output: all 19 "unused exports" a
 
 ## Acceptance criteria
 
-- [ ] `fallow dead-code --format json --quiet` reports 0 unused exports/types/class-members and 0 dependency findings, while still reporting the 20 circular dependencies (until TICKET-SOLID-05 lands — the config must **not** suppress those).
-- [ ] `fallow dupes` and `fallow health` outputs are unaffected by the config (spot-check counts before/after).
-- [ ] The config file carries a comment linking to review §5 (`docs/v1.3_code_review/code-review-fallow.md`) as the evidence trail (`.fallowrc.json` accepts JSONC comments).
-- [ ] Baseline file is committed and `fallow dead-code --baseline <file>` runs clean.
-- [ ] Verified via the fallow skill (a fresh run shows the expected clean output); no app code changes, so no lint/test/build impact beyond the one JSDoc tag.
+- [x] `fallow dead-code --format json --quiet` reports 0 unused exports/types/class-members and 0 dependency findings, while still reporting the 20 circular dependencies (until TICKET-SOLID-05 lands — the config must **not** suppress those).
+- [x] `fallow dupes` and `fallow health` outputs are unaffected by the config (spot-check counts before/after).
+- [x] The config file carries a comment linking to review §5 (`docs/v1.3_code_review/code-review-fallow.md`) as the evidence trail (`.fallowrc.json` accepts JSONC comments).
+- [x] Baseline file is committed and `fallow dead-code --baseline <file>` runs clean.
+- [x] Verified via the fallow skill (a fresh run shows the expected clean output); no app code changes, so no lint/test/build impact beyond the one JSDoc tag.
 
 ## Notes
 

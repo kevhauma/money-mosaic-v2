@@ -26,10 +26,10 @@ The human-readable labels for rule condition fields and operators exist twice wi
 
 ## Acceptance criteria
 
-- [ ] Each label string exists exactly once in `src` (`grep -rn "matches regex" src` → one hit).
-- [ ] Adding a hypothetical operator to `RuleCondition['operator']` fails compilation until both label records cover it (i.e. the records stay exhaustively typed, no `Partial`).
-- [ ] Rule form dropdowns and rule summary lines render unchanged — existing `rule-summary.spec.ts` and rule-form specs pass; live browser check of the rules page (create/edit a rule, summary text).
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Each label string exists exactly once in `src` (`grep -rn "matches regex" src` → one hit).
+- [x] Adding a hypothetical operator to `RuleCondition['operator']` fails compilation until both label records cover it (i.e. the records stay exhaustively typed, no `Partial`).
+- [x] Rule form dropdowns and rule summary lines render unchanged — existing `rule-summary.spec.ts` and rule-form specs pass; live browser check of the rules page (create/edit a rule, summary text).
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

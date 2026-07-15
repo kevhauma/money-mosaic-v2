@@ -72,6 +72,12 @@
               <input
                 type="checkbox"
                 class="checkbox checkbox-sm"
+                [attr.aria-label]="
+                  'Select transaction ' +
+                  row.transaction.bookingDate +
+                  ' ' +
+                  (row.transaction.counterpartyName ?? row.transaction.rawDescription)
+                "
                 [checked]="row.selected"
                 (change)="selection.toggle(row.transaction.id!)"
               />

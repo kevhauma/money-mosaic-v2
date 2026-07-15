@@ -249,4 +249,21 @@ describe('TransactionsOverviewComponent', () => {
 
     expect(transactionsRepository.update).not.toHaveBeenCalled();
   });
+
+  it('gives each row checkbox a distinguishing accessible name (TICKET-TXN-07)', async () => {
+    await setup();
+    TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2)]);
+    await fixture.whenStable();
+
+    const checkboxes = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      'tbody input[type="checkbox"]',
+    );
+    const labels = Array.from(checkboxes).map((checkbox) => checkbox.getAttribute('aria-label'));
+
+    expect(labels).toEqual([
+      'Select transaction 2026-06-01 Row 1',
+      'Select transaction 2026-06-01 Row 2',
+    ]);
+    expect(labels[0]).not.toBe(labels[1]);
+  });
 });

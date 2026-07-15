@@ -24,11 +24,11 @@ Every version block in `app-db.ts` re-declares the full table list — by `.vers
 
 ## Acceptance criteria
 
-- [ ] The `data-model` skill's versioning section states the minimal-declaration convention with a worked example.
-- [ ] `app-db.ts` carries the convention note where the next author will see it (adjacent to the version chain).
-- [ ] `git diff` shows zero changes inside version blocks 1–10.
-- [ ] The next real schema bump (e.g. TICKET-PERF-03's `.version(11)`) follows the convention — if that ticket lands first with a full re-declaration, this ticket includes bringing that one *unshipped-or-latest* block in line **only if it has not shipped to any user's browser yet**; otherwise the convention simply starts at the next bump.
-- [ ] Verified via the coding-conventions skill (fallow has no schema opinion here — no re-run needed).
+- [x] The `data-model` skill's versioning section states the minimal-declaration convention with a worked example.
+- [x] `app-db.ts` carries the convention note where the next author will see it (adjacent to the version chain).
+- [x] `git diff` shows zero changes inside version blocks 1–10.
+- [x] The next real schema bump (e.g. TICKET-PERF-03's `.version(11)`) follows the convention — if that ticket lands first with a full re-declaration, this ticket includes bringing that one *unshipped-or-latest* block in line **only if it has not shipped to any user's browser yet**; otherwise the convention simply starts at the next bump.
+- [x] Verified via the coding-conventions skill (fallow has no schema opinion here — no re-run needed).
 
 ## Notes
 
