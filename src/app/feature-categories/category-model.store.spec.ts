@@ -168,6 +168,44 @@ describe('CategoryModelStore', () => {
       expect(categoryModelService.init).toHaveBeenCalledTimes(1);
       expect(categoryModelService.predict).not.toHaveBeenCalled();
     });
+
+    it("a concurrent train() while the on-injection hydrate is still in flight wins — hydrate() backs off instead of clobbering it back to the persisted model's status (TICKET-PERF-07)", async () => {
+      categoriesRepository.getAll.mockResolvedValue([
+        category({ id: 1 }),
+        category({ id: 2, name: 'Rent' }),
+      ]);
+      transactionsRepository.getAll.mockResolvedValue(labeledTransactions());
+      const signature = taxonomySignature([
+        { id: 1, name: 'Groceries' },
+        { id: 2, name: 'Rent' },
+      ]);
+      // A persisted model exists, so hydrate() has real work to do (repository round-trips +
+      // worker init) — enough for train() to race ahead of it if nothing guards against it.
+      categoryModelRepository.get.mockResolvedValue(artifact({ taxonomySignature: signature }));
+      categoryModelService.train.mockResolvedValue({
+        type: 'TRAIN_OK',
+        artifacts: {
+          modelTopology: new ArrayBuffer(0),
+          weightSpecs: new ArrayBuffer(0),
+          weightData: new ArrayBuffer(0),
+          categoryIdByIndex: [1, 2],
+        },
+        metrics: { accuracy: 0.99, trainedSampleCount: MIN_TRAINING_LABELS },
+      });
+      await hydrateCollaborators();
+
+      // Injection alone kicks off hydrate() via onInit (TICKET-PERF-07) — deliberately not
+      // awaited here, mirroring a user who clicks Train before it settles.
+      const store = TestBed.inject(CategoryModelStore);
+      await store.train();
+      // Let the still in-flight on-injection hydrate() finish resolving.
+      await store.hydrate();
+
+      expect(store.status()).toBe('ready');
+      expect(store.metrics()).toEqual({ accuracy: 0.99, trainedSampleCount: MIN_TRAINING_LABELS });
+      // The persisted (now-stale) artifact must never reach the worker once train() has won.
+      expect(categoryModelService.init).not.toHaveBeenCalled();
+    });
   });
 
   describe('train', () => {

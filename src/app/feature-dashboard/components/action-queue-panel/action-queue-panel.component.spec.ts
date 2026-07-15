@@ -1,16 +1,27 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
+import { TransactionsRepository } from '@/core/data-access';
 import { TransactionsStore } from '@/core/state';
 
 import { ActionQueuePanelComponent } from './action-queue-panel.component';
 
 describe('ActionQueuePanelComponent', () => {
   let fixture: ComponentFixture<ActionQueuePanelComponent>;
+  const transactionsRepository = { getAll: vi.fn() };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
+    // Left permanently pending so TransactionsStore's on-injection hydrate (TICKET-PERF-07) never
+    // settles during setup — the "loading skeleton" test below depends on staying in that window;
+    // the "renders nothing" test resolves it itself before asserting.
+    transactionsRepository.getAll.mockReturnValue(new Promise(() => {}));
     await TestBed.configureTestingModule({
       imports: [ActionQueuePanelComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ActionQueuePanelComponent);
@@ -28,7 +39,8 @@ describe('ActionQueuePanelComponent', () => {
   });
 
   it('renders nothing when both queues are empty (hydrated, not just loading)', async () => {
-    await TestBed.inject(TransactionsStore).hydrate();
+    transactionsRepository.getAll.mockResolvedValue([]);
+    await TestBed.inject(TransactionsStore).hydrate({ force: true });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.card')).toBeNull();
     expect(fixture.nativeElement.querySelector('.skeleton')).toBeNull();

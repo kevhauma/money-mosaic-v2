@@ -17,6 +17,7 @@ import {
   ButtonComponent,
   ConfirmDialogComponent,
   EmptyStateComponent,
+  LoadingSkeletonComponent,
   PageHeaderComponent,
 } from '@/shared/ui';
 import { RulesStore } from '../../rules.store';
@@ -38,6 +39,7 @@ import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.co
     ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
+    LoadingSkeletonComponent,
     PageHeaderComponent,
   ],
   templateUrl: './rules-overview.component.html',

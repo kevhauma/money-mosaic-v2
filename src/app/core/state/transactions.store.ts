@@ -1,5 +1,13 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntities,
   entityConfig,
@@ -143,5 +151,13 @@ export const TransactionsStore = signalStore(
         return result;
       },
     };
+  }),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget: kicks off hydration the moment anything first injects this store,
+      // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
+      // `transactions()` synchronously can still `await store.hydrate()` as a guard.
+      void store.hydrate();
+    },
   }),
 );

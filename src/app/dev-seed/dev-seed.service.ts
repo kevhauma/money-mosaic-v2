@@ -31,12 +31,14 @@ export class DevSeedService {
    * transactions. Idempotent and non-destructive: on any existing dataset it's a no-op.
    * Returns the number of transactions written (0 when skipped).
    *
-   * Ordering contract (TICKET-PERF-05): `TransactionsStore`/`TransfersStore` hydrate in the
-   * background without blocking app bootstrap, so their initial `hydrate()` may still be
-   * in-flight when this runs. We await every store's *initial* hydrate before writing anything,
-   * so that in-flight fetch (which reflects pre-seed, possibly-empty data) is guaranteed to settle
-   * before the seed's own force-refresh below — otherwise a slow initial fetch resolving after the
-   * force-refresh would silently overwrite the freshly-seeded rows with stale empty state.
+   * Ordering contract: all four stores below now self-hydrate the moment anything first injects
+   * them (`withHooks({ onInit })`, TICKET-PERF-07) — including this service's own constructor
+   * injections above — rather than at a central app-bootstrap call (TICKET-PERF-05's original
+   * design). Either way, that hydrate may still be in-flight when this runs. We await every
+   * store's *initial* hydrate before writing anything, so that in-flight fetch (which reflects
+   * pre-seed, possibly-empty data) is guaranteed to settle before the seed's own force-refresh
+   * below — otherwise a slow initial fetch resolving after the force-refresh would silently
+   * overwrite the freshly-seeded rows with stale empty state.
    */
   seedIfEmpty = async (now: Date = new Date()): Promise<number> => {
     const [accounts, transactionCount] = await Promise.all([
@@ -77,10 +79,10 @@ export class DevSeedService {
     await this.linkTransfers(persisted, transferPairIndices);
 
     // Re-fetch every store the seed touched so the UI reflects the new rows without a reload.
-    // `AccountsStore.hydrate()` always re-fetches; `TransactionsStore`/`TransfersStore` need
-    // `force: true` since their own `hydrate()` already resolved above (TICKET-PERF-05).
+    // All three are idempotent/cached (TICKET-PERF-05, TICKET-PERF-07) and their own `hydrate()`
+    // already resolved above, so `force: true` is required here on every one of them.
     await Promise.all([
-      this.accountsStore.hydrate(),
+      this.accountsStore.hydrate({ force: true }),
       this.transactionsStore.hydrate({ force: true }),
       this.transfersStore.hydrate({ force: true }),
     ]);

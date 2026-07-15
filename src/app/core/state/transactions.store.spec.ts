@@ -31,8 +31,13 @@ describe('TransactionsStore: bulkAssignCategory (TICKET-TXN-01)', () => {
   });
 
   it('persists one batched write that assigns the category and marks each row manual', async () => {
+    transactionsRepository.getAll.mockResolvedValue([
+      transaction({ id: 1 }),
+      transaction({ id: 2 }),
+      transaction({ id: 3 }),
+    ]);
     const store = TestBed.inject(TransactionsStore);
-    store.addMany([transaction({ id: 1 }), transaction({ id: 2 }), transaction({ id: 3 })]);
+    await store.hydrate();
 
     await store.bulkAssignCategory([1, 2, 3], 7);
 
@@ -47,8 +52,12 @@ describe('TransactionsStore: bulkAssignCategory (TICKET-TXN-01)', () => {
   });
 
   it('reflects the category and manual flag into local state so computed stats update immediately', async () => {
+    transactionsRepository.getAll.mockResolvedValue([
+      transaction({ id: 1 }),
+      transaction({ id: 2 }),
+    ]);
     const store = TestBed.inject(TransactionsStore);
-    store.addMany([transaction({ id: 1 }), transaction({ id: 2 })]);
+    await store.hydrate();
     expect(store.uncategorisedCount()).toBe(2);
 
     await store.bulkAssignCategory([1, 2], 7);
@@ -80,14 +89,15 @@ describe('TransactionsStore: uncategorised backlog excludes savings movements (T
     });
   });
 
-  it('drops a movement to a savings account but keeps a genuine uncategorised spend', () => {
-    const store = TestBed.inject(TransactionsStore);
-    store.addMany([
+  it('drops a movement to a savings account but keeps a genuine uncategorised spend', async () => {
+    transactionsRepository.getAll.mockResolvedValue([
       // Uncategorised movement to an own savings account.
       transaction({ id: 1, amount: -200, counterpartyIban: 'BE00SAVINGS' }),
       // Genuinely uncategorised spend.
       transaction({ id: 2, amount: -30, counterpartyIban: 'BE00SHOP' }),
     ]);
+    const store = TestBed.inject(TransactionsStore);
+    await store.hydrate();
 
     // Before the savings IBANs are known, both look uncategorised.
     expect(store.uncategorisedCount()).toBe(2);
@@ -113,14 +123,15 @@ describe('TransactionsStore: uncategorised backlog excludes transfer-linked tran
     });
   });
 
-  it('drops a transaction linked as a transfer but keeps a genuine uncategorised spend', () => {
-    const store = TestBed.inject(TransactionsStore);
-    store.addMany([
+  it('drops a transaction linked as a transfer but keeps a genuine uncategorised spend', async () => {
+    transactionsRepository.getAll.mockResolvedValue([
       // Linked as a transfer — categoryId is cleared on link and must never re-enter the backlog.
       transaction({ id: 1, amount: -500, transferId: 42 }),
       // Genuinely uncategorised spend.
       transaction({ id: 2, amount: -30 }),
     ]);
+    const store = TestBed.inject(TransactionsStore);
+    await store.hydrate();
 
     expect(store.uncategorisedCount()).toBe(1);
     expect(store.uncategorisedTransactions().map((t) => t.id)).toEqual([2]);
@@ -148,12 +159,13 @@ describe('TransactionsStore: deleteTransactions', () => {
   });
 
   it('removes the deleted transactions from local state and clears any unlinked transferId', async () => {
-    const store = TestBed.inject(TransactionsStore);
-    store.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1 }),
       transaction({ id: 2, transferId: 5 }),
       transaction({ id: 3, transferId: 5 }),
     ]);
+    const store = TestBed.inject(TransactionsStore);
+    await store.hydrate();
     transactionDeletionService.removeMany.mockResolvedValue({
       removedTransactionIds: [1],
       unlinkedTransferIds: [5],
@@ -183,8 +195,7 @@ describe('TransactionsStore: nullify toggle leaves other fields untouched (TICKE
   });
 
   it('setting nullified persists and reflects only that field, leaving category/attributionOverride as-is', async () => {
-    const store = TestBed.inject(TransactionsStore);
-    store.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({
         id: 1,
         categoryId: 3,
@@ -192,6 +203,8 @@ describe('TransactionsStore: nullify toggle leaves other fields untouched (TICKE
         attributionOverride: { mode: 'personal' },
       }),
     ]);
+    const store = TestBed.inject(TransactionsStore);
+    await store.hydrate();
 
     await store.updateTransaction(1, { nullified: true });
 

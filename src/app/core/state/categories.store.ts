@@ -1,5 +1,13 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withMethods } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntity,
   entityConfig,
@@ -41,14 +49,24 @@ export const CategoriesStore = signalStore(
       }),
     };
   }),
+  withState({ hydrated: false }),
   withMethods((store) => {
     const categoriesRepository = inject(CategoriesRepository);
     const transactionsStore = inject(TransactionsStore);
+    let hydration: Promise<void> | null = null;
+
+    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
+    const hydrate = (): Promise<void> => {
+      if (!hydration) {
+        hydration = categoriesRepository.getAll().then((categories) => {
+          patchState(store, setAllEntities(categories, categoryConfig), { hydrated: true });
+        });
+      }
+      return hydration;
+    };
 
     return {
-      hydrate: async (): Promise<void> => {
-        patchState(store, setAllEntities(await categoriesRepository.getAll(), categoryConfig));
-      },
+      hydrate,
 
       addCategory: async (category: Category): Promise<void> => {
         const id = await categoriesRepository.add(category);
@@ -100,4 +118,12 @@ export const CategoriesStore = signalStore(
       );
     },
   })),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget: kicks off hydration the moment anything first injects this store,
+      // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
+      // `categories()` synchronously can still `await store.hydrate()` as a guard.
+      void store.hydrate();
+    },
+  }),
 );

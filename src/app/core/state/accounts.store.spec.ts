@@ -59,17 +59,18 @@ describe('AccountsStore: savings movements still count toward balances (TICKET-T
   });
 
   it('includes a movement to a savings account in both accounts’ balances (FR-ACC-3)', async () => {
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, accountId: 1, amount: -200, counterpartyIban: 'BE00SAVINGS' }),
       transaction({ id: 2, accountId: 2, amount: 200, counterpartyIban: 'BE00CHECKING' }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
 
-    const accountsStore = TestBed.inject(AccountsStore);
     accountsRepository.getAll.mockResolvedValue([
       account({ id: 1, type: 'checking', openingBalance: 1000, iban: 'BE00CHECKING' }),
       account({ id: 2, type: 'savings', openingBalance: 0, iban: 'BE00SAVINGS' }),
     ]);
+    const accountsStore = TestBed.inject(AccountsStore);
     await accountsStore.hydrate();
 
     // The savings movement is excluded from stats, but never from balances: checking 1000 - 200,
@@ -99,15 +100,34 @@ describe('AccountsStore: dataReady mirrors TransactionsStore/TransfersStore hydr
   });
 
   it('is false until both TransactionsStore and TransfersStore have hydrated', async () => {
+    // Deferred so each dependency's on-injection hydrate (TICKET-PERF-07) can be resolved
+    // independently — both fire at the same instant (AccountsStore's own construction injects
+    // both), so without control here they'd settle in the same microtask flush and this test
+    // couldn't observe the partial-hydration window.
+    let resolveTransactions!: (transactions: Transaction[]) => void;
+    let resolveTransfers!: (transfers: Transfer[]) => void;
+    transactionsRepository.getAll.mockReturnValue(
+      new Promise<Transaction[]>((resolve) => {
+        resolveTransactions = resolve;
+      }),
+    );
+    transfersRepository.getAll.mockReturnValue(
+      new Promise<Transfer[]>((resolve) => {
+        resolveTransfers = resolve;
+      }),
+    );
+
     const accountsStore = TestBed.inject(AccountsStore);
     const transactionsStore = TestBed.inject(TransactionsStore);
     const transfersStore = TestBed.inject(TransfersStore);
 
     expect(accountsStore.dataReady()).toBe(false);
 
+    resolveTransactions([]);
     await transactionsStore.hydrate();
     expect(accountsStore.dataReady()).toBe(false);
 
+    resolveTransfers([]);
     await transfersStore.hydrate();
     expect(accountsStore.dataReady()).toBe(true);
   });
@@ -266,8 +286,7 @@ describe('AccountsStore: contribution-based net worth for joint accounts (TICKET
     };
     transfersRepository.getAll.mockResolvedValue([transfer]);
 
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       // I move €1000 from checking into the joint pot (linked transfer) — mineIn at 100%.
       transaction({
         id: 1,
@@ -288,6 +307,8 @@ describe('AccountsStore: contribution-based net worth for joint accounts (TICKET
       // We spend €400 on groceries — my share only (€200).
       transaction({ id: 4, accountId: 1, amount: -400, bookingDate: '2026-07-03' }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
 
     await TestBed.inject(CategoriesStore).hydrate();
     await TestBed.inject(TransfersStore).hydrate();
@@ -305,11 +326,12 @@ describe('AccountsStore: contribution-based net worth for joint accounts (TICKET
       account({ id: 2, type: 'savings', openingBalance: 500 }),
     ]);
 
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, accountId: 1, amount: -100, bookingDate: '2026-07-01' }),
       transaction({ id: 2, accountId: 2, amount: 200, bookingDate: '2026-07-01' }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
 
     const accountsStore = TestBed.inject(AccountsStore);
     await accountsStore.hydrate();
@@ -329,11 +351,12 @@ describe('AccountsStore: contribution-based net worth for joint accounts (TICKET
       }),
     ]);
 
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, accountId: 1, amount: 300, counterpartyIban: 'BE71096123456769' }),
       transaction({ id: 2, accountId: 1, amount: 1200, counterpartyIban: 'BE00EMPLOYER' }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
 
     const accountsStore = TestBed.inject(AccountsStore);
     await accountsStore.hydrate();
@@ -384,8 +407,7 @@ describe('AccountsStore: manual attributionOverride reweights net worth (TICKET-
     };
     transfersRepository.getAll.mockResolvedValue([reimbursementTransfer]);
 
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       // I front €100 of groceries from checking, flagged shared against the joint account and
       // pointed at the reimbursement transfer below.
       transaction({
@@ -405,6 +427,8 @@ describe('AccountsStore: manual attributionOverride reweights net worth (TICKET-
       }),
       transaction({ id: 3, accountId: 2, amount: 100, transferId: 100, bookingDate: '2026-07-02' }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
 
     await TestBed.inject(TransfersStore).hydrate();
     const accountsStore = TestBed.inject(AccountsStore);
@@ -420,8 +444,7 @@ describe('AccountsStore: manual attributionOverride reweights net worth (TICKET-
     accountsRepository.getAll.mockResolvedValue([
       account({ id: 1, type: 'joint', openingBalance: 0, ownershipShare: 0.5 }),
     ]);
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({
         id: 1,
         accountId: 1,
@@ -429,6 +452,8 @@ describe('AccountsStore: manual attributionOverride reweights net worth (TICKET-
         attributionOverride: { mode: 'personal' },
       }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
 
     const accountsStore = TestBed.inject(AccountsStore);
     await accountsStore.hydrate();
@@ -467,8 +492,11 @@ describe('AccountsStore: nullified transactions do not affect net worth (TICKET-
 
   it('produces byte-identical net worth whether a plain transaction is nullified or not', async () => {
     accountsRepository.getAll.mockResolvedValue([account({ id: 1, openingBalance: 1000 })]);
+    transactionsRepository.getAll.mockResolvedValue([
+      transaction({ id: 1, accountId: 1, amount: -100 }),
+    ]);
     const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([transaction({ id: 1, accountId: 1, amount: -100 })]);
+    await transactionsStore.hydrate();
 
     const withoutNullified = TestBed.inject(AccountsStore);
     await withoutNullified.hydrate();
@@ -482,8 +510,7 @@ describe('AccountsStore: nullified transactions do not affect net worth (TICKET-
     accountsRepository.getAll.mockResolvedValue([
       account({ id: 1, type: 'joint', openingBalance: 0, ownershipShare: 0.5 }),
     ]);
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({
         id: 1,
         accountId: 1,
@@ -492,6 +519,8 @@ describe('AccountsStore: nullified transactions do not affect net worth (TICKET-
         nullified: true,
       }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
 
     const accountsStore = TestBed.inject(AccountsStore);
     await accountsStore.hydrate();
@@ -549,13 +578,14 @@ describe('AccountsStore: removeAccount cascades to entities, transactions, and t
       clearedTransferTransactionIds: [20],
     });
 
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 10, accountId: 1, transferId: 5 }),
       transaction({ id: 11, accountId: 1 }),
       // Cross-account survivor: belongs to account 2, was linked to a transaction on account 1.
       transaction({ id: 20, accountId: 2, transferId: 5 }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
     const transfersStore = TestBed.inject(TransfersStore);
     await transfersStore.hydrate();
     const accountsStore = TestBed.inject(AccountsStore);

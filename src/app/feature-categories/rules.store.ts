@@ -1,5 +1,13 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntity,
   entityConfig,
@@ -20,18 +28,27 @@ const ruleConfig = entityConfig({
 export const RulesStore = signalStore(
   { providedIn: 'root' },
   withEntities(ruleConfig),
-  withState({ lastRunCount: null as number | null }),
+  withState({ lastRunCount: null as number | null, hydrated: false }),
   withComputed(({ entities }) => ({
     rules: entities,
     rulesByPriority: computed(() => [...entities()].sort((a, b) => a.priority - b.priority)),
   })),
   withMethods((store) => {
     const rulesRepository = inject(RulesRepository);
+    let hydration: Promise<void> | null = null;
+
+    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
+    const hydrate = (): Promise<void> => {
+      if (!hydration) {
+        hydration = rulesRepository.getAll().then((rules) => {
+          patchState(store, setAllEntities(rules, ruleConfig), { hydrated: true });
+        });
+      }
+      return hydration;
+    };
 
     return {
-      hydrate: async (): Promise<void> => {
-        patchState(store, setAllEntities(await rulesRepository.getAll(), ruleConfig));
-      },
+      hydrate,
 
       addRule: async (rule: Rule): Promise<void> => {
         const id = await rulesRepository.add(rule);
@@ -110,4 +127,12 @@ export const RulesStore = signalStore(
       await store.runRules();
     },
   })),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget: kicks off hydration the moment anything first injects this store,
+      // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
+      // `rules()` synchronously can still `await store.hydrate()` as a guard.
+      void store.hydrate();
+    },
+  }),
 );

@@ -124,8 +124,9 @@ describe('TransactionsOverviewComponent', () => {
   });
 
   it('hides movements to a savings account when the uncategorised filter is applied (TICKET-TRF-02)', async () => {
-    await setup();
-    const accountsStore = TestBed.inject(AccountsStore);
+    // Mocked before setup() so AccountsStore's on-injection hydrate (TICKET-PERF-07) picks this
+    // up — hydrate() is idempotent/cached, so reconfiguring the mock after the component is
+    // created (and has already hydrated once) would be a no-op re-fetch.
     accountsRepository.getAll.mockResolvedValue([
       {
         id: 2,
@@ -140,6 +141,8 @@ describe('TransactionsOverviewComponent', () => {
         iban: 'BE00SAVINGS',
       },
     ]);
+    await setup();
+    const accountsStore = TestBed.inject(AccountsStore);
     await accountsStore.hydrate();
 
     TestBed.inject(TransactionsStore).addMany([
@@ -251,9 +254,12 @@ describe('TransactionsOverviewComponent', () => {
   });
 
   it('gives each row checkbox a distinguishing accessible name (TICKET-TXN-07)', async () => {
+    // Mocked before setup() so the store's on-injection hydrate (TICKET-PERF-07) picks this up —
+    // hydrate() is idempotent/cached, so reconfiguring the mock after the component is created
+    // (and has already hydrated once) would be a no-op re-fetch.
+    transactionsRepository.getAll.mockResolvedValue([transaction(1), transaction(2)]);
     await setup();
     // Renders the table (not the loading skeleton) only once `hydrated()` is true (TICKET-PERF-05).
-    transactionsRepository.getAll.mockResolvedValue([transaction(1), transaction(2)]);
     await TestBed.inject(TransactionsStore).hydrate();
     fixture.detectChanges();
     await fixture.whenStable();

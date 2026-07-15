@@ -44,7 +44,11 @@ describe('TrendChartPanelComponent', () => {
       providers: [
         provideRouter([]),
         provideEchartsCore({ echarts }),
-        { provide: CategoriesRepository, useValue: { add: vi.fn().mockResolvedValue(1) } },
+        {
+          provide: CategoriesRepository,
+          // CategoriesStore self-hydrates on injection (TICKET-PERF-07); tests seed via addCategory.
+          useValue: { add: vi.fn().mockResolvedValue(1), getAll: vi.fn().mockResolvedValue([]) },
+        },
       ],
     }).compileComponents();
 

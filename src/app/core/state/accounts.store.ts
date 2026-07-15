@@ -1,5 +1,13 @@
 import { computed, effect, inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withHooks, withMethods } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntity,
   entityConfig,
@@ -148,16 +156,31 @@ export const AccountsStore = signalStore(
       }),
     };
   }),
+  withState({ hydrated: false }),
   withMethods((store) => {
     const accountsRepository = inject(AccountsRepository);
     const accountDeletionService = inject(AccountDeletionService);
     const transactionsStore = inject(TransactionsStore);
     const transfersStore = inject(TransfersStore);
+    let hydration: Promise<void> | null = null;
+
+    /**
+     * Idempotent; triggered on first injection (`withHooks` below, TICKET-PERF-07). `force: true`
+     * re-fetches even after a prior hydrate already resolved — used by the dev seed to refresh
+     * state after writing new rows directly through the repository (matching
+     * `TransactionsStore`/`TransfersStore`'s established pattern, TICKET-PERF-05).
+     */
+    const hydrate = (options?: { force?: boolean }): Promise<void> => {
+      if (!hydration || options?.force) {
+        hydration = accountsRepository.getAll().then((accounts) => {
+          patchState(store, setAllEntities(accounts, accountConfig), { hydrated: true });
+        });
+      }
+      return hydration;
+    };
 
     return {
-      hydrate: async (): Promise<void> => {
-        patchState(store, setAllEntities(await accountsRepository.getAll(), accountConfig));
-      },
+      hydrate,
 
       addAccount: async (account: Account): Promise<void> => {
         const id = await accountsRepository.add(account);
@@ -225,6 +248,11 @@ export const AccountsStore = signalStore(
   })),
   withHooks({
     onInit(store) {
+      // Fire-and-forget: kicks off hydration the moment anything first injects this store,
+      // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
+      // `accounts()` synchronously can still `await store.hydrate()` as a guard.
+      void store.hydrate();
+
       const transactionsStore = inject(TransactionsStore);
       // Push savings-account IBANs down into TransactionsStore so its categorisation backlog can drop
       // money moved into savings, without TransactionsStore importing AccountsStore (which would create

@@ -28,7 +28,9 @@
   <a routerLink="/categories/rules" routerLinkActive="tab-active" class="tab">Rules</a>
 </div>
 
-@if (visibleCategories().length === 0) {
+@if (!categoriesStore.hydrated()) {
+  <mm-loading-skeleton [rows]="3" />
+} @else if (visibleCategories().length === 0) {
   <mm-empty-state
     title="No categories yet"
     message="Add your first category to start sorting transactions."

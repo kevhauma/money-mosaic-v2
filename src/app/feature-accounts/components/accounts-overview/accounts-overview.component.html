@@ -20,7 +20,9 @@
   <app-net-worth-history-chart />
 </div>
 
-@if (visibleAccounts().length === 0) {
+@if (!accountsStore.hydrated()) {
+  <mm-loading-skeleton [rows]="3" />
+} @else if (visibleAccounts().length === 0) {
   <mm-empty-state
     title="No accounts yet"
     message="Add your first account to start tracking transactions."

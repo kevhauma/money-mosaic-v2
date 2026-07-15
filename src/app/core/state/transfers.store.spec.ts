@@ -57,8 +57,12 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
   });
 
   it('link adds the transfer entity and patches both transactions’ transferId', async () => {
+    transactionsRepository.getAll.mockResolvedValue([
+      transaction({ id: 1 }),
+      transaction({ id: 2 }),
+    ]);
     const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([transaction({ id: 1 }), transaction({ id: 2 })]);
+    await transactionsStore.hydrate();
 
     const from = transaction({ id: 1 });
     const to = transaction({ id: 2 });
@@ -81,11 +85,12 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
   });
 
   it('link clears categoryId/categoryManual on both sides, mirroring the cleared category from the service (TICKET-TRF-01)', async () => {
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, categoryId: 7, categoryManual: true }),
       transaction({ id: 2, categoryId: 7 }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
 
     const from = transaction({ id: 1, categoryId: 7, categoryManual: true });
     const to = transaction({ id: 2, categoryId: 7 });
@@ -109,11 +114,12 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
   });
 
   it('unlink clears transferId on both sides and removes the transfer entity', async () => {
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, transferId: 42 }),
       transaction({ id: 2, transferId: 42 }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
     transfersRepository.getAll.mockResolvedValue([
       transfer({ id: 42, fromTransactionId: 1, toTransactionId: 2 }),
     ]);
@@ -132,8 +138,7 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
   });
 
   it('unlink mirrors a cleared dangling reimbursementTransferId into TransactionsStore (TICKET-TXN-03)', async () => {
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, transferId: 42 }),
       transaction({ id: 2, transferId: 42 }),
       transaction({
@@ -141,6 +146,8 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
         attributionOverride: { mode: 'shared', jointAccountId: 1, reimbursementTransferId: 42 },
       }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
     transfersRepository.getAll.mockResolvedValue([
       transfer({ id: 42, fromTransactionId: 1, toTransactionId: 2 }),
     ]);
@@ -169,6 +176,10 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
   });
 
   it('runAutoLink patches every linked pair and returns the linked count', async () => {
+    // Explicit, not inherited: TransfersStore now self-hydrates on injection (TICKET-PERF-07),
+    // so its own mock must be set per-test rather than relying on whatever an earlier test in
+    // this block last configured `transfersRepository.getAll` to resolve.
+    transfersRepository.getAll.mockResolvedValue([]);
     transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, categoryId: 9 }),
       transaction({ id: 2, categoryId: 9, categoryManual: true }),
@@ -199,6 +210,8 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
   });
 
   it('runAutoLink still mirrors correctly when TransactionsStore has not hydrated yet (TICKET-PERF-05)', async () => {
+    // Explicit, not inherited — see the previous test's comment.
+    transfersRepository.getAll.mockResolvedValue([]);
     // Nobody has called TransactionsStore.hydrate() yet — mirrors app bootstrap, where its
     // hydrate is kicked off without being awaited (CR-3.4).
     transactionsRepository.getAll.mockResolvedValue([

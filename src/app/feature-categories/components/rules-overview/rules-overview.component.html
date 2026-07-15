@@ -34,7 +34,9 @@
   </mm-alert>
 }
 
-@if (rulesStore.rulesByPriority().length === 0) {
+@if (!rulesStore.hydrated()) {
+  <mm-loading-skeleton [rows]="3" />
+} @else if (rulesStore.rulesByPriority().length === 0) {
   <mm-empty-state
     title="No rules yet"
     message="Add a rule to automatically categorise matching transactions on import."

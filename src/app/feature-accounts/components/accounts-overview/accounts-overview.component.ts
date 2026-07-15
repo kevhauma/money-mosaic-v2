@@ -17,6 +17,7 @@ import {
   ButtonComponent,
   ConfirmDialogComponent,
   EmptyStateComponent,
+  LoadingSkeletonComponent,
   PageHeaderComponent,
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
@@ -38,6 +39,7 @@ import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-wo
     ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
+    LoadingSkeletonComponent,
     NetWorthHistoryChartComponent,
     PageHeaderComponent,
     SignedAmountPipe,

@@ -49,9 +49,13 @@ describe('CategoryBreakdownPanelComponent', () => {
         provideEchartsCore({ echarts }),
         {
           provide: CategoriesRepository,
-          // Echoes back the fixture's own id so seeding several distinct categories in one test
-          // doesn't collapse them onto whatever a fixed mocked id would return.
-          useValue: { add: vi.fn((category: Category) => Promise.resolve(category.id)) },
+          useValue: {
+            // Echoes back the fixture's own id so seeding several distinct categories in one test
+            // doesn't collapse them onto whatever a fixed mocked id would return.
+            add: vi.fn((category: Category) => Promise.resolve(category.id)),
+            // CategoriesStore self-hydrates on injection (TICKET-PERF-07); tests seed via addCategory.
+            getAll: vi.fn().mockResolvedValue([]),
+          },
         },
       ],
     }).compileComponents();

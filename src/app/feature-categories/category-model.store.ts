@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { CategoryModelRepository, type CategoryModelArtifact } from '@/core/data-access';
 import {
   DEFAULT_FEATURE_CONFIG,
@@ -68,6 +68,7 @@ export const CategoryModelStore = signalStore(
     const transactionsStore = inject(TransactionsStore);
     const categoriesStore = inject(CategoriesStore);
     const rulesStore = inject(RulesStore);
+    let hydration: Promise<void> | null = null;
 
     const activeTaxonomySignature = (): string =>
       taxonomySignature(
@@ -120,52 +121,72 @@ export const CategoryModelStore = signalStore(
       patchState(store, { suggestions, ruleProposals });
     };
 
-    return {
-      /**
-       * Loads a persisted model on app start (`app.config.ts`) and flips `ready`/`stale` per the
-       * current taxonomy. Awaits `CategoriesStore`/`TransactionsStore`/`RulesStore`'s own
-       * hydration first (idempotent) since `activeTaxonomySignature`/`refreshSuggestions` below
-       * read their entities synchronously — `TransactionsStore`'s hydrate is bootstrap-kicked-off
-       * without blocking render (TICKET-PERF-05), so this store must wait for it explicitly rather
-       * than assume the old global barrier already ran.
-       */
-      hydrate: async (): Promise<void> => {
-        await Promise.all([
-          categoriesStore.hydrate(),
-          transactionsStore.hydrate(),
-          rulesStore.hydrate(),
-        ]);
-        const settings = await repository.getSettings();
-        patchState(store, { trainingWindowYears: settings.trainingWindowYears });
+    /**
+     * Loads a persisted model on first injection (`withHooks` below, TICKET-PERF-07) and flips
+     * `ready`/`stale` per the current taxonomy. Awaits `CategoriesStore`/`TransactionsStore`/
+     * `RulesStore`'s own hydration first (idempotent) since `activeTaxonomySignature`/
+     * `refreshSuggestions` below read their entities synchronously — each of those three now also
+     * self-hydrates on its own first injection (TICKET-PERF-07), so this await is likely already
+     * settled by the time it runs here, but stays as an explicit guard rather than assuming so.
+     *
+     * Guarded against `train()`: this now runs lazily on first injection rather than fully
+     * resolving before any route renders (TICKET-PERF-07), so a user can click Train while this
+     * is still mid-flight. `train()` moves `status` off `'untrained'` synchronously as its very
+     * first action, before its own first `await` — so checking that here after each `await`
+     * boundary reliably detects a concurrent/earlier `train()` and backs off rather than loading a
+     * stale persisted model into the worker (or the `'untrained'`/`'ready'` status it implies) over
+     * a fresher training result.
+     */
+    const stillUntrained = (): boolean => store.status() === 'untrained';
 
-        const artifact = await repository.get();
-        if (!artifact) {
-          patchState(store, { status: 'untrained' });
-          return;
-        }
+    const hydrate = (): Promise<void> => {
+      if (!hydration) {
+        hydration = (async () => {
+          await Promise.all([
+            categoriesStore.hydrate(),
+            transactionsStore.hydrate(),
+            rulesStore.hydrate(),
+          ]);
+          const settings = await repository.getSettings();
+          patchState(store, { trainingWindowYears: settings.trainingWindowYears });
+          if (!stillUntrained()) return;
 
-        const status: CategoryModelStatus =
-          artifact.taxonomySignature === activeTaxonomySignature() ? 'ready' : 'stale';
+          const artifact = await repository.get();
+          if (!stillUntrained()) return;
+          if (!artifact) {
+            patchState(store, { status: 'untrained' });
+            return;
+          }
 
-        await service.init(
-          {
-            modelTopology: artifact.modelTopology,
-            weightSpecs: artifact.weightSpecs,
-            weightData: artifact.weightData,
+          const status: CategoryModelStatus =
+            artifact.taxonomySignature === activeTaxonomySignature() ? 'ready' : 'stale';
+
+          await service.init(
+            {
+              modelTopology: artifact.modelTopology,
+              weightSpecs: artifact.weightSpecs,
+              weightData: artifact.weightData,
+              categoryIdByIndex: artifact.categoryIdByIndex,
+            },
+            artifact.featureConfig,
+          );
+          if (!stillUntrained()) return;
+
+          patchState(store, {
+            status,
+            metrics: artifact.metrics,
+            lastTrainedAt: artifact.trainedAt,
             categoryIdByIndex: artifact.categoryIdByIndex,
-          },
-          artifact.featureConfig,
-        );
+          });
 
-        patchState(store, {
-          status,
-          metrics: artifact.metrics,
-          lastTrainedAt: artifact.trainedAt,
-          categoryIdByIndex: artifact.categoryIdByIndex,
-        });
+          if (status === 'ready') await refreshSuggestions();
+        })();
+      }
+      return hydration;
+    };
 
-        if (status === 'ready') await refreshSuggestions();
-      },
+    return {
+      hydrate,
 
       /** User-initiated only (ML-10's Train/Retrain control) — no automatic retrain-on-N-labels. */
       train: async (): Promise<void> => {
@@ -277,5 +298,12 @@ export const CategoryModelStore = signalStore(
         });
       },
     };
+  }),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget: kicks off hydration (persisted-model load + ML worker init) the moment
+      // anything first injects this store, instead of at app bootstrap (TICKET-PERF-07).
+      void store.hydrate();
+    },
   }),
 );

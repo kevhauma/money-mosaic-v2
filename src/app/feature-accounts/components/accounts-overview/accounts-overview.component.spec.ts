@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
+import { vi } from 'vitest';
+import { AccountsRepository } from '@/core/data-access';
 import { echarts } from '@/shared/echarts';
 
 import { AccountsOverviewComponent } from './accounts-overview.component';
@@ -14,21 +16,30 @@ class ResizeObserverStub {
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
 
 describe('AccountsOverviewComponent', () => {
-  let component: AccountsOverviewComponent;
   let fixture: ComponentFixture<AccountsOverviewComponent>;
 
-  beforeEach(async () => {
+  const setup = async (providers: unknown[] = []): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [AccountsOverviewComponent],
-      providers: [provideRouter([]), provideEchartsCore({ echarts })],
+      providers: [provideRouter([]), provideEchartsCore({ echarts }), ...providers],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AccountsOverviewComponent);
-    component = fixture.componentInstance;
+  };
+
+  it('should create', async () => {
+    await setup();
     await fixture.whenStable();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('shows a loading skeleton, not the "no accounts yet" empty state, before AccountsStore hydrates (TICKET-PERF-07)', async () => {
+    const accountsRepository = { getAll: vi.fn().mockReturnValue(new Promise(() => {})) };
+    await setup([{ provide: AccountsRepository, useValue: accountsRepository }]);
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.skeleton')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('No accounts yet');
   });
 });

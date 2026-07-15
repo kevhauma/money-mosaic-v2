@@ -17,6 +17,7 @@ import {
   ButtonComponent,
   ConfirmDialogComponent,
   EmptyStateComponent,
+  LoadingSkeletonComponent,
   PageHeaderComponent,
   type BadgeColor,
 } from '@/shared/ui';
@@ -38,6 +39,7 @@ import {
     ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
+    LoadingSkeletonComponent,
     PageHeaderComponent,
   ],
   templateUrl: './categories-overview.component.html',
