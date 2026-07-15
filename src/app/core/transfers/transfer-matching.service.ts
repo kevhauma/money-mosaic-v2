@@ -33,16 +33,7 @@ export class TransferMatchingService {
       autoLinkMediumConfidence,
     );
 
-    const linked: Transfer[] = [];
-    for (const candidate of autoLink) {
-      const { transfer } = await this.transferLinkingService.linkAuto(
-        candidate.from,
-        candidate.to,
-        candidate.method,
-        candidate.confidence,
-      );
-      linked.push(transfer);
-    }
-    return linked;
+    const results = await this.transferLinkingService.linkAutoBatch(autoLink);
+    return results.map(({ transfer }) => transfer);
   };
 }

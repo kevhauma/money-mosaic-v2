@@ -1,10 +1,21 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  DeferBlockBehavior,
+  DeferBlockState,
+  TestBed,
+} from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { appDb } from '@/core/data-access';
 import { echarts } from '@/shared/echarts';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
 import { DashboardOverviewComponent } from './dashboard-overview.component';
+
+const renderAllDeferBlocks = async (fixture: ComponentFixture<unknown>): Promise<void> => {
+  for (const block of await fixture.getDeferBlocks()) {
+    await block.render(DeferBlockState.Complete);
+  }
+};
 
 // jsdom has no ResizeObserver; the trend chart's echarts directive needs one to observe its host element.
 class ResizeObserverStub {
@@ -41,6 +52,10 @@ describe('DashboardOverviewComponent', () => {
     await TestBed.configureTestingModule({
       imports: [DashboardOverviewComponent],
       providers: [provideRouter([]), provideEchartsCore({ echarts })],
+      // Below-fold panels are wrapped in `@defer (on viewport)` (TICKET-PERF-06); jsdom has no real
+      // IntersectionObserver to fire that trigger, so tests render deferred content explicitly via
+      // the defer-block testing API instead of waiting on a trigger that would never fire.
+      deferBlockBehavior: DeferBlockBehavior.Manual,
     }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardOverviewComponent);
@@ -68,8 +83,18 @@ describe('DashboardOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('app-action-queue-panel')).toBeNull();
   });
 
-  it('renders a visible row that has no hidden preference', () => {
+  it('does not instantiate a below-fold panel until its defer block is triggered (TICKET-PERF-06)', () => {
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-action-queue-panel')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-trend-chart-panel')).toBeNull();
+  });
+
+  it('renders a visible row that has no hidden preference once its defer block completes', async () => {
+    fixture.detectChanges();
+
+    await renderAllDeferBlocks(fixture);
+    fixture.detectChanges();
+
     expect(fixture.nativeElement.querySelector('app-action-queue-panel')).not.toBeNull();
   });
 });

@@ -32,7 +32,10 @@ const rule = (overrides: Partial<Rule> = {}): Rule => ({
 
 const setup = () => {
   const rulesRepository = { getAll: vi.fn().mockResolvedValue([rule()]) };
-  const transactionsRepository = { update: vi.fn().mockResolvedValue(1) };
+  const transactionsRepository = {
+    update: vi.fn().mockResolvedValue(1),
+    bulkUpdate: vi.fn().mockResolvedValue(1),
+  };
 
   TestBed.configureTestingModule({
     providers: [
@@ -115,7 +118,7 @@ describe('RulesEngineService: applyToTransactions', () => {
 });
 
 describe('RulesEngineService: runAndPersist', () => {
-  it('persists only the computed updates, skipping manual and linked transactions', async () => {
+  it('persists only the computed updates, skipping manual and linked transactions, in one batched write (TICKET-PERF-04)', async () => {
     const ctx = setup();
     ctx.rulesRepository.getAll.mockResolvedValue([rule()]);
 
@@ -126,7 +129,39 @@ describe('RulesEngineService: runAndPersist', () => {
     ]);
 
     expect(updates).toEqual([{ id: 1, categoryId: 1 }]);
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, { categoryId: 1 });
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledTimes(1);
+    expect(ctx.transactionsRepository.bulkUpdate).toHaveBeenCalledTimes(1);
+    expect(ctx.transactionsRepository.bulkUpdate).toHaveBeenCalledWith([
+      { id: 1, changes: { categoryId: 1 } },
+    ]);
+    expect(ctx.transactionsRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('persists an N-update pass via a single bulkUpdate call, not N sequential updates', async () => {
+    const ctx = setup();
+    ctx.rulesRepository.getAll.mockResolvedValue([rule()]);
+
+    const updates = await ctx.service.runAndPersist([
+      transaction({ id: 1 }),
+      transaction({ id: 2, rawDescription: 'CARREFOUR EXPRESS' }),
+      transaction({ id: 3, rawDescription: 'CARREFOUR CITY' }),
+    ]);
+
+    expect(updates).toHaveLength(3);
+    expect(ctx.transactionsRepository.bulkUpdate).toHaveBeenCalledTimes(1);
+    expect(ctx.transactionsRepository.bulkUpdate).toHaveBeenCalledWith([
+      { id: 1, changes: { categoryId: 1 } },
+      { id: 2, changes: { categoryId: 1 } },
+      { id: 3, changes: { categoryId: 1 } },
+    ]);
+  });
+
+  it('is a safe no-op write when nothing matches', async () => {
+    const ctx = setup();
+    ctx.rulesRepository.getAll.mockResolvedValue([rule()]);
+
+    const updates = await ctx.service.runAndPersist([transaction({ id: 1, categoryManual: true })]);
+
+    expect(updates).toEqual([]);
+    expect(ctx.transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
   });
 });

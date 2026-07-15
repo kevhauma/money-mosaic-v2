@@ -67,25 +67,88 @@
           }
         }
         @case ('weekday-weekend') {
-          <app-weekday-weekend-split-panel />
+          @defer (on viewport; prefetch on idle) {
+            <app-weekday-weekend-split-panel />
+          } @placeholder {
+            <div class="card h-full bg-base-100 shadow-sm">
+              <div class="card-body">
+                <mm-loading-skeleton [rows]="3" />
+              </div>
+            </div>
+          }
         }
         @case ('category-breakdown') {
-          <app-category-breakdown-panel />
+          @defer (on viewport; prefetch on idle) {
+            <app-category-breakdown-panel />
+          } @placeholder {
+            <div class="card h-full bg-base-100 shadow-sm">
+              <div class="card-body">
+                <h2 class="card-title text-base">Category breakdown</h2>
+                <mm-loading-skeleton [rows]="4" class="mt-2" />
+              </div>
+            </div>
+          }
         }
         @case ('category-comparison') {
-          <app-category-comparison-panel />
+          @defer (on viewport; prefetch on idle) {
+            <app-category-comparison-panel />
+          } @placeholder {
+            <div class="card h-full bg-base-100 shadow-sm">
+              <div class="card-body">
+                <h2 class="card-title text-base">Category period comparison</h2>
+                <mm-loading-skeleton [rows]="4" class="mt-4" />
+              </div>
+            </div>
+          }
         }
         @case ('trend-chart') {
-          <app-trend-chart-panel />
+          @defer (on viewport; prefetch on idle) {
+            <app-trend-chart-panel />
+          } @placeholder {
+            <div class="card h-full bg-base-100 shadow-sm">
+              <div class="card-body">
+                <h2 class="card-title text-base">Trend</h2>
+                <span class="sr-only">
+                  Income and expense trend chart loads when scrolled into view.
+                </span>
+                <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <div class="skeleton h-72 w-full"></div>
+                  <div class="skeleton h-72 w-full"></div>
+                </div>
+              </div>
+            </div>
+          }
         }
         @case ('top-transactions') {
-          <app-top-transactions-panel />
+          @defer (on viewport; prefetch on idle) {
+            <app-top-transactions-panel />
+          } @placeholder {
+            <div class="card h-full bg-base-100 shadow-sm">
+              <div class="card-body">
+                <h2 class="card-title text-base">Biggest transactions</h2>
+                <mm-loading-skeleton [rows]="3" class="mt-2" />
+              </div>
+            </div>
+          }
         }
         @case ('action-queue') {
-          <app-action-queue-panel />
+          @defer (on viewport; prefetch on idle) {
+            <app-action-queue-panel />
+          } @placeholder {
+            <mm-loading-skeleton [rows]="2" />
+          }
         }
         @case ('account-balance') {
-          <app-account-balance-strip />
+          @defer (on viewport; prefetch on idle) {
+            <app-account-balance-strip />
+          } @placeholder {
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body">
+                <h2 class="card-title text-base">Accounts</h2>
+                <mm-loading-skeleton [rows]="2" />
+              </div>
+            </div>
+          }
         }
       }
     </div>

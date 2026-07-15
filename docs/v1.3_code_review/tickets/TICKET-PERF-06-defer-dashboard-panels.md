@@ -24,11 +24,11 @@ The dashboard renders all visible rows eagerly inside its `@for`/`@switch`; the 
 
 ## Acceptance criteria
 
-- [ ] Panels below the initial viewport do not instantiate (no ECharts init, no aggregation computeds run) until scrolled near — verify via a spec using the defer-block testing APIs and live in the browser (Network/Performance tab or a constructor log in dev).
-- [ ] No cumulative-layout-shift regression while scrolling: placeholders approximate panel heights (visual check at desktop and mobile widths).
-- [ ] Drag-reordering rows in customize mode and toggling hidden rows still works with deferred panels (TICKET-STAT-14 flows re-checked live).
-- [ ] Bundle budget untouched; `ng build --configuration development` clean.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Panels below the initial viewport do not instantiate (no ECharts init, no aggregation computeds run) until scrolled near — verified via a spec using the defer-block testing APIs (`DeferBlockBehavior.Manual` + `getDeferBlocks()`/`render()`). **Live browser check skipped per explicit user request this session.**
+- [x] No cumulative-layout-shift regression while scrolling: placeholders approximate panel heights, built by reusing each panel's own root shell (`card`/`card-body`/title) plus `mm-loading-skeleton` or sized `skeleton` divs. **Visual check at desktop/mobile widths skipped per explicit user request this session** — worth a manual pass before shipping.
+- [x] Drag-reordering rows in customize mode and toggling hidden rows still works with deferred panels — unaffected by construction: customize mode's `@if (!customizeMode())` guard hides the entire panel `@for`/`@switch` (including every `@defer`) while `<app-dashboard-customize-panel>` is shown instead, and a hidden row is filtered out of `visibleRows()` before the `@switch`/`@defer` is ever reached. **Live re-check of the TICKET-STAT-14 flows skipped per explicit user request this session.**
+- [x] Bundle budget untouched; `ng build --configuration development` clean, no budget warnings.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

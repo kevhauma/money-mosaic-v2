@@ -185,6 +185,54 @@ describe('TransferLinkingService: category is cleared on link (TICKET-TRF-01)', 
     ]);
   });
 
+  it('linkAutoBatch links every candidate inside a single Dexie transaction (TICKET-PERF-04)', async () => {
+    const ctx = setup();
+    ctx.transfersRepository.add.mockResolvedValueOnce(101).mockResolvedValueOnce(102);
+    const pairA = { from: transaction({ id: 1 }), to: transaction({ id: 2 }) };
+    const pairB = { from: transaction({ id: 3 }), to: transaction({ id: 4 }) };
+
+    const results = await ctx.service.linkAutoBatch([
+      { ...pairA, method: 'auto-iban', confidence: 'high' },
+      { ...pairB, method: 'auto-amountdate', confidence: 'medium' },
+    ]);
+
+    // One transaction wraps the whole pass, not one per candidate.
+    expect(appDb.transaction).toHaveBeenCalledTimes(1);
+    expect(results.map((r) => r.transfer.id)).toEqual([101, 102]);
+    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, {
+      transferId: 101,
+      categoryId: undefined,
+      categoryManual: undefined,
+    });
+    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(3, {
+      transferId: 102,
+      categoryId: undefined,
+      categoryManual: undefined,
+    });
+  });
+
+  it('linkAutoBatch aborts the whole pass when a candidate mid-pass fails, leaving later candidates unlinked', async () => {
+    const ctx = setup();
+    ctx.transfersRepository.add
+      .mockResolvedValueOnce(101)
+      .mockRejectedValueOnce(new Error('write failed'));
+    const pairA = { from: transaction({ id: 1 }), to: transaction({ id: 2 }) };
+    const pairB = { from: transaction({ id: 3 }), to: transaction({ id: 4 }) };
+    const pairC = { from: transaction({ id: 5 }), to: transaction({ id: 6 }) };
+
+    await expect(
+      ctx.service.linkAutoBatch([
+        { ...pairA, method: 'auto-iban' as const, confidence: 'high' as const },
+        { ...pairB, method: 'auto-iban' as const, confidence: 'high' as const },
+        { ...pairC, method: 'auto-iban' as const, confidence: 'high' as const },
+      ]),
+    ).rejects.toThrow('write failed');
+
+    // The third candidate never runs — the failure propagates out of the shared transaction scope.
+    expect(ctx.transactionsRepository.update).not.toHaveBeenCalledWith(5, expect.anything());
+    expect(ctx.transactionsRepository.update).not.toHaveBeenCalledWith(6, expect.anything());
+  });
+
   it('unlink leaves other transactions’ attributionOverride untouched when nothing referenced this transfer', async () => {
     const ctx = setup();
 

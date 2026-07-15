@@ -26,11 +26,11 @@ Every step of the import pipeline currently decodes the **entire** file on the m
 
 ## Acceptance criteria
 
-- [ ] No full-file `TextDecoder.decode()` remains on the main thread in `csv-import.service.ts` (header/preview use a sliced blob; parse defers to the worker).
-- [ ] The worker request carries an `ArrayBuffer` in the transfer list (post-call, the buffer is detached on the main thread — assert in a spec).
-- [ ] Existing import behaviour is unchanged: presets detect (including the `windows-1252` encodings per CR-1.4), preview renders, commit produces identical transactions — `csv-parse.spec.ts` / `import.service.spec.ts` / map-step specs pass, plus a live browser import of a sample file.
-- [ ] Unit tests cover: sliced header detection on a file larger than the slice; cache hit on a second `detectHeaders` call with the same file+encoding; changed encoding busts the cache.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] No full-file `TextDecoder.decode()` remains on the main thread in `csv-import.service.ts` (header/preview use a sliced blob; parse defers to the worker).
+- [x] The worker request carries an `ArrayBuffer` in the transfer list (post-call, the buffer is detached on the main thread — assert in a spec).
+- [x] Existing import behaviour is unchanged: presets detect (including the `windows-1252` encodings per CR-1.4), preview renders, commit produces identical transactions — `csv-parse.spec.ts` / `import.service.spec.ts` / map-step specs pass. **Live browser import of a sample file skipped per explicit user request this session** — worth a manual pass before shipping if that hasn't happened separately.
+- [x] Unit tests cover: sliced header detection on a file larger than the slice; cache hit on a second `detectHeaders` call with the same file+encoding; changed encoding busts the cache.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

@@ -26,11 +26,11 @@ Three hot paths persist row-by-row. The rules engine awaits one `update` per cat
 
 ## Acceptance criteria
 
-- [ ] No per-row `transactionsRepository.update` loops remain on the three named paths (bulk category assignment's existing path is the reference pattern).
-- [ ] Auto-link runs in a single Dexie transaction per pass; a forced mid-pass failure (spec with a throwing fake) leaves zero new transfer rows and zero mutated transactions.
-- [ ] Rule semantics unchanged, including the `categoryManual`/transfer-leg skips — existing `rules-engine.service` and `transfers.store` specs pass; TICKET-TRF-01's cleared-category-on-link behaviour is preserved inside the batch.
-- [ ] Unit tests cover: N-update rules pass persists via one `bulkUpdate`; batch auto-link links all candidates atomically; category removal clears referencing rows in one write.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] No per-row `transactionsRepository.update` loops remain on the three named paths (bulk category assignment's existing path is the reference pattern).
+- [x] Auto-link runs in a single Dexie transaction per pass; a forced mid-pass failure (spec with a throwing fake) leaves zero new transfer rows and zero mutated transactions.
+- [x] Rule semantics unchanged, including the `categoryManual`/transfer-leg skips — existing `rules-engine.service` and `transfers.store` specs pass; TICKET-TRF-01's cleared-category-on-link behaviour is preserved inside the batch.
+- [x] Unit tests cover: N-update rules pass persists via one `bulkUpdate`; batch auto-link links all candidates atomically; category removal clears referencing rows in one write.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

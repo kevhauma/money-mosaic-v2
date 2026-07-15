@@ -15,6 +15,23 @@ class ResizeObserverStub {
 }
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
 
+// jsdom has no real canvas 2D context. The sr-only table spec below (TICKET-STAT-20) is the first
+// test in this file to call `fixture.detectChanges()`, which drives the echarts directive into
+// zrender's real paint path — that needs one (same stub as dashboard-overview.component.spec.ts).
+const noopCanvasContext = new Proxy(
+  {},
+  {
+    get: (target: Record<string, unknown>, prop: string) =>
+      prop in target ? target[prop] : (): void => {},
+    set: (target: Record<string, unknown>, prop: string, value: unknown) => {
+      target[prop] = value;
+      return true;
+    },
+  },
+);
+HTMLCanvasElement.prototype.getContext = (() =>
+  noopCanvasContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+
 const groceries: Category = {
   id: 1,
   name: 'Groceries',
@@ -191,6 +208,75 @@ describe('TrendChartPanelComponent', () => {
 
     expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/transactions'], {
       queryParams: { from: '2026-01-01', to: '2026-01-31', categoryId: '1' },
+    });
+  });
+
+  describe('accessible sr-only table (TICKET-STAT-20)', () => {
+    beforeEach(async () => {
+      await TestBed.inject(CategoriesStore).addCategory(groceries);
+      await TestBed.inject(CategoriesStore).addCategory(salary);
+      TestBed.inject(TransactionsStore).addMany([
+        {
+          id: 1,
+          accountId: 1,
+          bookingDate: '2026-01-10',
+          amount: -50,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-1',
+          createdAt: '2026-01-10T00:00:00.000Z',
+          categoryId: 1,
+        },
+        {
+          id: 2,
+          accountId: 1,
+          bookingDate: '2026-01-15',
+          amount: 3000,
+          currency: 'EUR',
+          rawDescription: 'Payroll',
+          fingerprint: 'fp-2',
+          createdAt: '2026-01-15T00:00:00.000Z',
+          categoryId: 2,
+        },
+      ]);
+      fixture.componentInstance['granularity'].set('month');
+    });
+
+    it('exposes one accessible row per bucket, matching the same series signal the charts render from', () => {
+      const rows = fixture.componentInstance['accessibleRows']();
+      const bucketKeys = (
+        fixture.componentInstance['expenseChartOption']()['xAxis'] as { data: string[] }
+      ).data;
+
+      expect(rows.map((row) => row.bucketKey)).toEqual(bucketKeys);
+      const januaryRow = rows.find((row) => row.bucketKey === '2026-01');
+      expect(januaryRow?.income).toContain('3,000');
+      expect(januaryRow?.expense).toContain('50');
+    });
+
+    it('updates the accessible rows when granularity changes, just like the charts', () => {
+      const monthRowCount = fixture.componentInstance['accessibleRows']().length;
+
+      fixture.componentInstance['granularity'].set('day');
+      const dayRowCount = fixture.componentInstance['accessibleRows']().length;
+
+      expect(dayRowCount).not.toBe(monthRowCount);
+    });
+
+    it('renders a visually-hidden table and role="img" summaries on both chart hosts', () => {
+      fixture.detectChanges();
+      const table = fixture.nativeElement.querySelector('table.sr-only');
+      expect(table).not.toBeNull();
+
+      const rows = table!.querySelectorAll('tbody tr');
+      expect(rows.length).toBe(fixture.componentInstance['accessibleRows']().length);
+
+      const chartHosts = fixture.nativeElement.querySelectorAll('[echarts]');
+      expect(chartHosts.length).toBe(2);
+      chartHosts.forEach((host: Element) => {
+        expect(host.getAttribute('role')).toBe('img');
+        expect(host.getAttribute('aria-label')).toContain('table with values follows');
+      });
     });
   });
 });

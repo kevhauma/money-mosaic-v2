@@ -14,17 +14,27 @@ import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { formatAxisTooltip } from '@/shared/echarts';
 import { GranularityPickerComponent } from '@/shared/ui';
-import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
+import {
+  buildTransactionDrilldownParams,
+  formatCurrency,
+  UNCATEGORISED_SENTINEL,
+} from '@/shared/utils';
+
+/** Every series' value at one bucket index, summed — the stacked-bar total for that bucket. */
+const bucketTotal = (series: CategorySeriesEntry[], bucketIndex: number): number =>
+  series.reduce((sum, entry) => sum + entry.values[bucketIndex], 0);
 
 /** Highest per-bucket stacked total across a column's series — the shared y-axis scale is the larger of the two columns' values. */
 const highestStackedTotal = (bucketKeys: string[], series: CategorySeriesEntry[]): number => {
   let max = 0;
   for (let i = 0; i < bucketKeys.length; i++) {
-    const total = series.reduce((sum, entry) => sum + entry.values[i], 0);
+    const total = bucketTotal(series, i);
     if (total > max) max = total;
   }
   return max;
 };
+
+export type TrendAccessibleRow = { bucketKey: string; income: string; expense: string };
 
 /** Pure echarts-option builder for one stacked-bar column, kept separate from the component so it's testable without TestBed. */
 const buildColumnChartOption = (
@@ -104,6 +114,32 @@ export class TrendChartPanelComponent {
     const { bucketKeys, expenseSeries } = this.composition();
     return buildColumnChartOption(bucketKeys, expenseSeries, 'expense', this.sharedYAxisMax());
   });
+
+  /**
+   * Mirrors the two charts' underlying figures into DOM text for assistive tech (TICKET-STAT-20) —
+   * sourced from the same `composition()` signal the charts render, so it can never diverge.
+   * Rendered as a visually-hidden table; the canvas hosts get a `role="img"` summary pointing at it.
+   */
+  protected readonly accessibleRows = computed<TrendAccessibleRow[]>(() => {
+    const { bucketKeys, incomeSeries, expenseSeries } = this.composition();
+    return bucketKeys.map((bucketKey, i) => ({
+      bucketKey,
+      income: formatCurrency(bucketTotal(incomeSeries, i)),
+      expense: formatCurrency(bucketTotal(expenseSeries, i)),
+    }));
+  });
+
+  private readonly rangeLabel = computed(
+    () => `${this.granularity()}, ${this.rangeStore.from()}–${this.rangeStore.to()}`,
+  );
+
+  protected readonly incomeChartAriaLabel = computed(
+    () => `Income trend by category, ${this.rangeLabel()}; table with values follows`,
+  );
+
+  protected readonly expenseChartAriaLabel = computed(
+    () => `Expense trend by category, ${this.rangeLabel()}; table with values follows`,
+  );
 
   protected onIncomeChartClick(event: ECElementEvent): void {
     this.navigateToSegment(event, this.composition().incomeSeries);

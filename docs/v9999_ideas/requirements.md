@@ -12,7 +12,11 @@
 - being able to set active date range, with linked expense category expense (eg. groceries)
 - 
 
-
+## Extra graphs
+- heatmaps, day of week/month/quarter (buckets), top 4 categories rows | example: https://echarts.apache.org/examples/en/editor.html?c=heatmap-cartesian or https://echarts.apache.org/examples/en/editor.html?c=matrix-simple
+- sankey, income, intermediate, outcome. outside -> accounts -> category groups if exist -> category (how to deal with savings accounts?) | example https://echarts.apache.org/examples/en/editor.html?c=sankey-levels
+- cool fancy 3d graph? 
+  
 ## Public Ready
 - Home page with explanation about the app, with click through to the dashboard
 - How-to's for using the app

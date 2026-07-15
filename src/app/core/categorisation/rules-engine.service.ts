@@ -36,11 +36,11 @@ export class RulesEngineService {
   runAndPersist = async (transactions: Transaction[]): Promise<RuleApplyUpdate[]> => {
     const rules = await this.rulesRepository.getAll();
     const updates = this.applyToTransactions(transactions, rules);
-    await Promise.all(
-      updates.map((update) =>
-        this.transactionsRepository.update(update.id, { categoryId: update.categoryId }),
-      ),
-    );
+    if (updates.length > 0) {
+      await this.transactionsRepository.bulkUpdate(
+        updates.map((update) => ({ id: update.id, changes: { categoryId: update.categoryId } })),
+      );
+    }
     return updates;
   };
 }

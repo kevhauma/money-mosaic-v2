@@ -142,6 +142,7 @@ describe('CategoriesStore: removeCategory clears the category off referencing tr
   const transactionsRepository = {
     getAll: vi.fn().mockResolvedValue([]),
     update: vi.fn().mockResolvedValue(1),
+    bulkUpdate: vi.fn().mockResolvedValue(2),
   };
 
   beforeEach(() => {
@@ -154,7 +155,7 @@ describe('CategoriesStore: removeCategory clears the category off referencing tr
     });
   });
 
-  it('clears categoryId and categoryManual on referencing transactions, persists via the repository, and leaves non-referencing rows untouched — even when TransactionsStore has not hydrated yet (TICKET-PERF-05)', async () => {
+  it('clears categoryId and categoryManual on referencing transactions in one batched write, and leaves non-referencing rows untouched — even when TransactionsStore has not hydrated yet (TICKET-PERF-05, TICKET-PERF-04)', async () => {
     transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, categoryId: 7, categoryManual: true }),
       transaction({ id: 2, categoryId: 7, categoryManual: false }),
@@ -171,15 +172,13 @@ describe('CategoriesStore: removeCategory clears the category off referencing tr
 
     expect(transactionsStore.hydrated()).toBe(true);
 
-    expect(transactionsRepository.update).toHaveBeenCalledTimes(2);
-    expect(transactionsRepository.update).toHaveBeenCalledWith(1, {
-      categoryId: undefined,
-      categoryManual: false,
-    });
-    expect(transactionsRepository.update).toHaveBeenCalledWith(2, {
-      categoryId: undefined,
-      categoryManual: false,
-    });
+    // Single batched write, not N sequential updates.
+    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledTimes(1);
+    expect(transactionsRepository.update).not.toHaveBeenCalled();
+    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledWith([
+      { id: 1, changes: { categoryId: undefined, categoryManual: false } },
+      { id: 2, changes: { categoryId: undefined, categoryManual: false } },
+    ]);
 
     const byId = new Map(transactionsStore.transactions().map((t) => [t.id, t]));
     expect(byId.get(1)).toMatchObject({ categoryId: undefined, categoryManual: false });

@@ -130,6 +130,14 @@ export const TransactionsStore = signalStore(
         store.patchMany(ids.map((id) => ({ id, changes })));
       },
 
+      /** One batched write clearing categoryId/categoryManual off many rows — powers category deletion (TICKET-PERF-04). */
+      bulkClearCategory: async (ids: number[]): Promise<void> => {
+        if (ids.length === 0) return;
+        const changes: Partial<Transaction> = { categoryId: undefined, categoryManual: false };
+        await transactionsRepository.bulkUpdate(ids.map((id) => ({ id, changes })));
+        store.patchMany(ids.map((id) => ({ id, changes })));
+      },
+
       /**
        * Permanently deletes the given transactions and unlinks any transfer touching them, in one
        * atomic write. Powers user-initiated deletion from the bulk-action bar and the transaction edit

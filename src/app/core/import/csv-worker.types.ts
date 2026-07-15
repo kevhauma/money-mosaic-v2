@@ -11,6 +11,17 @@ export type CsvParseRequest = {
   signConvention: RowMapOptions['signConvention'];
 };
 
+/**
+ * Posted across the worker boundary in place of `CsvParseRequest` (TICKET-IMP-06): carries the raw
+ * file bytes and encoding instead of a pre-decoded `fileText`, so `postMessage` transfers the buffer
+ * (zero-copy, detaching it on the main thread) instead of structured-cloning a copy of the decoded
+ * string. The worker decodes `buffer` with `encoding` into `fileText` before calling `parseCsvText`.
+ */
+export type CsvParseWireRequest = Omit<CsvParseRequest, 'fileText'> & {
+  buffer: ArrayBuffer;
+  encoding: string;
+};
+
 export type CsvParseResponse =
   | { headers: string[]; rows: ParsedRowResult[]; warnings: string[] }
   | { error: string }

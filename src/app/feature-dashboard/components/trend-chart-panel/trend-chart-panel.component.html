@@ -13,6 +13,8 @@
           [options]="incomeChartOption()"
           (chartClick)="onIncomeChartClick($event)"
           class="h-72 w-full"
+          role="img"
+          [attr.aria-label]="incomeChartAriaLabel()"
         ></div>
       </div>
 
@@ -23,8 +25,32 @@
           [options]="expenseChartOption()"
           (chartClick)="onExpenseChartClick($event)"
           class="h-72 w-full"
+          role="img"
+          [attr.aria-label]="expenseChartAriaLabel()"
         ></div>
       </div>
     </div>
+
+    <table class="sr-only">
+      <caption>
+        Income and expense trend by period, underlying the charts above
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Period</th>
+          <th scope="col">Income</th>
+          <th scope="col">Expense</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of accessibleRows(); track row.bucketKey) {
+          <tr>
+            <th scope="row">{{ row.bucketKey }}</th>
+            <td>{{ row.income }}</td>
+            <td>{{ row.expense }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
 </div>

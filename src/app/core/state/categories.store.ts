@@ -92,14 +92,7 @@ export const CategoriesStore = signalStore(
           .filter((transaction) => transaction.categoryId === id)
           .map((transaction) => transaction.id!);
 
-        await Promise.all(
-          affectedIds.map((transactionId) =>
-            transactionsStore.updateTransaction(transactionId, {
-              categoryId: undefined,
-              categoryManual: false,
-            }),
-          ),
-        );
+        await transactionsStore.bulkClearCategory(affectedIds);
 
         await categoriesRepository.remove(id);
         patchState(store, removeEntity(id));

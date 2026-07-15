@@ -75,6 +75,48 @@ describe('TransactionsStore: bulkAssignCategory (TICKET-TXN-01)', () => {
   });
 });
 
+describe('TransactionsStore: bulkClearCategory (TICKET-PERF-04)', () => {
+  const transactionsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+    bulkUpdate: vi.fn().mockResolvedValue(2),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [{ provide: TransactionsRepository, useValue: transactionsRepository }],
+    });
+  });
+
+  it('persists one batched write clearing categoryId and categoryManual', async () => {
+    transactionsRepository.getAll.mockResolvedValue([
+      transaction({ id: 1, categoryId: 7, categoryManual: true }),
+      transaction({ id: 2, categoryId: 7 }),
+    ]);
+    const store = TestBed.inject(TransactionsStore);
+    await store.hydrate();
+
+    await store.bulkClearCategory([1, 2]);
+
+    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledTimes(1);
+    expect(transactionsRepository.update).not.toHaveBeenCalled();
+    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledWith([
+      { id: 1, changes: { categoryId: undefined, categoryManual: false } },
+      { id: 2, changes: { categoryId: undefined, categoryManual: false } },
+    ]);
+    expect(
+      store.transactions().every((t) => t.categoryId === undefined && t.categoryManual === false),
+    ).toBe(true);
+  });
+
+  it('no-ops on an empty selection', async () => {
+    const store = TestBed.inject(TransactionsStore);
+    await store.bulkClearCategory([]);
+    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
+  });
+});
+
 describe('TransactionsStore: uncategorised backlog excludes savings movements (TICKET-TRF-02)', () => {
   const transactionsRepository = {
     getAll: vi.fn().mockResolvedValue([]),
