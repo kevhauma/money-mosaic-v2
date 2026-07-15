@@ -14,7 +14,7 @@ Flags when a recurring income category's typical monthly amount has sustained a 
 
 ## Current situation (as-is)
 
-- No step-change/anomaly detection exists anywhere in the codebase — this is genuinely new logic, not a reuse of an existing pattern (already flagged in the v1.4 vision's "Considered, not ticketed" section as the one story with no existing infra to build on).
+- No step-change/anomaly detection exists anywhere in the codebase — this is genuinely new logic, not a reuse of an existing pattern (already flagged in the v1.6 vision's "Considered, not ticketed" section as the one story with no existing infra to build on).
 
 ## Desired result (to-be)
 
@@ -37,5 +37,5 @@ Flags when a recurring income category's typical monthly amount has sustained a 
 
 ## Notes
 
-- Threshold (±15%) and window (3 months) are fixed constants for this ticket, not user-configurable — a settings surface for tuning sensitivity is a reasonable v1.5 follow-up if the fixed threshold proves too noisy/quiet in practice.
+- Threshold (±15%) and window (3 months) are fixed constants for this ticket, not user-configurable — a settings surface for tuning sensitivity is a reasonable v1.7 follow-up if the fixed threshold proves too noisy/quiet in practice.
 - Depends on FR-INC-4 (consumes the smoothed series) — build after it.

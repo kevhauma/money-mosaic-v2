@@ -1,4 +1,4 @@
-# Money Mosaic — v1.7 Data Management (Overview)
+# Money Mosaic — v1.4 Data Management (Overview)
 
 Full-database backup/restore, "delete all data", and a persistent-storage request were spec'd from day one as FR-DAT-1..4 ([finance-app-spec.md §4.7](../v1.0_foundation/finance-app-spec.md)) and restated as user stories in [data_management.md](./data_management.md), but never broken into tickets or built — today the only way to move data between browsers/devices is manually copying IndexedDB, and the only way to wipe it is browser devtools. This gap surfaced again while scoping v2's "public ready" work, whose privacy messaging ("your data never leaves the browser") is only honest once there's a real, discoverable way to get data *out* — so this version finally ships it. Each ticketed line links to a `tickets/TICKET-*.md` file carrying its own user story, description, as-is/to-be, and acceptance criteria — this file is only the index + build order.
 

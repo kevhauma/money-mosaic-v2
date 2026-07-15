@@ -45,7 +45,7 @@ Pure logic files (`*-matching.ts`, `stats/*.ts`, `csv-row-mapper.ts`, `fingerpri
 - `docs/v1.0_foundation/finance-app-spec.md` — functional requirements (FR-TXN-*, FR-CAT-*, FR-TRF-*, FR-IMP-*...), referenced from code comments.
 - `docs/v1.0_foundation/overview.md`, `docs/v1.0_foundation/ui-layout-spec.md` — v1 scope and layout.
 - `docs/v1.1_joint_accounts/`, `docs/v1.2_auto_categorise/`, `docs/v1.3_dashboard_insights/` — shipped: joint/co-owner accounts, the ML auto-categoriser (`/learning`), and dashboard/insights panels. Each has its own `overview.md` + `tickets/`.
-- `docs/v1.4_income_growth/`, `docs/v1.5_loan_tracker/`, `docs/v1.7_data_management/` — specced but **not yet implemented** (no `feature-income`/`feature-loans`/data-management code exists yet); ticket-shaped like the shipped versions.
-- `docs/v1.6_redesign/prepare.md`, `docs/v1.8_extended_date_range_picker/requirements.md` — free-form design/spec notes, not the ticket+overview.md shape.
+- `docs/v1.4_data_management/`, `docs/v1.6_income_growth/`, `docs/v1.7_loan_tracker/` — specced but **not yet implemented** (no `feature-income`/`feature-loans`/data-management code exists yet); ticket-shaped like the shipped versions.
+- `docs/v1.5_redesign/prepare.md`, `docs/v1.8_extended_date_range_picker/requirements.md` — free-form design/spec notes, not the ticket+overview.md shape.
 - `docs/v2/overview.md` — deferred v2+ backlog (settings, public pages, privacy mode, changelog).
 - `docs/v9999_ideas/requirements.md` — unscoped idea backlog.

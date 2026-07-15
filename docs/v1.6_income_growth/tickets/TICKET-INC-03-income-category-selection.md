@@ -34,4 +34,4 @@ Lets the user choose which income categories feed the growth view, so a noisy on
 
 ## Notes
 
-- Selection is intentionally ephemeral (resets on reload), matching `RangeStore`'s precedent. Persisting the choice (e.g. to a settings table) is a reasonable v1.5 follow-up, not blocking this ticket.
+- Selection is intentionally ephemeral (resets on reload), matching `RangeStore`'s precedent. Persisting the choice (e.g. to a settings table) is a reasonable v1.7 follow-up, not blocking this ticket.

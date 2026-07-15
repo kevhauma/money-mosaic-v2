@@ -37,4 +37,4 @@ Warns when a category that used to show up regularly has gone quiet longer than 
 ## Notes
 
 - Deliberately operates on the raw series, not FR-INC-4's smoothed one — smoothing redistributes a real deposit across months for *display* purposes but must never manufacture a fake non-zero month that hides a real gap.
-- Threshold constants (75% cadence, 6-month minimum, 2-month gap) mirror FR-INC-8's fixed-constant approach; same v1.5 tuning-surface follow-up note applies.
+- Threshold constants (75% cadence, 6-month minimum, 2-month gap) mirror FR-INC-8's fixed-constant approach; same v1.7 tuning-surface follow-up note applies.

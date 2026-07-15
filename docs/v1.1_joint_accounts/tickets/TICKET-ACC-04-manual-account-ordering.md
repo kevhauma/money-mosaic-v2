@@ -21,7 +21,7 @@ Let the user choose the display order of their accounts instead of being stuck w
 
 ## Desired result (to-be)
 
-- `Account` gains an optional, non-indexed `sortOrder?: number` field — additive, same pattern as v1.4's `Category.smoothAnnually`, no Dexie version bump.
+- `Account` gains an optional, non-indexed `sortOrder?: number` field — additive, same pattern as v1.6's `Category.smoothAnnually`, no Dexie version bump.
 - `AccountsStore`'s `accounts`/`activeAccounts` computed sort by `sortOrder` ascending, with accounts missing a `sortOrder` sorting after those that have one, in stable `id` order as a fallback — so existing data (nothing has `sortOrder` yet) renders exactly as today until the user reorders.
 - `accounts-overview.component` gets move-up/move-down controls on each account card, persisting the new order immediately through `AccountsRepository` (never a direct `appDb` write).
 - The net-worth chart needs **no chart-specific changes** — it already iterates `accounts()` directly, so the new order flows through automatically.

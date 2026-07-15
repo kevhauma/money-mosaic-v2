@@ -1,8 +1,8 @@
-# Money Mosaic — v1.4 Income growth (Overview)
+# Money Mosaic — v1.6 Income growth (Overview)
 
 Every prior stat release (v1.0's FR-STAT-1..7, v1.3's FR-STAT-8..13) treats income as one lump figure per
 period, folded into the dashboard — a single number on a stat card, one line on the income/expense trend
-chart, one bucket in the category breakdown. v1.4 pulls income out into its **own routed page and feature
+chart, one bucket in the category breakdown. v1.6 pulls income out into its **own routed page and feature
 area** and turns it from a number into a *trend the user can trust*: is it actually growing, shrinking, or
 just noisy — broken down by source, tracked year over year and across multiple years, smoothed against
 one-off noise (including *real but lumpy* income like a 13th month or vacation pay), flagged when
@@ -19,7 +19,7 @@ make "my income is up 8%" mean something different depending on whether a partne
 extra that month — so this vision keeps them as two separate concepts.
 
 **No new recurring/one-off classification for *whether* something counts as income.** Rather than
-inferring cadence, v1.4 reuses the existing income *categories* the user already assigns, and lets the
+inferring cadence, v1.6 reuses the existing income *categories* the user already assigns, and lets the
 user choose which ones count toward "my income growth" (FR-INC-3) — e.g. excluding "Other Income" if
 it's mostly noisy one-off gifts/refunds, so a bonus month doesn't get read as sustained growth without
 the user's say-so. The same selection feeds the gross/net ratio (FR-INC-11), so "net income" always means
@@ -60,7 +60,7 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
 ## Considered, not ticketed yet
 
 - **Household/joint income view** — deliberately out of scope here; it's the existing account-detail
-  concern (`joint-contributor-breakdown.ts`), not a "growth" question. Could get its own v1.4-adjacent
+  concern (`joint-contributor-breakdown.ts`), not a "growth" question. Could get its own v1.6-adjacent
   ticket (a contribution trend over time, not just a snapshot) but that's a different vision than this
   one and shouldn't be numbered under the same FR-INC stories, to avoid conflating "my income" with
   "household inflow."
@@ -71,7 +71,7 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
   amount/cadence patterns) — explicitly deferred in favour of the manual per-category flag (FR-INC-4);
   consistent with the "no new inferred classification" principle already applied to FR-INC-3.
 - **Auto-deriving gross wage** (payslip import/OCR, tax-bracket estimation from net alone) — manual
-  monthly entry only for v1.4; deriving gross from net would need country-specific tax-bracket logic
+  monthly entry only for v1.6; deriving gross from net would need country-specific tax-bracket logic
   that's a whole feature on its own.
 - **Forecasting/projected income** — already parked in [../v2/requirements.md](../v2/requirements.md)
   under v3 "forecasting/insights"; step-change detection (FR-INC-8) is retrospective only, not a
@@ -82,7 +82,7 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
   carry; worth a ticket once income growth alone has shipped and proven useful.
 - **User-configurable step-change/gap-detection thresholds** — FR-INC-8/FR-INC-9 ship with fixed
   constants (±15% / 3-month window; 75% cadence / 6-month minimum). A settings surface for tuning them
-  is a reasonable v1.5 follow-up once real usage shows whether the defaults are too noisy or too quiet.
+  is a reasonable v1.7 follow-up once real usage shows whether the defaults are too noisy or too quiet.
 
 ## Definition of Done (applies to every ticket)
 

@@ -11,7 +11,7 @@ for any loan — mortgage, auto, personal, or otherwise — isn't squeezed into 
 
 ## Description
 
-Scaffold a new top-level routed feature, `/loans`, mirroring how `feature-income` was scaffolded in v1.4
+Scaffold a new top-level routed feature, `/loans`, mirroring how `feature-income` was scaffolded in v1.6
 (TICKET-INC-01) — page shell only. Every later FR-LOAN ticket builds a panel onto this page.
 
 ## Current situation (as-is)

@@ -2,7 +2,7 @@
 
 - **Area:** Public / Onboarding
 - **Type:** Feature
-- **Traceability:** new capability from [v9999_ideas/requirements.md](../../v9999_ideas/requirements.md) ("Public Ready" — make sure the user gets informed about data never leaving the browser, use export/import to migrate to another browser). Ties to NFR-PRIV-1 (no network transmission) and FR-DAT-1/FR-DAT-2 (export/import, built by [v1.7 TICKET-DAT-01](../../v1.7_data_management/tickets/TICKET-DAT-01-full-data-export-import.md)).
+- **Traceability:** new capability from [v9999_ideas/requirements.md](../../v9999_ideas/requirements.md) ("Public Ready" — make sure the user gets informed about data never leaving the browser, use export/import to migrate to another browser). Ties to NFR-PRIV-1 (no network transmission) and FR-DAT-1/FR-DAT-2 (export/import, built by [v1.4 TICKET-DAT-01](../../v1.4_data_management/tickets/TICKET-DAT-01-full-data-export-import.md)).
 
 ## User story
 
@@ -10,11 +10,11 @@ As a privacy-conscious user, I want the app to clearly tell me my data never lea
 
 ## Description
 
-This ticket is the "make it visible" half of the local-first privacy story — the actual mechanism (full export/import) is built by v1.7's TICKET-DAT-01; this ticket makes sure a user actually discovers it and understands the guarantee behind it, since an unexplained privacy property might as well not exist from the user's perspective.
+This ticket is the "make it visible" half of the local-first privacy story — the actual mechanism (full export/import) is built by v1.4's TICKET-DAT-01; this ticket makes sure a user actually discovers it and understands the guarantee behind it, since an unexplained privacy property might as well not exist from the user's perspective.
 
 ## Current situation (as-is)
 
-- **Depends on [TICKET-DAT-01](../../v1.7_data_management/tickets/TICKET-DAT-01-full-data-export-import.md) existing** — before that ticket lands, there is no export/import feature to point users at, so this ticket cannot be meaningfully completed first. If build order across versions puts this ticket before DAT-01, treat it as blocked and pick a different next ticket.
+- **Depends on [TICKET-DAT-01](../../v1.4_data_management/tickets/TICKET-DAT-01-full-data-export-import.md) existing** — before that ticket lands, there is no export/import feature to point users at, so this ticket cannot be meaningfully completed first. If build order across versions puts this ticket before DAT-01, treat it as blocked and pick a different next ticket.
 - No messaging about the local-first/no-backend data model exists anywhere in the UI today — this is only documented in `NFR-PRIV-1` ([finance-app-spec.md:159](../../v1.0_foundation/finance-app-spec.md)) and this project's `CLAUDE.md`, both developer-facing.
 - TICKET-PUB-01's landing page will carry a short mention of this; TICKET-PUB-03's FAQ will carry a short Q&A entry that links here — this ticket owns the *authoritative*, fuller explanation both of those point to, plus the actual discoverability of the Export/Import UI itself.
 
@@ -36,5 +36,5 @@ This ticket is the "make it visible" half of the local-first privacy story — t
 
 ## Notes
 
-- **Hard dependency on v1.7's TICKET-DAT-01** — this ticket has nothing real to point users at until export/import exists. Sequence it after DAT-01 regardless of how the two versions' numbering suggests ordering.
+- **Hard dependency on v1.4's TICKET-DAT-01** — this ticket has nothing real to point users at until export/import exists. Sequence it after DAT-01 regardless of how the two versions' numbering suggests ordering.
 - Uses the same `localStorage`-flag pattern as TICKET-PUB-01 for "shown once" state, for the same reason: this is ephemeral UI state, not financial data that belongs in a TICKET-DAT-01 export.

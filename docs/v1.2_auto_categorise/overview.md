@@ -33,7 +33,7 @@ is the next free version number at implementation time if another version's tick
 
 ## Auto-categorisation (FR-ML — new)
 
-Like v1.5's set, these tickets are **not** mutually independent, so the list below is ordered by dependency,
+Like v1.7's set, these tickets are **not** mutually independent, so the list below is ordered by dependency,
 not by file list order:
 
 - [x] [TICKET-ML-01](./tickets/TICKET-ML-01-model-config-and-types.md) — Shared ML config, types, and taxonomy signature (adds FR-ML-1) — prerequisite for every other ticket; no tfjs, no dependencies

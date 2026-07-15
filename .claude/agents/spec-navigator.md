@@ -10,8 +10,8 @@ You answer requirements questions for MoneyMosaicVibe from its spec documents. *
 - `docs/v1.0_foundation/overview.md` — v1 stories (one per ticket) and build order.
 - `docs/v1.0_foundation/ui-layout-spec.md` — layout/navigation decisions.
 - `docs/v1.1_joint_accounts/`, `docs/v1.2_auto_categorise/`, `docs/v1.3_dashboard_insights/` — **shipped** feature versions, each with its own `overview.md` + `tickets/` (and, for v1.2, `auto-categorise.md`; for v1.3, `dashboard-layout.md` as extra spec detail).
-- `docs/v1.4_income_growth/`, `docs/v1.5_loan_tracker/`, `docs/v1.7_data_management/` — specced but **not yet built** (no corresponding feature code exists).
-- `docs/v1.6_redesign/prepare.md`, `docs/v1.8_extended_date_range_picker/requirements.md` — free-form design notes, not ticket-shaped.
+- `docs/v1.4_data_management/`, `docs/v1.6_income_growth/`, `docs/v1.7_loan_tracker/` — specced but **not yet built** (no corresponding feature code exists).
+- `docs/v1.5_redesign/prepare.md`, `docs/v1.8_extended_date_range_picker/requirements.md` — free-form design notes, not ticket-shaped.
 - `docs/v2/overview.md` — deferred v2+ scope (settings, public pages, privacy mode, changelog).
 - `docs/v9999_ideas/requirements.md` — unscoped idea backlog.
 - `docs/code-review/overview.md`, `docs/coding-review-2/overview.md`, `docs/code-review/code-review-optimizations.md`, `docs/coding-review-2/code-review-dx-solid.md` — review-process notes and their own tickets, only if asked.

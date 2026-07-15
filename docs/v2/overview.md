@@ -2,7 +2,7 @@
 
 Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v9999_ideas/requirements.md), which also lists a handful of other rough ideas (dashboard flexibility — already shipped as [v1.3 TICKET-STAT-14](../v1.3_dashboard_insights/tickets/TICKET-STAT-14-customizable-dashboard-layout.md); food voucher support; a UX audit pass; a code-review process tweak) that are deliberately **not** part of this version — this version tickets the "Public Ready" ideas only. The through-line across all nine tickets: today the app is a personal dev tool with no theming, no settings, no help content, and a straight redirect into the Dashboard — this version makes it presentable and legible to someone encountering it for the first time, without adding a backend or changing any of the app's local-first guarantees. Each ticketed line links to a `tickets/TICKET-*.md` file carrying its own user story, description, as-is/to-be, and acceptance criteria — this file is only the index + build order.
 
-**One cross-version dependency:** [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) needs [v1.7 TICKET-DAT-01](../v1.7_data_management/tickets/TICKET-DAT-01-full-data-export-import.md) (full data export/import) to exist before it has anything real to point users at — that's the one place this version's build order reaches outside itself.
+**One cross-version dependency:** [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) needs [v1.4 TICKET-DAT-01](../v1.4_data_management/tickets/TICKET-DAT-01-full-data-export-import.md) (full data export/import) to exist before it has anything real to point users at — that's the one place this version's build order reaches outside itself.
 
 ## Settings track (SET-01 first, everything else in this track extends it)
 
@@ -17,7 +17,7 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 - [ ] [TICKET-PUB-01](./tickets/TICKET-PUB-01-home-landing-page.md) — Public home/landing page with click-through to Dashboard (new capability) — fully independent, safe to build any time
 - [ ] [TICKET-PUB-02](./tickets/TICKET-PUB-02-how-to-guides.md) — How-to guides for core workflows (new capability) — independent; pairs naturally with PUB-03's shared content-page pattern
 - [ ] [TICKET-PUB-03](./tickets/TICKET-PUB-03-faq.md) — FAQ for complex/non-obvious features (new capability) — independent; pairs naturally with PUB-02
-- [ ] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Local-data & migration messaging, surfaced in-app (new capability) — **blocked on v1.7 TICKET-DAT-01**; build last among the PUB tickets
+- [ ] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Local-data & migration messaging, surfaced in-app (new capability) — **blocked on v1.4 TICKET-DAT-01**; build last among the PUB tickets
 
 ## Changelog track (independent)
 

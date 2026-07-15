@@ -1,9 +1,9 @@
-# Money Mosaic — v1.5 Loan tracker (Overview)
+# Money Mosaic — v1.7 Loan tracker (Overview)
 
 A loan — a mortgage, a car loan, a personal loan, student debt — is one of the largest, longest-running
 liabilities a household tracks, but today it's invisible in Money Mosaic beyond an ordinary expense
 category — there's no sense of how much principal is left, whether payments are on pace, or how much has
-actually been paid down versus what a textbook amortization schedule would predict. v1.5 turns a category
+actually been paid down versus what a textbook amortization schedule would predict. v1.7 turns a category
 the user **already assigns during normal categorization** into a live payoff picture: remaining balance,
 percentage paid off, and a projected payoff date, kept in sync automatically as new transactions are
 imported and categorized. Each ticketed line links to a `tickets/TICKET-*.md` file carrying its own user
@@ -38,13 +38,13 @@ pattern: `amortization.ts` (schedule from principal/rate/term alone, no transact
 branching) and `loan-progress.ts` (walks the linked category's actual transactions against that schedule to
 compute real balance, principal/interest paid, and schedule drift). One schema-level addition: a new
 `loans` table (Dexie schema **v7** — additive, no `.upgrade()` needed, since it's a brand-new empty table;
-if v1.4's `grossWageEntries` lands first and claims v7, this becomes v8 — whichever is the next free
+if v1.6's `grossWageEntries` lands first and claims v7, this becomes v8 — whichever is the next free
 version number at implementation time) with its own thin repository, `loans.repository.ts`, following the
 existing one-repository-per-entity convention.
 
 ## Loans (FR-LOAN — new)
 
-This introduces a new requirement family, **FR-LOAN**. Like v1.4's set, these tickets are **not** mutually
+This introduces a new requirement family, **FR-LOAN**. Like v1.6's set, these tickets are **not** mutually
 independent, so the list below is ordered by dependency, not by FR number:
 
 - [ ] [TICKET-LOAN-01](./tickets/TICKET-LOAN-01-loan-entity-and-repository.md) — `Loan` entity (with `loanType`), `loans` table, and repository (adds FR-LOAN-1) — prerequisite for every other ticket
@@ -62,32 +62,32 @@ independent, so the list below is ordered by dependency, not by FR number:
 ## Considered, not ticketed yet
 
 - **Type-specific behaviour** (e.g. escrow handling unique to mortgages, or a residual/balloon payment
-  unique to some auto loans) — explicitly out of scope for v1.5. `loanType` is a label only; every loan is
+  unique to some auto loans) — explicitly out of scope for v1.7. `loanType` is a label only; every loan is
   amortized with the same principal/rate/term math regardless of type. A type-specific calculation mode
   would need its own ticket and its own opt-in, not a silent branch keyed off `loanType`.
-- **Variable/adjustable interest rate mid-term** — v1.5 assumes one fixed rate for the full term, for every
+- **Variable/adjustable interest rate mid-term** — v1.7 assumes one fixed rate for the full term, for every
   loan type. A rate-change history (multiple rate segments over a loan's life) is a reasonable follow-up
   once the fixed-rate model is proven, but it complicates both the schedule and progress calculations
   enough to warrant its own version.
-- **Non-monthly payment frequency** (biweekly/quarterly) — monthly only for v1.5, matching how loans are
+- **Non-monthly payment frequency** (biweekly/quarterly) — monthly only for v1.7, matching how loans are
   near-universally billed. Would need `amortization.ts` and `loan-progress.ts` both parameterised by
   frequency, plus a UI control; not worth the complexity until a real user asks for it.
 - **Forward-looking overpayment "what-if" simulator** ("if I pay €200 extra per month, when do I pay this
   off?") — FR-LOAN-5/FR-LOAN-10 already reconcile *real* overpayments retroactively, but a hypothetical
-  forward projection is a distinct feature and a natural v1.5-adjacent follow-up once the actual-progress
+  forward projection is a distinct feature and a natural v1.7-adjacent follow-up once the actual-progress
   math has shipped and been trusted.
 - **Refinancing** (replacing one loan with a new rate/term, carrying forward the remaining balance) — out
   of scope; a user can archive the old loan (LOAN-11) and create a new one with the refinanced terms,
   accepting that the two show up as separate cards rather than one continuous history.
-- **Escrow / property tax / insurance bundled into the tracked payment** — v1.5 only models loan paydown
+- **Escrow / property tax / insurance bundled into the tracked payment** — v1.7 only models loan paydown
   (principal + interest), for every loan type. If a user's linked category includes escrow or other
   bundled costs, the actual-progress math will over-count principal reduction — worth a callout in the
   create/edit form's help text (LOAN-03), not a ticket of its own.
 - **Dashboard integration** (a loan payoff stat card on the main dashboard) — deliberately deferred to keep
-  v1.5 scoped to its own page, consistent with how v1.4 kept income off the dashboard. Could return as a
-  v1.6-adjacent ticket once the Loans page itself has proven useful.
+  v1.7 scoped to its own page, consistent with how v1.6 kept income off the dashboard. Could return as a
+  v1.8-adjacent ticket once the Loans page itself has proven useful.
 - **Multiple categories per loan** (e.g. distinguishing a "scheduled payment" category from an "extra
-  principal payment" category) — v1.5 keeps a strict one-category-per-loan link for simplicity; the
+  principal payment" category) — v1.7 keeps a strict one-category-per-loan link for simplicity; the
   actual-progress math already treats every payment as a lump regardless of size, so an extra payment made
   from the same category is already captured. Revisit only if users want the split visualised separately.
 
