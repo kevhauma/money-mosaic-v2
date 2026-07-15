@@ -1,5 +1,7 @@
 # MoneyMosaicVibe
 
+![Fallow health](https://raw.githubusercontent.com/kevhauma/money-mosaic-v2/main/.github/badges/fallow-health.svg)
+
 A local-first personal finance app. Import bank CSV exports, categorize transactions with rules (or a trained auto-categoriser), link inter-account transfers, track joint/shared accounts, and view dashboard insights — **no backend, no server, no account**. All data lives in [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (via [Dexie.js](https://dexie.org/)) inside your browser.
 
 ## Stack
