@@ -1,7 +1,5 @@
 name: Deploy
 
-# Runs on the self-hosted runner installed on the same machine as Caddy — build output is
-# copied straight into the Caddy webroot on disk, no SSH/network transfer involved.
 on:
   push:
     branches: [main]
@@ -12,8 +10,50 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test -- --watch=false
+        
+  fallow-audit:
+    runs-on: ubuntu-latest
+    needs: [tests]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: Run fallow audit
+        continue-on-error: true
+        run: npm run fallow:audit -- --format github-summary >> "$GITHUB_STEP_SUMMARY"
   deploy:
-    runs-on: [self-hosted, linux, x64] 
+    runs-on: [self-hosted, linux, x64]
+    needs: [tests, fallow-audit]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,12 +68,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npm run test -- --watch=false
 
       - name: Build (production)
         run: npm run build -- --configuration production

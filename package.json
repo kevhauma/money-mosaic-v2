@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "fallow:audit": "fallow audit"
   },
   "private": true,
   "packageManager": "npm@10.9.2",
@@ -47,6 +48,7 @@
     "angular-eslint": "21.4.0",
     "eslint": "^10.3.0",
     "fake-indexeddb": "^6.2.5",
+    "fallow": "^3.5.1",
     "husky": "^9.1.7",
     "jsdom": "^28.0.0",
     "lint-staged": "^16.4.0",
