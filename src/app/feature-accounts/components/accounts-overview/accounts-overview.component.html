@@ -130,7 +130,7 @@
 <app-account-form [(open)]="formOpen" [account]="editingAccount()" (saved)="saveAccount($event)" />
 
 <mm-confirm-dialog
-  [(open)]="deleteConfirmOpen"
+  [(open)]="deleteConfirm.open"
   title="Delete this account?"
   [message]="deleteMessage()"
   confirmLabel="Delete account"

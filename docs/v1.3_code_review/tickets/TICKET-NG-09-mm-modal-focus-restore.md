@@ -24,10 +24,10 @@ The native `<dialog>` + `showModal()` gives focus trapping and Escape handling f
 
 ## Acceptance criteria
 
-- [ ] Spec: open modal from a focused button → close programmatically → `document.activeElement` is that button again; opener removed from DOM before close → no error, focus falls back.
-- [ ] Escape-close path restores focus too (native `cancel`/`close` event handled, not just the signal path — the `open` model must also sync to `false` on Escape so state and DOM agree; add a spec if that sync is currently missing).
-- [ ] Live browser check with keyboard only: edit-transaction modal and a delete-confirm flow both return focus to their trigger.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Spec: open modal from a focused button → close programmatically → `document.activeElement` is that button again; opener removed from DOM before close → no error, focus falls back.
+- [x] Escape-close path restores focus too (native `cancel`/`close` event handled, not just the signal path — the `open` model must also sync to `false` on Escape so state and DOM agree; add a spec if that sync is currently missing).
+- [x] Live browser check with keyboard only: edit-transaction modal and a delete-confirm flow both return focus to their trigger.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

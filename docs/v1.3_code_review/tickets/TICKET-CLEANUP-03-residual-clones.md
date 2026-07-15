@@ -26,13 +26,14 @@ Two low-priority, verified-real leftovers. First: the filter components already 
 
 ## Acceptance criteria
 
-- [ ] Filter behaviour unchanged on both pages (structural filters apply immediately, text stays debounced, clear-filters resets) — existing component specs pass.
-- [ ] Deletion/undo flows unchanged: account clear/delete, transaction delete, import undo all still remove transfer links atomically — existing service specs pass; the new helper's spec covers the returned `unlinkedTransferIds`/`clearedTransferTransactionIds` shape.
-- [ ] The helper never opens its own Dexie transaction (caller-scope contract, documented — matches the existing `cleanupTransfersForRemovedTransactions` doc comment).
-- [ ] The three fingerprints above no longer appear in `fallow dupes`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Filter behaviour unchanged on both pages (structural filters apply immediately, text stays debounced, clear-filters resets) — existing component specs pass.
+- [x] Deletion/undo flows unchanged: account clear/delete, transaction delete, import undo all still remove transfer links atomically — existing service specs pass; the new helper's spec covers the returned `unlinkedTransferIds`/`clearedTransferTransactionIds` shape.
+- [x] The helper never opens its own Dexie transaction (caller-scope contract, documented — matches the existing `cleanupTransfersForRemovedTransactions` doc comment).
+- [x] The three fingerprints above no longer appear in `fallow dupes`.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
 - Explicitly low priority — the review marked these "only if the files are touched anyway"; batching them as one small ticket keeps them from lingering as perpetual backlog dust.
 - `dup:d9247208` and `dup:fbfaad2e` stay accepted (under 15 lines, different domains) — do not chase them.
+- `dup:f6d16225` (accounts-overview vs. categories-overview `deleteMessage` computed, surfaced 2026-07-15 by TICKET-NG-07's `createConfirmState` extraction) is accepted for the same reason: 11 lines, 2 instances, the count-based ternary shape is shared but the message text is domain-specific wording, not logic. Do not chase it either.

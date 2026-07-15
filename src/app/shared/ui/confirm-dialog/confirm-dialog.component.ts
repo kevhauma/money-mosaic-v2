@@ -1,18 +1,10 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  effect,
-  input,
-  model,
-  output,
-  viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 import { ButtonComponent } from '../button/button.component';
+import { MmModalComponent } from '../modal/mm-modal.component';
 
 @Component({
   selector: 'mm-confirm-dialog',
-  imports: [ButtonComponent],
+  imports: [ButtonComponent, MmModalComponent],
   templateUrl: './confirm-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -24,19 +16,6 @@ export class ConfirmDialogComponent {
   readonly danger = input(false);
   readonly open = model(false);
   readonly confirmed = output<void>();
-
-  private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
-
-  constructor() {
-    effect(() => {
-      const dialogElement = this.dialog().nativeElement;
-      if (this.open()) {
-        dialogElement.showModal?.();
-      } else {
-        dialogElement.close?.();
-      }
-    });
-  }
 
   protected confirm(): void {
     this.confirmed.emit();

@@ -24,10 +24,10 @@ As a developer, I want the "which entity is pending deletion + confirm-dialog op
 
 ## Acceptance criteria
 
-- [ ] Delete flows on both overview pages behave unchanged (open dialog, confirm deletes via the store, cancel leaves data intact) — verified live in the browser.
-- [ ] `dup:edd1ec44` no longer appears in `fallow dupes`.
-- [ ] The factory has its own spec (request → open, confirm → returns entity and closes, cancel → closes without returning).
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] Delete flows on both overview pages behave unchanged (open dialog, confirm deletes via the store, cancel leaves data intact) — verified live in the browser.
+- [x] `dup:edd1ec44` no longer appears in `fallow dupes`.
+- [x] The factory has its own spec (request → open, confirm → returns entity and closes, cancel → closes without returning).
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

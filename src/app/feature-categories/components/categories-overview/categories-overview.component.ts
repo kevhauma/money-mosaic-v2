@@ -21,6 +21,7 @@ import {
   PageHeaderComponent,
   type BadgeColor,
 } from '@/shared/ui';
+import { createConfirmState } from '@/shared/utils';
 import { CATEGORY_ICON_SET, categoryIconName } from '../../category-icons';
 import { CategoriesStore } from '@/core/state';
 import {
@@ -72,10 +73,9 @@ export class CategoriesOverviewComponent {
   protected readonly formOpen = signal(false);
   protected readonly editingCategory = signal<Category | null>(null);
 
-  protected readonly deleteConfirmOpen = signal(false);
-  private readonly deleteTarget = signal<Category | null>(null);
+  protected readonly deleteConfirm = createConfirmState<Category>();
   protected readonly deleteMessage = computed(() => {
-    const target = this.deleteTarget();
+    const target = this.deleteConfirm.pending();
     if (!target) {
       return '';
     }
@@ -130,12 +130,11 @@ export class CategoriesOverviewComponent {
   }
 
   protected confirmDelete(category: Category): void {
-    this.deleteTarget.set(category);
-    this.deleteConfirmOpen.set(true);
+    this.deleteConfirm.request(category);
   }
 
   protected deleteConfirmed(): void {
-    const target = this.deleteTarget();
+    const target = this.deleteConfirm.confirm();
     if (target?.id != null) {
       void this.categoriesStore.removeCategory(target.id);
     }

@@ -25,11 +25,11 @@ TICKET-NG-01 extracted `MmModalComponent` for the repeated `showModal()`/`close(
 
 ## Acceptance criteria
 
-- [ ] All existing confirm flows work unchanged (account delete/clear, category delete, rule delete, transaction delete, import undo) — verified live in the browser, including the `danger` styling variant.
-- [ ] `dup:42bf7346` no longer appears in `fallow dupes`; `grep -n "showModal" src/app/shared/ui` hits only `mm-modal.component.ts`.
-- [ ] Existing `confirm-dialog.component.spec.ts` passes (updated only if the internal DOM structure changed selectors); a case asserts `confirmed` emits once and the modal closes on confirm.
-- [ ] No public-API change for consumers — no call-site edits outside `shared/ui/confirm-dialog`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] All existing confirm flows work unchanged (account delete/clear, category delete, rule delete, transaction delete, import undo) — verified live in the browser, including the `danger` styling variant.
+- [x] `dup:42bf7346` no longer appears in `fallow dupes`; `grep -n "showModal" src/app/shared/ui` hits only `mm-modal.component.ts`.
+- [x] Existing `confirm-dialog.component.spec.ts` passes (updated only if the internal DOM structure changed selectors); a case asserts `confirmed` emits once and the modal closes on confirm.
+- [x] No public-API change for consumers — no call-site edits outside `shared/ui/confirm-dialog`.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

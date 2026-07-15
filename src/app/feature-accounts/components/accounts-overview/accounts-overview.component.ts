@@ -20,7 +20,7 @@ import {
   LoadingSkeletonComponent,
   PageHeaderComponent,
 } from '@/shared/ui';
-import { SignedAmountPipe } from '@/shared/utils';
+import { createConfirmState, SignedAmountPipe } from '@/shared/utils';
 import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
 import { AccountsStore } from '@/core/state';
 import {
@@ -72,10 +72,9 @@ export class AccountsOverviewComponent {
   protected readonly formOpen = signal(false);
   protected readonly editingAccount = signal<Account | null>(null);
 
-  protected readonly deleteConfirmOpen = signal(false);
-  private readonly deleteTarget = signal<Account | null>(null);
+  protected readonly deleteConfirm = createConfirmState<Account>();
   protected readonly deleteMessage = computed(() => {
-    const target = this.deleteTarget();
+    const target = this.deleteConfirm.pending();
     if (!target) {
       return '';
     }
@@ -130,12 +129,11 @@ export class AccountsOverviewComponent {
   }
 
   protected confirmDelete(account: Account): void {
-    this.deleteTarget.set(account);
-    this.deleteConfirmOpen.set(true);
+    this.deleteConfirm.request(account);
   }
 
   protected deleteConfirmed(): void {
-    const target = this.deleteTarget();
+    const target = this.deleteConfirm.confirm();
     if (target?.id != null) {
       void this.accountsStore.removeAccount(target.id);
     }

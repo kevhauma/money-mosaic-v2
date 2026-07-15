@@ -11,9 +11,9 @@ The list is in recommended build order: the correctness fix and test safety net 
 - [x] [TICKET-PERF-05](./tickets/TICKET-PERF-05-hydrate-on-demand.md) — Hydrate stores on demand instead of all upfront (CR-3.4 + CR-5.1 carried over) — largest-risk item, needs TICKET-SOLID-05 and TICKET-TEST-01's specs green; CR-3.4 shipped, CR-5.1 re-ticketed as PERF-07
 - [x] [TICKET-SOLID-06](./tickets/TICKET-SOLID-06-attribution-fieldset-extraction.md) — Extract the attribution-override fieldset from `transaction-edit-form` (+ O(1) transfer lookups) (CR3-2.2) — moderate, independent
 - [x] [TICKET-NG-05](./tickets/TICKET-NG-05-shared-balance-trend-scaffolding.md) — Share the balance-trend signal scaffolding between the two history charts (CR3-2.3, Fallow `dup:db831d48`) — small, sequence loosely after SOLID-05
-- [ ] [TICKET-NG-06](./tickets/TICKET-NG-06-confirm-dialog-on-mm-modal.md) — Rebuild `ConfirmDialogComponent` on `mm-modal`, completing TICKET-NG-01 (CR3-2.4, Fallow `dup:42bf7346`) — small, independent
-- [ ] [TICKET-NG-09](./tickets/TICKET-NG-09-mm-modal-focus-restore.md) — `mm-modal` restores focus to its trigger on close (CR-8 carried over; `aria-labelledby` half already shipped) — small; NG-06's rebuild inherits it, so pair them
-- [ ] [TICKET-NG-07](./tickets/TICKET-NG-07-create-confirm-state.md) — Extract `createConfirmState<T>()` for the overview delete-confirm scaffolding (CR2-6.3 carried over, Fallow `dup:edd1ec44`) — small, pairs naturally with NG-06
+- [x] [TICKET-NG-06](./tickets/TICKET-NG-06-confirm-dialog-on-mm-modal.md) — Rebuild `ConfirmDialogComponent` on `mm-modal`, completing TICKET-NG-01 (CR3-2.4, Fallow `dup:42bf7346`) — small, independent
+- [x] [TICKET-NG-09](./tickets/TICKET-NG-09-mm-modal-focus-restore.md) — `mm-modal` restores focus to its trigger on close (CR-8 carried over; `aria-labelledby` half already shipped) — small; NG-06's rebuild inherits it, so pair them
+- [x] [TICKET-NG-07](./tickets/TICKET-NG-07-create-confirm-state.md) — Extract `createConfirmState<T>()` for the overview delete-confirm scaffolding (CR2-6.3 carried over, Fallow `dup:edd1ec44`) — small, pairs naturally with NG-06
 - [x] [TICKET-PERF-02](./tickets/TICKET-PERF-02-rules-compile-once.md) — Sort rules and compile regexes once per run-rules pass + pattern length cap (CR-3.2 carried over + CR3-4, Fallow security `f3f50dc9`) — small, independent
 - [ ] [TICKET-PERF-04](./tickets/TICKET-PERF-04-batch-hot-write-paths.md) — Batch the hot write paths (rules persistence, transfer auto-link, category removal) into bulk transactions (CR-3.1 carried over) — small, pairs with PERF-02 on the rules path
 - [x] [TICKET-PERF-03](./tickets/TICKET-PERF-03-import-batch-id-index.md) — Index `importBatchId` and `attributionOverride.reimbursementTransferId` via additive `.version(11)` (CR-3.3 carried over) — small, independent
@@ -32,7 +32,7 @@ The list is in recommended build order: the correctness fix and test safety net 
 
 Not ticketed by design: CR-5.2 ("keep existing bundle wins intact") is a guardrail, not a work item — it's covered by the Definition of Done below and the bundle-budget hard rule.
 
-**Deliberate non-actions** (review §2.6/§5 — do not "fix"): `matchesTransactionFilters`' cyclomatic score (flat, specced guard list), the csv-row-mapper dispatch functions, all 19 flagged "unused exports" (in-file/spec-used), all 23 "unused class members" (DI-invoked, verified), `tailwindcss` staying in `devDependencies`, and `dup:d9247208`/`dup:fbfaad2e` (small, cross-domain).
+**Deliberate non-actions** (review §2.6/§5 — do not "fix"): `matchesTransactionFilters`' cyclomatic score (flat, specced guard list), the csv-row-mapper dispatch functions, all 19 flagged "unused exports" (in-file/spec-used), all 23 "unused class members" (DI-invoked, verified), `tailwindcss` staying in `devDependencies`, and `dup:d9247208`/`dup:fbfaad2e`/`dup:f6d16225` (small, cross-domain).
 
 ## Definition of Done (applies to every item)
 

@@ -67,4 +67,51 @@ describe('MmModalComponent', () => {
 
     expect(component.open()).toBe(false);
   });
+
+  it('restores focus to the trigger element when closed programmatically', async () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    fixture.componentRef.setInput('open', false);
+    await fixture.whenStable();
+
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
+  it('restores focus when the dialog closes via a native close event (Escape)', async () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    dialogElement.dispatchEvent(new Event('close'));
+    await fixture.whenStable();
+
+    expect(component.open()).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
+  it('does not throw if the trigger element was removed from the DOM before close', async () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    trigger.remove();
+
+    expect(() => {
+      fixture.componentRef.setInput('open', false);
+    }).not.toThrow();
+    await fixture.whenStable();
+  });
 });

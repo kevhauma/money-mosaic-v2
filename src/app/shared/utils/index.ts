@@ -11,3 +11,4 @@ export * from './iban';
 export * from './percentage';
 export * from './sortable';
 export * from './confidence-color';
+export * from './confirm-state';
