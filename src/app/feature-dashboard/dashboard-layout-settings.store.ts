@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import {
   DashboardLayoutSettingsRepository,
   DEFAULT_DASHBOARD_LAYOUT_SETTINGS,
@@ -17,10 +17,17 @@ export const DashboardLayoutSettingsStore = signalStore(
   withState<DashboardLayoutSettings>(DEFAULT_DASHBOARD_LAYOUT_SETTINGS),
   withMethods((store) => {
     const dashboardLayoutSettingsRepository = inject(DashboardLayoutSettingsRepository);
+    let hydration: Promise<void> | null = null;
 
     return {
-      hydrate: async (): Promise<void> => {
-        patchState(store, await dashboardLayoutSettingsRepository.get());
+      /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
+      hydrate: (): Promise<void> => {
+        if (!hydration) {
+          hydration = dashboardLayoutSettingsRepository
+            .get()
+            .then((settings) => patchState(store, settings));
+        }
+        return hydration;
       },
 
       /** Move-up/move-down for the keyboard-accessible reorder controls. */
@@ -51,5 +58,11 @@ export const DashboardLayoutSettingsStore = signalStore(
         patchState(store, { rowOrder, hiddenRowIds: [] });
       },
     };
+  }),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget on first injection instead of app bootstrap (TICKET-PERF-07).
+      void store.hydrate();
+    },
   }),
 );

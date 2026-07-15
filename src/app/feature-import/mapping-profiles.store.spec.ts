@@ -1,5 +1,7 @@
-import type { MappingProfile } from '@/core/data-access';
-import { matchTemplateForHeaders } from './mapping-profiles.store';
+import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { MappingProfilesRepository, type MappingProfile } from '@/core/data-access';
+import { matchTemplateForHeaders, MappingProfilesStore } from './mapping-profiles.store';
 
 const KBC_TEMPLATE: MappingProfile = {
   name: 'KBC',
@@ -70,5 +72,45 @@ describe('matchTemplateForHeaders: bank template detection', () => {
   it('ignores saved profiles that have no header signature', () => {
     const savedProfile: MappingProfile = { ...KBC_TEMPLATE, headerSignature: undefined };
     expect(matchTemplateForHeaders([savedProfile], KBC_TEMPLATE.headerSignature!)).toBeUndefined();
+  });
+});
+
+describe('MappingProfilesStore: on-injection hydration (TICKET-PERF-07)', () => {
+  const mappingProfilesRepository = { getAll: vi.fn(), add: vi.fn(), update: vi.fn() };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mappingProfilesRepository.getAll.mockResolvedValue([KBC_TEMPLATE]);
+    TestBed.configureTestingModule({
+      providers: [{ provide: MappingProfilesRepository, useValue: mappingProfilesRepository }],
+    });
+  });
+
+  it('hydrates itself on first injection without a caller invoking hydrate()', async () => {
+    const store = TestBed.inject(MappingProfilesStore);
+
+    await store.hydrate();
+
+    expect(mappingProfilesRepository.getAll).toHaveBeenCalledTimes(1);
+    expect(store.profiles()).toEqual([KBC_TEMPLATE]);
+  });
+
+  it('is idempotent: double injection and repeated calls all resolve without re-fetching', async () => {
+    const store = TestBed.inject(MappingProfilesStore);
+
+    await Promise.all([store.hydrate(), store.hydrate()]);
+    await store.hydrate();
+
+    expect(mappingProfilesRepository.getAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('detectTemplateForFile awaits the on-injection hydrate before matching', async () => {
+    const store = TestBed.inject(MappingProfilesStore);
+    const detectHeaders = vi.fn().mockResolvedValue(KBC_TEMPLATE.headerSignature);
+
+    const matched = await store.detectTemplateForFile(detectHeaders);
+
+    expect(matched?.bankPreset).toBe('kbc');
+    expect(mappingProfilesRepository.getAll).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withMethods } from '@ngrx/signals';
+import { patchState, signalStore, type, withComputed, withHooks, withMethods } from '@ngrx/signals';
 import {
   addEntity,
   entityConfig,
@@ -41,13 +41,17 @@ export const ImportBatchesStore = signalStore(
     const importService = inject(ImportService);
     const rulesEngineService = inject(RulesEngineService);
     const coOwnerContributionService = inject(CoOwnerContributionService);
+    let hydration: Promise<void> | null = null;
 
     return {
-      hydrate: async (): Promise<void> => {
-        patchState(
-          store,
-          setAllEntities(await importBatchesRepository.getAll(), importBatchConfig),
-        );
+      /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
+      hydrate: (): Promise<void> => {
+        if (!hydration) {
+          hydration = importBatchesRepository.getAll().then((batches) => {
+            patchState(store, setAllEntities(batches, importBatchConfig));
+          });
+        }
+        return hydration;
       },
 
       /**
@@ -111,5 +115,11 @@ export const ImportBatchesStore = signalStore(
         transfersStore.removeLocal(unlinkedTransferIds);
       },
     };
+  }),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget on first `/import` injection instead of app bootstrap (TICKET-PERF-07).
+      void store.hydrate();
+    },
   }),
 );

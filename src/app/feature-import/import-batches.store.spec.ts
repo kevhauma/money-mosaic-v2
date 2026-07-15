@@ -208,3 +208,55 @@ describe('ImportBatchesStore: undoImport mirrors removals and severed transfers 
     expect(transfersStore.removeLocal).toHaveBeenCalledWith([100]);
   });
 });
+
+describe('ImportBatchesStore: on-injection hydration (TICKET-PERF-07)', () => {
+  const importBatchesRepository = { getAll: vi.fn() };
+  const importService = { commitImport: vi.fn(), undoImport: vi.fn() };
+  const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const coOwnerContributionService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const transactionsStore = {
+    transactions: vi.fn().mockReturnValue([]),
+    hydrate: vi.fn().mockResolvedValue(undefined),
+    addMany: vi.fn(),
+    removeMany: vi.fn(),
+    patchMany: vi.fn(),
+  };
+  const transfersStore = {
+    hydrate: vi.fn().mockResolvedValue(undefined),
+    runAutoLink: vi.fn().mockResolvedValue(0),
+    removeLocal: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    importBatchesRepository.getAll.mockResolvedValue([importBatch()]);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
+        { provide: ImportService, useValue: importService },
+        { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: CoOwnerContributionService, useValue: coOwnerContributionService },
+        { provide: TransactionsStore, useValue: transactionsStore },
+        { provide: TransfersStore, useValue: transfersStore },
+      ],
+    });
+  });
+
+  it('hydrates itself on first injection without a caller invoking hydrate()', async () => {
+    const store = TestBed.inject(ImportBatchesStore);
+
+    await store.hydrate();
+
+    expect(importBatchesRepository.getAll).toHaveBeenCalledTimes(1);
+    expect(store.batches()).toEqual([importBatch()]);
+  });
+
+  it('is idempotent: double injection and repeated calls all resolve without re-fetching', async () => {
+    const store = TestBed.inject(ImportBatchesStore);
+
+    await Promise.all([store.hydrate(), store.hydrate()]);
+    await store.hydrate();
+
+    expect(importBatchesRepository.getAll).toHaveBeenCalledTimes(1);
+  });
+});

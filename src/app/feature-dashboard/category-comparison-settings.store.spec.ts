@@ -38,4 +38,23 @@ describe('CategoryComparisonSettingsStore', () => {
     expect(repository.setExcludedCategoryIds).toHaveBeenCalledExactlyOnceWith([2, 5]);
     expect(store.excludedCategoryIds()).toEqual([2, 5]);
   });
+
+  it('hydrates itself on first injection without a caller invoking hydrate() (TICKET-PERF-07)', async () => {
+    repository.get.mockResolvedValue({ id: 1, excludedCategoryIds: [3] });
+    const store = TestBed.inject(CategoryComparisonSettingsStore);
+
+    await store.hydrate();
+
+    expect(repository.get).toHaveBeenCalledTimes(1);
+    expect(store.excludedCategoryIds()).toEqual([3]);
+  });
+
+  it('is idempotent: double injection and repeated calls all resolve without re-fetching', async () => {
+    const store = TestBed.inject(CategoryComparisonSettingsStore);
+
+    await Promise.all([store.hydrate(), store.hydrate()]);
+    await store.hydrate();
+
+    expect(repository.get).toHaveBeenCalledTimes(1);
+  });
 });

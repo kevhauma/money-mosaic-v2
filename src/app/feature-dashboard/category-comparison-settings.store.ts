@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import {
   CategoryComparisonSettingsRepository,
   DEFAULT_CATEGORY_COMPARISON_SETTINGS,
@@ -16,10 +16,17 @@ export const CategoryComparisonSettingsStore = signalStore(
   withState<CategoryComparisonSettings>(DEFAULT_CATEGORY_COMPARISON_SETTINGS),
   withMethods((store) => {
     const categoryComparisonSettingsRepository = inject(CategoryComparisonSettingsRepository);
+    let hydration: Promise<void> | null = null;
 
     return {
-      hydrate: async (): Promise<void> => {
-        patchState(store, await categoryComparisonSettingsRepository.get());
+      /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
+      hydrate: (): Promise<void> => {
+        if (!hydration) {
+          hydration = categoryComparisonSettingsRepository
+            .get()
+            .then((settings) => patchState(store, settings));
+        }
+        return hydration;
       },
 
       setExcludedCategoryIds: async (excludedCategoryIds: number[]): Promise<void> => {
@@ -27,5 +34,11 @@ export const CategoryComparisonSettingsStore = signalStore(
         patchState(store, { excludedCategoryIds });
       },
     };
+  }),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget on first injection instead of app bootstrap (TICKET-PERF-07).
+      void store.hydrate();
+    },
   }),
 );

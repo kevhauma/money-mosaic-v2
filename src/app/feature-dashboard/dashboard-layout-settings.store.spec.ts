@@ -117,4 +117,22 @@ describe('DashboardLayoutSettingsStore', () => {
     expect(store.rowOrder()).toEqual(DEFAULT_ORDER);
     expect(store.hiddenRowIds()).toEqual([]);
   });
+
+  it('hydrates itself on first injection without a caller invoking hydrate() (TICKET-PERF-07)', async () => {
+    const store = TestBed.inject(DashboardLayoutSettingsStore);
+
+    await store.hydrate();
+
+    expect(repository.get).toHaveBeenCalledTimes(1);
+    expect(store.rowOrder()).toEqual(DEFAULT_ORDER);
+  });
+
+  it('is idempotent: double injection and repeated calls all resolve without re-fetching', async () => {
+    const store = TestBed.inject(DashboardLayoutSettingsStore);
+
+    await Promise.all([store.hydrate(), store.hydrate()]);
+    await store.hydrate();
+
+    expect(repository.get).toHaveBeenCalledTimes(1);
+  });
 });

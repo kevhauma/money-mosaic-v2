@@ -18,10 +18,6 @@ import {
 } from './core/state';
 import { RulesStore } from './feature-categories/rules.store';
 import { CategoryModelStore } from './feature-categories/category-model.store';
-import { MappingProfilesStore } from './feature-import/mapping-profiles.store';
-import { ImportBatchesStore } from './feature-import/import-batches.store';
-import { CategoryComparisonSettingsStore } from './feature-dashboard/category-comparison-settings.store';
-import { DashboardLayoutSettingsStore } from './feature-dashboard/dashboard-layout-settings.store';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -39,10 +35,6 @@ export const appConfig: ApplicationConfig = {
       const categoriesStore = inject(CategoriesStore);
       const rulesStore = inject(RulesStore);
       const categoryModelStore = inject(CategoryModelStore);
-      const mappingProfilesStore = inject(MappingProfilesStore);
-      const importBatchesStore = inject(ImportBatchesStore);
-      const categoryComparisonSettingsStore = inject(CategoryComparisonSettingsStore);
-      const dashboardLayoutSettingsStore = inject(DashboardLayoutSettingsStore);
       return appDb
         .open()
         .then(() => {
@@ -57,15 +49,15 @@ export const appConfig: ApplicationConfig = {
           // bootstrap on it.
           void categoryModelStore.hydrate();
 
+          // MappingProfilesStore/ImportBatchesStore/CategoryComparisonSettingsStore/
+          // DashboardLayoutSettingsStore hydrate themselves on first injection instead (each has
+          // its own `withHooks({ onInit })`, TICKET-PERF-07) — only stores every route depends on
+          // (or that the dev seed below reads) still block bootstrap here.
           return Promise.all([
             accountsStore.hydrate(),
             transferSettingsStore.hydrate(),
             categoriesStore.hydrate(),
             rulesStore.hydrate(),
-            mappingProfilesStore.hydrate(),
-            importBatchesStore.hydrate(),
-            categoryComparisonSettingsStore.hydrate(),
-            dashboardLayoutSettingsStore.hydrate(),
           ]);
         })
         .then(async () => {
