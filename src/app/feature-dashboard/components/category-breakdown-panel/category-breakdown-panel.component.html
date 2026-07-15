@@ -2,59 +2,68 @@
   <div class="card-body">
     <h2 class="card-title text-base">Category breakdown</h2>
 
-    <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
-      @for (column of columns(); track column.kind) {
-        <div>
-          <h3 class="text-sm font-medium text-base-content/70">{{ column.label }}</h3>
+    @if (!dataReady()) {
+      <mm-loading-skeleton [rows]="4" class="mt-2" />
+    } @else {
+      <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        @for (column of columns(); track column.kind) {
+          <div>
+            <h3 class="text-sm font-medium text-base-content/70">{{ column.label }}</h3>
 
-          @if (column.entries.length > 0) {
-            <div echarts [options]="column.chartOption" class="h-56 w-full"></div>
+            @if (column.entries.length > 0) {
+              <div echarts [options]="column.chartOption" class="h-56 w-full"></div>
 
-            <ul class="mt-2 divide-y divide-base-300">
-              @for (entry of column.visibleEntries; track entry.categoryId) {
-                <li>
+              <ul class="mt-2 divide-y divide-base-300">
+                @for (entry of column.visibleEntries; track entry.categoryId) {
+                  <li>
+                    <a
+                      [routerLink]="['/transactions']"
+                      [queryParams]="drilldownParams(entry.categoryId)"
+                      class="flex items-center justify-between py-2 transition hover:bg-base-200"
+                    >
+                      <span>{{ entry.name }}</span>
+                      <span class="text-sm text-base-content/70">
+                        {{ entry.formattedTotal }} · {{ entry.formattedShare }}
+                      </span>
+                    </a>
+                  </li>
+                }
+              </ul>
+
+              @if (column.remainingCount > 0) {
+                <mm-button
+                  variant="ghost"
+                  size="xs"
+                  class="mt-2"
+                  (click)="toggleColumn(column.kind)"
+                >
+                  {{ column.toggleLabel }}
+                </mm-button>
+              }
+
+              @if (column.kind === 'expense' && uncategorisedCallout(); as callout) {
+                <mm-alert status="warning" variant="soft" class="mt-2">
                   <a
                     [routerLink]="['/transactions']"
-                    [queryParams]="drilldownParams(entry.categoryId)"
-                    class="flex items-center justify-between py-2 transition hover:bg-base-200"
+                    [queryParams]="drilldownParams(null)"
+                    class="text-sm"
                   >
-                    <span>{{ entry.name }}</span>
-                    <span class="text-sm text-base-content/70">
-                      {{ entry.formattedTotal }} · {{ entry.formattedShare }}
-                    </span>
+                    {{ callout.formattedTotal }} uncategorised ({{ callout.formattedShare }} of
+                    expense, {{ callout.transactionCount }} transaction{{
+                      callout.transactionCount === 1 ? '' : 's'
+                    }})
                   </a>
-                </li>
+                </mm-alert>
               }
-            </ul>
-
-            @if (column.remainingCount > 0) {
-              <mm-button variant="ghost" size="xs" class="mt-2" (click)="toggleColumn(column.kind)">
-                {{ column.toggleLabel }}
-              </mm-button>
+            } @else {
+              <p class="py-6 text-center text-sm text-base-content/60">
+                {{ column.emptyStateText }}
+              </p>
             }
-
-            @if (column.kind === 'expense' && uncategorisedCallout(); as callout) {
-              <mm-alert status="warning" variant="soft" class="mt-2">
-                <a
-                  [routerLink]="['/transactions']"
-                  [queryParams]="drilldownParams(null)"
-                  class="text-sm"
-                >
-                  {{ callout.formattedTotal }} uncategorised ({{ callout.formattedShare }} of
-                  expense, {{ callout.transactionCount }} transaction{{
-                    callout.transactionCount === 1 ? '' : 's'
-                  }})
-                </a>
-              </mm-alert>
-            }
-          } @else {
-            <p class="py-6 text-center text-sm text-base-content/60">
-              {{ column.emptyStateText }}
-            </p>
-          }
-        </div>
-      }
-    </div>
+          </div>
+        }
+      </div>
+    }
 
     <a
       [routerLink]="['/categories']"

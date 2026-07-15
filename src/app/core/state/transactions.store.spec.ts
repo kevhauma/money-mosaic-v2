@@ -205,3 +205,50 @@ describe('TransactionsStore: nullify toggle leaves other fields untouched (TICKE
     });
   });
 });
+
+describe('TransactionsStore: hydrate (TICKET-PERF-05)', () => {
+  const transactionsRepository = { getAll: vi.fn() };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [{ provide: TransactionsRepository, useValue: transactionsRepository }],
+    });
+  });
+
+  it('transitions hydrated false -> true once the fetch resolves', async () => {
+    transactionsRepository.getAll.mockResolvedValue([transaction({ id: 1 })]);
+    const store = TestBed.inject(TransactionsStore);
+    expect(store.hydrated()).toBe(false);
+
+    await store.hydrate();
+
+    expect(store.hydrated()).toBe(true);
+    expect(store.transactions()).toHaveLength(1);
+  });
+
+  it('is idempotent: concurrent and later calls all resolve without re-fetching', async () => {
+    transactionsRepository.getAll.mockResolvedValue([]);
+    const store = TestBed.inject(TransactionsStore);
+
+    await Promise.all([store.hydrate(), store.hydrate()]);
+    await store.hydrate();
+
+    expect(transactionsRepository.getAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('force: true re-fetches even after a prior hydrate already resolved', async () => {
+    transactionsRepository.getAll
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([transaction({ id: 9 })]);
+    const store = TestBed.inject(TransactionsStore);
+
+    await store.hydrate();
+    expect(store.transactions()).toHaveLength(0);
+
+    await store.hydrate({ force: true });
+
+    expect(transactionsRepository.getAll).toHaveBeenCalledTimes(2);
+    expect(store.transactions().map((t) => t.id)).toEqual([9]);
+  });
+});

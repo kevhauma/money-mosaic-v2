@@ -61,8 +61,14 @@ export const CategoriesStore = signalStore(
         patchState(store, updateEntity({ id, changes }, categoryConfig));
       },
 
-      /** Clears the category off any transaction that referenced it before deleting, so nothing points at a dangling id. */
+      /**
+       * Clears the category off any transaction that referenced it before deleting, so nothing
+       * points at a dangling id. Awaits `TransactionsStore`'s own hydration first (idempotent) so
+       * the affected-ids scan below never runs against a not-yet-hydrated entity map
+       * (TICKET-PERF-05).
+       */
       removeCategory: async (id: number): Promise<void> => {
+        await transactionsStore.hydrate();
         const affectedIds = transactionsStore
           .transactions()
           .filter((transaction) => transaction.categoryId === id)

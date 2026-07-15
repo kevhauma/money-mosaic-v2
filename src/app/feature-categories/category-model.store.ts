@@ -121,8 +121,20 @@ export const CategoryModelStore = signalStore(
     };
 
     return {
-      /** Loads a persisted model on app start (`app.config.ts`) and flips `ready`/`stale` per the current taxonomy. */
+      /**
+       * Loads a persisted model on app start (`app.config.ts`) and flips `ready`/`stale` per the
+       * current taxonomy. Awaits `CategoriesStore`/`TransactionsStore`/`RulesStore`'s own
+       * hydration first (idempotent) since `activeTaxonomySignature`/`refreshSuggestions` below
+       * read their entities synchronously — `TransactionsStore`'s hydrate is bootstrap-kicked-off
+       * without blocking render (TICKET-PERF-05), so this store must wait for it explicitly rather
+       * than assume the old global barrier already ran.
+       */
       hydrate: async (): Promise<void> => {
+        await Promise.all([
+          categoriesStore.hydrate(),
+          transactionsStore.hydrate(),
+          rulesStore.hydrate(),
+        ]);
         const settings = await repository.getSettings();
         patchState(store, { trainingWindowYears: settings.trainingWindowYears });
 

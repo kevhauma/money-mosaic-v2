@@ -2,7 +2,9 @@
   <div class="card-body">
     <h2 class="card-title text-base">Biggest transactions</h2>
 
-    @if (entries().length > 0) {
+    @if (!dataReady()) {
+      <mm-loading-skeleton [rows]="3" class="mt-2" />
+    } @else if (entries().length > 0) {
       <ul class="mt-2 divide-y divide-base-300">
         @for (entry of entries(); track entry.id) {
           <li>

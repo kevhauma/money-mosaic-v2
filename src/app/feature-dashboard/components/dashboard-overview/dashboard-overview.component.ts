@@ -4,7 +4,12 @@ import { tablerCheck, tablerPencil } from '@ng-icons/tabler-icons';
 import { RangeStore, type PeriodStats } from '@/core/stats';
 import { AccountsStore } from '@/core/state';
 import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
-import { ButtonComponent, PageHeaderComponent, StatCardComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  LoadingSkeletonComponent,
+  PageHeaderComponent,
+  StatCardComponent,
+} from '@/shared/ui';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
 import { visibleDashboardRows } from '../../dashboard-row-order';
 import { StatsStore } from '../../stats.store';
@@ -35,6 +40,7 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' })
   imports: [
     NgIcon,
     ButtonComponent,
+    LoadingSkeletonComponent,
     PageHeaderComponent,
     StatCardComponent,
     NetWorthHeaderComponent,

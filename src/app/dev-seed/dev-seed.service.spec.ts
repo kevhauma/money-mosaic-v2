@@ -31,7 +31,10 @@ const setup = (options: { accounts: unknown[]; transactionCount: number }) => {
   const accountsStore = { hydrate: vi.fn().mockResolvedValue(undefined) };
   const transactionsStore = { hydrate: vi.fn().mockResolvedValue(undefined) };
   const transfersStore = { hydrate: vi.fn().mockResolvedValue(undefined) };
-  const categoriesStore = { categories: () => SEED_CATEGORIES };
+  const categoriesStore = {
+    categories: () => SEED_CATEGORIES,
+    hydrate: vi.fn().mockResolvedValue(undefined),
+  };
 
   TestBed.configureTestingModule({
     providers: [
@@ -73,9 +76,13 @@ describe('DevSeedService: seedIfEmpty', () => {
     expect(rows.every((row) => /\|\d+$/.test(row.fingerprint))).toBe(true);
 
     expect(ctx.transferLinkingService.linkAuto).toHaveBeenCalled();
-    expect(ctx.accountsStore.hydrate).toHaveBeenCalledTimes(1);
-    expect(ctx.transactionsStore.hydrate).toHaveBeenCalledTimes(1);
-    expect(ctx.transfersStore.hydrate).toHaveBeenCalledTimes(1);
+    // Each store's own (bootstrap-triggered) hydrate is awaited before writing, then re-fetched
+    // afterwards so the UI reflects the newly-seeded rows (TICKET-PERF-05) — two calls each.
+    expect(ctx.accountsStore.hydrate).toHaveBeenCalledTimes(2);
+    expect(ctx.transactionsStore.hydrate).toHaveBeenCalledTimes(2);
+    expect(ctx.transactionsStore.hydrate).toHaveBeenLastCalledWith({ force: true });
+    expect(ctx.transfersStore.hydrate).toHaveBeenCalledTimes(2);
+    expect(ctx.transfersStore.hydrate).toHaveBeenLastCalledWith({ force: true });
   });
 
   it('is a no-op when accounts already exist', async () => {

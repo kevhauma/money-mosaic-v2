@@ -55,9 +55,12 @@ export const ImportBatchesStore = signalStore(
        * imported rows before they land in the store, so they show up already categorised (FR-CAT-3).
        * The registry-driven "Partner contribution" tag runs last and wins over a conflicting user
        * Rule for the same joint-account inflow — the co-owner IBAN registry is the more specific,
-       * curated signal.
+       * curated signal. Awaits `TransactionsStore`/`TransfersStore`'s own hydration first
+       * (idempotent) so the mirroring below (and the `runAutoLink` it triggers) never races the
+       * bootstrap-kicked-off (non-blocking) hydration of either store (TICKET-PERF-05).
        */
       commitImport: async (input: CommitImportInput): Promise<CommitImportResult> => {
+        await Promise.all([transactionsStore.hydrate(), transfersStore.hydrate()]);
         const result = await importService.commitImport(input);
 
         const ruleUpdates = await rulesEngineService.runAndPersist(result.addedTransactions);
@@ -91,6 +94,7 @@ export const ImportBatchesStore = signalStore(
       },
 
       undoImport: async (batch: ImportBatch): Promise<void> => {
+        await transactionsStore.hydrate();
         const transactionIds = transactionsStore
           .transactions()
           .filter((transaction) => transaction.importBatchId === batch.id)

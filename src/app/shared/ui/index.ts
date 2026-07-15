@@ -12,3 +12,4 @@ export * from './range-grouping-switcher/range-grouping-switcher.component';
 export * from './granularity-picker/granularity-picker.component';
 export * from './paginator/paginator.component';
 export * from './date-range-input/date-range-input.component';
+export * from './loading-skeleton/loading-skeleton.component';

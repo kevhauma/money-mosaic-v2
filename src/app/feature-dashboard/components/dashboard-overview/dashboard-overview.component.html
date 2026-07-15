@@ -24,43 +24,47 @@
     <div class="mb-6">
       @switch (rowId) {
         @case ('stats') {
-          <div class="stats stats-vertical w-full overflow-visible shadow lg:stats-horizontal">
-            <mm-stat-card
-              label="Income"
-              [value]="incomeValue()"
-              [subLabel]="incomeYoySubLabel()"
-              [tooltip]="incomeYoyTooltip()"
-              link="/transactions"
-              [queryParams]="drilldownParams()"
-            />
-            <mm-stat-card
-              label="Expense"
-              [value]="expenseValue()"
-              [subLabel]="expenseYoySubLabel()"
-              [tooltip]="expenseYoyTooltip()"
-              link="/transactions"
-              [queryParams]="drilldownParams()"
-            />
-            <mm-stat-card
-              label="Net cash flow"
-              [value]="netValue()"
-              [subLabel]="netYoySubLabel()"
-              [tooltip]="netYoyTooltip()"
-              [color]="netColor()"
-              link="/transactions"
-              [queryParams]="drilldownParams()"
-            />
-            <mm-stat-card
-              label="Savings rate"
-              [value]="savingsRateValue()"
-              [subLabel]="savingsSubLabel()"
-            />
-            <mm-stat-card
-              label="Spending rate"
-              [value]="spendingRateValue()"
-              [subLabel]="spendingRateSubLabel()"
-            />
-          </div>
+          @if (!statsStore.dataReady()) {
+            <mm-loading-skeleton [rows]="2" />
+          } @else {
+            <div class="stats stats-vertical w-full overflow-visible shadow lg:stats-horizontal">
+              <mm-stat-card
+                label="Income"
+                [value]="incomeValue()"
+                [subLabel]="incomeYoySubLabel()"
+                [tooltip]="incomeYoyTooltip()"
+                link="/transactions"
+                [queryParams]="drilldownParams()"
+              />
+              <mm-stat-card
+                label="Expense"
+                [value]="expenseValue()"
+                [subLabel]="expenseYoySubLabel()"
+                [tooltip]="expenseYoyTooltip()"
+                link="/transactions"
+                [queryParams]="drilldownParams()"
+              />
+              <mm-stat-card
+                label="Net cash flow"
+                [value]="netValue()"
+                [subLabel]="netYoySubLabel()"
+                [tooltip]="netYoyTooltip()"
+                [color]="netColor()"
+                link="/transactions"
+                [queryParams]="drilldownParams()"
+              />
+              <mm-stat-card
+                label="Savings rate"
+                [value]="savingsRateValue()"
+                [subLabel]="savingsSubLabel()"
+              />
+              <mm-stat-card
+                label="Spending rate"
+                [value]="spendingRateValue()"
+                [subLabel]="spendingRateSubLabel()"
+              />
+            </div>
+          }
         }
         @case ('weekday-weekend') {
           <app-weekday-weekend-split-panel />

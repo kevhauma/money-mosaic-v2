@@ -35,6 +35,17 @@ describe('StatsStore', () => {
     expect(statsStore.periodStats().income).toBe(500);
   });
 
+  it('dataReady mirrors TransactionsStore.hydrated (TICKET-PERF-05)', async () => {
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    const statsStore = TestBed.inject(StatsStore);
+
+    expect(statsStore.dataReady()).toBe(false);
+
+    await transactionsStore.hydrate();
+
+    expect(statsStore.dataReady()).toBe(true);
+  });
+
   it('recomputes when the range changes', () => {
     const rangeStore = TestBed.inject(RangeStore);
     const transactionsStore = TestBed.inject(TransactionsStore);

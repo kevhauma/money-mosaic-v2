@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withMethods } from '@ngrx/signals';
+import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
   addEntities,
   addEntity,
@@ -35,14 +35,22 @@ export const TransfersStore = signalStore(
     /** Keyed by the transfer's own id, for resolving a `attributionOverride.reimbursementTransferId` (TICKET-TXN-03). */
     transfersById: computed(() => new Map(entities().map((transfer) => [transfer.id!, transfer]))),
   })),
+  withState({ hydrated: false }),
   withMethods((store) => {
     const transfersRepository = inject(TransfersRepository);
     const transferLinkingService = inject(TransferLinkingService);
     const transactionsStore = inject(TransactionsStore);
+    let hydration: Promise<void> | null = null;
 
     return {
-      hydrate: async (): Promise<void> => {
-        patchState(store, setAllEntities(await transfersRepository.getAll(), transferConfig));
+      /** Idempotent; `force: true` re-fetches (used by the dev seed after writing new transfers). */
+      hydrate: (options?: { force?: boolean }): Promise<void> => {
+        if (!hydration || options?.force) {
+          hydration = transfersRepository.getAll().then((transfers) => {
+            patchState(store, setAllEntities(transfers, transferConfig), { hydrated: true });
+          });
+        }
+        return hydration;
       },
 
       link: async (fromTransaction: Transaction, toTransaction: Transaction): Promise<void> => {
@@ -92,8 +100,16 @@ export const TransfersStore = signalStore(
     const transactionsStore = inject(TransactionsStore);
 
     return {
-      /** Re-runs auto-matching across the whole dataset — called after every import and on demand (FR-TRF-2). */
+      /**
+       * Re-runs auto-matching across the whole dataset — called after every import and on demand
+       * (FR-TRF-2). Awaits `TransactionsStore`'s own hydration first (idempotent, resolves
+       * immediately once hydrated) — `patchMany` below is a silent no-op for ids not yet in the
+       * entity map, so this guard keeps the mirror update correct even if `runAutoLink` fires
+       * before the bootstrap-kicked-off (non-blocking) transactions hydrate has resolved
+       * (TICKET-PERF-05).
+       */
       runAutoLink: async (): Promise<number> => {
+        await transactionsStore.hydrate();
         const linked = await transferMatchingService.runAndPersist(
           transferSettingsStore.matchWindowDays(),
           transferSettingsStore.autoLinkMediumConfidence(),

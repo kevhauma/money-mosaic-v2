@@ -30,6 +30,13 @@ export class DevSeedService {
    * Seeds the sample dataset iff we're in dev mode and the database has zero accounts and zero
    * transactions. Idempotent and non-destructive: on any existing dataset it's a no-op.
    * Returns the number of transactions written (0 when skipped).
+   *
+   * Ordering contract (TICKET-PERF-05): `TransactionsStore`/`TransfersStore` hydrate in the
+   * background without blocking app bootstrap, so their initial `hydrate()` may still be
+   * in-flight when this runs. We await every store's *initial* hydrate before writing anything,
+   * so that in-flight fetch (which reflects pre-seed, possibly-empty data) is guaranteed to settle
+   * before the seed's own force-refresh below — otherwise a slow initial fetch resolving after the
+   * force-refresh would silently overwrite the freshly-seeded rows with stale empty state.
    */
   seedIfEmpty = async (now: Date = new Date()): Promise<number> => {
     const [accounts, transactionCount] = await Promise.all([
@@ -47,6 +54,14 @@ export class DevSeedService {
       return 0;
     }
 
+    // Let every store's own bootstrap-triggered hydrate settle before we read from/write past it.
+    await Promise.all([
+      this.accountsStore.hydrate(),
+      this.transactionsStore.hydrate(),
+      this.transfersStore.hydrate(),
+      this.categoriesStore.hydrate(),
+    ]);
+
     const accountIds = await this.insertAccounts(now);
     const categoryIdByName = new Map(
       this.categoriesStore.categories().map((category) => [category.name, category.id!]),
@@ -61,11 +76,13 @@ export class DevSeedService {
     const persisted = await this.insertTransactions(transactions);
     await this.linkTransfers(persisted, transferPairIndices);
 
-    // Re-hydrate every store the seed touched so the UI reflects the new rows without a reload.
+    // Re-fetch every store the seed touched so the UI reflects the new rows without a reload.
+    // `AccountsStore.hydrate()` always re-fetches; `TransactionsStore`/`TransfersStore` need
+    // `force: true` since their own `hydrate()` already resolved above (TICKET-PERF-05).
     await Promise.all([
       this.accountsStore.hydrate(),
-      this.transactionsStore.hydrate(),
-      this.transfersStore.hydrate(),
+      this.transactionsStore.hydrate({ force: true }),
+      this.transfersStore.hydrate({ force: true }),
     ]);
 
     return persisted.length;

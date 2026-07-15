@@ -29,6 +29,10 @@ describe('TopTransactionsPanelComponent', () => {
     }).compileComponents();
 
     TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+    // Hydrated up front (against the empty fake-indexeddb-backed repo) so `dataReady()` is true
+    // before each test's `addMany` seeds local state — otherwise the panel would show its loading
+    // skeleton instead of the real content (TICKET-PERF-05).
+    await TestBed.inject(TransactionsStore).hydrate();
 
     fixture = TestBed.createComponent(TopTransactionsPanelComponent);
     await fixture.whenStable();

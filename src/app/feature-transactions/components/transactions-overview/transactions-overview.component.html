@@ -37,7 +37,9 @@
   />
 }
 
-@if (filteredTransactions().length === 0) {
+@if (!transactionsStore.hydrated()) {
+  <mm-loading-skeleton [rows]="6" />
+} @else if (filteredTransactions().length === 0) {
   <mm-empty-state
     title="No transactions match"
     message="Try widening your filters, or import a CSV to get started."

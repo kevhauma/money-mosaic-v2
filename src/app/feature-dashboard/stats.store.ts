@@ -136,6 +136,12 @@ export const StatsStore = signalStore(
       topTransactions,
       yearOverYear,
       categoryPeriodComparison,
+      /**
+       * `TransactionsStore` hydrates in the background without blocking app bootstrap
+       * (TICKET-PERF-05) — dashboard panels gate on this so a still-loading transaction set
+       * doesn't briefly read as "no data for this range" rather than "still loading".
+       */
+      dataReady: transactionsStore.hydrated,
     };
   }),
 );

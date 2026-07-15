@@ -162,16 +162,17 @@ describe('RulesStore: createRuleFromCounterparty creates then backfills matching
     expect(rulesEngineService.runAndPersist).not.toHaveBeenCalled();
   });
 
-  it('creates an equals rule on the trimmed counterparty at max priority + 10, then backfills matches while leaving manually-categorised rows alone', async () => {
+  it('creates an equals rule on the trimmed counterparty at max priority + 10, then backfills matches while leaving manually-categorised rows alone — even when TransactionsStore has not hydrated yet (TICKET-PERF-05)', async () => {
     rulesRepository.getAll.mockResolvedValue([rule({ id: 1, priority: 30 })]);
     const store = TestBed.inject(RulesStore);
     await store.hydrate();
 
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 10, categoryManual: false }),
       transaction({ id: 11, categoryManual: true }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    expect(transactionsStore.hydrated()).toBe(false);
     // The engine fake represents "already applied the matching rule, skipping the manual row" —
     // RulesEngineService's own categoryManual-skip logic is covered by rules-engine.service tests,
     // not re-verified here.

@@ -45,11 +45,16 @@ describe('ImportBatchesStore: commitImport pre-categorises rows before they land
   const coOwnerContributionService = { runAndPersist: vi.fn().mockResolvedValue([]) };
   const transactionsStore = {
     transactions: vi.fn().mockReturnValue([]),
+    hydrate: vi.fn().mockResolvedValue(undefined),
     addMany: vi.fn(),
     removeMany: vi.fn(),
     patchMany: vi.fn(),
   };
-  const transfersStore = { runAutoLink: vi.fn().mockResolvedValue(0), removeLocal: vi.fn() };
+  const transfersStore = {
+    hydrate: vi.fn().mockResolvedValue(undefined),
+    runAutoLink: vi.fn().mockResolvedValue(0),
+    removeLocal: vi.fn(),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -155,11 +160,16 @@ describe('ImportBatchesStore: undoImport mirrors removals and severed transfers 
   const coOwnerContributionService = { runAndPersist: vi.fn().mockResolvedValue([]) };
   const transactionsStore = {
     transactions: vi.fn().mockReturnValue([]),
+    hydrate: vi.fn().mockResolvedValue(undefined),
     addMany: vi.fn(),
     removeMany: vi.fn(),
     patchMany: vi.fn(),
   };
-  const transfersStore = { runAutoLink: vi.fn().mockResolvedValue(0), removeLocal: vi.fn() };
+  const transfersStore = {
+    hydrate: vi.fn().mockResolvedValue(undefined),
+    runAutoLink: vi.fn().mockResolvedValue(0),
+    removeLocal: vi.fn(),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();

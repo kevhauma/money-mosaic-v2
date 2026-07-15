@@ -22,6 +22,7 @@ import {
   BadgeComponent,
   ButtonComponent,
   EmptyStateComponent,
+  LoadingSkeletonComponent,
   PageHeaderComponent,
   PaginatorComponent,
 } from '@/shared/ui';
@@ -72,6 +73,7 @@ type TransactionRow = {
     BadgeComponent,
     ButtonComponent,
     EmptyStateComponent,
+    LoadingSkeletonComponent,
     PageHeaderComponent,
     PaginatorComponent,
     TransactionBulkBarComponent,

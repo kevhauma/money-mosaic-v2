@@ -79,6 +79,40 @@ describe('AccountsStore: savings movements still count toward balances (TICKET-T
   });
 });
 
+describe('AccountsStore: dataReady mirrors TransactionsStore/TransfersStore hydration (TICKET-PERF-05)', () => {
+  const accountsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const transfersRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    accountsRepository.getAll.mockResolvedValue([]);
+    transactionsRepository.getAll.mockResolvedValue([]);
+    transfersRepository.getAll.mockResolvedValue([]);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: TransfersRepository, useValue: transfersRepository },
+      ],
+    });
+  });
+
+  it('is false until both TransactionsStore and TransfersStore have hydrated', async () => {
+    const accountsStore = TestBed.inject(AccountsStore);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    const transfersStore = TestBed.inject(TransfersStore);
+
+    expect(accountsStore.dataReady()).toBe(false);
+
+    await transactionsStore.hydrate();
+    expect(accountsStore.dataReady()).toBe(false);
+
+    await transfersStore.hydrate();
+    expect(accountsStore.dataReady()).toBe(true);
+  });
+});
+
 describe('AccountsStore: archive/unarchive round-trip (TICKET-NG-04)', () => {
   const accountsRepository = {
     getAll: vi.fn().mockResolvedValue([]),

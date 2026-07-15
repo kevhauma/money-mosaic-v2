@@ -49,12 +49,26 @@ export const TransactionsStore = signalStore(
       uncategorisedCount: computed(() => uncategorisedTransactions().length),
     };
   }),
+  withState({ hydrated: false }),
   withMethods((store) => {
     const transactionsRepository = inject(TransactionsRepository);
+    let hydration: Promise<void> | null = null;
 
     return {
-      hydrate: async (): Promise<void> => {
-        patchState(store, setAllEntities(await transactionsRepository.getAll(), transactionConfig));
+      /**
+       * Idempotent and safe to call from multiple places (app bootstrap fires it once
+       * without awaiting; any flow reading `transactions()` synchronously can await it as a
+       * guard). `force: true` re-fetches even after a prior hydrate resolved — used by the
+       * dev seed to refresh state after writing new rows directly through the repository
+       * (TICKET-PERF-05).
+       */
+      hydrate: (options?: { force?: boolean }): Promise<void> => {
+        if (!hydration || options?.force) {
+          hydration = transactionsRepository.getAll().then((transactions) => {
+            patchState(store, setAllEntities(transactions, transactionConfig), { hydrated: true });
+          });
+        }
+        return hydration;
       },
 
       /** Receives the current savings-account IBANs from `AccountsStore` (TICKET-TRF-02). */

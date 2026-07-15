@@ -17,6 +17,7 @@
 - "fieldset" and "fieldset-legend" (what's different between fieldset-legend and "label"?)
 - "rounded-field" (I see it for input type = color)
 - "divider"
+- "skeleton" (there is LoadingSkeletonComponent but only used for lists)
 
 these is by far a comprehensive list of classes that could be moved to a component so changing styles stays confined to shared/ui
 

@@ -133,6 +133,12 @@ export const AccountsStore = signalStore(
       netWorth,
       jointAccountStakeById,
       contributorBreakdownById,
+      /**
+       * `TransactionsStore`/`TransfersStore` hydrate in the background without blocking app
+       * bootstrap (TICKET-PERF-05) — `balancesById`/`netWorth`/etc. above fold in both, so views
+       * reading them gate on this instead of briefly showing opening-balance-only figures as final.
+       */
+      dataReady: computed(() => transactionsStore.hydrated() && transfersStore.hydrated()),
       transactionCountById: computed(() => {
         const counts = new Map<number, number>();
         for (const transaction of transactionsStore.transactions()) {

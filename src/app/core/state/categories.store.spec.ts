@@ -154,19 +154,22 @@ describe('CategoriesStore: removeCategory clears the category off referencing tr
     });
   });
 
-  it('clears categoryId and categoryManual on referencing transactions, persists via the repository, and leaves non-referencing rows untouched', async () => {
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+  it('clears categoryId and categoryManual on referencing transactions, persists via the repository, and leaves non-referencing rows untouched — even when TransactionsStore has not hydrated yet (TICKET-PERF-05)', async () => {
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, categoryId: 7, categoryManual: true }),
       transaction({ id: 2, categoryId: 7, categoryManual: false }),
       transaction({ id: 3, categoryId: 8, categoryManual: true }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    expect(transactionsStore.hydrated()).toBe(false);
 
     categoriesRepository.getAll.mockResolvedValue([category({ id: 7 }), category({ id: 8 })]);
     const categoriesStore = TestBed.inject(CategoriesStore);
     await categoriesStore.hydrate();
 
     await categoriesStore.removeCategory(7);
+
+    expect(transactionsStore.hydrated()).toBe(true);
 
     expect(transactionsRepository.update).toHaveBeenCalledTimes(2);
     expect(transactionsRepository.update).toHaveBeenCalledWith(1, {

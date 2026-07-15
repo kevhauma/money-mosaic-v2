@@ -45,21 +45,29 @@ export const appConfig: ApplicationConfig = {
       const dashboardLayoutSettingsStore = inject(DashboardLayoutSettingsStore);
       return appDb
         .open()
-        .then(() =>
-          Promise.all([
-            transactionsStore.hydrate(),
-            transfersStore.hydrate(),
+        .then(() => {
+          // Transactions/transfers are the two tables that can grow large enough to block first
+          // paint for a noticeable stretch (CR-3.4) — kick their hydration off here without
+          // awaiting it. Each exposes `hydrated: Signal<boolean>` so data-heavy views gate on it
+          // instead of assuming the old all-or-nothing barrier (TICKET-PERF-05).
+          void transactionsStore.hydrate();
+          void transfersStore.hydrate();
+          // CategoryModelStore awaits categories/transactions/rules hydration internally (its own
+          // `hydrate()`, TICKET-PERF-05), so it's safe to fire off here too without blocking
+          // bootstrap on it.
+          void categoryModelStore.hydrate();
+
+          return Promise.all([
+            accountsStore.hydrate(),
             transferSettingsStore.hydrate(),
             categoriesStore.hydrate(),
             rulesStore.hydrate(),
-            accountsStore.hydrate(),
             mappingProfilesStore.hydrate(),
             importBatchesStore.hydrate(),
             categoryComparisonSettingsStore.hydrate(),
             dashboardLayoutSettingsStore.hydrate(),
-          ]),
-        )
-        .then(() => categoryModelStore.hydrate())
+          ]);
+        })
         .then(async () => {
           // Dev-only sample-data seed (TICKET-DEV-01). The dynamic import keeps the seed module and
           // its dataset in a separate chunk that a production build never references or loads, and

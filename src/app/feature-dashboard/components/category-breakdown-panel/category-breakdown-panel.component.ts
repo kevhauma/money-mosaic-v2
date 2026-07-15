@@ -4,7 +4,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { RangeStore, type CategoryBreakdownEntry } from '@/core/stats';
 import { CategoriesStore } from '@/core/state';
-import { AlertComponent, ButtonComponent } from '@/shared/ui';
+import { AlertComponent, ButtonComponent, LoadingSkeletonComponent } from '@/shared/ui';
 import {
   buildTransactionDrilldownParams,
   formatCurrency,
@@ -66,7 +66,13 @@ const formatPieTooltip = (params: PieTooltipParam): string => {
 /** Side-by-side donut + expandable list for the selected range's expense-by-category and income-by-source (FR-STAT-3). */
 @Component({
   selector: 'app-category-breakdown-panel',
-  imports: [RouterLink, NgxEchartsDirective, AlertComponent, ButtonComponent],
+  imports: [
+    RouterLink,
+    NgxEchartsDirective,
+    AlertComponent,
+    ButtonComponent,
+    LoadingSkeletonComponent,
+  ],
   templateUrl: './category-breakdown-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -74,6 +80,9 @@ export class CategoryBreakdownPanelComponent {
   private readonly statsStore = inject(StatsStore);
   private readonly categoriesStore = inject(CategoriesStore);
   protected readonly rangeStore = inject(RangeStore);
+
+  /** `TransactionsStore` hydrates in the background (TICKET-PERF-05) — gates the columns below so a still-loading range doesn't briefly read as "no data". */
+  protected readonly dataReady = this.statsStore.dataReady;
 
   /** Combined range key so `expandedColumns` below resets whenever either bound changes. */
   private readonly rangeKey = computed(() => `${this.rangeStore.from()}|${this.rangeStore.to()}`);

@@ -33,11 +33,15 @@
   <div class="card border border-base-300 bg-base-100">
     <div class="card-body">
       <p class="text-sm text-base-content/60">Current balance</p>
-      <p class="text-4xl font-semibold" [class.text-error]="balance() < 0">
-        {{ balance() | signedAmount }}
-      </p>
-      @if (share() !== null) {
-        <p class="text-sm text-base-content/60">Your share: {{ share()! | signedAmount }}</p>
+      @if (accountsStore.dataReady()) {
+        <p class="text-4xl font-semibold" [class.text-error]="balance() < 0">
+          {{ balance() | signedAmount }}
+        </p>
+        @if (share() !== null) {
+          <p class="text-sm text-base-content/60">Your share: {{ share()! | signedAmount }}</p>
+        }
+      } @else {
+        <span class="skeleton inline-block h-10 w-32"></span>
       }
       @if (account.iban) {
         <p class="mt-2 text-sm text-base-content/60">IBAN ···· {{ account.iban.slice(-4) }}</p>

@@ -252,7 +252,10 @@ describe('TransactionsOverviewComponent', () => {
 
   it('gives each row checkbox a distinguishing accessible name (TICKET-TXN-07)', async () => {
     await setup();
-    TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2)]);
+    // Renders the table (not the loading skeleton) only once `hydrated()` is true (TICKET-PERF-05).
+    transactionsRepository.getAll.mockResolvedValue([transaction(1), transaction(2)]);
+    await TestBed.inject(TransactionsStore).hydrate();
+    fixture.detectChanges();
     await fixture.whenStable();
 
     const checkboxes = (fixture.nativeElement as HTMLElement).querySelectorAll(

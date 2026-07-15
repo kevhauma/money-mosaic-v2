@@ -71,8 +71,13 @@ export const RulesStore = signalStore(
         ]);
       },
 
-      /** Re-runs every enabled rule across the whole dataset on demand (FR-CAT-3). */
+      /**
+       * Re-runs every enabled rule across the whole dataset on demand (FR-CAT-3). Awaits
+       * `TransactionsStore`'s own hydration first (idempotent) so this never runs against a
+       * not-yet-hydrated entity map (TICKET-PERF-05).
+       */
       runRules: async (): Promise<number> => {
+        await transactionsStore.hydrate();
         const updates = await rulesEngineService.runAndPersist(transactionsStore.transactions());
         transactionsStore.patchMany(
           updates.map((update) => ({ id: update.id, changes: { categoryId: update.categoryId } })),

@@ -169,13 +169,13 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
   });
 
   it('runAutoLink patches every linked pair and returns the linked count', async () => {
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    transactionsStore.addMany([
+    transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, categoryId: 9 }),
       transaction({ id: 2, categoryId: 9, categoryManual: true }),
       transaction({ id: 3 }),
       transaction({ id: 4 }),
     ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
     transferMatchingService.runAndPersist.mockResolvedValue([
       transfer({ id: 100, fromTransactionId: 1, toTransactionId: 2 }),
       transfer({ id: 101, fromTransactionId: 3, toTransactionId: 4 }),
@@ -196,5 +196,86 @@ describe('TransfersStore: link/unlink mirror transferId into TransactionsStore (
     expect(byId.get(1)?.categoryId).toBeUndefined();
     expect(byId.get(2)?.categoryId).toBeUndefined();
     expect(byId.get(2)?.categoryManual).toBeUndefined();
+  });
+
+  it('runAutoLink still mirrors correctly when TransactionsStore has not hydrated yet (TICKET-PERF-05)', async () => {
+    // Nobody has called TransactionsStore.hydrate() yet — mirrors app bootstrap, where its
+    // hydrate is kicked off without being awaited (CR-3.4).
+    transactionsRepository.getAll.mockResolvedValue([
+      transaction({ id: 1 }),
+      transaction({ id: 2 }),
+    ]);
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    expect(transactionsStore.hydrated()).toBe(false);
+
+    transferMatchingService.runAndPersist.mockResolvedValue([
+      transfer({ id: 100, fromTransactionId: 1, toTransactionId: 2 }),
+    ]);
+
+    const store = TestBed.inject(TransfersStore);
+    const count = await store.runAutoLink();
+
+    expect(transactionsStore.hydrated()).toBe(true);
+    expect(count).toBe(1);
+    const byId = new Map(transactionsStore.transactions().map((t) => [t.id, t]));
+    expect(byId.get(1)?.transferId).toBe(100);
+    expect(byId.get(2)?.transferId).toBe(100);
+  });
+});
+
+describe('TransfersStore: hydrate (TICKET-PERF-05)', () => {
+  const transfersRepository = { getAll: vi.fn() };
+  const transferLinkingService = { linkManually: vi.fn(), unlink: vi.fn() };
+  const transferMatchingService = { runAndPersist: vi.fn() };
+  const transferSettingsStore = { matchWindowDays: () => 3, autoLinkMediumConfidence: () => true };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: TransfersRepository, useValue: transfersRepository },
+        { provide: TransferLinkingService, useValue: transferLinkingService },
+        { provide: TransferMatchingService, useValue: transferMatchingService },
+        { provide: TransferSettingsStore, useValue: transferSettingsStore },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
+    });
+  });
+
+  it('transitions hydrated false -> true once the fetch resolves', async () => {
+    transfersRepository.getAll.mockResolvedValue([transfer({ id: 1 })]);
+    const store = TestBed.inject(TransfersStore);
+    expect(store.hydrated()).toBe(false);
+
+    await store.hydrate();
+
+    expect(store.hydrated()).toBe(true);
+    expect(store.transfers()).toHaveLength(1);
+  });
+
+  it('is idempotent: concurrent and later calls all resolve without re-fetching', async () => {
+    transfersRepository.getAll.mockResolvedValue([]);
+    const store = TestBed.inject(TransfersStore);
+
+    await Promise.all([store.hydrate(), store.hydrate()]);
+    await store.hydrate();
+
+    expect(transfersRepository.getAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('force: true re-fetches even after a prior hydrate already resolved', async () => {
+    transfersRepository.getAll
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([transfer({ id: 9 })]);
+    const store = TestBed.inject(TransfersStore);
+
+    await store.hydrate();
+    expect(store.transfers()).toHaveLength(0);
+
+    await store.hydrate({ force: true });
+
+    expect(transfersRepository.getAll).toHaveBeenCalledTimes(2);
+    expect(store.transfers().map((t) => t.id)).toEqual([9]);
   });
 });

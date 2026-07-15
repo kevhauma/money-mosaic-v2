@@ -1,4 +1,6 @@
-@if (transactionsStore.uncategorisedCount() > 0 || transfersToReviewCount() > 0) {
+@if (!transactionsStore.hydrated()) {
+  <mm-loading-skeleton [rows]="2" />
+} @else if (transactionsStore.uncategorisedCount() > 0 || transfersToReviewCount() > 0) {
   <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     @if (transactionsStore.uncategorisedCount(); as count) {
       <a

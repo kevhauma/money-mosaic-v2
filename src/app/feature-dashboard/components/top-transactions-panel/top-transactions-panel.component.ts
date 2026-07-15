@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { RangeStore } from '@/core/stats';
 import { CategoriesStore } from '@/core/state';
+import { LoadingSkeletonComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
@@ -28,7 +29,7 @@ const UNCATEGORISED_COLOR = '#9ca3af';
  */
 @Component({
   selector: 'app-top-transactions-panel',
-  imports: [RouterLink],
+  imports: [RouterLink, LoadingSkeletonComponent],
   templateUrl: './top-transactions-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,6 +37,9 @@ export class TopTransactionsPanelComponent {
   private readonly statsStore = inject(StatsStore);
   private readonly categoriesStore = inject(CategoriesStore);
   protected readonly rangeStore = inject(RangeStore);
+
+  /** `TransactionsStore` hydrates in the background (TICKET-PERF-05) — gates the list below so a still-loading range doesn't briefly read as "no data". */
+  protected readonly dataReady = this.statsStore.dataReady;
 
   protected readonly entries = computed<TopTransactionVm[]>(() => {
     const categoriesById = this.categoriesStore.categoriesById();
