@@ -1,26 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
-import {
-  bucketDateBoundaries,
-  computeAccountBalanceTrends,
-  computeFullHistoryRange,
-  computeZoomWindow,
-  pickGranularityForSpan,
-  RangeStore,
-  type ChartZoomWindow,
-  type Granularity,
-  type JointLegContext,
-  type NetWorthPoint,
-} from '@/core/stats';
-import { CategoriesStore, TransactionsStore, TransfersStore, AccountsStore } from '@/core/state';
+import { bucketDateBoundaries, type ChartZoomWindow, type NetWorthPoint } from '@/core/stats';
 import { formatAxisTooltip } from '@/shared/echarts';
 import { GranularityPickerComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
-
-const todayIso = (): string => new Date().toISOString().slice(0, 10);
+import { balanceTrendSignals } from '../../balance-trend-signals';
 
 /** Pure echarts-option builder, kept separate from the component so it's testable without TestBed. */
 export const buildAccountBalanceChartOption = (
@@ -62,51 +49,12 @@ export const buildAccountBalanceChartOption = (
 export class AccountBalanceChartComponent {
   readonly account = input.required<Account>();
 
-  private readonly accountsStore = inject(AccountsStore);
-  private readonly transactionsStore = inject(TransactionsStore);
-  private readonly transfersStore = inject(TransfersStore);
-  private readonly categoriesStore = inject(CategoriesStore);
-  private readonly rangeStore = inject(RangeStore);
   private readonly router = inject(Router);
 
-  private readonly range = computed(() =>
-    computeFullHistoryRange([this.account()], this.transactionsStore.transactions(), todayIso()),
-  );
-
-  /** Defaults from the current shared date range on first render (TICKET-STAT-15); independent of every other chart's control thereafter. */
-  protected readonly granularity = signal<Granularity>(
-    pickGranularityForSpan(this.rangeStore.from(), this.rangeStore.to()),
-  );
-
-  // Cross-account lookups a joint account's stake needs (TICKET-STAT-03) — `accountsById` spans
-  // every account so a linked transfer's other leg always resolves, even outside this one account.
-  private readonly jointLegContext = computed((): JointLegContext => ({
-    transactionsById: new Map(this.transactionsStore.transactions().map((t) => [t.id!, t])),
-    accountsById: this.accountsStore.accountsById(),
-    transfersById: this.transfersStore.transferByTransactionId(),
-    categoriesById: this.categoriesStore.categoriesById(),
-  }));
-
-  protected readonly points = computed(
-    () =>
-      computeAccountBalanceTrends(
-        this.transactionsStore.transactions(),
-        [this.account()],
-        this.range().from,
-        this.range().to,
-        this.granularity(),
-        this.jointLegContext(),
-      )[0]?.points ?? [],
-  );
-
-  private readonly zoomWindow = computed(() =>
-    computeZoomWindow(
-      this.points().map((point) => point.bucketKey),
-      this.rangeStore.from(),
-      this.rangeStore.to(),
-      this.granularity(),
-    ),
-  );
+  private readonly trend = balanceTrendSignals(computed(() => [this.account()]));
+  protected readonly granularity = this.trend.granularity;
+  protected readonly points = computed(() => this.trend.series()[0]?.points ?? []);
+  private readonly zoomWindow = this.trend.zoomWindow;
 
   protected readonly chartOption = computed<EChartsCoreOption>(() =>
     buildAccountBalanceChartOption(this.account(), this.points(), this.zoomWindow()),

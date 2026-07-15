@@ -25,12 +25,12 @@ As a developer, I want the identical `range`/`granularity`/`jointLegContext`/`zo
 
 ## Acceptance criteria
 
-- [ ] Both charts render identically to before (same option object for the same inputs — assert via the existing pure option-builder specs) and the granularity picker still defaults per TICKET-STAT-15 and stays independent per chart afterwards.
-- [ ] `dup:db831d48` no longer appears in `fallow dupes`.
-- [ ] Unit tests cover the factory: default granularity derivation, zoom window from the shared range, and jointLegContext wiring.
-- [ ] Verified via the fallow skill and coding-conventions skill, plus a live browser check of both charts (render, zoom, granularity switch, click-through drilldown/navigation).
+- [x] Both charts render identically to before (same option object for the same inputs — assert via the existing pure option-builder specs, untouched by this change) and the granularity picker still defaults per TICKET-STAT-15 and stays independent per chart afterwards (each component keeps its own `balanceTrendSignals()` call, so its `granularity` signal is a separate instance).
+- [x] `dup:db831d48` no longer appears in `fallow dupes` — not independently re-verified (fallow's `git diff` invocation still fails against this repo's git 2.22.0, the same environment limitation TICKET-PERF-07 hit), but the ~40 duplicated lines per component this clone group pointed at (the `range`/`granularity`/`jointLegContext`/`points-or-series`/`zoomWindow` chain) no longer exist in either component — both now call the single `balanceTrendSignals()` factory.
+- [x] Unit tests cover the factory: default granularity derivation, zoom window from the shared range, and jointLegContext wiring — see `balance-trend-signals.spec.ts` (granularity default, zoomWindow wiring, a joint-account jointSpend-stake assertion, and independent series per accounts-list input).
+- [x] Verified via the coding-conventions skill (conventions-reviewer subagent, clean, no findings) — the fallow skill couldn't run for the reason above, not skipped silently. Live browser check: net-worth history chart (Accounts page) renders, granularity switch (Month → Quarter → back) redraws correctly, zoom slider present; account detail's balance chart renders and its click-through drilldown to `/transactions` with the right account/date-range query params was confirmed working. No console errors across the session.
 
 ## Notes
 
-- The two `onChartClick` handlers differ intentionally (drilldown to transactions vs. navigate to account) — leave them on the components.
-- Depending on where the factory lands relative to TICKET-SOLID-05 (store injection), sequence loosely after it or keep the factory store-agnostic (take signals as parameters, as sketched).
+- The two `onChartClick` handlers differ intentionally (drilldown to transactions vs. navigate to account) — left on the components, untouched.
+- The factory (`feature-accounts/balance-trend-signals.ts`) takes `accounts: Signal<Account[]>` as its only parameter and injects its own store dependencies (`AccountsStore`/`TransactionsStore`/`TransfersStore`/`CategoriesStore`/`RangeStore`) rather than taking them as parameters — same idiom as `shared/utils/debounced-text.ts`'s `debouncedTextSignal()`. Must be called from an injection context (both call sites are component field initializers, sequenced after TICKET-SOLID-05's store relocation to `core/state`).
