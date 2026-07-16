@@ -8,89 +8,81 @@
 }
 
 <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-  <div class="card border border-base-300 bg-base-100">
-    <div class="card-body gap-3">
-      <h2 class="card-title text-base">Export data</h2>
-      <mm-text as="p" class="text-sm text-base-content/60">
-        Download everything — accounts, transactions, categories, rules, and settings — as one JSON
-        file. Nothing leaves your browser except the file you save.
-      </mm-text>
-      <mm-button color="primary" class="w-fit" [disabled]="exporting()" (click)="exportData()">
-        {{ exporting() ? 'Exporting…' : 'Export data' }}
-      </mm-button>
-    </div>
-  </div>
-
-  <div class="card border border-base-300 bg-base-100">
-    <div class="card-body gap-3">
-      <h2 class="card-title text-base">Import data</h2>
-      <mm-text as="p" class="text-sm text-base-content/60"
-        >Restore from a previously exported backup file.</mm-text
-      >
-      <label class="btn btn-primary w-fit">
-        Choose file
-        <input
-          type="file"
-          accept=".json,application/json"
-          class="hidden"
-          (change)="onFileSelected($event)"
-        />
-      </label>
-    </div>
-  </div>
-</div>
-
-<div class="card mt-4 border border-base-300 bg-base-100">
-  <div class="card-body gap-2">
-    <div class="flex items-center gap-2">
-      <h2 class="card-title text-base">Persistent storage</h2>
-      @switch (storageStatus()) {
-        @case ('granted') {
-          <mm-badge color="success" variant="soft">Active</mm-badge>
-        }
-        @case ('denied') {
-          <mm-badge color="warning" variant="soft">Not active</mm-badge>
-        }
-        @default {
-          <mm-badge color="neutral" variant="soft">Unavailable</mm-badge>
-        }
-      }
-    </div>
+  <mm-paper elevation="flat" bodyClass="card-body gap-3">
+    <h2 class="card-title text-base">Export data</h2>
     <mm-text as="p" class="text-sm text-base-content/60">
-      @switch (storageStatus()) {
-        @case ('granted') {
-          Your browser has exempted this app's data from automatic storage cleanup.
-        }
-        @case ('denied') {
-          Your browser hasn't granted persistent storage yet. Most browsers grant it automatically
-          for sites you visit often or install/bookmark — this may resolve on its own over time.
-        }
-        @default {
-          Your browser doesn't support requesting persistent storage. Your data is still saved
-          locally, but may be subject to automatic cleanup under storage pressure.
-        }
-      }
+      Download everything — accounts, transactions, categories, rules, and settings — as one JSON
+      file. Nothing leaves your browser except the file you save.
     </mm-text>
-  </div>
-</div>
-
-<div class="card mt-4 border border-error/40 bg-base-100">
-  <div class="card-body gap-2">
-    <h2 class="card-title text-base text-error">Delete all data</h2>
-    <mm-text as="p" class="text-sm text-base-content/60">
-      Permanently erase every account, transaction, category, rule, and setting stored in this
-      browser. This cannot be undone.
-    </mm-text>
-    <mm-button
-      color="error"
-      class="w-fit"
-      [disabled]="deleting()"
-      (click)="deleteDialogOpen.set(true)"
-    >
-      Delete all data
+    <mm-button color="primary" class="w-fit" [disabled]="exporting()" (click)="exportData()">
+      {{ exporting() ? 'Exporting…' : 'Export data' }}
     </mm-button>
-  </div>
+  </mm-paper>
+
+  <mm-paper elevation="flat" bodyClass="card-body gap-3">
+    <h2 class="card-title text-base">Import data</h2>
+    <mm-text as="p" class="text-sm text-base-content/60"
+      >Restore from a previously exported backup file.</mm-text
+    >
+    <label class="btn btn-primary w-fit">
+      Choose file
+      <input
+        type="file"
+        accept=".json,application/json"
+        class="hidden"
+        (change)="onFileSelected($event)"
+      />
+    </label>
+  </mm-paper>
 </div>
+
+<mm-paper elevation="flat" bodyClass="card-body gap-2" class="mt-4">
+  <div class="flex items-center gap-2">
+    <h2 class="card-title text-base">Persistent storage</h2>
+    @switch (storageStatus()) {
+      @case ('granted') {
+        <mm-badge color="success" variant="soft">Active</mm-badge>
+      }
+      @case ('denied') {
+        <mm-badge color="warning" variant="soft">Not active</mm-badge>
+      }
+      @default {
+        <mm-badge color="neutral" variant="soft">Unavailable</mm-badge>
+      }
+    }
+  </div>
+  <mm-text as="p" class="text-sm text-base-content/60">
+    @switch (storageStatus()) {
+      @case ('granted') {
+        Your browser has exempted this app's data from automatic storage cleanup.
+      }
+      @case ('denied') {
+        Your browser hasn't granted persistent storage yet. Most browsers grant it automatically for
+        sites you visit often or install/bookmark — this may resolve on its own over time.
+      }
+      @default {
+        Your browser doesn't support requesting persistent storage. Your data is still saved
+        locally, but may be subject to automatic cleanup under storage pressure.
+      }
+    }
+  </mm-text>
+</mm-paper>
+
+<mm-paper elevation="flat" borderColor="error/40" bodyClass="card-body gap-2" class="mt-4">
+  <h2 class="card-title text-base text-error">Delete all data</h2>
+  <mm-text as="p" class="text-sm text-base-content/60">
+    Permanently erase every account, transaction, category, rule, and setting stored in this
+    browser. This cannot be undone.
+  </mm-text>
+  <mm-button
+    color="error"
+    class="w-fit"
+    [disabled]="deleting()"
+    (click)="deleteDialogOpen.set(true)"
+  >
+    Delete all data
+  </mm-button>
+</mm-paper>
 
 <mm-modal [(open)]="importDialogOpen">
   <span mm-modal-title>Import data</span>

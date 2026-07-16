@@ -9,7 +9,7 @@ import {
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerFilterOff } from '@ng-icons/tabler-icons';
-import { ButtonComponent, InputComponent, SelectComponent } from '@/shared/ui';
+import { ButtonComponent, InputComponent, PaperComponent, SelectComponent } from '@/shared/ui';
 import {
   combinedFiltersSignal,
   debouncedTextSignal,
@@ -24,7 +24,14 @@ type StructuralFilters = Omit<RuleFilters, 'text'>;
 
 @Component({
   selector: 'app-rule-filters',
-  imports: [ReactiveFormsModule, NgIcon, ButtonComponent, InputComponent, SelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    NgIcon,
+    ButtonComponent,
+    InputComponent,
+    PaperComponent,
+    SelectComponent,
+  ],
   templateUrl: './rule-filters.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerFilterOff })],

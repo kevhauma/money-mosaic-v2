@@ -5,7 +5,7 @@ import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
 import { bucketDateBoundaries, type ChartZoomWindow, type NetWorthPoint } from '@/core/stats';
 import { formatAxisTooltip } from '@/shared/echarts';
-import { GranularityPickerComponent } from '@/shared/ui';
+import { GranularityPickerComponent, PaperComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
@@ -42,7 +42,7 @@ export const buildAccountBalanceChartOption = (
  */
 @Component({
   selector: 'app-account-balance-chart',
-  imports: [NgxEchartsDirective, GranularityPickerComponent],
+  imports: [NgxEchartsDirective, GranularityPickerComponent, PaperComponent],
   templateUrl: './account-balance-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

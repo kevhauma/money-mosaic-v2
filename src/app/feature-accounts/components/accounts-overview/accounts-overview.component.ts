@@ -19,6 +19,7 @@ import {
   EmptyStateComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
+  PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { createConfirmState, SignedAmountPipe } from '@/shared/utils';
@@ -43,6 +44,7 @@ import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-wo
     LoadingSkeletonComponent,
     NetWorthHistoryChartComponent,
     PageHeaderComponent,
+    PaperComponent,
     SignedAmountPipe,
     TypographyComponent,
   ],

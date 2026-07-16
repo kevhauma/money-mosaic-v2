@@ -1,56 +1,54 @@
-<div class="card h-full bg-base-100 shadow-sm">
-  <div class="card-body">
-    <div class="flex items-center justify-between gap-2">
-      <h2 class="card-title text-base">Trend</h2>
-      <mm-granularity-picker [value]="granularity()" (valueChange)="granularity.set($event)" />
-    </div>
-
-    <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div>
-        <mm-text as="h3" variant="subheading">Income</mm-text>
-        <div
-          echarts
-          [options]="incomeChartOption()"
-          (chartClick)="onIncomeChartClick($event)"
-          class="h-72 w-full"
-          role="img"
-          [attr.aria-label]="incomeChartAriaLabel()"
-        ></div>
-      </div>
-
-      <div>
-        <mm-text as="h3" variant="subheading">Expense</mm-text>
-        <div
-          echarts
-          [options]="expenseChartOption()"
-          (chartClick)="onExpenseChartClick($event)"
-          class="h-72 w-full"
-          role="img"
-          [attr.aria-label]="expenseChartAriaLabel()"
-        ></div>
-      </div>
-    </div>
-
-    <table class="sr-only">
-      <caption>
-        Income and expense trend by period, underlying the charts above
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col">Period</th>
-          <th scope="col">Income</th>
-          <th scope="col">Expense</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of accessibleRows(); track row.bucketKey) {
-          <tr>
-            <th scope="row">{{ row.bucketKey }}</th>
-            <td>{{ row.income }}</td>
-            <td>{{ row.expense }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+<mm-paper [fullHeight]="true">
+  <div class="flex items-center justify-between gap-2">
+    <h2 class="card-title text-base">Trend</h2>
+    <mm-granularity-picker [value]="granularity()" (valueChange)="granularity.set($event)" />
   </div>
-</div>
+
+  <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div>
+      <mm-text as="h3" variant="subheading">Income</mm-text>
+      <div
+        echarts
+        [options]="incomeChartOption()"
+        (chartClick)="onIncomeChartClick($event)"
+        class="h-72 w-full"
+        role="img"
+        [attr.aria-label]="incomeChartAriaLabel()"
+      ></div>
+    </div>
+
+    <div>
+      <mm-text as="h3" variant="subheading">Expense</mm-text>
+      <div
+        echarts
+        [options]="expenseChartOption()"
+        (chartClick)="onExpenseChartClick($event)"
+        class="h-72 w-full"
+        role="img"
+        [attr.aria-label]="expenseChartAriaLabel()"
+      ></div>
+    </div>
+  </div>
+
+  <table class="sr-only">
+    <caption>
+      Income and expense trend by period, underlying the charts above
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Period</th>
+        <th scope="col">Income</th>
+        <th scope="col">Expense</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of accessibleRows(); track row.bucketKey) {
+        <tr>
+          <th scope="row">{{ row.bucketKey }}</th>
+          <td>{{ row.income }}</td>
+          <td>{{ row.expense }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</mm-paper>

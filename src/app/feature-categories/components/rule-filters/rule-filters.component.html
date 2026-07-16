@@ -1,41 +1,45 @@
-<form
-  [formGroup]="filterForm"
-  class="mb-4 grid grid-cols-2 gap-3 rounded-box border border-base-300 bg-base-100 p-4 sm:grid-cols-4"
->
-  <fieldset class="fieldset col-span-2">
-    <legend class="fieldset-legend">Search</legend>
-    <mm-input
-      type="text"
-      formControlName="text"
-      size="sm"
-      class="w-full"
-      placeholder="Rule name or condition"
-    />
-  </fieldset>
+<mm-paper elevation="flat" bodyClass="" class="mb-4">
+  <form [formGroup]="filterForm" class="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
+    <fieldset class="fieldset col-span-2">
+      <legend class="fieldset-legend">Search</legend>
+      <mm-input
+        type="text"
+        formControlName="text"
+        size="sm"
+        class="w-full"
+        placeholder="Rule name or condition"
+      />
+    </fieldset>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Category</legend>
-    <mm-select formControlName="categoryId" size="sm" class="w-full">
-      <option value="">All categories</option>
-      @for (category of categoriesStore.activeCategories(); track category.id) {
-        <option [value]="category.id">{{ category.name }}</option>
-      }
-    </mm-select>
-  </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Category</legend>
+      <mm-select formControlName="categoryId" size="sm" class="w-full">
+        <option value="">All categories</option>
+        @for (category of categoriesStore.activeCategories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </mm-select>
+    </fieldset>
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">Status</legend>
-    <mm-select formControlName="enabled" size="sm" class="w-full">
-      <option value="">All rules</option>
-      <option value="enabled">Enabled only</option>
-      <option value="disabled">Disabled only</option>
-    </mm-select>
-  </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Status</legend>
+      <mm-select formControlName="enabled" size="sm" class="w-full">
+        <option value="">All rules</option>
+        <option value="enabled">Enabled only</option>
+        <option value="disabled">Disabled only</option>
+      </mm-select>
+    </fieldset>
 
-  <div class="col-span-2 flex items-end sm:col-span-4">
-    <mm-button variant="ghost" size="sm" [disabled]="!hasActiveFilters()" (click)="clearFilters()">
-      <ng-icon name="tablerFilterOff" size="16" aria-hidden="true" />
-      Clear filters
-    </mm-button>
-  </div>
-</form>
+    <div class="col-span-2 flex items-end sm:col-span-4">
+      <mm-button
+        variant="ghost"
+        size="sm"
+        [disabled]="!hasActiveFilters()"
+        (click)="clearFilters()"
+      >
+        <ng-icon name="tablerFilterOff" size="16" aria-hidden="true" />
+        Clear filters
+      </mm-button>
+    </div>
+  </form>
+</mm-paper>

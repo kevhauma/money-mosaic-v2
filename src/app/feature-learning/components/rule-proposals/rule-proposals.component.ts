@@ -5,13 +5,20 @@ import type { Transaction } from '@/core/data-access';
 import type { RuleProposal } from '@/core/ml';
 import { CategoryModelStore } from '@/feature-categories';
 import { CategoriesStore, TransactionsStore } from '@/core/state';
-import { BadgeComponent, ButtonComponent, TypographyComponent } from '@/shared/ui';
+import { BadgeComponent, ButtonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
 /** Rule-proposal inbox on the Learning page (FR-ML-9) — a thin UI consumer of `CategoryModelStore` (ML-07). */
 @Component({
   selector: 'app-rule-proposals',
-  imports: [NgIcon, SignedAmountPipe, BadgeComponent, ButtonComponent, TypographyComponent],
+  imports: [
+    NgIcon,
+    SignedAmountPipe,
+    BadgeComponent,
+    ButtonComponent,
+    PaperComponent,
+    TypographyComponent,
+  ],
   templateUrl: './rule-proposals.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerChevronDown, tablerChevronUp })],

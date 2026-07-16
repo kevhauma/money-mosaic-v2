@@ -8,6 +8,7 @@ import {
   ButtonComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
+  PaperComponent,
   StatCardComponent,
 } from '@/shared/ui';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
@@ -42,6 +43,7 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' })
     ButtonComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
+    PaperComponent,
     StatCardComponent,
     NetWorthHeaderComponent,
     CategoryBreakdownPanelComponent,

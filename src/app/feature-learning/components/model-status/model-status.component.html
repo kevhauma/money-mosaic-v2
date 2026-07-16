@@ -48,8 +48,10 @@
   </div>
 </mm-alert>
 
-<div
-  class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-box border border-base-300 bg-base-100 px-4 py-3"
+<mm-paper
+  elevation="flat"
+  bodyClass="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+  class="mb-4"
 >
   <div class="flex items-center gap-2">
     <mm-text class="text-sm text-base-content/60">Training window</mm-text>
@@ -70,4 +72,4 @@
   <mm-button [disabled]="trainDisabled()" (click)="train()">
     {{ buttonLabel() }}
   </mm-button>
-</div>
+</mm-paper>

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { resolveTransferMatches } from '@/core/transfers';
 import {
   AccountsStore,
@@ -7,13 +6,13 @@ import {
   TransactionsStore,
   TransferSettingsStore,
 } from '@/core/state';
-import { LoadingSkeletonComponent, TypographyComponent } from '@/shared/ui';
+import { LoadingSkeletonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { UNCATEGORISED_SENTINEL } from '@/shared/utils';
 
 /** Uncategorised-backlog and transfers-needing-review action cards, each hidden when its count is zero. */
 @Component({
   selector: 'app-action-queue-panel',
-  imports: [RouterLink, LoadingSkeletonComponent, TypographyComponent],
+  imports: [LoadingSkeletonComponent, PaperComponent, TypographyComponent],
   templateUrl: './action-queue-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

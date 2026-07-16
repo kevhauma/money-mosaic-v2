@@ -6,6 +6,7 @@ import { CategoriesStore } from '@/core/state';
 import {
   ButtonComponent,
   ConfirmDialogComponent,
+  PaperComponent,
   SelectComponent,
   TypographyComponent,
 } from '@/shared/ui';
@@ -17,6 +18,7 @@ import {
     NgIcon,
     ButtonComponent,
     ConfirmDialogComponent,
+    PaperComponent,
     SelectComponent,
     TypographyComponent,
   ],

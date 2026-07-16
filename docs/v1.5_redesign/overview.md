@@ -16,8 +16,8 @@ Closes the gap between prepare.md's manual audit and the actual codebase, then e
 
 - [x] [TICKET-UI-01](./tickets/TICKET-UI-01-styling-audit.md) — Styling audit & extraction punch list (adds FR-UI-1) — run first (or alongside UI-02); turns prepare.md's manual list into a verified one
 - [x] [TICKET-UI-02](./tickets/TICKET-UI-02-typography-primitive.md) — Typography/Text primitive (adds FR-UI-2) — highest-leverage primitive, nearly every other ticket's templates also contain bare text styling worth migrating opportunistically
-- [ ] [TICKET-UI-03](./tickets/TICKET-UI-03-bento-grid-primitive.md) — Bento-grid layout primitive (adds FR-UI-3) — the redesign's layout foundation; prerequisite for UI-12's dashboard adoption
-- [ ] [TICKET-UI-04](./tickets/TICKET-UI-04-paper-primitive.md) — Paper/surface primitive (adds FR-UI-4) — composes with UI-03's bento items; prerequisite for UI-12
+- [x] [TICKET-UI-03](./tickets/TICKET-UI-03-bento-grid-primitive.md) — Bento-grid layout primitive (adds FR-UI-3) — the redesign's layout foundation; prerequisite for UI-12's dashboard adoption
+- [x] [TICKET-UI-04](./tickets/TICKET-UI-04-paper-primitive.md) — Paper/surface primitive (adds FR-UI-4) — composes with UI-03's bento items; prerequisite for UI-12
 - [ ] [TICKET-UI-05](./tickets/TICKET-UI-05-tabs-primitive.md) — Tabs primitive (adds FR-UI-5) — independent
 - [ ] [TICKET-UI-06](./tickets/TICKET-UI-06-label-fieldset-primitives.md) — Label & Fieldset primitives (adds FR-UI-6) — independent; resolves prepare.md's open question about the two overlapping
 - [ ] [TICKET-UI-07](./tickets/TICKET-UI-07-table-primitive.md) — Table primitive family (adds FR-UI-7) — independent

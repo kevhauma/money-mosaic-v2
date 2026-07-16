@@ -11,7 +11,7 @@ import { from, of, startWith, switchMap, timer, map as rxMap, type Observable } 
 import { AccountsStore } from '@/core/state';
 import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
-import { AlertComponent, ButtonComponent, TypographyComponent } from '@/shared/ui';
+import { AlertComponent, ButtonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportBatchesStore } from '../../import-batches.store';
 import {
@@ -51,6 +51,7 @@ const PARSE_DEBOUNCE_MS = 300;
     ImportSummaryStepComponent,
     ButtonComponent,
     AlertComponent,
+    PaperComponent,
     TypographyComponent,
   ],
   templateUrl: './import-wizard.component.html',

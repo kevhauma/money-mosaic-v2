@@ -1,76 +1,65 @@
-<div class="card h-full bg-base-100 shadow-sm">
-  <div class="card-body">
-    <h2 class="card-title text-base">Category breakdown</h2>
+<mm-paper [fullHeight]="true">
+  <h2 class="card-title text-base">Category breakdown</h2>
 
-    @if (!dataReady()) {
-      <mm-loading-skeleton [rows]="4" class="mt-2" />
-    } @else {
-      <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        @for (column of columns(); track column.kind) {
-          <div>
-            <mm-text variant="subheading" as="h3">{{ column.label }}</mm-text>
+  @if (!dataReady()) {
+    <mm-loading-skeleton [rows]="4" class="mt-2" />
+  } @else {
+    <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      @for (column of columns(); track column.kind) {
+        <div>
+          <mm-text variant="subheading" as="h3">{{ column.label }}</mm-text>
 
-            @if (column.entries.length > 0) {
-              <div echarts [options]="column.chartOption" class="h-56 w-full"></div>
+          @if (column.entries.length > 0) {
+            <div echarts [options]="column.chartOption" class="h-56 w-full"></div>
 
-              <ul class="mt-2 divide-y divide-base-300">
-                @for (entry of column.visibleEntries; track entry.categoryId) {
-                  <li>
-                    <a
-                      [routerLink]="['/transactions']"
-                      [queryParams]="drilldownParams(entry.categoryId)"
-                      class="flex items-center justify-between py-2 transition hover:bg-base-200"
-                    >
-                      <span>{{ entry.name }}</span>
-                      <mm-text variant="caption">
-                        {{ entry.formattedTotal }} · {{ entry.formattedShare }}
-                      </mm-text>
-                    </a>
-                  </li>
-                }
-              </ul>
-
-              @if (column.remainingCount > 0) {
-                <mm-button
-                  variant="ghost"
-                  size="xs"
-                  class="mt-2"
-                  (click)="toggleColumn(column.kind)"
-                >
-                  {{ column.toggleLabel }}
-                </mm-button>
-              }
-
-              @if (column.kind === 'expense' && uncategorisedCallout(); as callout) {
-                <mm-alert status="warning" variant="soft" class="mt-2">
+            <ul class="mt-2 divide-y divide-base-300">
+              @for (entry of column.visibleEntries; track entry.categoryId) {
+                <li>
                   <a
                     [routerLink]="['/transactions']"
-                    [queryParams]="drilldownParams(null)"
-                    class="text-sm"
+                    [queryParams]="drilldownParams(entry.categoryId)"
+                    class="flex items-center justify-between py-2 transition hover:bg-base-200"
                   >
-                    {{ callout.formattedTotal }} uncategorised ({{ callout.formattedShare }} of
-                    expense, {{ callout.transactionCount }} transaction{{
-                      callout.transactionCount === 1 ? '' : 's'
-                    }})
+                    <span>{{ entry.name }}</span>
+                    <mm-text variant="caption">
+                      {{ entry.formattedTotal }} · {{ entry.formattedShare }}
+                    </mm-text>
                   </a>
-                </mm-alert>
+                </li>
               }
-            } @else {
-              <mm-text as="p" align="center" class="py-6 text-sm text-base-content/60">
-                {{ column.emptyStateText }}
-              </mm-text>
-            }
-          </div>
-        }
-      </div>
-    }
+            </ul>
 
-    <a
-      [routerLink]="['/categories']"
-      [queryParams]="viewAllQueryParams()"
-      class="link mt-2 text-sm"
-    >
-      View all categories
-    </a>
-  </div>
-</div>
+            @if (column.remainingCount > 0) {
+              <mm-button variant="ghost" size="xs" class="mt-2" (click)="toggleColumn(column.kind)">
+                {{ column.toggleLabel }}
+              </mm-button>
+            }
+
+            @if (column.kind === 'expense' && uncategorisedCallout(); as callout) {
+              <mm-alert status="warning" variant="soft" class="mt-2">
+                <a
+                  [routerLink]="['/transactions']"
+                  [queryParams]="drilldownParams(null)"
+                  class="text-sm"
+                >
+                  {{ callout.formattedTotal }} uncategorised ({{ callout.formattedShare }} of
+                  expense, {{ callout.transactionCount }} transaction{{
+                    callout.transactionCount === 1 ? '' : 's'
+                  }})
+                </a>
+              </mm-alert>
+            }
+          } @else {
+            <mm-text as="p" align="center" class="py-6 text-sm text-base-content/60">
+              {{ column.emptyStateText }}
+            </mm-text>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <a [routerLink]="['/categories']" [queryParams]="viewAllQueryParams()" class="link mt-2 text-sm">
+    View all categories
+  </a>
+</mm-paper>

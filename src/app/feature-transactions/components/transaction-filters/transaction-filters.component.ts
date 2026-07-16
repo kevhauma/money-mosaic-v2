@@ -17,6 +17,7 @@ import {
   ButtonComponent,
   DateRangeInputComponent,
   InputComponent,
+  PaperComponent,
   SelectComponent,
   type DateRangeValue,
 } from '@/shared/ui';
@@ -55,6 +56,7 @@ function structuralFiltersOf(value: Partial<TransactionFilters>): StructuralFilt
     ButtonComponent,
     DateRangeInputComponent,
     InputComponent,
+    PaperComponent,
     SelectComponent,
   ],
   templateUrl: './transaction-filters.component.html',

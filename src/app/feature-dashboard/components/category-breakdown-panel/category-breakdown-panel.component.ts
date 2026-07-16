@@ -8,6 +8,7 @@ import {
   AlertComponent,
   ButtonComponent,
   LoadingSkeletonComponent,
+  PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import {
@@ -77,6 +78,7 @@ const formatPieTooltip = (params: PieTooltipParam): string => {
     AlertComponent,
     ButtonComponent,
     LoadingSkeletonComponent,
+    PaperComponent,
     TypographyComponent,
   ],
   templateUrl: './category-breakdown-panel.component.html',

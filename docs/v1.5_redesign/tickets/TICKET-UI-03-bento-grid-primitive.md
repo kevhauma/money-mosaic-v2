@@ -25,9 +25,9 @@ Prepare.md names "Bento Box Grid" as the redesign's layout foundation and separa
 
 ## Acceptance criteria
 
-- [ ] `mm-bento-grid` + span-control API defined and unit-tested for at least 2/3/4-column responsive behavior
-- [ ] No opinions about color, border, or padding leak into this component — verified it composes with, not duplicates, `mm-paper`
-- [ ] Verified via the fallow and coding-conventions skills
+- [x] `mm-bento-grid` + span-control API defined and unit-tested for at least 2/3/4-column responsive behavior
+- [x] No opinions about color, border, or padding leak into this component — verified it composes with, not duplicates, `mm-paper`
+- [x] Verified via the fallow and coding-conventions skills
 
 ## Notes
 

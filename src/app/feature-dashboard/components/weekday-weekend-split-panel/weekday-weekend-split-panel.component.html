@@ -1,40 +1,31 @@
 @if (split(); as s) {
-  <a
-    [routerLink]="['/transactions']"
-    [queryParams]="drilldownParams()"
-    class="card h-full bg-base-100 shadow-sm transition hover:bg-base-200"
-  >
-    <div class="card-body">
-      <h2 class="card-title text-base">Weekday vs. weekend spending</h2>
+  <mm-paper [fullHeight]="true" [link]="'/transactions'" [queryParams]="drilldownParams()">
+    <h2 class="card-title text-base">Weekday vs. weekend spending</h2>
 
-      <div class="mt-2 space-y-3">
-        <div>
-          <div class="mb-1 flex items-center justify-between text-sm">
-            <span>Weekday</span>
-            <mm-text variant="caption">{{ weekdayAvgValue() }}/day</mm-text>
-          </div>
-          <div class="h-2 w-full rounded-full bg-base-300">
-            <div class="h-2 rounded-full bg-primary" [style.width.%]="barPercents().weekday"></div>
-          </div>
+    <div class="mt-2 space-y-3">
+      <div>
+        <div class="mb-1 flex items-center justify-between text-sm">
+          <span>Weekday</span>
+          <mm-text variant="caption">{{ weekdayAvgValue() }}/day</mm-text>
         </div>
-
-        <div>
-          <div class="mb-1 flex items-center justify-between text-sm">
-            <span>Weekend</span>
-            <mm-text variant="caption">{{ weekendAvgValue() }}/day</mm-text>
-          </div>
-          <div class="h-2 w-full rounded-full bg-base-300">
-            <div
-              class="h-2 rounded-full bg-secondary"
-              [style.width.%]="barPercents().weekend"
-            ></div>
-          </div>
+        <div class="h-2 w-full rounded-full bg-base-300">
+          <div class="h-2 rounded-full bg-primary" [style.width.%]="barPercents().weekday"></div>
         </div>
       </div>
 
-      @if (ratioLabel(); as ratio) {
-        <mm-text as="p" variant="caption" class="mt-2">{{ ratio }}</mm-text>
-      }
+      <div>
+        <div class="mb-1 flex items-center justify-between text-sm">
+          <span>Weekend</span>
+          <mm-text variant="caption">{{ weekendAvgValue() }}/day</mm-text>
+        </div>
+        <div class="h-2 w-full rounded-full bg-base-300">
+          <div class="h-2 rounded-full bg-secondary" [style.width.%]="barPercents().weekend"></div>
+        </div>
+      </div>
     </div>
-  </a>
+
+    @if (ratioLabel(); as ratio) {
+      <mm-text as="p" variant="caption" class="mt-2">{{ ratio }}</mm-text>
+    }
+  </mm-paper>
 }

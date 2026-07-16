@@ -6,7 +6,7 @@ import type { Account } from '@/core/data-access';
 import type { AccountBalanceSeries, ChartZoomWindow } from '@/core/stats';
 import { AccountsStore } from '@/core/state';
 import { formatAxisTooltip } from '@/shared/echarts';
-import { GranularityPickerComponent } from '@/shared/ui';
+import { GranularityPickerComponent, PaperComponent } from '@/shared/ui';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
 /** Pure echarts-option builder, kept separate from the component so it's testable without TestBed. */
@@ -53,7 +53,7 @@ export const buildNetWorthHistoryChartOption = (
  */
 @Component({
   selector: 'app-net-worth-history-chart',
-  imports: [NgxEchartsDirective, GranularityPickerComponent],
+  imports: [NgxEchartsDirective, GranularityPickerComponent, PaperComponent],
   templateUrl: './net-worth-history-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

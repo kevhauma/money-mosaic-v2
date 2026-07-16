@@ -10,7 +10,7 @@ import {
   TransferSettingsStore,
 } from '@/core/state';
 import { resolveTransferMatches, type TransferCandidate } from '@/core/transfers';
-import { ButtonComponent, InputComponent, TypographyComponent } from '@/shared/ui';
+import { ButtonComponent, InputComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
 @Component({
@@ -21,6 +21,7 @@ import { SignedAmountPipe } from '@/shared/utils';
     SignedAmountPipe,
     ButtonComponent,
     InputComponent,
+    PaperComponent,
     TypographyComponent,
   ],
   templateUrl: './transfer-review.component.html',

@@ -1,5 +1,9 @@
-<div
-  class="mb-4 flex flex-wrap items-center gap-3 rounded-box border border-primary/40 bg-primary/5 p-3"
+<mm-paper
+  elevation="flat"
+  background="bg-primary/5"
+  borderColor="primary/40"
+  bodyClass="flex flex-wrap items-center gap-3 p-3"
+  class="mb-4"
 >
   <mm-text weight="medium">
     <ng-icon name="tablerTag" size="16" aria-hidden="true" class="align-text-bottom" />
@@ -36,7 +40,7 @@
       Clear
     </mm-button>
   </div>
-</div>
+</mm-paper>
 
 <mm-confirm-dialog
   [(open)]="deleteConfirmOpen"

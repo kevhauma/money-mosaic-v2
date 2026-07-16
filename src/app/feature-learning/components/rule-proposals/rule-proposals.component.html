@@ -1,5 +1,5 @@
 @if (categoryModelStore.ruleProposals().length > 0) {
-  <div class="mb-4 flex flex-col gap-2 rounded-box border border-base-300 bg-base-100 p-3">
+  <mm-paper elevation="flat" bodyClass="flex flex-col gap-2 p-3" class="mb-4">
     @for (proposal of categoryModelStore.ruleProposals(); track proposal.counterpartyName) {
       <div>
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -48,5 +48,5 @@
         }
       </div>
     }
-  </div>
+  </mm-paper>
 }

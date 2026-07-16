@@ -14,6 +14,7 @@ import {
   ConfirmDialogComponent,
   EmptyStateComponent,
   PageHeaderComponent,
+  PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
@@ -37,6 +38,7 @@ import {
     ConfirmDialogComponent,
     EmptyStateComponent,
     PageHeaderComponent,
+    PaperComponent,
     TypographyComponent,
   ],
   templateUrl: './accounts-detail.component.html',

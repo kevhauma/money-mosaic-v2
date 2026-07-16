@@ -33,102 +33,95 @@
 } @else {
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
     @for (account of visibleAccounts(); track account.id) {
-      <div
-        class="card border border-base-300 bg-base-100"
-        [style.border-inline-start]="'4px solid ' + account.color"
+      <mm-paper
+        elevation="flat"
+        bodyClass="card-body gap-3"
+        [style]="'border-inline-start: 4px solid ' + account.color"
       >
-        <div class="card-body gap-3">
-          <div class="flex items-start justify-between">
-            <div class="flex items-center gap-2">
-              <ng-icon [name]="accountIconName(account.icon)" size="20" aria-hidden="true" />
-              <a [routerLink]="[account.id]" class="card-title text-base hover:underline">
-                {{ account.name }}
-              </a>
-            </div>
-            <div class="flex items-center gap-1">
-              <mm-button
-                variant="ghost"
-                shape="square"
-                size="sm"
-                [disabled]="isFirst(account)"
-                (click)="moveAccount(account, 'up')"
-                ariaLabel="Move account up"
-              >
-                <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-2">
+            <ng-icon [name]="accountIconName(account.icon)" size="20" aria-hidden="true" />
+            <a [routerLink]="[account.id]" class="card-title text-base hover:underline">
+              {{ account.name }}
+            </a>
+          </div>
+          <div class="flex items-center gap-1">
+            <mm-button
+              variant="ghost"
+              shape="square"
+              size="sm"
+              [disabled]="isFirst(account)"
+              (click)="moveAccount(account, 'up')"
+              ariaLabel="Move account up"
+            >
+              <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
+            </mm-button>
+            <mm-button
+              variant="ghost"
+              shape="square"
+              size="sm"
+              [disabled]="isLast(account)"
+              (click)="moveAccount(account, 'down')"
+              ariaLabel="Move account down"
+            >
+              <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
+            </mm-button>
+            <div class="dropdown dropdown-end">
+              <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Account actions">
+                <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
               </mm-button>
-              <mm-button
-                variant="ghost"
-                shape="square"
-                size="sm"
-                [disabled]="isLast(account)"
-                (click)="moveAccount(account, 'down')"
-                ariaLabel="Move account down"
+              <ul
+                tabindex="0"
+                class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
               >
-                <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
-              </mm-button>
-              <div class="dropdown dropdown-end">
-                <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Account actions">
-                  <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
-                </mm-button>
-                <ul
-                  tabindex="0"
-                  class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
-                >
-                  <li>
-                    <button type="button" (click)="openEditForm(account)">
-                      <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
-                      Edit
-                    </button>
-                  </li>
-                  <li>
-                    <button type="button" (click)="toggleArchive(account)">
-                      <ng-icon
-                        [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
-                        size="14"
-                        aria-hidden="true"
-                      />
-                      {{ account.archived ? 'Unarchive' : 'Archive' }}
-                    </button>
-                  </li>
-                  <li>
-                    <button type="button" class="text-error" (click)="confirmDelete(account)">
-                      <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
-                      Delete
-                    </button>
-                  </li>
-                </ul>
-              </div>
+                <li>
+                  <button type="button" (click)="openEditForm(account)">
+                    <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+                    Edit
+                  </button>
+                </li>
+                <li>
+                  <button type="button" (click)="toggleArchive(account)">
+                    <ng-icon
+                      [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
+                      size="14"
+                      aria-hidden="true"
+                    />
+                    {{ account.archived ? 'Unarchive' : 'Archive' }}
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="text-error" (click)="confirmDelete(account)">
+                    <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+                    Delete
+                  </button>
+                </li>
+              </ul>
             </div>
           </div>
-
-          <mm-badge variant="outline" size="sm" class="w-fit capitalize">{{
-            account.type
-          }}</mm-badge>
-
-          @if (accountsStore.dataReady()) {
-            <mm-text
-              as="p"
-              variant="display"
-              [color]="balanceFor(account) < 0 ? 'error' : undefined"
-            >
-              {{ balanceFor(account) | signedAmount }}
-            </mm-text>
-            @if (shareFor(account) !== null) {
-              <mm-text as="p" class="text-xs text-base-content/60">
-                Your share: {{ shareFor(account)! | signedAmount }}
-              </mm-text>
-            }
-          } @else {
-            <span class="skeleton inline-block h-8 w-24"></span>
-          }
-
-          @if (account.iban) {
-            <mm-text as="p" class="text-xs text-base-content/60"
-              >···· {{ account.iban.slice(-4) }}</mm-text
-            >
-          }
         </div>
-      </div>
+
+        <mm-badge variant="outline" size="sm" class="w-fit capitalize">{{ account.type }}</mm-badge>
+
+        @if (accountsStore.dataReady()) {
+          <mm-text as="p" variant="display" [color]="balanceFor(account) < 0 ? 'error' : undefined">
+            {{ balanceFor(account) | signedAmount }}
+          </mm-text>
+          @if (shareFor(account) !== null) {
+            <mm-text as="p" class="text-xs text-base-content/60">
+              Your share: {{ shareFor(account)! | signedAmount }}
+            </mm-text>
+          }
+        } @else {
+          <span class="skeleton inline-block h-8 w-24"></span>
+        }
+
+        @if (account.iban) {
+          <mm-text as="p" class="text-xs text-base-content/60"
+            >···· {{ account.iban.slice(-4) }}</mm-text
+          >
+        }
+      </mm-paper>
     }
   </div>
 }

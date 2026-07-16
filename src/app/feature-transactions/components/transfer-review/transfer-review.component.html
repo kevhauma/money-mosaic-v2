@@ -1,4 +1,4 @@
-<div class="mb-4 rounded-box border border-base-300 bg-base-100 p-4">
+<mm-paper elevation="flat" bodyClass="p-4" class="mb-4">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <form
       [formGroup]="settingsForm"
@@ -47,8 +47,10 @@
           >Possible transfers awaiting confirmation</mm-text
         >
         @for (candidate of ambiguousCandidates(); track candidate.from.id + '-' + candidate.to.id) {
-          <div
-            class="flex flex-wrap items-center justify-between gap-3 rounded-box border border-base-300 p-2 text-sm"
+          <mm-paper
+            elevation="flat"
+            background=""
+            bodyClass="flex flex-wrap items-center justify-between gap-3 p-2 text-sm"
           >
             <div class="flex flex-1 flex-wrap items-center gap-3">
               <div>
@@ -75,7 +77,7 @@
             <mm-button size="xs" color="primary" (click)="confirmCandidate(candidate)">
               Confirm
             </mm-button>
-          </div>
+          </mm-paper>
         }
       </div>
     } @else {
@@ -84,4 +86,4 @@
       >
     }
   }
-</div>
+</mm-paper>

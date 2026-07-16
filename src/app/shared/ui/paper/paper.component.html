@@ -1,0 +1,15 @@
+<ng-template #content>
+  <div [class]="bodyClass()">
+    <ng-content />
+  </div>
+</ng-template>
+
+@if (link(); as href) {
+  <a [routerLink]="href" [queryParams]="queryParams()" [class]="classes()" [style]="style()">
+    <ng-container [ngTemplateOutlet]="content" />
+  </a>
+} @else {
+  <div [class]="classes()" [style]="style()">
+    <ng-container [ngTemplateOutlet]="content" />
+  </div>
+}

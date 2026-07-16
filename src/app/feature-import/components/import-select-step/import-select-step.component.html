@@ -27,35 +27,39 @@
       <legend class="fieldset-legend">Files ({{ queue().length }})</legend>
       <ul class="flex flex-col gap-2">
         @for (row of queue(); track row.file; let i = $index) {
-          <li class="flex flex-wrap items-center gap-3 rounded-box border border-base-300 p-3">
-            <div class="min-w-0 flex-1">
-              <mm-text as="p" weight="medium" class="truncate text-sm">{{ row.file.name }}</mm-text>
-              <mm-text as="p" class="text-xs text-base-content/60"
-                >{{ (row.file.size / 1024).toFixed(1) }} KB</mm-text
+          <li>
+            <mm-paper elevation="flat" bodyClass="flex flex-wrap items-center gap-3 p-3">
+              <div class="min-w-0 flex-1">
+                <mm-text as="p" weight="medium" class="truncate text-sm">{{
+                  row.file.name
+                }}</mm-text>
+                <mm-text as="p" class="text-xs text-base-content/60"
+                  >{{ (row.file.size / 1024).toFixed(1) }} KB</mm-text
+                >
+              </div>
+              <select
+                class="select select-sm w-48"
+                [value]="row.accountId ?? ''"
+                (change)="onAccountChange(i, $event)"
               >
-            </div>
-            <select
-              class="select select-sm w-48"
-              [value]="row.accountId ?? ''"
-              (change)="onAccountChange(i, $event)"
-            >
-              <option value="" disabled>Choose an account</option>
-              @for (account of accounts(); track account.id) {
-                <option [value]="account.id">{{ account.name }}</option>
+                <option value="" disabled>Choose an account</option>
+                @for (account of accounts(); track account.id) {
+                  <option [value]="account.id">{{ account.name }}</option>
+                }
+              </select>
+              @if (row.autoDetected) {
+                <mm-badge color="success" size="sm">Auto-detected</mm-badge>
               }
-            </select>
-            @if (row.autoDetected) {
-              <mm-badge color="success" size="sm">Auto-detected</mm-badge>
-            }
-            <mm-button
-              variant="ghost"
-              size="sm"
-              shape="square"
-              ariaLabel="Remove file"
-              (click)="removeFile(i)"
-            >
-              ✕
-            </mm-button>
+              <mm-button
+                variant="ghost"
+                size="sm"
+                shape="square"
+                ariaLabel="Remove file"
+                (click)="removeFile(i)"
+              >
+                ✕
+              </mm-button>
+            </mm-paper>
           </li>
         }
       </ul>

@@ -70,65 +70,55 @@
           @defer (on viewport; prefetch on idle) {
             <app-weekday-weekend-split-panel />
           } @placeholder {
-            <div class="card h-full bg-base-100 shadow-sm">
-              <div class="card-body">
-                <mm-loading-skeleton [rows]="3" />
-              </div>
-            </div>
+            <mm-paper [fullHeight]="true">
+              <mm-loading-skeleton [rows]="3" />
+            </mm-paper>
           }
         }
         @case ('category-breakdown') {
           @defer (on viewport; prefetch on idle) {
             <app-category-breakdown-panel />
           } @placeholder {
-            <div class="card h-full bg-base-100 shadow-sm">
-              <div class="card-body">
-                <h2 class="card-title text-base">Category breakdown</h2>
-                <mm-loading-skeleton [rows]="4" class="mt-2" />
-              </div>
-            </div>
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Category breakdown</h2>
+              <mm-loading-skeleton [rows]="4" class="mt-2" />
+            </mm-paper>
           }
         }
         @case ('category-comparison') {
           @defer (on viewport; prefetch on idle) {
             <app-category-comparison-panel />
           } @placeholder {
-            <div class="card h-full bg-base-100 shadow-sm">
-              <div class="card-body">
-                <h2 class="card-title text-base">Category period comparison</h2>
-                <mm-loading-skeleton [rows]="4" class="mt-4" />
-              </div>
-            </div>
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Category period comparison</h2>
+              <mm-loading-skeleton [rows]="4" class="mt-4" />
+            </mm-paper>
           }
         }
         @case ('trend-chart') {
           @defer (on viewport; prefetch on idle) {
             <app-trend-chart-panel />
           } @placeholder {
-            <div class="card h-full bg-base-100 shadow-sm">
-              <div class="card-body">
-                <h2 class="card-title text-base">Trend</h2>
-                <span class="sr-only">
-                  Income and expense trend chart loads when scrolled into view.
-                </span>
-                <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                  <div class="skeleton h-72 w-full"></div>
-                  <div class="skeleton h-72 w-full"></div>
-                </div>
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Trend</h2>
+              <span class="sr-only">
+                Income and expense trend chart loads when scrolled into view.
+              </span>
+              <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div class="skeleton h-72 w-full"></div>
+                <div class="skeleton h-72 w-full"></div>
               </div>
-            </div>
+            </mm-paper>
           }
         }
         @case ('top-transactions') {
           @defer (on viewport; prefetch on idle) {
             <app-top-transactions-panel />
           } @placeholder {
-            <div class="card h-full bg-base-100 shadow-sm">
-              <div class="card-body">
-                <h2 class="card-title text-base">Biggest transactions</h2>
-                <mm-loading-skeleton [rows]="3" class="mt-2" />
-              </div>
-            </div>
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Biggest transactions</h2>
+              <mm-loading-skeleton [rows]="3" class="mt-2" />
+            </mm-paper>
           }
         }
         @case ('action-queue') {
@@ -142,12 +132,10 @@
           @defer (on viewport; prefetch on idle) {
             <app-account-balance-strip />
           } @placeholder {
-            <div class="card bg-base-100 shadow-sm">
-              <div class="card-body">
-                <h2 class="card-title text-base">Accounts</h2>
-                <mm-loading-skeleton [rows]="2" />
-              </div>
-            </div>
+            <mm-paper>
+              <h2 class="card-title text-base">Accounts</h2>
+              <mm-loading-skeleton [rows]="2" />
+            </mm-paper>
           }
         }
       }

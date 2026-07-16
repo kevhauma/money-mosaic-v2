@@ -30,58 +30,54 @@
     </div>
   </mm-page-header>
 
-  <div class="card border border-base-300 bg-base-100">
-    <div class="card-body">
-      <mm-text as="p" class="text-sm text-base-content/60">Current balance</mm-text>
-      @if (accountsStore.dataReady()) {
-        <mm-text
-          as="p"
-          weight="semibold"
-          class="text-4xl"
-          [color]="balance() < 0 ? 'error' : undefined"
-        >
-          {{ balance() | signedAmount }}
-        </mm-text>
-        @if (share() !== null) {
-          <mm-text as="p" class="text-sm text-base-content/60"
-            >Your share: {{ share()! | signedAmount }}</mm-text
-          >
-        }
-      } @else {
-        <span class="skeleton inline-block h-10 w-32"></span>
-      }
-      @if (account.iban) {
-        <mm-text as="p" class="mt-2 text-sm text-base-content/60"
-          >IBAN ···· {{ account.iban.slice(-4) }}</mm-text
+  <mm-paper elevation="flat">
+    <mm-text as="p" class="text-sm text-base-content/60">Current balance</mm-text>
+    @if (accountsStore.dataReady()) {
+      <mm-text
+        as="p"
+        weight="semibold"
+        class="text-4xl"
+        [color]="balance() < 0 ? 'error' : undefined"
+      >
+        {{ balance() | signedAmount }}
+      </mm-text>
+      @if (share() !== null) {
+        <mm-text as="p" class="text-sm text-base-content/60"
+          >Your share: {{ share()! | signedAmount }}</mm-text
         >
       }
-    </div>
-  </div>
+    } @else {
+      <span class="skeleton inline-block h-10 w-32"></span>
+    }
+    @if (account.iban) {
+      <mm-text as="p" class="mt-2 text-sm text-base-content/60"
+        >IBAN ···· {{ account.iban.slice(-4) }}</mm-text
+      >
+    }
+  </mm-paper>
 
   @if (contributorBreakdown(); as breakdown) {
-    <div class="card mt-4 border border-base-300 bg-base-100">
-      <div class="card-body gap-2">
-        <mm-text as="p" class="text-sm text-base-content/60">Contributions</mm-text>
-        <ul class="space-y-1 text-sm">
+    <mm-paper elevation="flat" bodyClass="card-body gap-2" class="mt-4">
+      <mm-text as="p" class="text-sm text-base-content/60">Contributions</mm-text>
+      <ul class="space-y-1 text-sm">
+        <li class="flex justify-between">
+          <span>Mine</span>
+          <span>{{ breakdown.mine | signedAmount }}</span>
+        </li>
+        @for (entry of breakdown.byCoOwner | keyvalue; track entry.key) {
           <li class="flex justify-between">
-            <span>Mine</span>
-            <span>{{ breakdown.mine | signedAmount }}</span>
+            <span>{{ entry.key }}</span>
+            <span>{{ entry.value | signedAmount }}</span>
           </li>
-          @for (entry of breakdown.byCoOwner | keyvalue; track entry.key) {
-            <li class="flex justify-between">
-              <span>{{ entry.key }}</span>
-              <span>{{ entry.value | signedAmount }}</span>
-            </li>
-          }
-          @if (breakdown.unattributed !== 0) {
-            <li class="flex justify-between text-base-content/60">
-              <span>Unattributed</span>
-              <span>{{ breakdown.unattributed | signedAmount }}</span>
-            </li>
-          }
-        </ul>
-      </div>
-    </div>
+        }
+        @if (breakdown.unattributed !== 0) {
+          <li class="flex justify-between text-base-content/60">
+            <span>Unattributed</span>
+            <span>{{ breakdown.unattributed | signedAmount }}</span>
+          </li>
+        }
+      </ul>
+    </mm-paper>
   }
 
   <div class="mt-6">
