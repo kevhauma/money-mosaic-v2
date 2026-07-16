@@ -5,11 +5,12 @@ Full-database backup/restore, "delete all data", and a persistent-storage reques
 - [x] [TICKET-DAT-01](./tickets/TICKET-DAT-01-full-data-export-import.md) — Full data export & import (JSON backup/restore, replace-vs-merge) (adds FR-DAT-1, FR-DAT-2, NFR-STORE-1) — the core mechanism; build first since DAT-03's confirmation copy and v2's [TICKET-PUB-04](../v2/tickets/TICKET-PUB-04-local-data-migration-messaging.md) both reference it
 - [x] [TICKET-DAT-02](./tickets/TICKET-DAT-02-persistent-storage-request.md) — Request persistent browser storage (adds FR-DAT-4) — independent, no dependency on DAT-01/DAT-03, safe to build in parallel
 - [x] [TICKET-DAT-03](./tickets/TICKET-DAT-03-delete-all-data.md) — Delete all data, with confirmation (adds FR-DAT-3) — build last so its confirmation dialog can point at DAT-01's Export as a "back up first" suggestion
+- [ ] [TICKET-CAT-06](./tickets/TICKET-CAT-06-share-rules.md) — Share rules: export all or a selection, and import a shared rule file, matching categories by label with an "Uncategorised" fallback for unmatched ones (extends FR-CAT-2) — independent of DAT-01/02/03 (own repository/UI in `feature-categories`), fills the "partial export" gap noted below but scoped to rules only
 
 ## Considered, not ticketed yet
 
 - **Scheduled/automatic backups** (e.g. periodic export reminders, or auto-download on an interval) — DAT-01 is manual export only; an automated nudge is a reasonable follow-up once manual export has shipped and its UX is proven, not part of this version.
-- **Partial export/import** (e.g. export a single account's history, or import-merge with per-row conflict resolution UI) — DAT-01 is whole-database only; scoping down to partial export is a larger feature with its own conflict-resolution questions, deferred.
+- **Partial export/import** (e.g. export a single account's history, or import-merge with per-row conflict resolution UI) — DAT-01 is whole-database only; scoping down to partial export is a larger feature with its own conflict-resolution questions. TICKET-CAT-06 now covers this for `rules` specifically; other tables (e.g. a single account's history) remain deferred.
 - **Cloud/remote backup targets** (Google Drive, Dropbox, etc.) — would require network access and an OAuth-style integration, in direct tension with NFR-PRIV-1 ("no network transmission of financial data"); explicitly out of scope for a local-first app unless that principle changes.
 
 ## Definition of Done (applies to every ticket)
