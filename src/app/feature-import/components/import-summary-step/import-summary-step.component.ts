@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
-import { ButtonComponent, ConfirmDialogComponent } from '@/shared/ui';
+import { ButtonComponent, ConfirmDialogComponent, TypographyComponent } from '@/shared/ui';
 import type { ImportBatch } from '@/core/data-access';
 
 @Component({
   selector: 'app-import-summary-step',
-  imports: [ButtonComponent, ConfirmDialogComponent],
+  imports: [ButtonComponent, ConfirmDialogComponent, TypographyComponent],
   templateUrl: './import-summary-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

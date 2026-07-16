@@ -13,7 +13,7 @@ import {
 import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { formatAxisTooltip } from '@/shared/echarts';
-import { GranularityPickerComponent } from '@/shared/ui';
+import { GranularityPickerComponent, TypographyComponent } from '@/shared/ui';
 import {
   buildTransactionDrilldownParams,
   formatCurrency,
@@ -65,7 +65,7 @@ const buildColumnChartOption = (
  */
 @Component({
   selector: 'app-trend-chart-panel',
-  imports: [NgxEchartsDirective, GranularityPickerComponent],
+  imports: [NgxEchartsDirective, GranularityPickerComponent, TypographyComponent],
   templateUrl: './trend-chart-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

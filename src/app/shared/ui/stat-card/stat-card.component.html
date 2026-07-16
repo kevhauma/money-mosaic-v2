@@ -18,13 +18,17 @@
 @if (link(); as href) {
   <a [routerLink]="href" [queryParams]="queryParams()" class="stat transition hover:bg-base-200">
     <div class="stat-title">{{ label() }}</div>
-    <div class="stat-value" [class]="valueClass()">{{ value() }}</div>
+    <div class="stat-value">
+      <mm-text [color]="color()">{{ value() }}</mm-text>
+    </div>
     <ng-container [ngTemplateOutlet]="subLabelContent" />
   </a>
 } @else {
   <div class="stat">
     <div class="stat-title">{{ label() }}</div>
-    <div class="stat-value" [class]="valueClass()">{{ value() }}</div>
+    <div class="stat-value">
+      <mm-text [color]="color()">{{ value() }}</mm-text>
+    </div>
     <ng-container [ngTemplateOutlet]="subLabelContent" />
   </div>
 }

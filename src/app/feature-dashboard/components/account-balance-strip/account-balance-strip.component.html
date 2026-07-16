@@ -7,8 +7,8 @@
           [routerLink]="['/accounts', account.id]"
           class="flex min-w-[10rem] flex-col rounded-box border border-base-300 px-4 py-3 transition hover:bg-base-200"
         >
-          <span class="text-sm text-base-content/70">{{ account.name }}</span>
-          <span class="font-semibold">{{ balanceFor(account.id!) | signedAmount }}</span>
+          <mm-text variant="caption">{{ account.name }}</mm-text>
+          <mm-text weight="semibold">{{ balanceFor(account.id!) | signedAmount }}</mm-text>
         </a>
       }
     </div>

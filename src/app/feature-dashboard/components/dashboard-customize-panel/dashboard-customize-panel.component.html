@@ -1,6 +1,6 @@
 <div class="mb-6 rounded-box border border-base-300 bg-base-100 p-4 shadow">
   <div class="mb-3 flex items-center justify-between gap-3">
-    <h2 class="text-sm font-semibold text-base-content/70">Customize dashboard layout</h2>
+    <mm-text as="h2" variant="subheading" weight="semibold">Customize dashboard layout</mm-text>
     <mm-button variant="ghost" size="sm" (click)="reset()">
       <ng-icon name="tablerRestore" size="16" aria-hidden="true" />
       Reset to default
@@ -17,7 +17,9 @@
         <span cdkDragHandle class="cursor-grab text-base-content/50" aria-hidden="true">
           <ng-icon name="tablerGripVertical" size="18" />
         </span>
-        <span class="flex-1 text-sm">{{ rowLabels[rowId] }}</span>
+        <mm-text variant="caption" color="base-content" class="flex-1">{{
+          rowLabels[rowId]
+        }}</mm-text>
         <div class="flex items-center gap-1">
           <mm-button
             variant="ghost"

@@ -105,12 +105,16 @@
 
       <label class="label mt-2 cursor-pointer justify-start gap-2">
         <input type="checkbox" formControlName="rememberForAccount" class="checkbox checkbox-sm" />
-        <span class="text-sm">Remember this mapping for this account next time</span>
+        <mm-text variant="caption" color="base-content"
+          >Remember this mapping for this account next time</mm-text
+        >
       </label>
     </form>
 
     <div>
-      <p class="mb-2 text-xs font-medium text-base-content/60">Raw file preview</p>
+      <mm-text as="p" weight="medium" class="mb-2 text-xs text-base-content/60"
+        >Raw file preview</mm-text
+      >
       <div class="overflow-x-auto rounded-box border border-base-300">
         <table class="table table-xs">
           <tbody>

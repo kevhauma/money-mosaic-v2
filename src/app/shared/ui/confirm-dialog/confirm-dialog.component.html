@@ -1,13 +1,13 @@
 <mm-modal [(open)]="open">
   <span mm-modal-title>{{ title() }}</span>
   @if (message()) {
-    <p class="py-3 text-sm text-base-content/70">{{ message() }}</p>
+    <mm-text as="p" variant="caption" class="py-3">{{ message() }}</mm-text>
   }
   @if (confirmPhrase(); as phrase) {
     <label class="fieldset-label flex-col items-start gap-1">
-      <span class="text-xs text-base-content/60">
+      <mm-text class="text-xs text-base-content/60">
         Type <span class="font-mono font-semibold">{{ phrase }}</span> to confirm
-      </span>
+      </mm-text>
       <input
         #phraseInput
         type="text"

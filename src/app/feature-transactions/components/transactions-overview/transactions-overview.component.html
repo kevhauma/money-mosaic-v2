@@ -87,7 +87,7 @@
             <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
             <td>
               <div class="flex items-center gap-1">
-                <span class="font-medium">{{ row.transaction.rawDescription }}</span>
+                <mm-text weight="medium">{{ row.transaction.rawDescription }}</mm-text>
                 @if (row.likelyTransfer) {
                   <mm-badge variant="outline" size="sm">Likely transfer</mm-badge>
                 }
@@ -96,9 +96,9 @@
                 }
               </div>
               @if (row.transaction.counterpartyName) {
-                <div class="text-xs text-base-content/60">
+                <mm-text as="p" class="text-xs text-base-content/60">
                   {{ row.transaction.counterpartyName }}
-                </div>
+                </mm-text>
               }
             </td>
             <td>{{ row.accountName }}</td>

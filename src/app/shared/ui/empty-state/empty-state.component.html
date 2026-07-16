@@ -4,9 +4,9 @@
   <div class="text-base-content/40">
     <ng-content select="[icon]" />
   </div>
-  <h2 class="text-lg font-medium">{{ title() }}</h2>
+  <mm-text as="h2" weight="medium" class="text-lg">{{ title() }}</mm-text>
   @if (message()) {
-    <p class="max-w-sm text-sm text-base-content/70">{{ message() }}</p>
+    <mm-text as="p" variant="caption" class="max-w-sm">{{ message() }}</mm-text>
   }
   <ng-content select="[action]" />
 </div>

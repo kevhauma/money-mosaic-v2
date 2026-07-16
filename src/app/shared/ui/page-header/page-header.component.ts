@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TypographyComponent } from '../typography/typography.component';
 
 @Component({
   selector: 'mm-page-header',
-  imports: [],
+  imports: [TypographyComponent],
   templateUrl: './page-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

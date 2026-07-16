@@ -1,7 +1,7 @@
 <!-- Step 2 (map + live preview) gets a wider shell so the mapping form, raw file preview, and row
      preview can sit side by side on desktop instead of stacking off-screen. -->
 <div class="mx-auto" [class.max-w-3xl]="step() !== 2" [class.max-w-6xl]="step() === 2">
-  <h1 class="mb-6 text-xl font-semibold">Import CSV</h1>
+  <mm-text as="h1" weight="semibold" class="mb-6 text-xl">Import CSV</mm-text>
 
   <ul class="steps mb-8 w-full">
     <li class="step" [class.step-primary]="step() >= 1">Select</li>
@@ -10,9 +10,9 @@
   </ul>
 
   @if (step() === 2 && totalFiles() > 1) {
-    <p class="mb-4 text-xs font-medium text-base-content/60">
+    <mm-text as="p" weight="medium" class="mb-4 text-xs text-base-content/60">
       File {{ currentFileIndex() + 1 }} of {{ totalFiles() }} — {{ currentFile()?.name }}
-    </p>
+    </mm-text>
   }
 
   <div class="card border border-base-300 bg-base-100">
@@ -81,19 +81,19 @@
                           [checked]="applyToRemaining()"
                           (change)="onApplyToRemainingChange($event)"
                         />
-                        <span class="text-sm">
+                        <mm-text variant="caption" color="base-content">
                           Apply this mapping to the remaining {{ remainingFilesCount() }} file{{
                             remainingFilesCount() === 1 ? '' : 's'
                           }}
-                        </span>
+                        </mm-text>
                       </label>
                     }
                   } @else {
                     <div class="rounded-box border border-base-300 bg-base-200/40 p-4 text-sm">
-                      <p class="font-medium">
+                      <mm-text as="p" weight="medium">
                         Using the batch mapping — this file imports automatically once parsed.
-                      </p>
-                      <p class="mt-1 text-base-content/70">{{ file.name }}</p>
+                      </mm-text>
+                      <mm-text as="p" variant="caption" class="mt-1">{{ file.name }}</mm-text>
                       <mm-button
                         variant="ghost"
                         size="sm"
@@ -111,19 +111,28 @@
             <div
               class="border-t border-base-300 pt-6 xl:col-span-5 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0"
             >
-              <h2 class="mb-3 text-sm font-semibold">Row preview</h2>
+              <mm-text
+                as="h2"
+                variant="subheading"
+                weight="semibold"
+                color="base-content"
+                class="mb-3"
+                >Row preview</mm-text
+              >
               @if (!mapResult()) {
-                <p class="text-sm text-base-content/60">
+                <mm-text as="p" class="text-sm text-base-content/60">
                   Complete the required mapping fields to see a preview.
-                </p>
+                </mm-text>
               } @else if (parseError(); as error) {
-                <p class="text-error text-sm">Couldn't parse this file: {{ error }}</p>
+                <mm-text as="p" color="error" class="text-sm"
+                  >Couldn't parse this file: {{ error }}</mm-text
+                >
               } @else if (headerMismatchMessage(); as message) {
-                <p class="text-error text-sm">{{ message }}</p>
+                <mm-text as="p" color="error" class="text-sm">{{ message }}</mm-text>
                 @if (showManualMapStep()) {
-                  <p class="mt-1 text-sm text-base-content/60">
+                  <mm-text as="p" class="mt-1 text-sm text-base-content/60">
                     Remap this file below to continue.
-                  </p>
+                  </mm-text>
                 } @else {
                   <mm-button variant="ghost" size="sm" class="mt-2" (click)="mapFileIndividually()">
                     Map this file individually

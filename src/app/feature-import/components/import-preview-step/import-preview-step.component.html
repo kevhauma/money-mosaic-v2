@@ -1,10 +1,10 @@
-<p class="mb-3 text-sm">
-  <span class="font-semibold">{{ validCount() }}</span> of
-  <span class="font-semibold">{{ rows().length }}</span> rows are valid.
+<mm-text as="p" variant="caption" color="base-content" class="mb-3">
+  <mm-text weight="semibold">{{ validCount() }}</mm-text> of
+  <mm-text weight="semibold">{{ rows().length }}</mm-text> rows are valid.
   @if (invalidCount() > 0) {
-    <span class="text-error">{{ invalidCount() }} row(s) will be skipped.</span>
+    <mm-text color="error">{{ invalidCount() }} row(s) will be skipped.</mm-text>
   }
-</p>
+</mm-text>
 
 <div class="max-h-96 overflow-auto rounded-box border border-base-300">
   <table class="table table-xs">
@@ -39,7 +39,7 @@
 </div>
 
 @if (rows().length > previewRows().length) {
-  <p class="mt-2 text-xs text-base-content/60">
+  <mm-text as="p" class="mt-2 text-xs text-base-content/60">
     Showing the first {{ previewRows().length }} of {{ rows().length }} rows.
-  </p>
+  </mm-text>
 }

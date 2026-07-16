@@ -37,7 +37,7 @@ Pure logic files (`*-matching.ts`, `stats/*.ts`, `csv-row-mapper.ts`, `fingerpri
 
 ## Shared
 
-- `shared/ui/` — `mm-`-prefixed daisyUI wrapper primitives: button, input, select, badge, alert, modal, page-header, empty-state, confirm-dialog, stat-card, paginator, date-range-input, granularity-picker, range-grouping-switcher. Variant-driven typed inputs; never expose raw daisy classes (see coding-conventions skill).
+- `shared/ui/` — `mm-`-prefixed daisyUI wrapper primitives: button, input, select, badge, alert, modal, page-header, empty-state, confirm-dialog, stat-card, paginator, date-range-input, granularity-picker, range-grouping-switcher, loading-skeleton, typography (selector `mm-text` — the folder/selector names diverge intentionally, per TICKET-UI-02). Variant-driven typed inputs; never expose raw daisy classes (see coding-conventions skill).
 - `shared/utils/` — `fingerprint.ts` (txn dedupe hash), `iban.ts` + `validators/iban.validator.ts`, `signed-amount.pipe.ts`, `currency-format.ts`, `percentage.ts`, `confidence-color.ts` (ML suggestion confidence → badge color), `debounced-text.ts`, `pagination.ts`, `selection-model.ts` (bulk-select state), `sortable.ts`, `search-params.ts` (URL param keys), `with-archivable.ts` (signalStore feature for archive/unarchive), `daisy-classes.ts`.
 - `shared/echarts/` — `echarts-setup.ts` (registers the ECharts modules actually used, keeping the bundle lean), `tooltip-formatter.ts`.
 

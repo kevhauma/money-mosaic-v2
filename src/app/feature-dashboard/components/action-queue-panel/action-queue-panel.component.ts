@@ -7,13 +7,13 @@ import {
   TransactionsStore,
   TransferSettingsStore,
 } from '@/core/state';
-import { LoadingSkeletonComponent } from '@/shared/ui';
+import { LoadingSkeletonComponent, TypographyComponent } from '@/shared/ui';
 import { UNCATEGORISED_SENTINEL } from '@/shared/utils';
 
 /** Uncategorised-backlog and transfers-needing-review action cards, each hidden when its count is zero. */
 @Component({
   selector: 'app-action-queue-panel',
-  imports: [RouterLink, LoadingSkeletonComponent],
+  imports: [RouterLink, LoadingSkeletonComponent, TypographyComponent],
   templateUrl: './action-queue-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

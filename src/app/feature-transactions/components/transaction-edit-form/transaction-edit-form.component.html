@@ -1,7 +1,7 @@
 <mm-modal [(open)]="open">
   <span mm-modal-title>Edit transaction</span>
   @if (transaction(); as transaction) {
-    <p class="mt-1 text-sm text-base-content/70">{{ transaction.rawDescription }}</p>
+    <mm-text as="p" variant="caption" class="mt-1">{{ transaction.rawDescription }}</mm-text>
   }
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
@@ -36,10 +36,10 @@
     @if (!isTransferLeg()) {
       <label class="label cursor-pointer justify-start gap-2">
         <input type="checkbox" formControlName="nullified" class="checkbox checkbox-sm" />
-        <span class="text-sm">Exclude from income/expense</span>
+        <mm-text variant="caption" color="base-content">Exclude from income/expense</mm-text>
       </label>
       @if (nullifiedError(); as error) {
-        <p class="mt-1 text-sm text-error">{{ error }}</p>
+        <mm-text as="p" color="error" class="mt-1 text-sm">{{ error }}</mm-text>
       }
     }
 
@@ -71,9 +71,9 @@
     @if (showAlwaysCategorise()) {
       <label class="label cursor-pointer justify-start gap-2">
         <input type="checkbox" formControlName="alwaysCategorise" class="checkbox checkbox-sm" />
-        <span class="text-sm">
+        <mm-text variant="caption" color="base-content">
           Always categorise "{{ transaction()?.counterpartyName }}" this way
-        </span>
+        </mm-text>
       </label>
     }
 

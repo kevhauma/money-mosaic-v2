@@ -8,6 +8,7 @@ import {
   ConfirmDialogComponent,
   MmModalComponent,
   PageHeaderComponent,
+  TypographyComponent,
 } from '@/shared/ui';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -21,6 +22,7 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
     ConfirmDialogComponent,
     MmModalComponent,
     PageHeaderComponent,
+    TypographyComponent,
   ],
   templateUrl: './data-management-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

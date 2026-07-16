@@ -20,6 +20,7 @@ import {
   ConfirmDialogComponent,
   MmModalComponent,
   SelectComponent,
+  TypographyComponent,
 } from '@/shared/ui';
 import { AttributionOverrideFieldsetComponent } from '../attribution-override-fieldset/attribution-override-fieldset.component';
 
@@ -36,6 +37,7 @@ export type TransactionEditResult = Partial<
     SelectComponent,
     MmModalComponent,
     AttributionOverrideFieldsetComponent,
+    TypographyComponent,
   ],
   templateUrl: './transaction-edit-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

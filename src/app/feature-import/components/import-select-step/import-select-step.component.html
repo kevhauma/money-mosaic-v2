@@ -6,7 +6,9 @@
       (drop)="onDrop($event)"
       (dragover)="onDragOver($event)"
     >
-      <p class="text-sm text-base-content/60">Drag &#38; drop one or more CSV files here, or</p>
+      <mm-text as="p" class="text-sm text-base-content/60"
+        >Drag &#38; drop one or more CSV files here, or</mm-text
+      >
       <label class="btn btn-sm">
         Browse
         <input
@@ -27,8 +29,10 @@
         @for (row of queue(); track row.file; let i = $index) {
           <li class="flex flex-wrap items-center gap-3 rounded-box border border-base-300 p-3">
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium">{{ row.file.name }}</p>
-              <p class="text-xs text-base-content/60">{{ (row.file.size / 1024).toFixed(1) }} KB</p>
+              <mm-text as="p" weight="medium" class="truncate text-sm">{{ row.file.name }}</mm-text>
+              <mm-text as="p" class="text-xs text-base-content/60"
+                >{{ (row.file.size / 1024).toFixed(1) }} KB</mm-text
+              >
             </div>
             <select
               class="select select-sm w-48"

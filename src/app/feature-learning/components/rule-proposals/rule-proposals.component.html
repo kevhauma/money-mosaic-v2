@@ -19,11 +19,11 @@
                 aria-hidden="true"
               />
             </mm-button>
-            <span class="font-medium">{{ proposal.counterpartyName }}</span>
+            <mm-text weight="medium">{{ proposal.counterpartyName }}</mm-text>
             <mm-badge variant="ghost" size="sm">{{ categoryNameFor(proposal) }}</mm-badge>
-            <span class="text-xs text-base-content/60">
+            <mm-text class="text-xs text-base-content/60">
               {{ proposal.support }} matches · {{ confidencePercent(proposal) }}% confident
-            </span>
+            </mm-text>
           </div>
           <div class="flex items-center gap-2">
             <mm-button size="xs" color="primary" (click)="accept(proposal)">Accept</mm-button>
@@ -33,13 +33,16 @@
         @if (isExpanded(proposal)) {
           <div class="mt-2 ml-8 flex flex-col gap-1 border-l border-base-300 pl-3">
             @for (transaction of matchedTransactions(proposal); track transaction.id) {
-              <div class="flex items-center justify-between gap-3 text-xs text-base-content/70">
+              <mm-text
+                as="p"
+                class="flex items-center justify-between gap-3 text-xs text-base-content/70"
+              >
                 <span class="whitespace-nowrap">{{ transaction.bookingDate }}</span>
                 <span class="flex-1 truncate">{{ transaction.rawDescription }}</span>
-                <span [class.text-error]="transaction.amount < 0">
+                <mm-text [color]="transaction.amount < 0 ? 'error' : undefined">
                   {{ transaction.amount | signedAmount }}
-                </span>
-              </div>
+                </mm-text>
+              </mm-text>
             }
           </div>
         }

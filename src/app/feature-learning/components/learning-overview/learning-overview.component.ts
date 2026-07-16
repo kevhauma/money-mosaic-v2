@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { PageHeaderComponent } from '@/shared/ui';
+import { PageHeaderComponent, TypographyComponent } from '@/shared/ui';
 import { ModelStatusComponent } from '../model-status/model-status.component';
 import { RuleProposalsComponent } from '../rule-proposals/rule-proposals.component';
 import { SuggestionsTableComponent } from '../suggestions-table/suggestions-table.component';
@@ -11,6 +11,7 @@ import { SuggestionsTableComponent } from '../suggestions-table/suggestions-tabl
     ModelStatusComponent,
     SuggestionsTableComponent,
     RuleProposalsComponent,
+    TypographyComponent,
   ],
   templateUrl: './learning-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

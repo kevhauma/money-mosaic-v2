@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { RangeStore } from '@/core/stats';
 import { CategoriesStore } from '@/core/state';
-import { LoadingSkeletonComponent } from '@/shared/ui';
+import { LoadingSkeletonComponent, TypographyComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
@@ -29,7 +29,7 @@ const UNCATEGORISED_COLOR = '#9ca3af';
  */
 @Component({
   selector: 'app-top-transactions-panel',
-  imports: [RouterLink, LoadingSkeletonComponent],
+  imports: [RouterLink, LoadingSkeletonComponent, TypographyComponent],
   templateUrl: './top-transactions-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

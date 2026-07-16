@@ -25,6 +25,7 @@ import {
   LoadingSkeletonComponent,
   PageHeaderComponent,
   PaginatorComponent,
+  TypographyComponent,
 } from '@/shared/ui';
 import {
   createPagination,
@@ -80,6 +81,7 @@ type TransactionRow = {
     TransactionEditFormComponent,
     TransactionFiltersComponent,
     TransferReviewComponent,
+    TypographyComponent,
   ],
   templateUrl: './transactions-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

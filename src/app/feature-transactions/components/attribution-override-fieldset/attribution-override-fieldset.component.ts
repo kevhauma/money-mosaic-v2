@@ -12,7 +12,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import type { Account, Transaction, Transfer } from '@/core/data-access';
 import { reimbursementCandidates, validateAttributionOverride } from '@/core/transactions';
 import { TransactionsStore, TransferSettingsStore, TransfersStore } from '@/core/state';
-import { SelectComponent } from '@/shared/ui';
+import { SelectComponent, TypographyComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
 /** Built attribution override, or `undefined` when the mode select is left at "Default". */
@@ -25,7 +25,7 @@ export type AttributionOverrideResult = { value: Transaction['attributionOverrid
  */
 @Component({
   selector: 'app-attribution-override-fieldset',
-  imports: [ReactiveFormsModule, SelectComponent, SignedAmountPipe],
+  imports: [ReactiveFormsModule, SelectComponent, SignedAmountPipe, TypographyComponent],
   templateUrl: './attribution-override-fieldset.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RangeStore } from '@/core/stats';
+import { TypographyComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
@@ -18,7 +19,7 @@ const RATIO_EQUALITY_THRESHOLD = 1.05;
  */
 @Component({
   selector: 'app-weekday-weekend-split-panel',
-  imports: [RouterLink],
+  imports: [RouterLink, TypographyComponent],
   templateUrl: './weekday-weekend-split-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

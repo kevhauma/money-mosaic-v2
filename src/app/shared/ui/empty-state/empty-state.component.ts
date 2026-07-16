@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TypographyComponent } from '../typography/typography.component';
 
 @Component({
   selector: 'mm-empty-state',
-  imports: [],
+  imports: [TypographyComponent],
   templateUrl: './empty-state.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

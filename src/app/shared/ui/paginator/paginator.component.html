@@ -1,7 +1,7 @@
 <div class="flex items-center justify-between gap-3 text-sm">
-  <span class="text-base-content/60">
+  <mm-text class="text-base-content/60">
     Showing {{ pageRange().start }}–{{ pageRange().end }} of {{ pageRange().total }}
-  </span>
+  </mm-text>
   @if (totalPages() > 1) {
     <div class="flex items-center gap-2">
       <mm-button variant="ghost" size="sm" [disabled]="currentPage() === 1" (click)="onPrev()">

@@ -22,11 +22,11 @@
           <tr>
             <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
             <td>
-              <span class="font-medium">{{ row.transaction.rawDescription }}</span>
+              <mm-text weight="medium">{{ row.transaction.rawDescription }}</mm-text>
               @if (row.transaction.counterpartyName) {
-                <div class="text-xs text-base-content/60">
+                <mm-text as="p" class="text-xs text-base-content/60">
                   {{ row.transaction.counterpartyName }}
-                </div>
+                </mm-text>
               }
             </td>
             <td>{{ row.accountName }}</td>

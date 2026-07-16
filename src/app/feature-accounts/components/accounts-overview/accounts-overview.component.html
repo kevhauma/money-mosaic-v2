@@ -1,7 +1,7 @@
 <mm-page-header title="Accounts" subtitle="Every account you track, in one place.">
   <div actions class="flex items-center gap-3">
     <label class="label cursor-pointer gap-2">
-      <span class="text-sm">Show archived</span>
+      <mm-text variant="caption" color="base-content">Show archived</mm-text>
       <input
         type="checkbox"
         class="toggle toggle-sm"
@@ -106,20 +106,26 @@
           }}</mm-badge>
 
           @if (accountsStore.dataReady()) {
-            <p class="text-2xl font-semibold" [class.text-error]="balanceFor(account) < 0">
+            <mm-text
+              as="p"
+              variant="display"
+              [color]="balanceFor(account) < 0 ? 'error' : undefined"
+            >
               {{ balanceFor(account) | signedAmount }}
-            </p>
+            </mm-text>
             @if (shareFor(account) !== null) {
-              <p class="text-xs text-base-content/60">
+              <mm-text as="p" class="text-xs text-base-content/60">
                 Your share: {{ shareFor(account)! | signedAmount }}
-              </p>
+              </mm-text>
             }
           } @else {
             <span class="skeleton inline-block h-8 w-24"></span>
           }
 
           @if (account.iban) {
-            <p class="text-xs text-base-content/60">···· {{ account.iban.slice(-4) }}</p>
+            <mm-text as="p" class="text-xs text-base-content/60"
+              >···· {{ account.iban.slice(-4) }}</mm-text
+            >
           }
         </div>
       </div>

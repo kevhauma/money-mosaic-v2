@@ -20,22 +20,22 @@
                 ></span>
                 <span class="min-w-0">
                   <span class="block truncate">{{ entry.description }}</span>
-                  <span class="text-xs text-base-content/60">
+                  <mm-text class="text-xs text-base-content/60">
                     {{ entry.bookingDate }} · {{ entry.categoryName }}
-                  </span>
+                  </mm-text>
                 </span>
               </span>
-              <span class="shrink-0 text-sm font-medium text-error">{{
+              <mm-text weight="medium" color="error" class="shrink-0 text-sm">{{
                 entry.formattedAmount
-              }}</span>
+              }}</mm-text>
             </a>
           </li>
         }
       </ul>
     } @else {
-      <p class="py-6 text-center text-sm text-base-content/60">
+      <mm-text as="p" align="center" class="py-6 text-sm text-base-content/60">
         No expense transactions for this range.
-      </p>
+      </mm-text>
     }
   </div>
 </div>

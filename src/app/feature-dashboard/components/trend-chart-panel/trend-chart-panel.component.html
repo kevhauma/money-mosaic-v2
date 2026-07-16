@@ -7,7 +7,7 @@
 
     <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div>
-        <h3 class="text-sm font-medium text-base-content/70">Income</h3>
+        <mm-text as="h3" variant="subheading">Income</mm-text>
         <div
           echarts
           [options]="incomeChartOption()"
@@ -19,7 +19,7 @@
       </div>
 
       <div>
-        <h3 class="text-sm font-medium text-base-content/70">Expense</h3>
+        <mm-text as="h3" variant="subheading">Expense</mm-text>
         <div
           echarts
           [options]="expenseChartOption()"

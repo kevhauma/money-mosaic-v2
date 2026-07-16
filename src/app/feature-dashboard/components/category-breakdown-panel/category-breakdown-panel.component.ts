@@ -4,7 +4,12 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { RangeStore, type CategoryBreakdownEntry } from '@/core/stats';
 import { CategoriesStore } from '@/core/state';
-import { AlertComponent, ButtonComponent, LoadingSkeletonComponent } from '@/shared/ui';
+import {
+  AlertComponent,
+  ButtonComponent,
+  LoadingSkeletonComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import {
   buildTransactionDrilldownParams,
   formatCurrency,
@@ -72,6 +77,7 @@ const formatPieTooltip = (params: PieTooltipParam): string => {
     AlertComponent,
     ButtonComponent,
     LoadingSkeletonComponent,
+    TypographyComponent,
   ],
   templateUrl: './category-breakdown-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

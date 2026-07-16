@@ -3,11 +3,23 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerTag, tablerTrash, tablerX } from '@ng-icons/tabler-icons';
 import { CategoriesStore } from '@/core/state';
-import { ButtonComponent, ConfirmDialogComponent, SelectComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  ConfirmDialogComponent,
+  SelectComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 
 @Component({
   selector: 'app-transaction-bulk-bar',
-  imports: [ReactiveFormsModule, NgIcon, ButtonComponent, ConfirmDialogComponent, SelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    NgIcon,
+    ButtonComponent,
+    ConfirmDialogComponent,
+    SelectComponent,
+    TypographyComponent,
+  ],
   templateUrl: './transaction-bulk-bar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerTag, tablerTrash, tablerX })],

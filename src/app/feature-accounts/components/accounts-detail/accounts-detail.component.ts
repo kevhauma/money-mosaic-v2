@@ -14,6 +14,7 @@ import {
   ConfirmDialogComponent,
   EmptyStateComponent,
   PageHeaderComponent,
+  TypographyComponent,
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 import { AccountsStore } from '@/core/state';
@@ -36,6 +37,7 @@ import {
     ConfirmDialogComponent,
     EmptyStateComponent,
     PageHeaderComponent,
+    TypographyComponent,
   ],
   templateUrl: './accounts-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

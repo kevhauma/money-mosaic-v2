@@ -20,7 +20,13 @@ import {
 import type { Rule, RuleCondition } from '@/core/data-access';
 import { OPERATORS_BY_FIELD } from '@/core/categorisation';
 import { AccountsStore, CategoriesStore } from '@/core/state';
-import { ButtonComponent, InputComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  InputComponent,
+  MmModalComponent,
+  SelectComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import { FIELD_LABELS, OPERATOR_LABELS } from '../../rule-labels';
 
 export type RuleFormValue = Omit<Rule, 'id'>;
@@ -57,6 +63,7 @@ const regexPatternMaxLength = (control: AbstractControl): ValidationErrors | nul
     InputComponent,
     SelectComponent,
     MmModalComponent,
+    TypographyComponent,
   ],
   templateUrl: './rule-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

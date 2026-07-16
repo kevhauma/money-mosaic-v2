@@ -19,6 +19,7 @@ import {
   EmptyStateComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
+  TypographyComponent,
   type BadgeColor,
 } from '@/shared/ui';
 import { createConfirmState } from '@/shared/utils';
@@ -42,6 +43,7 @@ import {
     EmptyStateComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
+    TypographyComponent,
   ],
   templateUrl: './categories-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -16,7 +16,9 @@
           formControlName="autoLinkMediumConfidence"
           class="checkbox checkbox-sm"
         />
-        <span class="text-sm">Auto-link medium-confidence matches</span>
+        <mm-text variant="caption" color="base-content"
+          >Auto-link medium-confidence matches</mm-text
+        >
       </label>
 
       <mm-button type="submit" size="sm" variant="outline">Save settings</mm-button>
@@ -24,9 +26,9 @@
 
     <div class="flex items-center gap-2">
       @if (lastRunCount() !== null) {
-        <span class="text-xs text-base-content/60">
+        <mm-text class="text-xs text-base-content/60">
           Linked {{ lastRunCount() }} pair{{ lastRunCount() === 1 ? '' : 's' }}.
-        </span>
+        </mm-text>
       }
       <mm-button size="sm" variant="ghost" (click)="toggleReview()">
         {{ reviewExpanded() ? 'Hide' : 'Review' }} possible transfers
@@ -41,7 +43,9 @@
   @if (reviewExpanded()) {
     @if (ambiguousCandidates().length > 0) {
       <div class="mt-4 space-y-2">
-        <p class="text-sm font-medium">Possible transfers awaiting confirmation</p>
+        <mm-text as="p" weight="medium" class="text-sm"
+          >Possible transfers awaiting confirmation</mm-text
+        >
         @for (candidate of ambiguousCandidates(); track candidate.from.id + '-' + candidate.to.id) {
           <div
             class="flex flex-wrap items-center justify-between gap-3 rounded-box border border-base-300 p-2 text-sm"
@@ -51,18 +55,22 @@
                 <div class="whitespace-nowrap">
                   {{ candidate.from.bookingDate }} · {{ accountName(candidate.from.accountId) }}
                 </div>
-                <div class="text-base-content/60">{{ candidate.from.rawDescription }}</div>
+                <mm-text as="p" class="text-base-content/60">{{
+                  candidate.from.rawDescription
+                }}</mm-text>
               </div>
               <span aria-hidden="true">→</span>
               <div>
                 <div class="whitespace-nowrap">
                   {{ candidate.to.bookingDate }} · {{ accountName(candidate.to.accountId) }}
                 </div>
-                <div class="text-base-content/60">{{ candidate.to.rawDescription }}</div>
+                <mm-text as="p" class="text-base-content/60">{{
+                  candidate.to.rawDescription
+                }}</mm-text>
               </div>
-              <span [class.text-error]="candidate.from.amount < 0">
+              <mm-text [color]="candidate.from.amount < 0 ? 'error' : undefined">
                 {{ candidate.from.amount | signedAmount }}
-              </span>
+              </mm-text>
             </div>
             <mm-button size="xs" color="primary" (click)="confirmCandidate(candidate)">
               Confirm
@@ -71,7 +79,9 @@
         }
       </div>
     } @else {
-      <p class="mt-4 text-sm text-base-content/60">No possible transfers awaiting confirmation.</p>
+      <mm-text as="p" class="mt-4 text-sm text-base-content/60"
+        >No possible transfers awaiting confirmation.</mm-text
+      >
     }
   }
 </div>

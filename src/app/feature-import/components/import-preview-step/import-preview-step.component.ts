@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { ParsedRowResult } from '@/core/import';
-import { BadgeComponent } from '@/shared/ui';
+import { BadgeComponent, TypographyComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
 @Component({
   selector: 'app-import-preview-step',
-  imports: [BadgeComponent, SignedAmountPipe],
+  imports: [BadgeComponent, SignedAmountPipe, TypographyComponent],
   templateUrl: './import-preview-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

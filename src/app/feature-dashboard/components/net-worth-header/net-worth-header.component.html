@@ -1,10 +1,10 @@
 <div class="text-right">
-  <div class="text-xs uppercase tracking-wide text-base-content/60">Net worth</div>
-  <div class="text-2xl font-semibold">
+  <mm-text variant="label" as="p">Net worth</mm-text>
+  <mm-text variant="display" as="p">
     @if (accountsStore.dataReady()) {
       {{ accountsStore.netWorth() | signedAmount }}
     } @else {
       <span class="skeleton inline-block h-6 w-20 align-middle"></span>
     }
-  </div>
+  </mm-text>
 </div>

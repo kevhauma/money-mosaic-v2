@@ -1,7 +1,7 @@
 <mm-page-header title="Categories" subtitle="Manage the categories transactions get sorted into.">
   <div actions class="flex items-center gap-3">
     <label class="label cursor-pointer gap-2">
-      <span class="text-sm">Show archived</span>
+      <mm-text variant="caption" color="base-content">Show archived</mm-text>
       <input
         type="checkbox"
         class="toggle toggle-sm"
@@ -89,7 +89,7 @@
                 >
                   <ng-icon [name]="categoryIconName(category.icon)" size="16" aria-hidden="true" />
                 </span>
-                <span class="font-medium">{{ category.name }}</span>
+                <mm-text weight="medium">{{ category.name }}</mm-text>
               </div>
             </td>
             <td>

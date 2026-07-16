@@ -11,10 +11,10 @@
   <div class="card border border-base-300 bg-base-100">
     <div class="card-body gap-3">
       <h2 class="card-title text-base">Export data</h2>
-      <p class="text-sm text-base-content/60">
+      <mm-text as="p" class="text-sm text-base-content/60">
         Download everything — accounts, transactions, categories, rules, and settings — as one JSON
         file. Nothing leaves your browser except the file you save.
-      </p>
+      </mm-text>
       <mm-button color="primary" class="w-fit" [disabled]="exporting()" (click)="exportData()">
         {{ exporting() ? 'Exporting…' : 'Export data' }}
       </mm-button>
@@ -24,7 +24,9 @@
   <div class="card border border-base-300 bg-base-100">
     <div class="card-body gap-3">
       <h2 class="card-title text-base">Import data</h2>
-      <p class="text-sm text-base-content/60">Restore from a previously exported backup file.</p>
+      <mm-text as="p" class="text-sm text-base-content/60"
+        >Restore from a previously exported backup file.</mm-text
+      >
       <label class="btn btn-primary w-fit">
         Choose file
         <input
@@ -54,7 +56,7 @@
         }
       }
     </div>
-    <p class="text-sm text-base-content/60">
+    <mm-text as="p" class="text-sm text-base-content/60">
       @switch (storageStatus()) {
         @case ('granted') {
           Your browser has exempted this app's data from automatic storage cleanup.
@@ -68,17 +70,17 @@
           locally, but may be subject to automatic cleanup under storage pressure.
         }
       }
-    </p>
+    </mm-text>
   </div>
 </div>
 
 <div class="card mt-4 border border-error/40 bg-base-100">
   <div class="card-body gap-2">
     <h2 class="card-title text-base text-error">Delete all data</h2>
-    <p class="text-sm text-base-content/60">
+    <mm-text as="p" class="text-sm text-base-content/60">
       Permanently erase every account, transaction, category, rule, and setting stored in this
       browser. This cannot be undone.
-    </p>
+    </mm-text>
     <mm-button
       color="error"
       class="w-fit"
@@ -92,9 +94,9 @@
 
 <mm-modal [(open)]="importDialogOpen">
   <span mm-modal-title>Import data</span>
-  <p class="py-3 text-sm text-base-content/70">
+  <mm-text as="p" variant="caption" class="py-3">
     Choose how the imported file should be combined with your existing data.
-  </p>
+  </mm-text>
 
   <fieldset class="fieldset gap-1">
     <label class="label cursor-pointer justify-start gap-3">
@@ -106,10 +108,10 @@
         (change)="importMode.set('merge')"
       />
       <span>
-        <span class="block font-medium">Merge</span>
-        <span class="block text-xs text-base-content/60">
+        <mm-text as="p" weight="medium">Merge</mm-text>
+        <mm-text as="p" class="text-xs text-base-content/60">
           Add imported rows alongside what you already have.
-        </span>
+        </mm-text>
       </span>
     </label>
     <label class="label cursor-pointer justify-start gap-3">
@@ -121,10 +123,10 @@
         (change)="importMode.set('replace')"
       />
       <span>
-        <span class="block font-medium">Replace</span>
-        <span class="block text-xs text-base-content/60">
+        <mm-text as="p" weight="medium">Replace</mm-text>
+        <mm-text as="p" class="text-xs text-base-content/60">
           Erase everything and restore only what's in this file.
-        </span>
+        </mm-text>
       </span>
     </label>
   </fieldset>

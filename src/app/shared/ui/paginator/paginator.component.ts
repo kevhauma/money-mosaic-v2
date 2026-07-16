@@ -3,11 +3,12 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerChevronLeft, tablerChevronRight } from '@ng-icons/tabler-icons';
 import { type PageRange } from '@/shared/utils';
 import { ButtonComponent } from '../button/button.component';
+import { TypographyComponent } from '../typography/typography.component';
 
 /** Presentational pager (holds no state of its own) — the caller owns the page and reacts to `pageChange`. */
 @Component({
   selector: 'mm-paginator',
-  imports: [NgIcon, ButtonComponent],
+  imports: [NgIcon, ButtonComponent, TypographyComponent],
   templateUrl: './paginator.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerChevronLeft, tablerChevronRight })],

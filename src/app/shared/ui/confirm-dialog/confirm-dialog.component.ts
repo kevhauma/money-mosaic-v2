@@ -10,10 +10,11 @@ import {
 } from '@angular/core';
 import { ButtonComponent } from '../button/button.component';
 import { MmModalComponent } from '../modal/mm-modal.component';
+import { TypographyComponent } from '../typography/typography.component';
 
 @Component({
   selector: 'mm-confirm-dialog',
-  imports: [ButtonComponent, MmModalComponent],
+  imports: [ButtonComponent, MmModalComponent, TypographyComponent],
   templateUrl: './confirm-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

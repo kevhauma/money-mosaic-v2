@@ -26,11 +26,16 @@ Text styling today is applied ad hoc: `<span>` (and occasional `<p>`/`<h*>`) tag
 
 ## Acceptance criteria
 
-- [ ] `mm-text` component with `variant`/`weight`/`color`/`align`/`as` typed inputs, plus `class` passthrough per the existing primitive convention
-- [ ] `stat-card`, `page-header`, and the dashboard panel templates named above no longer contain raw Tailwind font-size/weight/color utility classes on text elements — all migrated to `mm-text`
-- [ ] Unit tests cover each `variant` rendering its expected class string, and the `as` input rendering the correct tag
-- [ ] Verified via the fallow and coding-conventions skills
+**Phase 1 — build + pilot consumers:**
+- [x] `mm-text` component with `variant`/`weight`/`color`/`align`/`as` typed inputs, plus `class` passthrough per the existing primitive convention
+- [x] `stat-card`, `page-header`, and the dashboard panel templates named above no longer contain raw Tailwind font-size/weight/color utility classes on text elements — all migrated to `mm-text`
+- [x] Unit tests cover each `variant` rendering its expected class string, and the `as` input rendering the correct tag
+- [x] Pilot phase verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
+
+**Phase 2 — full rollout (all remaining consumers):**
+- [x] Every remaining bare text-styling `<span>`/`<p>`/heading identified by [TICKET-UI-01](./TICKET-UI-01-styling-audit.md)'s audit (88 occurrences / 28 files, plus several `<p>`/`<h1-4>` sites the audit's span-only grep hadn't tallied) migrated to `<mm-text>`, preserving each call site's exact rendered classes (no incidental visual drift — a variant's baked-in opacity/weight must match the original, or the raw values move to `class` passthrough instead of forcing an inexact variant). Deliberately left unmigrated: daisyUI's own structural classes (`card-title`, `stat-title`/`stat-value`/`stat-desc`, `label`, `fieldset-legend`, `divider`) reserved for other v1.5 tickets, decorative/icon-wrapper spans, and `mm-modal`'s `<h3 [id]="titleId">` (mm-text has no `id`-attribute passthrough and the id feeds `aria-labelledby`).
+- [x] Full rollout re-verified via `ng lint`/`ng test`/`ng build`, the fallow skill, a conventions-reviewer pass, and a live browser check
 
 ## Notes
 
-This is the highest-leverage primitive in the set — nearly every other extraction ticket's templates also contain bare text styling. Migrate it to `mm-text` opportunistically wherever a later ticket already touches that file, not only in the two pilot consumers named above.
+This is the highest-leverage primitive in the set — nearly every other extraction ticket's templates also contain bare text styling. Phase 1 already migrated the 5 pilot consumers named above; Phase 2 does the rest. Every ticket in this set follows this same **pilot consumers → verify → full rollout** shape rather than migrating every call site in one pass.

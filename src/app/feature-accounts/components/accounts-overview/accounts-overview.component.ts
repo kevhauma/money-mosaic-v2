@@ -19,6 +19,7 @@ import {
   EmptyStateComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
+  TypographyComponent,
 } from '@/shared/ui';
 import { createConfirmState, SignedAmountPipe } from '@/shared/utils';
 import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
@@ -43,6 +44,7 @@ import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-wo
     NetWorthHistoryChartComponent,
     PageHeaderComponent,
     SignedAmountPipe,
+    TypographyComponent,
   ],
   templateUrl: './accounts-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

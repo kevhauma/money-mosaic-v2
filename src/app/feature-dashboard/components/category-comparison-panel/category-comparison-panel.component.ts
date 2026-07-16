@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler-icons/fill';
 import { formatAlignedRangeLabel } from '@/core/stats';
-import { ButtonComponent, formatDisplayDate } from '@/shared/ui';
+import { ButtonComponent, formatDisplayDate, TypographyComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
 import { CategoriesStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
@@ -60,7 +60,7 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
  */
 @Component({
   selector: 'app-category-comparison-panel',
-  imports: [RouterLink, NgIcon, ButtonComponent],
+  imports: [RouterLink, NgIcon, ButtonComponent, TypographyComponent],
   templateUrl: './category-comparison-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerTriangleFill, tablerTriangleInvertedFill })],

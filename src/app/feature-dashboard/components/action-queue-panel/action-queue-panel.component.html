@@ -9,18 +9,20 @@
         class="card bg-warning/10 shadow-sm transition hover:bg-warning/20"
       >
         <div class="card-body">
-          <p class="font-semibold">
+          <mm-text as="p" weight="semibold">
             {{ count }} uncategorised transaction{{ count === 1 ? '' : 's' }}
-          </p>
-          <p class="text-sm text-base-content/70">Clear the backlog</p>
+          </mm-text>
+          <mm-text as="p" variant="caption">Clear the backlog</mm-text>
         </div>
       </a>
     }
     @if (transfersToReviewCount(); as count) {
       <a routerLink="/transactions" class="card bg-info/10 shadow-sm transition hover:bg-info/20">
         <div class="card-body">
-          <p class="font-semibold">{{ count }} transfer{{ count === 1 ? '' : 's' }} need review</p>
-          <p class="text-sm text-base-content/70">Confirm ambiguous matches</p>
+          <mm-text as="p" weight="semibold"
+            >{{ count }} transfer{{ count === 1 ? '' : 's' }} need review</mm-text
+          >
+          <mm-text as="p" variant="caption">Confirm ambiguous matches</mm-text>
         </div>
       </a>
     }

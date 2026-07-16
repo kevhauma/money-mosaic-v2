@@ -10,12 +10,19 @@ import {
   TransferSettingsStore,
 } from '@/core/state';
 import { resolveTransferMatches, type TransferCandidate } from '@/core/transfers';
-import { ButtonComponent, InputComponent } from '@/shared/ui';
+import { ButtonComponent, InputComponent, TypographyComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
 @Component({
   selector: 'app-transfer-review',
-  imports: [ReactiveFormsModule, NgIcon, SignedAmountPipe, ButtonComponent, InputComponent],
+  imports: [
+    ReactiveFormsModule,
+    NgIcon,
+    SignedAmountPipe,
+    ButtonComponent,
+    InputComponent,
+    TypographyComponent,
+  ],
   templateUrl: './transfer-review.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerRefresh })],

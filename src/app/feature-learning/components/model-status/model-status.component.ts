@@ -7,6 +7,7 @@ import {
   AlertComponent,
   BadgeComponent,
   ButtonComponent,
+  TypographyComponent,
   type AlertStatus,
   type BadgeColor,
 } from '@/shared/ui';
@@ -56,7 +57,14 @@ const TRAINING_WINDOW_OPTIONS: { years: number | null; label: string }[] = [
 /** Model status chip + diagnostic detail + Train/Retrain control (FR-ML-10, expanded by FR-ML-12), mounted on the Learning page. */
 @Component({
   selector: 'app-model-status',
-  imports: [DatePipe, DecimalPipe, AlertComponent, BadgeComponent, ButtonComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    AlertComponent,
+    BadgeComponent,
+    ButtonComponent,
+    TypographyComponent,
+  ],
   templateUrl: './model-status.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
