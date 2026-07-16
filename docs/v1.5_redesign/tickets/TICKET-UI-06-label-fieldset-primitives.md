@@ -26,12 +26,17 @@ Prepare.md flags both `label` and `fieldset`/`fieldset-legend` as extraction can
 
 ## Acceptance criteria
 
+**Phase 1 — build + pilot consumers:**
 - [ ] `mm-label` component wrapping a single field's caption
 - [ ] `mm-fieldset` component wrapping a grouped set of fields with a `legend`
 - [ ] Usage guidance (label vs. fieldset) documented on both components
-- [ ] Existing forms migrated to use the correct primitive per the guidance above
-- [ ] Verified via the fallow and coding-conventions skills
+- [ ] One representative form migrated to the correct primitive (label and/or fieldset) as the pilot consumer
+- [ ] Pilot phase verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
+
+**Phase 2 — full rollout (all remaining consumers):**
+- [ ] Every remaining form identified by [TICKET-UI-01](./TICKET-UI-01-styling-audit.md)'s audit (`label`: 24 occurrences / 12 files; `fieldset`/`fieldset-legend`: 86 occurrences / 11 files) migrated to the correct one of `mm-label`/`mm-fieldset` per the usage guidance
+- [ ] Full rollout re-verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
 
 ## Notes
 
-While auditing forms for this ticket, also check whether `input.component.ts`'s `type="color"` variant needs the `rounded-field` class prepare.md flagged — if it's a single, narrow usage, fix it inline here rather than opening a separate ticket.
+While auditing forms for this ticket, also check whether `input.component.ts`'s `type="color"` variant needs the `rounded-field` class prepare.md flagged — if it's a single, narrow usage, fix it inline here rather than opening a separate ticket. Follows the same **pilot consumers → verify → full rollout** shape as [TICKET-UI-02](./TICKET-UI-02-typography-primitive.md).

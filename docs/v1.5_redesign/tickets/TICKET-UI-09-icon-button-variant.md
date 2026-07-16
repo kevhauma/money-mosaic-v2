@@ -24,11 +24,16 @@ Prepare.md flags "button with icon as child (icon button)" as an extraction cand
 
 ## Acceptance criteria
 
+**Phase 1 — build + pilot consumer:**
 - [ ] `mm-button` gains a `shape` typed input (`'default' | 'square' | 'circle'`) computed into the class string alongside the existing color/variant/size axes
-- [ ] Icon-only usages across the app migrated to `mm-button` with the new `shape` input
+- [ ] [app.html](../../../src/app/app.html)'s drawer-toggle button migrated to `<mm-button shape="square">` as the pilot consumer
 - [ ] Unit test asserts an `aria-label` is present whenever `shape !== 'default'`
-- [ ] Verified via the fallow and coding-conventions skills
+- [ ] Pilot phase verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
+
+**Phase 2 — full rollout (all remaining consumers):**
+- [ ] Every remaining icon-only usage identified by [TICKET-UI-01](./TICKET-UI-01-styling-audit.md)'s audit (49 `ng-icon` uses / 15 files; 24 `ariaLabel`/`aria-label` occurrences / 11 files) migrated to `mm-button` with the new `shape` input
+- [ ] Full rollout re-verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
 
 ## Notes
 
-This extends an existing primitive rather than creating a new one — matches the Open/Closed principle already called out in the coding-conventions skill for `mm-button`'s typed axes.
+This extends an existing primitive rather than creating a new one — matches the Open/Closed principle already called out in the coding-conventions skill for `mm-button`'s typed axes. Follows the same **pilot consumers → verify → full rollout** shape as [TICKET-UI-02](./TICKET-UI-02-typography-primitive.md).

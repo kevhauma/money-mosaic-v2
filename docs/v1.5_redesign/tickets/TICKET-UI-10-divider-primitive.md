@@ -23,10 +23,15 @@ Prepare.md flags `divider` as an extraction candidate — the smallest of the pr
 
 ## Acceptance criteria
 
+**Phase 1 — build + pilot consumer:**
 - [ ] `mm-divider` component with `orientation` typed input and optional label projection, `class` passthrough per the existing primitive convention
-- [ ] Existing `divider` usages migrated to the new primitive
-- [ ] Verified via the fallow and coding-conventions skills
+- [ ] One existing `divider` usage (per [TICKET-UI-01](./TICKET-UI-01-styling-audit.md)'s audit — 3 occurrences / 3 files: `import-map-step`, `rule-form`, `account-form`) migrated to the new primitive as the pilot consumer
+- [ ] Pilot phase verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
+
+**Phase 2 — full rollout (all remaining consumers):**
+- [ ] The remaining 2 `divider` usages migrated to `mm-divider`
+- [ ] Full rollout re-verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
 
 ## Notes
 
-Smallest ticket in the set — a reasonable one to batch alongside another extraction ticket if picked up by the same PR, rather than shipping entirely alone.
+Smallest ticket in the set — a reasonable one to batch alongside another extraction ticket if picked up by the same PR, rather than shipping entirely alone. Follows the same **pilot consumers → verify → full rollout** shape as [TICKET-UI-02](./TICKET-UI-02-typography-primitive.md), scaled down to 3 files total.

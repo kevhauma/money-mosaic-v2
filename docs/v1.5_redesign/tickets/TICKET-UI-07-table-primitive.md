@@ -23,11 +23,16 @@ Prepare.md flags `table` (and its related `th`/`tr`/`td` structure) as an extrac
 
 ## Acceptance criteria
 
+**Phase 1 — build + pilot consumer:**
 - [ ] `mm-table` shell + structural child components defined, `class` passthrough per the existing primitive convention
 - [ ] Density and zebra-striping behavior covered by unit tests
-- [ ] At least one existing table usage migrated to the new primitive
-- [ ] Verified via the fallow and coding-conventions skills
+- [ ] At least one existing table usage (per [TICKET-UI-01](./TICKET-UI-01-styling-audit.md)'s audit — 93 occurrences / 8 files — likely the Transactions list) migrated to the new primitive as the pilot consumer
+- [ ] Pilot phase verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
+
+**Phase 2 — full rollout (all remaining consumers):**
+- [ ] The remaining table-rendering features from the audit's file list migrated to `mm-table`
+- [ ] Full rollout re-verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
 
 ## Notes
 
-Don't try to build a generic data-grid (sorting/virtualization/column resize) here — this is a styling-consistency wrapper around markup callers still author themselves, not a new table engine. Sorting/virtualization stay whatever each feature already does today.
+Don't try to build a generic data-grid (sorting/virtualization/column resize) here — this is a styling-consistency wrapper around markup callers still author themselves, not a new table engine. Sorting/virtualization stay whatever each feature already does today. Follows the same **pilot consumers → verify → full rollout** shape as [TICKET-UI-02](./TICKET-UI-02-typography-primitive.md).

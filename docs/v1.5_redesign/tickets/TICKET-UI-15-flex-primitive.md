@@ -26,12 +26,18 @@ As a developer working with an editor plugin that visually hides Tailwind classe
 
 ## Acceptance criteria
 
+**Phase 1 — build + pilot consumers:**
 - [ ] `mm-flex` component with `direction`, `align`, `justify`, `gap`, `wrap` typed inputs and `class` passthrough, own component folder with a colocated `.spec.ts`
 - [ ] Unit tests cover: default render (no inputs → bare `flex` class, row direction), each modifier input producing its expected class, `class` passthrough composing with the generated classes
-- [ ] Existing mechanical `flex` usages (per TICKET-UI-01's audit list) migrated to `<mm-flex>`
-- [ ] Verified via the fallow skill and coding-conventions skill
+- [ ] [page-header.component.html](../../../src/app/shared/ui/page-header/page-header.component.html) and [account-form.component.html](../../../src/app/feature-accounts/components/account-form/account-form.component.html) (the two files named in the as-is section) migrated to `<mm-flex>` as pilot consumers
+- [ ] Pilot phase verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
+
+**Phase 2 — full rollout (all remaining consumers):**
+- [ ] Every remaining mechanical `flex` usage identified by [TICKET-UI-01](./TICKET-UI-01-styling-audit.md)'s audit (91 occurrences / 35 files) migrated to `<mm-flex>`; call sites combining `flex` with a modifier set beyond `direction`/`align`/`justify`/`gap`/`wrap` stay a documented follow-up rather than forced into the primitive
+- [ ] Full rollout re-verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
 
 ## Notes
 
 - Grid stays out of scope — see `overview.md`'s Flex/Grid scope decision. Only Flex reverses; the Bento Box Grid ([TICKET-UI-03](./TICKET-UI-03-bento-grid-primitive.md)) remains the only grid-shaped primitive.
 - Independent of the other Phase A tickets; reasonable to pick up any time, including batched with [TICKET-UI-10](./TICKET-UI-10-divider-primitive.md) since both are mechanical, low-risk extractions.
+- Follows the same **pilot consumers → verify → full rollout** shape as [TICKET-UI-02](./TICKET-UI-02-typography-primitive.md) — with 35 files in scope, the two-phase split matters most here.

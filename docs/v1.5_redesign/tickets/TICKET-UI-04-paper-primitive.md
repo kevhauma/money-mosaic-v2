@@ -25,11 +25,16 @@ Prepare.md flags "a 'paper' component consisting of border and padding styling" 
 
 ## Acceptance criteria
 
+**Phase 1 — build + pilot consumers:**
 - [ ] `mm-paper` component with `elevation` typed input, `class` passthrough per the existing primitive convention
 - [ ] Dashboard panel templates named above migrated to use `mm-paper` instead of inline border/padding classes
 - [ ] Unit test covering each `elevation` value renders its expected class string
-- [ ] Verified via the fallow and coding-conventions skills
+- [ ] Pilot phase verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
+
+**Phase 2 — full rollout (all remaining consumers):**
+- [ ] Every remaining "paper" surface (border+padding combo) identified by [TICKET-UI-01](./TICKET-UI-01-styling-audit.md)'s audit (38 occurrences / 27 files) migrated to `<mm-paper>`
+- [ ] Full rollout re-verified via `ng lint`/`ng test`/`ng build`, the fallow and coding-conventions skills, and a live browser check
 
 ## Notes
 
-Ship this ahead of or alongside [TICKET-UI-03](./TICKET-UI-03-bento-grid-primitive.md) since the grid primitive composes with it — either build order works, but both should land before [TICKET-UI-12](./TICKET-UI-12-dashboard-bento-layout.md) (dashboard adoption) starts.
+Ship this ahead of or alongside [TICKET-UI-03](./TICKET-UI-03-bento-grid-primitive.md) since the grid primitive composes with it — either build order works, but both should land before [TICKET-UI-12](./TICKET-UI-12-dashboard-bento-layout.md) (dashboard adoption) starts. Follows the same **pilot consumers → verify → full rollout** shape as [TICKET-UI-02](./TICKET-UI-02-typography-primitive.md): Phase 1 migrates the named dashboard panels only; Phase 2 sweeps every remaining occurrence the audit found.
