@@ -8,14 +8,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import {
-  addEntity,
-  entityConfig,
-  removeEntity,
-  setAllEntities,
-  updateEntity,
-  withEntities,
-} from '@ngrx/signals/entities';
+import { entityConfig, removeEntity, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { AccountsRepository, type Account } from '@/core/data-access';
 import { AccountDeletionService } from '@/core/accounts';
 import {
@@ -30,7 +23,12 @@ import { savingsAccountIbans } from '@/core/transfers';
 import { CategoriesStore } from './categories.store';
 import { TransactionsStore } from './transactions.store';
 import { TransfersStore } from './transfers.store';
-import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
+import {
+  computeReorderUpdates,
+  sortedBySortOrder,
+  withArchivable,
+  withPersistedCrud,
+} from '@/shared/utils';
 
 const accountConfig = entityConfig({
   entity: type<Account>(),
@@ -41,6 +39,9 @@ export const AccountsStore = signalStore(
   { providedIn: 'root' },
   withEntities(accountConfig),
   withArchivable<Account>(),
+  // add/update are plain CRUD (TICKET-NG-08); removeAccount stays hand-rolled below since it
+  // cascades through AccountDeletionService instead of a plain repository call.
+  withPersistedCrud(AccountsRepository, accountConfig),
   withComputed(({ entities, activeEntities, archivedEntities }) => {
     const transactionsStore = inject(TransactionsStore);
     const transfersStore = inject(TransfersStore);
@@ -182,16 +183,11 @@ export const AccountsStore = signalStore(
     return {
       hydrate,
 
-      addAccount: async (account: Account): Promise<void> => {
-        const id = await accountsRepository.add(account);
-        const added: Account = { ...account, id };
-        patchState(store, addEntity(added, accountConfig));
-      },
-
-      updateAccount: async (id: number, changes: Partial<Account>): Promise<void> => {
-        await accountsRepository.update(id, changes);
-        patchState(store, updateEntity({ id, changes }, accountConfig));
-      },
+      // Aliased to the store's own public method names (same pattern as `withArchivable`'s
+      // `activeEntities`/`archivedEntities` -> `activeAccounts`/`archivedAccounts`).
+      addAccount: (account: Account): Promise<Account> => store.add(account),
+      updateAccount: (id: number, changes: Partial<Account>): Promise<void> =>
+        store.update(id, changes),
 
       /**
        * Cascades the delete: the account, its transactions, and any transfer links touching them are

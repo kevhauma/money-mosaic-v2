@@ -13,6 +13,7 @@ const setup = (transfers: Partial<Transfer>[] = []) => {
 
   const transactionsRepository = {
     update: vi.fn().mockResolvedValue(1),
+    bulkRemove: vi.fn().mockResolvedValue(undefined),
   };
   const transfersRepository = {
     getByIds: vi
@@ -89,5 +90,38 @@ describe('TransferCleanupService: cleanupTransfersForRemovedTransactions', () =>
 
     expect(ctx.transfersRepository.getByIds).toHaveBeenCalledWith([5]);
     expect(ctx.transfersRepository.remove).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('TransferCleanupService: removeTransactionsWithTransferCleanup (TICKET-CLEANUP-03)', () => {
+  it('cleans up transfers, then bulk-removes exactly the given transactions', async () => {
+    const ctx = setup([{ id: 5, fromTransactionId: 10, toTransactionId: 20 }]);
+    const transactions: Partial<Transaction>[] = [{ id: 10, transferId: 5 }];
+
+    const result = await ctx.service.removeTransactionsWithTransferCleanup(
+      transactions as Transaction[],
+    );
+
+    expect(ctx.transfersRepository.remove).toHaveBeenCalledWith(5);
+    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(20, { transferId: undefined });
+    expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([10]);
+    expect(result).toEqual({
+      removedTransactionIds: [10],
+      unlinkedTransferIds: [5],
+      clearedTransferTransactionIds: [20],
+    });
+  });
+
+  it('is a safe no-op for an empty selection', async () => {
+    const ctx = setup();
+
+    const result = await ctx.service.removeTransactionsWithTransferCleanup([]);
+
+    expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([]);
+    expect(result).toEqual({
+      removedTransactionIds: [],
+      unlinkedTransferIds: [],
+      clearedTransferTransactionIds: [],
+    });
   });
 });

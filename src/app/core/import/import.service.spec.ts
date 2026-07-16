@@ -47,9 +47,11 @@ describe('ImportService: undoImport', () => {
       remove: vi.fn().mockResolvedValue(undefined),
     };
     const transferCleanupService = {
-      cleanupTransfersForRemovedTransactions: vi
-        .fn()
-        .mockResolvedValue({ unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] }),
+      removeTransactionsWithTransferCleanup: vi.fn().mockResolvedValue({
+        removedTransactionIds: transactions.map((transaction) => transaction.id!),
+        unlinkedTransferIds: [5],
+        clearedTransferTransactionIds: [20],
+      }),
     };
 
     TestBed.configureTestingModule({
@@ -77,10 +79,9 @@ describe('ImportService: undoImport', () => {
 
     const result = await ctx.service.undoImport(99);
 
-    expect(ctx.transferCleanupService.cleanupTransfersForRemovedTransactions).toHaveBeenCalledWith(
+    expect(ctx.transferCleanupService.removeTransactionsWithTransferCleanup).toHaveBeenCalledWith(
       transactions,
     );
-    expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([10, 11]);
     expect(ctx.importBatchesRepository.remove).toHaveBeenCalledWith(99);
     expect(result).toEqual({ unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] });
   });

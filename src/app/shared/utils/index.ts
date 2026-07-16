@@ -12,3 +12,5 @@ export * from './percentage';
 export * from './sortable';
 export * from './confidence-color';
 export * from './confirm-state';
+export * from './structural-filters';
+export * from './with-persisted-crud';

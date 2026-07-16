@@ -1,11 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   effect,
   inject,
   input,
   output,
+  type Signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -20,7 +20,12 @@ import {
   SelectComponent,
   type DateRangeValue,
 } from '@/shared/ui';
-import { debouncedTextSignal } from '@/shared/utils';
+import {
+  combinedFiltersSignal,
+  debouncedTextSignal,
+  hasActiveFiltersSignal,
+  structuralFiltersSignal,
+} from '@/shared/utils';
 import type { TransactionFilters } from '../../transaction-filters';
 
 /** The filter fields that apply immediately, i.e. everything except the debounced free-text needle (CR-2.4). */
@@ -98,21 +103,11 @@ export class TransactionFiltersComponent {
     });
   }
 
-  /** Structural filters apply immediately; `distinctUntilChanged` keeps text keystrokes from re-emitting them. */
-  private readonly structuralFilters = toSignal(
-    this.filterForm.valueChanges.pipe(
-      map(structuralFiltersOf),
-      distinctUntilChanged(
-        (a, b) =>
-          a.accountId === b.accountId &&
-          a.dateFrom === b.dateFrom &&
-          a.dateTo === b.dateTo &&
-          a.categoryId === b.categoryId &&
-          a.amountMin === b.amountMin &&
-          a.amountMax === b.amountMax,
-      ),
-    ),
-    { initialValue: structuralFiltersOf(this.filterForm.getRawValue()) },
+  /** Structural filters apply immediately; text keystrokes never re-emit them (CR-2.4, CR3-2.5). */
+  private readonly structuralFilters = structuralFiltersSignal(
+    this.filterForm.valueChanges,
+    structuralFiltersOf,
+    this.filterForm.getRawValue(),
   );
 
   /** Free-text needle, debounced so typing doesn't re-run the filter/render pipeline on every keystroke (CR-2.4). */
@@ -133,15 +128,14 @@ export class TransactionFiltersComponent {
   );
 
   /** Single key that changes on either a structural change or a settled text change. */
-  private readonly filterKey = computed<TransactionFilters>(() => ({
-    ...this.structuralFilters(),
-    text: this.debouncedText(),
-  }));
+  private readonly filterKey: Signal<TransactionFilters> = combinedFiltersSignal(
+    this.structuralFilters,
+    this.debouncedText,
+  );
 
-  protected readonly hasActiveFilters = computed(
-    () =>
-      this.debouncedText() !== '' ||
-      Object.values(this.structuralFilters()).some((value) => value !== ''),
+  protected readonly hasActiveFilters = hasActiveFiltersSignal(
+    this.structuralFilters,
+    this.debouncedText,
   );
 
   protected onDateRangeChange(range: DateRangeValue): void {

@@ -25,14 +25,15 @@ Five entity stores (`AccountsStore`, `CategoriesStore`, `RulesStore`, `MappingPr
 
 ## Acceptance criteria
 
-- [ ] Decision + rationale recorded here and in the coding-conventions skill.
-- [ ] If adopted: `withPersistedCrud` has a spec (add/update/remove persist through the repository and patch entity state; a repository failure does not patch state), and the migrated stores' existing specs pass unchanged.
-- [ ] If adopted: persistence still goes exclusively through repositories — the feature takes a repository, never a Dexie table.
-- [ ] Verified via the fallow skill and coding-conventions skill (if code changed).
+- [x] Decision + rationale recorded here and in the coding-conventions skill.
+- [x] If adopted: `withPersistedCrud` has a spec (add/update/remove persist through the repository and patch entity state; a repository failure does not patch state), and the migrated stores' existing specs pass unchanged.
+- [x] If adopted: persistence still goes exclusively through repositories — the feature takes a repository, never a Dexie table.
+- [x] Verified via the fallow skill and coding-conventions skill (if code changed).
 
 ## Notes
 
 - Divergences to check before deciding: `AccountsStore.removeAccount` cascades via `AccountDeletionService` (not a plain repo call); `CategoriesStore.removeCategory` clears `categoryId`/`categoryManual` on referencing transactions; `MappingProfilesStore` upserts. If most "CRUD" methods turn out to be orchestrations, that's the "no" answer.
 
 ## Decision
-- go ahead with the withPersistedCrud feature store
+- Go ahead with a `withPersistedCrud` signal-store feature (`src/app/shared/utils/with-persisted-crud.ts`), same custom-`signalStoreFeature` shape as `withArchivable` (TICKET-NG-04). Adoption is **per-method, not all-or-nothing**: a store applies the feature and adopts whichever of its own `add`/`update`/`remove` are genuinely plain CRUD, aliasing the feature's generic method to its own public name (`addRule: (rule) => store.add(rule)`); a divergent operation (a cascade, a referencing-row cleanup, an upsert) stays hand-rolled right alongside the adopted ones on the same store.
+- Migrated two stores to prove the shape: `RulesStore` (fully plain — all three of `addRule`/`updateRule`/`removeRule` adopted) and `AccountsStore` (partially — `addAccount`/`updateAccount` adopted, `removeAccount` stays hand-rolled since it cascades through `AccountDeletionService`). `CategoriesStore` and `MappingProfilesStore` are left as documented "no" cases per the divergences above; nothing stops them adopting the feature for their own plain-CRUD methods later, opportunistically.

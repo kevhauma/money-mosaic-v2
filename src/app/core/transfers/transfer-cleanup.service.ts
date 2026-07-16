@@ -8,6 +8,11 @@ export type TransferCleanupResult = {
   clearedTransferTransactionIds: number[];
 };
 
+export type RemoveTransactionsWithCleanupResult = TransferCleanupResult & {
+  /** Transactions actually removed (the ids passed in). */
+  removedTransactionIds: number[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class TransferCleanupService {
   private readonly transactionsRepository = inject(TransactionsRepository);
@@ -51,5 +56,25 @@ export class TransferCleanupService {
       unlinkedTransferIds: transfers.map((transfer) => transfer.id!),
       clearedTransferTransactionIds,
     };
+  };
+
+  /**
+   * Combines the cleanup above with removing the doomed transactions themselves — the glue repeated
+   * at every call site that deletes a batch of transactions (account clear/delete, transaction
+   * delete, import undo): collect ids, clean up transfers, bulk-remove (CR3-2.5).
+   *
+   * Same caller-scope contract as {@link cleanupTransfersForRemovedTransactions}: must run inside the
+   * caller's own `appDb.transaction('rw', [...])` scope covering at least `transactions` + `transfers`
+   * — this method opens no transaction of its own.
+   */
+  removeTransactionsWithTransferCleanup = async (
+    transactions: Transaction[],
+  ): Promise<RemoveTransactionsWithCleanupResult> => {
+    const removedTransactionIds = transactions.map((transaction) => transaction.id!);
+    const { unlinkedTransferIds, clearedTransferTransactionIds } =
+      await this.cleanupTransfersForRemovedTransactions(transactions);
+    await this.transactionsRepository.bulkRemove(removedTransactionIds);
+
+    return { removedTransactionIds, unlinkedTransferIds, clearedTransferTransactionIds };
   };
 }

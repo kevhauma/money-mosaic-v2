@@ -52,17 +52,6 @@ export class AccountDeletionService {
    */
   private async cascadeTransactions(accountId: number): Promise<ClearTransactionsResult> {
     const transactions = await this.transactionsRepository.getByAccount(accountId);
-    const removedIds = transactions.map((transaction) => transaction.id!);
-
-    const { unlinkedTransferIds, clearedTransferTransactionIds } =
-      await this.transferCleanupService.cleanupTransfersForRemovedTransactions(transactions);
-
-    await this.transactionsRepository.bulkRemove(removedIds);
-
-    return {
-      removedTransactionIds: removedIds,
-      unlinkedTransferIds,
-      clearedTransferTransactionIds,
-    };
+    return this.transferCleanupService.removeTransactionsWithTransferCleanup(transactions);
   }
 }

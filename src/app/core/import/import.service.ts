@@ -166,12 +166,10 @@ export class ImportService {
       [appDb.transactions, appDb.importBatches, appDb.transfers],
       async () => {
         const transactions = await this.transactionsRepository.getByImportBatch(importBatchId);
-        const removedIds = transactions.map((transaction) => transaction.id!);
 
         const { unlinkedTransferIds, clearedTransferTransactionIds } =
-          await this.transferCleanupService.cleanupTransfersForRemovedTransactions(transactions);
+          await this.transferCleanupService.removeTransactionsWithTransferCleanup(transactions);
 
-        await this.transactionsRepository.bulkRemove(removedIds);
         await this.importBatchesRepository.remove(importBatchId);
 
         return { unlinkedTransferIds, clearedTransferTransactionIds };

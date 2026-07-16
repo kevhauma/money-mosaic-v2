@@ -23,10 +23,10 @@ ECharts renders to canvas — assistive tech gets nothing. The first review's re
 
 ## Acceptance criteria
 
-- [ ] The hidden table renders exactly the buckets/values the chart shows, updates with range/granularity changes, and is reachable by screen readers (spec asserts rows against the series signal; live check via the accessibility tree).
-- [ ] Visually nothing changes (sr-only styling; no layout shift) — browser check at desktop and mobile widths.
-- [ ] Values use the app's existing currency formatting so spoken output matches the visible tooltips.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] The hidden table renders exactly the buckets/values the chart shows, updates with range/granularity changes, and is reachable by screen readers — spec asserts rows against the series signal (`accessibleRows` sourced from the same `composition()` computed both chart options read from). **Live check via the accessibility tree skipped per explicit user request this session.**
+- [x] Visually nothing changes (`sr-only` is a zero-config Tailwind 4 utility, confirmed compiled into the installed engine). **Browser check at desktop/mobile widths skipped per explicit user request this session** — worth a manual pass before shipping.
+- [x] Values use the app's existing currency formatting (`formatCurrency` from `@/shared/utils`) so spoken output matches the visible tooltips.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

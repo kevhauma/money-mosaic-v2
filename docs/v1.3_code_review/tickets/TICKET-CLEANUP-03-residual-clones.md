@@ -29,8 +29,10 @@ Two low-priority, verified-real leftovers. First: the filter components already 
 - [x] Filter behaviour unchanged on both pages (structural filters apply immediately, text stays debounced, clear-filters resets) — existing component specs pass.
 - [x] Deletion/undo flows unchanged: account clear/delete, transaction delete, import undo all still remove transfer links atomically — existing service specs pass; the new helper's spec covers the returned `unlinkedTransferIds`/`clearedTransferTransactionIds` shape.
 - [x] The helper never opens its own Dexie transaction (caller-scope contract, documented — matches the existing `cleanupTransfersForRemovedTransactions` doc comment).
-- [x] The three fingerprints above no longer appear in `fallow dupes`.
+- [x] The three fingerprints above no longer appear in `fallow dupes`. Also folded in a fourth, closely-related duplication (`filters`/`hasActiveFilters` computed pair between the same two components) that `fallow dupes` still reported under `dup:f868aa89` after the toSignal-bridge fix alone — see `combinedFiltersSignal`/`hasActiveFiltersSignal` in `structural-filters.ts`.
 - [x] Verified via the fallow skill and coding-conventions skill.
+
+<!-- These were found already checked off with neither helper (`structuralFiltersSignal`, `removeTransactionsWithTransferCleanup`) present anywhere in src/ — stale from drafting, not a completed prior pass. Reset 2026-07-16, then actually done the same session. -->
 
 ## Notes
 

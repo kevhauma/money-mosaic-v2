@@ -8,17 +8,11 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import {
-  addEntity,
-  entityConfig,
-  removeEntity,
-  setAllEntities,
-  updateEntity,
-  withEntities,
-} from '@ngrx/signals/entities';
+import { entityConfig, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { RulesRepository, type Rule, type Transaction } from '@/core/data-access';
 import { RulesEngineService } from '@/core/categorisation';
 import { TransactionsStore } from '@/core/state';
+import { withPersistedCrud } from '@/shared/utils';
 
 const ruleConfig = entityConfig({
   entity: type<Rule>(),
@@ -28,6 +22,9 @@ const ruleConfig = entityConfig({
 export const RulesStore = signalStore(
   { providedIn: 'root' },
   withEntities(ruleConfig),
+  // Fully plain CRUD (TICKET-NG-08) — add/update/remove persist through RulesRepository and patch
+  // entity state, no divergent orchestration, so this store adopts all three generic methods.
+  withPersistedCrud(RulesRepository, ruleConfig),
   withState({ lastRunCount: null as number | null, hydrated: false }),
   withComputed(({ entities }) => ({
     rules: entities,
@@ -50,21 +47,11 @@ export const RulesStore = signalStore(
     return {
       hydrate,
 
-      addRule: async (rule: Rule): Promise<void> => {
-        const id = await rulesRepository.add(rule);
-        const added: Rule = { ...rule, id };
-        patchState(store, addEntity(added, ruleConfig));
-      },
-
-      updateRule: async (id: number, changes: Partial<Rule>): Promise<void> => {
-        await rulesRepository.update(id, changes);
-        patchState(store, updateEntity({ id, changes }, ruleConfig));
-      },
-
-      removeRule: async (id: number): Promise<void> => {
-        await rulesRepository.remove(id);
-        patchState(store, removeEntity(id));
-      },
+      // Aliased to the store's own public method names (same pattern as `withArchivable`'s
+      // `activeEntities`/`archivedEntities` -> `activeAccounts`/`archivedAccounts`).
+      addRule: (rule: Rule): Promise<Rule> => store.add(rule),
+      updateRule: (id: number, changes: Partial<Rule>): Promise<void> => store.update(id, changes),
+      removeRule: (id: number): Promise<void> => store.remove(id),
     };
   }),
   withMethods((store) => {

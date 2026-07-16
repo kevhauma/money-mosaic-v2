@@ -6,26 +6,27 @@ import {
   TransactionsRepository,
   type Transaction,
 } from '@/core/data-access';
-import { TransferCleanupService } from '@/core/transfers';
+import { TransferCleanupService, type RemoveTransactionsWithCleanupResult } from '@/core/transfers';
 import { AccountDeletionService } from './account-deletion.service';
 
 const setup = (options: {
   transactions: Partial<Transaction>[];
-  cleanupResult?: { unlinkedTransferIds: number[]; clearedTransferTransactionIds: number[] };
+  cleanupResult?: RemoveTransactionsWithCleanupResult;
 }) => {
   const accountsRepository = {
     remove: vi.fn().mockResolvedValue(undefined),
   };
   const transactionsRepository = {
     getByAccount: vi.fn().mockResolvedValue(options.transactions),
-    bulkRemove: vi.fn().mockResolvedValue(undefined),
   };
   const transferCleanupService = {
-    cleanupTransfersForRemovedTransactions: vi
-      .fn()
-      .mockResolvedValue(
-        options.cleanupResult ?? { unlinkedTransferIds: [], clearedTransferTransactionIds: [] },
-      ),
+    removeTransactionsWithTransferCleanup: vi.fn().mockResolvedValue(
+      options.cleanupResult ?? {
+        removedTransactionIds: options.transactions.map((transaction) => transaction.id!),
+        unlinkedTransferIds: [],
+        clearedTransferTransactionIds: [],
+      },
+    ),
   };
 
   TestBed.configureTestingModule({
@@ -60,11 +61,17 @@ describe('AccountDeletionService: clearTransactions', () => {
   });
 
   it("removes all of the target account's transactions but leaves the account row intact", async () => {
+    const transactions = [
+      { id: 10, accountId: 1 },
+      { id: 11, accountId: 1 },
+    ];
     const ctx = setup({
-      transactions: [
-        { id: 10, accountId: 1 },
-        { id: 11, accountId: 1 },
-      ],
+      transactions,
+      cleanupResult: {
+        removedTransactionIds: [10, 11],
+        unlinkedTransferIds: [],
+        clearedTransferTransactionIds: [],
+      },
     });
 
     const result = await ctx.service.clearTransactions(1);
@@ -72,25 +79,30 @@ describe('AccountDeletionService: clearTransactions', () => {
     // Only the target account was read, and exactly its transactions were removed — other accounts'
     // rows are never touched because `getByAccount(1)` is the only source of ids.
     expect(ctx.transactionsRepository.getByAccount).toHaveBeenCalledWith(1);
-    expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([10, 11]);
+    expect(ctx.transferCleanupService.removeTransactionsWithTransferCleanup).toHaveBeenCalledWith(
+      transactions,
+    );
     expect(result.removedTransactionIds).toEqual([10, 11]);
     // The account itself must survive.
     expect(ctx.accountsRepository.remove).not.toHaveBeenCalled();
   });
 
-  it('delegates transfer cleanup to the shared TransferCleanupService and merges its result', async () => {
+  it('delegates removal + transfer cleanup to the shared TransferCleanupService and forwards its result', async () => {
     const transactions = [{ id: 10, accountId: 1, transferId: 5 }];
     const ctx = setup({
       transactions,
-      cleanupResult: { unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] },
+      cleanupResult: {
+        removedTransactionIds: [10],
+        unlinkedTransferIds: [5],
+        clearedTransferTransactionIds: [20],
+      },
     });
 
     const result = await ctx.service.clearTransactions(1);
 
-    expect(ctx.transferCleanupService.cleanupTransfersForRemovedTransactions).toHaveBeenCalledWith(
+    expect(ctx.transferCleanupService.removeTransactionsWithTransferCleanup).toHaveBeenCalledWith(
       transactions,
     );
-    expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([10]);
     expect(result).toEqual({
       removedTransactionIds: [10],
       unlinkedTransferIds: [5],
@@ -100,12 +112,18 @@ describe('AccountDeletionService: clearTransactions', () => {
   });
 
   it('is a safe no-op when the account has no transactions', async () => {
-    const ctx = setup({ transactions: [] });
+    const ctx = setup({
+      transactions: [],
+      cleanupResult: {
+        removedTransactionIds: [],
+        unlinkedTransferIds: [],
+        clearedTransferTransactionIds: [],
+      },
+    });
 
     const result = await ctx.service.clearTransactions(1);
 
-    expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([]);
-    expect(ctx.transferCleanupService.cleanupTransfersForRemovedTransactions).toHaveBeenCalledWith(
+    expect(ctx.transferCleanupService.removeTransactionsWithTransferCleanup).toHaveBeenCalledWith(
       [],
     );
     expect(ctx.accountsRepository.remove).not.toHaveBeenCalled();
@@ -120,16 +138,19 @@ describe('AccountDeletionService: clearTransactions', () => {
     const transactions = [{ id: 10, accountId: 1, transferId: 5 }];
     const ctx = setup({
       transactions,
-      cleanupResult: { unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] },
+      cleanupResult: {
+        removedTransactionIds: [10],
+        unlinkedTransferIds: [5],
+        clearedTransferTransactionIds: [20],
+      },
     });
 
     await ctx.service.deleteAccount(1);
 
     // Same cross-account cleanup as clearTransactions...
-    expect(ctx.transferCleanupService.cleanupTransfersForRemovedTransactions).toHaveBeenCalledWith(
+    expect(ctx.transferCleanupService.removeTransactionsWithTransferCleanup).toHaveBeenCalledWith(
       transactions,
     );
-    expect(ctx.transactionsRepository.bulkRemove).toHaveBeenCalledWith([10]);
     // ...plus the account row is removed.
     expect(ctx.accountsRepository.remove).toHaveBeenCalledWith(1);
   });

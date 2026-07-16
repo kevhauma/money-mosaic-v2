@@ -1,18 +1,21 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   effect,
   inject,
   output,
+  type Signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { distinctUntilChanged, map } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerFilterOff } from '@ng-icons/tabler-icons';
 import { ButtonComponent, InputComponent, SelectComponent } from '@/shared/ui';
-import { debouncedTextSignal } from '@/shared/utils';
+import {
+  combinedFiltersSignal,
+  debouncedTextSignal,
+  hasActiveFiltersSignal,
+  structuralFiltersSignal,
+} from '@/shared/utils';
 import { CategoriesStore } from '@/core/state';
 import type { RuleFilters } from '../../rule-filters';
 
@@ -40,31 +43,28 @@ export class RuleFiltersComponent {
     enabled: [''],
   });
 
-  /** Structural filters apply immediately; `distinctUntilChanged` keeps text keystrokes from re-emitting them. */
-  private readonly structuralFilters = toSignal(
-    this.filterForm.valueChanges.pipe(
-      map((value): StructuralFilters => ({
-        categoryId: value.categoryId ?? '',
-        enabled: (value.enabled as RuleFilters['enabled']) ?? '',
-      })),
-      distinctUntilChanged((a, b) => a.categoryId === b.categoryId && a.enabled === b.enabled),
-    ),
-    { initialValue: { categoryId: '', enabled: '' } },
+  /** Structural filters apply immediately; text keystrokes never re-emit them (CR-2.4, CR3-2.5). */
+  private readonly structuralFilters = structuralFiltersSignal(
+    this.filterForm.valueChanges,
+    (value): StructuralFilters => ({
+      categoryId: value.categoryId ?? '',
+      enabled: (value.enabled as RuleFilters['enabled']) ?? '',
+    }),
+    this.filterForm.getRawValue(),
   );
 
   /** Free-text needle, debounced so typing doesn't re-run the filter/render pipeline on every keystroke (CR-2.4). */
   private readonly debouncedText = debouncedTextSignal(this.filterForm.controls.text);
 
   /** Single filter set that changes on either a structural change or a settled text change. */
-  private readonly filters = computed<RuleFilters>(() => ({
-    ...this.structuralFilters(),
-    text: this.debouncedText(),
-  }));
+  private readonly filters: Signal<RuleFilters> = combinedFiltersSignal(
+    this.structuralFilters,
+    this.debouncedText,
+  );
 
-  protected readonly hasActiveFilters = computed(
-    () =>
-      this.debouncedText() !== '' ||
-      Object.values(this.structuralFilters()).some((value) => value !== ''),
+  protected readonly hasActiveFilters = hasActiveFiltersSignal(
+    this.structuralFilters,
+    this.debouncedText,
   );
 
   constructor() {
