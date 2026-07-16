@@ -11,6 +11,7 @@ import {
   tablerArrowsExchange,
   tablerBuildingBank,
   tablerBulb,
+  tablerDatabase,
   tablerFileImport,
   tablerHome,
   tablerMenu2,
@@ -46,6 +47,7 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
       tablerArrowsExchange,
       tablerTags,
       tablerBulb,
+      tablerDatabase,
     }),
   ],
 })

@@ -31,4 +31,8 @@ export const routes: Routes = [
     path: 'learning',
     loadChildren: () => import('@/feature-learning').then((m) => m.LEARNING_ROUTES),
   },
+  {
+    path: 'data',
+    loadChildren: () => import('@/feature-data-management').then((m) => m.DATA_MANAGEMENT_ROUTES),
+  },
 ];

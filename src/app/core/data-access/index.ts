@@ -10,3 +10,4 @@ export * from './transfer-settings.repository';
 export * from './category-model.repository';
 export * from './category-comparison-settings.repository';
 export * from './dashboard-layout-settings.repository';
+export * from './data-management.repository';

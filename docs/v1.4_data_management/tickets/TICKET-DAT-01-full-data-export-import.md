@@ -32,18 +32,18 @@ The app is local-first with no backend — everything lives in one browser's Ind
 
 ## Acceptance criteria
 
-- [ ] `AppDataExport` type defined in `core/data-access/` covering every current `appDb` table.
-- [ ] `exportAll()` reads all tables inside one read transaction and returns an object including `schemaVersion` (`appDb.verno`) and `exportedAt` (ISO timestamp).
-- [ ] "Export data" downloads a `.json` file client-side (no network request) containing the full export.
-- [ ] `importAll(data, 'replace')` clears and repopulates every table inside one write transaction, preserving original IDs so foreign keys (`accountId`, `categoryId`, `transferId`, `fromTransactionId`/`toTransactionId`) stay valid.
-- [ ] `importAll(data, 'merge')` upserts rows into existing tables without clearing, inside one write transaction.
-- [ ] Import UI requires an explicit Replace-vs-Merge choice before proceeding, with Replace visually flagged as destructive (matches the existing `mm-confirm-dialog` pattern).
-- [ ] Importing a file whose `schemaVersion` exceeds the running app's `appDb.verno` is rejected with a clear error message and no data is touched.
-- [ ] A write failure partway through import leaves every table exactly as it was before the import started (verified by forcing a failure on a later table in a test and asserting earlier tables are unchanged).
-- [ ] Components/stores never touch `appDb.<table>` directly for export/import — all reads/writes go through the new repository/service.
-- [ ] Unit tests cover: `exportAll()` round-trips into `importAll(..., 'replace')` producing an identical database snapshot; `merge` mode preserves pre-existing non-colliding rows; a newer-schema-version import is rejected before any write; a forced mid-import failure leaves all tables unchanged.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: export a database with real seeded data, wipe IndexedDB via devtools, import the file back in Replace mode, confirm the app renders identically; separately verify Merge mode adds imported accounts alongside existing ones without deleting them.
+- [x] `AppDataExport` type defined in `core/data-access/` covering every current `appDb` table.
+- [x] `exportAll()` reads all tables inside one read transaction and returns an object including `schemaVersion` (`appDb.verno`) and `exportedAt` (ISO timestamp).
+- [x] "Export data" downloads a `.json` file client-side (no network request) containing the full export.
+- [x] `importAll(data, 'replace')` clears and repopulates every table inside one write transaction, preserving original IDs so foreign keys (`accountId`, `categoryId`, `transferId`, `fromTransactionId`/`toTransactionId`) stay valid.
+- [x] `importAll(data, 'merge')` upserts rows into existing tables without clearing, inside one write transaction.
+- [x] Import UI requires an explicit Replace-vs-Merge choice before proceeding, with Replace visually flagged as destructive (matches the existing `mm-confirm-dialog` pattern).
+- [x] Importing a file whose `schemaVersion` exceeds the running app's `appDb.verno` is rejected with a clear error message and no data is touched.
+- [x] A write failure partway through import leaves every table exactly as it was before the import started (verified by forcing a failure on a later table in a test and asserting earlier tables are unchanged).
+- [x] Components/stores never touch `appDb.<table>` directly for export/import — all reads/writes go through the new repository/service.
+- [x] Unit tests cover: `exportAll()` round-trips into `importAll(..., 'replace')` producing an identical database snapshot; `merge` mode preserves pre-existing non-colliding rows; a newer-schema-version import is rejected before any write; a forced mid-import failure leaves all tables unchanged.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: export a database with real seeded data, wipe IndexedDB via devtools, import the file back in Replace mode, confirm the app renders identically; separately verify Merge mode adds imported accounts alongside existing ones without deleting them.
 
 ## Notes
 
