@@ -38,6 +38,40 @@
   </div>
 </div>
 
+<div class="card mt-4 border border-base-300 bg-base-100">
+  <div class="card-body gap-2">
+    <div class="flex items-center gap-2">
+      <h2 class="card-title text-base">Persistent storage</h2>
+      @switch (storageStatus()) {
+        @case ('granted') {
+          <mm-badge color="success" variant="soft">Active</mm-badge>
+        }
+        @case ('denied') {
+          <mm-badge color="warning" variant="soft">Not active</mm-badge>
+        }
+        @default {
+          <mm-badge color="neutral" variant="soft">Unavailable</mm-badge>
+        }
+      }
+    </div>
+    <p class="text-sm text-base-content/60">
+      @switch (storageStatus()) {
+        @case ('granted') {
+          Your browser has exempted this app's data from automatic storage cleanup.
+        }
+        @case ('denied') {
+          Your browser hasn't granted persistent storage yet. Most browsers grant it automatically
+          for sites you visit often or install/bookmark — this may resolve on its own over time.
+        }
+        @default {
+          Your browser doesn't support requesting persistent storage. Your data is still saved
+          locally, but may be subject to automatic cleanup under storage pressure.
+        }
+      }
+    </p>
+  </div>
+</div>
+
 <mm-modal [(open)]="importDialogOpen">
   <span mm-modal-title>Import data</span>
   <p class="py-3 text-sm text-base-content/70">

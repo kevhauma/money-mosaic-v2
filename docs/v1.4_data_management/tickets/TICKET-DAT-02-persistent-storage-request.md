@@ -26,13 +26,13 @@ Browsers are allowed to evict "best-effort" IndexedDB data (e.g. under low disk 
 
 ## Acceptance criteria
 
-- [ ] `navigator.storage.persisted()`/`.persist()` are called once on startup, guarded by a feature-detection check that no-ops safely (no thrown error, no blocked bootstrap) when the API is unavailable.
-- [ ] The granted/denied/unsupported result is exposed via a signal readable by UI, not just logged.
-- [ ] The persistence request runs alongside store hydration in `app.config.ts`, not blocking or gating it — app renders normally regardless of the outcome.
-- [ ] A visible status indicator (in the Data Management or Settings UI) shows whether persistent storage is currently granted, with a short explanation when it isn't.
-- [ ] Unit tests cover: the guarded call when `navigator.storage` is absent (no throw); the status signal reflecting `persisted() === true` without calling `persist()` again; the status signal reflecting a `persist()` call's resolved value when not yet persisted.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: load the app, confirm no startup error/delay, and confirm the status indicator renders a value (granted or denied) — actually forcing a `denied`→`granted` transition isn't reliably triggerable from devtools, so this criterion only requires the indicator to render *some* real status, not both branches live.
+- [x] `navigator.storage.persisted()`/`.persist()` are called once on startup, guarded by a feature-detection check that no-ops safely (no thrown error, no blocked bootstrap) when the API is unavailable.
+- [x] The granted/denied/unsupported result is exposed via a signal readable by UI, not just logged.
+- [x] The persistence request runs alongside store hydration in `app.config.ts`, not blocking or gating it — app renders normally regardless of the outcome.
+- [x] A visible status indicator (in the Data Management or Settings UI) shows whether persistent storage is currently granted, with a short explanation when it isn't.
+- [x] Unit tests cover: the guarded call when `navigator.storage` is absent (no throw); the status signal reflecting `persisted() === true` without calling `persist()` again; the status signal reflecting a `persist()` call's resolved value when not yet persisted.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: load the app, confirm no startup error/delay, and confirm the status indicator renders a value (granted or denied) — actually forcing a `denied`→`granted` transition isn't reliably triggerable from devtools, so this criterion only requires the indicator to render *some* real status, not both branches live. **Skipped at user's request this session** — automated checks (lint/test/build/fallow) all pass; live check can be done later.
 
 ## Notes
 

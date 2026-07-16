@@ -9,6 +9,7 @@ import {
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { appDb } from './core/data-access';
+import { StorageStatusService } from './core/storage';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -23,6 +24,10 @@ export const appConfig: ApplicationConfig = {
       // TICKET-PERF-07) — whichever route (or the dev seed below) first injects one kicks off its
       // hydration there, so nothing needs to happen here beyond opening the database.
       return appDb.open().then(async () => {
+        // Fire-and-forget (FR-DAT-4) — never awaited, so a denied/unsupported result can never
+        // delay or block the rest of bootstrap.
+        void injector.get(StorageStatusService).checkAndRequest();
+
         // Dev-only sample-data seed (TICKET-DEV-01). The dynamic import keeps the seed module and
         // its dataset in a separate chunk that a production build never references or loads, and
         // `isDevMode()` gates it out at runtime regardless.

@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DataManagementRepository, type AppDataExport, type ImportMode } from '@/core/data-access';
+import { StorageStatusService } from '@/core/storage';
 import {
   AlertComponent,
+  BadgeComponent,
   ButtonComponent,
   ConfirmDialogComponent,
   MmModalComponent,
@@ -14,6 +16,7 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
   selector: 'app-data-management-overview',
   imports: [
     AlertComponent,
+    BadgeComponent,
     ButtonComponent,
     ConfirmDialogComponent,
     MmModalComponent,
@@ -24,6 +27,7 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
 })
 export class DataManagementOverviewComponent {
   private readonly dataManagementRepository = inject(DataManagementRepository);
+  protected readonly storageStatus = inject(StorageStatusService).status;
 
   protected readonly exporting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
