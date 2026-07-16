@@ -143,6 +143,50 @@ describe('DataManagementRepository', () => {
     });
   });
 
+  describe('deleteAll', () => {
+    it('clears every appDb table inside one write transaction', async () => {
+      await appDb.accounts.bulkAdd([account({ name: 'A' }), account({ name: 'B' })]);
+      await appDb.categories.bulkAdd([category({ name: 'Groceries' })]);
+      const transactionSpy = vi.spyOn(appDb, 'transaction');
+
+      await repository.deleteAll();
+
+      for (const table of appDb.tables) {
+        expect(await table.count()).toBe(0);
+      }
+      expect(transactionSpy).toHaveBeenCalledExactlyOnceWith(
+        'rw',
+        appDb.tables,
+        expect.any(Function),
+      );
+    });
+
+    it('leaves every table exactly as it was if a clear fails partway through', async () => {
+      await appDb.accounts.clear();
+      await appDb.categories.clear();
+      await appDb.accounts.add(account({ name: 'Survives' }));
+      await appDb.categories.add(category({ name: 'AlsoSurvives' }));
+
+      // `categories` sorts after `accounts` in appDb.tables, so failing its clear() proves the
+      // earlier accounts.clear() in the same transaction gets rolled back too.
+      const tableProto = Object.getPrototypeOf(appDb.categories);
+      const originalClear = tableProto.clear;
+      vi.spyOn(tableProto, 'clear').mockImplementation(function (this: { name: string }) {
+        if (this.name === 'categories') {
+          return Promise.reject(new Error('forced failure'));
+        }
+        return originalClear.apply(this);
+      });
+
+      await expect(repository.deleteAll()).rejects.toThrow('forced failure');
+
+      const accountsAfter = await appDb.accounts.toArray();
+      const categoriesAfter = await appDb.categories.toArray();
+      expect(accountsAfter.map((a) => a.name)).toEqual(['Survives']);
+      expect(categoriesAfter.map((c) => c.name)).toEqual(['AlsoSurvives']);
+    });
+  });
+
   describe('mid-import failure', () => {
     it('leaves every table exactly as it was before the import started', async () => {
       await appDb.accounts.clear();

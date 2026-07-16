@@ -3,9 +3,29 @@
   @if (message()) {
     <p class="py-3 text-sm text-base-content/70">{{ message() }}</p>
   }
+  @if (confirmPhrase(); as phrase) {
+    <label class="fieldset-label flex-col items-start gap-1">
+      <span class="text-xs text-base-content/60">
+        Type <span class="font-mono font-semibold">{{ phrase }}</span> to confirm
+      </span>
+      <input
+        #phraseInput
+        type="text"
+        class="input input-bordered input-sm w-full"
+        autocomplete="off"
+        [value]="typedPhrase()"
+        (input)="typedPhrase.set(phraseInput.value)"
+      />
+    </label>
+  }
   <div class="modal-action">
     <mm-button type="button" (click)="cancel()">{{ cancelLabel() }}</mm-button>
-    <mm-button type="button" [color]="danger() ? 'error' : 'primary'" (click)="confirm()">
+    <mm-button
+      type="button"
+      [color]="danger() ? 'error' : 'primary'"
+      [disabled]="!canConfirm()"
+      (click)="confirm()"
+    >
       {{ confirmLabel() }}
     </mm-button>
   </div>

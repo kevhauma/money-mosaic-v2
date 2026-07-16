@@ -10,9 +10,12 @@ type Internals = {
   importMode: { (): 'merge' | 'replace'; set: (value: 'merge' | 'replace') => void };
   importing: () => boolean;
   reloadPromptOpen: () => boolean;
+  deleteDialogOpen: { (): boolean; set: (value: boolean) => void };
+  deleting: () => boolean;
   exportData: () => Promise<void>;
   onFileSelected: (event: Event) => Promise<void>;
   confirmImport: () => Promise<void>;
+  deleteAllConfirmed: () => Promise<void>;
   reloadPage: () => void;
 };
 
@@ -31,12 +34,14 @@ describe('DataManagementOverviewComponent', () => {
   const dataManagementRepository = {
     exportAll: vi.fn().mockResolvedValue(backup),
     importAll: vi.fn().mockResolvedValue(undefined),
+    deleteAll: vi.fn().mockResolvedValue(undefined),
   };
 
   const setup = async (): Promise<void> => {
     vi.clearAllMocks();
     dataManagementRepository.exportAll.mockResolvedValue(backup);
     dataManagementRepository.importAll.mockResolvedValue(undefined);
+    dataManagementRepository.deleteAll.mockResolvedValue(undefined);
 
     await TestBed.configureTestingModule({
       imports: [DataManagementOverviewComponent],
@@ -162,6 +167,38 @@ describe('DataManagementOverviewComponent', () => {
       dataManagementRepository.importAll.mockResolvedValueOnce(undefined);
       await internals().confirmImport();
       expect(internals().reloadPromptOpen()).toBe(true);
+    });
+  });
+
+  describe('delete all data', () => {
+    it('deleteAllConfirmed calls deleteAll then reloads the page on success', async () => {
+      await setup();
+      const reload = vi.fn();
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', { value: { reload }, writable: true });
+
+      await internals().deleteAllConfirmed();
+
+      expect(dataManagementRepository.deleteAll).toHaveBeenCalledExactlyOnceWith();
+      expect(reload).toHaveBeenCalledTimes(1);
+      expect(internals().deleting()).toBe(false);
+
+      Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
+    });
+
+    it('surfaces a repository failure as an error message instead of reloading', async () => {
+      await setup();
+      dataManagementRepository.deleteAll.mockRejectedValueOnce(new Error('write failed'));
+      const reload = vi.fn();
+      const originalLocation = window.location;
+      Object.defineProperty(window, 'location', { value: { reload }, writable: true });
+
+      await internals().deleteAllConfirmed();
+
+      expect(internals().errorMessage()).toBe('write failed');
+      expect(reload).not.toHaveBeenCalled();
+
+      Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
     });
   });
 

@@ -27,14 +27,14 @@ There is currently no in-app way to wipe the database — the only option today 
 
 ## Acceptance criteria
 
-- [ ] "Delete all data" action is visually distinct as destructive (danger styling), separated from other Data Management actions.
-- [ ] Confirming requires typing an exact confirmation phrase into a field before the destructive action can be triggered — not a single-click Yes/No.
-- [ ] Confirmed deletion clears every `appDb` table inside one write transaction.
-- [ ] After deletion, the app reloads and renders as a genuinely fresh/empty install (matches the first-run state, no stale in-memory store data left over).
-- [ ] Components/stores never call `appDb.<table>.clear()` directly outside the new repository/service method that implements this.
-- [ ] Unit tests cover: the clear operation empties every table; the confirmation gate rejects a submit attempt when the typed phrase doesn't match exactly.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: seed the app with data, trigger Delete All Data, confirm with the exact phrase, and confirm the app reloads into an empty first-run state; also verify the confirm button stays disabled when the typed phrase is wrong or incomplete.
+- [x] "Delete all data" action is visually distinct as destructive (danger styling), separated from other Data Management actions.
+- [x] Confirming requires typing an exact confirmation phrase into a field before the destructive action can be triggered — not a single-click Yes/No.
+- [x] Confirmed deletion clears every `appDb` table inside one write transaction.
+- [x] After deletion, the app reloads and renders as a genuinely fresh/empty install (matches the first-run state, no stale in-memory store data left over).
+- [x] Components/stores never call `appDb.<table>.clear()` directly outside the new repository/service method that implements this.
+- [x] Unit tests cover: the clear operation empties every table; the confirmation gate rejects a submit attempt when the typed phrase doesn't match exactly.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: seed the app with data, trigger Delete All Data, confirm with the exact phrase, and confirm the app reloads into an empty first-run state; also verify the confirm button stays disabled when the typed phrase is wrong or incomplete.
 
 ## Notes
 

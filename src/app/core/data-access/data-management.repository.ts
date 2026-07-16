@@ -54,4 +54,17 @@ export class DataManagementRepository {
       }
     });
   };
+
+  /**
+   * Clears every `appDb` table inside one write transaction (FR-DAT-3). A failure partway through
+   * leaves every table exactly as it was (NFR-RESIL-1) — Dexie rolls back the entire transaction on
+   * any thrown error.
+   */
+  deleteAll = async (): Promise<void> => {
+    await appDb.transaction('rw', appDb.tables, async () => {
+      for (const table of appDb.tables) {
+        await table.clear();
+      }
+    });
+  };
 }

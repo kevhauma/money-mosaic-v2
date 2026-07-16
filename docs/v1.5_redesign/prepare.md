@@ -1,8 +1,10 @@
-# prepare the app for easy redesign
+# Prepare the app for easy redesign
 
 ## Goal
 - as little change needed throughout the app to apply a new theme/style
 - all design classes should be in /shared/ui
+- keep in mind daisyUI way of styling
+
 
 ## Manually found classes that should be own component (as per coding-conventions skill styling rule 4)
 - "tabs" and "tab"
@@ -13,7 +15,7 @@
 - a "paper" component consisting of border and padding styling
 - "dropdown-content" and "menu"
 - button with icon as child (icon button)
-- "grid" and grid related classes ("grid-cols-2", "col-span-2), make Grid, Col, and Row their own components
+- "grid" and grid related classes ("grid-cols-2", "col-span-2)
 - "fieldset" and "fieldset-legend" (what's different between fieldset-legend and "label"?)
 - "rounded-field" (I see it for input type = color)
 - "divider"
@@ -21,10 +23,10 @@
 
 these is by far a comprehensive list of classes that could be moved to a component so changing styles stays confined to shared/ui
 
+find all other instances of styling applied to components that are not positional related.
 
 
-
-## design ideas
+## Design ideas
 
 ### Feelings
 - Playful

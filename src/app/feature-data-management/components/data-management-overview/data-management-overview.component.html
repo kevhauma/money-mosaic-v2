@@ -72,6 +72,24 @@
   </div>
 </div>
 
+<div class="card mt-4 border border-error/40 bg-base-100">
+  <div class="card-body gap-2">
+    <h2 class="card-title text-base text-error">Delete all data</h2>
+    <p class="text-sm text-base-content/60">
+      Permanently erase every account, transaction, category, rule, and setting stored in this
+      browser. This cannot be undone.
+    </p>
+    <mm-button
+      color="error"
+      class="w-fit"
+      [disabled]="deleting()"
+      (click)="deleteDialogOpen.set(true)"
+    >
+      Delete all data
+    </mm-button>
+  </div>
+</div>
+
 <mm-modal [(open)]="importDialogOpen">
   <span mm-modal-title>Import data</span>
   <p class="py-3 text-sm text-base-content/70">
@@ -140,4 +158,14 @@
   confirmLabel="Reload now"
   cancelLabel="Later"
   (confirmed)="reloadPage()"
+/>
+
+<mm-confirm-dialog
+  [(open)]="deleteDialogOpen"
+  title="Delete all data?"
+  message="Consider exporting a backup first using Export data above. This permanently erases every account, transaction, category, rule, and setting — it cannot be undone."
+  confirmLabel="Delete everything"
+  confirmPhrase="DELETE"
+  [danger]="true"
+  (confirmed)="deleteAllConfirmed()"
 />

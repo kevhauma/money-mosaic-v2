@@ -37,6 +37,9 @@ export class DataManagementOverviewComponent {
   protected readonly importing = signal(false);
   protected readonly reloadPromptOpen = signal(false);
 
+  protected readonly deleteDialogOpen = signal(false);
+  protected readonly deleting = signal(false);
+
   private pendingImport: AppDataExport | null = null;
 
   protected async exportData(): Promise<void> {
@@ -87,6 +90,19 @@ export class DataManagementOverviewComponent {
       this.errorMessage.set(error instanceof Error ? error.message : 'Import failed.');
     } finally {
       this.importing.set(false);
+    }
+  }
+
+  protected async deleteAllConfirmed(): Promise<void> {
+    this.errorMessage.set(null);
+    this.deleting.set(true);
+    try {
+      await this.dataManagementRepository.deleteAll();
+      this.reloadPage();
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Delete failed.');
+    } finally {
+      this.deleting.set(false);
     }
   }
 
