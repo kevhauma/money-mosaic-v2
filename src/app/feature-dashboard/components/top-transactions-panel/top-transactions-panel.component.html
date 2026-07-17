@@ -12,7 +12,7 @@
             [queryParams]="entry.queryParams"
             class="flex items-center justify-between gap-3 py-2 transition hover:bg-base-200"
           >
-            <span class="flex min-w-0 items-center gap-2">
+            <mm-flex align="center" gap="2" class="min-w-0">
               <span
                 class="h-2 w-2 shrink-0 rounded-full"
                 [style.background-color]="entry.categoryColor"
@@ -23,7 +23,7 @@
                   {{ entry.bookingDate }} · {{ entry.categoryName }}
                 </mm-text>
               </span>
-            </span>
+            </mm-flex>
             <mm-text weight="medium" color="error" class="shrink-0 text-sm">{{
               entry.formattedAmount
             }}</mm-text>

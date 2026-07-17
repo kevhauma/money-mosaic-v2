@@ -85,7 +85,7 @@
           </td>
           <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
           <td>
-            <div class="flex items-center gap-1">
+            <mm-flex align="center" gap="1">
               <mm-text weight="medium">{{ row.transaction.rawDescription }}</mm-text>
               @if (row.likelyTransfer) {
                 <mm-badge variant="outline" size="sm">Likely transfer</mm-badge>
@@ -93,7 +93,7 @@
               @if (row.transaction.nullified) {
                 <mm-badge variant="outline" color="warning" size="sm">Nullified</mm-badge>
               }
-            </div>
+            </mm-flex>
             @if (row.transaction.counterpartyName) {
               <mm-text as="p" class="text-xs text-base-content/60">
                 {{ row.transaction.counterpartyName }}
@@ -119,7 +119,7 @@
             {{ row.transaction.amount | signedAmount }}
           </td>
           <td>
-            <div class="flex items-center justify-end gap-1">
+            <mm-flex align="center" justify="end" gap="1">
               @if (row.transfer; as transfer) {
                 <mm-button
                   variant="ghost"
@@ -140,7 +140,7 @@
               >
                 <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
               </mm-button>
-            </div>
+            </mm-flex>
           </td>
         </tr>
       }

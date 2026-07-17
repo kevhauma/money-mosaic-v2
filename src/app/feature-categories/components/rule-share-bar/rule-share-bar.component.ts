@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerDownload, tablerUpload } from '@ng-icons/tabler-icons';
-import { AlertComponent, ButtonComponent } from '@/shared/ui';
+import { AlertComponent, ButtonComponent, FlexComponent } from '@/shared/ui';
 import { downloadJson } from '@/shared/utils';
 import { RulesStore, type ImportRulesResult } from '../../rules.store';
 import type { SharedRulesFile } from '../../rule-share';
@@ -11,7 +11,7 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
 /** Export/import toolbar for the rules page (TICKET-CAT-06) — owns its own share state so the parent table stays focused on selection and row actions. */
 @Component({
   selector: 'app-rule-share-bar',
-  imports: [NgIcon, AlertComponent, ButtonComponent],
+  imports: [NgIcon, AlertComponent, ButtonComponent, FlexComponent],
   templateUrl: './rule-share-bar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerDownload, tablerUpload })],

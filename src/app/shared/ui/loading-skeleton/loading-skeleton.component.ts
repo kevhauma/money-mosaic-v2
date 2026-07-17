@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { FlexComponent } from '../flex/flex.component';
 
 /**
  * Placeholder block for a view whose data hasn't hydrated yet (TICKET-PERF-05) — distinct from
@@ -6,7 +7,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
  */
 @Component({
   selector: 'mm-loading-skeleton',
-  imports: [],
+  imports: [FlexComponent],
   templateUrl: './loading-skeleton.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

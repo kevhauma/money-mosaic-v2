@@ -37,7 +37,7 @@
 </div>
 
 <mm-paper elevation="flat" bodyClass="card-body gap-2" class="mt-4">
-  <div class="flex items-center gap-2">
+  <mm-flex align="center" gap="2">
     <h2 class="card-title text-base">Persistent storage</h2>
     @switch (storageStatus()) {
       @case ('granted') {
@@ -50,7 +50,7 @@
         <mm-badge color="neutral" variant="soft">Unavailable</mm-badge>
       }
     }
-  </div>
+  </mm-flex>
   <mm-text as="p" class="text-sm text-base-content/60">
     @switch (storageStatus()) {
       @case ('granted') {

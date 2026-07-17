@@ -1,5 +1,9 @@
-<div
-  class="flex flex-col items-center justify-center gap-3 rounded-box bg-base-100 p-12 text-center"
+<mm-flex
+  direction="col"
+  align="center"
+  justify="center"
+  gap="3"
+  class="rounded-box bg-base-100 p-12 text-center"
 >
   <div class="text-base-content/40">
     <ng-content select="[icon]" />
@@ -9,4 +13,4 @@
     <mm-text as="p" variant="caption" class="max-w-sm">{{ message() }}</mm-text>
   }
   <ng-content select="[action]" />
-</div>
+</mm-flex>

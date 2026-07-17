@@ -23,3 +23,4 @@ export * from './fieldset/fieldset.component';
 export * from './table/table.component';
 export * from './dropdown/dropdown.component';
 export * from './divider/divider.component';
+export * from './flex/flex.component';

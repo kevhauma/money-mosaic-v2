@@ -27,6 +27,7 @@ describe('LoadingSkeletonComponent', () => {
   it('forwards a class input onto the wrapper', () => {
     fixture.componentRef.setInput('class', 'mt-2');
     fixture.detectChanges();
-    expect((fixture.nativeElement.firstElementChild as HTMLElement).classList).toContain('mt-2');
+    const wrapper = fixture.nativeElement.querySelector('div') as HTMLElement;
+    expect(wrapper.classList).toContain('mt-2');
   });
 });

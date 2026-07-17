@@ -13,6 +13,7 @@ import { resolveTransferMatches, type TransferCandidate } from '@/core/transfers
 import {
   ButtonComponent,
   FieldsetComponent,
+  FlexComponent,
   InputComponent,
   LabelComponent,
   PaperComponent,
@@ -28,6 +29,7 @@ import { SignedAmountPipe } from '@/shared/utils';
     SignedAmountPipe,
     ButtonComponent,
     FieldsetComponent,
+    FlexComponent,
     InputComponent,
     LabelComponent,
     PaperComponent,

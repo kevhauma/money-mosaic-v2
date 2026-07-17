@@ -1,9 +1,9 @@
-<div class="flex items-center justify-between gap-3 text-sm">
+<mm-flex align="center" justify="between" gap="3" class="text-sm">
   <mm-text class="text-base-content/60">
     Showing {{ pageRange().start }}–{{ pageRange().end }} of {{ pageRange().total }}
   </mm-text>
   @if (totalPages() > 1) {
-    <div class="flex items-center gap-2">
+    <mm-flex align="center" gap="2">
       <mm-button variant="ghost" size="sm" [disabled]="currentPage() === 1" (click)="onPrev()">
         <ng-icon name="tablerChevronLeft" size="16" aria-hidden="true" />
         Prev
@@ -18,6 +18,6 @@
         Next
         <ng-icon name="tablerChevronRight" size="16" aria-hidden="true" />
       </mm-button>
-    </div>
+    </mm-flex>
   }
-</div>
+</mm-flex>

@@ -1,14 +1,14 @@
-<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+<mm-flex align="center" justify="between" gap="3" [wrap]="true" class="mb-6">
   <div>
-    <div class="flex items-center gap-2">
+    <mm-flex align="center" gap="2">
       <mm-text variant="heading" as="h1">{{ title() }}</mm-text>
       <ng-content select="[title-adornment]" />
-    </div>
+    </mm-flex>
     @if (subtitle()) {
       <mm-text variant="caption" as="p">{{ subtitle() }}</mm-text>
     }
   </div>
-  <div class="flex items-center gap-2">
+  <mm-flex align="center" gap="2">
     <ng-content select="[actions]" />
-  </div>
-</div>
+  </mm-flex>
+</mm-flex>

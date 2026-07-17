@@ -1,8 +1,8 @@
 <mm-paper elevation="flat">
-  <div class="flex items-center justify-between gap-2">
+  <mm-flex align="center" justify="between" gap="2">
     <p class="card-title text-base">Balance history</p>
     <mm-granularity-picker [value]="granularity()" (valueChange)="granularity.set($event)" />
-  </div>
+  </mm-flex>
   <div
     echarts
     [options]="chartOption()"

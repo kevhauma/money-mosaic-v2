@@ -6,6 +6,7 @@ import { CategoriesStore } from '@/core/state';
 import {
   ButtonComponent,
   ConfirmDialogComponent,
+  FlexComponent,
   PaperComponent,
   SelectComponent,
   TypographyComponent,
@@ -18,6 +19,7 @@ import {
     NgIcon,
     ButtonComponent,
     ConfirmDialogComponent,
+    FlexComponent,
     PaperComponent,
     SelectComponent,
     TypographyComponent,

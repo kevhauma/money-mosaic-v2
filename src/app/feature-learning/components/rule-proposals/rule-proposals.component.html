@@ -2,8 +2,8 @@
   <mm-paper elevation="flat" bodyClass="flex flex-col gap-2 p-3" class="mb-4">
     @for (proposal of categoryModelStore.ruleProposals(); track proposal.counterpartyName) {
       <div>
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
+        <mm-flex align="center" justify="between" gap="3" [wrap]="true">
+          <mm-flex align="center" gap="2">
             <mm-button
               variant="ghost"
               shape="square"
@@ -24,14 +24,14 @@
             <mm-text class="text-xs text-base-content/60">
               {{ proposal.support }} matches · {{ confidencePercent(proposal) }}% confident
             </mm-text>
-          </div>
-          <div class="flex items-center gap-2">
+          </mm-flex>
+          <mm-flex align="center" gap="2">
             <mm-button size="xs" color="primary" (click)="accept(proposal)">Accept</mm-button>
             <mm-button size="xs" variant="ghost" (click)="dismiss(proposal)">Dismiss</mm-button>
-          </div>
-        </div>
+          </mm-flex>
+        </mm-flex>
         @if (isExpanded(proposal)) {
-          <div class="mt-2 ml-8 flex flex-col gap-1 border-l border-base-300 pl-3">
+          <mm-flex direction="col" gap="1" class="mt-2 ml-8 border-l border-base-300 pl-3">
             @for (transaction of matchedTransactions(proposal); track transaction.id) {
               <mm-text
                 as="p"
@@ -44,7 +44,7 @@
                 </mm-text>
               </mm-text>
             }
-          </div>
+          </mm-flex>
         }
       </div>
     }

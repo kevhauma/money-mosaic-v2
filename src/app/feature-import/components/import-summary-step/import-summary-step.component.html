@@ -19,14 +19,14 @@
 
 <!-- Transfer-review / uncategorised-queue links are deferred: those features don't exist yet. -->
 
-<div class="mt-6 flex items-center gap-3">
+<mm-flex align="center" gap="3" class="mt-6">
   @if (showDoneLink()) {
     <mm-button color="primary" size="sm" link="/accounts">Done</mm-button>
   }
   <mm-button variant="ghost" size="sm" class="text-error" (click)="undoConfirmOpen.set(true)">
     Undo this import
   </mm-button>
-</div>
+</mm-flex>
 
 <mm-confirm-dialog
   [(open)]="undoConfirmOpen"

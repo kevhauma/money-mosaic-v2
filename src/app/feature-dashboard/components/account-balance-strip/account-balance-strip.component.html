@@ -1,6 +1,6 @@
 <mm-paper>
   <h2 class="card-title text-base">Accounts</h2>
-  <div class="flex flex-wrap gap-3">
+  <mm-flex gap="3" [wrap]="true">
     @for (account of accountsStore.activeAccounts(); track account.id) {
       <mm-paper
         elevation="flat"
@@ -13,5 +13,5 @@
         <mm-text weight="semibold">{{ balanceFor(account.id!) | signedAmount }}</mm-text>
       </mm-paper>
     }
-  </div>
+  </mm-flex>
 </mm-paper>

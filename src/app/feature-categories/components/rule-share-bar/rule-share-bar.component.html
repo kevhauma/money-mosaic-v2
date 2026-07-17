@@ -1,4 +1,4 @@
-<div class="mb-4 flex flex-wrap items-center gap-3">
+<mm-flex align="center" gap="3" [wrap]="true" class="mb-4">
   <mm-button size="sm" (click)="exportSelectedRules()" [disabled]="selectedIds().length === 0">
     <ng-icon name="tablerDownload" size="16" aria-hidden="true" />
     Export selected ({{ selectedIds().length }})
@@ -23,7 +23,7 @@
     class="hidden"
     (change)="onFileSelected($event)"
   />
-</div>
+</mm-flex>
 
 @if (shareError()) {
   <mm-alert status="error" class="mb-4 py-2 text-sm">{{ shareError() }}</mm-alert>

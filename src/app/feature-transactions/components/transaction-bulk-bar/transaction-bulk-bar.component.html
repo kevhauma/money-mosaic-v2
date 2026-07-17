@@ -10,7 +10,7 @@
     {{ count() }} selected
   </mm-text>
 
-  <div class="flex items-end gap-2">
+  <mm-flex align="end" gap="2">
     <mm-select [formControl]="categoryControl" size="sm">
       <option value="">Assign category…</option>
       @for (category of categoriesStore.activeCategories(); track category.id) {
@@ -25,9 +25,9 @@
     >
       Apply
     </mm-button>
-  </div>
+  </mm-flex>
 
-  <div class="ms-auto flex items-center gap-2">
+  <mm-flex align="center" gap="2" class="ms-auto">
     <mm-button variant="ghost" size="sm" (click)="selectAllRequested.emit()">
       Select all {{ filteredCount() }}
     </mm-button>
@@ -39,7 +39,7 @@
       <ng-icon name="tablerX" size="16" aria-hidden="true" />
       Clear
     </mm-button>
-  </div>
+  </mm-flex>
 </mm-paper>
 
 <mm-confirm-dialog

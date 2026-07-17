@@ -1,5 +1,5 @@
 <mm-page-header title="Categories" subtitle="Manage the categories transactions get sorted into.">
-  <div actions class="flex items-center gap-3">
+  <mm-flex actions align="center" gap="3">
     <mm-label as="label" class="gap-2">
       <mm-text variant="caption" color="base-content">Show archived</mm-text>
       <input
@@ -13,7 +13,7 @@
       <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
       Add category
     </mm-button>
-  </div>
+  </mm-flex>
 </mm-page-header>
 
 <mm-tabs [tabs]="categoriesTabs" variant="box" class="mb-4 w-fit" />
@@ -46,7 +46,7 @@
       @for (category of visibleCategories(); track category.id) {
         <tr [class.opacity-60]="category.archived">
           <td>
-            <div class="flex items-center gap-1">
+            <mm-flex align="center" gap="1">
               <mm-button
                 variant="ghost"
                 shape="square"
@@ -67,19 +67,21 @@
               >
                 <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
               </mm-button>
-            </div>
+            </mm-flex>
           </td>
           <td>
-            <div class="flex items-center gap-2">
-              <span
-                class="flex h-7 w-7 items-center justify-center rounded-full"
+            <mm-flex align="center" gap="2">
+              <mm-flex
+                align="center"
+                justify="center"
+                class="h-7 w-7 rounded-full"
                 [style.background-color]="category.color + '33'"
                 [style.color]="category.color"
               >
                 <ng-icon [name]="categoryIconName(category.icon)" size="16" aria-hidden="true" />
-              </span>
+              </mm-flex>
               <mm-text weight="medium">{{ category.name }}</mm-text>
-            </div>
+            </mm-flex>
           </td>
           <td>
             <mm-badge

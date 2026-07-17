@@ -1,6 +1,6 @@
 @if (account(); as account) {
   <mm-page-header [title]="account.name" [subtitle]="account.type | titlecase">
-    <div actions class="flex items-center gap-2">
+    <mm-flex actions align="center" gap="2">
       <mm-button variant="ghost" size="sm" link="/accounts">Back to accounts</mm-button>
       <mm-button size="sm" (click)="formOpen.set(true)">
         <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
@@ -27,7 +27,7 @@
         <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
         Delete
       </mm-button>
-    </div>
+    </mm-flex>
   </mm-page-header>
 
   <mm-paper elevation="flat">

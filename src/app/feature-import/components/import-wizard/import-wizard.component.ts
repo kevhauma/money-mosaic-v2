@@ -14,6 +14,7 @@ import type { MappingProfile } from '@/core/data-access';
 import {
   AlertComponent,
   ButtonComponent,
+  FlexComponent,
   LabelComponent,
   PaperComponent,
   TypographyComponent,
@@ -57,6 +58,7 @@ const PARSE_DEBOUNCE_MS = 300;
     ImportSummaryStepComponent,
     ButtonComponent,
     AlertComponent,
+    FlexComponent,
     LabelComponent,
     PaperComponent,
     TypographyComponent,

@@ -5,6 +5,7 @@ import {
   BadgeComponent,
   ButtonComponent,
   FieldsetComponent,
+  FlexComponent,
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
@@ -22,6 +23,7 @@ export type QueuedImportFile = {
     BadgeComponent,
     ButtonComponent,
     FieldsetComponent,
+    FlexComponent,
     PaperComponent,
     TypographyComponent,
   ],

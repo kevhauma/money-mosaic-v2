@@ -12,6 +12,7 @@ import { tablerFilterOff } from '@ng-icons/tabler-icons';
 import {
   ButtonComponent,
   FieldsetComponent,
+  FlexComponent,
   InputComponent,
   PaperComponent,
   SelectComponent,
@@ -35,6 +36,7 @@ type StructuralFilters = Omit<RuleFilters, 'text'>;
     NgIcon,
     ButtonComponent,
     FieldsetComponent,
+    FlexComponent,
     InputComponent,
     PaperComponent,
     SelectComponent,

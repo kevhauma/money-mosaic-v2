@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AccountsStore } from '@/core/state';
-import { PaperComponent, TypographyComponent } from '@/shared/ui';
+import { FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
 /** Compact per-account balance strip (FR-STAT-1), each entry drilling down to its account detail. */
 @Component({
   selector: 'app-account-balance-strip',
-  imports: [SignedAmountPipe, PaperComponent, TypographyComponent],
+  imports: [SignedAmountPipe, FlexComponent, PaperComponent, TypographyComponent],
   templateUrl: './account-balance-strip.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

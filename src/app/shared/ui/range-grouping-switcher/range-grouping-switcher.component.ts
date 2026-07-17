@@ -6,6 +6,7 @@ import {
   DateRangeInputComponent,
   type DateRangeValue,
 } from '../date-range-input/date-range-input.component';
+import { FlexComponent } from '../flex/flex.component';
 
 export type RangeGroupingPreset =
   | 'this-week'
@@ -34,7 +35,7 @@ export type RangeGroupingSwitcherValue = {
  */
 @Component({
   selector: 'mm-range-grouping-switcher',
-  imports: [DateRangeInputComponent, ButtonComponent, NgIcon],
+  imports: [DateRangeInputComponent, ButtonComponent, FlexComponent, NgIcon],
   templateUrl: './range-grouping-switcher.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerChevronLeft, tablerChevronRight })],

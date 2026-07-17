@@ -138,9 +138,9 @@
                 </mm-button>
               }
             } @else if (parsing() && parsedRows().length === 0) {
-              <div class="flex justify-center py-8">
+              <mm-flex justify="center" class="py-8">
                 <span class="loading loading-spinner loading-md"></span>
-              </div>
+              </mm-flex>
             } @else {
               @if (parseWarnings().length > 0) {
                 <mm-alert status="warning" variant="soft" class="mb-3 block text-sm">
@@ -157,7 +157,7 @@
         </div>
       }
       @case (3) {
-        <div class="flex flex-col gap-6">
+        <mm-flex direction="col" gap="6">
           @for (result of commitResults(); track result.batch.id) {
             <app-import-summary-step
               [batch]="result.batch"
@@ -165,13 +165,13 @@
               (undo)="onUndo(result)"
             />
           }
-          <div class="flex items-center gap-3 border-t border-base-300 pt-4">
+          <mm-flex align="center" gap="3" class="border-t border-base-300 pt-4">
             <mm-button color="primary" size="sm" link="/accounts">Done</mm-button>
             <mm-button variant="ghost" size="sm" (click)="startNewImport()">
               Start new import
             </mm-button>
-          </div>
-        </div>
+          </mm-flex>
+        </mm-flex>
       }
     }
   </mm-paper>

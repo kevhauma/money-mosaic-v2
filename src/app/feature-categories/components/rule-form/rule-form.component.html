@@ -28,7 +28,7 @@
       </mm-fieldset>
     </div>
 
-    <div class="flex items-center gap-4">
+    <mm-flex align="center" gap="4">
       <mm-label as="label" class="cursor-pointer gap-2">
         <input type="checkbox" formControlName="enabled" class="toggle toggle-sm" />
         <mm-text variant="caption" color="base-content">Enabled</mm-text>
@@ -39,7 +39,7 @@
           >Continue to next rule after a match</mm-text
         >
       </mm-label>
-    </div>
+    </mm-flex>
 
     <mm-divider class="my-2">Conditions</mm-divider>
 
@@ -50,7 +50,7 @@
       </mm-select>
     </mm-fieldset>
 
-    <div formArrayName="conditions" class="flex flex-col gap-3">
+    <mm-flex formArrayName="conditions" direction="col" gap="3">
       @for (group of conditionsArray.controls; track $index) {
         <div [formGroup]="group" class="grid grid-cols-12 items-start gap-2">
           <mm-select
@@ -129,7 +129,7 @@
           </mm-button>
         </div>
       }
-    </div>
+    </mm-flex>
 
     <mm-button variant="ghost" size="sm" class="mt-2" (click)="addCondition()">
       + Add condition

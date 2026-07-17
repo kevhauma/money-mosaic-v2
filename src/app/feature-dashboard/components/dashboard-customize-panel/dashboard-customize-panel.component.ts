@@ -10,14 +10,21 @@ import {
   tablerRestore,
 } from '@ng-icons/tabler-icons';
 import type { DashboardRowId } from '@/core/data-access';
-import { ButtonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import { ButtonComponent, FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
 import { DASHBOARD_ROW_LABELS, resolveDashboardRowOrder } from '../../dashboard-row-order';
 
 /** Drag-to-reorder / hide-toggle list for every Dashboard row, entered via the "Customize dashboard" toggle (TICKET-STAT-14). Loaded lazily — see the `@defer` block in `dashboard-overview.component.html` — so `@angular/cdk` never ships in the base Dashboard bundle. */
 @Component({
   selector: 'app-dashboard-customize-panel',
-  imports: [DragDropModule, NgIcon, ButtonComponent, PaperComponent, TypographyComponent],
+  imports: [
+    DragDropModule,
+    NgIcon,
+    ButtonComponent,
+    FlexComponent,
+    PaperComponent,
+    TypographyComponent,
+  ],
   templateUrl: './dashboard-customize-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [

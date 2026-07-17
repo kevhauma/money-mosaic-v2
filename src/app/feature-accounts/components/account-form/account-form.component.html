@@ -90,12 +90,12 @@
       <!-- Standalone section heading beside an action button, not an actual fieldset (the
            co-owners formArray below is a sibling, not this legend's content) — left as a raw
            daisyUI class rather than forced through mm-fieldset/mm-label (TICKET-UI-06). -->
-      <div class="flex items-center justify-between">
+      <mm-flex align="center" justify="between">
         <span class="fieldset-legend">Co-owners</span>
         <mm-button type="button" variant="ghost" size="sm" (click)="addCoOwner()">
           + Add co-owner
         </mm-button>
-      </div>
+      </mm-flex>
 
       @if (form.hasError('duplicateIban')) {
         <mm-label variant="error">
@@ -104,7 +104,7 @@
         </mm-label>
       }
 
-      <div formArrayName="coOwners" class="flex flex-col gap-3">
+      <mm-flex formArrayName="coOwners" direction="col" gap="3">
         @for (group of coOwnersArray.controls; track $index) {
           <div [formGroup]="group" class="rounded-field border border-base-300 p-3">
             <div class="grid grid-cols-12 items-start gap-2">
@@ -142,9 +142,9 @@
               </mm-button>
             </div>
 
-            <div formArrayName="ibans" class="mt-2 flex flex-col gap-2">
+            <mm-flex formArrayName="ibans" direction="col" gap="2" class="mt-2">
               @for (ibanControl of group.controls.ibans.controls; track $index) {
-                <div class="flex items-center gap-2">
+                <mm-flex align="center" gap="2">
                   <mm-input
                     type="text"
                     [formControlName]="$index"
@@ -163,7 +163,7 @@
                   >
                     &times;
                   </mm-button>
-                </div>
+                </mm-flex>
                 @if (ibanControl.invalid && ibanControl.touched) {
                   <mm-label variant="error">That doesn't look like a valid IBAN.</mm-label>
                 }
@@ -176,10 +176,10 @@
               <mm-button type="button" variant="ghost" size="sm" (click)="addIban(group)">
                 + Add IBAN
               </mm-button>
-            </div>
+            </mm-flex>
           </div>
         }
-      </div>
+      </mm-flex>
     }
 
     <div class="modal-action">

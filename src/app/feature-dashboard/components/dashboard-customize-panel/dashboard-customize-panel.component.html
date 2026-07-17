@@ -1,17 +1,19 @@
 <mm-paper elevation="flat" bodyClass="p-4" class="mb-6 shadow">
-  <div class="mb-3 flex items-center justify-between gap-3">
+  <mm-flex align="center" justify="between" gap="3" class="mb-3">
     <mm-text as="h2" variant="subheading" weight="semibold">Customize dashboard layout</mm-text>
     <mm-button variant="ghost" size="sm" (click)="reset()">
       <ng-icon name="tablerRestore" size="16" aria-hidden="true" />
       Reset to default
     </mm-button>
-  </div>
+  </mm-flex>
 
-  <div cdkDropList class="flex flex-col gap-2" (cdkDropListDropped)="onDrop($event)">
+  <mm-flex cdkDropList direction="col" gap="2" (cdkDropListDropped)="onDrop($event)">
     @for (rowId of rows(); track rowId; let first = $first; let last = $last) {
-      <div
+      <mm-flex
         cdkDrag
-        class="flex items-center gap-2 rounded-box border border-base-300 bg-base-200/50 p-2"
+        align="center"
+        gap="2"
+        class="rounded-box border border-base-300 bg-base-200/50 p-2"
         [class.opacity-50]="isHidden(rowId)"
       >
         <span cdkDragHandle class="cursor-grab text-base-content/50" aria-hidden="true">
@@ -20,7 +22,7 @@
         <mm-text variant="caption" color="base-content" class="flex-1">{{
           rowLabels[rowId]
         }}</mm-text>
-        <div class="flex items-center gap-1">
+        <mm-flex align="center" gap="1">
           <mm-button
             variant="ghost"
             size="sm"
@@ -51,8 +53,8 @@
               aria-hidden="true"
             />
           </mm-button>
-        </div>
-      </div>
+        </mm-flex>
+      </mm-flex>
     }
-  </div>
+  </mm-flex>
 </mm-paper>

@@ -1,5 +1,5 @@
 <mm-alert [status]="alertStatus()" class="mb-3 flex items-center gap-3">
-  <div class="flex items-center gap-2">
+  <mm-flex align="center" gap="2">
     @switch (categoryModelStore.status()) {
       @case ('training') {
         <span class="loading loading-spinner loading-sm"></span>
@@ -45,7 +45,7 @@
         <span>{{ statusCopy() }}</span>
       }
     }
-  </div>
+  </mm-flex>
 </mm-alert>
 
 <mm-paper
@@ -53,7 +53,7 @@
   bodyClass="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
   class="mb-4"
 >
-  <div class="flex items-center gap-2">
+  <mm-flex align="center" gap="2">
     <mm-text class="text-sm text-base-content/60">Training window</mm-text>
     <div class="join" role="group" aria-label="Training window">
       @for (option of trainingWindowOptions; track option.years) {
@@ -68,7 +68,7 @@
         </button>
       }
     </div>
-  </div>
+  </mm-flex>
   <mm-button [disabled]="trainDisabled()" (click)="train()">
     {{ buttonLabel() }}
   </mm-button>

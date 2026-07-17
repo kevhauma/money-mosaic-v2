@@ -1,7 +1,7 @@
 @if (loading()) {
-  <div class="flex justify-center py-8">
+  <mm-flex justify="center" class="py-8">
     <span class="loading loading-spinner loading-md"></span>
-  </div>
+  </mm-flex>
 } @else {
   @if (detectedPreset(); as preset) {
     <mm-alert status="success" class="mb-4 text-sm">

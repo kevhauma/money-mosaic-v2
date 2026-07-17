@@ -1,7 +1,11 @@
-<div class="flex flex-col gap-4">
+<mm-flex direction="col" gap="4">
   <mm-fieldset legend="CSV files">
-    <div
-      class="flex flex-col items-center justify-center gap-2 rounded-box border-2 border-dashed border-base-300 p-8 text-center"
+    <mm-flex
+      direction="col"
+      align="center"
+      justify="center"
+      gap="2"
+      class="rounded-box border-2 border-dashed border-base-300 p-8 text-center"
       (drop)="onDrop($event)"
       (dragover)="onDragOver($event)"
     >
@@ -18,7 +22,7 @@
           (change)="onFileSelected($event)"
         />
       </label>
-    </div>
+    </mm-flex>
   </mm-fieldset>
 
   @if (queue().length > 0) {
@@ -63,4 +67,4 @@
       </ul>
     </mm-fieldset>
   }
-</div>
+</mm-flex>

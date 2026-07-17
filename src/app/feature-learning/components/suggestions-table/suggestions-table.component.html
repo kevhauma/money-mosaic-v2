@@ -51,14 +51,14 @@
             </mm-badge>
           </td>
           <td>
-            <div class="flex items-center justify-end gap-1">
+            <mm-flex align="center" justify="end" gap="1">
               <mm-button size="xs" color="primary" (click)="acceptSuggestion(row.transaction.id!)">
                 Accept
               </mm-button>
               <mm-button size="xs" variant="ghost" (click)="dismissSuggestion(row.transaction.id!)">
                 Dismiss
               </mm-button>
-            </div>
+            </mm-flex>
           </td>
         </tr>
       }

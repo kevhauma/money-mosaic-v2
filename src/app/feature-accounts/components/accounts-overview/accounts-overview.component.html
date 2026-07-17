@@ -1,5 +1,5 @@
 <mm-page-header title="Accounts" subtitle="Every account you track, in one place.">
-  <div actions class="flex items-center gap-3">
+  <mm-flex actions align="center" gap="3">
     <mm-label as="label" class="gap-2">
       <mm-text variant="caption" color="base-content">Show archived</mm-text>
       <input
@@ -13,7 +13,7 @@
       <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
       Add account
     </mm-button>
-  </div>
+  </mm-flex>
 </mm-page-header>
 
 <div class="mb-6">
@@ -38,14 +38,14 @@
         bodyClass="card-body gap-3"
         [style]="'border-inline-start: 4px solid ' + account.color"
       >
-        <div class="flex items-start justify-between">
-          <div class="flex items-center gap-2">
+        <mm-flex align="start" justify="between">
+          <mm-flex align="center" gap="2">
             <ng-icon [name]="accountIconName(account.icon)" size="20" aria-hidden="true" />
             <a [routerLink]="[account.id]" class="card-title text-base hover:underline">
               {{ account.name }}
             </a>
-          </div>
-          <div class="flex items-center gap-1">
+          </mm-flex>
+          <mm-flex align="center" gap="1">
             <mm-button
               variant="ghost"
               shape="square"
@@ -99,8 +99,8 @@
                 </button>
               </li>
             </mm-dropdown>
-          </div>
-        </div>
+          </mm-flex>
+        </mm-flex>
 
         <mm-badge variant="outline" size="sm" class="w-fit capitalize">{{ account.type }}</mm-badge>
 

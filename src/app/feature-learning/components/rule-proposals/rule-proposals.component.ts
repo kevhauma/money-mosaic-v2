@@ -5,7 +5,13 @@ import type { Transaction } from '@/core/data-access';
 import type { RuleProposal } from '@/core/ml';
 import { CategoryModelStore } from '@/feature-categories';
 import { CategoriesStore, TransactionsStore } from '@/core/state';
-import { BadgeComponent, ButtonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import {
+  BadgeComponent,
+  ButtonComponent,
+  FlexComponent,
+  PaperComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
 /** Rule-proposal inbox on the Learning page (FR-ML-9) — a thin UI consumer of `CategoryModelStore` (ML-07). */
@@ -16,6 +22,7 @@ import { SignedAmountPipe } from '@/shared/utils';
     SignedAmountPipe,
     BadgeComponent,
     ButtonComponent,
+    FlexComponent,
     PaperComponent,
     TypographyComponent,
   ],

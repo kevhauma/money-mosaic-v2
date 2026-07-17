@@ -1,8 +1,8 @@
 <mm-paper [fullHeight]="true">
-  <div class="flex items-center justify-between gap-2">
+  <mm-flex align="center" justify="between" gap="2">
     <h2 class="card-title text-base">Trend</h2>
     <mm-granularity-picker [value]="granularity()" (valueChange)="granularity.set($event)" />
-  </div>
+  </mm-flex>
 
   <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
     <div>

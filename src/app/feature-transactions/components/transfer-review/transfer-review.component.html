@@ -1,5 +1,5 @@
 <mm-paper elevation="flat" bodyClass="p-4" class="mb-4">
-  <div class="flex flex-wrap items-end justify-between gap-4">
+  <mm-flex align="end" justify="between" gap="4" [wrap]="true">
     <form
       [formGroup]="settingsForm"
       (ngSubmit)="saveSettings()"
@@ -23,7 +23,7 @@
       <mm-button type="submit" size="sm" variant="outline">Save settings</mm-button>
     </form>
 
-    <div class="flex items-center gap-2">
+    <mm-flex align="center" gap="2">
       @if (lastRunCount() !== null) {
         <mm-text class="text-xs text-base-content/60">
           Linked {{ lastRunCount() }} pair{{ lastRunCount() === 1 ? '' : 's' }}.
@@ -36,8 +36,8 @@
         <ng-icon name="tablerRefresh" size="16" aria-hidden="true" />
         Re-run auto-linking
       </mm-button>
-    </div>
-  </div>
+    </mm-flex>
+  </mm-flex>
 
   @if (reviewExpanded()) {
     @if (ambiguousCandidates().length > 0) {
@@ -51,7 +51,7 @@
             background=""
             bodyClass="flex flex-wrap items-center justify-between gap-3 p-2 text-sm"
           >
-            <div class="flex flex-1 flex-wrap items-center gap-3">
+            <mm-flex align="center" gap="3" [wrap]="true" class="flex-1">
               <div>
                 <div class="whitespace-nowrap">
                   {{ candidate.from.bookingDate }} · {{ accountName(candidate.from.accountId) }}
@@ -72,7 +72,7 @@
               <mm-text [color]="candidate.from.amount < 0 ? 'error' : undefined">
                 {{ candidate.from.amount | signedAmount }}
               </mm-text>
-            </div>
+            </mm-flex>
             <mm-button size="xs" color="primary" (click)="confirmCandidate(candidate)">
               Confirm
             </mm-button>

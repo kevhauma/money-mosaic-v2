@@ -1,6 +1,6 @@
 @if (comparison(); as c) {
   <mm-paper [fullHeight]="true">
-    <div class="flex items-center justify-between gap-2">
+    <mm-flex align="center" justify="between" gap="2">
       <h2 class="card-title text-base">Category period comparison</h2>
 
       @if (excludableCategories().length > 0) {
@@ -26,7 +26,7 @@
           }
         </mm-dropdown>
       }
-    </div>
+    </mm-flex>
 
     @if (c.hasEnoughData) {
       <mm-text as="p" class="text-sm text-base-content/60">
@@ -36,7 +36,7 @@
       <div class="mt-4 grid grid-cols-[repeat(auto-fit,minmax(275px,1fr))] gap-4">
         @for (category of categories(); track category.categoryId) {
           <mm-paper elevation="flat" background="" bodyClass="p-3">
-            <div class="mb-2 flex items-center justify-between gap-2">
+            <mm-flex align="center" justify="between" gap="2" class="mb-2">
               <mm-text weight="medium" class="flex min-w-0 items-center gap-2 text-sm">
                 <span
                   class="h-2 w-2 shrink-0 rounded-full"
@@ -68,10 +68,10 @@
                   {{ label }}
                 </mm-text>
               }
-            </div>
+            </mm-flex>
 
             <div class="h-16">
-              <div class="relative flex h-full items-end gap-1">
+              <mm-flex align="end" gap="1" class="relative h-full">
                 @for (bar of category.bars; track bar.key) {
                   <a
                     [routerLink]="['/transactions']"
@@ -87,7 +87,7 @@
                     ></div>
                   </a>
                 }
-              </div>
+              </mm-flex>
             </div>
 
             <mm-text as="p" class="mt-2 flex justify-between text-xs text-base-content/60">
