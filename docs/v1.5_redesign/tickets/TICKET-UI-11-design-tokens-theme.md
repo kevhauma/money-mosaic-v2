@@ -12,6 +12,8 @@ As a user, I want the app to look and feel Playful, Curious, Premium, Insightful
 
 This is the payoff ticket the whole Phase A extraction (UI-02..UI-10) exists to make cheap: once every recurring visual pattern lives in a `shared/ui/` primitive, the actual redesign — new color tokens, typography scale, elevation/shadow scale, and an accent treatment for the "Gradient Mesh / Aurora Evolved" and "Dimensional Layering" visual styles prepare.md describes — is authored once in `styles.css`'s daisyUI theme config and a small set of primitives, rather than touched per-page.
 
+The actual token values (colors, type scale, elevation, the aurora-wash gradient recipe) are specified in [design-language.md](../design-language.md) §1, §3, §4 — implement from there rather than re-deriving values from prepare.md's feelings/terms directly.
+
 ## Current situation (as-is)
 
 - [styles.css](../../../src/styles.css) is minimal: `@import 'tailwindcss'; @plugin 'daisyui';` — no theme list configured, single implicit default daisyUI theme, no OLED-tuned dark palette.

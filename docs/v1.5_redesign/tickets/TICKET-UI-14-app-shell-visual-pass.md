@@ -12,6 +12,8 @@ As a user, I want the app's persistent navigation shell (sidebar, top bar) to re
 
 [app.html](../../../src/app/app.html) is the one piece of chrome present on every routed page — the daisyUI `drawer` shell, top `navbar`, and sidebar `menu`. This ticket gives it a visual pass using the new tokens/primitives, so the redesign reads as consistent app-wide rather than confined to the Dashboard's bespoke layout.
 
+[design-language.md](../design-language.md) §7 specifies the nav active-item accent treatment.
+
 ## Current situation (as-is)
 
 - [app.html](../../../src/app/app.html) renders a plain daisyUI `drawer` + `navbar` + `menu-vertical` sidebar with no custom styling beyond base daisyUI classes and hardcoded `border-base-300`/`bg-base-100`/`bg-base-200` tokens.

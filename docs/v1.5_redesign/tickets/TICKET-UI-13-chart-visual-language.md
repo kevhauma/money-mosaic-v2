@@ -12,6 +12,8 @@ As a user, I want the app's charts to be the visual centerpiece (this version's 
 
 `ngx-echarts` already renders every chart in the app; this ticket recolors those charts to consume [TICKET-UI-11](./TICKET-UI-11-design-tokens-theme.md)'s new tokens and adds a "Motion-Driven" transition treatment (prepare.md's term) when a chart's underlying data changes — without adding a new animation dependency.
 
+[design-language.md](../design-language.md) §2 has the validated 6-slot categorical palette (light + dark, CVD-checked) and §6 has the animation duration/easing values to use.
+
 ## Current situation (as-is)
 
 - Chart color options across `feature-dashboard/components/*` (`trend-chart-panel`, `category-breakdown-panel`, `category-comparison-panel`, `weekday-weekend-split-panel`) and `feature-stats`/`feature-income`-style panels each set their own ECharts `color`/series styling, independent of daisyUI theme tokens (canvas rendering can't consume CSS custom properties directly the way DOM elements can).

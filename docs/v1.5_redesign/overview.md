@@ -28,7 +28,7 @@ Closes the gap between prepare.md's manual audit and the actual codebase, then e
 
 ## Phase B — Visual redesign (built on Phase A)
 
-Applies the actual new visual identity. **Do not start UI-11 until Phase A has landed** — recoloring/retyping before the extraction is done means redoing the same work once a primitive later lands underneath it.
+Applies the actual new visual identity. **Do not start UI-11 until Phase A has landed** — recoloring/retyping before the extraction is done means redoing the same work once a primitive later lands underneath it. [design-language.md](./design-language.md) turns prepare.md's feelings/terms/styles into the actual color tokens, type scale, elevation scale, categorical chart palette, motion timings, and bento sizing each ticket below implements — read it before starting any Phase B ticket.
 
 - [ ] [TICKET-UI-11](./tickets/TICKET-UI-11-design-tokens-theme.md) — Design tokens & daisyUI theme foundation (adds FR-UI-11) — the payoff ticket; needs all of Phase A merged first
 - [ ] [TICKET-UI-12](./tickets/TICKET-UI-12-dashboard-bento-layout.md) — Dashboard Bento-grid layout adoption (adds FR-UI-12) — needs UI-03 + UI-04; the redesign's "hero" surface

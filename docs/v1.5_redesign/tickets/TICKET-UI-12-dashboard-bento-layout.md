@@ -12,6 +12,8 @@ As a user, I want the Dashboard to read as an at-a-glance, visually prioritized 
 
 This ticket applies [TICKET-UI-03](./TICKET-UI-03-bento-grid-primitive.md)'s `mm-bento-grid` primitive and [TICKET-UI-11](./TICKET-UI-11-design-tokens-theme.md)'s tokens to the Dashboard's actual panel arrangement — the one page this version gives a bespoke layout redesign, per prepare.md's "Dashboard-first UX" and "make the charts the hero" terms.
 
+[design-language.md](../design-language.md) §5 has a suggested `colSpan`/`rowSpan` per panel to start from.
+
 ## Current situation (as-is)
 
 - `feature-dashboard/components/dashboard-overview/` currently arranges `net-worth-header`, `account-balance-strip`, `action-queue-panel`, `category-breakdown-panel`, `category-comparison-panel`, `trend-chart-panel`, `top-transactions-panel`, and `weekday-weekend-split-panel` in whatever order/sizing the existing layout uses, with no deliberate visual-hierarchy pass.
