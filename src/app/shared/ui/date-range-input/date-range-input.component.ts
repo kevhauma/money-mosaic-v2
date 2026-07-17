@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import 'cally';
 import { daisyClasses, formatAlignedRangeLabel } from '@/shared/utils';
+import { DropdownComponent } from '../dropdown/dropdown.component';
 
 export type DateRangeValue = { from: string; to: string };
 export type DateRangeInputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -20,7 +21,7 @@ export const formatDisplayDate = (iso: string): string => {
 /** Presentational single-field date-range picker (a Cally `calendar-range` popover) — holds no state of its own; the caller owns the value and reacts to `valueChange`. */
 @Component({
   selector: 'mm-date-range-input',
-  imports: [],
+  imports: [DropdownComponent],
   templateUrl: './date-range-input.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

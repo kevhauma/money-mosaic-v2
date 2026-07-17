@@ -1,0 +1,16 @@
+<ng-template #body>
+  <ng-content />
+</ng-template>
+
+<div [class]="wrapperClasses()">
+  <ng-content select="[trigger]" />
+  @if (menu()) {
+    <ul tabindex="0" [class]="contentClasses()">
+      <ng-container [ngTemplateOutlet]="body" />
+    </ul>
+  } @else {
+    <div tabindex="0" [class]="contentClasses()">
+      <ng-container [ngTemplateOutlet]="body" />
+    </div>
+  }
+</div>

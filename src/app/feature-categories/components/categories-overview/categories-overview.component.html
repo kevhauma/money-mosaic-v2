@@ -94,38 +94,39 @@
           <td class="text-sm text-base-content/60">{{ category.group || '—' }}</td>
           <td class="text-right">{{ transactionCountFor(category) }}</td>
           <td>
-            <div class="dropdown dropdown-end">
-              <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Category actions">
+            <mm-dropdown align="end" contentClass="z-10 w-44">
+              <mm-button
+                trigger
+                variant="ghost"
+                shape="square"
+                size="sm"
+                ariaLabel="Category actions"
+              >
                 <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
               </mm-button>
-              <ul
-                tabindex="0"
-                class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
-              >
-                <li>
-                  <button type="button" (click)="openEditForm(category)">
-                    <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
-                    Edit
-                  </button>
-                </li>
-                <li>
-                  <button type="button" (click)="toggleArchive(category)">
-                    <ng-icon
-                      [name]="category.archived ? 'tablerArchiveOff' : 'tablerArchive'"
-                      size="14"
-                      aria-hidden="true"
-                    />
-                    {{ category.archived ? 'Unarchive' : 'Archive' }}
-                  </button>
-                </li>
-                <li>
-                  <button type="button" class="text-error" (click)="confirmDelete(category)">
-                    <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
-                    Delete
-                  </button>
-                </li>
-              </ul>
-            </div>
+              <li>
+                <button type="button" (click)="openEditForm(category)">
+                  <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+                  Edit
+                </button>
+              </li>
+              <li>
+                <button type="button" (click)="toggleArchive(category)">
+                  <ng-icon
+                    [name]="category.archived ? 'tablerArchiveOff' : 'tablerArchive'"
+                    size="14"
+                    aria-hidden="true"
+                  />
+                  {{ category.archived ? 'Unarchive' : 'Archive' }}
+                </button>
+              </li>
+              <li>
+                <button type="button" class="text-error" (click)="confirmDelete(category)">
+                  <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+                  Delete
+                </button>
+              </li>
+            </mm-dropdown>
           </td>
         </tr>
       }

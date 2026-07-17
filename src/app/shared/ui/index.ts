@@ -21,3 +21,4 @@ export * from './tabs/tabs.component';
 export * from './label/label.component';
 export * from './fieldset/fieldset.component';
 export * from './table/table.component';
+export * from './dropdown/dropdown.component';

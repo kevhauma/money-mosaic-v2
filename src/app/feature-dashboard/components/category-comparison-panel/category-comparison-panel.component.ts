@@ -4,6 +4,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler-icons/fill';
 import {
   ButtonComponent,
+  DropdownComponent,
   formatDisplayDate,
   LabelComponent,
   PaperComponent,
@@ -73,6 +74,7 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
     RouterLink,
     NgIcon,
     ButtonComponent,
+    DropdownComponent,
     LabelComponent,
     PaperComponent,
     TypographyComponent,
