@@ -46,6 +46,7 @@
     "@tailwindcss/postcss": "^4.1.12",
     "@types/papaparse": "^5.5.2",
     "angular-eslint": "21.4.0",
+    "dependency-cruiser": "^18.1.0",
     "eslint": "^10.3.0",
     "fake-indexeddb": "^6.2.5",
     "fallow": "^3.5.1",

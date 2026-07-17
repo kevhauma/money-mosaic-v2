@@ -1,1 +1,8 @@
+set -e
+
 npx lint-staged
+
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '^(src/app/|\.dependency-cruiser\.cjs$)'; then
+  node scripts/update-dependency-graphs.mjs
+  git add reports/dependency-graph.html reports/dependency-graph.mmd reports/dependency-graph-deep.mmd docs/dependency-graph.md
+fi
