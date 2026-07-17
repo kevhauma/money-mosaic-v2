@@ -22,10 +22,13 @@ import {
   tablerFileImport,
   tablerHome,
   tablerMenu2,
+  tablerMoon,
+  tablerSun,
   tablerTags,
 } from '@ng-icons/tabler-icons';
 import { RangeStore, computeFullHistoryRange } from '@/core/stats';
 import { AccountsStore, TransactionsStore } from '@/core/state';
+import { ThemeService } from '@/core/theme';
 // Imported directly (not via the @/shared/ui barrel) to keep the rest of shared/ui — and the
 // @angular/forms it drags in via InputComponent/SelectComponent — out of the eager bundle;
 // Angular's @Component decorator has side effects, so esbuild can't tree-shake unused barrel
@@ -63,6 +66,8 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
       tablerTags,
       tablerBulb,
       tablerDatabase,
+      tablerSun,
+      tablerMoon,
     }),
   ],
 })
@@ -70,6 +75,7 @@ export class App {
   protected readonly transactionsStore = inject(TransactionsStore);
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly rangeStore = inject(RangeStore);
+  protected readonly themeService = inject(ThemeService);
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
