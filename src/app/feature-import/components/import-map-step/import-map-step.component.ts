@@ -22,6 +22,7 @@ import {
 import { CsvImportService, guessDelimiter } from '@/core/import';
 import {
   AlertComponent,
+  DividerComponent,
   FieldsetComponent,
   InputComponent,
   LabelComponent,
@@ -44,6 +45,7 @@ const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
   imports: [
     ReactiveFormsModule,
     AlertComponent,
+    DividerComponent,
     FieldsetComponent,
     InputComponent,
     LabelComponent,

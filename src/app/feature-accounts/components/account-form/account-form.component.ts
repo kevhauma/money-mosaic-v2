@@ -22,6 +22,7 @@ import type { ValidationErrors, ValidatorFn } from '@angular/forms';
 import type { Account, JointOwner } from '@/core/data-access';
 import {
   ButtonComponent,
+  DividerComponent,
   FieldsetComponent,
   InputComponent,
   LabelComponent,
@@ -87,6 +88,7 @@ const uniqueCoOwnerIbansValidator: ValidatorFn = (control): ValidationErrors | n
   imports: [
     ReactiveFormsModule,
     ButtonComponent,
+    DividerComponent,
     FieldsetComponent,
     InputComponent,
     LabelComponent,
