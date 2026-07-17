@@ -1,6 +1,5 @@
 <div class="flex flex-col gap-4">
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend">CSV files</legend>
+  <mm-fieldset legend="CSV files">
     <div
       class="flex flex-col items-center justify-center gap-2 rounded-box border-2 border-dashed border-base-300 p-8 text-center"
       (drop)="onDrop($event)"
@@ -20,11 +19,10 @@
         />
       </label>
     </div>
-  </fieldset>
+  </mm-fieldset>
 
   @if (queue().length > 0) {
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Files ({{ queue().length }})</legend>
+    <mm-fieldset [legend]="'Files (' + queue().length + ')'">
       <ul class="flex flex-col gap-2">
         @for (row of queue(); track row.file; let i = $index) {
           <li>
@@ -63,6 +61,6 @@
           </li>
         }
       </ul>
-    </fieldset>
+    </mm-fieldset>
   }
 </div>

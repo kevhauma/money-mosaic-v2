@@ -9,12 +9,13 @@ import {
   signal,
 } from '@angular/core';
 import { ButtonComponent } from '../button/button.component';
+import { LabelComponent } from '../label/label.component';
 import { MmModalComponent } from '../modal/mm-modal.component';
 import { TypographyComponent } from '../typography/typography.component';
 
 @Component({
   selector: 'mm-confirm-dialog',
-  imports: [ButtonComponent, MmModalComponent, TypographyComponent],
+  imports: [ButtonComponent, LabelComponent, MmModalComponent, TypographyComponent],
   templateUrl: './confirm-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

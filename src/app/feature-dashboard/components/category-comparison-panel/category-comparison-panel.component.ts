@@ -5,6 +5,7 @@ import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler
 import {
   ButtonComponent,
   formatDisplayDate,
+  LabelComponent,
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
@@ -68,7 +69,14 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
  */
 @Component({
   selector: 'app-category-comparison-panel',
-  imports: [RouterLink, NgIcon, ButtonComponent, PaperComponent, TypographyComponent],
+  imports: [
+    RouterLink,
+    NgIcon,
+    ButtonComponent,
+    LabelComponent,
+    PaperComponent,
+    TypographyComponent,
+  ],
   templateUrl: './category-comparison-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerTriangleFill, tablerTriangleInvertedFill })],

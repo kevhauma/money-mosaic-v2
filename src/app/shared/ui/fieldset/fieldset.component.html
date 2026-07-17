@@ -1,0 +1,10 @@
+<fieldset [class]="classes()">
+  @if (legend()) {
+    @if (for()) {
+      <label class="fieldset-legend" [attr.for]="for()">{{ legend() }}</label>
+    } @else {
+      <legend class="fieldset-legend">{{ legend() }}</legend>
+    }
+  }
+  <ng-content />
+</fieldset>

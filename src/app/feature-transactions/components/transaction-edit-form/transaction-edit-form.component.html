@@ -5,15 +5,14 @@
   }
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Category</legend>
+    <mm-fieldset legend="Category">
       <mm-select formControlName="categoryId" class="w-full">
         <option value="">Uncategorised</option>
         @for (category of categoriesStore.activeCategories(); track category.id) {
           <option [value]="category.id">{{ categoryLabel(category) }}</option>
         }
       </mm-select>
-    </fieldset>
+    </mm-fieldset>
 
     @if (showAttribution()) {
       <app-attribution-override-fieldset
@@ -23,29 +22,27 @@
       />
     }
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Notes</legend>
+    <mm-fieldset legend="Notes">
       <textarea
         formControlName="notes"
         class="textarea w-full"
         rows="3"
         placeholder="Optional notes"
       ></textarea>
-    </fieldset>
+    </mm-fieldset>
 
     @if (!isTransferLeg()) {
-      <label class="label cursor-pointer justify-start gap-2">
+      <mm-label as="label" class="justify-start gap-2">
         <input type="checkbox" formControlName="nullified" class="checkbox checkbox-sm" />
         <mm-text variant="caption" color="base-content">Exclude from income/expense</mm-text>
-      </label>
+      </mm-label>
       @if (nullifiedError(); as error) {
         <mm-text as="p" color="error" class="mt-1 text-sm">{{ error }}</mm-text>
       }
     }
 
     @if (rawRowEntries().length > 0) {
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Original CSV row</legend>
+      <mm-fieldset legend="Original CSV row">
         <div class="max-h-48 overflow-auto rounded-box border border-base-300">
           <table class="table-sm table">
             <tbody>
@@ -58,23 +55,22 @@
             </tbody>
           </table>
         </div>
-      </fieldset>
+      </mm-fieldset>
     } @else if (transaction()?.rawLine; as rawLine) {
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Original CSV row</legend>
+      <mm-fieldset legend="Original CSV row">
         <pre
           class="max-h-32 overflow-auto rounded-box bg-base-200 p-2 font-mono text-xs whitespace-pre-wrap"
           >{{ rawLine }}</pre>
-      </fieldset>
+      </mm-fieldset>
     }
 
     @if (showAlwaysCategorise()) {
-      <label class="label cursor-pointer justify-start gap-2">
+      <mm-label as="label" class="justify-start gap-2">
         <input type="checkbox" formControlName="alwaysCategorise" class="checkbox checkbox-sm" />
         <mm-text variant="caption" color="base-content">
           Always categorise "{{ transaction()?.counterpartyName }}" this way
         </mm-text>
-      </label>
+      </mm-label>
     }
 
     <div class="modal-action">

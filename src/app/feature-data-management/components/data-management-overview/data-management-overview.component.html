@@ -90,8 +90,8 @@
     Choose how the imported file should be combined with your existing data.
   </mm-text>
 
-  <fieldset class="fieldset gap-1">
-    <label class="label cursor-pointer justify-start gap-3">
+  <mm-fieldset class="gap-1">
+    <mm-label as="label" class="justify-start gap-3">
       <input
         type="radio"
         name="import-mode"
@@ -105,8 +105,8 @@
           Add imported rows alongside what you already have.
         </mm-text>
       </span>
-    </label>
-    <label class="label cursor-pointer justify-start gap-3">
+    </mm-label>
+    <mm-label as="label" class="justify-start gap-3">
       <input
         type="radio"
         name="import-mode"
@@ -120,8 +120,8 @@
           Erase everything and restore only what's in this file.
         </mm-text>
       </span>
-    </label>
-  </fieldset>
+    </mm-label>
+  </mm-fieldset>
 
   @if (importMode() === 'replace') {
     <mm-alert status="error" class="mt-2">

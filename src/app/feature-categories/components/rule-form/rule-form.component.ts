@@ -22,7 +22,9 @@ import { OPERATORS_BY_FIELD } from '@/core/categorisation';
 import { AccountsStore, CategoriesStore } from '@/core/state';
 import {
   ButtonComponent,
+  FieldsetComponent,
   InputComponent,
+  LabelComponent,
   MmModalComponent,
   SelectComponent,
   TypographyComponent,
@@ -60,7 +62,9 @@ const regexPatternMaxLength = (control: AbstractControl): ValidationErrors | nul
   imports: [
     ReactiveFormsModule,
     ButtonComponent,
+    FieldsetComponent,
     InputComponent,
+    LabelComponent,
     SelectComponent,
     MmModalComponent,
     TypographyComponent,

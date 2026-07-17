@@ -20,7 +20,14 @@ import {
 } from '@angular/forms';
 import type { ValidationErrors, ValidatorFn } from '@angular/forms';
 import type { Account, JointOwner } from '@/core/data-access';
-import { ButtonComponent, InputComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  FieldsetComponent,
+  InputComponent,
+  LabelComponent,
+  MmModalComponent,
+  SelectComponent,
+} from '@/shared/ui';
 import { fractionToPercentage, normalizeIban, percentageToFraction } from '@/shared/utils';
 import { ibanValidator } from '@/shared/utils/validators/iban.validator';
 import { percentageValidator } from '@/shared/utils/validators/percentage.validator';
@@ -80,7 +87,9 @@ const uniqueCoOwnerIbansValidator: ValidatorFn = (control): ValidationErrors | n
   imports: [
     ReactiveFormsModule,
     ButtonComponent,
+    FieldsetComponent,
     InputComponent,
+    LabelComponent,
     SelectComponent,
     MmModalComponent,
   ],

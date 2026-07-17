@@ -10,7 +10,14 @@ import {
   TransferSettingsStore,
 } from '@/core/state';
 import { resolveTransferMatches, type TransferCandidate } from '@/core/transfers';
-import { ButtonComponent, InputComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  FieldsetComponent,
+  InputComponent,
+  LabelComponent,
+  PaperComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
 @Component({
@@ -20,7 +27,9 @@ import { SignedAmountPipe } from '@/shared/utils';
     NgIcon,
     SignedAmountPipe,
     ButtonComponent,
+    FieldsetComponent,
     InputComponent,
+    LabelComponent,
     PaperComponent,
     TypographyComponent,
   ],

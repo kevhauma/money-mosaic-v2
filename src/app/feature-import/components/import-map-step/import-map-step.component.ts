@@ -20,7 +20,14 @@ import {
   type SignConvention,
 } from '@/core/data-access';
 import { CsvImportService, guessDelimiter } from '@/core/import';
-import { AlertComponent, InputComponent, SelectComponent, TypographyComponent } from '@/shared/ui';
+import {
+  AlertComponent,
+  FieldsetComponent,
+  InputComponent,
+  LabelComponent,
+  SelectComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
@@ -36,7 +43,9 @@ const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
   imports: [
     ReactiveFormsModule,
     AlertComponent,
+    FieldsetComponent,
     InputComponent,
+    LabelComponent,
     SelectComponent,
     TypographyComponent,
   ],

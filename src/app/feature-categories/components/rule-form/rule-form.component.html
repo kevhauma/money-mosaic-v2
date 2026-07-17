@@ -2,8 +2,7 @@
   <span mm-modal-title>{{ rule() ? 'Edit rule' : 'Add rule' }}</span>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Name</legend>
+    <mm-fieldset legend="Name">
       <mm-input
         type="text"
         formControlName="name"
@@ -11,48 +10,45 @@
         placeholder="e.g. Netflix subscription"
       />
       @if (form.controls.name.invalid && form.controls.name.touched) {
-        <p class="label text-error">Name is required.</p>
+        <mm-label variant="error">Name is required.</mm-label>
       }
-    </fieldset>
+    </mm-fieldset>
 
     <div class="grid grid-cols-3 gap-3">
-      <fieldset class="fieldset col-span-2">
-        <legend class="fieldset-legend">Assign category</legend>
+      <mm-fieldset legend="Assign category" class="col-span-2">
         <mm-select formControlName="categoryId" class="w-full">
           <option value="" disabled>Choose a category</option>
           @for (category of categoriesStore.activeCategories(); track category.id) {
             <option [value]="category.id">{{ category.name }}</option>
           }
         </mm-select>
-      </fieldset>
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Priority</legend>
+      </mm-fieldset>
+      <mm-fieldset legend="Priority">
         <mm-input type="number" formControlName="priority" class="w-full" />
-      </fieldset>
+      </mm-fieldset>
     </div>
 
     <div class="flex items-center gap-4">
-      <label class="label cursor-pointer gap-2">
+      <mm-label as="label" class="cursor-pointer gap-2">
         <input type="checkbox" formControlName="enabled" class="toggle toggle-sm" />
         <mm-text variant="caption" color="base-content">Enabled</mm-text>
-      </label>
-      <label class="label cursor-pointer gap-2">
+      </mm-label>
+      <mm-label as="label" class="cursor-pointer gap-2">
         <input type="checkbox" formControlName="continueOnMatch" class="toggle toggle-sm" />
         <mm-text variant="caption" color="base-content"
           >Continue to next rule after a match</mm-text
         >
-      </label>
+      </mm-label>
     </div>
 
     <div class="divider my-2">Conditions</div>
 
-    <fieldset class="fieldset mb-2 flex-row items-center gap-2">
-      <label class="fieldset-legend" for="conditionMatch">Match</label>
+    <mm-fieldset legend="Match" for="conditionMatch" class="mb-2 flex-row items-center gap-2">
       <mm-select id="conditionMatch" formControlName="conditionMatch" size="sm" class="w-auto">
         <option value="all">ALL conditions (AND)</option>
         <option value="any">ANY condition (OR)</option>
       </mm-select>
-    </fieldset>
+    </mm-fieldset>
 
     <div formArrayName="conditions" class="flex flex-col gap-3">
       @for (group of conditionsArray.controls; track $index) {
@@ -114,9 +110,9 @@
           } @else {
             <mm-input type="text" formControlName="value" size="sm" class="col-span-5" />
             @if (group.controls.value.hasError('regexPatternMaxLength')) {
-              <p class="label text-error col-span-12">
+              <mm-label variant="error" class="col-span-12">
                 Pattern is too long (max {{ maxRegexPatternLength }} characters).
-              </p>
+              </mm-label>
             }
           }
 

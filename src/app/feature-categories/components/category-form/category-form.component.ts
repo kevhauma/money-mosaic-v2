@@ -9,7 +9,14 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Category } from '@/core/data-access';
-import { ButtonComponent, InputComponent, MmModalComponent, SelectComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  FieldsetComponent,
+  InputComponent,
+  LabelComponent,
+  MmModalComponent,
+  SelectComponent,
+} from '@/shared/ui';
 import { CATEGORY_ICON_OPTIONS } from '../../category-icons';
 
 export type CategoryFormValue = Omit<Category, 'id' | 'archived' | 'isSystem'>;
@@ -19,7 +26,9 @@ export type CategoryFormValue = Omit<Category, 'id' | 'archived' | 'isSystem'>;
   imports: [
     ReactiveFormsModule,
     ButtonComponent,
+    FieldsetComponent,
     InputComponent,
+    LabelComponent,
     SelectComponent,
     MmModalComponent,
   ],

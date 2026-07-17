@@ -1,7 +1,6 @@
 <mm-paper elevation="flat" bodyClass="" class="mb-4">
   <form [formGroup]="filterForm" class="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
-    <fieldset class="fieldset col-span-2">
-      <legend class="fieldset-legend">Search</legend>
+    <mm-fieldset legend="Search" class="col-span-2">
       <mm-input
         type="text"
         formControlName="text"
@@ -9,26 +8,24 @@
         class="w-full"
         placeholder="Rule name or condition"
       />
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Category</legend>
+    <mm-fieldset legend="Category">
       <mm-select formControlName="categoryId" size="sm" class="w-full">
         <option value="">All categories</option>
         @for (category of categoriesStore.activeCategories(); track category.id) {
           <option [value]="category.id">{{ category.name }}</option>
         }
       </mm-select>
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Status</legend>
+    <mm-fieldset legend="Status">
       <mm-select formControlName="enabled" size="sm" class="w-full">
         <option value="">All rules</option>
         <option value="enabled">Enabled only</option>
         <option value="disabled">Disabled only</option>
       </mm-select>
-    </fieldset>
+    </mm-fieldset>
 
     <div class="col-span-2 flex items-end sm:col-span-4">
       <mm-button

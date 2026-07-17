@@ -20,14 +20,12 @@
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <form [formGroup]="form" class="flex flex-col gap-3">
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Mapping profile name</legend>
+      <mm-fieldset legend="Mapping profile name">
         <mm-input type="text" formControlName="name" size="sm" class="w-full" />
-      </fieldset>
+      </mm-fieldset>
 
       <div class="grid grid-cols-2 gap-3">
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Delimiter</legend>
+        <mm-fieldset legend="Delimiter">
           <mm-input
             type="text"
             formControlName="delimiter"
@@ -35,9 +33,8 @@
             class="w-full"
             [maxlength]="1"
           />
-        </fieldset>
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Decimal separator</legend>
+        </mm-fieldset>
+        <mm-fieldset legend="Decimal separator">
           <mm-input
             type="text"
             formControlName="decimalSeparator"
@@ -45,35 +42,31 @@
             class="w-full"
             [maxlength]="1"
           />
-        </fieldset>
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Date format</legend>
+        </mm-fieldset>
+        <mm-fieldset legend="Date format">
           <mm-select formControlName="dateFormat" size="sm" class="w-full">
             @for (format of dateFormats; track format) {
               <option [value]="format">{{ format }}</option>
             }
           </mm-select>
-        </fieldset>
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Encoding</legend>
+        </mm-fieldset>
+        <mm-fieldset legend="Encoding">
           <mm-select formControlName="encoding" size="sm" class="w-full">
             @for (encoding of encodings; track encoding) {
               <option [value]="encoding">{{ encoding }}</option>
             }
           </mm-select>
-        </fieldset>
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Header rows</legend>
+        </mm-fieldset>
+        <mm-fieldset legend="Header rows">
           <mm-input type="number" formControlName="headerRows" min="1" size="sm" class="w-full" />
-        </fieldset>
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Sign convention</legend>
+        </mm-fieldset>
+        <mm-fieldset legend="Sign convention">
           <mm-select formControlName="signConvention" size="sm" class="w-full">
             @for (option of signConventionOptions; track option.value) {
               <option [value]="option.value">{{ option.label }}</option>
             }
           </mm-select>
-        </fieldset>
+        </mm-fieldset>
       </div>
 
       <div class="divider my-1 text-xs">Columns</div>
@@ -92,23 +85,22 @@
         ];
         track field.key
       ) {
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ field.label }}</legend>
+        <mm-fieldset [legend]="field.label">
           <mm-select [formControlName]="field.key" size="sm" class="w-full">
             <option value="">{{ field.required ? '— select column —' : '— none —' }}</option>
             @for (header of headers(); track header) {
               <option [value]="header">{{ header }}</option>
             }
           </mm-select>
-        </fieldset>
+        </mm-fieldset>
       }
 
-      <label class="label mt-2 cursor-pointer justify-start gap-2">
+      <mm-label as="label" class="mt-2 cursor-pointer justify-start gap-2">
         <input type="checkbox" formControlName="rememberForAccount" class="checkbox checkbox-sm" />
         <mm-text variant="caption" color="base-content"
           >Remember this mapping for this account next time</mm-text
         >
-      </label>
+      </mm-label>
     </form>
 
     <div>

@@ -2,8 +2,7 @@
   <span mm-modal-title>{{ account() ? 'Edit account' : 'Add account' }}</span>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Name</legend>
+    <mm-fieldset legend="Name">
       <mm-input
         type="text"
         formControlName="name"
@@ -11,22 +10,20 @@
         placeholder="e.g. Everyday checking"
       />
       @if (form.controls.name.invalid && form.controls.name.touched) {
-        <p class="label text-error">Name is required.</p>
+        <mm-label variant="error">Name is required.</mm-label>
       }
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Type</legend>
+    <mm-fieldset legend="Type">
       <mm-select formControlName="type" class="w-full">
         <option value="checking">Checking</option>
         <option value="savings">Savings</option>
         <option value="joint">Joint</option>
         <option value="invest">Invest</option>
       </mm-select>
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">IBAN (optional)</legend>
+    <mm-fieldset legend="IBAN (optional)">
       <mm-input
         type="text"
         formControlName="iban"
@@ -34,32 +31,28 @@
         placeholder="BE71 0961 2345 6769"
       />
       @if (form.controls.iban.invalid && form.controls.iban.touched) {
-        <p class="label text-error">That doesn't look like a valid IBAN.</p>
+        <mm-label variant="error">That doesn't look like a valid IBAN.</mm-label>
       }
-    </fieldset>
+    </mm-fieldset>
 
     <div class="grid grid-cols-2 gap-3">
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Opening balance</legend>
+      <mm-fieldset legend="Opening balance">
         <mm-input type="number" step="0.01" formControlName="openingBalance" class="w-full" />
-      </fieldset>
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">As of</legend>
+      </mm-fieldset>
+      <mm-fieldset legend="As of">
         <mm-input type="date" formControlName="openingBalanceDate" class="w-full" />
-      </fieldset>
+      </mm-fieldset>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Colour</legend>
+      <mm-fieldset legend="Colour">
         <input
           type="color"
           formControlName="color"
           class="h-10 w-full rounded-field border border-base-300 bg-base-100"
         />
-      </fieldset>
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Icon</legend>
+      </mm-fieldset>
+      <mm-fieldset legend="Icon">
         <mm-select formControlName="icon" class="w-full">
           <option value="wallet">Wallet</option>
           <option value="piggy-bank">Piggy bank</option>
@@ -67,14 +60,13 @@
           <option value="chart-line">Invest</option>
           <option value="building-bank">Bank</option>
         </mm-select>
-      </fieldset>
+      </mm-fieldset>
     </div>
 
     @if (selectedType() === 'joint') {
       <div class="divider my-2">Joint account</div>
 
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">My share</legend>
+      <mm-fieldset legend="My share">
         <mm-input
           type="number"
           step="1"
@@ -86,15 +78,18 @@
         @if (
           form.controls.ownershipSharePercent.invalid && form.controls.ownershipSharePercent.touched
         ) {
-          <p class="label text-error">Enter a share between 0 and 100%.</p>
+          <mm-label variant="error">Enter a share between 0 and 100%.</mm-label>
         }
-        <p class="label text-xs text-base-content/60">
+        <mm-label class="text-xs text-base-content/60">
           My percentage of joint spending and of the opening balance. <br />Left blank, the whole
           account counts as mine.<br />Changing it later recomputes historical net worth, since
           there's no date-effective history.
-        </p>
-      </fieldset>
+        </mm-label>
+      </mm-fieldset>
 
+      <!-- Standalone section heading beside an action button, not an actual fieldset (the
+           co-owners formArray below is a sibling, not this legend's content) — left as a raw
+           daisyUI class rather than forced through mm-fieldset/mm-label (TICKET-UI-06). -->
       <div class="flex items-center justify-between">
         <span class="fieldset-legend">Co-owners</span>
         <mm-button type="button" variant="ghost" size="sm" (click)="addCoOwner()">
@@ -103,10 +98,10 @@
       </div>
 
       @if (form.hasError('duplicateIban')) {
-        <p class="label text-error">
+        <mm-label variant="error">
           An IBAN can only belong to one owner — check for a duplicate with the account's own IBAN
           or another co-owner.
-        </p>
+        </mm-label>
       }
 
       <div formArrayName="coOwners" class="flex flex-col gap-3">
@@ -121,7 +116,7 @@
                 placeholder="Co-owner name"
               />
               @if (group.controls.name.invalid && group.controls.name.touched) {
-                <p class="label col-span-12 text-error">A co-owner needs a name.</p>
+                <mm-label variant="error" class="col-span-12">A co-owner needs a name.</mm-label>
               }
 
               <mm-input
@@ -170,11 +165,13 @@
                   </mm-button>
                 </div>
                 @if (ibanControl.invalid && ibanControl.touched) {
-                  <p class="label text-error">That doesn't look like a valid IBAN.</p>
+                  <mm-label variant="error">That doesn't look like a valid IBAN.</mm-label>
                 }
               }
               @if (group.controls.ibans.invalid && group.controls.ibans.touched) {
-                <p class="label text-error">Add at least one IBAN this co-owner pays in from.</p>
+                <mm-label variant="error"
+                  >Add at least one IBAN this co-owner pays in from.</mm-label
+                >
               }
               <mm-button type="button" variant="ghost" size="sm" (click)="addIban(group)">
                 + Add IBAN

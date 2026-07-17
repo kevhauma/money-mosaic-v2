@@ -1,0 +1,16 @@
+<ng-template #content>
+  <ng-content />
+</ng-template>
+
+@switch (tag()) {
+  @case ('label') {
+    <label [attr.for]="for()" [class]="classes()">
+      <ng-container [ngTemplateOutlet]="content" />
+    </label>
+  }
+  @default {
+    <p [class]="classes()">
+      <ng-container [ngTemplateOutlet]="content" />
+    </p>
+  }
+}

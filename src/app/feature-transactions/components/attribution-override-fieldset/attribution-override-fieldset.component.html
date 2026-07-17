@@ -1,5 +1,4 @@
-<fieldset class="fieldset" [formGroup]="form">
-  <legend class="fieldset-legend">Attribution</legend>
+<mm-fieldset legend="Attribution" [formGroup]="form">
   <mm-select formControlName="mode" class="w-full">
     <option value="">Default (based on account)</option>
     <option value="personal">Personal (100% mine)</option>
@@ -30,4 +29,4 @@
   @if (error(); as message) {
     <mm-text as="p" color="error" class="mt-1 text-sm">{{ message }}</mm-text>
   }
-</fieldset>
+</mm-fieldset>

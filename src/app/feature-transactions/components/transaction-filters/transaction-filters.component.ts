@@ -16,6 +16,7 @@ import { AccountsStore, CategoriesStore } from '@/core/state';
 import {
   ButtonComponent,
   DateRangeInputComponent,
+  FieldsetComponent,
   InputComponent,
   PaperComponent,
   SelectComponent,
@@ -55,6 +56,7 @@ function structuralFiltersOf(value: Partial<TransactionFilters>): StructuralFilt
     NgIcon,
     ButtonComponent,
     DateRangeInputComponent,
+    FieldsetComponent,
     InputComponent,
     PaperComponent,
     SelectComponent,

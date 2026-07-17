@@ -5,12 +5,11 @@
       (ngSubmit)="saveSettings()"
       class="flex flex-wrap items-end gap-3"
     >
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Match window (days)</legend>
+      <mm-fieldset legend="Match window (days)">
         <mm-input type="number" formControlName="matchWindowDays" size="sm" min="0" class="w-24" />
-      </fieldset>
+      </mm-fieldset>
 
-      <label class="label cursor-pointer gap-2">
+      <mm-label as="label" class="gap-2">
         <input
           type="checkbox"
           formControlName="autoLinkMediumConfidence"
@@ -19,7 +18,7 @@
         <mm-text variant="caption" color="base-content"
           >Auto-link medium-confidence matches</mm-text
         >
-      </label>
+      </mm-label>
 
       <mm-button type="submit" size="sm" variant="outline">Save settings</mm-button>
     </form>

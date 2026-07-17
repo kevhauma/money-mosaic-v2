@@ -1,27 +1,24 @@
 <mm-paper elevation="flat" bodyClass="" class="mb-4">
   <form [formGroup]="filterForm" class="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Account</legend>
+    <mm-fieldset legend="Account">
       <mm-select formControlName="accountId" size="sm" class="w-full">
         <option value="">All accounts</option>
         @for (account of accountsStore.accounts(); track account.id) {
           <option [value]="account.id">{{ account.name }}</option>
         }
       </mm-select>
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset col-span-2">
-      <legend class="fieldset-legend">Date range</legend>
+    <mm-fieldset legend="Date range" class="col-span-2">
       <mm-date-range-input
         [value]="dateRangeValue()"
         (valueChange)="onDateRangeChange($event)"
         size="sm"
         class="w-full"
       />
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Category</legend>
+    <mm-fieldset legend="Category">
       <mm-select formControlName="categoryId" size="sm" class="w-full">
         <option value="">All categories</option>
         <option value="uncategorised">Uncategorised</option>
@@ -29,20 +26,17 @@
           <option [value]="category.id">{{ category.name }}</option>
         }
       </mm-select>
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Min amount</legend>
+    <mm-fieldset legend="Min amount">
       <mm-input type="number" step="0.01" formControlName="amountMin" size="sm" class="w-full" />
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Max amount</legend>
+    <mm-fieldset legend="Max amount">
       <mm-input type="number" step="0.01" formControlName="amountMax" size="sm" class="w-full" />
-    </fieldset>
+    </mm-fieldset>
 
-    <fieldset class="fieldset col-span-2 sm:col-span-3 lg:col-span-5">
-      <legend class="fieldset-legend">Search</legend>
+    <mm-fieldset legend="Search" class="col-span-2 sm:col-span-3 lg:col-span-5">
       <mm-input
         type="text"
         formControlName="text"
@@ -50,7 +44,7 @@
         class="w-full"
         placeholder="Description or counterparty"
       />
-    </fieldset>
+    </mm-fieldset>
 
     <div class="flex items-end">
       <mm-button

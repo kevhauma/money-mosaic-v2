@@ -73,7 +73,7 @@
                     [(result)]="mapResult"
                   />
                   @if (canOfferApplyToRemaining()) {
-                    <label class="label mt-4 cursor-pointer justify-start gap-2">
+                    <mm-label as="label" class="mt-4 cursor-pointer justify-start gap-2">
                       <input
                         type="checkbox"
                         class="checkbox checkbox-sm"
@@ -85,7 +85,7 @@
                           remainingFilesCount() === 1 ? '' : 's'
                         }}
                       </mm-text>
-                    </label>
+                    </mm-label>
                   }
                 } @else {
                   <mm-paper elevation="flat" background="bg-base-200/40" bodyClass="p-4 text-sm">

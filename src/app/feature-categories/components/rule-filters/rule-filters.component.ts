@@ -9,7 +9,13 @@ import {
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerFilterOff } from '@ng-icons/tabler-icons';
-import { ButtonComponent, InputComponent, PaperComponent, SelectComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  FieldsetComponent,
+  InputComponent,
+  PaperComponent,
+  SelectComponent,
+} from '@/shared/ui';
 import {
   combinedFiltersSignal,
   debouncedTextSignal,
@@ -28,6 +34,7 @@ type StructuralFilters = Omit<RuleFilters, 'text'>;
     ReactiveFormsModule,
     NgIcon,
     ButtonComponent,
+    FieldsetComponent,
     InputComponent,
     PaperComponent,
     SelectComponent,

@@ -1,6 +1,6 @@
 <mm-page-header title="Accounts" subtitle="Every account you track, in one place.">
   <div actions class="flex items-center gap-3">
-    <label class="label cursor-pointer gap-2">
+    <mm-label as="label" class="gap-2">
       <mm-text variant="caption" color="base-content">Show archived</mm-text>
       <input
         type="checkbox"
@@ -8,7 +8,7 @@
         [checked]="showArchived()"
         (change)="showArchived.set(!showArchived())"
       />
-    </label>
+    </mm-label>
     <mm-button color="primary" size="sm" (click)="openAddForm()">
       <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
       Add account

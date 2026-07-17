@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, input, model } from '@angular/core';
 import type { Account } from '@/core/data-access';
 import { detectOwnIban, matchAccountByIban, CsvImportService, guessDelimiter } from '@/core/import';
-import { BadgeComponent, ButtonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import {
+  BadgeComponent,
+  ButtonComponent,
+  FieldsetComponent,
+  PaperComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 
 export type QueuedImportFile = {
@@ -12,7 +18,13 @@ export type QueuedImportFile = {
 
 @Component({
   selector: 'app-import-select-step',
-  imports: [BadgeComponent, ButtonComponent, PaperComponent, TypographyComponent],
+  imports: [
+    BadgeComponent,
+    ButtonComponent,
+    FieldsetComponent,
+    PaperComponent,
+    TypographyComponent,
+  ],
   templateUrl: './import-select-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

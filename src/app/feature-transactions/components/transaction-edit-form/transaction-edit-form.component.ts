@@ -18,6 +18,8 @@ import { RulesStore } from '@/feature-categories';
 import {
   ButtonComponent,
   ConfirmDialogComponent,
+  FieldsetComponent,
+  LabelComponent,
   MmModalComponent,
   SelectComponent,
   TypographyComponent,
@@ -34,6 +36,8 @@ export type TransactionEditResult = Partial<
     ReactiveFormsModule,
     ButtonComponent,
     ConfirmDialogComponent,
+    FieldsetComponent,
+    LabelComponent,
     SelectComponent,
     MmModalComponent,
     AttributionOverrideFieldsetComponent,

@@ -19,7 +19,7 @@ Closes the gap between prepare.md's manual audit and the actual codebase, then e
 - [x] [TICKET-UI-03](./tickets/TICKET-UI-03-bento-grid-primitive.md) — Bento-grid layout primitive (adds FR-UI-3) — the redesign's layout foundation; prerequisite for UI-12's dashboard adoption
 - [x] [TICKET-UI-04](./tickets/TICKET-UI-04-paper-primitive.md) — Paper/surface primitive (adds FR-UI-4) — composes with UI-03's bento items; prerequisite for UI-12
 - [x] [TICKET-UI-05](./tickets/TICKET-UI-05-tabs-primitive.md) — Tabs primitive (adds FR-UI-5) — independent
-- [ ] [TICKET-UI-06](./tickets/TICKET-UI-06-label-fieldset-primitives.md) — Label & Fieldset primitives (adds FR-UI-6) — independent; resolves prepare.md's open question about the two overlapping
+- [x] [TICKET-UI-06](./tickets/TICKET-UI-06-label-fieldset-primitives.md) — Label & Fieldset primitives (adds FR-UI-6) — independent; resolves prepare.md's open question about the two overlapping
 - [ ] [TICKET-UI-07](./tickets/TICKET-UI-07-table-primitive.md) — Table primitive family (adds FR-UI-7) — independent
 - [ ] [TICKET-UI-08](./tickets/TICKET-UI-08-dropdown-menu-primitive.md) — Dropdown/menu primitive (adds FR-UI-8) — independent
 - [ ] [TICKET-UI-09](./tickets/TICKET-UI-09-icon-button-variant.md) — Icon-button variant on `mm-button` (adds FR-UI-9) — independent; prerequisite for UI-14's drawer-toggle migration

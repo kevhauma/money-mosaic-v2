@@ -4,7 +4,7 @@
     <mm-text as="p" variant="caption" class="py-3">{{ message() }}</mm-text>
   }
   @if (confirmPhrase(); as phrase) {
-    <label class="fieldset-label flex-col items-start gap-1">
+    <mm-label as="label" variant="fieldset" class="flex-col items-start gap-1">
       <mm-text class="text-xs text-base-content/60">
         Type <span class="font-mono font-semibold">{{ phrase }}</span> to confirm
       </mm-text>
@@ -16,7 +16,7 @@
         [value]="typedPhrase()"
         (input)="typedPhrase.set(phraseInput.value)"
       />
-    </label>
+    </mm-label>
   }
   <div class="modal-action">
     <mm-button type="button" (click)="cancel()">{{ cancelLabel() }}</mm-button>

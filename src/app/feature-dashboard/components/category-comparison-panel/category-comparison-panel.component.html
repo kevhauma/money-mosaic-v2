@@ -17,7 +17,7 @@
           >
             @for (category of excludableCategories(); track category.id) {
               <li>
-                <label class="label cursor-pointer justify-start gap-2">
+                <mm-label as="label" class="justify-start gap-2">
                   <input
                     type="checkbox"
                     class="checkbox checkbox-sm"
@@ -25,7 +25,7 @@
                     (change)="toggleExcluded(category.id, !category.excluded)"
                   />
                   <mm-text variant="caption" color="base-content">{{ category.name }}</mm-text>
-                </label>
+                </mm-label>
               </li>
             }
           </ul>

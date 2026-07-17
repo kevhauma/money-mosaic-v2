@@ -2,46 +2,41 @@
   <span mm-modal-title>{{ category() ? 'Edit category' : 'Add category' }}</span>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Name</legend>
+    <mm-fieldset legend="Name">
       <mm-input type="text" formControlName="name" class="w-full" placeholder="e.g. Groceries" />
       @if (form.controls.name.invalid && form.controls.name.touched) {
-        <p class="label text-error">Name is required.</p>
+        <mm-label variant="error">Name is required.</mm-label>
       }
-    </fieldset>
+    </mm-fieldset>
 
     <div class="grid grid-cols-2 gap-3">
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Kind</legend>
+      <mm-fieldset legend="Kind">
         <mm-select formControlName="kind" class="w-full">
           <option value="expense">Expense</option>
           <option value="income">Income</option>
           <option value="neutral">Neutral (excluded)</option>
         </mm-select>
-      </fieldset>
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Group (optional)</legend>
+      </mm-fieldset>
+      <mm-fieldset legend="Group (optional)">
         <mm-input type="text" formControlName="group" class="w-full" placeholder="e.g. Income" />
-      </fieldset>
+      </mm-fieldset>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Colour</legend>
+      <mm-fieldset legend="Colour">
         <input
           type="color"
           formControlName="color"
           class="h-10 w-full rounded-field border border-base-300 bg-base-100"
         />
-      </fieldset>
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Icon</legend>
+      </mm-fieldset>
+      <mm-fieldset legend="Icon">
         <mm-select formControlName="icon" class="w-full">
           @for (option of iconOptions; track option.value) {
             <option [value]="option.value">{{ option.label }}</option>
           }
         </mm-select>
-      </fieldset>
+      </mm-fieldset>
     </div>
 
     <div class="modal-action">
