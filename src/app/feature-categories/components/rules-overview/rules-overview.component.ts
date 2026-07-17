@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerChevronDown,
@@ -19,6 +18,8 @@ import {
   EmptyStateComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
+  TabsComponent,
+  type TabDefinition,
 } from '@/shared/ui';
 import { createSelectionModel } from '@/shared/utils';
 import { RulesStore } from '../../rules.store';
@@ -28,11 +29,14 @@ import { RuleFiltersComponent } from '../rule-filters/rule-filters.component';
 import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.component';
 import { RuleShareBarComponent } from '../rule-share-bar/rule-share-bar.component';
 
+const CATEGORIES_TABS: TabDefinition[] = [
+  { label: 'Categories', value: 'categories', link: '/categories', exact: true },
+  { label: 'Rules', value: 'rules', link: '/categories/rules' },
+];
+
 @Component({
   selector: 'app-rules-overview',
   imports: [
-    RouterLink,
-    RouterLinkActive,
     NgIcon,
     RuleFiltersComponent,
     RuleFormComponent,
@@ -44,6 +48,7 @@ import { RuleShareBarComponent } from '../rule-share-bar/rule-share-bar.componen
     EmptyStateComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
+    TabsComponent,
   ],
   templateUrl: './rules-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,6 +64,8 @@ import { RuleShareBarComponent } from '../rule-share-bar/rule-share-bar.componen
   ],
 })
 export class RulesOverviewComponent {
+  protected readonly categoriesTabs = CATEGORIES_TABS;
+
   protected readonly rulesStore = inject(RulesStore);
   protected readonly categoriesStore = inject(CategoriesStore);
   private readonly accountsStore = inject(AccountsStore);

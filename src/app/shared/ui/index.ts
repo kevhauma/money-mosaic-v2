@@ -17,3 +17,4 @@ export * from './typography/typography.component';
 export * from './paper/paper.component';
 export * from './bento-grid/bento-grid.component';
 export * from './bento-grid/bento-item.component';
+export * from './tabs/tabs.component';

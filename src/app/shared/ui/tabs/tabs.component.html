@@ -1,0 +1,25 @@
+<div role="tablist" [class]="classes()">
+  @for (tab of tabs(); track tab.value) {
+    @if (tab.link) {
+      <a
+        [routerLink]="tab.link"
+        routerLinkActive="tab-active"
+        [routerLinkActiveOptions]="{ exact: !!tab.exact }"
+        role="tab"
+        class="tab"
+      >
+        {{ tab.label }}
+      </a>
+    } @else {
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        [class.tab-active]="selected() === tab.value"
+        (click)="selectTab(tab.value)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  }
+</div>

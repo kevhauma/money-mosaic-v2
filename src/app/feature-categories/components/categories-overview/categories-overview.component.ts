@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArchive,
@@ -19,8 +18,10 @@ import {
   EmptyStateComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
+  TabsComponent,
   TypographyComponent,
   type BadgeColor,
+  type TabDefinition,
 } from '@/shared/ui';
 import { createConfirmState } from '@/shared/utils';
 import { CATEGORY_ICON_SET, categoryIconName } from '../../category-icons';
@@ -30,11 +31,14 @@ import {
   type CategoryFormValue,
 } from '../category-form/category-form.component';
 
+const CATEGORIES_TABS: TabDefinition[] = [
+  { label: 'Categories', value: 'categories', link: '/categories', exact: true },
+  { label: 'Rules', value: 'rules', link: '/categories/rules' },
+];
+
 @Component({
   selector: 'app-categories-overview',
   imports: [
-    RouterLink,
-    RouterLinkActive,
     NgIcon,
     CategoryFormComponent,
     BadgeComponent,
@@ -43,6 +47,7 @@ import {
     EmptyStateComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
+    TabsComponent,
     TypographyComponent,
   ],
   templateUrl: './categories-overview.component.html',
@@ -62,6 +67,8 @@ import {
   ],
 })
 export class CategoriesOverviewComponent {
+  protected readonly categoriesTabs = CATEGORIES_TABS;
+
   protected readonly categoriesStore = inject(CategoriesStore);
   protected readonly categoryIconName = categoryIconName;
 

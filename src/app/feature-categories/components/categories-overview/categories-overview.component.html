@@ -16,17 +16,7 @@
   </div>
 </mm-page-header>
 
-<div role="tablist" class="tabs tabs-box mb-4 w-fit">
-  <a
-    routerLink="/categories"
-    routerLinkActive="tab-active"
-    [routerLinkActiveOptions]="{ exact: true }"
-    class="tab"
-  >
-    Categories
-  </a>
-  <a routerLink="/categories/rules" routerLinkActive="tab-active" class="tab">Rules</a>
-</div>
+<mm-tabs [tabs]="categoriesTabs" variant="box" class="mb-4 w-fit" />
 
 @if (!categoriesStore.hydrated()) {
   <mm-loading-skeleton [rows]="3" />
