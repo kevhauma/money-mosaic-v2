@@ -6,37 +6,35 @@
   }
 </mm-text>
 
-<div class="max-h-96 overflow-auto rounded-box border border-base-300">
-  <table class="table table-xs">
-    <thead>
+<mm-table density="compact" scroll="auto" class="max-h-96">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Date</th>
+      <th>Amount</th>
+      <th>Description</th>
+      <th>Counterparty</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of previewRows(); track $index) {
       <tr>
-        <th>Status</th>
-        <th>Date</th>
-        <th>Amount</th>
-        <th>Description</th>
-        <th>Counterparty</th>
+        @if (row.valid) {
+          <td><mm-badge color="success" size="sm">valid</mm-badge></td>
+          <td>{{ row.transaction.bookingDate }}</td>
+          <td [class.text-error]="row.transaction.amount < 0">
+            {{ row.transaction.amount | signedAmount }}
+          </td>
+          <td>{{ row.transaction.rawDescription }}</td>
+          <td>{{ row.transaction.counterpartyName }}</td>
+        } @else {
+          <td><mm-badge color="error" size="sm">invalid</mm-badge></td>
+          <td colspan="4" class="text-error">{{ row.errors.join(', ') }}</td>
+        }
       </tr>
-    </thead>
-    <tbody>
-      @for (row of previewRows(); track $index) {
-        <tr>
-          @if (row.valid) {
-            <td><mm-badge color="success" size="sm">valid</mm-badge></td>
-            <td>{{ row.transaction.bookingDate }}</td>
-            <td [class.text-error]="row.transaction.amount < 0">
-              {{ row.transaction.amount | signedAmount }}
-            </td>
-            <td>{{ row.transaction.rawDescription }}</td>
-            <td>{{ row.transaction.counterpartyName }}</td>
-          } @else {
-            <td><mm-badge color="error" size="sm">invalid</mm-badge></td>
-            <td colspan="4" class="text-error">{{ row.errors.join(', ') }}</td>
-          }
-        </tr>
-      }
-    </tbody>
-  </table>
-</div>
+    }
+  </tbody>
+</mm-table>
 
 @if (rows().length > previewRows().length) {
   <mm-text as="p" class="mt-2 text-xs text-base-content/60">

@@ -4,76 +4,66 @@
     message="Train the model on your categorised transactions — suggestions for uncategorised ones will show up here."
   />
 } @else {
-  <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
-    <table class="table">
-      <thead>
+  <mm-table class="bg-base-100">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Account</th>
+        <th class="text-right">Amount</th>
+        <th>Category</th>
+        <th>Suggested</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of pagination.pagedItems(); track row.transaction.id) {
         <tr>
-          <th>Date</th>
-          <th>Description</th>
-          <th>Account</th>
-          <th class="text-right">Amount</th>
-          <th>Category</th>
-          <th>Suggested</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of pagination.pagedItems(); track row.transaction.id) {
-          <tr>
-            <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
-            <td>
-              <mm-text weight="medium">{{ row.transaction.rawDescription }}</mm-text>
-              @if (row.transaction.counterpartyName) {
-                <mm-text as="p" class="text-xs text-base-content/60">
-                  {{ row.transaction.counterpartyName }}
-                </mm-text>
-              }
-            </td>
-            <td>{{ row.accountName }}</td>
-            <td class="text-right" [class.text-error]="row.transaction.amount < 0">
-              {{ row.transaction.amount | signedAmount }}
-            </td>
+          <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
+          <td>
+            <mm-text weight="medium">{{ row.transaction.rawDescription }}</mm-text>
+            @if (row.transaction.counterpartyName) {
+              <mm-text as="p" class="text-xs text-base-content/60">
+                {{ row.transaction.counterpartyName }}
+              </mm-text>
+            }
+          </td>
+          <td>{{ row.accountName }}</td>
+          <td class="text-right" [class.text-error]="row.transaction.amount < 0">
+            {{ row.transaction.amount | signedAmount }}
+          </td>
 
-            <td>
-              <select
-                class="select select-sm w-40"
-                aria-label="Category"
-                (change)="onCategoryChange(row.transaction, $any($event.target).value)"
-              >
-                <option value="" selected>Uncategorised</option>
-                @for (category of categoriesStore.activeCategories(); track category.id) {
-                  <option [value]="category.id">{{ category.name }}</option>
-                }
-              </select>
-            </td>
-            <td>
-              <mm-badge variant="outline" size="sm" [style]="confidenceBadgeStyle(row.confidence)">
-                {{ row.suggestedCategoryName }} ({{ row.confidence * 100 | number: '1.0-0' }}%)
-              </mm-badge>
-            </td>
-            <td>
-              <div class="flex items-center justify-end gap-1">
-                <mm-button
-                  size="xs"
-                  color="primary"
-                  (click)="acceptSuggestion(row.transaction.id!)"
-                >
-                  Accept
-                </mm-button>
-                <mm-button
-                  size="xs"
-                  variant="ghost"
-                  (click)="dismissSuggestion(row.transaction.id!)"
-                >
-                  Dismiss
-                </mm-button>
-              </div>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+          <td>
+            <select
+              class="select select-sm w-40"
+              aria-label="Category"
+              (change)="onCategoryChange(row.transaction, $any($event.target).value)"
+            >
+              <option value="" selected>Uncategorised</option>
+              @for (category of categoriesStore.activeCategories(); track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
+          </td>
+          <td>
+            <mm-badge variant="outline" size="sm" [style]="confidenceBadgeStyle(row.confidence)">
+              {{ row.suggestedCategoryName }} ({{ row.confidence * 100 | number: '1.0-0' }}%)
+            </mm-badge>
+          </td>
+          <td>
+            <div class="flex items-center justify-end gap-1">
+              <mm-button size="xs" color="primary" (click)="acceptSuggestion(row.transaction.id!)">
+                Accept
+              </mm-button>
+              <mm-button size="xs" variant="ghost" (click)="dismissSuggestion(row.transaction.id!)">
+                Dismiss
+              </mm-button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </mm-table>
 
   <mm-paginator
     class="mt-3 block"

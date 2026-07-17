@@ -31,108 +31,106 @@
     </mm-button>
   </mm-empty-state>
 } @else {
-  <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Order</th>
-          <th>Name</th>
-          <th>Kind</th>
-          <th>Group</th>
-          <th class="text-right">Transactions</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (category of visibleCategories(); track category.id) {
-          <tr [class.opacity-60]="category.archived">
-            <td>
-              <div class="flex items-center gap-1">
-                <mm-button
-                  variant="ghost"
-                  shape="square"
-                  size="xs"
-                  [disabled]="isFirst(category)"
-                  (click)="moveCategory(category, 'up')"
-                  ariaLabel="Move category up"
-                >
-                  <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
-                </mm-button>
-                <mm-button
-                  variant="ghost"
-                  shape="square"
-                  size="xs"
-                  [disabled]="isLast(category)"
-                  (click)="moveCategory(category, 'down')"
-                  ariaLabel="Move category down"
-                >
-                  <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
-                </mm-button>
-              </div>
-            </td>
-            <td>
-              <div class="flex items-center gap-2">
-                <span
-                  class="flex h-7 w-7 items-center justify-center rounded-full"
-                  [style.background-color]="category.color + '33'"
-                  [style.color]="category.color"
-                >
-                  <ng-icon [name]="categoryIconName(category.icon)" size="16" aria-hidden="true" />
-                </span>
-                <mm-text weight="medium">{{ category.name }}</mm-text>
-              </div>
-            </td>
-            <td>
-              <mm-badge
-                variant="outline"
-                size="sm"
-                class="capitalize"
-                [color]="badgeColorFor(category.kind)"
+  <mm-table class="bg-base-100">
+    <thead>
+      <tr>
+        <th>Order</th>
+        <th>Name</th>
+        <th>Kind</th>
+        <th>Group</th>
+        <th class="text-right">Transactions</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (category of visibleCategories(); track category.id) {
+        <tr [class.opacity-60]="category.archived">
+          <td>
+            <div class="flex items-center gap-1">
+              <mm-button
+                variant="ghost"
+                shape="square"
+                size="xs"
+                [disabled]="isFirst(category)"
+                (click)="moveCategory(category, 'up')"
+                ariaLabel="Move category up"
               >
-                {{ category.kind }}
-              </mm-badge>
-            </td>
-            <td class="text-sm text-base-content/60">{{ category.group || '—' }}</td>
-            <td class="text-right">{{ transactionCountFor(category) }}</td>
-            <td>
-              <div class="dropdown dropdown-end">
-                <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Category actions">
-                  <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
-                </mm-button>
-                <ul
-                  tabindex="0"
-                  class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
-                >
-                  <li>
-                    <button type="button" (click)="openEditForm(category)">
-                      <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
-                      Edit
-                    </button>
-                  </li>
-                  <li>
-                    <button type="button" (click)="toggleArchive(category)">
-                      <ng-icon
-                        [name]="category.archived ? 'tablerArchiveOff' : 'tablerArchive'"
-                        size="14"
-                        aria-hidden="true"
-                      />
-                      {{ category.archived ? 'Unarchive' : 'Archive' }}
-                    </button>
-                  </li>
-                  <li>
-                    <button type="button" class="text-error" (click)="confirmDelete(category)">
-                      <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
-                      Delete
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+                <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
+              </mm-button>
+              <mm-button
+                variant="ghost"
+                shape="square"
+                size="xs"
+                [disabled]="isLast(category)"
+                (click)="moveCategory(category, 'down')"
+                ariaLabel="Move category down"
+              >
+                <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
+              </mm-button>
+            </div>
+          </td>
+          <td>
+            <div class="flex items-center gap-2">
+              <span
+                class="flex h-7 w-7 items-center justify-center rounded-full"
+                [style.background-color]="category.color + '33'"
+                [style.color]="category.color"
+              >
+                <ng-icon [name]="categoryIconName(category.icon)" size="16" aria-hidden="true" />
+              </span>
+              <mm-text weight="medium">{{ category.name }}</mm-text>
+            </div>
+          </td>
+          <td>
+            <mm-badge
+              variant="outline"
+              size="sm"
+              class="capitalize"
+              [color]="badgeColorFor(category.kind)"
+            >
+              {{ category.kind }}
+            </mm-badge>
+          </td>
+          <td class="text-sm text-base-content/60">{{ category.group || '—' }}</td>
+          <td class="text-right">{{ transactionCountFor(category) }}</td>
+          <td>
+            <div class="dropdown dropdown-end">
+              <mm-button variant="ghost" shape="square" size="sm" ariaLabel="Category actions">
+                <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
+              </mm-button>
+              <ul
+                tabindex="0"
+                class="dropdown-content menu z-10 w-44 rounded-box bg-base-100 p-2 shadow"
+              >
+                <li>
+                  <button type="button" (click)="openEditForm(category)">
+                    <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+                    Edit
+                  </button>
+                </li>
+                <li>
+                  <button type="button" (click)="toggleArchive(category)">
+                    <ng-icon
+                      [name]="category.archived ? 'tablerArchiveOff' : 'tablerArchive'"
+                      size="14"
+                      aria-hidden="true"
+                    />
+                    {{ category.archived ? 'Unarchive' : 'Archive' }}
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="text-error" (click)="confirmDelete(category)">
+                    <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+                    Delete
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </mm-table>
 }
 
 <app-category-form

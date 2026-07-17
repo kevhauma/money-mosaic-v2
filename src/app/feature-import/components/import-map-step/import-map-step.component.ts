@@ -26,6 +26,7 @@ import {
   InputComponent,
   LabelComponent,
   SelectComponent,
+  TableComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
@@ -47,6 +48,7 @@ const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
     InputComponent,
     LabelComponent,
     SelectComponent,
+    TableComponent,
     TypographyComponent,
   ],
   templateUrl: './import-map-step.component.html',

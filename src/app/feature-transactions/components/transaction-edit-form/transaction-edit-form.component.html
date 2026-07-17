@@ -43,18 +43,16 @@
 
     @if (rawRowEntries().length > 0) {
       <mm-fieldset legend="Original CSV row">
-        <div class="max-h-48 overflow-auto rounded-box border border-base-300">
-          <table class="table-sm table">
-            <tbody>
-              @for (entry of rawRowEntries(); track entry[0]) {
-                <tr>
-                  <th class="whitespace-nowrap text-base-content/60">{{ entry[0] }}</th>
-                  <td class="font-mono break-all">{{ entry[1] }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <mm-table density="compact" scroll="auto" class="max-h-48">
+          <tbody>
+            @for (entry of rawRowEntries(); track entry[0]) {
+              <tr>
+                <th class="whitespace-nowrap text-base-content/60">{{ entry[0] }}</th>
+                <td class="font-mono break-all">{{ entry[1] }}</td>
+              </tr>
+            }
+          </tbody>
+        </mm-table>
       </mm-fieldset>
     } @else if (transaction()?.rawLine; as rawLine) {
       <mm-fieldset legend="Original CSV row">

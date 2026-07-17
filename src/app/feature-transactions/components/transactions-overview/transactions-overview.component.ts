@@ -25,6 +25,7 @@ import {
   LoadingSkeletonComponent,
   PageHeaderComponent,
   PaginatorComponent,
+  TableComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import {
@@ -77,6 +78,7 @@ type TransactionRow = {
     LoadingSkeletonComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    TableComponent,
     TransactionBulkBarComponent,
     TransactionEditFormComponent,
     TransactionFiltersComponent,

@@ -22,6 +22,7 @@ import {
   LabelComponent,
   MmModalComponent,
   SelectComponent,
+  TableComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { AttributionOverrideFieldsetComponent } from '../attribution-override-fieldset/attribution-override-fieldset.component';
@@ -41,6 +42,7 @@ export type TransactionEditResult = Partial<
     SelectComponent,
     MmModalComponent,
     AttributionOverrideFieldsetComponent,
+    TableComponent,
     TypographyComponent,
   ],
   templateUrl: './transaction-edit-form.component.html',

@@ -107,19 +107,17 @@
       <mm-text as="p" weight="medium" class="mb-2 text-xs text-base-content/60"
         >Raw file preview</mm-text
       >
-      <div class="overflow-x-auto rounded-box border border-base-300">
-        <table class="table table-xs">
-          <tbody>
-            @for (row of previewRows(); track $index) {
-              <tr>
-                @for (cell of row; track $index) {
-                  <td class="whitespace-nowrap">{{ cell }}</td>
-                }
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <mm-table density="compact">
+        <tbody>
+          @for (row of previewRows(); track $index) {
+            <tr>
+              @for (cell of row; track $index) {
+                <td class="whitespace-nowrap">{{ cell }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </mm-table>
     </div>
   </div>
 }

@@ -8,6 +8,7 @@ import {
   ButtonComponent,
   EmptyStateComponent,
   PaginatorComponent,
+  TableComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { confidenceToColor, createPagination, SignedAmountPipe } from '@/shared/utils';
@@ -34,6 +35,7 @@ type SuggestionRow = {
     ButtonComponent,
     EmptyStateComponent,
     PaginatorComponent,
+    TableComponent,
     TypographyComponent,
   ],
   templateUrl: './suggestions-table.component.html',

@@ -18,6 +18,7 @@ import {
   EmptyStateComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
+  TableComponent,
   TabsComponent,
   type TabDefinition,
 } from '@/shared/ui';
@@ -48,6 +49,7 @@ const CATEGORIES_TABS: TabDefinition[] = [
     EmptyStateComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
+    TableComponent,
     TabsComponent,
   ],
   templateUrl: './rules-overview.component.html',
