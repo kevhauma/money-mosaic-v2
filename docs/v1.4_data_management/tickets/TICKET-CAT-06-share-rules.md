@@ -32,17 +32,17 @@ Rules currently exist only inside one browser's IndexedDB with no way to get a s
 
 ## Acceptance criteria
 
-- [ ] Rules overview has a selection mode (checkbox per rule + select-all/none, scoped to the filtered view) that doesn't disrupt existing priority reordering, filtering, or edit/delete controls.
-- [ ] "Export all rules" and "Export selected rules" both download a `.json` file with no network request, containing the chosen rules with `setCategoryId` resolved to a portable `setCategoryName` label instead of the raw id.
-- [ ] "Import rules" accepts a file produced by this ticket's export, matches categories **by label** (case-insensitive) via `CategoriesStore`, and adds each rule through `RulesStore`/`RulesRepository` (never a direct `appDb.rules` write).
-- [ ] A rule whose `setCategoryName` matches no existing category is still imported, with its action pointed at a seeded "Uncategorised"/"Unknown" system category — no new category is silently created from the file's label.
-- [ ] The "Uncategorised" system category is seeded idempotently (created once, reused on every subsequent import) rather than duplicated per import.
-- [ ] Imported rules are appended after the current highest priority, preserving their relative order from the file.
-- [ ] A rule whose name collides with an existing rule is added as a separate rule rather than overwriting the existing one.
-- [ ] Import reports how many rules were added vs. skipped (with a reason) when the file contains unrepairable entries (missing required fields, unrecognised operator), and does not abort the rest of the import on one bad row.
-- [ ] Unit tests cover: export serialises selected vs. all rules with correct category label resolution; import matches an existing category by label (case-insensitive); import falls back to the seeded "Uncategorised" category exactly once across repeated imports with unmatched labels; import appends priorities above the current max; an unrepairable rule entry is skipped without failing the rest of the import.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: select two of several rules, export, confirm the downloaded file only contains those two with category labels (not ids); import that file into a database with a different category set and confirm the rules appear at the end of the priority list, with a label that doesn't exist there landing on "Uncategorised".
+- [x] Rules overview has a selection mode (checkbox per rule + select-all/none, scoped to the filtered view) that doesn't disrupt existing priority reordering, filtering, or edit/delete controls.
+- [x] "Export all rules" and "Export selected rules" both download a `.json` file with no network request, containing the chosen rules with `setCategoryId` resolved to a portable `setCategoryName` label instead of the raw id.
+- [x] "Import rules" accepts a file produced by this ticket's export, matches categories **by label** (case-insensitive) via `CategoriesStore`, and adds each rule through `RulesStore`/`RulesRepository` (never a direct `appDb.rules` write).
+- [x] A rule whose `setCategoryName` matches no existing category is still imported, with its action pointed at a seeded "Uncategorised"/"Unknown" system category — no new category is silently created from the file's label.
+- [x] The "Uncategorised" system category is seeded idempotently (created once, reused on every subsequent import) rather than duplicated per import.
+- [x] Imported rules are appended after the current highest priority, preserving their relative order from the file.
+- [x] A rule whose name collides with an existing rule is added as a separate rule rather than overwriting the existing one.
+- [x] Import reports how many rules were added vs. skipped (with a reason) when the file contains unrepairable entries (missing required fields, unrecognised operator), and does not abort the rest of the import on one bad row.
+- [x] Unit tests cover: export serialises selected vs. all rules with correct category label resolution; import matches an existing category by label (case-insensitive); import falls back to the seeded "Uncategorised" category exactly once across repeated imports with unmatched labels; import appends priorities above the current max; an unrepairable rule entry is skipped without failing the rest of the import.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [ ] Verified live in the browser: select two of several rules, export, confirm the downloaded file only contains those two with category labels (not ids); import that file into a database with a different category set and confirm the rules appear at the end of the priority list, with a label that doesn't exist there landing on "Uncategorised". — **skipped this pass at the user's explicit request.**
 
 ## Notes
 

@@ -20,11 +20,13 @@ import {
   LoadingSkeletonComponent,
   PageHeaderComponent,
 } from '@/shared/ui';
+import { createSelectionModel } from '@/shared/utils';
 import { RulesStore } from '../../rules.store';
 import { describeRule } from '../../rule-summary';
 import { matchesRuleFilters, type RuleFilters } from '../../rule-filters';
 import { RuleFiltersComponent } from '../rule-filters/rule-filters.component';
 import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.component';
+import { RuleShareBarComponent } from '../rule-share-bar/rule-share-bar.component';
 
 @Component({
   selector: 'app-rules-overview',
@@ -34,6 +36,7 @@ import { RuleFormComponent, type RuleFormValue } from '../rule-form/rule-form.co
     NgIcon,
     RuleFiltersComponent,
     RuleFormComponent,
+    RuleShareBarComponent,
     AlertComponent,
     BadgeComponent,
     ButtonComponent,
@@ -74,6 +77,9 @@ export class RulesOverviewComponent {
 
   protected readonly filters = signal<RuleFilters>({ text: '', categoryId: '', enabled: '' });
 
+  /** Row selection for rule sharing (TICKET-CAT-06) — passed down to `app-rule-share-bar`. */
+  protected readonly selection = createSelectionModel<number>();
+
   /** True while any search/filter axis is active (TICKET-CAT-04). */
   protected readonly filtersActive = computed(
     () =>
@@ -93,6 +99,21 @@ export class RulesOverviewComponent {
       .rulesByPriority()
       .filter((rule) => matchesRuleFilters(rule, this.filters(), this.resolveAccountName)),
   );
+
+  private readonly filteredIds = computed(() => this.filteredRules().map((rule) => rule.id!));
+
+  /** Whether every currently-filtered rule is selected — drives the header checkbox's own state. */
+  protected readonly allFilteredSelected = computed(() =>
+    this.selection.allSelected(this.filteredIds()),
+  );
+
+  /** Drives the header checkbox's indeterminate state: some, but not all, filtered rows selected. */
+  protected readonly someFilteredSelected = computed(() =>
+    this.selection.someSelected(this.filteredIds()),
+  );
+
+  /** Plain array view of the selection for `app-rule-share-bar`'s `selectedIds` input (TICKET-CAT-06). */
+  protected readonly selectedIdsList = computed(() => [...this.selection.selectedIds()]);
 
   protected onFiltersChange(filters: RuleFilters): void {
     this.filters.set(filters);
@@ -167,6 +188,15 @@ export class RulesOverviewComponent {
       await this.rulesStore.runRules();
     } finally {
       this.running.set(false);
+    }
+  }
+
+  /** Header checkbox: collapse to none if every filtered rule is already selected, otherwise select them all. */
+  protected toggleSelectAllFiltered(): void {
+    if (this.allFilteredSelected()) {
+      this.selection.clear();
+    } else {
+      this.selection.selectAll(this.filteredIds());
     }
   }
 }

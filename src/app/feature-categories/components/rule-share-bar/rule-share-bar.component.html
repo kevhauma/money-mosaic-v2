@@ -1,0 +1,38 @@
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <mm-button size="sm" (click)="exportSelectedRules()" [disabled]="selectedIds().length === 0">
+    <ng-icon name="tablerDownload" size="16" aria-hidden="true" />
+    Export selected ({{ selectedIds().length }})
+  </mm-button>
+  <mm-button size="sm" (click)="exportAllRules()">
+    <ng-icon name="tablerDownload" size="16" aria-hidden="true" />
+    Export all rules
+  </mm-button>
+  <mm-button
+    size="sm"
+    [class]="importing() ? 'loading' : ''"
+    [disabled]="importing()"
+    (click)="fileInput.click()"
+  >
+    <ng-icon name="tablerUpload" size="16" aria-hidden="true" />
+    Import rules
+  </mm-button>
+  <input
+    #fileInput
+    type="file"
+    accept="application/json"
+    class="hidden"
+    (change)="onFileSelected($event)"
+  />
+</div>
+
+@if (shareError()) {
+  <mm-alert status="error" class="mb-4 py-2 text-sm">{{ shareError() }}</mm-alert>
+}
+@if (importSummary(); as summary) {
+  <mm-alert status="success" class="mb-4 py-2 text-sm">
+    Imported {{ summary.added }} rule{{ summary.added === 1 ? '' : 's' }}.
+    @if (summary.skipped.length > 0) {
+      Skipped {{ summary.skipped.length }}: {{ skippedReasonsText(summary) }}.
+    }
+  </mm-alert>
+}

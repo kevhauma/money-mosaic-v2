@@ -1,0 +1,500 @@
+<title>MoneyMosaicVibe — Dependency Map</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --border: #dde1e7;
+    --text: #1a2027;
+    --text-dim: #5b6472;
+    --accent: #c2703a;
+    --core: #2c7a73;
+    --shared: #6c5b9e;
+    --feature: #c2703a;
+    --diagram-bg: #fbfaf7;
+    --diagram-border: #e5e0d5;
+    --mono: ui-monospace, 'Cascadia Code', 'SF Mono', 'JetBrains Mono', Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --surface: #1b1f26;
+      --border: #2a2f38;
+      --text: #e7e9ed;
+      --text-dim: #98a0ac;
+      --accent: #e08a4e;
+      --core: #4fa79e;
+      --shared: #9c8ad1;
+      --feature: #e08a4e;
+    }
+  }
+  :root[data-theme='dark'] {
+    --bg: #14171c;
+    --surface: #1b1f26;
+    --border: #2a2f38;
+    --text: #e7e9ed;
+    --text-dim: #98a0ac;
+    --accent: #e08a4e;
+    --core: #4fa79e;
+    --shared: #9c8ad1;
+    --feature: #e08a4e;
+  }
+  :root[data-theme='light'] {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --border: #dde1e7;
+    --text: #1a2027;
+    --text-dim: #5b6472;
+    --accent: #c2703a;
+    --core: #2c7a73;
+    --shared: #6c5b9e;
+    --feature: #c2703a;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.5;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2.5rem 1.75rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  header p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+
+  .stats {
+    display: flex;
+    gap: 1.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.4rem;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .stat .value {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.35rem;
+    font-weight: 600;
+  }
+
+  .stat .label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.35rem;
+  }
+
+  .panel h2 {
+    margin: 0 0 0.9rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .legend-item {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+
+  .swatch {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 3px;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  }
+
+  .swatch.core {
+    background: color-mix(in srgb, var(--core) 22%, var(--surface));
+    color: var(--core);
+  }
+  .swatch.shared {
+    background: color-mix(in srgb, var(--shared) 22%, var(--surface));
+    color: var(--shared);
+  }
+  .swatch.feature {
+    background: color-mix(in srgb, var(--feature) 22%, var(--surface));
+    color: var(--feature);
+  }
+
+  .legend-item strong {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  .legend-item span {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+  }
+
+  .rules {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .rules li::marker {
+    color: var(--accent);
+  }
+
+  .command {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--text);
+    background: color-mix(in srgb, var(--text) 5%, var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.7rem 0.8rem;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+  }
+
+  .diagram-panel {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .diagram-panel .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .diagram-panel .panel-head h2 {
+    margin: 0;
+  }
+
+  .diagram-panel .panel-head .note {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .diagram-scroll {
+    overflow-x: auto;
+    background: var(--diagram-bg);
+  }
+
+  .diagram-scroll pre.mermaid {
+    margin: 0;
+    padding: 1.5rem;
+    min-width: 900px;
+  }
+
+  footer {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  footer code {
+    font-family: var(--mono);
+    background: color-mix(in srgb, var(--text) 6%, var(--surface));
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+</style>
+
+<div class="page">
+  <header>
+    <span class="eyebrow">src/app · dependency-cruiser</span>
+    <h1>MoneyMosaicVibe dependency map</h1>
+    <p>
+      Every import edge under <code>src/app</code>, scoped to three layers: each feature folder
+      collapsed to a single node, <code>core</code> and <code>shared</code> expanded one folder
+      deep. Spec files and <code>node_modules</code> are excluded.
+    </p>
+    <div class="stats">
+      <!-- GENERATED:STATS:START -->
+      <div class="stat"><span class="value">20</span><span class="label">Nodes</span></div>
+      <div class="stat"><span class="value">71</span><span class="label">Edges</span></div>
+      <div class="stat"><span class="value">7</span><span class="label">Features</span></div>
+      <div class="stat"><span class="value">10</span><span class="label">Core modules</span></div>
+      <div class="stat"><span class="value">3</span><span class="label">Shared modules</span></div>
+      <!-- GENERATED:STATS:END -->
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="panel">
+        <h2>Legend</h2>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="swatch feature"></span>
+            <div>
+              <strong>Features</strong>
+              <span>Top-level product areas — one node per <code>feature-*</code> folder.</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <span class="swatch core"></span>
+            <div>
+              <strong>Core</strong>
+              <span
+                >Foundation services — repositories, state, stats — one node per subfolder.</span
+              >
+            </div>
+          </div>
+          <div class="legend-item">
+            <span class="swatch shared"></span>
+            <div>
+              <strong>Shared</strong>
+              <span>Cross-cutting UI and utilities — one node per subfolder.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Scope rules</h2>
+        <ul class="rules">
+          <li>
+            Feature internals aren't expanded — an edge into a feature node means
+            <em>something</em> in it imports the target, not necessarily its entry point.
+          </li>
+          <li>
+            Core/shared stop one folder past their own root, so e.g.
+            <code>core/data-access/*</code> collapses to <code>data-access</code>.
+          </li>
+          <li><code>*.spec.ts</code> and <code>node_modules</code> are filtered out entirely.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>Regenerate</h2>
+        <pre class="command">
+depcruise src/app \
+  --config .dependency-cruiser.cjs \
+  --collapse '^src/app/(?:core|shared)/[^/]+|^src/app/[^/]+' \
+  --output-type mermaid \
+  --output-to reports/dependency-graph.mmd</pre>
+      </div>
+    </aside>
+
+    <div class="panel diagram-panel">
+      <div class="panel-head">
+        <h2>Graph</h2>
+        <span class="note">flowchart · left → right · scroll to see full width</span>
+      </div>
+      <div class="diagram-scroll">
+        <pre class="mermaid">
+flowchart LR
+
+subgraph 0["src"]
+subgraph 1["app"]
+subgraph 2["core"]
+3["accounts"]
+4["categorisation"]
+5["data-access"]
+6["import"]
+7["ml"]
+8["state"]
+9["stats"]
+A["storage"]
+B["transactions"]
+C["transfers"]
+end
+subgraph FEAT["features"]
+D["feature-accounts"]
+E["feature-categories"]
+F["feature-dashboard"]
+G["feature-data-management"]
+H["feature-import"]
+I["feature-learning"]
+J["feature-transactions"]
+end
+subgraph K["shared"]
+L["echarts"]
+M["ui"]
+N["utils"]
+end
+end
+end
+3-->5
+3-->C
+3-->N
+4-->5
+4-->3
+5-->7
+5-->N
+6-->5
+6-->N
+6-->C
+7-->4
+7-->5
+8-->3
+8-->5
+8-->9
+8-->C
+8-->N
+8-->B
+9-->5
+9-->3
+9-->C
+B-->5
+B-->C
+C-->5
+C-->3
+C-->N
+D-->5
+D-->L
+D-->8
+D-->M
+D-->N
+D-->9
+E-->5
+E-->8
+E-->M
+E-->N
+E-->4
+E-->7
+F-->5
+F-->8
+F-->M
+F-->N
+F-->C
+F-->9
+F-->L
+G-->5
+G-->A
+G-->M
+G-->N
+H-->5
+H-->6
+H-->M
+H-->N
+H-->8
+H-->4
+I-->M
+I-->7
+I-->8
+I-->E
+I-->5
+I-->N
+J-->5
+J-->8
+J-->B
+J-->M
+J-->N
+J-->E
+J-->C
+L-->N
+M-->N
+M-->9
+
+classDef core fill:#E4F3F1,stroke:#2C7A73,color:#173F3B,stroke-width:1.5px;
+classDef shared fill:#EFEBFA,stroke:#6C5B9E,color:#332B54,stroke-width:1.5px;
+classDef feature fill:#FBEADC,stroke:#C2703A,color:#5C3111,stroke-width:1.5px;
+class 3,4,5,6,7,8,9,A,B,C core
+class L,M,N shared
+class D,E,F,G,H,I,J feature
+style 2 fill:#F5FBFA,stroke:#2C7A73,stroke-width:1px
+style K fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
+style FEAT fill:#FDF6F0,stroke:#C2703A,stroke-width:1px
+</pre>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Generated with <code>dependency-cruiser</code> (real package — the previously installed
+    <code>depcruise</code> devDependency was an npm dependency-confusion placeholder and has been
+    swapped out). Config in <code>.dependency-cruiser.cjs</code>, raw output in
+    <code>reports/dependency-graph.mmd</code>.
+  </footer>
+</div>

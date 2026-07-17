@@ -11,8 +11,17 @@ import {
 import { entityConfig, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { RulesRepository, type Rule, type Transaction } from '@/core/data-access';
 import { RulesEngineService } from '@/core/categorisation';
-import { TransactionsStore } from '@/core/state';
+import { CategoriesStore, TransactionsStore } from '@/core/state';
 import { withPersistedCrud } from '@/shared/utils';
+import {
+  parseSharedRulesFile,
+  toSharedRules,
+  UNCATEGORISED_RULE_CATEGORY_NAME,
+  type SharedRulesFile,
+  type SkippedRuleEntry,
+} from './rule-share';
+
+export type ImportRulesResult = { added: number; skipped: SkippedRuleEntry[] };
 
 const ruleConfig = entityConfig({
   entity: type<Rule>(),
@@ -114,6 +123,84 @@ export const RulesStore = signalStore(
       await store.runRules();
     },
   })),
+  withMethods((store) => {
+    const categoriesStore = inject(CategoriesStore);
+
+    return {
+      /** Exports all rules, or just `ruleIds` if given, with categories resolved to portable labels (TICKET-CAT-06). */
+      exportRules: (ruleIds?: number[]): SharedRulesFile => {
+        const categoriesById = categoriesStore.categoriesById();
+        const rules = ruleIds
+          ? store.rules().filter((rule) => ruleIds.includes(rule.id!))
+          : store.rules();
+        return toSharedRules(rules, categoriesById);
+      },
+
+      /**
+       * Imports a shared-rules file (TICKET-CAT-06). Each entry's category label is matched
+       * case-insensitively against the importing user's categories; an unmatched label falls back
+       * to a seeded "Uncategorised" system category rather than auto-creating one from the file
+       * (an untrusted file shouldn't be able to populate the category list with arbitrary names).
+       * Imported rules are appended after the current highest priority so they never jump ahead of
+       * existing ones, and a name collision with an existing rule adds a second rule rather than
+       * overwriting it.
+       */
+      importRules: async (data: SharedRulesFile): Promise<ImportRulesResult> => {
+        const { entries, skipped } = parseSharedRulesFile(data);
+        await categoriesStore.hydrate();
+
+        let nextPriority = Math.max(0, ...store.rules().map((rule) => rule.priority));
+        let uncategorisedId: number | null = null;
+
+        const resolveCategoryId = async (label: string): Promise<number> => {
+          const match = categoriesStore
+            .categories()
+            .find((category) => category.name.toLowerCase() === label.toLowerCase());
+          if (match) return match.id!;
+
+          if (uncategorisedId == null) {
+            const seeded = categoriesStore
+              .categories()
+              .find(
+                (category) =>
+                  category.isSystem && category.name === UNCATEGORISED_RULE_CATEGORY_NAME,
+              );
+            uncategorisedId = seeded
+              ? seeded.id!
+              : (
+                  await categoriesStore.addCategory({
+                    name: UNCATEGORISED_RULE_CATEGORY_NAME,
+                    kind: 'neutral',
+                    color: '#9CA3AF',
+                    icon: 'tag',
+                    archived: false,
+                    isSystem: true,
+                  })
+                ).id!;
+          }
+          return uncategorisedId;
+        };
+
+        let added = 0;
+        for (const entry of entries) {
+          const categoryId = await resolveCategoryId(entry.action.setCategoryName);
+          nextPriority += 10;
+          await store.addRule({
+            name: entry.name,
+            priority: nextPriority,
+            enabled: entry.enabled,
+            continueOnMatch: entry.continueOnMatch,
+            conditionMatch: entry.conditionMatch,
+            conditions: entry.conditions,
+            action: { setCategoryId: categoryId },
+          });
+          added += 1;
+        }
+
+        return { added, skipped };
+      },
+    };
+  }),
   withHooks({
     onInit(store) {
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,

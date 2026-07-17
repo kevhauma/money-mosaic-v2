@@ -1,14 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import {
+  CategoriesRepository,
   RulesRepository,
   TransactionsRepository,
+  type Category,
   type Rule,
   type Transaction,
 } from '@/core/data-access';
 import { RulesEngineService } from '@/core/categorisation';
-import { TransactionsStore } from '@/core/state';
+import { CategoriesStore, TransactionsStore } from '@/core/state';
 import { RulesStore } from './rules.store';
+import type { SharedRulesFile } from './rule-share';
 
 const rule = (overrides: Partial<Rule> = {}): Rule => ({
   id: 1,
@@ -18,6 +21,36 @@ const rule = (overrides: Partial<Rule> = {}): Rule => ({
   continueOnMatch: false,
   conditions: [{ field: 'description', operator: 'contains', value: 'carrefour' }],
   action: { setCategoryId: 1 },
+  ...overrides,
+});
+
+const category = (overrides: Partial<Category> = {}): Category => ({
+  id: 1,
+  name: 'Groceries',
+  kind: 'expense',
+  color: '#4ADE80',
+  icon: 'shopping-cart',
+  archived: false,
+  isSystem: false,
+  ...overrides,
+});
+
+const sharedRulesFile = (rules: SharedRulesFile['rules']): SharedRulesFile => ({
+  schemaVersion: 1,
+  exportedAt: '2026-07-16T00:00:00.000Z',
+  rules,
+});
+
+const sharedRuleEntry = (
+  overrides: Partial<SharedRulesFile['rules'][number]> = {},
+): SharedRulesFile['rules'][number] => ({
+  name: 'Shared rule',
+  priority: 10,
+  enabled: true,
+  continueOnMatch: false,
+  conditionMatch: 'all',
+  conditions: [{ field: 'description', operator: 'contains', value: 'carrefour' }],
+  action: { setCategoryName: 'Groceries' },
   ...overrides,
 });
 
@@ -197,5 +230,201 @@ describe('RulesStore: createRuleFromCounterparty creates then backfills matching
     expect(byId.get(10)).toMatchObject({ categoryId: 7 });
     expect(byId.get(11)).toMatchObject({ categoryManual: true });
     expect(byId.get(11)?.categoryId).toBeUndefined();
+  });
+});
+
+describe('RulesStore: exportRules resolves categories to portable labels (TICKET-CAT-06)', () => {
+  const rulesRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const categoriesRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: RulesRepository, useValue: rulesRepository },
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+        { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
+    });
+  });
+
+  it('exports all rules with setCategoryId resolved to the category name, sorted by priority', async () => {
+    rulesRepository.getAll.mockResolvedValue([
+      rule({ id: 1, priority: 20, action: { setCategoryId: 2 } }),
+      rule({ id: 2, priority: 10, action: { setCategoryId: 1 } }),
+    ]);
+    categoriesRepository.getAll.mockResolvedValue([
+      category({ id: 1, name: 'Groceries' }),
+      category({ id: 2, name: 'Salary' }),
+    ]);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+    await TestBed.inject(CategoriesStore).hydrate();
+
+    const exported = store.exportRules();
+
+    expect(exported.rules.map((r) => r.action.setCategoryName)).toEqual(['Groceries', 'Salary']);
+  });
+
+  it('exports only the given rule ids when a selection is passed', async () => {
+    rulesRepository.getAll.mockResolvedValue([
+      rule({ id: 1, priority: 10, name: 'Rule A' }),
+      rule({ id: 2, priority: 20, name: 'Rule B' }),
+    ]);
+    categoriesRepository.getAll.mockResolvedValue([category({ id: 1, name: 'Groceries' })]);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+
+    const exported = store.exportRules([2]);
+
+    expect(exported.rules.map((r) => r.name)).toEqual(['Rule B']);
+  });
+});
+
+describe('RulesStore: importRules matches categories by label with an Uncategorised fallback (TICKET-CAT-06)', () => {
+  const rulesRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(1),
+  };
+  const categoriesRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(99),
+  };
+  const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    rulesRepository.getAll.mockResolvedValue([]);
+    rulesRepository.add.mockResolvedValue(1);
+    categoriesRepository.getAll.mockResolvedValue([]);
+    categoriesRepository.add.mockResolvedValue(99);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: RulesRepository, useValue: rulesRepository },
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+        { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
+    });
+  });
+
+  it('matches an existing category by label, case-insensitively', async () => {
+    categoriesRepository.getAll.mockResolvedValue([category({ id: 5, name: 'Groceries' })]);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+
+    const result = await store.importRules(
+      sharedRulesFile([sharedRuleEntry({ action: { setCategoryName: 'GROCERIES' } })]),
+    );
+
+    expect(rulesRepository.add).toHaveBeenCalledWith(
+      expect.objectContaining({ action: { setCategoryId: 5 } }),
+    );
+    expect(result.added).toBe(1);
+    expect(categoriesRepository.add).not.toHaveBeenCalled();
+  });
+
+  it('falls back to a seeded "Uncategorised" category exactly once for repeated unmatched labels', async () => {
+    rulesRepository.add.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+
+    await store.importRules(
+      sharedRulesFile([
+        sharedRuleEntry({ name: 'Rule A', action: { setCategoryName: 'Nonexistent' } }),
+        sharedRuleEntry({ name: 'Rule B', action: { setCategoryName: 'AlsoNonexistent' } }),
+      ]),
+    );
+
+    expect(categoriesRepository.add).toHaveBeenCalledTimes(1);
+    expect(categoriesRepository.add).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Uncategorised', isSystem: true }),
+    );
+    expect(rulesRepository.add).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ action: { setCategoryId: 99 } }),
+    );
+    expect(rulesRepository.add).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ action: { setCategoryId: 99 } }),
+    );
+  });
+
+  it('reuses an already-seeded "Uncategorised" system category instead of creating another one', async () => {
+    categoriesRepository.getAll.mockResolvedValue([
+      category({ id: 7, name: 'Uncategorised', isSystem: true, kind: 'neutral' }),
+    ]);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+
+    await store.importRules(
+      sharedRulesFile([sharedRuleEntry({ action: { setCategoryName: 'Nonexistent' } })]),
+    );
+
+    expect(categoriesRepository.add).not.toHaveBeenCalled();
+    expect(rulesRepository.add).toHaveBeenCalledWith(
+      expect.objectContaining({ action: { setCategoryId: 7 } }),
+    );
+  });
+
+  it('appends imported rules after the current highest priority', async () => {
+    rulesRepository.getAll.mockResolvedValue([rule({ id: 1, priority: 20 })]);
+    rulesRepository.add.mockResolvedValueOnce(2).mockResolvedValueOnce(3);
+    categoriesRepository.getAll.mockResolvedValue([category({ id: 1, name: 'Groceries' })]);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+
+    await store.importRules(
+      sharedRulesFile([sharedRuleEntry({ name: 'Rule A' }), sharedRuleEntry({ name: 'Rule B' })]),
+    );
+
+    expect(rulesRepository.add).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ priority: 30 }),
+    );
+    expect(rulesRepository.add).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ priority: 40 }),
+    );
+  });
+
+  it('skips an unrepairable entry (missing a rule name) without failing the rest of the import', async () => {
+    categoriesRepository.getAll.mockResolvedValue([category({ id: 1, name: 'Groceries' })]);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+
+    const result = await store.importRules({
+      schemaVersion: 1,
+      exportedAt: '2026-07-16T00:00:00.000Z',
+      rules: [{ ...sharedRuleEntry(), name: '' }, sharedRuleEntry({ name: 'Good rule' })],
+    });
+
+    expect(result.added).toBe(1);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].reason).toMatch(/name/);
+    expect(rulesRepository.add).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds a rule as a separate row rather than overwriting an existing rule with the same name', async () => {
+    rulesRepository.getAll.mockResolvedValue([
+      rule({ id: 1, priority: 10, name: 'Duplicate name' }),
+    ]);
+    // Existing rule already occupies id 1 — the imported row needs a distinct id from the
+    // repository to land as a genuinely separate entity, exactly as a real auto-increment table would.
+    rulesRepository.add.mockResolvedValueOnce(2);
+    categoriesRepository.getAll.mockResolvedValue([category({ id: 1, name: 'Groceries' })]);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+
+    await store.importRules(sharedRulesFile([sharedRuleEntry({ name: 'Duplicate name' })]));
+
+    expect(rulesRepository.add).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Duplicate name' }),
+    );
+    expect(store.rules().filter((r) => r.name === 'Duplicate name')).toHaveLength(2);
   });
 });

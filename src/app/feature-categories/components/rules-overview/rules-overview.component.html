@@ -16,6 +16,8 @@
   </div>
 </mm-page-header>
 
+<app-rule-share-bar [selectedIds]="selectedIdsList()" />
+
 <div role="tablist" class="tabs tabs-box mb-4 w-fit">
   <a
     routerLink="/categories"
@@ -56,6 +58,16 @@
       <table class="table">
         <thead>
           <tr>
+            <th>
+              <input
+                type="checkbox"
+                class="checkbox checkbox-sm"
+                aria-label="Select all filtered rules"
+                [checked]="allFilteredSelected()"
+                [indeterminate]="someFilteredSelected()"
+                (change)="toggleSelectAllFiltered()"
+              />
+            </th>
             <th>Order</th>
             <th>Rule</th>
             <th>Category</th>
@@ -66,6 +78,15 @@
         <tbody>
           @for (rule of filteredRules(); track rule.id) {
             <tr [class.opacity-60]="!rule.enabled">
+              <td>
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm"
+                  [attr.aria-label]="'Select rule ' + rule.name"
+                  [checked]="selection.selectedIds().has(rule.id!)"
+                  (change)="selection.toggle(rule.id!)"
+                />
+              </td>
               <td>
                 <div class="flex items-center gap-1">
                   <mm-button

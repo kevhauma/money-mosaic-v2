@@ -11,6 +11,7 @@ import {
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
+import { downloadJson } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -51,7 +52,7 @@ export class DataManagementOverviewComponent {
     this.exporting.set(true);
     try {
       const data = await this.dataManagementRepository.exportAll();
-      this.downloadJson(data, `money-mosaic-backup-${todayIso()}.json`);
+      downloadJson(data, `money-mosaic-backup-${todayIso()}.json`);
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Export failed.');
     } finally {
@@ -112,15 +113,5 @@ export class DataManagementOverviewComponent {
 
   protected reloadPage(): void {
     window.location.reload();
-  }
-
-  private downloadJson(data: unknown, filename: string): void {
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
   }
 }

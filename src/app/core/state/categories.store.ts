@@ -68,10 +68,11 @@ export const CategoriesStore = signalStore(
     return {
       hydrate,
 
-      addCategory: async (category: Category): Promise<void> => {
+      addCategory: async (category: Category): Promise<Category> => {
         const id = await categoriesRepository.add(category);
         const added: Category = { ...category, id };
         patchState(store, addEntity(added, categoryConfig));
+        return added;
       },
 
       updateCategory: async (id: number, changes: Partial<Category>): Promise<void> => {
