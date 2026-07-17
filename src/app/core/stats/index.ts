@@ -1,7 +1,6 @@
 export * from './category-kind-contribution';
 export * from './classify-for-stats';
 export * from './classify-joint-leg';
-export * from './date-buckets';
 export * from './joint-account-stake';
 export * from './joint-contributor-breakdown';
 export * from './period-stats';

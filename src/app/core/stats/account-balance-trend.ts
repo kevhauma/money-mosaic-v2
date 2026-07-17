@@ -1,7 +1,7 @@
 import type { Account, Transaction } from '@/core/data-access';
 import type { JointLegContext } from './classify-joint-leg';
 import { computeNetWorthTrend, type NetWorthPoint } from './net-worth-trend';
-import type { Granularity } from './date-buckets';
+import type { Granularity } from '@/shared/utils';
 
 export type AccountBalanceSeries = {
   accountId: number;

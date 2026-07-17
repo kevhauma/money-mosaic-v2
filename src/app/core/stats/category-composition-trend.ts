@@ -1,6 +1,6 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { computeCategoryBreakdown, type CategoryBreakdown } from './category-breakdown';
-import { bucketDateBoundaries, bucketKeysInRange, type Granularity } from './date-buckets';
+import { bucketDateBoundaries, bucketKeysInRange, type Granularity } from '@/shared/utils';
 
 const UNCATEGORISED_NAME = 'Uncategorised';
 const UNCATEGORISED_COLOR = '#9ca3af';

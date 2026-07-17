@@ -1,4 +1,4 @@
-import { bucketKeyForDate, type Granularity } from './date-buckets';
+import { bucketKeyForDate, type Granularity } from '@/shared/utils';
 
 export type ChartZoomWindow = { startValue: number; endValue: number };
 

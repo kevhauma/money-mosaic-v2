@@ -1,6 +1,6 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { classifyForStats } from './classify-for-stats';
-import { bucketKeysInRange } from './date-buckets';
+import { bucketKeysInRange } from '@/shared/utils';
 
 export type DayTypeSpend = {
   total: number;

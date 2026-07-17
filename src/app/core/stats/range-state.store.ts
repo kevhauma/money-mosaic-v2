@@ -6,7 +6,7 @@ import {
   shiftRangeByDayCount,
   type CalendarUnit,
   type RangePreset,
-} from './date-buckets';
+} from '@/shared/utils';
 
 type RangeState = {
   preset: RangePreset | 'custom';

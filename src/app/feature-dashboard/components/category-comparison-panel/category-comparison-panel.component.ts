@@ -2,14 +2,17 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler-icons/fill';
-import { formatAlignedRangeLabel } from '@/core/stats';
 import {
   ButtonComponent,
   formatDisplayDate,
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
+import {
+  buildTransactionDrilldownParams,
+  formatAlignedRangeLabel,
+  UNCATEGORISED_SENTINEL,
+} from '@/shared/utils';
 import { CategoriesStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { StatsStore } from '../../stats.store';

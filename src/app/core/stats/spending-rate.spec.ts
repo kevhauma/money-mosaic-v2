@@ -1,5 +1,5 @@
 import type { Transaction } from '@/core/data-access';
-import { bucketKeysInRange } from './date-buckets';
+import { bucketKeysInRange } from '@/shared/utils';
 import { computePeriodStats } from './period-stats';
 import { computeSpendingRate } from './spending-rate';
 

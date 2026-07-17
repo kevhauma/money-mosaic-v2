@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AccountsRepository, type Account, type Transaction } from '@/core/data-access';
-import { RangeStore, resolvePresetRange } from '@/core/stats';
+import { RangeStore } from '@/core/stats';
 import { AccountsStore, TransactionsStore } from '@/core/state';
-import { STAT_QUERY_PARAMS } from '@/shared/utils';
+import { resolvePresetRange, STAT_QUERY_PARAMS } from '@/shared/utils';
 import { App } from './app';
 
 const account = (overrides: Partial<Account> = {}): Account => ({

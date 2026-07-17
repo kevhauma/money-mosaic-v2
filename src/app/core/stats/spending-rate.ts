@@ -1,5 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
-import { bucketKeysInRange } from './date-buckets';
+import { bucketKeysInRange } from '@/shared/utils';
 import { computePeriodStats } from './period-stats';
 
 export type SpendingRate = {

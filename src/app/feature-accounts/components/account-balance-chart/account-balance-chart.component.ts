@@ -3,10 +3,10 @@ import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
-import { bucketDateBoundaries, type ChartZoomWindow, type NetWorthPoint } from '@/core/stats';
+import type { ChartZoomWindow, NetWorthPoint } from '@/core/stats';
 import { formatAxisTooltip } from '@/shared/echarts';
 import { GranularityPickerComponent, PaperComponent } from '@/shared/ui';
-import { buildTransactionDrilldownParams } from '@/shared/utils';
+import { bucketDateBoundaries, buildTransactionDrilldownParams } from '@/shared/utils';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
 /** Pure echarts-option builder, kept separate from the component so it's testable without TestBed. */

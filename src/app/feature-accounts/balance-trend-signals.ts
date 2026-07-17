@@ -8,10 +8,10 @@ import {
   RangeStore,
   type AccountBalanceSeries,
   type ChartZoomWindow,
-  type Granularity,
   type JointLegContext,
 } from '@/core/stats';
 import { AccountsStore, CategoriesStore, TransactionsStore, TransfersStore } from '@/core/state';
+import type { Granularity } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 

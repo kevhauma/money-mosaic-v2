@@ -7,8 +7,7 @@ import {
   output,
 } from '@angular/core';
 import 'cally';
-import { formatAlignedRangeLabel } from '@/core/stats/date-buckets';
-import { daisyClasses } from '@/shared/utils';
+import { daisyClasses, formatAlignedRangeLabel } from '@/shared/utils';
 
 export type DateRangeValue = { from: string; to: string };
 export type DateRangeInputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';

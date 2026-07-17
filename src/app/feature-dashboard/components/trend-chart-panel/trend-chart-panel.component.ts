@@ -3,20 +3,20 @@ import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import {
-  bucketDateBoundaries,
   computeCategoryCompositionTrend,
   pickGranularityForSpan,
   RangeStore,
   type CategorySeriesEntry,
-  type Granularity,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { formatAxisTooltip } from '@/shared/echarts';
 import { GranularityPickerComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import {
+  bucketDateBoundaries,
   buildTransactionDrilldownParams,
   formatCurrency,
+  type Granularity,
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
 
