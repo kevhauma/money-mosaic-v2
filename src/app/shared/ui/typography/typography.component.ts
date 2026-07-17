@@ -24,14 +24,41 @@ const WEIGHT_CLASSES: Record<TextWeight, string> = {
   bold: 'font-bold',
 };
 
-/** Each variant's default text-size/weight/color, mirroring the ad-hoc combos already in use across templates today, so migrating a call site to `mm-text` is visually a no-op until Phase B's tokens land. */
-const VARIANTS: Record<TextVariant, { text: string; weight?: TextWeight; color?: TextColor }> = {
-  display: { text: 'text-2xl', weight: 'semibold' },
-  heading: { text: 'text-2xl', weight: 'semibold', color: 'base-content' },
-  subheading: { text: 'text-sm', weight: 'medium', color: 'base-content' },
-  body: { text: '' },
-  caption: { text: 'text-sm', color: 'base-content' },
-  label: { text: 'text-xs uppercase tracking-wide', color: 'base-content' },
+type VariantSpec = {
+  text: string;
+  weight?: TextWeight;
+  color?: TextColor;
+  tracking?: string;
+  leading?: string;
+  uppercase?: boolean;
+};
+
+/** design-language.md §4 — "Swiss Modernism 2.0" type scale: high-contrast size jumps, tight tracking on large text, generous line-height on body copy. */
+const VARIANTS: Record<TextVariant, VariantSpec> = {
+  display: { text: 'text-[2.25rem]', weight: 'bold', tracking: '-0.02em', leading: '1.1' },
+  heading: {
+    text: 'text-[1.5rem]',
+    weight: 'semibold',
+    tracking: '-0.01em',
+    leading: '1.25',
+    color: 'base-content',
+  },
+  subheading: {
+    text: 'text-[1.0625rem]',
+    weight: 'medium',
+    leading: '1.4',
+    color: 'base-content',
+  },
+  body: { text: 'text-base', leading: '1.6' },
+  caption: { text: 'text-[0.8125rem]', leading: '1.5', color: 'base-content' },
+  label: {
+    text: 'text-[0.75rem]',
+    weight: 'semibold',
+    tracking: '0.06em',
+    leading: '1.4',
+    uppercase: true,
+    color: 'base-content',
+  },
 };
 
 /** Opacity applied to each variant's default (unopinionated when `color` is overridden). */
@@ -60,6 +87,8 @@ export class TypographyComponent {
   readonly color = input<TextColor>();
   readonly align = input<TextAlign>();
   readonly as = input<TextTag>('span');
+  /** design-language.md §4's tabular-figures rule — every monetary amount and numeric table column should align digits vertically. */
+  readonly numeric = input(false);
   readonly class = input('', { alias: 'class' });
 
   /** `as` is a reserved word in Angular template expressions (`expr as x`), so the template can't call `as()` directly (e.g. inside `@switch`) — this computed gives the template a non-reserved name to switch on instead, without aliasing the input itself (this repo's `no-input-rename` lint rule only allows aliasing `class`/`style`). */
@@ -72,7 +101,15 @@ export class TypographyComponent {
 
     return daisyClasses(
       spec.text,
-      [weight && WEIGHT_CLASSES[weight], colorClass, this.align() && `text-${this.align()}`],
+      [
+        weight && WEIGHT_CLASSES[weight],
+        colorClass,
+        spec.tracking && `tracking-[${spec.tracking}]`,
+        spec.leading && `leading-[${spec.leading}]`,
+        spec.uppercase && 'uppercase',
+        this.align() && `text-${this.align()}`,
+        this.numeric() && 'tabular-nums',
+      ],
       this.class(),
     );
   });

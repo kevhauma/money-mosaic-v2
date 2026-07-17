@@ -29,12 +29,18 @@ As a user, I want the app's persistent navigation shell (sidebar, top bar) to re
 
 ## Acceptance criteria
 
-- [ ] Sidebar active-item state uses the new primary-color accent treatment
-- [ ] Mobile drawer toggle uses `mm-button shape="square"`
-- [ ] Nav shell renders correctly in both the light and OLED dark theme from TICKET-UI-11
-- [ ] No change to routing/drawer open-close behavior — existing behavior spot-checked unchanged
-- [ ] Verified via the fallow and coding-conventions skills, and live in the browser at desktop and mobile widths in both themes
+- [x] Sidebar active-item state uses the new primary-color accent treatment
+- [x] Mobile drawer toggle uses `mm-button shape="square"` — already done by TICKET-UI-09's own commit, prior to this ticket
+- [x] Nav shell renders correctly in both the light and OLED dark theme from TICKET-UI-11 — built from theme-aware `bg-primary`/`border-l-primary` tokens, not verified live (see below)
+- [x] No change to routing/drawer open-close behavior — template structure and `App`'s drawer signal/handlers untouched, only nav-item `class` bindings changed
+- [~] Verified via the fallow and coding-conventions skills; **not** verified live in the browser (unattended run, live-browser step skipped per instruction)
 
 ## Notes
 
 Depends on [TICKET-UI-09](./TICKET-UI-09-icon-button-variant.md) (icon-button shape) and [TICKET-UI-11](./TICKET-UI-11-design-tokens-theme.md) (tokens) — build last in this version, once both exist.
+
+## Implementation notes (as built)
+
+- Every sidebar `<a>` now binds a shared `navItemClass` (`NAV_ITEM_CLASS` in `app.ts`, per design-language.md §7): `3px` transparent left border by default, switching to `border-l-primary` + `bg-primary/8` + `text-primary` when `routerLinkActive` applies `menu-active`, via a Tailwind arbitrary variant (`[&.menu-active]:...`) rather than fighting daisyUI's own `.menu-active` specificity. Originally written as a literal string repeated on all 7 `<a>` tags; consolidated into one constant after `fallow audit` flagged the repeated `border-l-[3px]` arbitrary value as token drift.
+- Nav labels now render through `<mm-text as="span">` (default `body` variant) instead of bare text nodes, so they pick up the same type-scale primitive as the rest of the app; visually a no-op (mm-text's `body` variant is unstyled apart from `leading-[1.6]`).
+- No `mm-divider` was introduced — the sidebar is a single flat list with no sub-sections to separate, matching the ticket's "if introduced" phrasing.

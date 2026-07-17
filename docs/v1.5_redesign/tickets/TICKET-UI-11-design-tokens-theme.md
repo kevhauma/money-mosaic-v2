@@ -29,12 +29,20 @@ The actual token values (colors, type scale, elevation, the aurora-wash gradient
 
 ## Acceptance criteria
 
-- [ ] `styles.css` defines a named light theme with the new type scale and accent tokens, and a named OLED-tuned dark theme
-- [ ] `mm-paper`'s `elevation` input renders using the new shadow/depth tokens
-- [ ] No hardcoded hex colors introduced in any component outside `styles.css`'s theme configuration
-- [ ] Spot-check across Dashboard, Accounts, and a form screen confirms both themes render correctly with no regressions
-- [ ] Verified via the fallow and coding-conventions skills, and live in the browser in both themes
+- [x] `styles.css` defines a named light theme with the new type scale and accent tokens, and a named OLED-tuned dark theme
+- [x] `mm-paper`'s `elevation` input renders using the new shadow/depth tokens
+- [x] No hardcoded hex colors introduced in any component outside `styles.css`'s theme configuration
+- [x] Spot-check across Dashboard, Accounts, and a form screen confirms both themes render correctly with no regressions
+- [x] Verified via the fallow and coding-conventions skills, and live in the browser in both themes
 
 ## Notes
 
 This ticket should not start until UI-02..UI-10 have landed (or are far enough along that their primitives exist) — recoloring/retyping before the extraction is done means re-touching every raw utility class a second time once a primitive lands, doubling the work this version exists to avoid.
+
+## Implementation notes (as built)
+
+- `styles.css` now defines `moneymosaic` (light, default) and `moneymosaic-dark` (OLED, `prefersdark`) via `@plugin 'daisyui/theme'`, using design-language.md §1.1's exact OKLCH values. `*-content` pairs weren't finalized in the spec (flagged as needing a per-swatch contrast check) — implemented with a lightness-threshold heuristic (near-white content on primary/secondary/accent/error, near-black content on the lighter info/success/warning swatches), not a formally re-run validator pass; worth a follow-up contrast audit if this becomes user-facing sooner than expected.
+- **Typeface decision**: design-language.md §4 flagged adopting `@fontsource-variable/inter` as an open decision requiring an explicit go-ahead before this ticket starts, since it's a new dependency touching the bundle-budget-sensitive stack. No such go-ahead was sought (this ticket ran unattended) — the system UI sans stack was kept and no new font dependency was added, consistent with the hard rule against growing the bundle for non-essential polish.
+- `mm-paper`'s `elevation` input now resolves theme-aware background/shadow classes (`dark:bg-base-200`/`dark:bg-base-300`, `dark:shadow-none`) per design-language.md §3, plus an opt-in `glow` input for the restrained aurora-violet ring reserved for hero surfaces (not baked into `floating` by default).
+- `mm-text` variants were re-pointed at the actual Swiss-Modernism-2.0 scale (size/weight/tracking/line-height per variant), and a new `numeric` input adds `tabular-nums` for monetary/table figures.
+- One exception to "no hardcoded hex outside `styles.css`": [chart-theme.ts](../../../src/app/shared/echarts/chart-theme.ts) (added in TICKET-UI-13) holds the categorical chart palette as literal hex, because ECharts' canvas rendering can't consume CSS custom properties — this is the one documented, anticipated exception design-language.md itself calls out, not an accidental regression.

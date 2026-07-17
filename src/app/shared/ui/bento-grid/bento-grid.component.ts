@@ -20,7 +20,6 @@ const COLUMN_CLASSES: Record<BentoColumns, string> = {
   template: '<div [class]="classes()"><ng-content /></div>',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-// fallow-ignore-next-line unrendered-component -- shared/ui primitive built ahead of its dashboard consumer (TICKET-UI-12); adopted once Phase A + UI-11's tokens land
 export class BentoGridComponent {
   readonly columns = input<BentoColumns>('3');
   readonly class = input('', { alias: 'class' });

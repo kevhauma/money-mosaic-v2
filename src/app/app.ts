@@ -39,9 +39,14 @@ import {
   type RangeGroupingSwitcherValue,
 } from '@/shared/ui/range-grouping-switcher/range-grouping-switcher.component';
 import { ButtonComponent } from '@/shared/ui/button/button.component';
+import { TypographyComponent } from '@/shared/ui/typography/typography.component';
 import { STAT_QUERY_PARAMS } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
+/** design-language.md §7 — sidebar active-item accent: a solid primary left border + tint + text color on `.menu-active` (added by `routerLinkActive`), inactive items at reduced opacity. Defined once and bound identically to every nav `<a>` rather than repeating the same utility string per item. */
+const NAV_ITEM_CLASS =
+  'border-l-[3px] border-l-transparent text-base-content/70 [&.menu-active]:border-l-primary [&.menu-active]:bg-primary/8 [&.menu-active]:text-primary';
 
 @Component({
   selector: 'app-root',
@@ -52,6 +57,7 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
     NgIcon,
     RangeGroupingSwitcherComponent,
     ButtonComponent,
+    TypographyComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -82,6 +88,8 @@ export class App {
 
   /** Mobile drawer open state — the toggle button and the checkbox-driven CSS drawer both read/write this. */
   protected readonly drawerOpen = signal(false);
+
+  protected readonly navItemClass = NAV_ITEM_CLASS;
 
   protected readonly switcherValue = computed<RangeGroupingSwitcherValue>(() => ({
     preset: this.rangeStore.preset(),

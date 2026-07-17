@@ -30,10 +30,10 @@ Closes the gap between prepare.md's manual audit and the actual codebase, then e
 
 Applies the actual new visual identity. **Do not start UI-11 until Phase A has landed** — recoloring/retyping before the extraction is done means redoing the same work once a primitive later lands underneath it. [design-language.md](./design-language.md) turns prepare.md's feelings/terms/styles into the actual color tokens, type scale, elevation scale, categorical chart palette, motion timings, and bento sizing each ticket below implements — read it before starting any Phase B ticket.
 
-- [ ] [TICKET-UI-11](./tickets/TICKET-UI-11-design-tokens-theme.md) — Design tokens & daisyUI theme foundation (adds FR-UI-11) — the payoff ticket; needs all of Phase A merged first
-- [ ] [TICKET-UI-12](./tickets/TICKET-UI-12-dashboard-bento-layout.md) — Dashboard Bento-grid layout adoption (adds FR-UI-12) — needs UI-03 + UI-04; the redesign's "hero" surface
-- [ ] [TICKET-UI-13](./tickets/TICKET-UI-13-chart-visual-language.md) — Chart visual language & motion pass (adds FR-UI-13) — needs UI-11's tokens; independent of UI-12, can run in parallel
-- [ ] [TICKET-UI-14](./tickets/TICKET-UI-14-app-shell-visual-pass.md) — App shell (nav/drawer) visual pass (adds FR-UI-14) — needs UI-09 + UI-11; build last
+- [x] [TICKET-UI-11](./tickets/TICKET-UI-11-design-tokens-theme.md) — Design tokens & daisyUI theme foundation (adds FR-UI-11) — the payoff ticket; needs all of Phase A merged first
+- [x] [TICKET-UI-12](./tickets/TICKET-UI-12-dashboard-bento-layout.md) — Dashboard Bento-grid layout adoption (adds FR-UI-12) — needs UI-03 + UI-04; the redesign's "hero" surface
+- [x] [TICKET-UI-13](./tickets/TICKET-UI-13-chart-visual-language.md) — Chart visual language & motion pass (adds FR-UI-13) — needs UI-11's tokens; independent of UI-12, can run in parallel
+- [x] [TICKET-UI-14](./tickets/TICKET-UI-14-app-shell-visual-pass.md) — App shell (nav/drawer) visual pass (adds FR-UI-14) — needs UI-09 + UI-11; build last
 
 ## Considered, not ticketed yet
 

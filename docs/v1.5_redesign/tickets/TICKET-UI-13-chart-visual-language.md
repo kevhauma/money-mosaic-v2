@@ -28,13 +28,20 @@ As a user, I want the app's charts to be the visual centerpiece (this version's 
 
 ## Acceptance criteria
 
-- [ ] Shared chart-palette utility defined and consumed by every ECharts-rendering component named above, replacing per-component hardcoded color arrays
-- [ ] Palette is colorblind-safe (validated per the dataviz skill's guidance)
-- [ ] Chart series transitions smoothly on data change via ECharts' native animation options, no new dependency added
-- [ ] `angular.json` production bundle budgets unchanged
-- [ ] TICKET-STAT-20's accessible-numbers table still renders correct values after this ticket's changes
-- [ ] Verified via the fallow and coding-conventions skills, and live in the browser (switch date range/granularity on the Dashboard, confirm smooth transition and correct colors in both light and dark theme)
+- [x] Shared chart-palette utility defined and consumed by every ECharts-rendering component named above, replacing per-component hardcoded color arrays
+- [x] Palette is colorblind-safe (validated per the dataviz skill's guidance) — colors are copied verbatim from design-language.md §2, which documents its own CVD-safety validation; not independently re-run in this session
+- [x] Chart series transitions smoothly on data change via ECharts' native animation options, no new dependency added
+- [x] `angular.json` production bundle budgets unchanged — file untouched; production build re-run and confirmed no new error-level budget breach (pre-existing `initial` warning unrelated to this change, see implementation notes)
+- [x] TICKET-STAT-20's accessible-numbers table still renders correct values after this ticket's changes — `accessibleRows` in `trend-chart-panel.component.ts` untouched, only the chart-option builder changed
+- [~] Verified via the fallow and coding-conventions skills; **not** verified live in the browser (unattended run, live-browser step skipped per instruction)
 
 ## Notes
 
 Do not add `@angular/animations` or a third-party motion library for this ticket — ECharts' native animation config plus CSS transitions on DOM-rendered elements (panel entrance, `mm-paper` hover states) cover prepare.md's "Motion-Driven" term without new bundle weight, consistent with the hard rule against raising `angular.json` budgets.
+
+## Implementation notes (as built)
+
+- New [chart-theme.ts](../../../src/app/shared/echarts/chart-theme.ts) (in `shared/echarts/`, not `core/stats/` — the ticket allowed "or similar"; this fits the existing echarts-specific-helper tier alongside `tooltip-formatter.ts`) exports `resolveChartCategoricalColors()` (theme-aware via `prefers-color-scheme`, since no theme switcher exists yet), `CHART_ANIMATION` (design-language.md §6 timings), and `CHART_NO_COLOR_FALLBACK` (the shared neutral-gray fallback, replacing a hardcoded `#9ca3af` literal in `category-breakdown-panel.component.ts`).
+- Consumed by all 4 actual ECharts-rendering components: `trend-chart-panel`, `category-breakdown-panel` (both `feature-dashboard`), `net-worth-history-chart`, `account-balance-chart` (both `feature-accounts`). **Scope correction**: the ticket's as-is section also names `category-comparison-panel` and `weekday-weekend-split-panel` as chart components, but neither actually renders ECharts (grep-confirmed) — they're plain HTML/CSS visualizations, out of this ticket's actual scope.
+- Every series in all 4 components already colors itself from a user-assigned `account.color`/`category.color`, so the shared palette's practical role is the top-level `EChartsCoreOption.color` fallback for entities without one, not a wholesale re-color of user-chosen chart colors.
+- Skipped as explicitly optional: design-language.md §1.2's "very faint (≤4% opacity)" aurora-wash backdrop on `trend-chart-panel`'s plot area — the spec itself flags this as optional and cautions it must never overlap the data lines' contrast zone; left for a follow-up with a live visual check rather than guessing the safe opacity/placement unattended.

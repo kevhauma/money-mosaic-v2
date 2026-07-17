@@ -4,7 +4,11 @@ import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
 import type { ChartZoomWindow, NetWorthPoint } from '@/core/stats';
-import { formatAxisTooltip } from '@/shared/echarts';
+import {
+  CHART_ANIMATION,
+  formatAxisTooltip,
+  resolveChartCategoricalColors,
+} from '@/shared/echarts';
 import { FlexComponent, GranularityPickerComponent, PaperComponent } from '@/shared/ui';
 import { bucketDateBoundaries, buildTransactionDrilldownParams } from '@/shared/utils';
 import { balanceTrendSignals } from '../../balance-trend-signals';
@@ -15,6 +19,8 @@ export const buildAccountBalanceChartOption = (
   points: NetWorthPoint[],
   zoomWindow: ChartZoomWindow,
 ): EChartsCoreOption => ({
+  ...CHART_ANIMATION,
+  color: resolveChartCategoricalColors(),
   tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
   grid: { left: 56, right: 24, top: 24, bottom: 64 },
   xAxis: { type: 'category', data: points.map((point) => point.bucketKey) },

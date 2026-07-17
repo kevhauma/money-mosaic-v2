@@ -10,7 +10,11 @@ import {
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
-import { formatAxisTooltip } from '@/shared/echarts';
+import {
+  CHART_ANIMATION,
+  formatAxisTooltip,
+  resolveChartCategoricalColors,
+} from '@/shared/echarts';
 import {
   FlexComponent,
   GranularityPickerComponent,
@@ -48,6 +52,8 @@ const buildColumnChartOption = (
   stackName: 'income' | 'expense',
   sharedMax: number,
 ): EChartsCoreOption => ({
+  ...CHART_ANIMATION,
+  color: resolveChartCategoricalColors(),
   tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
   legend: { data: series.map((entry) => entry.name) },
   grid: { left: 48, right: 24, top: 32, bottom: 24 },

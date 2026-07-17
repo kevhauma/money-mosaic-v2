@@ -5,7 +5,11 @@ import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
 import type { AccountBalanceSeries, ChartZoomWindow } from '@/core/stats';
 import { AccountsStore } from '@/core/state';
-import { formatAxisTooltip } from '@/shared/echarts';
+import {
+  CHART_ANIMATION,
+  formatAxisTooltip,
+  resolveChartCategoricalColors,
+} from '@/shared/echarts';
 import { FlexComponent, GranularityPickerComponent, PaperComponent } from '@/shared/ui';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
@@ -19,6 +23,8 @@ export const buildNetWorthHistoryChartOption = (
   const bucketKeys = series[0]?.points.map((point) => point.bucketKey) ?? [];
 
   return {
+    ...CHART_ANIMATION,
+    color: resolveChartCategoricalColors(),
     tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
     legend: { data: accounts.map((account) => account.name) },
     grid: { left: 56, right: 24, top: 48, bottom: 64 },

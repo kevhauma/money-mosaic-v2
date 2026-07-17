@@ -5,6 +5,11 @@ import { NgxEchartsDirective } from 'ngx-echarts';
 import { RangeStore, type CategoryBreakdownEntry } from '@/core/stats';
 import { CategoriesStore } from '@/core/state';
 import {
+  CHART_ANIMATION,
+  CHART_NO_COLOR_FALLBACK,
+  resolveChartCategoricalColors,
+} from '@/shared/echarts';
+import {
   AlertComponent,
   ButtonComponent,
   LoadingSkeletonComponent,
@@ -168,7 +173,10 @@ export class CategoryBreakdownPanelComponent {
         categoryId: entry.categoryId,
         total: entry.total,
         name: entry.categoryId != null ? (category?.name ?? 'Unknown') : 'Uncategorised',
-        color: entry.categoryId != null ? (category?.color ?? '#9ca3af') : '#9ca3af',
+        color:
+          entry.categoryId != null
+            ? (category?.color ?? CHART_NO_COLOR_FALLBACK)
+            : CHART_NO_COLOR_FALLBACK,
         formattedTotal: formatCurrency(entry.total),
         formattedShare: PERCENT_FORMATTER.format(entry.share),
       };
@@ -197,6 +205,8 @@ export class CategoryBreakdownPanelComponent {
 
   private buildChartOption(entries: BreakdownEntryVm[]): EChartsCoreOption {
     return {
+      ...CHART_ANIMATION,
+      color: resolveChartCategoricalColors(),
       tooltip: { trigger: 'item', formatter: formatPieTooltip },
       series: [
         {

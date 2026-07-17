@@ -57,48 +57,48 @@
       <span class="hidden px-2 pb-4 text-lg font-semibold lg:block">Money Mosaic</span>
       <ul class="menu-vertical gap-1">
         <li>
-          <a routerLink="/dashboard" routerLinkActive="menu-active">
+          <a routerLink="/dashboard" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerHome" size="18" aria-hidden="true" />
-            Dashboard
+            <mm-text as="span">Dashboard</mm-text>
           </a>
         </li>
         <li>
-          <a routerLink="/accounts" routerLinkActive="menu-active">
+          <a routerLink="/accounts" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerBuildingBank" size="18" aria-hidden="true" />
-            Accounts
+            <mm-text as="span">Accounts</mm-text>
           </a>
         </li>
         <li>
-          <a routerLink="/transactions" routerLinkActive="menu-active">
+          <a routerLink="/transactions" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerArrowsExchange" size="18" aria-hidden="true" />
-            Transactions
+            <mm-text as="span">Transactions</mm-text>
             @if (transactionsStore.uncategorisedCount(); as count) {
               <span class="badge badge-warning badge-sm ml-auto">{{ count }}</span>
             }
           </a>
         </li>
         <li>
-          <a routerLink="/categories" routerLinkActive="menu-active">
+          <a routerLink="/categories" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerTags" size="18" aria-hidden="true" />
-            Categories
+            <mm-text as="span">Categories</mm-text>
           </a>
         </li>
         <li>
-          <a routerLink="/learning" routerLinkActive="menu-active">
+          <a routerLink="/learning" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerBulb" size="18" aria-hidden="true" />
-            Learning
+            <mm-text as="span">Learning</mm-text>
           </a>
         </li>
         <li>
-          <a routerLink="/import" routerLinkActive="menu-active">
+          <a routerLink="/import" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerFileImport" size="18" aria-hidden="true" />
-            Import
+            <mm-text as="span">Import</mm-text>
           </a>
         </li>
         <li>
-          <a routerLink="/data" routerLinkActive="menu-active">
+          <a routerLink="/data" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerDatabase" size="18" aria-hidden="true" />
-            Data
+            <mm-text as="span">Data</mm-text>
           </a>
         </li>
       </ul>

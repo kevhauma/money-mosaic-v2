@@ -8,6 +8,10 @@ const expectClasses = (element: Element, expected: string[]): void => {
   expect(new Set(element.className.split(' ').filter(Boolean))).toEqual(new Set(expected));
 };
 
+const RAISED_SHADOW = 'shadow-[0_1px_2px_rgba(11,11,17,.06),0_1px_3px_rgba(11,11,17,.08)]';
+const FLOATING_SHADOW = 'shadow-[0_4px_12px_rgba(11,11,17,.10),0_2px_4px_rgba(11,11,17,.06)]';
+const DARK_SHADOW_NONE = 'dark:shadow-none';
+
 describe('PaperComponent', () => {
   let fixture: ComponentFixture<PaperComponent>;
 
@@ -27,7 +31,13 @@ describe('PaperComponent', () => {
 
   it('renders the raised elevation (default) classes', () => {
     fixture.detectChanges();
-    expectClasses(fixture.nativeElement.querySelector('div'), ['card', 'bg-base-100', 'shadow-sm']);
+    expectClasses(fixture.nativeElement.querySelector('div'), [
+      'card',
+      'bg-base-100',
+      'dark:bg-base-200',
+      RAISED_SHADOW,
+      DARK_SHADOW_NONE,
+    ]);
   });
 
   it('renders the flat elevation classes', () => {
@@ -44,7 +54,28 @@ describe('PaperComponent', () => {
   it('renders the floating elevation classes', () => {
     fixture.componentRef.setInput('elevation', 'floating');
     fixture.detectChanges();
-    expectClasses(fixture.nativeElement.querySelector('div'), ['card', 'bg-base-100', 'shadow-md']);
+    expectClasses(fixture.nativeElement.querySelector('div'), [
+      'card',
+      'bg-base-100',
+      'dark:bg-base-300',
+      FLOATING_SHADOW,
+      DARK_SHADOW_NONE,
+    ]);
+  });
+
+  it('adds a dark aurora-violet ring when glow is set on a floating surface', () => {
+    fixture.componentRef.setInput('elevation', 'floating');
+    fixture.componentRef.setInput('glow', true);
+    fixture.detectChanges();
+    expectClasses(fixture.nativeElement.querySelector('div'), [
+      'card',
+      'bg-base-100',
+      'dark:bg-base-300',
+      FLOATING_SHADOW,
+      DARK_SHADOW_NONE,
+      'dark:ring-1',
+      'dark:ring-[oklch(60%_0.17_285_/_15%)]',
+    ]);
   });
 
   it('adds h-full when fullHeight is set', () => {
@@ -53,7 +84,9 @@ describe('PaperComponent', () => {
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
       'bg-base-100',
-      'shadow-sm',
+      'dark:bg-base-200',
+      RAISED_SHADOW,
+      DARK_SHADOW_NONE,
       'h-full',
     ]);
   });
@@ -64,7 +97,9 @@ describe('PaperComponent', () => {
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
       'bg-base-100',
-      'shadow-sm',
+      'dark:bg-base-200',
+      RAISED_SHADOW,
+      DARK_SHADOW_NONE,
       'mt-2',
     ]);
   });
@@ -81,7 +116,15 @@ describe('PaperComponent', () => {
     await fixture.whenStable();
     const anchor = fixture.nativeElement.querySelector('a');
     expect(anchor).toBeTruthy();
-    expectClasses(anchor, ['card', 'bg-base-100', 'shadow-sm', 'transition', 'hover:bg-base-200']);
+    expectClasses(anchor, [
+      'card',
+      'bg-base-100',
+      'dark:bg-base-200',
+      RAISED_SHADOW,
+      DARK_SHADOW_NONE,
+      'transition',
+      'hover:bg-base-200',
+    ]);
   });
 
   it('projects content into the card-body', () => {
@@ -90,13 +133,14 @@ describe('PaperComponent', () => {
     expect(cardBody).toBeTruthy();
   });
 
-  it('overrides the background', () => {
+  it('overrides the background, replacing the dark-mode default entirely', () => {
     fixture.componentRef.setInput('background', 'bg-warning/10');
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
       'bg-warning/10',
-      'shadow-sm',
+      RAISED_SHADOW,
+      DARK_SHADOW_NONE,
     ]);
   });
 
@@ -140,7 +184,8 @@ describe('PaperComponent', () => {
     expectClasses(anchor, [
       'card',
       'bg-warning/10',
-      'shadow-sm',
+      RAISED_SHADOW,
+      DARK_SHADOW_NONE,
       'transition',
       'hover:bg-warning/20',
     ]);

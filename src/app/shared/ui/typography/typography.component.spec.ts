@@ -33,15 +33,22 @@ describe('TypographyComponent', () => {
   it('renders the display variant classes', () => {
     fixture.componentRef.setInput('variant', 'display');
     fixture.detectChanges();
-    expectClasses(fixture.nativeElement.querySelector('span'), ['text-2xl', 'font-semibold']);
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-[2.25rem]',
+      'font-bold',
+      'tracking-[-0.02em]',
+      'leading-[1.1]',
+    ]);
   });
 
   it('renders the heading variant classes', () => {
     fixture.componentRef.setInput('variant', 'heading');
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('span'), [
-      'text-2xl',
+      'text-[1.5rem]',
       'font-semibold',
+      'tracking-[-0.01em]',
+      'leading-[1.25]',
       'text-base-content',
     ]);
   });
@@ -50,32 +57,50 @@ describe('TypographyComponent', () => {
     fixture.componentRef.setInput('variant', 'subheading');
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('span'), [
-      'text-sm',
+      'text-[1.0625rem]',
       'font-medium',
+      'leading-[1.4]',
       'text-base-content/70',
     ]);
   });
 
-  it('renders the body variant with no default classes', () => {
+  it('renders the body variant classes', () => {
     fixture.componentRef.setInput('variant', 'body');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('span').className).toBe('');
+    expectClasses(fixture.nativeElement.querySelector('span'), ['text-base', 'leading-[1.6]']);
   });
 
   it('renders the caption variant classes', () => {
     fixture.componentRef.setInput('variant', 'caption');
     fixture.detectChanges();
-    expectClasses(fixture.nativeElement.querySelector('span'), ['text-sm', 'text-base-content/70']);
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-[0.8125rem]',
+      'leading-[1.5]',
+      'text-base-content/70',
+    ]);
   });
 
   it('renders the label variant classes', () => {
     fixture.componentRef.setInput('variant', 'label');
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('span'), [
-      'text-xs',
+      'text-[0.75rem]',
+      'font-semibold',
+      'tracking-[0.06em]',
+      'leading-[1.4]',
       'uppercase',
-      'tracking-wide',
       'text-base-content/60',
+    ]);
+  });
+
+  it('adds tabular-nums when numeric is set', () => {
+    fixture.componentRef.setInput('variant', 'body');
+    fixture.componentRef.setInput('numeric', true);
+    fixture.detectChanges();
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-base',
+      'leading-[1.6]',
+      'tabular-nums',
     ]);
   });
 
@@ -83,28 +108,44 @@ describe('TypographyComponent', () => {
     fixture.componentRef.setInput('variant', 'body');
     fixture.componentRef.setInput('weight', 'semibold');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('span').className).toBe('font-semibold');
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-base',
+      'leading-[1.6]',
+      'font-semibold',
+    ]);
   });
 
   it('overrides a variant default color with the color input', () => {
     fixture.componentRef.setInput('variant', 'body');
     fixture.componentRef.setInput('color', 'error');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('span').className).toBe('text-error');
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-base',
+      'leading-[1.6]',
+      'text-error',
+    ]);
   });
 
   it('applies the align input as a text-alignment utility', () => {
     fixture.componentRef.setInput('variant', 'body');
     fixture.componentRef.setInput('align', 'center');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('span').className).toBe('text-center');
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-base',
+      'leading-[1.6]',
+      'text-center',
+    ]);
   });
 
   it('passes through the class input', () => {
     fixture.componentRef.setInput('variant', 'body');
     fixture.componentRef.setInput('class', 'mt-2');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('span').className).toBe('mt-2');
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-base',
+      'leading-[1.6]',
+      'mt-2',
+    ]);
   });
 
   it('defaults to rendering a span', () => {
@@ -132,6 +173,12 @@ describe('TypographyComponent', () => {
 
     const heading = hostFixture.nativeElement.querySelector('h2');
     expect(heading?.textContent?.trim()).toBe('Net worth');
-    expectClasses(heading, ['text-2xl', 'font-semibold', 'text-base-content']);
+    expectClasses(heading, [
+      'text-[1.5rem]',
+      'font-semibold',
+      'tracking-[-0.01em]',
+      'leading-[1.25]',
+      'text-base-content',
+    ]);
   });
 });

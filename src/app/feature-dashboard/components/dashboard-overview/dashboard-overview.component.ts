@@ -3,8 +3,12 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerCheck, tablerPencil } from '@ng-icons/tabler-icons';
 import { RangeStore, type PeriodStats } from '@/core/stats';
 import { AccountsStore } from '@/core/state';
+import type { DashboardRowId } from '@/core/data-access';
 import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
 import {
+  BentoGridComponent,
+  BentoItemComponent,
+  type BentoSpan,
   ButtonComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
@@ -36,10 +40,30 @@ const YOY_PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
 });
 const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' });
 
+/**
+ * design-language.md §5 — bento sizing on the 3-column grid: the trend chart is the hero (biggest
+ * surface), category-breakdown gets a taller tile to match its row, the income/expense/rates strip
+ * spans full width since it's a horizontal daisyUI `stats` band rather than a single tile, and
+ * everything else is a compact 1x1 stat/list tile. Sizes a row *type*, not its position — plays
+ * alongside `dashboard-customize-panel`'s reorder/toggle, which still controls order/visibility.
+ */
+const ROW_BENTO_SPAN: Record<DashboardRowId, { colSpan: BentoSpan; rowSpan: BentoSpan }> = {
+  stats: { colSpan: '3', rowSpan: '1' },
+  'weekday-weekend': { colSpan: '1', rowSpan: '1' },
+  'category-breakdown': { colSpan: '1', rowSpan: '2' },
+  'category-comparison': { colSpan: '1', rowSpan: '1' },
+  'trend-chart': { colSpan: '2', rowSpan: '2' },
+  'top-transactions': { colSpan: '1', rowSpan: '1' },
+  'action-queue': { colSpan: '1', rowSpan: '1' },
+  'account-balance': { colSpan: '1', rowSpan: '1' },
+};
+
 @Component({
   selector: 'app-dashboard-overview',
   imports: [
     NgIcon,
+    BentoGridComponent,
+    BentoItemComponent,
     ButtonComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
@@ -76,6 +100,10 @@ export class DashboardOverviewComponent {
 
   protected toggleCustomizeMode(): void {
     this.customizeMode.set(!this.customizeMode());
+  }
+
+  protected rowBentoSpan(rowId: DashboardRowId): { colSpan: BentoSpan; rowSpan: BentoSpan } {
+    return ROW_BENTO_SPAN[rowId];
   }
 
   protected readonly drilldownParams = computed(() =>

@@ -13,7 +13,6 @@ export type BentoSpan = '1' | '2' | '3' | '4';
   template: '<div [class]="classes()"><ng-content /></div>',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-// fallow-ignore-next-line unrendered-component -- shared/ui primitive built ahead of its dashboard consumer (TICKET-UI-12); adopted once Phase A + UI-11's tokens land
 export class BentoItemComponent {
   readonly colSpan = input<BentoSpan>('1');
   readonly rowSpan = input<BentoSpan>('1');
