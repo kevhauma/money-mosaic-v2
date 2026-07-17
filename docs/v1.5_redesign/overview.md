@@ -22,7 +22,7 @@ Closes the gap between prepare.md's manual audit and the actual codebase, then e
 - [x] [TICKET-UI-06](./tickets/TICKET-UI-06-label-fieldset-primitives.md) — Label & Fieldset primitives (adds FR-UI-6) — independent; resolves prepare.md's open question about the two overlapping
 - [x] [TICKET-UI-07](./tickets/TICKET-UI-07-table-primitive.md) — Table primitive family (adds FR-UI-7) — independent
 - [x] [TICKET-UI-08](./tickets/TICKET-UI-08-dropdown-menu-primitive.md) — Dropdown/menu primitive (adds FR-UI-8) — independent
-- [ ] [TICKET-UI-09](./tickets/TICKET-UI-09-icon-button-variant.md) — Icon-button variant on `mm-button` (adds FR-UI-9) — independent; prerequisite for UI-14's drawer-toggle migration
+- [x] [TICKET-UI-09](./tickets/TICKET-UI-09-icon-button-variant.md) — Icon-button variant on `mm-button` (adds FR-UI-9) — independent; prerequisite for UI-14's drawer-toggle migration
 - [ ] [TICKET-UI-10](./tickets/TICKET-UI-10-divider-primitive.md) — Divider primitive (adds FR-UI-10) — smallest ticket, reasonable to batch with another
 - [ ] [TICKET-UI-15](./tickets/TICKET-UI-15-flex-primitive.md) — Flex primitive (adds FR-UI-15) — independent; readability-driven (class-hiding editor tooling), not reuse-driven; reasonable to batch with UI-10
 

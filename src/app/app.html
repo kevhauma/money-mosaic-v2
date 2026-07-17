@@ -1,12 +1,23 @@
 <div class="drawer lg:drawer-open">
-  <input id="app-drawer" type="checkbox" class="drawer-toggle" />
+  <input
+    id="app-drawer"
+    type="checkbox"
+    class="drawer-toggle"
+    [checked]="drawerOpen()"
+    (change)="onDrawerCheckboxChange($event)"
+  />
 
   <div class="drawer-content flex min-h-screen flex-col bg-base-200">
     <div class="navbar flex-wrap gap-2 border-b border-base-300 bg-base-100 px-4">
       <div class="flex items-center lg:hidden">
-        <label for="app-drawer" class="btn btn-square btn-ghost" aria-label="Open menu">
+        <mm-button
+          shape="square"
+          variant="ghost"
+          ariaLabel="Open menu"
+          (click)="drawerOpen.set(true)"
+        >
           <ng-icon name="tablerMenu2" size="20" aria-hidden="true" />
-        </label>
+        </mm-button>
         <span class="ml-2 text-lg font-semibold">Money Mosaic</span>
       </div>
       <div class="ml-2 flex items-center">

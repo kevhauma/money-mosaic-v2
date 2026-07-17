@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   ActivatedRoute,
   Router,
@@ -28,13 +35,21 @@ import {
   type RangeGroupingPreset,
   type RangeGroupingSwitcherValue,
 } from '@/shared/ui/range-grouping-switcher/range-grouping-switcher.component';
+import { ButtonComponent } from '@/shared/ui/button/button.component';
 import { STAT_QUERY_PARAMS } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgIcon, RangeGroupingSwitcherComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    NgIcon,
+    RangeGroupingSwitcherComponent,
+    ButtonComponent,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,6 +73,9 @@ export class App {
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /** Mobile drawer open state — the toggle button and the checkbox-driven CSS drawer both read/write this. */
+  protected readonly drawerOpen = signal(false);
 
   protected readonly switcherValue = computed<RangeGroupingSwitcherValue>(() => ({
     preset: this.rangeStore.preset(),
@@ -123,5 +141,9 @@ export class App {
 
   protected onRangeShift(direction: -1 | 1): void {
     this.rangeStore.shiftRange(direction);
+  }
+
+  protected onDrawerCheckboxChange(event: Event): void {
+    this.drawerOpen.set((event.target as HTMLInputElement).checked);
   }
 }
