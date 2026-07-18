@@ -21,7 +21,7 @@ function systemTheme(): ThemeMode {
 }
 
 /**
- * Navbar quick-toggle between the light/OLED-dark daisyUI themes (TICKET-UI-11) — deliberately not
+ * Navbar quick-toggle between the light/dark daisyUI themes (TICKET-UI-11) — deliberately not
  * the Dexie-backed `appSettings` table v2's TICKET-SET-01 would introduce; this is a simpler,
  * `localStorage`-only preference with no "system" option, until/unless that ticket lands.
  */

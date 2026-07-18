@@ -1,6 +1,6 @@
-<div class="mm-aurora-wash rounded-box px-4 py-2 text-right">
-  <mm-text variant="label" as="p">Net worth</mm-text>
-  <mm-text variant="display" as="p" [numeric]="true">
+<div class="rounded-box border border-primary/30 bg-primary/10 px-4 py-2 text-right">
+  <mm-text variant="label" as="p" color="primary">Net worth</mm-text>
+  <mm-text variant="display" as="p" color="primary" [numeric]="true">
     @if (accountsStore.dataReady()) {
       {{ accountsStore.netWorth() | signedAmount }}
     } @else {

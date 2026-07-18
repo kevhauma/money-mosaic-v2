@@ -23,18 +23,21 @@ const CHART_CATEGORICAL_COLORS_DARK = [
   '#a8347f',
 ] as const;
 
-/** No `data-theme` switcher exists yet (v2's TICKET-SET-01) — the OLED theme applies via `prefers-color-scheme`, so charts read the same media query directly since canvas can't react to CSS. */
-function prefersDarkTheme(): boolean {
+/** Must match `core/theme/theme.service.ts`'s `DATA_THEME.dark` value. Reads the actual `data-theme` attribute `ThemeService` sets, not `prefers-color-scheme` directly — canvas can't react to CSS, but it must still follow the user's explicit toggle rather than just the OS preference, which can disagree with it. */
+const DARK_DATA_THEME = 'moneymosaic-dark';
+
+function isDarkThemeActive(): boolean {
   return (
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
+    typeof document !== 'undefined' &&
+    document.documentElement.getAttribute('data-theme') === DARK_DATA_THEME
   );
 }
 
 /** The current theme's fixed-order categorical palette — pass as an `EChartsCoreOption`'s top-level `color`, so any series without its own explicit color (e.g. an account/category with no user-assigned color) falls back to a CVD-safe, theme-aware cycle instead of ECharts' own default palette. */
 export function resolveChartCategoricalColors(): string[] {
-  return [...(prefersDarkTheme() ? CHART_CATEGORICAL_COLORS_DARK : CHART_CATEGORICAL_COLORS_LIGHT)];
+  return [
+    ...(isDarkThemeActive() ? CHART_CATEGORICAL_COLORS_DARK : CHART_CATEGORICAL_COLORS_LIGHT),
+  ];
 }
 
 /** Single source for the "no color assigned" neutral gray (an uncategorised entry, or an account/category predating the color-picker feature) — previously duplicated as a hardcoded hex literal per chart component. */

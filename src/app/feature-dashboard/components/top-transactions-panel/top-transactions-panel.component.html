@@ -4,26 +4,21 @@
   @if (!dataReady()) {
     <mm-loading-skeleton [rows]="3" class="mt-2" />
   } @else if (entries().length > 0) {
-    <ul class="mt-2 divide-y divide-base-300">
+    <ul class="mt-2 flex flex-col gap-2">
       @for (entry of entries(); track entry.id) {
         <li>
           <a
             [routerLink]="['/transactions']"
             [queryParams]="entry.queryParams"
-            class="flex items-center justify-between gap-3 py-2 transition hover:bg-base-200"
+            class="flex items-center justify-between gap-3 py-2 pl-3 transition hover:bg-base-200"
+            [style.border-inline-start]="'4px solid ' + entry.categoryColor"
           >
-            <mm-flex align="center" gap="2" class="min-w-0">
-              <span
-                class="h-2 w-2 shrink-0 rounded-full"
-                [style.background-color]="entry.categoryColor"
-              ></span>
-              <span class="min-w-0">
-                <span class="block truncate">{{ entry.description }}</span>
-                <mm-text class="text-xs text-base-content/60">
-                  {{ entry.bookingDate }} · {{ entry.categoryName }}
-                </mm-text>
-              </span>
-            </mm-flex>
+            <span class="min-w-0">
+              <span class="block truncate">{{ entry.description }}</span>
+              <mm-text class="text-xs text-base-content/60">
+                {{ entry.bookingDate }} · {{ entry.categoryName }}
+              </mm-text>
+            </span>
             <mm-text weight="medium" color="error" class="shrink-0 text-sm">{{
               entry.formattedAmount
             }}</mm-text>

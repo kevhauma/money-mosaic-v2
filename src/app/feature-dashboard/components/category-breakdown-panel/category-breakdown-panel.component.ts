@@ -15,6 +15,7 @@ import {
   LoadingSkeletonComponent,
   PaperComponent,
   TypographyComponent,
+  DividerComponent,
 } from '@/shared/ui';
 import {
   buildTransactionDrilldownParams,
@@ -85,6 +86,7 @@ const formatPieTooltip = (params: PieTooltipParam): string => {
     LoadingSkeletonComponent,
     PaperComponent,
     TypographyComponent,
+    DividerComponent,
   ],
   templateUrl: './category-breakdown-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

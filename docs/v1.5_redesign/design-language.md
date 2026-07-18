@@ -24,18 +24,25 @@ scope — don't act on those without a go-ahead.
 
 ### 1.1 Semantic tokens (daisyUI theme)
 
-Two named themes: a light default and an OLED-tuned dark, per TICKET-UI-11. Both are built from
-the same six hue families so the two themes read as one identity, not a re-skin. Primary,
-secondary, and accent are three members of the categorical chart family (§2) — the brand color
-*is* a chart color, which is what makes "the charts are the hero" and "the UI has a consistent
-identity" the same design decision instead of two.
+Two named themes: a light default and a dark theme, per TICKET-UI-11. Both are built from the same
+six hue families so the two themes read as one identity, not a re-skin. Primary, secondary, and
+accent are three members of the categorical chart family (§2) — the brand color *is* a chart
+color, which is what makes "the charts are the hero" and "the UI has a consistent identity" the
+same design decision instead of two.
 
-| Token | Hue role | Light | Dark (OLED) |
+> **Superseded (post-launch user feedback):** this table originally specified an OLED-tuned
+> (near-black, `base-100` at `oklch(12%)`) dark theme. Direct user feedback called it "too dark" in
+> practice, so the dark column below reflects the corrected, lighter values actually shipped in
+> `styles.css` — a conventional dark-gray theme at the same hue (285) rather than near-black. The
+> `base-100 → base-200 → base-300` stepping direction and every other section of this document are
+> unaffected.
+
+| Token | Hue role | Light | Dark |
 |---|---|---|---|
-| `--color-base-100` | page/surface | `oklch(98.5% 0.004 90)` `#fbfaf7` | `oklch(12% 0.006 285)` `#050608` |
-| `--color-base-200` | raised surface | `oklch(96% 0.005 90)` `#f3f2ee` | `oklch(17% 0.008 285)` `#0f0f13` |
-| `--color-base-300` | border / most-elevated | `oklch(91% 0.006 90)` `#e3e1dd` | `oklch(23% 0.01 285)` `#1c1c22` |
-| `--color-base-content` | body text | `oklch(19% 0.01 285)` `#131318` | `oklch(96% 0.004 285)` `#f1f1f4` |
+| `--color-base-100` | page/surface | `oklch(98.5% 0.004 90)` `#fbfaf7` | `oklch(21% 0.006 285)` |
+| `--color-base-200` | raised surface | `oklch(96% 0.005 90)` `#f3f2ee` | `oklch(27% 0.008 285)` |
+| `--color-base-300` | border / most-elevated | `oklch(91% 0.006 90)` `#e3e1dd` | `oklch(35% 0.01 285)` |
+| `--color-base-content` | body text | `oklch(19% 0.01 285)` `#131318` | `oklch(94% 0.004 285)` |
 | `--color-primary` (violet) | brand, primary actions | `oklch(48% 0.16 285)` `#5849b2` | `oklch(60% 0.17 285)` `#6353c5` |
 | `--color-secondary` (sky) | secondary actions, links | `oklch(58% 0.10 210)` `#028a9b` | `oklch(61% 0.105 210)` `#0394a6` |
 | `--color-accent` (pink) | rare highlight, gradient stop | `oklch(48% 0.17 345)` `#9b2673` | `oklch(52% 0.17 345)` `#a8347f` |
@@ -45,9 +52,9 @@ identity" the same design decision instead of two.
 | `--color-error` (red) | negative amounts, destructive | `oklch(58% 0.19 25)` `#d33a3c` | `oklch(68% 0.17 25)` `#ef6661` |
 
 Base tones carry a deliberate hue tint rather than pure gray: warm off-white (`hue 90`) in light
-mode, violet-tinted near-black (`hue 285`, matching primary) in dark mode. This is what makes the
-OLED theme read as "an intentional black" (Premium) instead of "gray inverted to `#000`" —
-prepare.md's actual complaint about a naive dark mode.
+mode, violet-tinted dark gray (`hue 285`, matching primary) in dark mode — the same "intentional,
+branded dark" idea as the original OLED approach (Premium, not "gray inverted to `#000`"), just at
+a lighter, more conventional lightness level.
 
 `*-content` pairs (`--color-primary-content`, etc.) aren't finalized here — each needs a real WCAG
 contrast check against its own background at implementation time; default to near-white
@@ -87,11 +94,13 @@ not decoration. Approved surfaces for this wash:
 the nav sidebar (TICKET-UI-14's accent treatment is a solid left-border/tint, not a gradient), or
 any status color.
 
-### 1.3 OLED dark mode ("Dimensional Layering" without shadows)
+### 1.3 Dark mode ("Dimensional Layering" without shadows)
 
-Box-shadows don't read against a near-black surface — dark mode's "Dimensional Layering" comes
-from stepping `base-100 → base-200 → base-300` instead. See §3 (elevation) for how this maps onto
-`mm-paper`'s `elevation` input concretely.
+Box-shadows barely read against a dark surface regardless of exactly how dark — dark mode's
+"Dimensional Layering" comes from stepping `base-100 → base-200 → base-300` instead. See §3
+(elevation) for how this maps onto `mm-paper`'s `elevation` input concretely. (This section
+originally specified a near-black OLED surface; see §1.1's superseded note — the stepping
+mechanism itself is unchanged, only the absolute lightness of the three base tones.)
 
 ## 2. Categorical chart palette
 

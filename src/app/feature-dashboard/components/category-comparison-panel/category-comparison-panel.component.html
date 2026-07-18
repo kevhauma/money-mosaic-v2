@@ -35,15 +35,17 @@
 
       <div class="mt-4 grid grid-cols-[repeat(auto-fit,minmax(275px,1fr))] gap-4">
         @for (category of categories(); track category.categoryId) {
-          <mm-paper elevation="flat" background="" bodyClass="p-3">
+          <mm-paper
+            elevation="floating"
+            background=""
+            bodyClass="p-3"
+            class=""
+            [style]="'border-inline-start: 4px solid ' + category.color"
+          >
             <mm-flex align="center" justify="between" gap="2" class="mb-2">
-              <mm-text weight="medium" class="flex min-w-0 items-center gap-2 text-sm">
-                <span
-                  class="h-2 w-2 shrink-0 rounded-full"
-                  [style.background-color]="category.color"
-                ></span>
-                <span class="truncate">{{ category.name }}</span>
-              </mm-text>
+              <mm-text weight="medium" class="min-w-0 truncate text-sm">{{
+                category.name
+              }}</mm-text>
               @if (category.deltaLabel; as label) {
                 <mm-text
                   weight="bold"
@@ -81,8 +83,7 @@
                   >
                     <div
                       class="w-full min-h-[2px] rounded-t transition group-hover:opacity-80"
-                      [class.bg-primary]="bar.isSelected"
-                      [class.bg-base-300]="!bar.isSelected"
+                      [class]="bar.isSelected ? 'bg-primary' : 'bg-base-content/15'"
                       [style.height.%]="bar.heightPercent"
                     ></div>
                   </a>

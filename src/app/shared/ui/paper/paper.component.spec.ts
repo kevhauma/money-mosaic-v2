@@ -34,7 +34,9 @@ describe('PaperComponent', () => {
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
       'bg-base-100',
-      'dark:bg-base-200',
+      'dark:bg-base-300',
+      'border',
+      'border-base-300',
       RAISED_SHADOW,
       DARK_SHADOW_NONE,
     ]);
@@ -58,6 +60,8 @@ describe('PaperComponent', () => {
       'card',
       'bg-base-100',
       'dark:bg-base-300',
+      'border',
+      'border-base-300',
       FLOATING_SHADOW,
       DARK_SHADOW_NONE,
     ]);
@@ -71,6 +75,8 @@ describe('PaperComponent', () => {
       'card',
       'bg-base-100',
       'dark:bg-base-300',
+      'border',
+      'border-base-300',
       FLOATING_SHADOW,
       DARK_SHADOW_NONE,
       'dark:ring-1',
@@ -84,7 +90,9 @@ describe('PaperComponent', () => {
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
       'bg-base-100',
-      'dark:bg-base-200',
+      'dark:bg-base-300',
+      'border',
+      'border-base-300',
       RAISED_SHADOW,
       DARK_SHADOW_NONE,
       'h-full',
@@ -97,7 +105,9 @@ describe('PaperComponent', () => {
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
       'bg-base-100',
-      'dark:bg-base-200',
+      'dark:bg-base-300',
+      'border',
+      'border-base-300',
       RAISED_SHADOW,
       DARK_SHADOW_NONE,
       'mt-2',
@@ -119,7 +129,9 @@ describe('PaperComponent', () => {
     expectClasses(anchor, [
       'card',
       'bg-base-100',
-      'dark:bg-base-200',
+      'dark:bg-base-300',
+      'border',
+      'border-base-300',
       RAISED_SHADOW,
       DARK_SHADOW_NONE,
       'transition',
@@ -133,12 +145,14 @@ describe('PaperComponent', () => {
     expect(cardBody).toBeTruthy();
   });
 
-  it('overrides the background, replacing the dark-mode default entirely', () => {
+  it('overrides the background, replacing the dark-mode default entirely (border still applies)', () => {
     fixture.componentRef.setInput('background', 'bg-warning/10');
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
       'bg-warning/10',
+      'border',
+      'border-base-300',
       RAISED_SHADOW,
       DARK_SHADOW_NONE,
     ]);
@@ -184,6 +198,8 @@ describe('PaperComponent', () => {
     expectClasses(anchor, [
       'card',
       'bg-warning/10',
+      'border',
+      'border-base-300',
       RAISED_SHADOW,
       DARK_SHADOW_NONE,
       'transition',

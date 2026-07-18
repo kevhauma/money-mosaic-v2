@@ -23,7 +23,7 @@ describe('ThemeService', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('moneymosaic');
   });
 
-  it('defaults to the system dark preference and sets the OLED dark data-theme', () => {
+  it('defaults to the system dark preference and sets the dark data-theme', () => {
     mockMatchMedia(true);
 
     const service = new ThemeService();

@@ -20,20 +20,17 @@
 </mm-page-header>
 
 @if (!customizeMode()) {
-  <mm-bento-grid columns="3" class="mb-6">
-    @for (rowId of visibleRows(); track rowId) {
-      <mm-bento-item
-        [colSpan]="rowBentoSpan(rowId).colSpan"
-        [rowSpan]="rowBentoSpan(rowId).rowSpan"
-      >
-        @switch (rowId) {
-          @case ('stats') {
-            @if (!statsStore.dataReady()) {
-              <mm-paper [fullHeight]="true">
-                <mm-loading-skeleton [rows]="2" />
-              </mm-paper>
-            } @else {
-              <div class="stats stats-vertical w-full overflow-visible shadow lg:stats-horizontal">
+  @for (rowId of visibleRows(); track rowId) {
+    <div class="mb-6">
+      @switch (rowId) {
+        @case ('stats') {
+          @if (!statsStore.dataReady()) {
+            <mm-paper [fullHeight]="true">
+              <mm-loading-skeleton [rows]="2" />
+            </mm-paper>
+          } @else {
+            <mm-paper bodyClass="">
+              <div class="stats stats-vertical w-full overflow-visible lg:stats-horizontal">
                 <mm-stat-card
                   label="Income"
                   [value]="incomeValue()"
@@ -70,86 +67,86 @@
                   [subLabel]="spendingRateSubLabel()"
                 />
               </div>
-            }
-          }
-          @case ('weekday-weekend') {
-            @defer (on viewport; prefetch on idle) {
-              <app-weekday-weekend-split-panel />
-            } @placeholder {
-              <mm-paper [fullHeight]="true">
-                <mm-loading-skeleton [rows]="3" />
-              </mm-paper>
-            }
-          }
-          @case ('category-breakdown') {
-            @defer (on viewport; prefetch on idle) {
-              <app-category-breakdown-panel />
-            } @placeholder {
-              <mm-paper [fullHeight]="true">
-                <h2 class="card-title text-base">Category breakdown</h2>
-                <mm-loading-skeleton [rows]="4" class="mt-2" />
-              </mm-paper>
-            }
-          }
-          @case ('category-comparison') {
-            @defer (on viewport; prefetch on idle) {
-              <app-category-comparison-panel />
-            } @placeholder {
-              <mm-paper [fullHeight]="true">
-                <h2 class="card-title text-base">Category period comparison</h2>
-                <mm-loading-skeleton [rows]="4" class="mt-4" />
-              </mm-paper>
-            }
-          }
-          @case ('trend-chart') {
-            @defer (on viewport; prefetch on idle) {
-              <app-trend-chart-panel />
-            } @placeholder {
-              <mm-paper [fullHeight]="true">
-                <h2 class="card-title text-base">Trend</h2>
-                <span class="sr-only">
-                  Income and expense trend chart loads when scrolled into view.
-                </span>
-                <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                  <div class="skeleton h-72 w-full"></div>
-                  <div class="skeleton h-72 w-full"></div>
-                </div>
-              </mm-paper>
-            }
-          }
-          @case ('top-transactions') {
-            @defer (on viewport; prefetch on idle) {
-              <app-top-transactions-panel />
-            } @placeholder {
-              <mm-paper [fullHeight]="true">
-                <h2 class="card-title text-base">Biggest transactions</h2>
-                <mm-loading-skeleton [rows]="3" class="mt-2" />
-              </mm-paper>
-            }
-          }
-          @case ('action-queue') {
-            @defer (on viewport; prefetch on idle) {
-              <app-action-queue-panel />
-            } @placeholder {
-              <mm-paper [fullHeight]="true">
-                <mm-loading-skeleton [rows]="2" />
-              </mm-paper>
-            }
-          }
-          @case ('account-balance') {
-            @defer (on viewport; prefetch on idle) {
-              <app-account-balance-strip />
-            } @placeholder {
-              <mm-paper [fullHeight]="true">
-                <h2 class="card-title text-base">Accounts</h2>
-                <mm-loading-skeleton [rows]="2" />
-              </mm-paper>
-            }
+            </mm-paper>
           }
         }
-      </mm-bento-item>
-    }
-  </mm-bento-grid>
+        @case ('weekday-weekend') {
+          @defer (on viewport; prefetch on idle) {
+            <app-weekday-weekend-split-panel />
+          } @placeholder {
+            <mm-paper [fullHeight]="true">
+              <mm-loading-skeleton [rows]="3" />
+            </mm-paper>
+          }
+        }
+        @case ('category-breakdown') {
+          @defer (on viewport; prefetch on idle) {
+            <app-category-breakdown-panel />
+          } @placeholder {
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Category breakdown</h2>
+              <mm-loading-skeleton [rows]="4" class="mt-2" />
+            </mm-paper>
+          }
+        }
+        @case ('category-comparison') {
+          @defer (on viewport; prefetch on idle) {
+            <app-category-comparison-panel />
+          } @placeholder {
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Category period comparison</h2>
+              <mm-loading-skeleton [rows]="4" class="mt-4" />
+            </mm-paper>
+          }
+        }
+        @case ('trend-chart') {
+          @defer (on viewport; prefetch on idle) {
+            <app-trend-chart-panel />
+          } @placeholder {
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Trend</h2>
+              <span class="sr-only">
+                Income and expense trend chart loads when scrolled into view.
+              </span>
+              <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div class="skeleton h-72 w-full"></div>
+                <div class="skeleton h-72 w-full"></div>
+              </div>
+            </mm-paper>
+          }
+        }
+        @case ('top-transactions') {
+          @defer (on viewport; prefetch on idle) {
+            <app-top-transactions-panel />
+          } @placeholder {
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Biggest transactions</h2>
+              <mm-loading-skeleton [rows]="3" class="mt-2" />
+            </mm-paper>
+          }
+        }
+        @case ('action-queue') {
+          @defer (on viewport; prefetch on idle) {
+            <app-action-queue-panel />
+          } @placeholder {
+            <mm-paper [fullHeight]="true">
+              <mm-loading-skeleton [rows]="2" />
+            </mm-paper>
+          }
+        }
+        @case ('account-balance') {
+          @defer (on viewport; prefetch on idle) {
+            <app-account-balance-strip />
+          } @placeholder {
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Accounts</h2>
+              <mm-loading-skeleton [rows]="2" />
+            </mm-paper>
+          }
+        }
+      }
+    </div>
+  }
 }
 
 @defer (on interaction(customizeToggle)) {

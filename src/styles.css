@@ -3,6 +3,17 @@
 @import 'tailwindcss';
 @plugin 'daisyui';
 
+/**
+ * Tailwind's `dark:` variant defaults to the OS-level `prefers-color-scheme` media query, which is
+ * entirely independent of the `data-theme` attribute `ThemeService`/daisyUI actually switch on
+ * (core/theme/theme.service.ts). Without this override, a user whose OS is set to light but who
+ * picks the app's dark theme (or vice versa) gets correct daisyUI semantic tokens (bg-base-100 etc.,
+ * which key off `[data-theme]`) but incorrect `dark:`-prefixed utility overrides (mm-paper's
+ * elevation/border step, TICKET-UI-11) — the two mechanisms disagree. Tying `dark:` to the same
+ * `data-theme="moneymosaic-dark"` attribute makes both mechanisms follow one switch.
+ */
+@custom-variant dark (&:where([data-theme='moneymosaic-dark'], [data-theme='moneymosaic-dark'] *));
+
 /* v1.5 redesign — design-language.md §1: light theme, Swiss-Modernism-2.0 accent palette. */
 @plugin 'daisyui/theme' {
   name: 'moneymosaic';
@@ -44,18 +55,23 @@
   --noise: 0;
 }
 
-/* v1.5 redesign — design-language.md §1.3: OLED-tuned dark theme (Dimensional Layering via
-   stepped base surfaces, not shadows — see PaperElevation in paper.component.ts). */
+/*
+ * v1.5 redesign — design-language.md §1.3 originally specified an OLED-tuned (near-black) dark
+ * theme; per explicit user feedback that read as "too dark" in practice, so the base scale below
+ * is a conventional dark-gray theme instead — same violet-tinted hue (285) for continuity, same
+ * three-tier stepping (100 → 200 → 300 = flat/recessed → page → raised), just lighter overall.
+ * `PaperElevation`'s stepped-surface mechanism in paper.component.ts is unaffected by this change.
+ */
 @plugin 'daisyui/theme' {
   name: 'moneymosaic-dark';
   default: false;
   prefersdark: true;
   color-scheme: dark;
 
-  --color-base-100: oklch(12% 0.006 285);
-  --color-base-200: oklch(17% 0.008 285);
-  --color-base-300: oklch(23% 0.01 285);
-  --color-base-content: oklch(96% 0.004 285);
+  --color-base-100: oklch(21% 0.006 285);
+  --color-base-200: oklch(27% 0.008 285);
+  --color-base-300: oklch(35% 0.01 285);
+  --color-base-content: oklch(94% 0.004 285);
   --color-primary: oklch(60% 0.17 285);
   --color-primary-content: oklch(98% 0.01 285);
   --color-secondary: oklch(61% 0.105 210);
@@ -84,14 +100,4 @@
 
   --depth: 1;
   --noise: 0;
-}
-
-/* design-language.md §1.2 — the Gradient-Mesh/Aurora wash. A background wash only: never applied
-   to buttons/badges/borders/status colors. Approved surfaces: net-worth-header (TICKET-UI-12),
-   trend-chart-panel backdrop (≤4% opacity variant, TICKET-UI-13), mm-empty-state. */
-.mm-aurora-wash {
-  background:
-    radial-gradient(120% 120% at 15% 20%, oklch(75% 0.1 285 / 10%), transparent 55%),
-    radial-gradient(120% 120% at 85% 30%, oklch(75% 0.09 210 / 8%), transparent 55%),
-    radial-gradient(140% 140% at 60% 90%, oklch(75% 0.1 345 / 7%), transparent 60%);
 }

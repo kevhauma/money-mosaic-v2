@@ -6,20 +6,28 @@ import { daisyClasses } from '@/shared/utils';
 export type PaperElevation = 'flat' | 'raised' | 'floating';
 
 /**
- * design-language.md §3 — "Dimensional Layering". Light mode reads depth via `box-shadow`; OLED
- * dark mode steps `base-100 → base-200 → base-300` instead, since shadows don't read against
- * `#050608`. `flat`'s border color is a separate axis (`borderColor`), since some flat surfaces
- * need a tinted border (e.g. a danger-zone panel).
+ * design-language.md §3 — "Dimensional Layering". Light mode reads depth via `box-shadow`; dark
+ * mode steps the surface instead (a plain box-shadow barely reads against a dark background
+ * regardless of exactly how dark). Every elevation — not just `flat` — carries a visible
+ * `border-${borderColor}` outline: the app shell's content area sits on `bg-base-200` (see
+ * `app.html`), so a shadow alone isn't enough separation against a same-tone page background,
+ * especially with `dark:shadow-none`.
  */
 const ELEVATION_SHADOW_CLASSES: Record<'raised' | 'floating', string> = {
   raised: 'shadow-[0_1px_2px_rgba(11,11,17,.06),0_1px_3px_rgba(11,11,17,.08)] dark:shadow-none',
   floating: 'shadow-[0_4px_12px_rgba(11,11,17,.10),0_2px_4px_rgba(11,11,17,.06)] dark:shadow-none',
 };
 
-/** Default background per elevation when the caller doesn't pass an explicit `background` override — this is where the dark-mode surface step (`base-100 → base-200 → base-300`) actually lives, since a custom `background` (a tinted callout, or `""` for none) must fully replace it rather than fight it in dark mode. */
+/**
+ * Default background per elevation when the caller doesn't pass an explicit `background` override
+ * — this is where the dark-mode surface step actually lives, since a custom `background` (a tinted
+ * callout, or `""` for none) must fully replace it rather than fight it in dark mode. The page
+ * shell's content area is `bg-base-200`, so `raised`/`floating` step *up* to `base-300` (lighter,
+ * i.e. more "raised") rather than `base-200`, which would be indistinguishable from the page itself.
+ */
 const ELEVATION_DEFAULT_BACKGROUND: Record<PaperElevation, string> = {
   flat: 'bg-base-100',
-  raised: 'bg-base-100 dark:bg-base-200',
+  raised: 'bg-base-100 dark:bg-base-300',
   floating: 'bg-base-100 dark:bg-base-300',
 };
 
@@ -54,10 +62,9 @@ export class PaperComponent {
 
   protected readonly classes = computed(() => {
     const elevation = this.elevation();
+    const borderClass = `border border-${this.borderColor()}`;
     const elevationClass =
-      elevation === 'flat'
-        ? `border border-${this.borderColor()}`
-        : ELEVATION_SHADOW_CLASSES[elevation];
+      elevation === 'flat' ? borderClass : `${borderClass} ${ELEVATION_SHADOW_CLASSES[elevation]}`;
     const background = this.background() ?? ELEVATION_DEFAULT_BACKGROUND[elevation];
 
     return daisyClasses(
