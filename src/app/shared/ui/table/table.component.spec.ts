@@ -60,7 +60,7 @@ describe('TableComponent', () => {
 
     const wrapper = fixture.nativeElement.querySelector('div');
     expect(new Set(wrapper.className.split(' '))).toEqual(
-      new Set(['rounded-box', 'border', 'border-base-300', 'overflow-x-auto']),
+      new Set(['mm-table-wrap', 'rounded-box', 'border', 'border-base-300', 'overflow-x-auto']),
     );
   });
 

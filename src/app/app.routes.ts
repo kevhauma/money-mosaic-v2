@@ -35,4 +35,8 @@ export const routes: Routes = [
     path: 'data',
     loadChildren: () => import('@/feature-data-management').then((m) => m.DATA_MANAGEMENT_ROUTES),
   },
+  {
+    path: 'settings',
+    loadChildren: () => import('@/feature-settings').then((m) => m.SETTINGS_ROUTES),
+  },
 ];

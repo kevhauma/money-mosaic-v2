@@ -16,3 +16,4 @@ export * from './confirm-state';
 export * from './structural-filters';
 export * from './with-persisted-crud';
 export * from './download-json';
+export * from './theme-hooks';

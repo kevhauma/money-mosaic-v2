@@ -1,8 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ButtonComponent, type ButtonShape } from './button.component';
+import { MM_SQUISH_CLASS } from '@/shared/utils';
 
 const ICON_ONLY_SHAPES: ButtonShape[] = ['square', 'circle'];
+
+/** Angular's `[class]` binding applies/diffs individual class tokens rather than the concatenated string verbatim, so `element.className` doesn't preserve source order — compare as sets instead. */
+const expectClasses = (element: Element, expected: string[]): void => {
+  expect(new Set(element.className.split(' ').filter(Boolean))).toEqual(new Set(expected));
+};
+
+const SQUISH_TOKENS = MM_SQUISH_CLASS.split(' ');
 
 describe('ButtonComponent', () => {
   let fixture: ComponentFixture<ButtonComponent>;
@@ -21,7 +29,15 @@ describe('ButtonComponent', () => {
 
     const button = fixture.nativeElement.querySelector('button');
     expect(button).toBeTruthy();
-    expect(button.className).toBe('btn');
+    expectClasses(button, ['btn', ...SQUISH_TOKENS]);
+  });
+
+  it('omits the squish classes for the link variant', () => {
+    fixture.componentRef.setInput('variant', 'link');
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button');
+    expectClasses(button, ['btn', 'btn-link']);
   });
 
   it('renders a routerLink anchor instead of a button when link is set', () => {

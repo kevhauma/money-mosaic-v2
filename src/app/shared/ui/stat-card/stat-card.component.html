@@ -16,7 +16,7 @@
 </ng-template>
 
 @if (link(); as href) {
-  <a [routerLink]="href" [queryParams]="queryParams()" class="stat transition hover:bg-base-200">
+  <a [routerLink]="href" [queryParams]="queryParams()" [class]="linkClasses()">
     <div class="stat-title">{{ label() }}</div>
     <div class="stat-value">
       <mm-text variant="display" [color]="color()" [numeric]="true">{{ value() }}</mm-text>
@@ -24,7 +24,7 @@
     <ng-container [ngTemplateOutlet]="subLabelContent" />
   </a>
 } @else {
-  <div class="stat">
+  <div [class]="classes()">
     <div class="stat-title">{{ label() }}</div>
     <div class="stat-value">
       <mm-text variant="display" [color]="color()" [numeric]="true">{{ value() }}</mm-text>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -11,7 +11,7 @@ import {
 import { savingsAccountIbans } from '@/core/transfers';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import {
-  CHART_ANIMATION,
+  resolveChartAnimation,
   formatAxisTooltip,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
@@ -29,11 +29,11 @@ import {
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
 
-/** Every series' value at one bucket index, summed — the stacked-bar total for that bucket. */
+/** Every series' value at one bucket index, summed â€” the stacked-bar total for that bucket. */
 const bucketTotal = (series: CategorySeriesEntry[], bucketIndex: number): number =>
   series.reduce((sum, entry) => sum + entry.values[bucketIndex], 0);
 
-/** Highest per-bucket stacked total across a column's series — the shared y-axis scale is the larger of the two columns' values. */
+/** Highest per-bucket stacked total across a column's series â€” the shared y-axis scale is the larger of the two columns' values. */
 const highestStackedTotal = (bucketKeys: string[], series: CategorySeriesEntry[]): number => {
   let max = 0;
   for (let i = 0; i < bucketKeys.length; i++) {
@@ -52,7 +52,7 @@ const buildColumnChartOption = (
   stackName: 'income' | 'expense',
   sharedMax: number,
 ): EChartsCoreOption => ({
-  ...CHART_ANIMATION,
+  ...resolveChartAnimation(),
   color: resolveChartCategoricalColors(),
   tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
   legend: { data: series.map((entry) => entry.name) },
@@ -133,7 +133,7 @@ export class TrendChartPanelComponent {
   });
 
   /**
-   * Mirrors the two charts' underlying figures into DOM text for assistive tech (TICKET-STAT-20) —
+   * Mirrors the two charts' underlying figures into DOM text for assistive tech (TICKET-STAT-20) â€”
    * sourced from the same `composition()` signal the charts render, so it can never diverge.
    * Rendered as a visually-hidden table; the canvas hosts get a `role="img"` summary pointing at it.
    */
@@ -147,7 +147,7 @@ export class TrendChartPanelComponent {
   });
 
   private readonly rangeLabel = computed(
-    () => `${this.granularity()}, ${this.rangeStore.from()}–${this.rangeStore.to()}`,
+    () => `${this.granularity()}, ${this.rangeStore.from()}â€“${this.rangeStore.to()}`,
   );
 
   protected readonly incomeChartAriaLabel = computed(

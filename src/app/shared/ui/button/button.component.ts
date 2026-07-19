@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { daisyClasses } from '@/shared/utils';
+import { daisyClasses, MM_SQUISH_CLASS } from '@/shared/utils';
 
 export type ButtonColor =
   'neutral' | 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
@@ -34,6 +34,8 @@ export class ButtonComponent {
         this.variant() !== 'solid' && `btn-${this.variant()}`,
         this.size() !== 'md' && `btn-${this.size()}`,
         this.shape() !== 'default' && `btn-${this.shape()}`,
+        /** Theme-style press/hover hook (styles.css `--mm-squish-*`), every variant except `link` (no fill for a squish to read against). */
+        this.variant() !== 'link' && MM_SQUISH_CLASS,
       ],
       this.class(),
     ),

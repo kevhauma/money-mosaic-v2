@@ -1,5 +1,6 @@
 <mm-flex align="center" justify="between" gap="3" [wrap]="true" class="mb-6">
-  <div>
+  <!-- `mm-page-title` is a theme-style hook — inert by default, themes may add an accent (e.g. Memphis's heavy left rule). -->
+  <div class="mm-page-title">
     <mm-flex align="center" gap="2">
       <mm-text variant="heading" as="h1">{{ title() }}</mm-text>
       <ng-content select="[title-adornment]" />

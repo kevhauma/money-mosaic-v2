@@ -1,0 +1,440 @@
+/* ============================================================================
+ * LIQUID GLASS — dark-mode theme style (ported from the design/liquid-glass
+ * branch, dark "smoked panes over a deep nebula" variant).
+ *
+ * Every surface is translucent, backdrop-blurred glass floating over an
+ * animated aurora backdrop. The mechanism has three parts:
+ *
+ *   1. The daisyUI theme defines base-100/200/300 WITH alpha, so every
+ *      existing `bg-base-*` utility becomes a glass fill for free.
+ *   2. The scoped rules below (un-layered, so they win over Tailwind's
+ *      layered utilities) add the optical glass: backdrop blur + saturation,
+ *      a specular top-edge highlight, and deep soft shadows on `.card`,
+ *      `.modal-box`, `.dropdown-content`, `.btn`, fields, tables, menus.
+ *      Paper elevation tiers read as pane thickness via the shared
+ *      `--mm-elev-*`/`--mm-surface-*` hooks (flat = thin see-through pane,
+ *      floating = thick dense slab).
+ *   3. `body::before/::after` paint the fixed, slowly-rotating aurora + film
+ *      grain the glass refracts.
+ *
+ * Deliberately NOT restyled: `.card` background/border-color — mm-paper
+ * callers override those via utilities (`bg-warning/10`, `border-error/40`)
+ * and must keep winning.
+ * ========================================================================= */
+
+@plugin 'daisyui/theme' {
+  name: 'liquid-glass';
+  default: false;
+  prefersdark: false;
+  color-scheme: dark;
+
+  --color-base-100: oklch(30% 0.045 290 / 0.5);
+  --color-base-200: oklch(25% 0.04 290 / 0.42);
+  --color-base-300: oklch(62% 0.06 290 / 0.28);
+  --color-base-content: oklch(96% 0.012 290);
+  --color-primary: oklch(70% 0.2 292);
+  --color-primary-content: oklch(16% 0.05 292);
+  --color-secondary: oklch(72% 0.14 215);
+  --color-secondary-content: oklch(16% 0.04 215);
+  --color-accent: oklch(70% 0.21 340);
+  --color-accent-content: oklch(16% 0.05 340);
+  --color-neutral: oklch(88% 0.01 290);
+  --color-neutral-content: oklch(15% 0.02 290);
+  --color-info: oklch(70% 0.15 250);
+  --color-info-content: oklch(16% 0.04 250);
+  --color-success: oklch(72% 0.16 150);
+  --color-success-content: oklch(16% 0.04 150);
+  --color-warning: oklch(82% 0.16 80);
+  --color-warning-content: oklch(18% 0.04 80);
+  --color-error: oklch(70% 0.19 22);
+  --color-error-content: oklch(14% 0.04 22);
+
+  --radius-selector: 2rem;
+  --radius-field: 1rem;
+  --radius-box: 1.5rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 1px;
+
+  --depth: 0;
+  --noise: 0;
+
+  /* Glass optics — specular edges, refraction shadows, aurora palette. */
+  --mm-specular: oklch(100% 0 0 / 0.16);
+  --mm-inner-tint: oklch(85% 0.06 300 / 0.06);
+  --mm-shadow: oklch(8% 0.03 290 / 0.55);
+  --mm-shadow-strong: oklch(5% 0.03 290 / 0.7);
+  --mm-page-bg: linear-gradient(180deg, oklch(15% 0.035 292), oklch(12% 0.04 270));
+  --mm-page-solid: oklch(14% 0.035 290);
+  --mm-aurora-1: oklch(40% 0.17 300 / 0.8);
+  --mm-aurora-2: oklch(36% 0.13 220 / 0.7);
+  --mm-aurora-3: oklch(35% 0.15 345 / 0.65);
+  --mm-aurora-4: oklch(32% 0.11 190 / 0.6);
+  --mm-grain-opacity: 0.06;
+
+  /* Shared theme-style hooks: fills are the alpha-carrying base tokens (flat = more
+   * see-through), depth is pane thickness via the elevation shadows below (blur lives in the
+   * scoped rules — box-shadow alone can't carry backdrop-filter). */
+  --mm-surface-flat: var(--color-base-200);
+  --mm-surface-raised: var(--color-base-100);
+  --mm-surface-floating: var(--color-base-100);
+  --mm-elev-flat-shadow: inset 0 1px 0 0 var(--mm-specular), 0 8px 24px -14px var(--mm-shadow);
+  --mm-elev-raised-shadow:
+    inset 0 1px 0 0 var(--mm-specular), inset 0 0 24px 0 var(--mm-inner-tint),
+    0 16px 48px -16px var(--mm-shadow);
+  --mm-elev-floating-shadow:
+    inset 0 1px 0 0 var(--mm-specular), inset 0 0 32px 0 var(--mm-inner-tint),
+    0 32px 80px -24px var(--mm-shadow-strong);
+  /* Aurora halo for hero surfaces (mm-paper `glow` on floating elevation). */
+  --mm-halo-shadow:
+    inset 0 1px 0 0 var(--mm-specular), inset 0 0 32px 0 var(--mm-inner-tint),
+    0 32px 80px -24px var(--mm-shadow-strong),
+    0 0 64px -8px color-mix(in oklab, var(--color-primary) 45%, transparent),
+    0 0 120px -16px color-mix(in oklab, var(--color-accent) 30%, transparent);
+}
+
+/* Ambient backdrop: rotating aurora field + film grain the glass sits on. */
+html[data-theme='liquid-glass'] {
+  background: var(--mm-page-solid);
+  scrollbar-color: color-mix(in oklab, var(--color-base-content) 25%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+html[data-theme='liquid-glass'] body {
+  position: relative;
+  min-height: 100dvh;
+}
+
+html[data-theme='liquid-glass'] body::before {
+  content: '';
+  position: fixed;
+  inset: -30%;
+  z-index: -2;
+  background:
+    radial-gradient(38% 34% at 22% 26%, var(--mm-aurora-1), transparent 70%),
+    radial-gradient(34% 40% at 80% 18%, var(--mm-aurora-2), transparent 70%),
+    radial-gradient(44% 44% at 74% 80%, var(--mm-aurora-3), transparent 70%),
+    radial-gradient(30% 30% at 28% 76%, var(--mm-aurora-4), transparent 70%), var(--mm-page-bg);
+  animation: mm-aurora 90s linear infinite;
+  will-change: transform;
+}
+
+html[data-theme='liquid-glass'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: var(--mm-grain-opacity);
+  mix-blend-mode: overlay;
+}
+
+@keyframes mm-aurora {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.18);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* The shell's content area drops its opaque base-200 wash so the aurora shows through. */
+[data-theme='liquid-glass'] .drawer-content {
+  background: transparent;
+}
+
+/* Sleek glass wants the quiet system face, not the default theme's bubbly display face. */
+[data-theme='liquid-glass'] :is(.mm-text-display, .mm-text-heading, .mm-brand) {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+/* Glass surfaces. Background/border-color intentionally NOT set here (see header comment) —
+ * fills come from the alpha-carrying `bg-base-*` utilities. Papers get their per-tier shadows
+ * from the `--mm-elev-*` hooks; everything else carries the standard pane shadow inline. */
+[data-theme='liquid-glass']
+  :is(
+    .card,
+    .stats,
+    .stat,
+    .alert,
+    .modal-box,
+    .dropdown-content,
+    .tooltip-content,
+    .mm-table-wrap,
+    .mm-empty
+  ) {
+  position: relative;
+  backdrop-filter: blur(var(--mm-blur, 22px)) saturate(1.6);
+  -webkit-backdrop-filter: blur(var(--mm-blur, 22px)) saturate(1.6);
+}
+
+[data-theme='liquid-glass']
+  :is(.stats, .stat, .alert, .dropdown-content, .tooltip-content, .mm-table-wrap) {
+  box-shadow:
+    inset 0 1px 0 0 var(--mm-specular),
+    inset 0 0 24px 0 var(--mm-inner-tint),
+    0 16px 48px -16px var(--mm-shadow);
+}
+
+/* Pane thickness per paper tier = blur depth (the shadows ride the --mm-elev-* hooks). */
+[data-theme='liquid-glass'] .mm-elev-flat {
+  --mm-blur: 14px;
+}
+
+[data-theme='liquid-glass'] .mm-elev-floating {
+  --mm-blur: 36px;
+}
+
+[data-theme='liquid-glass'] .modal-box {
+  --mm-blur: 40px;
+  box-shadow:
+    inset 0 1px 0 0 var(--mm-specular),
+    inset 0 0 32px 0 var(--mm-inner-tint),
+    0 32px 80px -24px var(--mm-shadow-strong);
+}
+
+/* Empty states are thin panes on the see-through fill. */
+[data-theme='liquid-glass'] .mm-empty {
+  --mm-blur: 14px;
+  background-color: var(--color-base-200);
+  box-shadow:
+    inset 0 1px 0 0 var(--mm-specular),
+    0 8px 24px -14px var(--mm-shadow);
+}
+
+/* Both dismissal backdrops (native ::backdrop + daisyUI's .modal-backdrop) frost the page
+ * behind an open dialog. */
+[data-theme='liquid-glass'] .modal::backdrop,
+[data-theme='liquid-glass'] .modal-backdrop {
+  background: oklch(18% 0.05 292 / 0.35);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+}
+
+[data-theme='liquid-glass'] .drawer-overlay {
+  background: oklch(18% 0.05 292 / 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* App shell — the navbar becomes a detached sticky glass bar; the sidebar a floating glass
+ * column (approximating the branch's wrapper markup purely in scoped CSS). */
+[data-theme='liquid-glass'] .navbar {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 10;
+  margin: 0.75rem 0.75rem 0;
+  width: auto;
+  border-bottom: 0;
+  border-radius: var(--radius-box);
+  backdrop-filter: blur(22px) saturate(1.6);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 var(--mm-specular),
+    inset 0 0 24px 0 var(--mm-inner-tint),
+    0 16px 48px -16px var(--mm-shadow);
+}
+
+[data-theme='liquid-glass'] .drawer-side {
+  background: transparent;
+}
+
+[data-theme='liquid-glass'] .drawer-side > .menu {
+  margin: 0.75rem;
+  min-height: calc(100dvh - 1.5rem);
+  border-right: 0;
+  border-radius: var(--radius-box);
+  backdrop-filter: blur(36px) saturate(1.6);
+  -webkit-backdrop-filter: blur(36px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 var(--mm-specular),
+    inset 0 0 32px 0 var(--mm-inner-tint),
+    0 32px 80px -24px var(--mm-shadow-strong);
+}
+
+/* Sidebar nav — muted items on transparent glass; the active route becomes an iridescent
+ * glass pill. */
+[data-theme='liquid-glass'] .mm-nav-item {
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  font-weight: 500;
+  color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+  transition: all 0.2s ease;
+}
+
+[data-theme='liquid-glass'] .mm-nav-item:hover {
+  color: var(--color-base-content);
+}
+
+[data-theme='liquid-glass'] .menu .menu-active {
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--color-primary) 30%, transparent),
+    color-mix(in oklab, var(--color-accent) 20%, transparent)
+  );
+  color: var(--color-base-content);
+  box-shadow:
+    inset 0 1px 0 var(--mm-specular),
+    0 8px 24px -10px color-mix(in oklab, var(--color-primary) 55%, transparent);
+}
+
+/* Buttons — glossy liquid pills with a specular shine sweep on hover. */
+[data-theme='liquid-glass'] .btn {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.28), oklch(100% 0 0 / 0) 55%);
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.32),
+    0 6px 20px -8px var(--mm-shadow);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+/* `.join-item` grouping (paginators, range switcher) keeps daisyUI's shared end-cap radii;
+ * standalone buttons go full pill. */
+[data-theme='liquid-glass'] .btn:not(.join-item) {
+  border-radius: calc(infinity * 1px);
+}
+
+[data-theme='liquid-glass'] .btn:hover {
+  transform: translateY(-1px);
+}
+
+[data-theme='liquid-glass'] .btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+[data-theme='liquid-glass'] .btn:not(.btn-ghost):not(.btn-link)::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 42%, oklch(100% 0 0 / 0.45) 50%, transparent 58%);
+  transform: translateX(-130%);
+  transition: transform 0.55s ease;
+}
+
+[data-theme='liquid-glass'] .btn:not(.btn-ghost):not(.btn-link):hover::before {
+  transform: translateX(130%);
+}
+
+[data-theme='liquid-glass'] :is(.btn-ghost, .btn-link, .btn:disabled, .btn[disabled]) {
+  background-image: none;
+  box-shadow: none;
+}
+
+/* Fields — recessed glass wells with a liquid focus glow. */
+[data-theme='liquid-glass'] :is(.input, .select, .textarea) {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 2px 6px oklch(20% 0.05 292 / 0.1),
+    inset 0 1px 0 var(--mm-specular);
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+[data-theme='liquid-glass'] :is(.input, .select, .textarea):is(:focus, :focus-within) {
+  outline: none;
+  border-color: color-mix(in oklab, var(--color-primary) 60%, transparent);
+  box-shadow:
+    inset 0 2px 6px oklch(20% 0.05 292 / 0.1),
+    0 0 0 4px color-mix(in oklab, var(--color-primary) 22%, transparent),
+    0 4px 24px -8px color-mix(in oklab, var(--color-primary) 45%, transparent);
+}
+
+[data-theme='liquid-glass'] :is(.checkbox, .radio, .toggle, .range) {
+  transition: box-shadow 0.2s ease;
+}
+
+[data-theme='liquid-glass'] :is(.checkbox, .radio, .toggle):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 25%, transparent);
+}
+
+/* Tables — frosted header band, liquid row hover. */
+[data-theme='liquid-glass'] .table thead tr {
+  background: color-mix(in oklab, var(--color-base-content) 5%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+[data-theme='liquid-glass'] .table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Brand wordmark — shimmering iridescent gradient text. */
+[data-theme='liquid-glass'] .mm-brand {
+  background: linear-gradient(
+    95deg,
+    var(--color-primary),
+    var(--color-accent) 45%,
+    var(--color-secondary) 90%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: mm-brand-shimmer 6s ease-in-out infinite alternate;
+}
+
+@keyframes mm-brand-shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+/* Finishing touches. */
+[data-theme='liquid-glass'] .badge {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+[data-theme='liquid-glass'] ::selection {
+  background: color-mix(in oklab, var(--color-primary) 30%, transparent);
+}
+
+[data-theme='liquid-glass'] *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme='liquid-glass'] *::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--color-base-content) 22%, transparent);
+}
+
+[data-theme='liquid-glass'] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme='liquid-glass'] body::before {
+    animation: none;
+  }
+
+  [data-theme='liquid-glass'] .mm-brand {
+    animation: none;
+  }
+
+  [data-theme='liquid-glass'] :is(.btn, .btn::before) {
+    transition: none;
+  }
+}

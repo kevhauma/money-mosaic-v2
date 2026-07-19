@@ -1,0 +1,357 @@
+/* ============================================================================
+ * RETRO-FUTURISM — "ATOMIC DAYLIGHT" — light-mode theme style (ported from
+ * the design/Retro-Futurism branch's light variant).
+ *
+ * Yesterday's tomorrow: warm mission-briefing cream, rocket-exhaust orange,
+ * TWA-lounge teal, mustard gold, espresso text. Chunky 2px borders, capsule
+ * selectors, and the googie boomerang swoop on every card (three swept
+ * corners, one clipped) — the theme's single strongest signature. Type:
+ * Righteous for display/headings, Space Grotesk body, Space Mono placards.
+ * ========================================================================= */
+
+@plugin 'daisyui/theme' {
+  name: 'retro-futurism';
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: oklch(96.5% 0.022 85);
+  --color-base-200: oklch(93% 0.032 80);
+  --color-base-300: oklch(86% 0.045 75);
+  --color-base-content: oklch(27% 0.045 45);
+  --color-primary: oklch(60% 0.185 42);
+  --color-primary-content: oklch(97% 0.02 85);
+  --color-secondary: oklch(52% 0.105 195);
+  --color-secondary-content: oklch(97% 0.015 195);
+  --color-accent: oklch(74% 0.145 88);
+  --color-accent-content: oklch(28% 0.05 60);
+  --color-neutral: oklch(32% 0.045 50);
+  --color-neutral-content: oklch(96% 0.02 85);
+  --color-info: oklch(62% 0.12 235);
+  --color-info-content: oklch(97% 0.015 235);
+  --color-success: oklch(56% 0.13 150);
+  --color-success-content: oklch(97% 0.015 150);
+  --color-warning: oklch(76% 0.15 75);
+  --color-warning-content: oklch(28% 0.05 60);
+  --color-error: oklch(56% 0.19 28);
+  --color-error-content: oklch(97% 0.015 28);
+
+  --radius-selector: 2rem;
+  --radius-field: 1rem;
+  --radius-box: 1.5rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 2px;
+
+  --depth: 1;
+  --noise: 0;
+
+  /* Shared theme-style hooks — printed Atomic Age poster depth: inset chrome highlight along the
+   * top edge plus a warm sepia drop shadow that grows with elevation. */
+  --mm-surface-flat: var(--color-base-100);
+  --mm-surface-raised: var(--color-base-100);
+  --mm-surface-floating: var(--color-base-100);
+  --mm-elev-raised-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.55), 0 2px 0 oklch(60% 0.07 60 / 0.25),
+    0 10px 24px -12px oklch(40% 0.08 50 / 0.35);
+  --mm-elev-floating-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.6), 0 3px 0 oklch(60% 0.07 60 / 0.28),
+    0 18px 40px -16px oklch(40% 0.08 50 / 0.45);
+  /* Afterburner ring for hero surfaces (mm-paper `glow` on floating elevation). */
+  --mm-halo-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.6), 0 3px 0 oklch(60% 0.07 60 / 0.28),
+    0 0 0 2px oklch(60% 0.185 42 / 0.25), 0 18px 40px -16px oklch(40% 0.08 50 / 0.45);
+}
+
+/* Type stack (faces imported once in styles.css): Righteous googie headline voice, Space
+ * Grotesk body, Space Mono mission placards. */
+[data-theme='retro-futurism'] {
+  --font-display: 'Righteous', 'Space Grotesk', ui-sans-serif, sans-serif;
+  --mm-font-mono: 'Space Mono', ui-monospace, 'Cascadia Mono', monospace;
+}
+
+html[data-theme='retro-futurism'] body {
+  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Righteous ships a single 400 weight; pinning it stops the type scale's font-bold/semibold
+ * utilities from faux-bolding it. Display grows a step (2.5rem) for the poster voice. */
+[data-theme='retro-futurism'] :is(.mm-text-display, .mm-text-heading) {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+[data-theme='retro-futurism'] .mm-text-display {
+  font-size: 2.5rem;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+}
+
+[data-theme='retro-futurism'] .mm-text-heading {
+  letter-spacing: 0.02em;
+}
+
+[data-theme='retro-futurism'] .mm-text-label {
+  font-family: var(--mm-font-mono);
+  letter-spacing: 0.12em;
+}
+
+/* Monetary/numeric readouts go Space Mono like mission-control instruments. */
+[data-theme='retro-futurism'] .tabular-nums {
+  font-family: var(--mm-font-mono);
+}
+
+/* Atmosphere: halftone cream daylight. */
+[data-theme='retro-futurism'] .drawer-content {
+  background-image:
+    radial-gradient(oklch(45% 0.06 60 / 0.08) 1px, transparent 1.5px),
+    linear-gradient(180deg, oklch(89% 0.06 70 / 0.55), transparent 28rem);
+  background-size:
+    22px 22px,
+    100% 100%;
+}
+
+[data-theme='retro-futurism'] ::selection {
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+/* Chrome capsule scrollbars. */
+[data-theme='retro-futurism'] *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+[data-theme='retro-futurism'] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-theme='retro-futurism'] *::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+  border-radius: 9999px;
+  border: 2px solid var(--color-base-200);
+}
+
+/* Racing stripes: the tri-color program stripe (orange / gold / teal) under the navbar and down
+ * the sidebar's outer edge. */
+[data-theme='retro-futurism'] .navbar {
+  position: relative;
+}
+
+[data-theme='retro-futurism'] .navbar::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -2px 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0 33.3%,
+    var(--color-accent) 33.3% 66.6%,
+    var(--color-secondary) 66.6% 100%
+  );
+  pointer-events: none;
+}
+
+[data-theme='retro-futurism'] .drawer-side .menu {
+  position: relative;
+}
+
+[data-theme='retro-futurism'] .drawer-side .menu::after {
+  content: '';
+  position: absolute;
+  inset: 0 -2px 0 auto;
+  width: 4px;
+  background: linear-gradient(
+    180deg,
+    var(--color-primary) 0 33.3%,
+    var(--color-accent) 33.3% 66.6%,
+    var(--color-secondary) 66.6% 100%
+  );
+  pointer-events: none;
+}
+
+/* Logo: googie face filled with a sunset gradient; the sidebar wordmark gains a mission tagline. */
+[data-theme='retro-futurism'] .mm-brand {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: linear-gradient(
+    180deg,
+    var(--color-accent) 0%,
+    var(--color-primary) 58%,
+    oklch(46% 0.17 30) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 oklch(100% 0 0 / 0.5));
+}
+
+[data-theme='retro-futurism'] .drawer-side .mm-brand::after {
+  content: 'Finance of tomorrow';
+  display: block;
+  font-family: var(--mm-font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  background: none;
+  -webkit-text-fill-color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
+
+/* Sidebar: uppercase capsule nav, blast-off active pill. */
+[data-theme='retro-futurism'] .mm-nav-item {
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+[data-theme='retro-futurism'] .menu li > .menu-active {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    color-mix(in oklab, var(--color-primary) 72%, oklch(40% 0.17 25))
+  );
+  color: var(--color-primary-content);
+  border-radius: 9999px;
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.25),
+    0 4px 12px -4px color-mix(in oklab, var(--color-primary) 65%, transparent);
+}
+
+/* Buttons: chrome-shined uppercase capsules with lift-off hover. */
+[data-theme='retro-futurism'] .btn {
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+[data-theme='retro-futurism'] .btn:not(.btn-ghost, .btn-link, .btn-outline, .btn-dash) {
+  background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.22), oklch(100% 0 0 / 0) 48%);
+}
+
+[data-theme='retro-futurism'] .btn:not(.btn-ghost, .btn-link):hover {
+  transform: translateY(-1px);
+}
+
+[data-theme='retro-futurism'] .btn:active {
+  transform: translateY(1px);
+}
+
+/* Fields: chunky porthole inputs with an exhaust-glow focus ring. */
+[data-theme='retro-futurism'] :is(.input, .select, .textarea):is(:focus, :focus-within) {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 28%, transparent);
+}
+
+/* Tabs: control-panel toggles. */
+[data-theme='retro-futurism'] .tab {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+[data-theme='retro-futurism'] .tabs-box {
+  border-radius: 9999px;
+}
+
+[data-theme='retro-futurism'] .tabs-box .tab {
+  border-radius: 9999px;
+}
+
+/* Tables: mission ledger — mono uppercase headers, dashed row rules. */
+[data-theme='retro-futurism'] .table thead th {
+  font-family: var(--mm-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.6875rem;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+[data-theme='retro-futurism'] .table :where(tbody tr) {
+  border-bottom: 1px dashed color-mix(in oklab, var(--color-base-content) 18%, transparent);
+}
+
+[data-theme='retro-futurism'] .table :where(tbody tr):hover {
+  background: color-mix(in oklab, var(--color-primary) 6%, transparent);
+}
+
+/* Badges: little mission patches. */
+[data-theme='retro-futurism'] .badge {
+  border-radius: 9999px;
+  font-family: var(--mm-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+/* Surfaces: every card gets the googie boomerang swoop (three swept corners, one clipped). */
+[data-theme='retro-futurism'] .card {
+  border-radius: 1.5rem 1.5rem 1.5rem 0.375rem;
+}
+
+[data-theme='retro-futurism'] .card .card-body {
+  border-radius: inherit;
+}
+
+[data-theme='retro-futurism'] .modal-box {
+  border-radius: 1.75rem 1.75rem 1.75rem 0.5rem;
+  border: 2px solid var(--color-base-300);
+  position: relative;
+}
+
+[data-theme='retro-futurism'] .modal-box::before {
+  content: '';
+  position: absolute;
+  inset: 0 1.25rem auto 1.25rem;
+  height: 4px;
+  border-radius: 0 0 9999px 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0 33.3%,
+    var(--color-accent) 33.3% 66.6%,
+    var(--color-secondary) 66.6% 100%
+  );
+  pointer-events: none;
+}
+
+[data-theme='retro-futurism'] .dropdown-content {
+  border-radius: 1.25rem 1.25rem 1.25rem 0.375rem;
+  border: 2px solid var(--color-base-300);
+  box-shadow: 0 12px 32px -12px oklch(20% 0.05 278 / 0.45);
+}
+
+[data-theme='retro-futurism'] .skeleton {
+  border-radius: 1rem 1rem 1rem 0.25rem;
+}
+
+[data-theme='retro-futurism'] .divider::before,
+[data-theme='retro-futurism'] .divider::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-base-content) 25%, transparent),
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='retro-futurism'] :is(.btn, .btn:hover, .btn:active) {
+    transition: none;
+    transform: none;
+  }
+}

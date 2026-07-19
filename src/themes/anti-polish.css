@@ -1,0 +1,222 @@
+/* ============================================================================
+ * ANTI-POLISH / RAW — light-mode theme style (ported from the
+ * design/anit-polish branch).
+ *
+ * Deliberately abandons softness, restraint and subtle gradients for an
+ * unpolished, brutalist-web aesthetic: zero corner radius everywhere, thick
+ * ink-black structural borders, hard offset (non-blurred) drop shadows
+ * instead of soft elevation, and a loud, clashing, un-color-theory'd accent
+ * set (acid yellow / cobalt / hot magenta). Nothing here is meant to look
+ * "designed" — seams, borders and raw HTML-control shapes are exposed on
+ * purpose. Type is the system monospace stack; motion is a hard linear cut.
+ * ========================================================================= */
+
+@plugin 'daisyui/theme' {
+  name: 'anti-polish';
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(96% 0 0);
+  --color-base-300: oklch(85% 0 0);
+  --color-base-content: oklch(0% 0 0);
+  --color-primary: oklch(87% 0.19 100);
+  --color-primary-content: oklch(15% 0.02 100);
+  --color-secondary: oklch(52% 0.23 265);
+  --color-secondary-content: oklch(98% 0.01 265);
+  --color-accent: oklch(58% 0.27 350);
+  --color-accent-content: oklch(98% 0.01 350);
+  --color-neutral: oklch(0% 0 0);
+  --color-neutral-content: oklch(100% 0 0);
+  --color-info: oklch(62% 0.18 240);
+  --color-info-content: oklch(98% 0.01 240);
+  --color-success: oklch(68% 0.21 145);
+  --color-success-content: oklch(15% 0.02 145);
+  --color-warning: oklch(80% 0.18 70);
+  --color-warning-content: oklch(15% 0.02 70);
+  --color-error: oklch(55% 0.24 25);
+  --color-error-content: oklch(98% 0.01 25);
+
+  --radius-selector: 0;
+  --radius-field: 0;
+  --radius-box: 0;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 3px;
+
+  --depth: 0;
+  --noise: 0;
+
+  /* The hard offset shadow's ink color — elevation is a fixed physical offset, not a glow. */
+  --shadow-raw: #000000;
+
+  /* Shared theme-style hooks: `floating` offsets further than `raised` rather than blurring
+   * more; the halo is a second accent-colored hard shadow stacked behind the base one. */
+  --mm-surface-flat: var(--color-base-100);
+  --mm-surface-raised: var(--color-base-100);
+  --mm-surface-floating: var(--color-base-100);
+  --mm-elev-raised-shadow: 4px 4px 0 0 var(--shadow-raw);
+  --mm-elev-floating-shadow: 8px 8px 0 0 var(--shadow-raw);
+  --mm-halo-shadow: 8px 8px 0 0 var(--shadow-raw), 14px 14px 0 0 var(--color-accent);
+}
+
+/* Raw/brutalist type: expose the system monospace stack everywhere instead of a humanist sans —
+ * no webfont fetch, keeps the "unstyled terminal" register. Headings drop the bubbly display
+ * face for the same stack. */
+[data-theme='anti-polish'] {
+  --font-display: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+html[data-theme='anti-polish'] body {
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* Snap instead of ease: motion here is a hard cut, not a glide. */
+[data-theme='anti-polish'] * {
+  transition-timing-function: linear !important;
+}
+
+[data-theme='anti-polish'] ::selection {
+  background-color: var(--color-accent);
+  color: var(--color-accent-content);
+}
+
+/* Raw type scale (mm-text hooks): blunt size jumps, loud uppercase on display/heading/label
+ * (stencil/hazard-sign register); tracking widens instead of tightening — stamped, not typeset. */
+[data-theme='anti-polish'] .mm-text-display {
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+[data-theme='anti-polish'] .mm-text-heading {
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+[data-theme='anti-polish'] .mm-text-subheading {
+  font-weight: 600;
+}
+
+[data-theme='anti-polish'] .mm-text-label {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+[data-theme='anti-polish'] .mm-brand {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Papers: thick structural borders. Width applies to every card; the ink-black color only
+ * replaces the *default* border tone so tinted callouts (`border-error/40`, ...) keep theirs. */
+[data-theme='anti-polish'] .card {
+  border-width: 4px;
+}
+
+[data-theme='anti-polish'] .card.border-base-300 {
+  border-color: var(--color-base-content);
+}
+
+[data-theme='anti-polish'] .stat {
+  border-width: 3px;
+  border-color: var(--color-base-content);
+}
+
+/* Buttons: physical raised blocks — exposed hard-offset shadow that "un-presses" flat on click. */
+[data-theme='anti-polish'] .btn {
+  border-width: 2px;
+  border-color: var(--color-base-content);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 0 var(--shadow-raw);
+  transition: none;
+}
+
+[data-theme='anti-polish'] .btn:active {
+  translate: 3px 3px;
+  box-shadow: none;
+}
+
+[data-theme='anti-polish'] :is(.btn-ghost, .btn-link) {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+[data-theme='anti-polish'] .badge {
+  border-width: 2px;
+  border-color: var(--color-base-content);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+[data-theme='anti-polish'] .alert {
+  border-width: 2px;
+  border-color: var(--color-base-content);
+}
+
+[data-theme='anti-polish'] .dropdown-content {
+  border: 4px solid var(--color-base-content);
+  background-color: var(--color-base-100);
+  box-shadow: 6px 6px 0 0 var(--shadow-raw);
+}
+
+[data-theme='anti-polish'] .modal-box {
+  border: 4px solid var(--color-base-content);
+  box-shadow: 8px 8px 0 0 var(--shadow-raw);
+}
+
+[data-theme='anti-polish'] .modal-box h3 {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+[data-theme='anti-polish'] .mm-table-wrap {
+  border-width: 4px;
+  border-color: var(--color-base-content);
+}
+
+/* Sidebar nav: plain uppercase text; the active item is a full color-block invert (loud primary
+ * fill, thick ink left rail) rather than a tint. */
+[data-theme='anti-polish'] .mm-nav-item {
+  border-radius: 0;
+  border-left: 6px solid transparent;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: var(--color-base-content);
+}
+
+[data-theme='anti-polish'] .menu .menu-active {
+  border-left-color: var(--color-base-content);
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+/* The hero surface goes hazard-plate: flat primary fill behind ink text. */
+[data-theme='anti-polish'] .mm-net-worth {
+  border-radius: 0;
+  border: 3px solid var(--color-base-content);
+  background-color: var(--color-primary);
+  box-shadow: 4px 4px 0 0 var(--shadow-raw);
+}
+
+[data-theme='anti-polish'] .mm-net-worth :is(.mm-text-label, .mm-text-display) {
+  color: var(--color-primary-content);
+}
+
+/* Empty states: a bare dashed outline, no fill softness. */
+[data-theme='anti-polish'] .mm-empty {
+  border-radius: 0;
+  border: 3px dashed var(--color-base-content);
+}

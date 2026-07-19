@@ -1,0 +1,380 @@
+/* ============================================================================
+ * NEUMORPHISM — dark-mode theme style (ported from the design/neumorphism
+ * branch, dark clay variant).
+ *
+ * Everything is molded from one continuous slab of soft charcoal "clay": the
+ * page, the cards, the buttons, the sidebar all share the SAME surface color,
+ * and depth comes exclusively from paired soft shadows — a faint warm
+ * highlight cast from the top-left and a deep shade falling to the
+ * bottom-right. The mechanism:
+ *
+ *   1. The daisyUI theme collapses base-100/200 to one identical clay tone
+ *      (base-300 sits a whisper lighter for seams/tracks), so every existing
+ *      `bg-base-*` / `border-base-300` utility dissolves into the monolith.
+ *   2. The scoped rules below (un-layered, so they win over Tailwind's
+ *      layered utilities) sculpt the clay: paper elevations via the shared
+ *      `--mm-elev-*` hooks (flat → carved-in well, raised/floating →
+ *      extrusions), extruded buttons that press in on :active, debossed input
+ *      wells, an engraved wordmark, a pressed-in active nav pill.
+ *
+ * Deliberately NOT restyled: `.card` background/border-color — mm-paper
+ * callers override those via utilities (`bg-warning/10`, `border-error/40`)
+ * and must keep winning.
+ * ========================================================================= */
+
+@plugin 'daisyui/theme' {
+  name: 'neumorphism';
+  default: false;
+  prefersdark: false;
+  color-scheme: dark;
+
+  --color-base-100: oklch(27% 0.018 275);
+  --color-base-200: oklch(27% 0.018 275);
+  --color-base-300: oklch(32% 0.022 275);
+  --color-base-content: oklch(88% 0.012 275);
+  --color-primary: oklch(70% 0.13 278);
+  --color-primary-content: oklch(18% 0.04 278);
+  --color-secondary: oklch(68% 0.1 210);
+  --color-secondary-content: oklch(16% 0.03 210);
+  --color-accent: oklch(70% 0.13 340);
+  --color-accent-content: oklch(18% 0.04 340);
+  --color-neutral: oklch(80% 0.01 275);
+  --color-neutral-content: oklch(18% 0.02 275);
+  --color-info: oklch(68% 0.12 250);
+  --color-info-content: oklch(16% 0.03 250);
+  --color-success: oklch(68% 0.13 150);
+  --color-success-content: oklch(16% 0.03 150);
+  --color-warning: oklch(80% 0.13 85);
+  --color-warning-content: oklch(18% 0.04 85);
+  --color-error: oklch(66% 0.15 25);
+  --color-error-content: oklch(14% 0.03 25);
+
+  --radius-selector: 2rem;
+  --radius-field: 1rem;
+  --radius-box: 1.75rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 1px;
+
+  --depth: 0;
+  --noise: 0;
+
+  /* Clay optics — one dim lamp, top-left. Every depth cue pairs --mm-hi (highlight toward the
+   * light) and --mm-lo (shade away from it). */
+  --mm-hi: oklch(38% 0.025 275 / 0.9);
+  --mm-lo: oklch(13% 0.02 275 / 0.8);
+  --mm-lo-deep: oklch(8% 0.015 275 / 0.9);
+  /* Extrusion tiers (out of the slab). */
+  --mm-raised-sm: -3px -3px 7px var(--mm-hi), 3px 3px 7px var(--mm-lo);
+  --mm-raised: -7px -7px 16px var(--mm-hi), 7px 7px 16px var(--mm-lo);
+  --mm-floating: -14px -14px 30px var(--mm-hi), 16px 16px 38px var(--mm-lo-deep);
+  /* Depression tiers (into the slab). */
+  --mm-pressed: inset -3px -3px 7px var(--mm-hi), inset 3px 3px 7px var(--mm-lo);
+  --mm-well: inset -4px -4px 10px var(--mm-hi), inset 4px 4px 10px var(--mm-lo);
+
+  /* Shared theme-style hooks: every paper tier is the same clay; `flat` is carved INTO the slab
+   * as a well, `raised`/`floating` extrude out of it. */
+  --mm-surface-flat: var(--color-base-100);
+  --mm-surface-raised: var(--color-base-100);
+  --mm-surface-floating: var(--color-base-100);
+  --mm-elev-flat-shadow: var(--mm-well);
+  --mm-elev-raised-shadow: var(--mm-raised);
+  --mm-elev-floating-shadow: var(--mm-floating);
+  --mm-halo-shadow:
+    var(--mm-floating), 0 0 48px -8px color-mix(in oklab, var(--color-primary) 40%, transparent);
+}
+
+/* The slab itself. No gradients, no texture — a single matte clay expanse. */
+html[data-theme='neumorphism'] {
+  background: var(--color-base-200);
+  scrollbar-color: color-mix(in oklab, var(--color-base-content) 25%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+html[data-theme='neumorphism'] body {
+  min-height: 100dvh;
+}
+
+/* Headings drop the default theme's bubbly display face — clay is quiet, systemic. */
+[data-theme='neumorphism'] :is(.mm-text-display, .mm-text-heading) {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+/* Link cards lift toward the light on hover instead of tinting (base-100 == base-200, so
+ * daisyUI's hover:bg-base-200 tint is invisible by design). Same idiom for link stat cards. */
+[data-theme='neumorphism'] :is(a.card, a.stat) {
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+[data-theme='neumorphism'] :is(a.card, a.stat):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mm-floating);
+}
+
+/* Free-standing stat cards: extrusion is the frame — the border dissolves. */
+[data-theme='neumorphism'] .stat {
+  border-color: transparent;
+}
+
+/* Remaining raised chrome that never carries caller overrides. */
+[data-theme='neumorphism'] :is(.stats, .alert) {
+  box-shadow: var(--mm-raised);
+}
+
+[data-theme='neumorphism'] .dropdown-content {
+  box-shadow: var(--mm-floating);
+}
+
+[data-theme='neumorphism'] .modal-box {
+  box-shadow:
+    var(--mm-floating),
+    -22px -22px 52px var(--mm-hi),
+    26px 26px 64px var(--mm-lo-deep);
+}
+
+[data-theme='neumorphism'] .modal::backdrop,
+[data-theme='neumorphism'] .modal-backdrop {
+  background: color-mix(in oklab, var(--color-base-200) 55%, oklch(20% 0.02 275));
+  opacity: 0.55;
+}
+
+[data-theme='neumorphism'] .drawer-overlay {
+  background: color-mix(in oklab, var(--color-base-200) 45%, oklch(20% 0.02 275 / 0.7));
+}
+
+/* App shell: the navbar is a detached clay bar floating over the slab; the sidebar is an
+ * extruded panel (its bg-base-100 must stay — as a mobile drawer it overlays content and needs
+ * an opaque fill). Both shed the baseline's hairline borders. */
+[data-theme='neumorphism'] .navbar {
+  margin: 1rem 1rem 0;
+  width: auto;
+  border-bottom: 0;
+  border-radius: var(--radius-box);
+  background: var(--color-base-100);
+  box-shadow: var(--mm-raised);
+}
+
+[data-theme='neumorphism'] .drawer-side > .menu {
+  border-right: 0;
+  box-shadow: var(--mm-raised);
+}
+
+/* Sidebar nav — flush full-pill items; the active route is pressed INTO the clay (the
+ * neumorphic "this button is currently held down" idiom), tinted primary. */
+[data-theme='neumorphism'] .mm-nav-item {
+  border-radius: calc(infinity * 1px);
+  padding: 0.625rem 1rem;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+[data-theme='neumorphism'] .menu .menu-active {
+  background: color-mix(in oklab, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+  box-shadow: var(--mm-pressed);
+}
+
+/* Buttons — clay knobs. Resting: extruded. Hover: lifts. Active: pressed in. Borders vanish
+ * (depth IS the affordance); standalone buttons go full pill. */
+[data-theme='neumorphism'] .btn {
+  border-color: transparent;
+  background-image: none;
+  box-shadow: var(--mm-raised-sm);
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+[data-theme='neumorphism'] .btn:not(.join-item) {
+  border-radius: calc(infinity * 1px);
+}
+
+[data-theme='neumorphism'] .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--mm-raised);
+}
+
+[data-theme='neumorphism'] .btn:active {
+  transform: translateY(0);
+  box-shadow: var(--mm-pressed);
+}
+
+/* Ghost/link buttons rest flush with the slab and only extrude on hover. */
+[data-theme='neumorphism'] :is(.btn-ghost, .btn-link, .btn:disabled, .btn[disabled]) {
+  box-shadow: none;
+}
+
+[data-theme='neumorphism'] .btn-ghost:hover {
+  transform: none;
+  box-shadow: var(--mm-raised-sm);
+}
+
+[data-theme='neumorphism'] :is(.btn:disabled, .btn[disabled]) {
+  transform: none;
+}
+
+/* Grouped segments (paginators, range switcher): one molded bar, the active segment pressed in
+ * via daisyUI's btn-active. */
+[data-theme='neumorphism'] .join {
+  border-radius: var(--radius-field);
+  box-shadow: var(--mm-raised-sm);
+}
+
+[data-theme='neumorphism'] .join .btn.join-item {
+  box-shadow: none;
+}
+
+[data-theme='neumorphism'] .join .btn.join-item:active,
+[data-theme='neumorphism'] .join .btn.btn-active {
+  box-shadow: var(--mm-pressed);
+}
+
+/* Fields — wells carved into the clay; focus deepens the well and casts a soft primary bloom
+ * instead of a hard ring. */
+[data-theme='neumorphism'] :is(.input, .select, .textarea) {
+  border-color: transparent;
+  background-color: var(--color-base-100);
+  box-shadow: var(--mm-well);
+  transition: box-shadow 0.2s ease;
+}
+
+[data-theme='neumorphism'] :is(.input, .select, .textarea):is(:focus, :focus-within) {
+  outline: none;
+  border-color: transparent;
+  box-shadow:
+    var(--mm-well),
+    0 0 0 3px color-mix(in oklab, var(--color-primary) 22%, transparent),
+    0 6px 20px -8px color-mix(in oklab, var(--color-primary) 40%, transparent);
+}
+
+[data-theme='neumorphism'] :is(.checkbox, .radio, .range, .toggle) {
+  box-shadow: var(--mm-pressed);
+  border-color: transparent;
+  transition: box-shadow 0.2s ease;
+}
+
+[data-theme='neumorphism'] :is(.checkbox, .radio, .toggle):focus-visible {
+  outline: none;
+  box-shadow:
+    var(--mm-pressed),
+    0 0 0 3px color-mix(in oklab, var(--color-primary) 25%, transparent);
+}
+
+[data-theme='neumorphism'] :is(.checkbox, .toggle):checked {
+  box-shadow: var(--mm-raised-sm);
+}
+
+/* Tables — the whole table sits in a well (`mm-table-wrap` hook) rather than behind a border
+ * (borders are near-invisible against the monolithic slab by design); the header band is an
+ * engraved strip, rows separate by shadowless whisper-seams (base-300). */
+[data-theme='neumorphism'] .mm-table-wrap {
+  border-color: transparent;
+  box-shadow: var(--mm-well);
+}
+
+[data-theme='neumorphism'] .table thead tr {
+  background: color-mix(in oklab, var(--color-base-content) 4%, transparent);
+  box-shadow:
+    inset 0 -1px 0 var(--mm-lo),
+    inset 0 1px 0 var(--mm-hi);
+}
+
+[data-theme='neumorphism'] .table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Empty states sit in the same carved well. */
+[data-theme='neumorphism'] .mm-empty {
+  box-shadow: var(--mm-well);
+}
+
+/* Tabs — molded switch plate: the rail is a well, the active tab pops out. */
+[data-theme='neumorphism'] .tabs-box {
+  background: var(--color-base-100);
+  box-shadow: var(--mm-well);
+}
+
+[data-theme='neumorphism'] .tabs-box .tab {
+  border-radius: calc(infinity * 1px);
+}
+
+[data-theme='neumorphism'] .tabs-box .tab:is(input:checked, label:has(input:checked)),
+[data-theme='neumorphism'] .tabs-box .tab-active {
+  background: var(--color-base-100);
+  box-shadow: var(--mm-raised-sm);
+}
+
+/* Badges and progress: tiny extrusions / carved channels. */
+[data-theme='neumorphism'] .badge {
+  border-color: transparent;
+  box-shadow: var(--mm-raised-sm);
+}
+
+[data-theme='neumorphism'] .progress {
+  box-shadow: var(--mm-pressed);
+}
+
+[data-theme='neumorphism'] .steps .step:before,
+[data-theme='neumorphism'] .steps .step:after {
+  box-shadow: var(--mm-pressed);
+}
+
+/* Brand wordmark — engraved into the clay: muted fill, highlight kissing the bottom-right edge
+ * of each stroke, shade tucked top-left. Drops the display face along with the headings. */
+[data-theme='neumorphism'] .mm-brand {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  color: color-mix(in oklab, var(--color-base-content) 62%, var(--color-base-100));
+  text-shadow:
+    1px 1px 1px var(--mm-hi),
+    -1px -1px 1px var(--mm-lo);
+  letter-spacing: 0.02em;
+}
+
+/* Finishing touches. */
+[data-theme='neumorphism'] .divider::before,
+[data-theme='neumorphism'] .divider::after {
+  height: 2px;
+  background: linear-gradient(180deg, var(--mm-lo), var(--mm-hi));
+}
+
+[data-theme='neumorphism'] ::selection {
+  background: color-mix(in oklab, var(--color-primary) 28%, transparent);
+}
+
+[data-theme='neumorphism'] *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+[data-theme='neumorphism'] *::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--color-base-content) 18%, var(--color-base-200));
+  box-shadow:
+    inset -1px -1px 2px var(--mm-hi),
+    inset 1px 1px 2px var(--mm-lo);
+}
+
+[data-theme='neumorphism'] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='neumorphism'] :is(.btn, a.card, a.stat) {
+    transition: none;
+  }
+}

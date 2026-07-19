@@ -1,57 +1,86 @@
 import {
-  CHART_ANIMATION,
   CHART_NO_COLOR_FALLBACK,
+  resolveChartAnimation,
   resolveChartCategoricalColors,
 } from './chart-theme';
 
+const setDataTheme = (theme: string | null): void => {
+  if (theme) document.documentElement.setAttribute('data-theme', theme);
+  else document.documentElement.removeAttribute('data-theme');
+};
+
+afterEach(() => {
+  setDataTheme(null);
+});
+
 describe('resolveChartCategoricalColors', () => {
-  const setDataTheme = (theme: string | null): void => {
-    if (theme) document.documentElement.setAttribute('data-theme', theme);
-    else document.documentElement.removeAttribute('data-theme');
-  };
+  it('returns the deformable light palette for the default light theme', () => {
+    setDataTheme('deformable');
 
-  afterEach(() => {
+    const colors = resolveChartCategoricalColors();
+
+    expect(colors).toEqual(['#5fd4a8', '#7c8cf0', '#a07cf0', '#c26fe0', '#e26fc9', '#f0708f']);
+  });
+
+  it('returns the deformable dark palette for the default dark theme', () => {
+    setDataTheme('deformable-dark');
+
+    const colors = resolveChartCategoricalColors();
+
+    expect(colors).toEqual(['#5cc99e', '#8b99f5', '#ac8ef7', '#cc82ea', '#e884d1', '#f2839c']);
+  });
+
+  it('returns a style-specific palette for a non-default theme style', () => {
+    setDataTheme('cyberpunk');
+
+    const colors = resolveChartCategoricalColors();
+
+    expect(colors).toEqual(['#00e5ff', '#ff2ec4', '#c3f53c', '#8f7bff', '#ffa02e', '#00ffa3']);
+  });
+
+  it('defaults to the deformable light palette when no data-theme is set', () => {
     setDataTheme(null);
-  });
-
-  it('returns the 6-slot light-theme palette when data-theme is the light theme', () => {
-    setDataTheme('moneymosaic');
 
     const colors = resolveChartCategoricalColors();
 
-    expect(colors).toEqual(['#37b78a', '#028a9b', '#5e9ae7', '#5849b2', '#b473d1', '#9b2673']);
+    expect(colors).toEqual(['#5fd4a8', '#7c8cf0', '#a07cf0', '#c26fe0', '#e26fc9', '#f0708f']);
   });
 
-  it('returns the 6-slot dark-theme palette when data-theme is the dark theme', () => {
-    setDataTheme('moneymosaic-dark');
+  it('falls back to the deformable light palette for an unknown data-theme', () => {
+    setDataTheme('not-a-theme');
 
     const colors = resolveChartCategoricalColors();
 
-    expect(colors).toEqual(['#36a980', '#0394a6', '#5294e6', '#6353c5', '#b06ace', '#a8347f']);
-  });
-
-  it('defaults to the light palette when no data-theme is set', () => {
-    setDataTheme(null);
-
-    const colors = resolveChartCategoricalColors();
-
-    expect(colors).toEqual(['#37b78a', '#028a9b', '#5e9ae7', '#5849b2', '#b473d1', '#9b2673']);
+    expect(colors).toEqual(['#5fd4a8', '#7c8cf0', '#a07cf0', '#c26fe0', '#e26fc9', '#f0708f']);
   });
 
   it('returns a fresh array each call, safe for a caller to mutate', () => {
-    setDataTheme('moneymosaic');
+    setDataTheme('deformable');
 
     expect(resolveChartCategoricalColors()).not.toBe(resolveChartCategoricalColors());
   });
 });
 
-describe('CHART_ANIMATION', () => {
-  it("matches design-language.md §6's subtle, no-bounce transition timings", () => {
-    expect(CHART_ANIMATION).toEqual({
-      animationDuration: 500,
-      animationDurationUpdate: 350,
-      animationEasing: 'cubicOut',
-      animationEasingUpdate: 'cubicOut',
+describe('resolveChartAnimation', () => {
+  it("returns deformable's spring/overshoot timings for the default theme", () => {
+    setDataTheme('deformable');
+
+    expect(resolveChartAnimation()).toEqual({
+      animationDuration: 600,
+      animationDurationUpdate: 400,
+      animationEasing: 'elasticOut',
+      animationEasingUpdate: 'bounceOut',
+    });
+  });
+
+  it('returns the style-specific motion for a non-default theme style', () => {
+    setDataTheme('anti-polish');
+
+    expect(resolveChartAnimation()).toEqual({
+      animationDuration: 200,
+      animationDurationUpdate: 150,
+      animationEasing: 'linear',
+      animationEasingUpdate: 'linear',
     });
   });
 });

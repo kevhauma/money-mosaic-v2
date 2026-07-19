@@ -1,6 +1,14 @@
-<div class="rounded-box border border-primary/30 bg-primary/10 px-4 py-2 text-right">
-  <mm-text variant="label" as="p" color="primary">Net worth</mm-text>
-  <mm-text variant="display" as="p" color="primary" [numeric]="true">
+<!-- `mm-net-worth` is a theme-style hook — themes restyle the hero surface via scoped CSS. -->
+<div
+  class="mm-net-worth relative overflow-hidden rounded-box border border-primary/30 bg-primary/10 px-4 py-2 text-right"
+>
+  <!-- The app's one hero surface gets the decorative mm-blob wash (theme-style hook; only themes that set --mm-blob-bg render it) — nowhere else in the shell does. -->
+  <div
+    class="mm-blob pointer-events-none absolute -top-6 -right-6 h-24 w-24"
+    aria-hidden="true"
+  ></div>
+  <mm-text variant="label" as="p" color="primary" class="relative">Net worth</mm-text>
+  <mm-text variant="display" as="p" color="primary" [numeric]="true" class="relative">
     @if (accountsStore.dataReady()) {
       {{ accountsStore.netWorth() | signedAmount }}
     } @else {

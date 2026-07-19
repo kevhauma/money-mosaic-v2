@@ -2,15 +2,17 @@ import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PaperComponent } from './paper.component';
+import { MM_SQUISH_CLASS } from '@/shared/utils';
 
 /** Angular's `[class]` binding applies/diffs individual class tokens rather than the concatenated string verbatim, so `element.className` doesn't preserve source order — compare as sets instead. */
 const expectClasses = (element: Element, expected: string[]): void => {
   expect(new Set(element.className.split(' ').filter(Boolean))).toEqual(new Set(expected));
 };
 
-const RAISED_SHADOW = 'shadow-[0_1px_2px_rgba(11,11,17,.06),0_1px_3px_rgba(11,11,17,.08)]';
-const FLOATING_SHADOW = 'shadow-[0_4px_12px_rgba(11,11,17,.10),0_2px_4px_rgba(11,11,17,.06)]';
-const DARK_SHADOW_NONE = 'dark:shadow-none';
+/** Per-tier surface + elevation hook (styles.css) — the actual look comes from the active theme's `--mm-surface-*`/`--mm-elev-*` values, so the component only ever emits these stable markers. */
+const FLAT_SURFACE = 'bg-(--mm-surface-flat)';
+const RAISED_SURFACE = 'bg-(--mm-surface-raised)';
+const FLOATING_SURFACE = 'bg-(--mm-surface-floating)';
 
 describe('PaperComponent', () => {
   let fixture: ComponentFixture<PaperComponent>;
@@ -33,12 +35,10 @@ describe('PaperComponent', () => {
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
-      'bg-base-100',
-      'dark:bg-base-300',
+      RAISED_SURFACE,
       'border',
       'border-base-300',
-      RAISED_SHADOW,
-      DARK_SHADOW_NONE,
+      'mm-elev-raised',
     ]);
   });
 
@@ -47,9 +47,10 @@ describe('PaperComponent', () => {
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
-      'bg-base-100',
+      FLAT_SURFACE,
       'border',
       'border-base-300',
+      'mm-elev-flat',
     ]);
   });
 
@@ -58,30 +59,31 @@ describe('PaperComponent', () => {
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
-      'bg-base-100',
-      'dark:bg-base-300',
+      FLOATING_SURFACE,
       'border',
       'border-base-300',
-      FLOATING_SHADOW,
-      DARK_SHADOW_NONE,
+      'mm-elev-floating',
     ]);
   });
 
-  it('adds a dark aurora-violet ring when glow is set on a floating surface', () => {
+  it('adds the mm-halo hook when glow is set on a floating surface', () => {
     fixture.componentRef.setInput('elevation', 'floating');
     fixture.componentRef.setInput('glow', true);
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
-      'bg-base-100',
-      'dark:bg-base-300',
+      FLOATING_SURFACE,
       'border',
       'border-base-300',
-      FLOATING_SHADOW,
-      DARK_SHADOW_NONE,
-      'dark:ring-1',
-      'dark:ring-[oklch(60%_0.17_285_/_15%)]',
+      'mm-elev-floating',
+      'mm-halo',
     ]);
+  });
+
+  it('ignores glow on non-floating elevations', () => {
+    fixture.componentRef.setInput('glow', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('div').className).not.toContain('mm-halo');
   });
 
   it('adds h-full when fullHeight is set', () => {
@@ -89,12 +91,10 @@ describe('PaperComponent', () => {
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
-      'bg-base-100',
-      'dark:bg-base-300',
+      RAISED_SURFACE,
       'border',
       'border-base-300',
-      RAISED_SHADOW,
-      DARK_SHADOW_NONE,
+      'mm-elev-raised',
       'h-full',
     ]);
   });
@@ -104,12 +104,10 @@ describe('PaperComponent', () => {
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
-      'bg-base-100',
-      'dark:bg-base-300',
+      RAISED_SURFACE,
       'border',
       'border-base-300',
-      RAISED_SHADOW,
-      DARK_SHADOW_NONE,
+      'mm-elev-raised',
       'mt-2',
     ]);
   });
@@ -120,7 +118,7 @@ describe('PaperComponent', () => {
     expect(fixture.nativeElement.querySelector('div.card')).toBeTruthy();
   });
 
-  it('renders as a router link with hover transition when link is provided', async () => {
+  it('renders as a router link with the squish hook and hover tint when link is provided', async () => {
     fixture.componentRef.setInput('link', '/transactions');
     fixture.detectChanges();
     await fixture.whenStable();
@@ -128,13 +126,11 @@ describe('PaperComponent', () => {
     expect(anchor).toBeTruthy();
     expectClasses(anchor, [
       'card',
-      'bg-base-100',
-      'dark:bg-base-300',
+      RAISED_SURFACE,
       'border',
       'border-base-300',
-      RAISED_SHADOW,
-      DARK_SHADOW_NONE,
-      'transition',
+      'mm-elev-raised',
+      MM_SQUISH_CLASS,
       'hover:bg-base-200',
     ]);
   });
@@ -145,7 +141,7 @@ describe('PaperComponent', () => {
     expect(cardBody).toBeTruthy();
   });
 
-  it('overrides the background, replacing the dark-mode default entirely (border still applies)', () => {
+  it('overrides the background, replacing the per-theme surface default entirely (border still applies)', () => {
     fixture.componentRef.setInput('background', 'bg-warning/10');
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
@@ -153,8 +149,7 @@ describe('PaperComponent', () => {
       'bg-warning/10',
       'border',
       'border-base-300',
-      RAISED_SHADOW,
-      DARK_SHADOW_NONE,
+      'mm-elev-raised',
     ]);
   });
 
@@ -164,9 +159,10 @@ describe('PaperComponent', () => {
     fixture.detectChanges();
     expectClasses(fixture.nativeElement.querySelector('div'), [
       'card',
-      'bg-base-100',
+      FLAT_SURFACE,
       'border',
       'border-error/40',
+      'mm-elev-flat',
     ]);
   });
 
@@ -200,9 +196,8 @@ describe('PaperComponent', () => {
       'bg-warning/10',
       'border',
       'border-base-300',
-      RAISED_SHADOW,
-      DARK_SHADOW_NONE,
-      'transition',
+      'mm-elev-raised',
+      MM_SQUISH_CLASS,
       'hover:bg-warning/20',
     ]);
   });

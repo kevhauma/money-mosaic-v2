@@ -300,9 +300,9 @@
     </p>
     <div class="stats">
       <!-- GENERATED:STATS:START -->
-      <div class="stat"><span class="value">21</span><span class="label">Nodes</span></div>
-      <div class="stat"><span class="value">71</span><span class="label">Edges</span></div>
-      <div class="stat"><span class="value">7</span><span class="label">Features</span></div>
+      <div class="stat"><span class="value">22</span><span class="label">Nodes</span></div>
+      <div class="stat"><span class="value">73</span><span class="label">Edges</span></div>
+      <div class="stat"><span class="value">8</span><span class="label">Features</span></div>
       <div class="stat"><span class="value">11</span><span class="label">Core modules</span></div>
       <div class="stat"><span class="value">3</span><span class="label">Shared modules</span></div>
       <!-- GENERATED:STATS:END -->
@@ -397,24 +397,25 @@ G["feature-dashboard"]
 H["feature-data-management"]
 I["feature-import"]
 J["feature-learning"]
-K["feature-transactions"]
+K["feature-settings"]
+L["feature-transactions"]
 end
-subgraph L["shared"]
-M["echarts"]
-N["ui"]
-O["utils"]
+subgraph M["shared"]
+N["echarts"]
+O["ui"]
+P["utils"]
 end
 end
 end
 3-->5
 3-->D
-3-->O
+3-->P
 4-->5
 4-->3
 5-->7
-5-->O
+5-->P
 6-->5
-6-->O
+6-->P
 6-->D
 7-->4
 7-->5
@@ -422,70 +423,72 @@ end
 8-->5
 8-->9
 8-->D
-8-->O
+8-->P
 8-->C
 9-->5
-9-->O
+9-->P
 9-->3
 9-->D
 C-->5
 C-->D
 D-->5
 D-->3
-D-->O
+D-->P
 E-->5
-E-->M
-E-->8
 E-->N
+E-->8
 E-->O
+E-->P
 E-->9
 F-->5
 F-->8
-F-->N
 F-->O
+F-->P
 F-->4
 F-->7
 G-->5
 G-->8
-G-->N
 G-->O
+G-->P
 G-->D
 G-->9
-G-->M
+G-->N
 H-->5
 H-->A
-H-->N
 H-->O
+H-->P
 I-->5
 I-->6
-I-->N
 I-->O
+I-->P
 I-->8
 I-->4
-J-->N
+J-->O
 J-->7
 J-->8
 J-->F
 J-->5
-J-->O
-K-->5
-K-->8
-K-->C
-K-->N
+J-->P
+K-->B
 K-->O
-K-->F
-K-->D
-M-->O
-N-->O
+L-->5
+L-->8
+L-->C
+L-->O
+L-->P
+L-->F
+L-->D
+N-->P
+O-->P
 
 classDef core fill:#E4F3F1,stroke:#2C7A73,color:#173F3B,stroke-width:1.5px;
 classDef shared fill:#EFEBFA,stroke:#6C5B9E,color:#332B54,stroke-width:1.5px;
 classDef feature fill:#FBEADC,stroke:#C2703A,color:#5C3111,stroke-width:1.5px;
 class 3,4,5,6,7,8,9,A,B,C,D core
-class M,N,O shared
-class E,F,G,H,I,J,K feature
+class N,O,P shared
+class E,F,G,H,I,J,K,L feature
 style 2 fill:#F5FBFA,stroke:#2C7A73,stroke-width:1px
-style L fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
+style M fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
 style FEAT fill:#FDF6F0,stroke:#C2703A,stroke-width:1px
 </pre>
       </div>

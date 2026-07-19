@@ -34,12 +34,12 @@
       </mm-text>
 
       <div class="mt-4 grid grid-cols-[repeat(auto-fit,minmax(275px,1fr))] gap-4">
-        @for (category of categories(); track category.categoryId) {
+        @for (category of categories(); track category.categoryId; let index = $index) {
           <mm-paper
             elevation="floating"
             background=""
             bodyClass="p-3"
-            class=""
+            [class]="index % 2 === 0 ? 'mm-tilt-l' : 'mm-tilt-r'"
             [style]="'border-inline-start: 4px solid ' + category.color"
           >
             <mm-flex align="center" justify="between" gap="2" class="mb-2">

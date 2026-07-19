@@ -9,9 +9,10 @@ import { TypographyComponent } from './typography.component';
 })
 class HostComponent {}
 
-/** Angular's `[class]` binding applies/diffs individual class tokens rather than the concatenated string verbatim, so `element.className` doesn't preserve source order — compare as sets instead. */
+/** Angular's `[class]` binding applies/diffs individual class tokens rather than the concatenated string verbatim, so `element.className` doesn't preserve source order — compare as sets instead. The per-variant `mm-text-*` theme-style marker is asserted once in its own test and filtered here so every variant list stays about the variant's actual styling. */
 const expectClasses = (element: Element, expected: string[]): void => {
-  expect(new Set(element.className.split(' ').filter(Boolean))).toEqual(new Set(expected));
+  const tokens = element.className.split(' ').filter((c) => c && !c.startsWith('mm-text-'));
+  expect(new Set(tokens)).toEqual(new Set(expected));
 };
 
 describe('TypographyComponent', () => {
@@ -38,6 +39,7 @@ describe('TypographyComponent', () => {
       'font-bold',
       'tracking-[-0.02em]',
       'leading-[1.1]',
+      'font-display',
     ]);
   });
 
@@ -50,6 +52,7 @@ describe('TypographyComponent', () => {
       'tracking-[-0.01em]',
       'leading-[1.25]',
       'text-base-content',
+      'font-display',
     ]);
   });
 
@@ -91,6 +94,12 @@ describe('TypographyComponent', () => {
       'uppercase',
       'text-base-content/60',
     ]);
+  });
+
+  it('emits the mm-text theme-style marker for its variant', () => {
+    fixture.componentRef.setInput('variant', 'heading');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('span').classList).toContain('mm-text-heading');
   });
 
   it('adds tabular-nums when numeric is set', () => {
@@ -179,6 +188,7 @@ describe('TypographyComponent', () => {
       'tracking-[-0.01em]',
       'leading-[1.25]',
       'text-base-content',
+      'font-display',
     ]);
   });
 });

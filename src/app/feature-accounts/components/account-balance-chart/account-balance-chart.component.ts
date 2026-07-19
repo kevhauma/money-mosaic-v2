@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
 import type { ChartZoomWindow, NetWorthPoint } from '@/core/stats';
 import {
-  CHART_ANIMATION,
+  resolveChartAnimation,
   formatAxisTooltip,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
@@ -19,7 +19,7 @@ export const buildAccountBalanceChartOption = (
   points: NetWorthPoint[],
   zoomWindow: ChartZoomWindow,
 ): EChartsCoreOption => ({
-  ...CHART_ANIMATION,
+  ...resolveChartAnimation(),
   color: resolveChartCategoricalColors(),
   tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
   grid: { left: 56, right: 24, top: 24, bottom: 64 },
@@ -39,7 +39,7 @@ export const buildAccountBalanceChartOption = (
 });
 
 /**
- * Full-history balance line for one account (TICKET-STAT-02) — spans opening-balance date/first
+ * Full-history balance line for one account (TICKET-STAT-02) â€” spans opening-balance date/first
  * transaction through today, so the series itself is always the account's entire history. This
  * chart owns its own local granularity control (TICKET-STAT-15), independent of every other
  * chart's, and the topbar's date range scrubs the initial zoom window (via `dataZoom`) rather than

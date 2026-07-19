@@ -37,6 +37,20 @@ describe('StatCardComponent', () => {
     expect(fixture.nativeElement.querySelector('a')).toBeTruthy();
   });
 
+  it('is upright by default and applies the mm-tilt hook when tilt is set', () => {
+    fixture.detectChanges();
+    const stat = fixture.nativeElement.querySelector('.stat');
+    expect(stat.classList).not.toContain('mm-tilt-l');
+
+    fixture.componentRef.setInput('tilt', 'a');
+    fixture.detectChanges();
+    expect(stat.classList).toContain('mm-tilt-l');
+
+    fixture.componentRef.setInput('tilt', 'b');
+    fixture.detectChanges();
+    expect(stat.classList).toContain('mm-tilt-r');
+  });
+
   it('renders subLabel without a tooltip wrapper when no tooltip is provided', () => {
     fixture.componentRef.setInput('subLabel', '+12% vs. last year');
     fixture.detectChanges();

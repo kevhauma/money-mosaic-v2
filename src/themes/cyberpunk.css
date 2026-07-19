@@ -1,0 +1,503 @@
+/* ============================================================================
+ * CYBERPUNK — "NIGHT CITY LEDGER" — dark-mode theme style (ported from the
+ * design/cyberpunk branch's canonical dark variant).
+ *
+ * Deep indigo-black surfaces, electric-cyan primary, neon-violet secondary,
+ * hot-magenta accent, acid warning, laser success. Radius 0 everywhere:
+ * nothing in this UI is soft. Base scale keeps the stepping contract
+ * (100 < 200 < 300 in lightness): 100 = flat panels/sidebars, 200 = page
+ * background, 300 = raised surfaces + borders (cyan-cast so every default
+ * border reads as circuitry). The body paints a neon circuit grid + glow
+ * vignettes with a scan sweep and CRT scanlines; type flips to
+ * Orbitron/Rajdhani/Share Tech Mono via the `mm-text-*` hooks.
+ * ========================================================================= */
+
+@plugin 'daisyui/theme' {
+  name: 'cyberpunk';
+  default: false;
+  prefersdark: false;
+  color-scheme: dark;
+
+  --color-base-100: oklch(16% 0.028 278);
+  --color-base-200: oklch(20% 0.032 278);
+  --color-base-300: oklch(28% 0.045 250);
+  --color-base-content: oklch(93% 0.025 195);
+  --color-primary: oklch(84% 0.15 195);
+  --color-primary-content: oklch(15% 0.05 220);
+  --color-secondary: oklch(66% 0.23 305);
+  --color-secondary-content: oklch(97% 0.01 305);
+  --color-accent: oklch(66% 0.27 350);
+  --color-accent-content: oklch(15% 0.05 350);
+  --color-neutral: oklch(90% 0.05 195);
+  --color-neutral-content: oklch(15% 0.03 250);
+  --color-info: oklch(74% 0.15 235);
+  --color-info-content: oklch(15% 0.04 235);
+  --color-success: oklch(80% 0.22 152);
+  --color-success-content: oklch(15% 0.05 152);
+  --color-warning: oklch(86% 0.18 100);
+  --color-warning-content: oklch(18% 0.05 100);
+  --color-error: oklch(64% 0.24 18);
+  --color-error-content: oklch(97% 0.01 18);
+
+  --radius-selector: 0rem;
+  --radius-field: 0rem;
+  --radius-box: 0rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 1px;
+
+  --depth: 0;
+  --noise: 1;
+
+  /* Shared theme-style hooks. NIGHT CITY reads depth as neon emission — a cyan glow that scales
+   * with elevation — on top of the stepped surface. */
+  --mm-surface-flat: var(--color-base-100);
+  --mm-surface-raised: var(--color-base-300);
+  --mm-surface-floating: var(--color-base-300);
+  --mm-elev-raised-shadow: 0 0 14px oklch(84% 0.15 195 / 0.1);
+  --mm-elev-floating-shadow:
+    0 0 24px oklch(84% 0.15 195 / 0.16), 0 0 60px oklch(66% 0.27 350 / 0.08);
+  /* Full-power neon ring for hero surfaces (mm-paper `glow` on floating elevation). */
+  --mm-halo-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-primary) 40%, transparent),
+    0 0 24px oklch(84% 0.15 195 / 0.16), 0 0 60px oklch(66% 0.27 350 / 0.08);
+}
+
+/* Cyberpunk type stack (faces imported once in styles.css). --font-display is declared
+ * un-layered here so it reliably beats the @theme default for `font-display` utilities. */
+[data-theme='cyberpunk'] {
+  --font-display: 'Orbitron', 'Rajdhani', ui-sans-serif, sans-serif;
+  --mm-font-mono: 'Share Tech Mono', ui-monospace, 'Cascadia Mono', monospace;
+}
+
+/* Ambient layer: neon circuit grid, glow vignettes, scan sweep, CRT scanlines. The app shell's
+ * content pane goes transparent so these show through everywhere. */
+html[data-theme='cyberpunk'] body {
+  font-family: 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
+  background-color: var(--color-base-200);
+  background-image:
+    radial-gradient(
+      70rem 45rem at 10% -10%,
+      color-mix(in oklab, var(--color-primary) 8%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      55rem 40rem at 110% 115%,
+      color-mix(in oklab, var(--color-accent) 7%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(color-mix(in oklab, var(--color-primary) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-primary) 5%, transparent) 1px,
+      transparent 1px
+    );
+  background-size:
+    100% 100%,
+    100% 100%,
+    44px 44px,
+    44px 44px;
+  background-attachment: fixed;
+}
+
+[data-theme='cyberpunk'] .drawer-content {
+  background: transparent;
+}
+
+/* Slow luminous scan bar drifting down the viewport. */
+html[data-theme='cyberpunk'] body::before {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: -25vh;
+  height: 22vh;
+  z-index: 10;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in oklab, var(--color-primary) 5%, transparent) 50%,
+    transparent
+  );
+  animation: mm-scan-sweep 10s linear infinite;
+}
+
+/* CRT scanlines over everything (modals included — that's the aesthetic). */
+html[data-theme='cyberpunk'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(2, 6, 16, 0.09) 0px,
+    rgba(2, 6, 16, 0.09) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+@keyframes mm-scan-sweep {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(150vh);
+  }
+}
+
+@keyframes mm-neon-flicker {
+  0%,
+  7%,
+  9%,
+  33%,
+  35%,
+  78%,
+  80.5%,
+  100% {
+    opacity: 1;
+  }
+  8%,
+  34%,
+  79% {
+    opacity: 0.55;
+  }
+}
+
+[data-theme='cyberpunk'] ::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-content);
+}
+
+[data-theme='cyberpunk'] * {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-primary) 45%, transparent) transparent;
+}
+
+[data-theme='cyberpunk'] :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 10px color-mix(in oklab, var(--color-primary) 45%, transparent);
+}
+
+/* Neon logotype with chromatic-aberration ghosting and an occasional flicker. */
+[data-theme='cyberpunk'] .mm-brand {
+  font-family: var(--font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--color-base-content);
+  text-shadow:
+    -1.5px 0 color-mix(in oklab, var(--color-accent) 80%, transparent),
+    1.5px 0 color-mix(in oklab, var(--color-primary) 80%, transparent),
+    0 0 14px color-mix(in oklab, var(--color-primary) 55%, transparent);
+  animation: mm-neon-flicker 7s steps(1) infinite;
+}
+
+/* The sidebar wordmark gains a terminal status line (the branch added this as markup; here it
+ * rides the hook so only this theme renders it). */
+[data-theme='cyberpunk'] .drawer-side .mm-brand::after {
+  content: '// ledger.sys online';
+  display: block;
+  font-family: var(--mm-font-mono);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  text-shadow: none;
+  color: color-mix(in oklab, var(--color-accent) 80%, transparent);
+}
+
+/* Type scale (mm-text hooks): Orbitron for display numbers and headings — wide, uppercase,
+ * positive tracking; Share Tech Mono for labels/captions so metadata reads as terminal output;
+ * Rajdhani carries body copy. */
+[data-theme='cyberpunk'] .mm-text-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+[data-theme='cyberpunk'] .mm-text-heading {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+[data-theme='cyberpunk'] .mm-text-subheading {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+[data-theme='cyberpunk'] .mm-text-caption {
+  font-family: var(--mm-font-mono);
+}
+
+[data-theme='cyberpunk'] .mm-text-label {
+  font-family: var(--mm-font-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: color-mix(in oklab, var(--color-primary) 80%, transparent);
+}
+
+/* HUD panel chrome for lifted papers: a faint diagonal energy wash plus the classic corner
+ * brackets. Pseudo-elements are absolutely positioned so daisyUI's flex `card` layout is
+ * unaffected; no clip-path, so overflowing children (dropdowns, tooltips) stay visible. */
+[data-theme='cyberpunk'] .card:is(.mm-elev-raised, .mm-elev-floating) {
+  position: relative;
+  background-image: linear-gradient(
+    140deg,
+    color-mix(in oklab, var(--color-primary) 6%, transparent),
+    transparent 45%
+  );
+}
+
+[data-theme='cyberpunk'] .card:is(.mm-elev-raised, .mm-elev-floating)::before,
+[data-theme='cyberpunk'] .card:is(.mm-elev-raised, .mm-elev-floating)::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 1;
+  border: 0 solid color-mix(in oklab, var(--color-primary) 75%, transparent);
+}
+
+[data-theme='cyberpunk'] .card:is(.mm-elev-raised, .mm-elev-floating)::before {
+  top: -1px;
+  left: -1px;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+
+[data-theme='cyberpunk'] .card:is(.mm-elev-raised, .mm-elev-floating)::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
+}
+
+/* Link cards energize on hover (the baseline's hover:bg-base-200 tint barely reads here). */
+[data-theme='cyberpunk'] :is(a.card, a.stat):hover {
+  border-color: color-mix(in oklab, var(--color-primary) 50%, transparent);
+  background-color: color-mix(in oklab, var(--color-primary) 5%, transparent);
+}
+
+/* App shell: neon hairline along the top of the navbar, circuitry borders, slight blur. */
+[data-theme='cyberpunk'] .navbar {
+  position: relative;
+  border-bottom-color: color-mix(in oklab, var(--color-primary) 25%, transparent);
+  background-color: color-mix(in oklab, var(--color-base-100) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme='cyberpunk'] .navbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-accent) 45%,
+    transparent 85%
+  );
+}
+
+[data-theme='cyberpunk'] .drawer-side > .menu {
+  border-right-color: color-mix(in oklab, var(--color-primary) 20%, transparent);
+}
+
+/* Sidebar nav: mono uppercase channel labels; `.menu-active` energizes the item — neon left
+ * rail, primary tint, phosphor text glow. */
+[data-theme='cyberpunk'] .mm-nav-item {
+  border-radius: 0;
+  border-left: 2px solid transparent;
+  font-family: var(--mm-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+[data-theme='cyberpunk'] .menu .menu-active {
+  border-left-color: var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+  text-shadow: 0 0 10px var(--color-primary);
+}
+
+/* Buttons: command-console styling — angular corner cuts, uppercase, cyan hover glow.
+ * (drop-shadow, not box-shadow: it follows the clip-path silhouette.) */
+[data-theme='cyberpunk'] .btn {
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+  border-radius: 0;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  transition:
+    filter 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+[data-theme='cyberpunk'] .btn:hover:not(:disabled):not([disabled]) {
+  filter: drop-shadow(0 0 7px color-mix(in oklab, var(--color-primary) 50%, transparent));
+}
+
+/* clip-path clips the focus outline at the cut corners — add an inset ring that survives it. */
+[data-theme='cyberpunk'] .btn:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Form fields: data-entry ports. Mono values, cyan charge-up on focus. */
+[data-theme='cyberpunk'] :is(.input, .select, .textarea) {
+  font-family: var(--mm-font-mono);
+  border-radius: 0;
+  background-color: color-mix(in oklab, var(--color-base-100) 60%, transparent);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+[data-theme='cyberpunk'] :is(.input, .select, .textarea):is(:focus, :focus-within) {
+  border-color: var(--color-primary);
+  box-shadow:
+    0 0 0 1px var(--color-primary),
+    0 0 14px color-mix(in oklab, var(--color-primary) 35%, transparent);
+  outline: none;
+}
+
+/* Tables: terminal readouts. */
+[data-theme='cyberpunk'] .table {
+  font-size: 0.9rem;
+}
+
+[data-theme='cyberpunk'] .table thead tr {
+  font-family: var(--mm-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.68rem;
+  color: color-mix(in oklab, var(--color-primary) 85%, var(--color-base-content));
+  border-bottom: 1px solid color-mix(in oklab, var(--color-primary) 40%, transparent);
+}
+
+[data-theme='cyberpunk'] .table tbody tr {
+  border-color: color-mix(in oklab, var(--color-base-300) 60%, transparent);
+}
+
+[data-theme='cyberpunk'] .table tbody tr:hover {
+  background: color-mix(in oklab, var(--color-primary) 6%, transparent);
+}
+
+/* Stat readouts: Orbitron digits with a phosphor glow. */
+[data-theme='cyberpunk'] .stat-title {
+  font-family: var(--mm-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+  opacity: 0.75;
+}
+
+[data-theme='cyberpunk'] .stat-value {
+  font-family: var(--font-display);
+  text-shadow: 0 0 12px color-mix(in oklab, currentColor 35%, transparent);
+}
+
+[data-theme='cyberpunk'] .stat-desc {
+  font-family: var(--mm-font-mono);
+  font-size: 0.72rem;
+}
+
+/* Badges: ID chips. */
+[data-theme='cyberpunk'] .badge {
+  font-family: var(--mm-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.66rem;
+}
+
+/* Tabs: channel selectors with a glowing active edge. */
+[data-theme='cyberpunk'] .tab {
+  font-family: var(--mm-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+}
+
+[data-theme='cyberpunk'] .tab:is(.tab-active, [aria-selected='true']) {
+  color: var(--color-primary);
+  text-shadow: 0 0 10px color-mix(in oklab, var(--color-primary) 55%, transparent);
+}
+
+/* Alerts: hazard plates — heavy energized left rail. */
+[data-theme='cyberpunk'] .alert {
+  border-width: 1px;
+  border-left-width: 4px;
+}
+
+/* Modals: holo-terminals floating over a dimmed grid. */
+[data-theme='cyberpunk'] .modal-box {
+  border: 1px solid color-mix(in oklab, var(--color-primary) 40%, var(--color-base-300));
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-primary) 15%, transparent),
+    0 0 40px color-mix(in oklab, var(--color-primary) 18%, transparent),
+    0 24px 60px rgba(2, 6, 16, 0.5);
+}
+
+[data-theme='cyberpunk'] .modal-backdrop {
+  background: rgba(3, 6, 14, 0.7);
+  backdrop-filter: blur(3px) saturate(1.2);
+}
+
+/* Dropdown + tooltip surfaces: same energized border as panels. */
+[data-theme='cyberpunk'] .dropdown .menu,
+[data-theme='cyberpunk'] .dropdown-content {
+  border: 1px solid color-mix(in oklab, var(--color-primary) 35%, var(--color-base-300));
+  box-shadow: 0 0 24px color-mix(in oklab, var(--color-primary) 15%, transparent);
+}
+
+[data-theme='cyberpunk'] .tooltip-content,
+[data-theme='cyberpunk'] .tooltip::before {
+  font-family: var(--mm-font-mono);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 35%, transparent);
+}
+
+/* Dividers: powered-down light strips. */
+[data-theme='cyberpunk'] .divider::before,
+[data-theme='cyberpunk'] .divider::after {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-primary) 35%, transparent),
+    transparent
+  );
+}
+
+/* Loading skeletons shimmer cyan instead of gray. */
+[data-theme='cyberpunk'] .skeleton {
+  background-color: color-mix(in oklab, var(--color-primary) 8%, var(--color-base-300));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme='cyberpunk'] body::before {
+    animation: none;
+    display: none;
+  }
+
+  [data-theme='cyberpunk'] .mm-brand {
+    animation: none;
+  }
+}

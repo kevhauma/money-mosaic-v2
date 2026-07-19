@@ -29,45 +29,49 @@
               <mm-loading-skeleton [rows]="2" />
             </mm-paper>
           } @else {
-            <mm-paper bodyClass="">
-              <div class="stats stats-vertical w-full overflow-visible lg:stats-horizontal">
-                <mm-stat-card
-                  label="Income"
-                  [value]="incomeValue()"
-                  [subLabel]="incomeYoySubLabel()"
-                  [tooltip]="incomeYoyTooltip()"
-                  link="/transactions"
-                  [queryParams]="drilldownParams()"
-                />
-                <mm-stat-card
-                  label="Expense"
-                  [value]="expenseValue()"
-                  [subLabel]="expenseYoySubLabel()"
-                  [tooltip]="expenseYoyTooltip()"
-                  link="/transactions"
-                  [queryParams]="drilldownParams()"
-                />
-                <mm-stat-card
-                  label="Net cash flow"
-                  [value]="netValue()"
-                  [subLabel]="netYoySubLabel()"
-                  [tooltip]="netYoyTooltip()"
-                  [color]="netColor()"
-                  link="/transactions"
-                  [queryParams]="drilldownParams()"
-                />
-                <mm-stat-card
-                  label="Savings rate"
-                  [value]="savingsRateValue()"
-                  [subLabel]="savingsSubLabel()"
-                />
-                <mm-stat-card
-                  label="Spending rate"
-                  [value]="spendingRateValue()"
-                  [subLabel]="spendingRateSubLabel()"
-                />
-              </div>
-            </mm-paper>
+            <!-- Each stat is its own free-standing card (not a joined .stats strip); the alternating tilt hooks only render in themes that opt in (Memphis). -->
+            <div class="flex flex-wrap gap-6 py-2">
+              <mm-stat-card
+                label="Income"
+                [value]="incomeValue()"
+                [subLabel]="incomeYoySubLabel()"
+                [tooltip]="incomeYoyTooltip()"
+                link="/transactions"
+                [queryParams]="drilldownParams()"
+                tilt="a"
+              />
+              <mm-stat-card
+                label="Expense"
+                [value]="expenseValue()"
+                [subLabel]="expenseYoySubLabel()"
+                [tooltip]="expenseYoyTooltip()"
+                link="/transactions"
+                [queryParams]="drilldownParams()"
+                tilt="b"
+              />
+              <mm-stat-card
+                label="Net cash flow"
+                [value]="netValue()"
+                [subLabel]="netYoySubLabel()"
+                [tooltip]="netYoyTooltip()"
+                [color]="netColor()"
+                link="/transactions"
+                [queryParams]="drilldownParams()"
+                tilt="a"
+              />
+              <mm-stat-card
+                label="Savings rate"
+                [value]="savingsRateValue()"
+                [subLabel]="savingsSubLabel()"
+                tilt="b"
+              />
+              <mm-stat-card
+                label="Spending rate"
+                [value]="spendingRateValue()"
+                [subLabel]="spendingRateSubLabel()"
+                tilt="a"
+              />
+            </div>
           }
         }
         @case ('weekday-weekend') {

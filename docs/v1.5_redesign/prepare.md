@@ -51,3 +51,22 @@ find all other instances of styling applied to components that are not positiona
 - Aurora UI → soft lighting and atmosphere
 - Vibrant & Block-based → category identity through color
 - Dark Mode (OLED) → optional theme where colorful data really stands out
+
+
+
+ignore the design language docs, redesign everything for the <year> design, go extreme in the design.  go through without my input. and skip the browser check
+- [x] y2k
+- [x] Soft UI Evolution
+- [x] Skeuomorphism
+- [x] Memphis Design
+- [x] Pixel Art
+- [x] Gen Z Chaos 
+- [x] Deformable UI
+- [x] Anti-polish / Raw aesthetic
+- [x] Glassmorphism
+- [x] Cyberpunk UI
+- [x] Liquid glass
+- [x] Vaporwave
+- [x] HUD/Sci-Fi FUI
+- [x] Retro-Futurism
+- [x] Neumorphism

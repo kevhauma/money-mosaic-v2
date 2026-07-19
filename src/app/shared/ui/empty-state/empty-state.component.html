@@ -3,9 +3,10 @@
   align="center"
   justify="center"
   gap="3"
-  class="rounded-box bg-base-100 p-12 text-center"
+  class="mm-empty rounded-box bg-base-100 p-12 text-center"
 >
-  <div class="text-base-content/40">
+  <!-- `mm-empty`/`mm-empty-icon` are theme-style hooks — themes restyle the shell and icon chip via scoped CSS. -->
+  <div class="mm-empty-icon text-base-content/40">
     <ng-content select="[icon]" />
   </div>
   <mm-text as="h2" weight="medium" class="text-lg">{{ title() }}</mm-text>

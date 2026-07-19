@@ -31,17 +31,31 @@ type VariantSpec = {
   tracking?: string;
   leading?: string;
   uppercase?: boolean;
+  font?: string;
 };
 
-/** design-language.md §4 — "Swiss Modernism 2.0" type scale: high-contrast size jumps, tight tracking on large text, generous line-height on body copy. */
+/**
+ * docs/v1.9_deformable_ui_redesign/design-language.md §5 — supersedes design-language.md §4's
+ * "Swiss Modernism 2.0" scale. Same sizes/weights/tracking as v1.5 — only `display`/`heading` move
+ * to the bubbly `font-display` face (`styles.css`'s `@theme` block); `subheading`/`body`/`caption`/
+ * `label` stay off it, since a bubbly face reads worse at paragraph/label sizes than the system
+ * stack.
+ */
 const VARIANTS: Record<TextVariant, VariantSpec> = {
-  display: { text: 'text-[2.25rem]', weight: 'bold', tracking: '-0.02em', leading: '1.1' },
+  display: {
+    text: 'text-[2.25rem]',
+    weight: 'bold',
+    tracking: '-0.02em',
+    leading: '1.1',
+    font: 'font-display',
+  },
   heading: {
     text: 'text-[1.5rem]',
     weight: 'semibold',
     tracking: '-0.01em',
     leading: '1.25',
     color: 'base-content',
+    font: 'font-display',
   },
   subheading: {
     text: 'text-[1.0625rem]',
@@ -100,13 +114,16 @@ export class TypographyComponent {
     const colorClass = resolveColorClass(this.variant(), this.color());
 
     return daisyClasses(
-      spec.text,
+      // `mm-text-*` is a theme-style hook (styles.css): inert by default, it lets a theme's
+      // scoped CSS restyle a whole text tier (face, tracking, case) without markup changes.
+      `mm-text-${this.variant()} ${spec.text}`,
       [
         weight && WEIGHT_CLASSES[weight],
         colorClass,
         spec.tracking && `tracking-[${spec.tracking}]`,
         spec.leading && `leading-[${spec.leading}]`,
         spec.uppercase && 'uppercase',
+        spec.font,
         this.align() && `text-${this.align()}`,
         this.numeric() && 'tabular-nums',
       ],

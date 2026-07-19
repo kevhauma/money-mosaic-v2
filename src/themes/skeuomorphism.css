@@ -1,0 +1,246 @@
+/* ============================================================================
+ * SKEUOMORPHISM — "GUNMETAL WORKSHOP" — dark-mode theme style (ported from
+ * the design/Skeuomorphism branch's dark variant).
+ *
+ * A cool brushed-steel base so the brass/copper/garnet accents read as
+ * hardware bolted onto a machine panel. Every surface is a physical object
+ * catching an overhead light: a bright inset highlight along the top edge, a
+ * soft inset shadow along the bottom, and an outer drop shadow that grows
+ * with elevation (the `--mm-elev-*` hooks). Buttons have real press travel,
+ * badges are stamped into the metal, papers are saddle-stitched leather
+ * panels, tables are bound ledger books with a brass spine. daisyUI 5's own
+ * `--depth`/`--noise` tokens do half the work for free on native primitives
+ * (noise reads as leather/paper grain, depth as a built-in raised edge).
+ * ========================================================================= */
+
+@plugin 'daisyui/theme' {
+  name: 'skeuomorphism';
+  default: false;
+  prefersdark: false;
+  color-scheme: dark;
+
+  --color-base-100: oklch(24% 0.015 250);
+  --color-base-200: oklch(30% 0.018 250);
+  --color-base-300: oklch(38% 0.02 250);
+  --color-base-content: oklch(93% 0.01 70);
+  --color-primary: oklch(74% 0.15 80);
+  --color-primary-content: oklch(16% 0.02 80);
+  --color-secondary: oklch(65% 0.1 195);
+  --color-secondary-content: oklch(15% 0.02 195);
+  --color-accent: oklch(55% 0.18 20);
+  --color-accent-content: oklch(15% 0.02 20);
+  --color-neutral: oklch(85% 0.01 70);
+  --color-neutral-content: oklch(16% 0.02 70);
+  --color-info: oklch(68% 0.1 240);
+  --color-info-content: oklch(15% 0.02 240);
+  --color-success: oklch(65% 0.14 145);
+  --color-success-content: oklch(15% 0.02 145);
+  --color-warning: oklch(78% 0.15 75);
+  --color-warning-content: oklch(16% 0.02 75);
+  --color-error: oklch(65% 0.2 25);
+  --color-error-content: oklch(15% 0.02 25);
+
+  /* Rounded hardware corners — enough radius to read as a machined/tooled edge. */
+  --radius-selector: 0.75rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.625rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  /* Heavy border — every bevel needs a visible edge for the inset highlight/shadow to read against. */
+  --border: 3px;
+
+  --depth: 1;
+  --noise: 1;
+
+  /* Shared theme-style hooks — the "tooled leather & brass hardware" bevel system. Raised
+   * surfaces step up the gunmetal scale AND carry the bevel. */
+  --mm-surface-flat: var(--color-base-100);
+  --mm-surface-raised: var(--color-base-300);
+  --mm-surface-floating: var(--color-base-300);
+  --mm-elev-raised-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.45), 0 5px 10px -3px rgba(0, 0, 0, 0.6);
+  --mm-elev-floating-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1), inset 0 -3px 5px 0 rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.5), 0 14px 28px -6px rgba(0, 0, 0, 0.7);
+  /* Brass glow ring for hero surfaces (mm-paper `glow` on floating elevation) — the bevel plus a
+   * warm offset ring. */
+  --mm-halo-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1), inset 0 -3px 5px 0 rgba(0, 0, 0, 0.6),
+    0 0 0 2px var(--color-base-100), 0 0 0 4px oklch(72% 0.15 78 / 0.65),
+    0 14px 28px -6px rgba(0, 0, 0, 0.7);
+  /* Badge `solid` stamp (rides the mm-glow hook): a tag pressed INTO the metal plate. */
+  --mm-glow-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.6), inset 0 -1px 0 0 rgba(255, 255, 255, 0.1);
+
+  /* Tooled/pebbled-leather crosshatch shared by the content backdrop and the sidebar panel. */
+  --mm-texture-leather:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in oklch, var(--color-base-content) 5%, transparent) 0px,
+      transparent 1px,
+      transparent 5px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--color-base-content) 5%, transparent) 0px,
+      transparent 1px,
+      transparent 5px
+    );
+}
+
+/* Engraved-brass display face for headings/labels; body copy reads like a ledger-book page — a
+ * warm system serif stack, no webfont fetch (Cinzel is imported once in styles.css). */
+[data-theme='skeuomorphism'] {
+  --font-display: 'Cinzel Variable', Georgia, 'Times New Roman', serif;
+}
+
+html[data-theme='skeuomorphism'] body {
+  font-family: Charter, Georgia, Cambria, 'Times New Roman', Times, serif;
+}
+
+/* Engraved text — a dark groove above, a bright glint below, as if the letterforms were cut into
+ * metal. Display/heading/label only: the effect is illegible noise at body scale. */
+[data-theme='skeuomorphism'] :is(.mm-text-display, .mm-text-heading, .mm-text-label) {
+  font-family: var(--font-display);
+  text-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.65),
+    0 -1px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='skeuomorphism'] .mm-brand {
+  font-family: var(--font-display);
+  letter-spacing: 0.025em;
+  text-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.65),
+    0 -1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Saddle-stitched leather panels: a dashed inset outline standing in for sewn thread, offset
+ * inward so it reads as stitched ONTO the panel. Raised/floating only — flat panels are bare
+ * backing board. */
+[data-theme='skeuomorphism'] .card:is(.mm-elev-raised, .mm-elev-floating) {
+  outline: 2px dashed color-mix(in oklab, var(--color-base-content) 15%, transparent);
+  outline-offset: -7px;
+}
+
+/* Material texture washes, no image asset (cheap gradient layers tinted off base-content).
+ * Tooled-leather crosshatch on the content backdrop + sidebar, brushed metal on the navbar. */
+[data-theme='skeuomorphism'] .drawer-content {
+  background-image: var(--mm-texture-leather);
+}
+
+[data-theme='skeuomorphism'] .navbar {
+  border-bottom-width: 2px;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--color-base-content) 7%, transparent) 0px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(to bottom, var(--color-base-100), var(--color-base-200));
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme='skeuomorphism'] .drawer-side > .menu {
+  border-right-width: 2px;
+  background-image: var(--mm-texture-leather);
+  box-shadow: inset -4px 0 8px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* Sidebar nav — riveted brass nameplate on the active route: heavy primary left rail, warm
+ * tint, and an inset stamped-metal shadow so it reads as bolted onto the panel. */
+[data-theme='skeuomorphism'] .mm-nav-item {
+  border-radius: 0;
+  border-left: 4px solid transparent;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+[data-theme='skeuomorphism'] .menu .menu-active {
+  border-left-color: var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Buttons — a real push-button's raised bevel + press travel. Solid/soft only (outline, dash,
+ * ghost and link have no fill for a bevel to sit on). */
+[data-theme='skeuomorphism']
+  .btn:not(.btn-outline):not(.btn-dash):not(.btn-ghost):not(.btn-link):not(:disabled):not(
+    [disabled]
+  ) {
+  /* Same bevel recipe as a raised paper — a button is a small pressable panel. */
+  box-shadow: var(--mm-elev-raised-shadow);
+}
+
+[data-theme='skeuomorphism']
+  .btn:not(.btn-outline):not(.btn-dash):not(.btn-ghost):not(.btn-link):active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 5px 0 rgba(0, 0, 0, 0.7),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Badges — small tags stamped into a metal plate (the stamp itself rides the mm-glow hook on
+ * the `solid` variant); every badge takes the engraved caps face. */
+[data-theme='skeuomorphism'] .badge {
+  font-family: var(--font-display);
+  letter-spacing: 0.025em;
+}
+
+/* Tables — a bound ledger book: a solid brass spine stripe down the left edge plus a shallow
+ * inset shadow, as if the table sat recessed into the page. */
+[data-theme='skeuomorphism'] .mm-table-wrap {
+  box-shadow:
+    inset 3px 0 0 0 var(--color-primary),
+    inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* The dashboard hero as a riveted brass gauge plaque: warm brass-tinted gradient face, raised
+ * bevel, four corner rivets (each a tiny lit sphere), engraved readout. */
+[data-theme='skeuomorphism'] .mm-net-worth {
+  border-width: 2px;
+  border-color: color-mix(in oklab, var(--color-primary) 40%, transparent);
+  background-color: transparent;
+  background-image:
+    radial-gradient(
+      circle at 10px 10px,
+      color-mix(in oklch, var(--color-base-content) 65%, transparent) 0 2px,
+      color-mix(in oklch, white 65%, transparent) 2px 3px,
+      transparent 3px
+    ),
+    radial-gradient(
+      circle at calc(100% - 10px) 10px,
+      color-mix(in oklch, var(--color-base-content) 65%, transparent) 0 2px,
+      color-mix(in oklch, white 65%, transparent) 2px 3px,
+      transparent 3px
+    ),
+    radial-gradient(
+      circle at 10px calc(100% - 10px),
+      color-mix(in oklch, var(--color-base-content) 65%, transparent) 0 2px,
+      color-mix(in oklch, white 65%, transparent) 2px 3px,
+      transparent 3px
+    ),
+    radial-gradient(
+      circle at calc(100% - 10px) calc(100% - 10px),
+      color-mix(in oklch, var(--color-base-content) 65%, transparent) 0 2px,
+      color-mix(in oklch, white 65%, transparent) 2px 3px,
+      transparent 3px
+    ),
+    linear-gradient(
+      to bottom right,
+      color-mix(in oklab, var(--color-primary) 20%, transparent),
+      var(--color-base-100),
+      var(--color-base-200)
+    );
+  background-repeat: no-repeat;
+  padding: 0.75rem 1.5rem;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px 0 rgba(0, 0, 0, 0.5),
+    0 4px 10px -2px rgba(0, 0, 0, 0.6);
+}

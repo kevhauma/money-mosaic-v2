@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -6,7 +6,7 @@ import type { Account } from '@/core/data-access';
 import type { AccountBalanceSeries, ChartZoomWindow } from '@/core/stats';
 import { AccountsStore } from '@/core/state';
 import {
-  CHART_ANIMATION,
+  resolveChartAnimation,
   formatAxisTooltip,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
@@ -23,7 +23,7 @@ export const buildNetWorthHistoryChartOption = (
   const bucketKeys = series[0]?.points.map((point) => point.bucketKey) ?? [];
 
   return {
-    ...CHART_ANIMATION,
+    ...resolveChartAnimation(),
     color: resolveChartCategoricalColors(),
     tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
     legend: { data: accounts.map((account) => account.name) },

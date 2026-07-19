@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { RangeStore, type CategoryBreakdownEntry } from '@/core/stats';
 import { CategoriesStore } from '@/core/state';
 import {
-  CHART_ANIMATION,
+  resolveChartAnimation,
   CHART_NO_COLOR_FALLBACK,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
@@ -51,7 +51,7 @@ type BreakdownColumnVm = {
   emptyStateText: string;
 };
 
-/** Shape of an item-trigger tooltip callback param echarts actually passes — only the fields the pie formatter reads. */
+/** Shape of an item-trigger tooltip callback param echarts actually passes â€” only the fields the pie formatter reads. */
 type PieTooltipParam = {
   marker?: string;
   name: string;
@@ -96,16 +96,16 @@ export class CategoryBreakdownPanelComponent {
   private readonly categoriesStore = inject(CategoriesStore);
   protected readonly rangeStore = inject(RangeStore);
 
-  /** `TransactionsStore` hydrates in the background (TICKET-PERF-05) — gates the columns below so a still-loading range doesn't briefly read as "no data". */
+  /** `TransactionsStore` hydrates in the background (TICKET-PERF-05) â€” gates the columns below so a still-loading range doesn't briefly read as "no data". */
   protected readonly dataReady = this.statsStore.dataReady;
 
   /** Combined range key so `expandedColumns` below resets whenever either bound changes. */
   private readonly rangeKey = computed(() => `${this.rangeStore.from()}|${this.rangeStore.to()}`);
 
   /**
-   * Per-column "show more" state (TICKET-STAT-13) — expanding one column never affects the
+   * Per-column "show more" state (TICKET-STAT-13) â€” expanding one column never affects the
    * other. A `linkedSignal` rather than a plain `signal` + effect: it resets to an empty set
-   * whenever `rangeKey` changes (new range → collapse both columns) while still supporting a
+   * whenever `rangeKey` changes (new range â†’ collapse both columns) while still supporting a
    * local `.update()` for the toggle, matching the reset-on-source-change pattern already used
    * by `createPagination`'s `resetOn` (`shared/utils/pagination.ts`).
    */
@@ -207,7 +207,7 @@ export class CategoryBreakdownPanelComponent {
 
   private buildChartOption(entries: BreakdownEntryVm[]): EChartsCoreOption {
     return {
-      ...CHART_ANIMATION,
+      ...resolveChartAnimation(),
       color: resolveChartCategoricalColors(),
       tooltip: { trigger: 'item', formatter: formatPieTooltip },
       series: [

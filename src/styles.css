@@ -4,47 +4,175 @@
 @plugin 'daisyui';
 
 /**
+ * Self-hosted display faces, one per theme style that needs a non-system face (this is a
+ * local-first app — no font-CDN requests). Importing every @font-face up front is cheap: the
+ * browser only downloads a font file once rendered text actually uses that family, and only the
+ * active theme's `--font-display`/body font ever references it.
+ */
+@import '@fontsource-variable/baloo-2/wght.css';
+@import '@fontsource-variable/cinzel/wght.css';
+@import '@fontsource/orbitron/500.css';
+@import '@fontsource/orbitron/700.css';
+@import '@fontsource/orbitron/900.css';
+@import '@fontsource/rajdhani/400.css';
+@import '@fontsource/rajdhani/500.css';
+@import '@fontsource/rajdhani/600.css';
+@import '@fontsource/rajdhani/700.css';
+@import '@fontsource/share-tech-mono/index.css';
+@import '@fontsource/righteous/index.css';
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
+
+/**
+ * One file per non-default theme style (see `core/theme/theme-styles.ts` for the catalogue).
+ * Each defines its daisyUI theme block plus `[data-theme='...']`-scoped rules.
+ */
+@import './themes/neumorphism.css';
+@import './themes/liquid-glass.css';
+@import './themes/cyberpunk.css';
+@import './themes/skeuomorphism.css';
+@import './themes/anti-polish.css';
+@import './themes/memphis.css';
+@import './themes/retro-futurism.css';
+
+/**
  * Tailwind's `dark:` variant defaults to the OS-level `prefers-color-scheme` media query, which is
  * entirely independent of the `data-theme` attribute `ThemeService`/daisyUI actually switch on
- * (core/theme/theme.service.ts). Without this override, a user whose OS is set to light but who
- * picks the app's dark theme (or vice versa) gets correct daisyUI semantic tokens (bg-base-100 etc.,
- * which key off `[data-theme]`) but incorrect `dark:`-prefixed utility overrides (mm-paper's
- * elevation/border step, TICKET-UI-11) — the two mechanisms disagree. Tying `dark:` to the same
- * `data-theme="moneymosaic-dark"` attribute makes both mechanisms follow one switch.
+ * (core/theme/theme.service.ts). Tying `dark:` to the set of dark `data-theme` names keeps both
+ * mechanisms on one switch. Every dark-mode theme style name must appear here — keep in sync with
+ * `core/theme/theme-styles.ts`.
  */
-@custom-variant dark (&:where([data-theme='moneymosaic-dark'], [data-theme='moneymosaic-dark'] *));
+@custom-variant dark (
+  &:where(
+    [data-theme='deformable-dark'],
+    [data-theme='deformable-dark'] *,
+    [data-theme='neumorphism'],
+    [data-theme='neumorphism'] *,
+    [data-theme='liquid-glass'],
+    [data-theme='liquid-glass'] *,
+    [data-theme='cyberpunk'],
+    [data-theme='cyberpunk'] *,
+    [data-theme='skeuomorphism'],
+    [data-theme='skeuomorphism'] *
+  )
+);
 
-/* v1.5 redesign — design-language.md §1: light theme, Swiss-Modernism-2.0 accent palette. */
+@theme {
+  /**
+   * Heading face consumed by `mm-text`'s `display`/`heading` variants via the `font-display`
+   * utility. The utility compiles to `font-family: var(--font-display)`, so each theme style's
+   * daisyUI block can re-declare the variable to swap the face without touching markup.
+   */
+  --font-display: 'Baloo 2 Variable', 'Trebuchet MS', sans-serif;
+}
+
+/**
+ * Theme-style hook classes — the one indirection that lets eight visual styles share one set of
+ * components. Shared components emit these markers (`mm-squish` on buttons, `mm-elev-*` on
+ * papers, ...) and each theme's daisyUI block below supplies the `--mm-*` values. Custom
+ * properties resolve from the NEAREST `data-theme` ancestor, so nested previews (settings page)
+ * automatically render in their own style. Deliberately un-layered so they win over Tailwind
+ * utilities (which live in `@layer utilities`) without `!important`.
+ */
+.mm-squish {
+  transition:
+    scale 0.3s var(--mm-squish-ease, ease),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+.mm-squish:hover {
+  scale: var(--mm-squish-hover, none);
+}
+.mm-squish:active {
+  scale: var(--mm-squish-active, none);
+}
+.mm-glow {
+  box-shadow: var(--mm-glow-shadow, none);
+}
+.mm-elev-flat {
+  box-shadow: var(--mm-elev-flat-shadow, none);
+}
+.mm-elev-raised {
+  box-shadow: var(--mm-elev-raised-shadow, none);
+}
+.mm-elev-floating {
+  box-shadow: var(--mm-elev-floating-shadow, none);
+}
+/* `mm-halo` (paper's opt-in `glow` input) replaces — not stacks on — the floating shadow. */
+.mm-elev-floating.mm-halo {
+  box-shadow: var(--mm-halo-shadow, var(--mm-elev-floating-shadow, none));
+}
+/**
+ * Alternating off-axis tilt (stat cards, category comparison cards) — upright unless the active
+ * theme sets the `--mm-tilt-*` angles (Memphis scatters its card stacks with them).
+ */
+.mm-tilt-l {
+  rotate: var(--mm-tilt-l, none);
+}
+.mm-tilt-r {
+  rotate: var(--mm-tilt-r, none);
+}
+/**
+ * Decorative backdrop wash (net-worth-header). Invisible unless the active theme opts in with
+ * `--mm-blob-bg` — never on an interactive element or anything with legible content on its edge.
+ */
+.mm-blob {
+  background-color: var(--mm-blob-bg, transparent);
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  animation: var(--mm-blob-animation, none);
+}
+
+@keyframes mm-blob-morph {
+  0%,
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 40% 60% 70% 30% / 30% 70% 40% 60%;
+  }
+}
+
+/*
+ * ============================== Deformable UI (default, light) ==============================
+ * docs/v1.9_deformable_ui_redesign/design-language.md §1/§2 — gummy/candy pastel-saturated
+ * palette (coral / periwinkle / mint), big soft uniform radii (pill fields, chunky rounded
+ * boxes) — the "everything is soft material" baseline.
+ */
 @plugin 'daisyui/theme' {
-  name: 'moneymosaic';
+  name: 'deformable';
   default: true;
   prefersdark: false;
   color-scheme: light;
 
-  --color-base-100: oklch(98.5% 0.004 90);
-  --color-base-200: oklch(96% 0.005 90);
-  --color-base-300: oklch(91% 0.006 90);
-  --color-base-content: oklch(19% 0.01 285);
-  --color-primary: oklch(48% 0.16 285);
-  --color-primary-content: oklch(98% 0.01 285);
-  --color-secondary: oklch(58% 0.1 210);
-  --color-secondary-content: oklch(98% 0.01 210);
-  --color-accent: oklch(48% 0.17 345);
-  --color-accent-content: oklch(98% 0.01 345);
-  --color-neutral: oklch(30% 0.01 285);
-  --color-neutral-content: oklch(98% 0.01 285);
-  --color-info: oklch(68% 0.13 255);
-  --color-info-content: oklch(20% 0.03 255);
-  --color-success: oklch(58% 0.15 145);
-  --color-success-content: oklch(98% 0.01 145);
-  --color-warning: oklch(78% 0.16 85);
+  --color-base-100: oklch(97% 0.015 95);
+  --color-base-200: oklch(93% 0.02 95);
+  --color-base-300: oklch(87% 0.025 95);
+  --color-base-content: oklch(24% 0.03 320);
+  --color-primary: oklch(68% 0.19 25);
+  --color-primary-content: oklch(98% 0.01 25);
+  --color-secondary: oklch(62% 0.17 275);
+  --color-secondary-content: oklch(98% 0.01 275);
+  --color-accent: oklch(78% 0.16 165);
+  --color-accent-content: oklch(20% 0.03 165);
+  --color-neutral: oklch(32% 0.03 300);
+  --color-neutral-content: oklch(98% 0.01 300);
+  --color-info: oklch(70% 0.14 230);
+  --color-info-content: oklch(20% 0.03 230);
+  --color-success: oklch(74% 0.17 145);
+  --color-success-content: oklch(20% 0.03 145);
+  --color-warning: oklch(82% 0.17 85);
   --color-warning-content: oklch(20% 0.03 85);
-  --color-error: oklch(58% 0.19 25);
-  --color-error-content: oklch(98% 0.01 25);
+  --color-error: oklch(64% 0.21 20);
+  --color-error-content: oklch(98% 0.01 20);
 
-  --radius-selector: 1rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.75rem;
+  /* Soft-material shape language: pill-shaped fields, big rounded boxes, no sharp corners. */
+  --radius-selector: 1.75rem;
+  --radius-field: 9999px;
+  --radius-box: 1.5rem;
 
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
@@ -53,45 +181,62 @@
 
   --depth: 1;
   --noise: 0;
+
+  /* Paper surface per elevation tier — light mode reads depth via shadow, so every tier sits on the same surface. */
+  --mm-surface-flat: var(--color-base-100);
+  --mm-surface-raised: var(--color-base-100);
+  --mm-surface-floating: var(--color-base-100);
+
+  /* Hook values — design-language.md §3 jelly squish, §4 gel glow, §7 blob wash. */
+  --mm-squish-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --mm-squish-hover: 1.05;
+  --mm-squish-active: 0.95 1.05;
+  --mm-glow-shadow: 0 8px 24px -4px oklch(68% 0.19 25 / 0.35);
+  --mm-elev-raised-shadow: 0 8px 24px -4px oklch(68% 0.19 25 / 0.35);
+  --mm-elev-floating-shadow: 0 16px 40px -6px oklch(68% 0.19 25 / 0.4);
+  --mm-halo-shadow: 0 0 32px oklch(78% 0.16 165 / 0.4);
+  --mm-blob-bg: color-mix(in oklab, var(--color-primary) 20%, transparent);
+  --mm-blob-animation: mm-blob-morph 8s ease-in-out infinite;
 }
 
 /*
- * v1.5 redesign — design-language.md §1.3 originally specified an OLED-tuned (near-black) dark
- * theme; per explicit user feedback that read as "too dark" in practice, so the base scale below
- * is a conventional dark-gray theme instead — same violet-tinted hue (285) for continuity, same
- * three-tier stepping (100 → 200 → 300 = flat/recessed → page → raised), just lighter overall.
- * `PaperElevation`'s stepped-surface mechanism in paper.component.ts is unaffected by this change.
+ * ============================== Deformable UI (default, dark) ==============================
+ * docs/v1.9_deformable_ui_redesign/design-language.md §1 — same gummy hues, brighter/lighter so
+ * they still pop against a soft plum-black surface. Same radius/border tokens as light so the
+ * soft-material shape language is consistent across both modes. Dark mode steps the surface
+ * instead of relying on shadows (a blurred glow barely reads on a dark background), so the
+ * `--mm-elev-*`/`--mm-glow` hooks stay unset — only the mint halo survives.
  */
 @plugin 'daisyui/theme' {
-  name: 'moneymosaic-dark';
+  name: 'deformable-dark';
   default: false;
   prefersdark: true;
   color-scheme: dark;
 
-  --color-base-100: oklch(21% 0.006 285);
-  --color-base-200: oklch(27% 0.008 285);
-  --color-base-300: oklch(35% 0.01 285);
-  --color-base-content: oklch(94% 0.004 285);
-  --color-primary: oklch(60% 0.17 285);
-  --color-primary-content: oklch(98% 0.01 285);
-  --color-secondary: oklch(61% 0.105 210);
-  --color-secondary-content: oklch(98% 0.01 210);
-  --color-accent: oklch(52% 0.17 345);
-  --color-accent-content: oklch(98% 0.01 345);
-  --color-neutral: oklch(85% 0.005 285);
-  --color-neutral-content: oklch(15% 0.01 285);
-  --color-info: oklch(66% 0.14 255);
-  --color-info-content: oklch(18% 0.03 255);
-  --color-success: oklch(68% 0.15 145);
+  --color-base-100: oklch(19% 0.02 300);
+  --color-base-200: oklch(25% 0.025 300);
+  --color-base-300: oklch(32% 0.03 300);
+  --color-base-content: oklch(95% 0.01 300);
+  --color-primary: oklch(74% 0.18 25);
+  --color-primary-content: oklch(18% 0.03 25);
+  --color-secondary: oklch(70% 0.16 275);
+  --color-secondary-content: oklch(18% 0.03 275);
+  --color-accent: oklch(80% 0.15 165);
+  --color-accent-content: oklch(18% 0.03 165);
+  --color-neutral: oklch(88% 0.015 300);
+  --color-neutral-content: oklch(18% 0.02 300);
+  --color-info: oklch(74% 0.14 230);
+  --color-info-content: oklch(18% 0.03 230);
+  --color-success: oklch(78% 0.16 145);
   --color-success-content: oklch(18% 0.03 145);
-  --color-warning: oklch(80% 0.16 85);
+  --color-warning: oklch(84% 0.16 85);
   --color-warning-content: oklch(18% 0.03 85);
-  --color-error: oklch(68% 0.17 25);
-  --color-error-content: oklch(15% 0.03 25);
+  --color-error: oklch(70% 0.19 20);
+  --color-error-content: oklch(18% 0.03 20);
 
-  --radius-selector: 1rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.75rem;
+  --radius-selector: 1.75rem;
+  --radius-field: 9999px;
+  --radius-box: 1.5rem;
 
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
@@ -100,4 +245,16 @@
 
   --depth: 1;
   --noise: 0;
+
+  /* Dark mode steps the raised/floating surface up instead of relying on shadows — the page shell is base-200, so stepping to base-300 (lighter = more raised) is the visible cue. */
+  --mm-surface-flat: var(--color-base-100);
+  --mm-surface-raised: var(--color-base-300);
+  --mm-surface-floating: var(--color-base-300);
+
+  --mm-squish-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --mm-squish-hover: 1.05;
+  --mm-squish-active: 0.95 1.05;
+  --mm-halo-shadow: 0 0 32px oklch(80% 0.15 165 / 0.3);
+  --mm-blob-bg: color-mix(in oklab, var(--color-primary) 20%, transparent);
+  --mm-blob-animation: mm-blob-morph 8s ease-in-out infinite;
 }

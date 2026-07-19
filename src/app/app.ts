@@ -23,6 +23,7 @@ import {
   tablerHome,
   tablerMenu2,
   tablerMoon,
+  tablerSettings,
   tablerSun,
   tablerTags,
 } from '@ng-icons/tabler-icons';
@@ -44,9 +45,9 @@ import { STAT_QUERY_PARAMS } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
-/** design-language.md §7 — sidebar active-item accent: a solid primary left border + tint + text color on `.menu-active` (added by `routerLinkActive`), inactive items at reduced opacity. Defined once and bound identically to every nav `<a>` rather than repeating the same utility string per item. */
+/** Sidebar nav item — default look is Deformable UI's soft full-pill primary tint on `.menu-active` (docs/v1.9_deformable_ui_redesign/design-language.md §7); the `mm-nav-item` marker is a theme-style hook other themes' scoped CSS restyles. Defined once and bound identically to every nav `<a>` rather than repeating the same utility string per item. */
 const NAV_ITEM_CLASS =
-  'border-l-[3px] border-l-transparent text-base-content/70 [&.menu-active]:border-l-primary [&.menu-active]:bg-primary/8 [&.menu-active]:text-primary';
+  'mm-nav-item rounded-full text-base-content/70 transition-colors [&.menu-active]:bg-primary/15 [&.menu-active]:text-primary [&.menu-active]:font-semibold';
 
 @Component({
   selector: 'app-root',
@@ -74,6 +75,7 @@ const NAV_ITEM_CLASS =
       tablerDatabase,
       tablerSun,
       tablerMoon,
+      tablerSettings,
     }),
   ],
 })

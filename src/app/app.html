@@ -18,7 +18,7 @@
         >
           <ng-icon name="tablerMenu2" size="20" aria-hidden="true" />
         </mm-button>
-        <span class="ml-2 text-lg font-semibold">Money Mosaic</span>
+        <span class="mm-brand font-display ml-2 text-lg font-semibold">Money Mosaic</span>
       </div>
       <div class="ml-2 flex items-center">
         <mm-range-grouping-switcher
@@ -54,7 +54,9 @@
   <div class="drawer-side z-20">
     <label for="app-drawer" aria-label="Close menu" class="drawer-overlay"></label>
     <div class="menu min-h-full w-64 border-r border-base-300 bg-base-100 p-4">
-      <span class="hidden px-2 pb-4 text-lg font-semibold lg:block">Money Mosaic</span>
+      <span class="mm-brand font-display hidden px-2 pb-4 text-lg font-semibold lg:block"
+        >Money Mosaic</span
+      >
       <ul class="menu-vertical gap-1">
         <li>
           <a routerLink="/dashboard" routerLinkActive="menu-active" [class]="navItemClass">
@@ -99,6 +101,15 @@
           <a routerLink="/data" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerDatabase" size="18" aria-hidden="true" />
             <mm-text as="span">Data</mm-text>
+          </a>
+        </li>
+      </ul>
+      <!-- Pinned to the very bottom of the sidebar (`.menu` is a flex column; mt-auto absorbs the slack). -->
+      <ul class="menu-vertical mt-auto gap-1 pt-4">
+        <li>
+          <a routerLink="/settings" routerLinkActive="menu-active" [class]="navItemClass">
+            <ng-icon name="tablerSettings" size="18" aria-hidden="true" />
+            <mm-text as="span">Settings</mm-text>
           </a>
         </li>
       </ul>

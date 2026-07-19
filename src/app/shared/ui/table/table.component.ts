@@ -27,8 +27,10 @@ export class TableComponent {
   readonly class = input('', { alias: 'class' });
 
   protected readonly wrapperClasses = computed(() =>
+    // `mm-table-wrap` is a theme-style hook — themes swap the border for their own frame
+    // (neumorphism carves the table into a well, liquid glass frosts it, ...).
     daisyClasses(
-      'rounded-box border border-base-300',
+      'mm-table-wrap rounded-box border border-base-300',
       [this.scroll() === 'auto' ? 'overflow-auto' : 'overflow-x-auto'],
       this.class(),
     ),

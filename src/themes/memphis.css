@@ -1,0 +1,225 @@
+/* ============================================================================
+ * MEMPHIS DESIGN — light-mode theme style (ported from the design/Memphis
+ * branch).
+ *
+ * Loud, clashing primaries on a cream backdrop, thick black rules,
+ * sharp-cornered fields/boxes paired with fully-pilled selectors, and a
+ * print-poster grain (`--noise`). Depth reads as a hard, un-blurred offset
+ * shadow whose color is `--color-base-content` — a black block on cream.
+ * Stat cards and comparison cards scatter off-axis via the `mm-tilt-*`
+ * hooks; the shell backdrop is a confetti field.
+ * ========================================================================= */
+
+@plugin 'daisyui/theme' {
+  name: 'memphis';
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: oklch(97.5% 0.02 95);
+  --color-base-200: oklch(94% 0.03 95);
+  --color-base-300: oklch(88% 0.045 95);
+  --color-base-content: oklch(15% 0.01 285);
+  --color-primary: oklch(62% 0.27 350);
+  --color-primary-content: oklch(99% 0.005 350);
+  --color-secondary: oklch(75% 0.15 200);
+  --color-secondary-content: oklch(16% 0.03 200);
+  --color-accent: oklch(88% 0.19 100);
+  --color-accent-content: oklch(16% 0.03 100);
+  --color-neutral: oklch(12% 0 0);
+  --color-neutral-content: oklch(99% 0 0);
+  --color-info: oklch(70% 0.16 240);
+  --color-info-content: oklch(16% 0.03 240);
+  --color-success: oklch(80% 0.22 130);
+  --color-success-content: oklch(17% 0.05 130);
+  --color-warning: oklch(78% 0.19 55);
+  --color-warning-content: oklch(17% 0.04 55);
+  --color-error: oklch(60% 0.24 25);
+  --color-error-content: oklch(98% 0.01 25);
+
+  /* Sharp boxes/fields, fully-pilled selectors. */
+  --radius-selector: 999px;
+  --radius-field: 0rem;
+  --radius-box: 0rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  --border: 3px;
+
+  --depth: 1;
+  --noise: 1;
+
+  /* Shared theme-style hooks: hard offset shadows, scattered card tilts. */
+  --mm-surface-flat: var(--color-base-100);
+  --mm-surface-raised: var(--color-base-100);
+  --mm-surface-floating: var(--color-base-100);
+  --mm-elev-raised-shadow: 3px 3px 0 0 var(--color-base-content);
+  --mm-elev-floating-shadow: 5px 5px 0 0 var(--color-base-content);
+  --mm-halo-shadow: 5px 5px 0 0 var(--color-base-content), 9px 9px 0 0 var(--color-primary);
+  --mm-tilt-l: -1.25deg;
+  --mm-tilt-r: 1.25deg;
+}
+
+/* Poster type: bold display, black-weight uppercase headings; the system sans stays (Memphis is
+ * loud through weight and case, not through a novelty face). */
+[data-theme='memphis'] {
+  --font-display: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme='memphis'] .mm-text-display {
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+[data-theme='memphis'] .mm-text-heading {
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+/* Papers: the default hairline recolors to a thick ink rule; caller-tinted borders
+ * (`border-error/40`, ...) keep their own color. */
+[data-theme='memphis'] .card.border-base-300 {
+  border-color: var(--color-base-content);
+}
+
+/* Free-standing stat cards: chunky bordered blocks with the full-size hard shadow. */
+[data-theme='memphis'] .stat {
+  border-width: 2px;
+  border-color: var(--color-base-content);
+  box-shadow: 5px 5px 0 0 var(--color-base-content);
+}
+
+/* Confetti backdrop behind the whole content pane. */
+[data-theme='memphis'] .drawer-content {
+  background-color: var(--color-base-200);
+  background-image:
+    radial-gradient(circle, var(--color-primary) 5px, transparent 6px),
+    radial-gradient(circle, var(--color-secondary) 4px, transparent 5px),
+    radial-gradient(circle, var(--color-accent) 6px, transparent 7px),
+    radial-gradient(circle, var(--color-primary) 3px, transparent 4px);
+  background-repeat: repeat;
+  background-position:
+    10px 15px,
+    90px 60px,
+    150px 20px,
+    50px 110px;
+  background-size: 200px 200px;
+}
+
+[data-theme='memphis'] .navbar {
+  border-bottom-width: 4px;
+  border-bottom-color: var(--color-base-content);
+}
+
+[data-theme='memphis'] .drawer-side > .menu {
+  border-right-width: 4px;
+  border-right-color: var(--color-base-content);
+}
+
+/* Brand wordmark: a tilted poster sticker — accent plate in the navbar, primary in the sidebar. */
+[data-theme='memphis'] .mm-brand {
+  width: fit-content;
+  border: 2px solid var(--color-base-content);
+  background: var(--color-accent);
+  color: var(--color-accent-content);
+  padding: 0.125rem 0.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 0 var(--color-base-content);
+  rotate: -1.25deg;
+}
+
+[data-theme='memphis'] .drawer-side .mm-brand {
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+/* Sidebar nav: chunky sharp-cornered blocks — transparent at rest, a solid primary fill + thick
+ * border + hard offset shadow + slight tilt on the active item. */
+[data-theme='memphis'] .mm-nav-item {
+  border-radius: 0;
+  border: 2px solid transparent;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+[data-theme='memphis'] .mm-nav-item:hover:not(.menu-active) {
+  border-color: color-mix(in oklab, var(--color-base-content) 40%, transparent);
+}
+
+[data-theme='memphis'] .menu .menu-active {
+  border-color: var(--color-base-content);
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+  box-shadow: 3px 3px 0 0 var(--color-base-content);
+  rotate: 1.25deg;
+}
+
+[data-theme='memphis'] .menu .badge {
+  border: 2px solid var(--color-base-content);
+}
+
+/* Buttons: hard-offset-shadow "press" — the shadow collapses and the button nudges into it.
+ * Ghost/link/soft variants have no fill to cast a shadow against. */
+[data-theme='memphis'] .btn:not(.btn-ghost):not(.btn-link):not(.btn-soft):not(.btn-dash) {
+  box-shadow: 3px 3px 0 0 var(--color-base-content);
+  transition:
+    translate 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+[data-theme='memphis'] .btn:not(.btn-ghost):not(.btn-link):not(.btn-soft):not(.btn-dash):hover {
+  translate: 1px 1px;
+}
+
+[data-theme='memphis'] .btn:not(.btn-ghost):not(.btn-link):not(.btn-soft):not(.btn-dash):active {
+  translate: 3px 3px;
+  box-shadow: none;
+}
+
+[data-theme='memphis'] .modal-box {
+  border: 2px solid var(--color-base-content);
+  box-shadow: 9px 9px 0 0 var(--color-base-content);
+}
+
+[data-theme='memphis'] .mm-table-wrap {
+  border-radius: 0;
+  border-width: 2px;
+  border-color: var(--color-base-content);
+}
+
+/* Page headers: a heavy ink rule down the title's left edge. */
+[data-theme='memphis'] .mm-page-title {
+  border-left: 4px solid var(--color-base-content);
+  padding-left: 0.75rem;
+}
+
+/* Empty states: dashed ink outline + a tilted accent icon chip. */
+[data-theme='memphis'] .mm-empty {
+  border-radius: 0;
+  border: 2px dashed var(--color-base-content);
+}
+
+[data-theme='memphis'] .mm-empty-icon {
+  border: 2px solid var(--color-base-content);
+  background: var(--color-accent);
+  color: var(--color-accent-content);
+  padding: 0.75rem;
+  box-shadow: 3px 3px 0 0 var(--color-base-content);
+  rotate: -1.25deg;
+}
+
+/* The hero surface as a tilted accent poster plate. */
+[data-theme='memphis'] .mm-net-worth {
+  border-radius: 0;
+  border: 4px solid var(--color-base-content);
+  background-color: var(--color-accent);
+  box-shadow: 5px 5px 0 0 var(--color-base-content);
+  rotate: 1.25deg;
+}
