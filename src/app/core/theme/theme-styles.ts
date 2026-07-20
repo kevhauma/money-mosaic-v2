@@ -31,7 +31,7 @@ export type ThemeStyle = {
 export const THEME_STYLES: readonly ThemeStyle[] = [
   {
     id: 'deformable',
-    label: 'Default (dark)',
+    label: 'Default',
     tagline: 'Soft gummy material — jelly buttons, gel glows, pill shapes.',
     dataTheme: { light: 'deformable', dark: 'deformable-dark' },
   },
