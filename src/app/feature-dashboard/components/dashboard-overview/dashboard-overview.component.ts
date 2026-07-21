@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerCheck, tablerPencil } from '@ng-icons/tabler-icons';
-import { RangeStore, type PeriodStats } from '@/core/stats';
+import { computeNetMargin, computePeriodizedRate, RangeStore } from '@/core/stats';
 import { AccountsStore } from '@/core/state';
 import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
 import {
@@ -28,13 +28,6 @@ const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
   style: 'percent',
   maximumFractionDigits: 1,
 });
-/** `signDisplay: 'exceptZero'` so a year-over-year delta always shows its sign (e.g. "+12%"), unlike the plain PERCENT_FORMATTER used for the (always non-negative) savings rate. */
-const YOY_PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
-  style: 'percent',
-  maximumFractionDigits: 1,
-  signDisplay: 'exceptZero',
-});
-const DATE_FORMATTER = new Intl.DateTimeFormat('en-BE', { dateStyle: 'medium' });
 
 @Component({
   selector: 'app-dashboard-overview',
@@ -96,70 +89,46 @@ export class DashboardOverviewComponent {
     this.statsStore.periodStats().net >= 0 ? 'success' : 'error',
   );
 
-  /** Hidden for `all-time` (no meaningful "same period" to shift) and whenever less than a year of history exists (TICKET-STAT-07). */
-  protected readonly showYearOverYear = computed(
-    () => this.rangeStore.preset() !== 'all-time' && this.statsStore.yearOverYear().delta != null,
+  protected readonly incomeSubLabel = computed(() =>
+    this.periodizedSubLabel(this.statsStore.periodStats().income),
   );
 
-  protected readonly incomeYoySubLabel = computed(() =>
-    this.yoySubLabel(this.statsStore.yearOverYear().delta?.income ?? null),
+  protected readonly expenseSubLabel = computed(() =>
+    this.periodizedSubLabel(this.statsStore.periodStats().expense),
   );
 
-  protected readonly expenseYoySubLabel = computed(() =>
-    this.yoySubLabel(this.statsStore.yearOverYear().delta?.expense ?? null),
-  );
-
-  protected readonly netYoySubLabel = computed(() =>
-    this.yoySubLabel(this.statsStore.yearOverYear().delta?.net ?? null),
-  );
-
-  private yoySubLabel(deltaPct: number | null): string | undefined {
-    if (!this.showYearOverYear() || deltaPct == null) return undefined;
-    return `${YOY_PERCENT_FORMATTER.format(deltaPct)} vs. last year`;
-  }
-
-  protected readonly incomeYoyTooltip = computed(() =>
-    this.yoyTooltip('Earned', (stats) => stats.income),
-  );
-
-  protected readonly expenseYoyTooltip = computed(() =>
-    this.yoyTooltip('Spent', (stats) => stats.expense),
-  );
-
-  protected readonly netYoyTooltip = computed(() => this.yoyTooltip('Saved', (stats) => stats.net));
-
-  /** Spells out the figure behind the delta badge — the prior year's amount and the exact dates it was compared against. */
-  private yoyTooltip(verb: string, pick: (stats: PeriodStats) => number): string | undefined {
-    if (!this.showYearOverYear()) return undefined;
-    const priorYear = this.statsStore.yearOverYear().priorYears[0];
-    if (!priorYear) return undefined;
-    const amount = formatCurrency(pick(priorYear.stats));
-    const from = DATE_FORMATTER.format(new Date(`${priorYear.from}T00:00:00Z`));
-    const to = DATE_FORMATTER.format(new Date(`${priorYear.to}T00:00:00Z`));
-    return `${verb} ${amount}\nbetween ${from} and ${to}`;
-  }
+  /** `net / income`, worded by sign, distinct from savings rate (TICKET-STAT-21) — reuses `netColor`'s success/error split. */
+  protected readonly netMarginSubLabel = computed(() => {
+    const { net, income } = this.statsStore.periodStats();
+    const margin = computeNetMargin(net, income);
+    if (margin == null) return undefined;
+    const formatted = PERCENT_FORMATTER.format(Math.abs(margin));
+    return this.netColor() === 'success'
+      ? `${formatted} of income kept`
+      : `${formatted} of income overspent`;
+  });
 
   protected readonly savingsRateValue = computed(() => {
     const rate = this.statsStore.periodStats().savingsRate;
     return rate == null ? '—' : PERCENT_FORMATTER.format(rate);
   });
 
-  /** The absolute savings figure behind the rate — money moved into savings this period (TICKET-TRF-02). */
-  protected readonly savingsSubLabel = computed(
-    () => `${formatCurrency(this.statsStore.periodStats().savings)} to savings`,
+  protected readonly savingsSubLabel = computed(() =>
+    this.periodizedSubLabel(this.statsStore.periodStats().savings),
   );
 
-  protected readonly spendingRateValue = computed(
-    () => `${formatCurrency(this.statsStore.spendingRate().avgPerDay)}/day`,
-  );
-
-  /** Coarser units past day, only when the range is long enough for them to be a genuine average rather than the total (FR-STAT-9). */
-  protected readonly spendingRateSubLabel = computed(() => {
-    const { avgPerWeek, avgPerMonth } = this.statsStore.spendingRate();
+  /** `€X/month · €X/week · €X/day`, gated by `computePeriodizedRate`'s bucket-count threshold (TICKET-STAT-21) — day always shows, week/month only once the range spans ≥2 of that bucket. */
+  private periodizedSubLabel(figure: number): string {
+    const { avgPerDay, avgPerWeek, avgPerMonth } = computePeriodizedRate(
+      figure,
+      this.rangeStore.from(),
+      this.rangeStore.to(),
+    );
     const parts = [
-      avgPerWeek != null ? `${formatCurrency(avgPerWeek)}/week` : null,
       avgPerMonth != null ? `${formatCurrency(avgPerMonth)}/month` : null,
+      avgPerWeek != null ? `${formatCurrency(avgPerWeek)}/week` : null,
+      `${formatCurrency(avgPerDay)}/day`,
     ].filter((part): part is string => part != null);
-    return parts.length > 0 ? parts.join(' · ') : undefined;
-  });
+    return parts.join(' · ');
+  }
 }

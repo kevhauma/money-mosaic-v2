@@ -34,14 +34,14 @@ Replace the year-over-year sub-labels on the Income and Expense cards, and the "
 
 ## Acceptance criteria
 
-- [ ] `computeSpendingRate` (or an extracted generic averaging helper it and the others call) is parameterized on the source figure — no duplicated bucket-counting logic between income/expense/savings/spending-rate.
-- [ ] Income, Expense, and Savings rate cards render `€X/month · €X/week · €X/day` sub-labels sourced from `periodStats()`, gated by the existing `MIN_BUCKETS_FOR_AVERAGE` rule (verified for a range with <2 weeks, <2 months, and ≥2 of both).
-- [ ] Net cash flow card renders the net-margin sub-label with correct "kept" vs. "overspent" wording for positive and negative `net`, and is `undefined` when `income` is 0.
-- [ ] The now-unused YoY sub-label/tooltip computeds and their formatter (`YOY_PERCENT_FORMATTER`) are removed if confirmed dead, or left in place with a one-line note if something else still depends on them.
-- [ ] The "Spending rate" stat card is removed from `dashboard-overview.component.html`, and its now-dead `spendingRateValue`/`spendingRateSubLabel` computeds and the `spendingRate` property on `StatsStore` are removed (its underlying averaging logic lives on, generalized, for Income/Expense/Savings — only the standalone-card wiring is deleted).
-- [ ] Persistence/state is unaffected — this is presentation-only (`StatsStore`/`computePeriodStats` outputs are read, not written), so no repository changes are needed.
-- [ ] Unit tests cover: the generalized averaging helper for a non-expense figure (e.g. income), the gating boundary at exactly 2 buckets, the net-margin sign flip at `net === 0` and `net < 0`, and the zero-income `undefined` case.
-- [ ] `spending-rate.spec.ts` and `stats.store.spec.ts` are updated for the removed/renamed surface rather than left asserting a deleted card's behaviour.
+- [x] `computeSpendingRate` (or an extracted generic averaging helper it and the others call) is parameterized on the source figure — no duplicated bucket-counting logic between income/expense/savings/spending-rate.
+- [x] Income, Expense, and Savings rate cards render `€X/month · €X/week · €X/day` sub-labels sourced from `periodStats()`, gated by the existing `MIN_BUCKETS_FOR_AVERAGE` rule (verified for a range with <2 weeks, <2 months, and ≥2 of both).
+- [x] Net cash flow card renders the net-margin sub-label with correct "kept" vs. "overspent" wording for positive and negative `net`, and is `undefined` when `income` is 0.
+- [x] The now-unused YoY sub-label/tooltip computeds and their formatter (`YOY_PERCENT_FORMATTER`) are removed if confirmed dead, or left in place with a one-line note if something else still depends on them.
+- [x] The "Spending rate" stat card is removed from `dashboard-overview.component.html`, and its now-dead `spendingRateValue`/`spendingRateSubLabel` computeds and the `spendingRate` property on `StatsStore` are removed (its underlying averaging logic lives on, generalized, for Income/Expense/Savings — only the standalone-card wiring is deleted).
+- [x] Persistence/state is unaffected — this is presentation-only (`StatsStore`/`computePeriodStats` outputs are read, not written), so no repository changes are needed.
+- [x] Unit tests cover: the generalized averaging helper for a non-expense figure (e.g. income), the gating boundary at exactly 2 buckets, the net-margin sign flip at `net === 0` and `net < 0`, and the zero-income `undefined` case.
+- [x] `spending-rate.spec.ts` and `stats.store.spec.ts` are updated for the removed/renamed surface rather than left asserting a deleted card's behaviour.
 - [ ] Verified via the fallow skill and coding-conventions skill, plus a live browser check of the remaining four cards (Income, Expense, Net cash flow, Savings rate) across a short range (day-only), a multi-week range, and a multi-month range — confirming "Spending rate" no longer renders.
 
 ## Notes

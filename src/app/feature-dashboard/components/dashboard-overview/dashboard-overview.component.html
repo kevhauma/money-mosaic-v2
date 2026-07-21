@@ -34,8 +34,7 @@
               <mm-stat-card
                 label="Income"
                 [value]="incomeValue()"
-                [subLabel]="incomeYoySubLabel()"
-                [tooltip]="incomeYoyTooltip()"
+                [subLabel]="incomeSubLabel()"
                 link="/transactions"
                 [queryParams]="drilldownParams()"
                 tilt="a"
@@ -43,8 +42,7 @@
               <mm-stat-card
                 label="Expense"
                 [value]="expenseValue()"
-                [subLabel]="expenseYoySubLabel()"
-                [tooltip]="expenseYoyTooltip()"
+                [subLabel]="expenseSubLabel()"
                 link="/transactions"
                 [queryParams]="drilldownParams()"
                 tilt="b"
@@ -52,8 +50,7 @@
               <mm-stat-card
                 label="Net cash flow"
                 [value]="netValue()"
-                [subLabel]="netYoySubLabel()"
-                [tooltip]="netYoyTooltip()"
+                [subLabel]="netMarginSubLabel()"
                 [color]="netColor()"
                 link="/transactions"
                 [queryParams]="drilldownParams()"
@@ -64,12 +61,6 @@
                 [value]="savingsRateValue()"
                 [subLabel]="savingsSubLabel()"
                 tilt="b"
-              />
-              <mm-stat-card
-                label="Spending rate"
-                [value]="spendingRateValue()"
-                [subLabel]="spendingRateSubLabel()"
-                tilt="a"
               />
             </div>
           }

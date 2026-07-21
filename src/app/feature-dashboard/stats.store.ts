@@ -5,7 +5,6 @@ import {
   computeCategoryPeriodComparison,
   computeComparisonWindow,
   computePeriodStats,
-  computeSpendingRate,
   computeTopTransactions,
   computeWeekdayWeekendSplit,
   computeYearOverYearComparison,
@@ -65,17 +64,6 @@ export const StatsStore = signalStore(
       ),
     );
 
-    const spendingRate = computed(() =>
-      computeSpendingRate(
-        transactionsStore.transactions(),
-        rangeStore.from(),
-        rangeStore.to(),
-        ownSavingsIbans(),
-        categoriesStore.categoriesById(),
-        accountsStore.accountsById(),
-      ),
-    );
-
     const weekdayWeekendSplit = computed(() =>
       computeWeekdayWeekendSplit(
         transactionsStore.transactions(),
@@ -131,7 +119,6 @@ export const StatsStore = signalStore(
     return {
       periodStats,
       categoryBreakdown,
-      spendingRate,
       weekdayWeekendSplit,
       topTransactions,
       yearOverYear,

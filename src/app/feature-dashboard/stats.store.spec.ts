@@ -59,21 +59,6 @@ describe('StatsStore', () => {
     expect(statsStore.periodStats().income).toBe(500);
   });
 
-  it('recomputes spendingRate from the same expense figure as periodStats', () => {
-    const rangeStore = TestBed.inject(RangeStore);
-    rangeStore.setCustomRange('2026-06-01', '2026-06-10');
-
-    const transactionsStore = TestBed.inject(TransactionsStore);
-    const statsStore = TestBed.inject(StatsStore);
-
-    transactionsStore.addMany([transaction({ id: 1, bookingDate: '2026-06-01', amount: -100 })]);
-
-    expect(statsStore.spendingRate().avgPerDay * 10).toBeCloseTo(
-      statsStore.periodStats().expense,
-      10,
-    );
-  });
-
   it('recomputes weekdayWeekendSplit when transactions change', () => {
     const rangeStore = TestBed.inject(RangeStore);
     // 2026-07-10..18: Fri, Sat, Sun, Mon, Tue, Wed, Thu, Fri, Sat -> 6 weekdays, 3 weekend days.
