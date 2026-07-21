@@ -3,10 +3,12 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerBulb,
   tablerChartBar,
+  tablerCodeCircle2,
   tablerCoin,
   tablerFileImport,
-  tablerMapPin,
+  tablerPalette,
   tablerShieldLock,
+  tablerSparkles,
   tablerTags,
   tablerUsers,
 } from '@ng-icons/tabler-icons';
@@ -48,12 +50,6 @@ const VALUE_PROPS: readonly ValueProp[] = [
       'No subscription, no premium tier gating features behind a paywall. Everything on this page is included — for every user, forever.',
   },
   {
-    icon: 'tablerMapPin',
-    title: 'Actually built for European banks',
-    description:
-      'KBC and Belfius CSV presets, IBAN-based transfer matching, EUR formatting — not a US-first product with EU support bolted on afterward.',
-  },
-  {
     icon: 'tablerUsers',
     title: 'Joint accounts, done properly',
     description:
@@ -64,6 +60,18 @@ const VALUE_PROPS: readonly ValueProp[] = [
     title: 'Categorisation you can see and correct',
     description:
       'A rules engine you can read and edit, plus an on-device learning model that only ever suggests. Never a black box, never an override of a category you set yourself.',
+  },
+  {
+    icon: 'tablerSparkles',
+    title: 'Suggestions that get smarter as you go',
+    description:
+      'The more you categorise, the better the on-device model gets at guessing right. Suggestions show up as a one-click accept next to each transaction — never applied automatically.',
+  },
+  {
+    icon: 'tablerPalette',
+    title: 'Make it feel like yours',
+    description:
+      'A full set of built-in visual themes, from clean and minimal to bold and playful — switch anytime from Settings, no reload required.',
   },
 ];
 
@@ -168,9 +176,11 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
     provideIcons({
       tablerShieldLock,
       tablerCoin,
-      tablerMapPin,
+      tablerCodeCircle2,
       tablerUsers,
       tablerBulb,
+      tablerSparkles,
+      tablerPalette,
       tablerFileImport,
       tablerTags,
       tablerChartBar,
