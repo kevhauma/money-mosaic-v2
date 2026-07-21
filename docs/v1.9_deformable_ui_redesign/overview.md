@@ -49,6 +49,28 @@ border via daisyUI's theme CSS variables without direct edits. Only the Dashboar
 layout rework in v1.5 and that layout is unchanged here; every other routed feature inherits the
 new look the same way it inherited v1.5's.
 
+## Tickets — theme-picker feedback follow-ups
+
+Direct user feedback on the unified theme picker (8 themes, one settings page) after all branches
+landed. Each links to a `tickets/TICKET-*.md` file with its own user story, as-is/to-be, and
+acceptance criteria — this section is only the index.
+
+- [x] [TICKET-UI-16](./tickets/TICKET-UI-16-theme-icon-separator.md) — Per-theme brand icon &
+      separator glyph (adds FR-UI-16) — restores Retro-Futurism's atom icon and Cyberpunk's `//`
+      slash wordmark, extends the pattern to all 8 themes
+- [x] [TICKET-UI-17](./tickets/TICKET-UI-17-single-theme-selector.md) — Collapse to a single theme
+      selector, remove the navbar light/dark toggle (adds FR-UI-17) — do this first, the next two
+      tickets build on its flattened picker list
+- [x] [TICKET-UI-18](./tickets/TICKET-UI-18-full-tile-theme-preview.md) — Full-tile live theme
+      preview (adds FR-UI-18) — needs UI-17's tile template
+- [x] [TICKET-UI-19](./tickets/TICKET-UI-19-no-hover-zoom-rule.md) — Remove intense hover-zoom, add
+      a no-hover-scale design rule — independent, audit-and-prevent
+- [x] [TICKET-UI-20](./tickets/TICKET-UI-20-neumorphism-light-variant.md) — Neumorphism: use its
+      light-mode clay variant instead of the dark port — independent
+- [x] [TICKET-UI-21](./tickets/TICKET-UI-21-default-theme-polish.md) — Default theme polish: safer
+      shadows/borders, wider `mm-blob` use, no pill radius on fields/nav (adds FR-UI-21) —
+      independent, default theme only
+
 ## Considered, not done
 
 - **`mm-blob` on more surfaces** (empty states, every floating card) — kept to one hero surface per

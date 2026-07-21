@@ -156,6 +156,46 @@ The net-worth header — the app's one true hero surface (small as it is, it's t
 sees) — gets an `mm-blob` decorative wash behind its content, at low opacity (~8%), primary-tinted,
 slowly morphing. Nowhere else in the shell gets `mm-blob`.
 
+## Post-launch updates (theme-picker feedback, TICKET-UI-16..21)
+
+Direct user feedback after all 8 themes shipped changed several values documented above. This
+section is the amendment log — the numbered sections above are left as originally written except
+where noted here, so this doubles as a record of what shipped vs. what changed after review.
+
+- **§2 Shape — `--radius-field` is no longer `9999px`.** TICKET-UI-21: a full pill on every field
+  read as too extreme for a "safe" default. Both `deformable`/`deformable-dark` now use `0.875rem`
+  — soft, still distinct from `--radius-box`'s `1.5rem`, but not a stadium shape. The app shell's
+  nav active-item pill (§7) moved off `rounded-full` onto the same `--radius-field` token for the
+  same reason.
+- **§2 Shape — `mm-blob` extended to a second surface.** TICKET-UI-21: beyond the net-worth header
+  (§7), `shared/ui/empty-state` now also carries a low-opacity decorative `mm-blob` wash, per the
+  original "Considered, not done" note above naming empty states as the reasonable next candidate.
+  Still never on an interactive element or under legible edge content.
+- **§3 Motion — hover-triggered scale removed.** TICKET-UI-19: `--mm-squish-hover` (a 1.05×
+  hover-triggered grow on every button) has no producer left in either `deformable` block, and
+  `.mm-squish:hover` was removed from `styles.css` entirely. Cross-theme design rule now in force:
+  hover states may change color/shadow/opacity/border but must never scale/zoom an element; scale
+  stays reserved for `:active` press feedback only, which this change leaves untouched.
+- **§4 Depth — glow shadows calmed.** TICKET-UI-21: `--mm-glow-shadow`/`--mm-elev-raised-shadow`
+  dropped from 0.35 to 0.18 alpha, `--mm-elev-floating-shadow` from 0.4 to 0.22 — the same shape,
+  a quieter default. `mm-paper`'s border-on-every-elevation behavior (already true for all tiers,
+  not just `flat`) is unaffected — that pairing already existed, not a new change.
+- **Icon + separator per theme (new, TICKET-UI-16).** Not part of this design-language originally.
+  A shared `.mm-brand-icon`/`.mm-brand-sep`/`.mm-brand-stripe` hook-class trio (styled per theme,
+  same mechanism as `mm-blob`/`mm-squish`) now renders a small brand mark next to the "Money
+  Mosaic" wordmark for every catalog theme, restoring Retro-Futurism's atomic-orbit emblem +
+  racing stripe and Cyberpunk's `Money//Mosaic` slash wordmark from their original design branches.
+- **Single-theme picker, no light/dark toggle (TICKET-UI-17/18).** The mode+per-mode-style model
+  described implicitly by "spans both modes" language above is gone — every catalog entry
+  (including the default, now split into "Default Light"/"Default Dark") maps to exactly one
+  `data-theme` value, picked from one flat list. The settings-page picker tile's outer chrome (not
+  just the inner swatch) now renders under the theme it represents.
+- **Neumorphism's primary identity is its light variant (TICKET-UI-20).** The original
+  `design/neumorphism` branch restyled the app's *light* theme; a separately-authored dark clay
+  variant had incorrectly stood in for the whole theme on `main`. `neumorphism` (id, "Clay") is now
+  that light variant; the dark clay port survives as a second, independent `neumorphism-dark`
+  entry.
+
 ## Traceability
 
 | Section | Feeds |
