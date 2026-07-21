@@ -28,7 +28,8 @@ const V15_DARK = ['#36a980', '#0394a6', '#5294e6', '#6353c5', '#b06ace', '#a8347
 const CHART_CATEGORICAL_COLORS: Record<string, readonly string[]> = {
   deformable: DEFORMABLE_LIGHT,
   'deformable-dark': DEFORMABLE_DARK,
-  neumorphism: V15_DARK,
+  neumorphism: V15_LIGHT,
+  'neumorphism-dark': V15_DARK,
   'liquid-glass': V15_DARK,
   /** Cyberpunk: neon signage hues over the NIGHT CITY grid; slots alternate hue family AND lightness. */
   cyberpunk: ['#00e5ff', '#ff2ec4', '#c3f53c', '#8f7bff', '#ffa02e', '#00ffa3'],
@@ -85,6 +86,7 @@ const CHART_ANIMATIONS: Record<string, ChartAnimation> = {
   deformable: DEFORMABLE_ANIMATION,
   'deformable-dark': DEFORMABLE_ANIMATION,
   neumorphism: V15_ANIMATION,
+  'neumorphism-dark': V15_ANIMATION,
   'liquid-glass': V15_ANIMATION,
   cyberpunk: V15_ANIMATION,
   skeuomorphism: V15_ANIMATION,

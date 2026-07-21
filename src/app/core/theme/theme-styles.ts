@@ -2,6 +2,7 @@ export type ThemeStyleId =
   | 'deformable'
   | 'deformable-dark'
   | 'neumorphism'
+  | 'neumorphism-dark'
   | 'liquid-glass'
   | 'cyberpunk'
   | 'skeuomorphism'
@@ -61,6 +62,12 @@ export const THEME_STYLES: readonly ThemeStyle[] = [
     label: 'Clay',
     tagline: 'One soft clay slab — surfaces extrude and carve instead of float.',
     dataTheme: 'neumorphism',
+  },
+  {
+    id: 'neumorphism-dark',
+    label: 'Clay Dark',
+    tagline: 'The same clay slab, lit by a single dim lamp after hours.',
+    dataTheme: 'neumorphism-dark',
   },
   {
     id: 'liquid-glass',

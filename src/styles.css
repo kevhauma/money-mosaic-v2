@@ -49,8 +49,8 @@
   &:where(
     [data-theme='deformable-dark'],
     [data-theme='deformable-dark'] *,
-    [data-theme='neumorphism'],
-    [data-theme='neumorphism'] *,
+    [data-theme='neumorphism-dark'],
+    [data-theme='neumorphism-dark'] *,
     [data-theme='liquid-glass'],
     [data-theme='liquid-glass'] *,
     [data-theme='cyberpunk'],
