@@ -23,6 +23,7 @@ type SuggestionRow = {
   accountName: string;
   suggestedCategoryId: number;
   suggestedCategoryName: string;
+  suggestedCategoryColor: string;
   confidence: number;
 };
 
@@ -65,14 +66,15 @@ export class SuggestionsTableComponent {
         const suggestion = suggestions.get(transaction.id!);
         if (!suggestion) return undefined;
 
-        const suggestedCategoryName = categoriesById.get(suggestion.categoryId)?.name;
-        if (!suggestedCategoryName) return undefined;
+        const suggestedCategory = categoriesById.get(suggestion.categoryId);
+        if (!suggestedCategory) return undefined;
 
         return {
           transaction,
           accountName: accountsById.get(transaction.accountId)?.name ?? '—',
           suggestedCategoryId: suggestion.categoryId,
-          suggestedCategoryName,
+          suggestedCategoryName: suggestedCategory.name,
+          suggestedCategoryColor: suggestedCategory.color,
           confidence: suggestion.confidence,
         };
       })
@@ -101,6 +103,15 @@ export class SuggestionsTableComponent {
   protected confidenceBadgeStyle(confidence: number): string {
     const color = confidenceToColor(confidence);
     return `background-color: ${color}; border-color: ${color}; color: white;`;
+  }
+
+  /**
+   * Alternate presentation requested after using the background-gradient badge above (FR-ML-16
+   * feedback): a category-colour dot plus a confidence-coloured percentage, left in place
+   * alongside the original so the user can delete whichever they don't prefer.
+   */
+  protected confidenceTextColor(confidence: number): string {
+    return confidenceToColor(confidence);
   }
 
   /**

@@ -73,3 +73,11 @@ is unchanged; only the badge's colour becomes confidence-driven.
 # Feedback
 
 after using it, I'd prefer if the category name is prepended by a dot colored with the category color, then folowed by the percentage being the gradient, implement both the badge with background and also a dot with the color of the confidence. I will delete manually the one I don't like.
+
+**Resolved:** the suggestions-table "Suggested" cell now renders both variants side by side —
+the original background-gradient badge (`.suggestion-badge--gradient`, unchanged) and a new
+`.suggestion-badge--dot` badge: a small dot coloured by the row's category colour, followed by the
+category name and a confidence-gradient-coloured percentage (`confidenceTextColor()` in
+[suggestions-table.component.ts](../../../src/app/feature-learning/components/suggestions-table/suggestions-table.component.ts),
+reusing the same `confidenceToColor` helper). Delete whichever `mm-badge` block you don't want from
+[suggestions-table.component.html](../../../src/app/feature-learning/components/suggestions-table/suggestions-table.component.html).

@@ -46,9 +46,27 @@
             </select>
           </td>
           <td>
-            <mm-badge variant="outline" size="sm" [style]="confidenceBadgeStyle(row.confidence)">
-              {{ row.suggestedCategoryName }} ({{ row.confidence * 100 | number: '1.0-0' }}%)
-            </mm-badge>
+            <mm-flex align="center" gap="2">
+              <mm-badge
+                variant="outline"
+                size="sm"
+                class="suggestion-badge--gradient"
+                [style]="confidenceBadgeStyle(row.confidence)"
+              >
+                {{ row.suggestedCategoryName }} ({{ row.confidence * 100 | number: '1.0-0' }}%)
+              </mm-badge>
+              <mm-badge variant="outline" size="sm" class="suggestion-badge--dot">
+                <span
+                  class="mr-1 inline-block h-2 w-2 rounded-full align-middle"
+                  [style.background-color]="row.suggestedCategoryColor"
+                  aria-hidden="true"
+                ></span
+                >{{ row.suggestedCategoryName }} (<span
+                  [style.color]="confidenceTextColor(row.confidence)"
+                  >{{ row.confidence * 100 | number: '1.0-0' }}%</span
+                >)
+              </mm-badge>
+            </mm-flex>
           </td>
           <td>
             <mm-flex align="center" justify="end" gap="1">
