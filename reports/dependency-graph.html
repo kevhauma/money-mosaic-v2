@@ -300,10 +300,10 @@
     </p>
     <div class="stats">
       <!-- GENERATED:STATS:START -->
-      <div class="stat"><span class="value">22</span><span class="label">Nodes</span></div>
-      <div class="stat"><span class="value">73</span><span class="label">Edges</span></div>
-      <div class="stat"><span class="value">8</span><span class="label">Features</span></div>
-      <div class="stat"><span class="value">11</span><span class="label">Core modules</span></div>
+      <div class="stat"><span class="value">25</span><span class="label">Nodes</span></div>
+      <div class="stat"><span class="value">78</span><span class="label">Edges</span></div>
+      <div class="stat"><span class="value">9</span><span class="label">Features</span></div>
+      <div class="stat"><span class="value">13</span><span class="label">Core modules</span></div>
       <div class="stat"><span class="value">3</span><span class="label">Shared modules</span></div>
       <!-- GENERATED:STATS:END -->
     </div>
@@ -382,113 +382,121 @@ subgraph 2["core"]
 4["categorisation"]
 5["data-access"]
 6["import"]
-7["ml"]
-8["state"]
-9["stats"]
-A["storage"]
-B["theme"]
-C["transactions"]
-D["transfers"]
+7["layout"]
+8["ml"]
+9["onboarding"]
+A["state"]
+B["stats"]
+C["storage"]
+D["theme"]
+E["transactions"]
+F["transfers"]
 end
 subgraph FEAT["features"]
-E["feature-accounts"]
-F["feature-categories"]
-G["feature-dashboard"]
-H["feature-data-management"]
-I["feature-import"]
-J["feature-learning"]
-K["feature-settings"]
-L["feature-transactions"]
+G["feature-accounts"]
+H["feature-categories"]
+I["feature-dashboard"]
+J["feature-data-management"]
+K["feature-home"]
+L["feature-import"]
+M["feature-learning"]
+N["feature-settings"]
+O["feature-transactions"]
 end
-subgraph M["shared"]
-N["echarts"]
-O["ui"]
-P["utils"]
+subgraph P["shared"]
+Q["echarts"]
+R["ui"]
+S["utils"]
 end
 end
 end
 3-->5
-3-->D
-3-->P
+3-->F
+3-->S
 4-->5
 4-->3
-5-->7
-5-->P
+5-->8
+5-->S
 6-->5
-6-->P
-6-->D
-7-->4
-7-->5
-8-->3
+6-->S
+6-->F
+7-->A
+7-->B
+7-->R
+7-->S
+8-->4
 8-->5
-8-->9
-8-->D
-8-->P
-8-->C
-9-->5
-9-->P
-9-->3
-9-->D
-C-->5
-C-->D
-D-->5
-D-->3
-D-->P
+A-->3
+A-->5
+A-->B
+A-->F
+A-->S
+A-->E
+B-->5
+B-->S
+B-->3
+B-->F
 E-->5
-E-->N
-E-->8
-E-->O
-E-->P
-E-->9
+E-->F
 F-->5
-F-->8
-F-->O
-F-->P
-F-->4
-F-->7
+F-->3
+F-->S
 G-->5
-G-->8
-G-->O
-G-->P
-G-->D
-G-->9
-G-->N
+G-->Q
+G-->A
+G-->R
+G-->S
+G-->B
 H-->5
 H-->A
-H-->O
-H-->P
+H-->R
+H-->S
+H-->4
+H-->8
 I-->5
-I-->6
-I-->O
-I-->P
-I-->8
-I-->4
-J-->O
-J-->7
-J-->8
-J-->F
+I-->A
+I-->R
+I-->S
+I-->F
+I-->B
+I-->Q
 J-->5
-J-->P
-K-->B
-K-->O
+J-->C
+J-->R
+J-->S
+K-->R
 L-->5
-L-->8
-L-->C
-L-->O
-L-->P
-L-->F
-L-->D
-N-->P
-O-->P
+L-->6
+L-->R
+L-->S
+L-->A
+L-->4
+M-->R
+M-->8
+M-->A
+M-->H
+M-->5
+M-->S
+N-->D
+N-->R
+O-->5
+O-->A
+O-->E
+O-->R
+O-->S
+O-->H
+O-->F
+Q-->S
+R-->S
 
 classDef core fill:#E4F3F1,stroke:#2C7A73,color:#173F3B,stroke-width:1.5px;
 classDef shared fill:#EFEBFA,stroke:#6C5B9E,color:#332B54,stroke-width:1.5px;
 classDef feature fill:#FBEADC,stroke:#C2703A,color:#5C3111,stroke-width:1.5px;
-class 3,4,5,6,7,8,9,A,B,C,D core
-class N,O,P shared
-class E,F,G,H,I,J,K,L feature
+class 3,4,5,6,7,8,9,A,B,C,D,E,F core
+class Q,R,S shared
+class G,H,I,J,K,L,M,N,O feature
 style 2 fill:#F5FBFA,stroke:#2C7A73,stroke-width:1px
-style M fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
+style P fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
 style FEAT fill:#FDF6F0,stroke:#C2703A,stroke-width:1px
 </pre>
       </div>

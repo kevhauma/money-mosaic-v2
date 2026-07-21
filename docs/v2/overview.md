@@ -13,10 +13,12 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 - [ ] [TICKET-SET-03](./tickets/TICKET-SET-03-currency-setting.md) — Currency setting (new capability) — needs SET-05 only; build before SET-04, which extends the same formatter refactor
 - [ ] [TICKET-SET-04](./tickets/TICKET-SET-04-locale-setting.md) — Locale setting for number/date formatting (new capability) — needs SET-05 + SET-03 (the only cross-sibling dependency in this track)
 - [ ] [TICKET-PRIV-01](./tickets/TICKET-PRIV-01-privacy-mode-dashboard.md) — Privacy mode: blur amounts on the Dashboard (new capability) — needs SET-05 only; independent of SET-02/03/04
+- [ ] [TICKET-SET-06](./tickets/TICKET-SET-06-move-data-nav-into-settings.md) — Move Data Management nav item/route under Settings (`/settings/data`) (refactor, relocates FR-DAT-1/2/3) — independent of SET-02/03/04/05/PRIV-01, no schema or store involved; safe to build any time
 
 ## Public content track (independent of the Settings track and of each other, except PUB-05)
 
-- [ ] [TICKET-PUB-01](./tickets/TICKET-PUB-01-home-landing-page.md) — Public home/landing page with click-through to Dashboard (new capability) — fully independent, safe to build any time
+- [x] [TICKET-PUB-01](./tickets/TICKET-PUB-01-home-landing-page.md) — Public home/landing page with click-through to Dashboard (new capability) — fully independent, safe to build any time
+- [ ] [TICKET-PUB-06](./tickets/TICKET-PUB-06-github-repo-link.md) — GitHub repository link on the landing page, and optionally in Settings (new capability) — **needs TICKET-PUB-01** (landing page it's placed on); Settings half is optional/secondary
 - [ ] [TICKET-PUB-02](./tickets/TICKET-PUB-02-how-to-guides.md) — How-to guides for core workflows (new capability) — independent; pairs naturally with PUB-03's shared content-page pattern
 - [ ] [TICKET-PUB-03](./tickets/TICKET-PUB-03-faq.md) — FAQ for complex/non-obvious features (new capability) — independent; pairs naturally with PUB-02
 - [ ] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Local-data & migration messaging, surfaced in-app (new capability) — **unblocked**: v1.4 TICKET-DAT-01 (export/import) has since shipped; build last among the PUB tickets regardless

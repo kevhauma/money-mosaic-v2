@@ -27,15 +27,15 @@ Today the app has no public-facing explanation of what it is — the root route 
 
 ## Acceptance criteria
 
-- [ ] `feature-home/` created following the standard feature-folder shape (`home.routes.ts`, `index.ts`, `components/`), lazy-loaded like every other feature.
-- [ ] Landing page renders outside the drawer/sidebar shell — verified visually distinct from every other routed page (no sidebar/nav chrome).
-- [ ] Landing page copy explains what the app does and mentions the local-first/no-backend data model.
-- [ ] A prominent call-to-action button navigates to `/dashboard`.
-- [ ] First visit to `/` renders the landing page; after reaching the Dashboard once (via the CTA or any other route), subsequent visits to `/` redirect straight to `/dashboard`, verified by inspecting the `mm-has-visited`-equivalent `localStorage` flag.
-- [ ] The landing page remains reachable at an explicit route even after the "seen it" flag is set, linked from a low-key location (footer or Settings), not the primary sidebar nav.
-- [ ] Unit tests cover: the root-route resolution logic choosing landing-page vs. dashboard-redirect based on the stored flag; the flag being set once the user reaches the dashboard.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: clear `localStorage`, load `/`, confirm the landing page renders with no sidebar; click through to the dashboard; reload `/` and confirm it now redirects straight to `/dashboard`; navigate to the explicit landing-page route directly and confirm it still renders.
+- [x] `feature-home/` created following the standard feature-folder shape (`home.routes.ts`, `index.ts`, `components/`), lazy-loaded like every other feature.
+- [x] Landing page renders outside the drawer/sidebar shell — verified visually distinct from every other routed page (no sidebar/nav chrome).
+- [x] Landing page copy explains what the app does and mentions the local-first/no-backend data model.
+- [x] A prominent call-to-action button navigates to `/dashboard`.
+- [x] First visit to `/` renders the landing page; after reaching the Dashboard once (via the CTA or any other route), subsequent visits to `/` redirect straight to `/dashboard`, verified by inspecting the `mm-has-visited`-equivalent `localStorage` flag.
+- [x] The landing page remains reachable at an explicit route even after the "seen it" flag is set, linked from a low-key location (footer or Settings), not the primary sidebar nav.
+- [x] Unit tests cover: the root-route resolution logic choosing landing-page vs. dashboard-redirect based on the stored flag; the flag being set once the user reaches the dashboard.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: clear `localStorage`, load `/`, confirm the landing page renders with no sidebar; click through to the dashboard; reload `/` and confirm it now redirects straight to `/dashboard`; navigate to the explicit landing-page route directly and confirm it still renders.
 
 ## Notes
 
