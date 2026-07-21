@@ -70,6 +70,36 @@
 [data-theme='cyberpunk'] {
   --font-display: 'Orbitron', 'Rajdhani', ui-sans-serif, sans-serif;
   --mm-font-mono: 'Share Tech Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  /* Brand mark: "Money//Mosaic" — the slash separator baked into the wordmark, restored from
+   * design/cyberpunk (commit 13efb22). Icon is a small neon terminal cursor block. */
+  --mm-brand-sep: '//';
+  --mm-brand-icon-size: 0.7rem;
+  --mm-brand-icon-bg: var(--color-primary);
+  --mm-brand-icon-radius: 1px;
+}
+[data-theme='cyberpunk'] .mm-brand-icon {
+  box-shadow: 0 0 8px color-mix(in oklab, var(--color-primary) 70%, transparent);
+  animation: cyber-cursor-blink 1.1s steps(1) infinite;
+}
+[data-theme='cyberpunk'] .mm-brand-sep {
+  color: var(--color-accent);
+  font-family: var(--mm-font-mono);
+}
+@keyframes cyber-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='cyberpunk'] .mm-brand-icon {
+    animation: none;
+  }
 }
 
 /* Ambient layer: neon circuit grid, glow vignettes, scan sweep, CRT scanlines. The app shell's

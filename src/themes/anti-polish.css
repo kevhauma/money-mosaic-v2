@@ -61,6 +61,13 @@
   --mm-elev-raised-shadow: 4px 4px 0 0 var(--shadow-raw);
   --mm-elev-floating-shadow: 8px 8px 0 0 var(--shadow-raw);
   --mm-halo-shadow: 8px 8px 0 0 var(--shadow-raw), 14px 14px 0 0 var(--color-accent);
+
+  /* Brand mark: a bare unstyled square (no radius, no shadow — "nothing here is meant to look
+   * designed") and a bare underscore separator, matching the raw/system-monospace register. */
+  --mm-brand-icon-size: 0.75rem;
+  --mm-brand-icon-bg: var(--color-base-content);
+  --mm-brand-icon-radius: 0;
+  --mm-brand-sep: '_';
 }
 
 /* Raw/brutalist type: expose the system monospace stack everywhere instead of a humanist sans —

@@ -72,6 +72,67 @@
   --mm-font-mono: 'Space Mono', ui-monospace, 'Cascadia Mono', monospace;
 }
 
+/* Brand mark: the atomic orbit emblem (nucleus + two counter-rotated elliptical electron rings)
+ * next to the wordmark, and the tri-color racing stripe under the drawer wordmark — this theme's
+ * single strongest signature, restored from design/Retro-Futurism (commit 1560fa3). No inline
+ * separator glyph — the stripe carries that role instead. */
+[data-theme='retro-futurism'] .mm-brand-icon {
+  position: relative;
+  width: 1.625rem;
+  height: 1.625rem;
+  background: radial-gradient(circle, var(--color-primary) 3px, transparent 3.5px);
+  border-radius: 0;
+}
+[data-theme='retro-futurism'] .mm-brand-icon::before,
+[data-theme='retro-futurism'] .mm-brand-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid color-mix(in oklab, var(--color-secondary) 85%, transparent);
+  border-radius: 50%;
+}
+[data-theme='retro-futurism'] .mm-brand-icon::before {
+  border-color: color-mix(in oklab, var(--color-secondary) 85%, transparent);
+  transform: rotate(60deg) scaleY(0.42);
+  animation: rf-orbit-a 6s linear infinite;
+}
+[data-theme='retro-futurism'] .mm-brand-icon::after {
+  border-color: color-mix(in oklab, var(--color-accent) 85%, transparent);
+  transform: rotate(-60deg) scaleY(0.42);
+  animation: rf-orbit-b 9s linear infinite;
+}
+@keyframes rf-orbit-a {
+  from {
+    transform: rotate(60deg) scaleY(0.42);
+  }
+  to {
+    transform: rotate(420deg) scaleY(0.42);
+  }
+}
+@keyframes rf-orbit-b {
+  from {
+    transform: rotate(-60deg) scaleY(0.42);
+  }
+  to {
+    transform: rotate(-420deg) scaleY(0.42);
+  }
+}
+[data-theme='retro-futurism'] .mm-brand-stripe {
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0 33.3%,
+    var(--color-accent) 33.3% 66.6%,
+    var(--color-secondary) 66.6% 100%
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='retro-futurism'] .mm-brand-icon::before,
+  [data-theme='retro-futurism'] .mm-brand-icon::after {
+    animation: none;
+  }
+}
+
 html[data-theme='retro-futurism'] body {
   font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 }

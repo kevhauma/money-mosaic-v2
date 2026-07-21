@@ -93,6 +93,25 @@
     0 32px 80px -24px var(--mm-shadow-strong),
     0 0 64px -8px color-mix(in oklab, var(--color-primary) 45%, transparent),
     0 0 120px -16px color-mix(in oklab, var(--color-accent) 30%, transparent);
+
+  /* Brand mark: a frosted glass droplet with a specular highlight, a hollow diamond separator. */
+  --mm-brand-icon-size: 0.8rem;
+  --mm-brand-icon-radius: 9999px;
+}
+[data-theme='liquid-glass'] .mm-brand-icon {
+  background: radial-gradient(
+    circle at 30% 28%,
+    oklch(100% 0 0 / 0.85),
+    color-mix(in oklab, var(--color-primary) 70%, transparent) 55%,
+    color-mix(in oklab, var(--color-accent) 55%, transparent)
+  );
+  box-shadow: 0 0 10px -1px color-mix(in oklab, var(--color-primary) 55%, transparent);
+}
+[data-theme='liquid-glass'] .mm-brand-sep::before {
+  content: '◇';
+}
+[data-theme='liquid-glass'] .mm-brand-sep {
+  color: var(--color-secondary);
 }
 
 /* Ambient backdrop: rotating aurora field + film grain the glass sits on. */

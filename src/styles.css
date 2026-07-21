@@ -126,6 +126,31 @@
   animation: var(--mm-blob-animation, none);
 }
 
+/**
+ * Wordmark brand marks — a per-theme icon badge and inline separator glyph next to "Money
+ * Mosaic" in the app shell (`app.html`), and reused on the settings picker's theme tiles.
+ * Invisible/inert by default; each theme's own CSS block (below, or `src/themes/*.css`) opts in
+ * with a shape/glyph so every theme carries its own small brand identity, not just its palette.
+ */
+.mm-brand-icon {
+  display: inline-block;
+  width: var(--mm-brand-icon-size, 0);
+  height: var(--mm-brand-icon-size, 0);
+  flex: none;
+  background: var(--mm-brand-icon-bg, none);
+  border-radius: var(--mm-brand-icon-radius, 0);
+}
+.mm-brand-sep::before {
+  content: var(--mm-brand-sep, '');
+}
+/* Full-width accent rule under the drawer wordmark (retro-futurism's racing stripe). Zero-height/invisible by default. */
+.mm-brand-stripe {
+  display: block;
+  height: var(--mm-brand-stripe-height, 0);
+  border-radius: 9999px;
+  background: var(--mm-brand-stripe-bg, transparent);
+}
+
 @keyframes mm-blob-morph {
   0%,
   100% {
@@ -197,6 +222,12 @@
   --mm-halo-shadow: 0 0 32px oklch(78% 0.16 165 / 0.4);
   --mm-blob-bg: color-mix(in oklab, var(--color-primary) 20%, transparent);
   --mm-blob-animation: mm-blob-morph 8s ease-in-out infinite;
+
+  /* Brand mark: a soft gummy dot echoing the blob's own morph shape, a middot separator. */
+  --mm-brand-icon-size: 0.875rem;
+  --mm-brand-icon-bg: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  --mm-brand-icon-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  --mm-brand-sep: '·';
 }
 
 /*
@@ -257,4 +288,9 @@
   --mm-halo-shadow: 0 0 32px oklch(80% 0.15 165 / 0.3);
   --mm-blob-bg: color-mix(in oklab, var(--color-primary) 20%, transparent);
   --mm-blob-animation: mm-blob-morph 8s ease-in-out infinite;
+
+  --mm-brand-icon-size: 0.875rem;
+  --mm-brand-icon-bg: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  --mm-brand-icon-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  --mm-brand-sep: '·';
 }
