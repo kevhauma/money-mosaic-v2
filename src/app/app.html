@@ -28,22 +28,6 @@
           (rangeShift)="onRangeShift($event)"
         />
       </div>
-      <div class="ml-auto flex items-center">
-        <mm-button
-          shape="square"
-          variant="ghost"
-          [ariaLabel]="
-            themeService.theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
-          "
-          (click)="themeService.toggle()"
-        >
-          <ng-icon
-            [name]="themeService.theme() === 'dark' ? 'tablerSun' : 'tablerMoon'"
-            size="18"
-            aria-hidden="true"
-          />
-        </mm-button>
-      </div>
     </div>
 
     <main class="flex-1 p-4 lg:p-6">

@@ -3,66 +3,41 @@
 <mm-paper>
   <mm-text variant="heading" as="h2">Theme</mm-text>
   <mm-text as="p" variant="caption" class="mt-1">
-    Pick a style for each mode. Choosing one switches you to it right away; the sun/moon toggle in
-    the top bar keeps flipping between your light and dark picks.
+    Pick a theme — choosing one switches you to it right away.
   </mm-text>
 
-  <section class="mt-6">
-    <mm-text variant="label" as="h3">Light mode styles</mm-text>
-    <div class="mt-3 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
-      @for (style of lightStyles; track style.id) {
-        <ng-container
-          [ngTemplateOutlet]="styleOption"
-          [ngTemplateOutletContext]="{ style, mode: 'light' }"
-        />
-      }
-    </div>
-  </section>
-
-  <section class="mt-8">
-    <mm-text variant="label" as="h3">Dark mode styles</mm-text>
-    <div class="mt-3 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
-      @for (style of darkStyles; track style.id) {
-        <ng-container
-          [ngTemplateOutlet]="styleOption"
-          [ngTemplateOutletContext]="{ style, mode: 'dark' }"
-        />
-      }
-    </div>
-  </section>
-</mm-paper>
-
-<!-- One picker card. The inner div re-declares data-theme, so everything inside renders in that
-     style's own tokens (palette, radius, fonts, --mm-* hooks) — a live preview, not a screenshot. -->
-<ng-template #styleOption let-style="style" let-mode="mode">
-  <button
-    type="button"
-    class="group rounded-box text-left transition focus-visible:outline-2 focus-visible:outline-primary"
-    [class.ring-2]="isSelected(mode, style.id)"
-    [class.ring-primary]="isSelected(mode, style.id)"
-    [attr.aria-pressed]="isSelected(mode, style.id)"
-    (click)="onSelect(mode, style.id)"
-  >
-    <span
-      [attr.data-theme]="style.dataTheme[mode]"
-      class="block rounded-box border border-base-300 bg-base-200 p-3"
-    >
-      <span class="block rounded-box border border-base-300 bg-base-100 p-3">
-        <span class="font-display block text-sm font-bold text-base-content">Aa 123</span>
-        <span class="mt-2 flex gap-1">
-          <span class="rounded-field h-4 w-9 bg-primary"></span>
-          <span class="rounded-field h-4 w-9 bg-secondary"></span>
-          <span class="rounded-field h-4 w-9 bg-accent"></span>
+  <div class="mt-6 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+    @for (style of styles; track style.id) {
+      <button
+        type="button"
+        class="group rounded-box text-left transition focus-visible:outline-2 focus-visible:outline-primary"
+        [class.ring-2]="isSelected(style.id)"
+        [class.ring-primary]="isSelected(style.id)"
+        [attr.aria-pressed]="isSelected(style.id)"
+        (click)="onSelect(style.id)"
+      >
+        <span
+          [attr.data-theme]="style.dataTheme"
+          class="block rounded-box border border-base-300 bg-base-200 p-3"
+        >
+          <span class="block rounded-box border border-base-300 bg-base-100 p-3">
+            <span class="font-display block text-sm font-bold text-base-content">Aa 123</span>
+            <span class="mt-2 flex gap-1">
+              <span class="rounded-field h-4 w-9 bg-primary"></span>
+              <span class="rounded-field h-4 w-9 bg-secondary"></span>
+              <span class="rounded-field h-4 w-9 bg-accent"></span>
+            </span>
+            <span class="mt-2 block h-2 w-3/4 rounded-selector bg-base-300"></span>
+          </span>
         </span>
-        <span class="mt-2 block h-2 w-3/4 rounded-selector bg-base-300"></span>
-      </span>
-    </span>
-    <span class="mt-2 flex items-center gap-2 px-1">
-      <mm-text as="span" weight="semibold" class="text-sm">{{ style.label }}</mm-text>
-      @if (isSelected(mode, style.id)) {
-        <span class="badge badge-primary badge-sm">Active</span>
-      }
-    </span>
-    <mm-text as="p" variant="caption" class="px-1 pb-1">{{ style.tagline }}</mm-text>
-  </button>
-</ng-template>
+        <span class="mt-2 flex items-center gap-2 px-1">
+          <mm-text as="span" weight="semibold" class="text-sm">{{ style.label }}</mm-text>
+          @if (isSelected(style.id)) {
+            <span class="badge badge-primary badge-sm">Active</span>
+          }
+        </span>
+        <mm-text as="p" variant="caption" class="px-1 pb-1">{{ style.tagline }}</mm-text>
+      </button>
+    }
+  </div>
+</mm-paper>

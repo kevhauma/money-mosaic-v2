@@ -1,116 +1,93 @@
-import { vi } from 'vitest';
 import { ThemeService } from './theme.service';
 
-const MODE_KEY = 'mm-theme';
-const LIGHT_STYLE_KEY = 'mm-style-light';
-const DARK_STYLE_KEY = 'mm-style-dark';
-
-const mockMatchMedia = (matches: boolean): void => {
-  window.matchMedia = vi.fn().mockReturnValue({ matches }) as unknown as typeof window.matchMedia;
-};
+const STYLE_KEY = 'mm-theme-style';
+const LEGACY_MODE_KEY = 'mm-theme';
+const LEGACY_LIGHT_KEY = 'mm-style-light';
+const LEGACY_DARK_KEY = 'mm-style-dark';
 
 describe('ThemeService', () => {
   afterEach(() => {
-    localStorage.removeItem(MODE_KEY);
-    localStorage.removeItem(LIGHT_STYLE_KEY);
-    localStorage.removeItem(DARK_STYLE_KEY);
+    localStorage.removeItem(STYLE_KEY);
+    localStorage.removeItem(LEGACY_MODE_KEY);
+    localStorage.removeItem(LEGACY_LIGHT_KEY);
+    localStorage.removeItem(LEGACY_DARK_KEY);
     document.documentElement.removeAttribute('data-theme');
-    vi.restoreAllMocks();
   });
 
-  it('defaults to the system light preference and the default light style', () => {
-    mockMatchMedia(false);
-
+  it('defaults to the default light style when nothing is stored', () => {
     const service = new ThemeService();
 
-    expect(service.mode()).toBe('light');
-    expect(service.activeStyle()).toBe('deformable');
+    expect(service.style()).toBe('deformable');
     expect(document.documentElement.getAttribute('data-theme')).toBe('deformable');
   });
 
-  it('defaults to the system dark preference and the default dark style', () => {
-    mockMatchMedia(true);
+  it('restores a stored style choice', () => {
+    localStorage.setItem(STYLE_KEY, 'cyberpunk');
 
     const service = new ThemeService();
 
-    expect(service.mode()).toBe('dark');
+    expect(service.style()).toBe('cyberpunk');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('cyberpunk');
+  });
+
+  it('ignores an unknown/removed stored style id', () => {
+    localStorage.setItem(STYLE_KEY, 'not-a-real-style');
+
+    const service = new ThemeService();
+
+    expect(service.style()).toBe('deformable');
+  });
+
+  it('select() applies and persists the chosen style', () => {
+    const service = new ThemeService();
+
+    service.select('skeuomorphism');
+
+    expect(service.style()).toBe('skeuomorphism');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('skeuomorphism');
+    expect(localStorage.getItem(STYLE_KEY)).toBe('skeuomorphism');
+  });
+
+  it('select() rejects an unknown style id', () => {
+    const service = new ThemeService();
+
+    service.select('not-a-real-style' as never);
+
+    expect(service.style()).toBe('deformable');
+  });
+
+  it('migrates a legacy light-mode style pick on first read, then clears legacy keys', () => {
+    localStorage.setItem(LEGACY_MODE_KEY, 'light');
+    localStorage.setItem(LEGACY_LIGHT_KEY, 'memphis');
+    localStorage.setItem(LEGACY_DARK_KEY, 'neumorphism');
+
+    const service = new ThemeService();
+
+    expect(service.style()).toBe('memphis');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('memphis');
+    expect(localStorage.getItem(LEGACY_MODE_KEY)).toBeNull();
+    expect(localStorage.getItem(LEGACY_LIGHT_KEY)).toBeNull();
+    expect(localStorage.getItem(LEGACY_DARK_KEY)).toBeNull();
+    expect(localStorage.getItem(STYLE_KEY)).toBe('memphis');
+  });
+
+  it('migrates a legacy dark-mode "deformable" pick onto the new "deformable-dark" entry', () => {
+    localStorage.setItem(LEGACY_MODE_KEY, 'dark');
+    localStorage.setItem(LEGACY_DARK_KEY, 'deformable');
+
+    const service = new ThemeService();
+
+    expect(service.style()).toBe('deformable-dark');
     expect(document.documentElement.getAttribute('data-theme')).toBe('deformable-dark');
   });
 
-  it('prefers a stored mode choice over the system preference', () => {
-    mockMatchMedia(true);
-    localStorage.setItem(MODE_KEY, 'light');
+  it('prefers a current-format stored style over legacy keys', () => {
+    localStorage.setItem(STYLE_KEY, 'liquid-glass');
+    localStorage.setItem(LEGACY_MODE_KEY, 'light');
+    localStorage.setItem(LEGACY_LIGHT_KEY, 'memphis');
 
     const service = new ThemeService();
 
-    expect(service.mode()).toBe('light');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('deformable');
-  });
-
-  it('restores stored per-mode style choices', () => {
-    mockMatchMedia(false);
-    localStorage.setItem(MODE_KEY, 'dark');
-    localStorage.setItem(DARK_STYLE_KEY, 'neumorphism');
-    localStorage.setItem(LIGHT_STYLE_KEY, 'memphis');
-
-    const service = new ThemeService();
-
-    expect(service.darkStyle()).toBe('neumorphism');
-    expect(service.lightStyle()).toBe('memphis');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('neumorphism');
-  });
-
-  it('ignores a stored style that does not support its mode', () => {
-    mockMatchMedia(false);
-    // memphis is light-only — an (impossible via UI, but possible via stale storage) dark pick.
-    localStorage.setItem(DARK_STYLE_KEY, 'memphis');
-
-    const service = new ThemeService();
-
-    expect(service.darkStyle()).toBe('deformable');
-  });
-
-  it('toggle() flips the mode between the two per-mode style picks and persists', () => {
-    mockMatchMedia(false);
-    const service = new ThemeService();
-    service.selectStyle('dark', 'cyberpunk');
-    service.selectStyle('light', 'retro-futurism');
-
-    expect(service.mode()).toBe('light');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('retro-futurism');
-
-    service.toggle();
-
-    expect(service.mode()).toBe('dark');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('cyberpunk');
-    expect(localStorage.getItem(MODE_KEY)).toBe('dark');
-
-    service.toggle();
-
-    expect(document.documentElement.getAttribute('data-theme')).toBe('retro-futurism');
-  });
-
-  it('selectStyle() sets the style for that mode, switches to it, and persists both picks', () => {
-    mockMatchMedia(false);
-    const service = new ThemeService();
-
-    service.selectStyle('dark', 'liquid-glass');
-
-    expect(service.mode()).toBe('dark');
-    expect(service.activeStyle()).toBe('liquid-glass');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('liquid-glass');
-    expect(localStorage.getItem(DARK_STYLE_KEY)).toBe('liquid-glass');
-    expect(localStorage.getItem(MODE_KEY)).toBe('dark');
-  });
-
-  it('selectStyle() rejects a style that does not support the requested mode', () => {
-    mockMatchMedia(false);
-    const service = new ThemeService();
-
-    service.selectStyle('light', 'neumorphism');
-
-    expect(service.mode()).toBe('light');
-    expect(service.lightStyle()).toBe('deformable');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('deformable');
+    expect(service.style()).toBe('liquid-glass');
   });
 });

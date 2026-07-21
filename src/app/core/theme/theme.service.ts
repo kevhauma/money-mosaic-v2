@@ -1,83 +1,65 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { DEFAULT_STYLE, themeStyleById, type ThemeMode, type ThemeStyleId } from './theme-styles';
+import { Injectable, signal } from '@angular/core';
+import { DEFAULT_STYLE, themeStyleById, type ThemeStyleId } from './theme-styles';
 
-const MODE_STORAGE_KEY = 'mm-theme';
-const STYLE_STORAGE_KEY: Record<ThemeMode, string> = {
+const STYLE_STORAGE_KEY = 'mm-theme-style';
+
+/** Superseded by `STYLE_STORAGE_KEY` — read once for best-effort migration, then cleared. */
+const LEGACY_MODE_KEY = 'mm-theme';
+const LEGACY_STYLE_KEY: Record<'light' | 'dark', string> = {
   light: 'mm-style-light',
   dark: 'mm-style-dark',
 };
 
-function readStoredMode(): ThemeMode | null {
-  const stored = localStorage.getItem(MODE_STORAGE_KEY);
-  return stored === 'light' || stored === 'dark' ? stored : null;
-}
-
-/** Ignores unknown/removed style ids (and styles that don't support the mode) rather than throwing — localStorage outlives refactors. */
-function readStoredStyle(mode: ThemeMode): ThemeStyleId | null {
-  const style = themeStyleById(localStorage.getItem(STYLE_STORAGE_KEY[mode]));
-  return style && style.dataTheme[mode] !== undefined ? style.id : null;
-}
-
-/** jsdom (this repo's Vitest environment) doesn't implement `matchMedia` unless a spec stubs it — fall back to 'light' rather than throwing. */
-function systemTheme(): ThemeMode {
-  if (typeof window.matchMedia !== 'function') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+function readStoredStyle(): ThemeStyleId | null {
+  return themeStyleById(localStorage.getItem(STYLE_STORAGE_KEY))?.id ?? null;
 }
 
 /**
- * Owns the two axes of the app's appearance: the light/dark `mode` (navbar sun/moon quick-toggle)
- * and, per mode, which theme *style* from `THEME_STYLES` renders it (settings page picker). The
- * two resolve to a single daisyUI `data-theme` attribute on `<html>`. Deliberately
- * `localStorage`-only, not the Dexie-backed `appSettings` table v2's TICKET-SET-01 would
- * introduce — appearance is a per-browser preference, not portable data.
+ * Best-effort read of the pre-unification mode+per-mode-style storage shape. The old `deformable`
+ * id spanned both modes; a legacy dark-mode `deformable` pick maps onto the new `deformable-dark`
+ * entry so the migration doesn't silently drop it back to a light theme.
+ */
+function readLegacyStyle(): ThemeStyleId | null {
+  const mode = localStorage.getItem(LEGACY_MODE_KEY);
+  const key = mode === 'dark' ? LEGACY_STYLE_KEY.dark : LEGACY_STYLE_KEY.light;
+  const legacyId = localStorage.getItem(key);
+  if (legacyId === 'deformable' && mode === 'dark') return 'deformable-dark';
+  return themeStyleById(legacyId)?.id ?? null;
+}
+
+function clearLegacyStorage(): void {
+  localStorage.removeItem(LEGACY_MODE_KEY);
+  localStorage.removeItem(LEGACY_STYLE_KEY.light);
+  localStorage.removeItem(LEGACY_STYLE_KEY.dark);
+}
+
+/**
+ * Owns the app's single appearance axis: which theme `style` from `THEME_STYLES` renders it,
+ * resolved straight to a daisyUI `data-theme` attribute on `<html>`. Deliberately `localStorage`-
+ * only, not the Dexie-backed `appSettings` table v2's TICKET-SET-01 would introduce — appearance
+ * is a per-browser preference, not portable data.
  */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  private readonly _mode = signal<ThemeMode>(readStoredMode() ?? systemTheme());
-  readonly mode = this._mode.asReadonly();
-  /** Back-compat alias — pre-theme-picker callers (navbar toggle icon) read this as `theme`. */
-  readonly theme = this._mode.asReadonly();
-
-  private readonly _lightStyle = signal<ThemeStyleId>(
-    readStoredStyle('light') ?? DEFAULT_STYLE.light,
+  private readonly _style = signal<ThemeStyleId>(
+    readStoredStyle() ?? readLegacyStyle() ?? DEFAULT_STYLE,
   );
-  private readonly _darkStyle = signal<ThemeStyleId>(readStoredStyle('dark') ?? DEFAULT_STYLE.dark);
-  readonly lightStyle = this._lightStyle.asReadonly();
-  readonly darkStyle = this._darkStyle.asReadonly();
-
-  /** The style rendering the current mode. */
-  readonly activeStyle = computed<ThemeStyleId>(() =>
-    this._mode() === 'dark' ? this._darkStyle() : this._lightStyle(),
-  );
+  readonly style = this._style.asReadonly();
 
   constructor() {
     this.apply();
   }
 
-  toggle(): void {
-    this._mode.set(this._mode() === 'dark' ? 'light' : 'dark');
-    this.apply();
-  }
-
-  /**
-   * Picks `style` as the look for `mode`, and switches the app to that mode so the choice is
-   * immediately visible — the settings page's two picker groups are "what does light mode look
-   * like" / "what does dark mode look like", and tapping either previews it live.
-   */
-  selectStyle(mode: ThemeMode, style: ThemeStyleId): void {
-    if (themeStyleById(style)?.dataTheme[mode] === undefined) return;
-    (mode === 'dark' ? this._darkStyle : this._lightStyle).set(style);
-    this._mode.set(mode);
+  select(style: ThemeStyleId): void {
+    if (!themeStyleById(style)) return;
+    this._style.set(style);
     this.apply();
   }
 
   private apply(): void {
-    const mode = this._mode();
-    // The guards in readStoredStyle/selectStyle keep style↔mode pairs valid, so the lookup can't miss.
-    const dataTheme = themeStyleById(this.activeStyle())?.dataTheme[mode] ?? 'deformable';
+    const dataTheme = themeStyleById(this._style())?.dataTheme ?? 'deformable';
     document.documentElement.setAttribute('data-theme', dataTheme);
-    localStorage.setItem(MODE_STORAGE_KEY, mode);
-    localStorage.setItem(STYLE_STORAGE_KEY.light, this._lightStyle());
-    localStorage.setItem(STYLE_STORAGE_KEY.dark, this._darkStyle());
+    localStorage.setItem(STYLE_STORAGE_KEY, this._style());
+    clearLegacyStorage();
   }
 }
