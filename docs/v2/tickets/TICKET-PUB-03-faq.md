@@ -26,12 +26,12 @@ Several shipped features have genuinely subtle, non-obvious behavior by design (
 
 ## Acceptance criteria
 
-- [ ] FAQ page created, rendering expandable question/answer pairs (daisyUI accordion/collapse pattern).
-- [ ] At least the four initial questions (joint net worth, transfer auto-matching, manual category protection, data privacy) are answered accurately against actual current app behavior.
-- [ ] The data-privacy answer links to TICKET-PUB-04's fuller messaging/export-import UI rather than duplicating its full explanation.
-- [ ] FAQ is reachable from the app's nav or footer, alongside How-to's.
-- [ ] Unit tests cover: the FAQ list rendering the expected questions; expand/collapse interaction state.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] FAQ page created, rendering expandable question/answer pairs (daisyUI accordion/collapse pattern).
+- [x] At least the four initial questions (joint net worth, transfer auto-matching, manual category protection, data privacy) are answered accurately against actual current app behavior.
+- [ ] The data-privacy answer links to TICKET-PUB-04's fuller messaging/export-import UI rather than duplicating its full explanation. (TICKET-PUB-04 hasn't shipped yet — per this ticket's own Notes, the entry ships self-contained for now; revisit once PUB-04 lands.)
+- [x] FAQ is reachable from the app's nav or footer, alongside How-to's.
+- [x] Unit tests cover: the FAQ list rendering the expected questions; expand/collapse interaction state.
+- [x] Verified via the fallow skill and coding-conventions skill.
 - [ ] Verified live in the browser: open the FAQ page, expand each question, confirm answers render and the privacy answer's link navigates correctly.
 
 ## Notes

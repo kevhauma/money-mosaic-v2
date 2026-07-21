@@ -27,15 +27,15 @@ The app has no in-app help content today — a new user has to figure out CSV im
 
 ## Acceptance criteria
 
-- [ ] `feature-help/` (or agreed equivalent location) created following the standard feature-folder shape, lazy-loaded.
-- [ ] A How-to's index page lists all available guides with titles/short descriptions.
-- [ ] At least the three initial guides (import, categorization rules, transfer linking) exist as individual pages with accurate, current steps matching the actual UI flow.
-- [ ] Each guide includes a "Try it" link into the real route the guide describes.
-- [ ] How-to's is reachable from the app's nav (Above settings nav).
-- [ ] Content renders as static, checked-in markdown/template content — no runtime fetch, no external CMS dependency.
-- [ ] Add "keep guides up to date" to ticket worker.
-- [ ] Unit tests cover: the guides index rendering the expected list; routing to an individual guide page.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `feature-help/` (or agreed equivalent location) created following the standard feature-folder shape, lazy-loaded.
+- [x] A How-to's index page lists all available guides with titles/short descriptions.
+- [x] At least the three initial guides (import, categorization rules, transfer linking) exist as individual pages with accurate, current steps matching the actual UI flow.
+- [x] Each guide includes a "Try it" link into the real route the guide describes.
+- [x] How-to's is reachable from the app's nav (Above settings nav).
+- [x] Content renders as static, checked-in markdown/template content — no runtime fetch, no external CMS dependency.
+- [x] Add "keep guides up to date" to ticket worker.
+- [x] Unit tests cover: the guides index rendering the expected list; routing to an individual guide page.
+- [x] Verified via the fallow skill and coding-conventions skill.
 - [ ] Verified live in the browser: open the How-to's index, open each of the three initial guides, follow a "Try it" link and confirm it lands on the correct real route.
 
 ## Notes

@@ -24,3 +24,4 @@ export * from './table/table.component';
 export * from './dropdown/dropdown.component';
 export * from './divider/divider.component';
 export * from './flex/flex.component';
+export * from './collapse/collapse.component';

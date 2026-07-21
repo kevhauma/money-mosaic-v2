@@ -98,6 +98,23 @@
       <!-- Pinned to the very bottom of the sidebar (`.menu` is a flex column; mt-auto absorbs the slack). -->
       <ul class="menu-vertical mt-auto gap-1 pt-4">
         <li>
+          <a
+            routerLink="/help"
+            routerLinkActive="menu-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [class]="navItemClass"
+          >
+            <ng-icon name="tablerBook2" size="18" aria-hidden="true" />
+            <mm-text as="span">How-to's</mm-text>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/help/faq" routerLinkActive="menu-active" [class]="navItemClass">
+            <ng-icon name="tablerHelpCircle" size="18" aria-hidden="true" />
+            <mm-text as="span">FAQ</mm-text>
+          </a>
+        </li>
+        <li>
           <a routerLink="/settings" routerLinkActive="menu-active" [class]="navItemClass">
             <ng-icon name="tablerSettings" size="18" aria-hidden="true" />
             <mm-text as="span">Settings</mm-text>

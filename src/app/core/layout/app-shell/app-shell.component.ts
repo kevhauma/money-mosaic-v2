@@ -16,10 +16,11 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArrowsExchange,
+  tablerBook2,
   tablerBuildingBank,
   tablerBulb,
-  tablerDatabase,
   tablerFileImport,
+  tablerHelpCircle,
   tablerHome,
   tablerMenu2,
   tablerSettings,
@@ -76,6 +77,8 @@ const NAV_ITEM_CLASS =
       tablerTags,
       tablerBulb,
       tablerDatabase,
+      tablerBook2,
+      tablerHelpCircle,
       tablerSettings,
     }),
   ],

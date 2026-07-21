@@ -1,0 +1,15 @@
+<div [class]="rootClass()">
+  <button
+    type="button"
+    class="collapse-title w-full cursor-pointer border-none bg-transparent text-left font-semibold"
+    [id]="titleId"
+    [attr.aria-expanded]="open()"
+    [attr.aria-controls]="contentId"
+    (click)="toggle()"
+  >
+    <ng-content select="[mm-collapse-title]" />
+  </button>
+  <div class="collapse-content" [id]="contentId" role="region" [attr.aria-labelledby]="titleId">
+    <ng-content />
+  </div>
+</div>

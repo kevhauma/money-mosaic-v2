@@ -1,0 +1,10 @@
+<mm-page-header title="How-to's" subtitle="Step-by-step guides for the app's main workflows" />
+
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+  @for (guide of guides; track guide.slug) {
+    <mm-paper [link]="'/help/' + guide.slug" elevation="raised" [fullHeight]="true">
+      <mm-text as="h2" weight="semibold" class="block">{{ guide.title }}</mm-text>
+      <mm-text as="p" variant="caption" class="mt-1.5 block">{{ guide.summary }}</mm-text>
+    </mm-paper>
+  }
+</div>

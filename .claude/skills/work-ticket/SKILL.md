@@ -70,6 +70,9 @@ auto-attaches when you edit `.ts`/`.html`/`.css`) plus the `data-model` and `pro
 skills. Keep changes scoped to this ticket —
 resist unrelated refactors; if you spot out-of-scope work, note it rather than doing it.
 
+If this ticket meaningfully changes any behavior that's documented in the how-to guides, also update the matching how-to guide in
+`src/app/feature-help/data/guides.ts` (TICKET-PUB-02) so its steps keep matching the real UI. If the ticket is big and complex enough, include it into a how-to guide
+
 ## Step 5 — Verify, then tick each criterion
 
 A criterion gets ticked **only when it verifiably passes** — never on hope.

@@ -58,6 +58,10 @@ export const routes: Routes = [
           import('@/feature-data-management').then((m) => m.DATA_MANAGEMENT_ROUTES),
       },
       {
+        path: 'help',
+        loadChildren: () => import('@/feature-help').then((m) => m.HELP_ROUTES),
+      },
+      {
         path: 'settings',
         loadChildren: () => import('@/feature-settings').then((m) => m.SETTINGS_ROUTES),
       },

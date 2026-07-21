@@ -1,0 +1,20 @@
+@if (guide(); as guide) {
+  <mm-page-header [title]="guide.title" [subtitle]="guide.summary" />
+
+  <mm-paper elevation="raised">
+    <ol class="flex flex-col gap-5">
+      @for (step of guide.steps; track step.title; let i = $index) {
+        <li>
+          <mm-text as="h2" weight="semibold" class="block">{{ i + 1 }}. {{ step.title }}</mm-text>
+          <mm-text as="p" variant="caption" class="mt-1 block">{{ step.description }}</mm-text>
+        </li>
+      }
+    </ol>
+
+    <div class="mt-6">
+      <mm-button color="primary" [link]="guide.tryItRoute">{{ guide.tryItLabel }}</mm-button>
+    </div>
+  </mm-paper>
+} @else {
+  <mm-empty-state title="Guide not found" message="This how-to guide doesn't exist." />
+}
