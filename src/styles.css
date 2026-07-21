@@ -198,9 +198,10 @@
   --color-error: oklch(64% 0.21 20);
   --color-error-content: oklch(98% 0.01 20);
 
-  /* Soft-material shape language: pill-shaped fields, big rounded boxes, no sharp corners. */
+  /* Soft-material shape language: moderate uniform corners, big rounded boxes, no sharp corners —
+   * TICKET-UI-21 moved fields off a full 9999px pill onto a calmer, still-soft radius. */
   --radius-selector: 1.75rem;
-  --radius-field: 9999px;
+  --radius-field: 0.875rem;
   --radius-box: 1.5rem;
 
   --size-selector: 0.25rem;
@@ -216,12 +217,13 @@
   --mm-surface-raised: var(--color-base-100);
   --mm-surface-floating: var(--color-base-100);
 
-  /* Hook values — design-language.md §3 jelly squish, §4 gel glow, §7 blob wash. */
+  /* Hook values — design-language.md §3 jelly squish, §4 gel glow, §7 blob wash. TICKET-UI-21
+   * calmed these from 0.35/0.4 opacity to a "safer", less loud default. */
   --mm-squish-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
   --mm-squish-active: 0.95 1.05;
-  --mm-glow-shadow: 0 8px 24px -4px oklch(68% 0.19 25 / 0.35);
-  --mm-elev-raised-shadow: 0 8px 24px -4px oklch(68% 0.19 25 / 0.35);
-  --mm-elev-floating-shadow: 0 16px 40px -6px oklch(68% 0.19 25 / 0.4);
+  --mm-glow-shadow: 0 6px 16px -4px oklch(68% 0.19 25 / 0.18);
+  --mm-elev-raised-shadow: 0 6px 16px -4px oklch(68% 0.19 25 / 0.18);
+  --mm-elev-floating-shadow: 0 14px 32px -6px oklch(68% 0.19 25 / 0.22);
   --mm-halo-shadow: 0 0 32px oklch(78% 0.16 165 / 0.4);
   --mm-blob-bg: color-mix(in oklab, var(--color-primary) 20%, transparent);
   --mm-blob-animation: mm-blob-morph 8s ease-in-out infinite;
@@ -269,7 +271,7 @@
   --color-error-content: oklch(18% 0.03 20);
 
   --radius-selector: 1.75rem;
-  --radius-field: 9999px;
+  --radius-field: 0.875rem;
   --radius-box: 1.5rem;
 
   --size-selector: 0.25rem;

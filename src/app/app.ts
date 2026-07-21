@@ -42,9 +42,9 @@ import { STAT_QUERY_PARAMS } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
-/** Sidebar nav item — default look is Deformable UI's soft full-pill primary tint on `.menu-active` (docs/v1.9_deformable_ui_redesign/design-language.md §7); the `mm-nav-item` marker is a theme-style hook other themes' scoped CSS restyles. Defined once and bound identically to every nav `<a>` rather than repeating the same utility string per item. */
+/** Sidebar nav item — default look is Deformable UI's soft rounded (not full-pill — TICKET-UI-21) primary tint on `.menu-active` (docs/v1.9_deformable_ui_redesign/design-language.md §7); the `mm-nav-item` marker is a theme-style hook other themes' scoped CSS restyles (every other theme sets its own `.mm-nav-item` radius, so this base class only governs the default theme). Defined once and bound identically to every nav `<a>` rather than repeating the same utility string per item. */
 const NAV_ITEM_CLASS =
-  'mm-nav-item rounded-full text-base-content/70 transition-colors [&.menu-active]:bg-primary/15 [&.menu-active]:text-primary [&.menu-active]:font-semibold';
+  'mm-nav-item rounded-field text-base-content/70 transition-colors [&.menu-active]:bg-primary/15 [&.menu-active]:text-primary [&.menu-active]:font-semibold';
 
 @Component({
   selector: 'app-root',
