@@ -16,7 +16,7 @@ TICKET-SET-03 made the currency *code* configurable but left the formatting loca
 
 - After TICKET-SET-03, `formatCurrency` in [currency-format.ts](../../../src/app/shared/utils/currency-format.ts) reads `AppSettings.currency` for the currency code but still hardcodes `'en-BE'` as the `Intl.NumberFormat` locale argument — the thing that controls whether `1234.5` renders as `1.234,50` (Belgian/European grouping) versus `1,234.50` (US grouping) versus other conventions.
 - No date-formatting locale configuration exists either — a scan of the codebase for date display (e.g. transaction/account list dates, chart axis labels) shows dates are formatted ad hoc per call site rather than through one shared locale-aware helper; bringing every date call site under one locale-aware formatter is part of this ticket's scope (see to-be), not just the currency formatter.
-- TICKET-SET-01 has introduced the `appSettings` table/repository/store/`/settings` page this ticket extends; TICKET-SET-03 has introduced the settings-driven currency formatter this ticket extends further.
+- **Status update:** there is no TICKET-SET-01 — it was dropped, not built (see "Considered, not ticketed yet" in `overview.md`); its dark/light/system scope was superseded by the separately-shipped, `localStorage`-only `ThemeService`. The `appSettings` table/repository/store this ticket needs does not exist yet on its own — it depends on TICKET-SET-03 having created it (SET-03's as-is/notes cover this). Build this ticket only after SET-03, not as a standalone.
 
 ## Desired result (to-be)
 
@@ -39,5 +39,5 @@ TICKET-SET-03 made the currency *code* configurable but left the formatting loca
 
 ## Notes
 
-- Depends on TICKET-SET-01 (settings shell) and specifically follows TICKET-SET-03 (currency), since it extends the same `formatCurrency` refactor rather than doing a second, conflicting refactor in parallel.
+- No longer depends on a prior TICKET-SET-01 (dropped, see `overview.md`); specifically follows TICKET-SET-03 (currency), since it extends both the `appSettings` table SET-03 creates and the same `formatCurrency` refactor, rather than doing a second, conflicting refactor in parallel.
 - Scope note: this ticket does not attempt full i18n (translated UI strings) — it only affects number/date *formatting* conventions, not the language of labels/copy. Translating the app's UI text is a materially larger effort explicitly out of scope here.

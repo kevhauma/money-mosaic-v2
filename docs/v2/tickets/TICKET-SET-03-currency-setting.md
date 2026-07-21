@@ -16,7 +16,7 @@ Every amount in the app is formatted through one hardcoded `Intl.NumberFormat('e
 
 - [currency-format.ts](../../../src/app/shared/utils/currency-format.ts) hardcodes both the currency and the formatting locale: `new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' })` (plus a `signDisplay: 'always'` variant). It exports one function, `formatCurrency(amount, { signed? })`, that is the single source of truth reused by [signed-amount.pipe.ts](../../../src/app/shared/utils/signed-amount.pipe.ts), dashboard stat/panel formatters, and the chart tooltip formatter ([tooltip-formatter.ts](../../../src/app/shared/echarts/tooltip-formatter.ts)) — confirmed via a repo-wide search, this is the *only* place currency formatting happens; there is no second hardcoded EUR literal to hunt down elsewhere.
 - There is no per-user currency configuration anywhere — `en-BE`/`EUR` are compile-time constants.
-- TICKET-SET-01 has introduced the `appSettings` table, `AppSettingsRepository`/`Store`, and `/settings` page this ticket extends.
+- **Status update:** TICKET-SET-01 (originally assumed to have already introduced the `appSettings` table/repository/store) was dropped, not built — see "Considered, not ticketed yet" in `overview.md`. Its dark/light/system scope was superseded by a separately-shipped `ThemeService` ([theme.service.ts](../../../src/app/core/theme/theme.service.ts)), deliberately `localStorage`-only and not Dexie-backed. A `/settings` route exists (`feature-settings/`) but **no `appSettings` table, repository, or store exists yet**. Whichever of SET-02/SET-03/SET-04/PRIV-01 is built first now needs to introduce that table/repository/store (additive `.version(12).stores(...)`, schema currently runs through `.version(11)`); this ticket should check whether SET-02 already did so before creating it again.
 
 ## Desired result (to-be)
 
@@ -40,6 +40,6 @@ Every amount in the app is formatted through one hardcoded `Intl.NumberFormat('e
 
 ## Notes
 
-- Depends on TICKET-SET-01 for the `appSettings` table/store/page shell. Independent of TICKET-SET-02 (primary color) — either order is fine between them.
+- No longer depends on a prior TICKET-SET-01 — that ticket was dropped (see `overview.md`). Independent of TICKET-SET-02 (primary color) — either order is fine between them, but whichever lands first creates the shared `appSettings` table/repository/store; the other should extend it rather than recreate it.
 - TICKET-SET-04 (locale) extends the same refactored `formatCurrency` to also read a user-selected locale instead of the still-hardcoded `'en-BE'` grouping/format locale — build this ticket first since it establishes the "settings-driven formatter" shape TICKET-SET-04 then extends, rather than both tickets touching `currency-format.ts` in parallel.
 - Multi-currency accounting (per-account currency, real conversion rates) is explicitly out of scope — flagged in "Considered, not ticketed yet" in this version's `overview.md` as a materially bigger feature.

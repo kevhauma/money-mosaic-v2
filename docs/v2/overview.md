@@ -4,20 +4,19 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 
 **One cross-version dependency:** [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) needs [v1.4 TICKET-DAT-01](../v1.4_data_management/tickets/TICKET-DAT-01-full-data-export-import.md) (full data export/import) to exist before it has anything real to point users at — that's the one place this version's build order reaches outside itself.
 
-## Settings track (SET-01 first, everything else in this track extends it)
+## Settings track (foundation not built — see Notes)
 
-- [ ] [TICKET-SET-01](./tickets/TICKET-SET-01-theme-settings.md) — Settings page shell + dark/light/system theme (new capability) — builds the `appSettings` table, repository, store, and `/settings` page every other SET/PRIV ticket extends; build first
-- [ ] [TICKET-SET-02](./tickets/TICKET-SET-02-primary-color-setting.md) — Primary accent color setting (new capability) — needs SET-01; independent of SET-03/SET-04
-- [ ] [TICKET-SET-03](./tickets/TICKET-SET-03-currency-setting.md) — Currency setting (new capability) — needs SET-01; build before SET-04, which extends the same formatter refactor
-- [ ] [TICKET-SET-04](./tickets/TICKET-SET-04-locale-setting.md) — Locale setting for number/date formatting (new capability) — needs SET-01 + SET-03
-- [ ] [TICKET-PRIV-01](./tickets/TICKET-PRIV-01-privacy-mode-dashboard.md) — Privacy mode: blur amounts on the Dashboard (new capability) — needs SET-01; independent of SET-02/03/04
+- [ ] [TICKET-SET-02](./tickets/TICKET-SET-02-primary-color-setting.md) — Primary accent color setting (new capability) — needs an `appSettings` table/store foundation (not yet built, see Notes); independent of SET-03/SET-04
+- [ ] [TICKET-SET-03](./tickets/TICKET-SET-03-currency-setting.md) — Currency setting (new capability) — needs an `appSettings` table/store foundation (not yet built, see Notes); build before SET-04, which extends the same formatter refactor
+- [ ] [TICKET-SET-04](./tickets/TICKET-SET-04-locale-setting.md) — Locale setting for number/date formatting (new capability) — needs an `appSettings` table/store foundation (not yet built, see Notes) + SET-03
+- [ ] [TICKET-PRIV-01](./tickets/TICKET-PRIV-01-privacy-mode-dashboard.md) — Privacy mode: blur amounts on the Dashboard (new capability) — needs an `appSettings` table/store foundation (not yet built, see Notes); independent of SET-02/03/04
 
 ## Public content track (independent of the Settings track and of each other)
 
 - [ ] [TICKET-PUB-01](./tickets/TICKET-PUB-01-home-landing-page.md) — Public home/landing page with click-through to Dashboard (new capability) — fully independent, safe to build any time
 - [ ] [TICKET-PUB-02](./tickets/TICKET-PUB-02-how-to-guides.md) — How-to guides for core workflows (new capability) — independent; pairs naturally with PUB-03's shared content-page pattern
 - [ ] [TICKET-PUB-03](./tickets/TICKET-PUB-03-faq.md) — FAQ for complex/non-obvious features (new capability) — independent; pairs naturally with PUB-02
-- [ ] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Local-data & migration messaging, surfaced in-app (new capability) — **blocked on v1.4 TICKET-DAT-01**; build last among the PUB tickets
+- [ ] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Local-data & migration messaging, surfaced in-app (new capability) — **unblocked**: v1.4 TICKET-DAT-01 (export/import) has since shipped; build last among the PUB tickets regardless
 
 ## Changelog track (independent)
 
@@ -25,6 +24,7 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 
 ## Considered, not ticketed yet
 
+- **TICKET-SET-01 was dropped, not completed.** Its scope (dark/light/system theme + a Dexie `appSettings` table/`AppSettingsRepository`/`Store`/`/settings` page shell) was superseded by a separately-shipped, much larger theming system (`ThemeService` in [theme.service.ts](../../src/app/core/theme/theme.service.ts), a 9-theme catalogue, built under the v1.5 redesign / TICKET-UI-16..21 "theme picker unification" work, not this version). That system is deliberately `localStorage`-only per its own code comment — explicitly *not* the Dexie-backed `appSettings` table SET-01 would have introduced, since appearance was judged a per-browser preference rather than portable data. A `/settings` route does exist (`feature-settings/`) but only hosts the theme picker. Net effect: **no `appSettings` table, repository, or store exists in the codebase today.** SET-02, SET-03, SET-04, and PRIV-01 all originally assumed SET-01's shell would already be there — each of their as-is sections has been corrected to say so. Whichever of those four is picked up first now needs to introduce the `appSettings` table/repository/store itself (schema `.version(12)` — versions currently run through `.version(11)`) before adding its own field, rather than relying on a prerequisite ticket that no longer exists.
 - **Dashboard flexibility (hide/reorder panels)** — this was the other concrete idea in v9999's "Public Ready" adjacent "UX improvements" section, but it's already shipped as [v1.3 TICKET-STAT-14](../v1.3_dashboard_insights/tickets/TICKET-STAT-14-customizable-dashboard-layout.md); no duplicate ticket here.
 - **Food voucher support, a full UX audit pass, and a code-review process tweak** — the other three items in v9999's backlog, deliberately left unticketed for this version since the scoping decision was "Public Ready only." They remain in [v9999_ideas/requirements.md](../v9999_ideas/requirements.md) for a future version to pick up.
 - **Freeform primary-color picker** — SET-02 ships a fixed preset palette instead; a true color picker needs live contrast-checking that's a bigger feature on its own (see SET-02's Notes).
