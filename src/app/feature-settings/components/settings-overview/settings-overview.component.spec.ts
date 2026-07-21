@@ -34,4 +34,18 @@ describe('SettingsOverviewComponent', () => {
     expect(link?.target).toBe('_blank');
     expect(link?.rel).toBe('noopener noreferrer');
   });
+
+  it('embeds the Data Management section directly, not behind a link', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+
+    const dataManagement = (fixture.nativeElement as HTMLElement).querySelector(
+      'app-data-management-overview',
+    );
+
+    expect(dataManagement).toBeTruthy();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('a[href="/settings/data"]'),
+    ).toBeNull();
+  });
 });

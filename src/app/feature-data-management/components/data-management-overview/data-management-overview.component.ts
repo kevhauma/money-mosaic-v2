@@ -10,7 +10,6 @@ import {
   FlexComponent,
   LabelComponent,
   MmModalComponent,
-  PageHeaderComponent,
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
@@ -29,7 +28,6 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
     FlexComponent,
     LabelComponent,
     MmModalComponent,
-    PageHeaderComponent,
     PaperComponent,
     TypographyComponent,
   ],

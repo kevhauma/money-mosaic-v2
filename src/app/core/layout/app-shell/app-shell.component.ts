@@ -76,7 +76,6 @@ const NAV_ITEM_CLASS =
       tablerArrowsExchange,
       tablerTags,
       tablerBulb,
-      tablerDatabase,
       tablerBook2,
       tablerHelpCircle,
       tablerSettings,

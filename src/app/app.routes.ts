@@ -53,11 +53,6 @@ export const routes: Routes = [
         loadChildren: () => import('@/feature-learning').then((m) => m.LEARNING_ROUTES),
       },
       {
-        path: 'data',
-        loadChildren: () =>
-          import('@/feature-data-management').then((m) => m.DATA_MANAGEMENT_ROUTES),
-      },
-      {
         path: 'help',
         loadChildren: () => import('@/feature-help').then((m) => m.HELP_ROUTES),
       },

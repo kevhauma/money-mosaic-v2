@@ -30,13 +30,13 @@ As a user, I want data export/import/delete-all to live inside Settings rather t
 
 ## Acceptance criteria
 
-- [ ] `app.routes.ts` no longer registers a top-level `path: 'data'` route.
-- [ ] `feature-settings/settings.routes.ts` adds a `path: 'data'` child route resolving to `DATA_MANAGEMENT_ROUTES` (imported from the `@/feature-data-management` barrel), so `/settings/data` renders `DataManagementOverviewComponent`.
-- [ ] The "Data" `<li>` is removed from `app-shell.component.html`'s primary sidebar `<ul>`; no other primary nav items are reordered or altered.
-- [ ] `settings-overview.component.html` renders a link/card into `/settings/data`, positioned below the existing theme-picker section.
-- [ ] Export, import, and delete-all continue to work unchanged at their new location (no regression in `DataManagementRepository` calls or dialogs).
-- [ ] Unit tests cover: `app-shell` no longer rendering a "Data" nav item; `settings.routes.ts` resolving its `data` child to `DataManagementOverviewComponent`; `settings-overview` rendering a link to `/settings/data`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `app.routes.ts` no longer registers a top-level `path: 'data'` route.
+- [x] `feature-settings/settings.routes.ts` adds a `path: 'data'` child route resolving to `DATA_MANAGEMENT_ROUTES` (imported from the `@/feature-data-management` barrel), so `/settings/data` renders `DataManagementOverviewComponent`.
+- [x] The "Data" `<li>` is removed from `app-shell.component.html`'s primary sidebar `<ul>`; no other primary nav items are reordered or altered.
+- [x] `settings-overview.component.html` renders a link/card into `/settings/data`, positioned below the existing theme-picker section.
+- [x] Export, import, and delete-all continue to work unchanged at their new location (no regression in `DataManagementRepository` calls or dialogs).
+- [x] Unit tests cover: `app-shell` no longer rendering a "Data" nav item; `settings.routes.ts` resolving its `data` child to `DataManagementOverviewComponent`; `settings-overview` rendering a link to `/settings/data`.
+- [x] Verified via the fallow skill and coding-conventions skill.
 - [ ] Verified live in the browser: sidebar no longer shows a separate "Data" item; navigating to `/settings` shows a link into the Data section; clicking it lands on `/settings/data` with export/import/delete-all all still functioning; a direct visit to the old `/data` URL no longer resolves.
 
 ## Notes

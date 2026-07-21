@@ -1,13 +1,13 @@
-<mm-page-header
-  title="Data Management"
-  subtitle="Back up your data to a file, or restore it on another browser or device."
-/>
+<mm-text variant="heading" as="h2">Data</mm-text>
+<mm-text as="p" variant="caption" class="mt-1">
+  Back up your data to a file, or restore it on another browser or device.
+</mm-text>
 
 @if (errorMessage()) {
-  <mm-alert status="error" class="mb-4">{{ errorMessage() }}</mm-alert>
+  <mm-alert status="error" class="mt-4">{{ errorMessage() }}</mm-alert>
 }
 
-<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+<div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
   <mm-paper elevation="flat" bodyClass="card-body gap-3">
     <h2 class="card-title text-base">Export data</h2>
     <mm-text as="p" class="text-sm text-base-content/60">

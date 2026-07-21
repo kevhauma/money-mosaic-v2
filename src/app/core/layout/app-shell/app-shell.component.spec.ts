@@ -58,6 +58,15 @@ describe('AppShellComponent', () => {
     expect(app).toBeTruthy();
   });
 
+  it('does not render a top-level "Data" nav item (moved under Settings — TICKET-SET-06)', () => {
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+
+    const dataLink = (fixture.nativeElement as HTMLElement).querySelector('a[href="/data"]');
+
+    expect(dataLink).toBeNull();
+  });
+
   it('does not navigate when the URL already mirrors the range store state', async () => {
     TestBed.overrideProvider(ActivatedRoute, {
       useValue: { snapshot: { queryParamMap: convertToParamMap(defaultQueryParams()) } },
