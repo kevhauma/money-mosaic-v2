@@ -77,15 +77,19 @@
  * automatically render in their own style. Deliberately un-layered so they win over Tailwind
  * utilities (which live in `@layer utilities`) without `!important`.
  */
+/**
+ * Design rule: hover states may change color/shadow/opacity/border but must never scale/zoom an
+ * element — a hover-triggered grow reads as jumpy on a finance app. Scale is reserved for
+ * deliberate PRESS feedback only (`:active`, below). This rule applies across every theme style,
+ * not just the default — `--mm-squish-hover` intentionally has no producer left in any theme
+ * block; do not reintroduce one.
+ */
 .mm-squish {
   transition:
     scale 0.3s var(--mm-squish-ease, ease),
     background-color 0.2s ease,
     border-color 0.2s ease,
     color 0.2s ease;
-}
-.mm-squish:hover {
-  scale: var(--mm-squish-hover, none);
 }
 .mm-squish:active {
   scale: var(--mm-squish-active, none);
@@ -214,7 +218,6 @@
 
   /* Hook values — design-language.md §3 jelly squish, §4 gel glow, §7 blob wash. */
   --mm-squish-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --mm-squish-hover: 1.05;
   --mm-squish-active: 0.95 1.05;
   --mm-glow-shadow: 0 8px 24px -4px oklch(68% 0.19 25 / 0.35);
   --mm-elev-raised-shadow: 0 8px 24px -4px oklch(68% 0.19 25 / 0.35);
@@ -283,7 +286,6 @@
   --mm-surface-floating: var(--color-base-300);
 
   --mm-squish-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --mm-squish-hover: 1.05;
   --mm-squish-active: 0.95 1.05;
   --mm-halo-shadow: 0 0 32px oklch(80% 0.15 165 / 0.3);
   --mm-blob-bg: color-mix(in oklab, var(--color-primary) 20%, transparent);
