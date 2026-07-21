@@ -30,6 +30,7 @@ The list is in recommended build order: the correctness fix and test safety net 
 - [x] [TICKET-DX-02](./tickets/TICKET-DX-02-commitlint-conventional-commits.md) — Enforce conventional commit messages with commitlint on the existing husky hook (CR2-1.2 carried over) — process, independent, any time
 - [x] [TICKET-DX-03](./tickets/TICKET-DX-03-version-folder-naming-scheme.md) — Decide and document the docs version-folder naming scheme (CR2-1.3 carried over; now includes the `v1.3_*` collision this folder created) — process, independent, decide before the next milestone folder
 
+
 Not ticketed by design: CR-5.2 ("keep existing bundle wins intact") is a guardrail, not a work item — it's covered by the Definition of Done below and the bundle-budget hard rule.
 
 **Deliberate non-actions** (review §2.6/§5 — do not "fix"): `matchesTransactionFilters`' cyclomatic score (flat, specced guard list), the csv-row-mapper dispatch functions, all 19 flagged "unused exports" (in-file/spec-used), all 23 "unused class members" (DI-invoked, verified), `tailwindcss` staying in `devDependencies`, and `dup:d9247208`/`dup:fbfaad2e`/`dup:f6d16225` (small, cross-domain).
