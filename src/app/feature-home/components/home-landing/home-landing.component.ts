@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  tablerBrandGithub,
   tablerBulb,
   tablerChartBar,
   tablerCodeCircle2,
@@ -12,6 +13,7 @@ import {
   tablerTags,
   tablerUsers,
 } from '@ng-icons/tabler-icons';
+import { GITHUB_REPO_URL } from '@/core/links';
 import { ButtonComponent, FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 
 type ValueProp = {
@@ -184,6 +186,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
       tablerFileImport,
       tablerTags,
       tablerChartBar,
+      tablerBrandGithub,
     }),
   ],
 })
@@ -191,4 +194,5 @@ export class HomeLandingComponent {
   protected readonly valueProps = VALUE_PROPS;
   protected readonly processSteps = PROCESS_STEPS;
   protected readonly featureGroups = FEATURE_GROUPS;
+  protected readonly githubRepoUrl = GITHUB_REPO_URL;
 }

@@ -27,13 +27,13 @@ The app currently has no in-app link to its own source repository anywhere — n
 
 ## Acceptance criteria
 
-- [ ] A GitHub repository link renders on the landing page, pointing at the correct URL, opening in a new tab with `rel="noopener noreferrer"`.
-- [ ] The link is visually low-key (not competing with the primary "Get started" CTA).
-- [ ] The repository URL is defined in exactly one shared constant, imported by both the landing page and (if built) the Settings section — not duplicated as a literal string.
-- [ ] Settings page gains an optional small "About"/links section with the same GitHub link, without disturbing the existing theme-picker section above it.
-- [ ] Unit tests cover: the link renders with the correct `href`, `target`, and `rel` attributes on both the landing page and (if built) the Settings section.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: landing page shows the link and it opens the correct GitHub URL in a new tab; Settings shows the same link if that half is built.
+- [x] A GitHub repository link renders on the landing page, pointing at the correct URL, opening in a new tab with `rel="noopener noreferrer"`.
+- [x] The link is visually low-key (not competing with the primary "Get started" CTA).
+- [x] The repository URL is defined in exactly one shared constant, imported by both the landing page and (if built) the Settings section — not duplicated as a literal string.
+- [x] Settings page gains an optional small "About"/links section with the same GitHub link, without disturbing the existing theme-picker section above it.
+- [x] Unit tests cover: the link renders with the correct `href`, `target`, and `rel` attributes on both the landing page and (if built) the Settings section.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: landing page shows the link and it opens the correct GitHub URL in a new tab; Settings shows the same link if that half is built.
 
 ## Notes
 

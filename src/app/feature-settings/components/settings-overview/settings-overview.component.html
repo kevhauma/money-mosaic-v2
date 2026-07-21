@@ -44,3 +44,16 @@
 <mm-text as="p" variant="caption" class="mt-6 block">
   <a routerLink="/home" class="link link-hover">View the welcome page</a>
 </mm-text>
+
+<mm-paper class="mt-6">
+  <mm-text variant="heading" as="h2">About</mm-text>
+  <a
+    [href]="githubRepoUrl"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="link link-hover mt-3 inline-flex items-center gap-1.5 text-base-content/60"
+  >
+    <ng-icon name="tablerBrandGithub" size="16" aria-hidden="true" />
+    <mm-text as="span" variant="caption">View source on GitHub</mm-text>
+  </a>
+</mm-paper>
