@@ -1,23 +1,24 @@
-<mm-flex
-  direction="col"
-  align="center"
-  justify="center"
-  gap="3"
-  class="mm-empty relative overflow-hidden rounded-box bg-base-100 p-12 text-center"
->
-  <!-- Decorative mm-blob wash (theme-style hook; only themes that set --mm-blob-bg render it) —
-       TICKET-UI-21 extends the hero-only blob to this second, non-interactive surface. -->
+<!-- Container styling (bg/padding/radius/relative/overflow-hidden) lives on this plain div, not
+     on `<mm-flex>` — `mm-flex`'s host has no `:host { display }` rule, so it renders inline by
+     default and a background/overflow-hidden/absolute-positioned-child combo placed directly on
+     it paints outside its expected box (it bled into/behind the app shell sidebar on empty
+     pages). `mm-flex` below is used the same way every other call site in the codebase already
+     uses it: layout-only (direction/align/justify/gap), no container styling. -->
+<div class="mm-empty relative overflow-hidden rounded-box bg-base-100 p-12 text-center">
+  <!-- Decorative mm-blob wash (theme-style hook; only themes that set --mm-blob-bg render it). -->
   <div
     class="mm-blob pointer-events-none absolute -top-8 -right-8 h-28 w-28"
     aria-hidden="true"
   ></div>
-  <!-- `mm-empty`/`mm-empty-icon` are theme-style hooks — themes restyle the shell and icon chip via scoped CSS. -->
-  <div class="mm-empty-icon relative text-base-content/40">
-    <ng-content select="[icon]" />
-  </div>
-  <mm-text as="h2" weight="medium" class="relative text-lg">{{ title() }}</mm-text>
-  @if (message()) {
-    <mm-text as="p" variant="caption" class="relative max-w-sm">{{ message() }}</mm-text>
-  }
-  <ng-content select="[action]" />
-</mm-flex>
+  <mm-flex direction="col" align="center" justify="center" gap="3" class="relative">
+    <!-- `mm-empty`/`mm-empty-icon` are theme-style hooks — themes restyle the shell and icon chip via scoped CSS. -->
+    <div class="mm-empty-icon text-base-content/40">
+      <ng-content select="[icon]" />
+    </div>
+    <mm-text as="h2" weight="medium" class="text-lg">{{ title() }}</mm-text>
+    @if (message()) {
+      <mm-text as="p" variant="caption" class="max-w-sm">{{ message() }}</mm-text>
+    }
+    <ng-content select="[action]" />
+  </mm-flex>
+</div>
