@@ -16,11 +16,11 @@ TICKET-SET-03 made the currency *code* configurable but left the formatting loca
 
 - After TICKET-SET-03, `formatCurrency` in [currency-format.ts](../../../src/app/shared/utils/currency-format.ts) reads `AppSettings.currency` for the currency code but still hardcodes `'en-BE'` as the `Intl.NumberFormat` locale argument — the thing that controls whether `1234.5` renders as `1.234,50` (Belgian/European grouping) versus `1,234.50` (US grouping) versus other conventions.
 - No date-formatting locale configuration exists either — a scan of the codebase for date display (e.g. transaction/account list dates, chart axis labels) shows dates are formatted ad hoc per call site rather than through one shared locale-aware helper; bringing every date call site under one locale-aware formatter is part of this ticket's scope (see to-be), not just the currency formatter.
-- **Status update:** there is no TICKET-SET-01 — it was dropped, not built (see "Considered, not ticketed yet" in `overview.md`); its dark/light/system scope was superseded by the separately-shipped, `localStorage`-only `ThemeService`. The `appSettings` table/repository/store this ticket needs does not exist yet on its own — it depends on TICKET-SET-03 having created it (SET-03's as-is/notes cover this). Build this ticket only after SET-03, not as a standalone.
+- **Depends on TICKET-SET-05** (settings-store foundation — `appSettings` table/repository/store) **and TICKET-SET-03** (the settings-driven `formatCurrency` refactor this ticket extends further). Unlike SET-02/SET-03/PRIV-01, which only need SET-05, this ticket has a genuine second dependency: it can't extend a currency-aware formatter that doesn't exist yet.
 
 ## Desired result (to-be)
 
-- `AppSettings` gains an additive `locale?: string` field (a BCP 47 tag, e.g. `'en-BE'`, `'en-US'`, `'nl-NL'`) on the existing table, defaulting to `'en-BE'` so unset behaves identically to today — no Dexie version bump.
+- `AppSettings` (from TICKET-SET-05) gains an additive `locale?: string` field (a BCP 47 tag, e.g. `'en-BE'`, `'en-US'`, `'nl-NL'`), defaulting to `'en-BE'` so unset behaves identically to today — no Dexie version bump.
 - `formatCurrency` reads `locale` from `AppSettingsStore` instead of the hardcoded `'en-BE'` literal, combining it with TICKET-SET-03's currency-code setting in the same `Intl.NumberFormat(locale, { currency, style: 'currency' })` call.
 - A new shared date-formatting helper (alongside `currency-format.ts` in `shared/utils/`, e.g. `date-format.ts`) wraps `Intl.DateTimeFormat(locale, ...)` reading the same `AppSettingsStore.locale()`, and existing ad hoc date-formatting call sites (transaction/account rows, chart axis labels — enumerate the actual call sites during implementation) are migrated onto it, so date formatting becomes locale-aware too rather than only currency numbers.
 - The Settings page's "Currency" section (from TICKET-SET-03) gains a sibling "Locale" select (fixed list of common BCP 47 tags, not freeform, same reasoning as TICKET-SET-03's currency select), or the two are combined into one "Currency & locale" section if that reads better once both exist — implementation's call, not a hard requirement either way.
@@ -39,5 +39,5 @@ TICKET-SET-03 made the currency *code* configurable but left the formatting loca
 
 ## Notes
 
-- No longer depends on a prior TICKET-SET-01 (dropped, see `overview.md`); specifically follows TICKET-SET-03 (currency), since it extends both the `appSettings` table SET-03 creates and the same `formatCurrency` refactor, rather than doing a second, conflicting refactor in parallel.
+- Depends on TICKET-SET-05 (settings-store foundation) and specifically follows TICKET-SET-03 (currency), since it extends the same `formatCurrency` refactor rather than doing a second, conflicting refactor in parallel. Independent of SET-02 and PRIV-01.
 - Scope note: this ticket does not attempt full i18n (translated UI strings) — it only affects number/date *formatting* conventions, not the language of labels/copy. Translating the app's UI text is a materially larger effort explicitly out of scope here.

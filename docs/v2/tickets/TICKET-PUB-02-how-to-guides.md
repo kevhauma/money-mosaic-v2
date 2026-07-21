@@ -22,7 +22,7 @@ The app has no in-app help content today — a new user has to figure out CSV im
 
 - A new `feature-help/` (or a `guides` sub-route under `feature-home`/a shared public-content area — implementation's call once PUB-01/PUB-03 exist to see what shape fits best) renders a How-to's index page listing available guides, each a short static page (title, numbered steps, screenshots optional for v1 — text-only steps are acceptable to start) with a "Try it" link into the relevant real route (e.g. the import guide links to `/import`).
 - Initial guide set: **"Importing a bank statement"** (CSV upload → bank preset/column mapping → preview → confirm), **"Setting up categorization rules"** (creating a rule, conditions, priority, how `categoryManual` protects manually-set categories from being overwritten), **"Reviewing and linking transfers"** (how auto-matching works, manually confirming/rejecting a match). Additional guides are a natural follow-up, not blocking this ticket.
-- Guides are reachable from the app's nav or footer (not buried), and from the landing page (TICKET-PUB-01) once that exists.
+- Guides are reachable from the app's nav, and from the landing page (TICKET-PUB-01) once that exists.
 - Content is static (hand-written markdown or component templates checked into the repo), not dynamically generated — no CMS, no runtime content-fetching (consistent with the app having no backend at all).
 
 ## Acceptance criteria
@@ -31,8 +31,9 @@ The app has no in-app help content today — a new user has to figure out CSV im
 - [ ] A How-to's index page lists all available guides with titles/short descriptions.
 - [ ] At least the three initial guides (import, categorization rules, transfer linking) exist as individual pages with accurate, current steps matching the actual UI flow.
 - [ ] Each guide includes a "Try it" link into the real route the guide describes.
-- [ ] How-to's is reachable from the app's nav or footer.
+- [ ] How-to's is reachable from the app's nav (Above settings nav).
 - [ ] Content renders as static, checked-in markdown/template content — no runtime fetch, no external CMS dependency.
+- [ ] Add "keep guides up to date" to ticket worker.
 - [ ] Unit tests cover: the guides index rendering the expected list; routing to an individual guide page.
 - [ ] Verified via the fallow skill and coding-conventions skill.
 - [ ] Verified live in the browser: open the How-to's index, open each of the three initial guides, follow a "Try it" link and confirm it lands on the correct real route.
