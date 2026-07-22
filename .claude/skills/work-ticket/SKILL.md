@@ -100,7 +100,7 @@ Once every acceptance-criteria checkbox in the ticket is `- [x]`:
   `[TICKET-ACC-01](./tickets/…)`. **Match on the ticket link, not the title wording.**
 - Flip that line's `- [ ]` → `- [x]`.
 
-## Step 6.5 — Add a changelog entry (only when ALL criteria are `[x]`)
+## Step 6.5 — Add a changelog entry, remove the roadmap entry (only when ALL criteria are `[x]`)
 
 Once Step 6 has actually run (same gate: every acceptance criterion on this ticket is
 genuinely `[x]`, not hoped-for), **ask the user via `AskUserQuestion`** whether this ticket
@@ -112,6 +112,13 @@ If they say yes, invoke the **`changelog-entry`** skill's convention to append o
 derived from the ticket's **User story**, and `area`. If they say no, skip it and note that in
 Step 7's report. Skip asking entirely only if the changelog feature/skill doesn't exist yet in
 the repo (e.g. this ticket predates TICKET-CHG-01 landing).
+
+Regardless of the changelog answer, also invoke the **`roadmap-entry`** skill's convention to
+remove this ticket's row (matching on `ticketId`) from
+`src/app/feature-changelog/data/roadmap-entries.ts` — it was added by `story-ticket`'s Step 4.5
+when the ticket was created, and now that the ticket has shipped it's no longer "planned." If no
+matching row exists (the ticket predates TICKET-PUB-05, or the roadmap feature/skill doesn't
+exist yet in the repo), there's nothing to remove — skip silently.
 
 ## Step 7 — Report and stop
 

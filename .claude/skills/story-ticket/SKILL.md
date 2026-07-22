@@ -89,8 +89,16 @@ Keep a traceability reference (FR-ID or spec/UI-layout section) in the trailing 
 
 **Insert the line at its actual position in the build order, not at the end and not grouped by area.** If it has a clear dependency (reads/writes something another ticket also touches), place it immediately after that dependency and say so inline (e.g. "— needs TICKET-X"); if it's independent, place it wherever its priority/effort fits among the other open lines and say so (e.g. "— independent, can ship any time"). Match whatever ordering convention that version's list already uses (pure dependency chain, or value/effort ranking, or parallel tracks) — check its existing lines' trailing notes before choosing where to put the new one.
 
+## Step 4.5 — Add a roadmap entry
+
+Invoke the **`roadmap-entry`** skill's convention to append one entry to
+`src/app/feature-changelog/data/roadmap-entries.ts` for the ticket just added — `versionFolder`,
+`ticketId`, a plain-language `title` derived from the ticket's **User story**, and `area`. Skip
+this step only if the Roadmap tab/skill doesn't exist yet in the repo (i.e. this ticket predates
+TICKET-PUB-05 landing).
+
 ## Step 5 — Report back
 
 Tell the user which **version + section** the ticket was added to, and link both the new ticket file and its line in `overview.md`. Mention the `Recommended order` update. Do not run lint/test/build — these are docs, not code.
 
-Note: this new ticket does **not** get a Changelog entry now — it hasn't shipped yet. A changelog entry is added later, by the `work-ticket` skill's Step 6.5, once this ticket's acceptance criteria are actually all `[x]`. See the `changelog-entry` skill.
+Note: this new ticket does **not** get a Changelog entry now — it hasn't shipped yet. A changelog entry is added later, by the `work-ticket` skill's Step 6.5, once this ticket's acceptance criteria are actually all `[x]`; that same step also removes the Roadmap entry Step 4.5 just added, since a ticket is either planned or shipped, never both. See the `changelog-entry` and `roadmap-entry` skills.

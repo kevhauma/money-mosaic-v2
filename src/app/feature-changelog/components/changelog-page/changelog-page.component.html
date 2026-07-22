@@ -1,14 +1,21 @@
-<mm-page-header title="Changelog" subtitle="What's shipped, newest first" />
+<mm-page-header title="Changelog & Roadmap" />
 
-@if (groups.length === 0) {
-  <mm-text as="p" variant="caption">Nothing's been logged here yet.</mm-text>
+<mm-tabs
+  [tabs]="tabs"
+  [selected]="selectedTab()"
+  (selectedChange)="onTabChange($event)"
+  class="mb-4"
+/>
+
+@if (activeGroups().length === 0) {
+  <mm-text as="p" variant="caption">{{ emptyMessage() }}</mm-text>
 } @else {
   <div class="flex flex-col gap-4">
-    @for (group of groups; track group.date; let isLast = $last) {
+    @for (group of activeGroups(); track group.heading; let isLast = $last) {
       <div>
-        <mm-text as="h2" variant="subheading" class="block">{{ group.date }}</mm-text>
+        <mm-text as="h2" variant="subheading" class="block">{{ group.heading }}</mm-text>
         <div class="mt-2 flex flex-col gap-3">
-          @for (entry of group.entries; track entry.title) {
+          @for (entry of group.entries; track entry.key) {
             <div class="flex items-start gap-2">
               <mm-badge
                 color="primary"
@@ -22,9 +29,7 @@
           }
         </div>
       </div>
-      @if (!isLast) {
-        <mm-divider />
-      }
+      <mm-divider [class.hidden]="isLast" />
     }
   </div>
 }

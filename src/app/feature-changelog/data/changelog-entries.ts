@@ -59,7 +59,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     area: 'Joint accounts',
   },
   {
-    date: '2026-07-21',
+    date: '2026-07-20',
     versionFolder: 'v1.2_auto_categorise',
     ticketIds: [
       'TICKET-ML-01',
@@ -168,6 +168,13 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     versionFolder: 'v2',
     ticketIds: ['TICKET-CHG-01'],
     title: "Added a Changelog page showing what's shipped, kept current via the ticket workflow",
+    area: 'Changelog',
+  },
+  {
+    date: '2026-07-22',
+    versionFolder: 'v2',
+    ticketIds: ['TICKET-PUB-05'],
+    title: "Added a Roadmap tab to the Changelog page, showing what's planned next",
     area: 'Changelog',
   },
 ];
