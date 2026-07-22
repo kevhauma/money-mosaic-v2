@@ -100,6 +100,19 @@ Once every acceptance-criteria checkbox in the ticket is `- [x]`:
   `[TICKET-ACC-01](./tickets/…)`. **Match on the ticket link, not the title wording.**
 - Flip that line's `- [ ]` → `- [x]`.
 
+## Step 6.5 — Add a changelog entry (only when ALL criteria are `[x]`)
+
+Once Step 6 has actually run (same gate: every acceptance criterion on this ticket is
+genuinely `[x]`, not hoped-for), **ask the user via `AskUserQuestion`** whether this ticket
+should get a Changelog entry — default the suggested answer to yes for a user-facing
+feature/bugfix and to no for a purely internal refactor/infra ticket, but let the user decide.
+If they say yes, invoke the **`changelog-entry`** skill's convention to append one entry to
+`src/app/feature-changelog/data/changelog-entries.ts` for the ticket just completed — `date`
+(today, ISO), `versionFolder`, `ticketIds` (this one ticket's ID), a plain-language `title`
+derived from the ticket's **User story**, and `area`. If they say no, skip it and note that in
+Step 7's report. Skip asking entirely only if the changelog feature/skill doesn't exist yet in
+the repo (e.g. this ticket predates TICKET-CHG-01 landing).
+
 ## Step 7 — Report and stop
 
 Summarize what changed, link the now fully-`[x]` ticket and the checked story line, and show

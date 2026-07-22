@@ -300,9 +300,9 @@
     </p>
     <div class="stats">
       <!-- GENERATED:STATS:START -->
-      <div class="stat"><span class="value">27</span><span class="label">Nodes</span></div>
-      <div class="stat"><span class="value">82</span><span class="label">Edges</span></div>
-      <div class="stat"><span class="value">10</span><span class="label">Features</span></div>
+      <div class="stat"><span class="value">28</span><span class="label">Nodes</span></div>
+      <div class="stat"><span class="value">83</span><span class="label">Edges</span></div>
+      <div class="stat"><span class="value">11</span><span class="label">Features</span></div>
       <div class="stat"><span class="value">14</span><span class="label">Core modules</span></div>
       <div class="stat"><span class="value">3</span><span class="label">Shared modules</span></div>
       <!-- GENERATED:STATS:END -->
@@ -396,113 +396,115 @@ end
 subgraph FEAT["features"]
 H["feature-accounts"]
 I["feature-categories"]
-J["feature-dashboard"]
-K["feature-data-management"]
-L["feature-help"]
-M["feature-home"]
-N["feature-import"]
-O["feature-learning"]
-P["feature-settings"]
-Q["feature-transactions"]
+J["feature-changelog"]
+K["feature-dashboard"]
+L["feature-data-management"]
+M["feature-help"]
+N["feature-home"]
+O["feature-import"]
+P["feature-learning"]
+Q["feature-settings"]
+R["feature-transactions"]
 end
-subgraph R["shared"]
-S["echarts"]
-T["ui"]
-U["utils"]
+subgraph S["shared"]
+T["echarts"]
+U["ui"]
+V["utils"]
 end
 end
 end
 3-->5
 3-->G
-3-->U
+3-->V
 4-->5
 4-->3
 5-->9
-5-->U
+5-->V
 6-->5
-6-->U
+6-->V
 6-->G
 7-->B
 7-->C
-7-->T
 7-->U
+7-->V
 9-->4
 9-->5
 B-->3
 B-->5
 B-->C
 B-->G
-B-->U
+B-->V
 B-->F
 C-->5
-C-->U
+C-->V
 C-->3
 C-->G
 F-->5
 F-->G
 G-->5
 G-->3
-G-->U
+G-->V
 H-->5
-H-->S
-H-->B
 H-->T
+H-->B
 H-->U
+H-->V
 H-->C
 I-->5
 I-->B
-I-->T
 I-->U
+I-->V
 I-->4
 I-->9
-J-->5
-J-->B
-J-->T
 J-->U
-J-->G
-J-->C
-J-->S
 K-->5
-K-->D
-K-->T
+K-->B
 K-->U
-L-->T
-M-->8
-M-->T
-N-->5
-N-->6
-N-->T
+K-->V
+K-->G
+K-->C
+K-->T
+L-->5
+L-->D
+L-->U
+L-->V
+M-->U
+N-->8
 N-->U
-N-->B
-N-->4
-O-->T
-O-->9
-O-->B
-O-->I
 O-->5
+O-->6
 O-->U
-P-->8
-P-->E
-P-->K
-P-->T
-Q-->5
-Q-->B
-Q-->F
-Q-->T
+O-->V
+O-->B
+O-->4
+P-->U
+P-->9
+P-->B
+P-->I
+P-->5
+P-->V
+Q-->8
+Q-->E
+Q-->L
 Q-->U
-Q-->I
-Q-->G
-S-->U
-T-->U
+R-->5
+R-->B
+R-->F
+R-->U
+R-->V
+R-->I
+R-->G
+T-->V
+U-->V
 
 classDef core fill:#E4F3F1,stroke:#2C7A73,color:#173F3B,stroke-width:1.5px;
 classDef shared fill:#EFEBFA,stroke:#6C5B9E,color:#332B54,stroke-width:1.5px;
 classDef feature fill:#FBEADC,stroke:#C2703A,color:#5C3111,stroke-width:1.5px;
 class 3,4,5,6,7,8,9,A,B,C,D,E,F,G core
-class S,T,U shared
-class H,I,J,K,L,M,N,O,P,Q feature
+class T,U,V shared
+class H,I,J,K,L,M,N,O,P,Q,R feature
 style 2 fill:#F5FBFA,stroke:#2C7A73,stroke-width:1px
-style R fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
+style S fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
 style FEAT fill:#FDF6F0,stroke:#C2703A,stroke-width:1px
 </pre>
       </div>

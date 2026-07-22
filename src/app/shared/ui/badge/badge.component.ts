@@ -24,7 +24,13 @@ export class BadgeComponent {
   // fallow-ignore-next-line complexity
   protected readonly classes = computed(() =>
     daisyClasses(
-      'badge',
+      // `shrink-0`: daisyUI's `.badge` sizes itself to `width: fit-content`, but a flex sibling
+      // (e.g. a flex-growing title next to it) can still squeeze it narrower than its own text via
+      // the default flex-shrink, forcing multi-word text to wrap inside the badge's fixed-height
+      // pill and overflow. `shrink-0` keeps the badge at its natural content width instead. A
+      // caller that wants a fixed width with wrapped text (e.g. a tag column) can still pass an
+      // explicit `w-*`/`h-auto` via `class` — nothing here forces single-line text.
+      'badge shrink-0',
       [
         this.color() && `badge-${this.color()}`,
         this.variant() !== 'solid' && `badge-${this.variant()}`,

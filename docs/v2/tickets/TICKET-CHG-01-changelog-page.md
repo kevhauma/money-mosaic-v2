@@ -30,15 +30,15 @@ Adds an in-app Changelog page rendering a list of shipped, user-facing changes. 
 
 ## Acceptance criteria
 
-- [ ] `changelog-entries.ts`/`.json` data file created with the documented entry shape.
-- [ ] `/changelog` route renders entries grouped by date/version, newest first, in plain-language titles.
-- [ ] `.claude/skills/changelog-entry/SKILL.md` created, documenting the data file location/shape and the "one entry per shipped ticket, plain language" convention.
-- [ ] `.claude/skills/work-ticket/SKILL.md` updated with a new step (between the existing Step 6 and Step 7) that adds a changelog entry for the completed ticket, gated on all acceptance criteria being genuinely `[x]` first.
-- [ ] `.claude/skills/story-ticket/SKILL.md` updated with a short note clarifying changelog entries are added later, by `work-ticket`, not at ticket-creation time.
-- [ ] This very ticket (TICKET-CHG-01) gets its own changelog entry added once it's completed, as a live proof the new `work-ticket` step works — added by whoever finishes this ticket, following the just-updated skill.
-- [ ] Unit tests cover: the Changelog page rendering a sample set of entries grouped/sorted correctly.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: open `/changelog`, confirm entries render grouped and sorted newest-first.
+- [x] `changelog-entries.ts`/`.json` data file created with the documented entry shape.
+- [x] `/changelog` route renders entries grouped by date/version, newest first, in plain-language titles.
+- [x] `.claude/skills/changelog-entry/SKILL.md` created, documenting the data file location/shape and the "one entry per shipped ticket, plain language" convention.
+- [x] `.claude/skills/work-ticket/SKILL.md` updated with a new step (between the existing Step 6 and Step 7) that adds a changelog entry for the completed ticket, gated on all acceptance criteria being genuinely `[x]` first.
+- [x] `.claude/skills/story-ticket/SKILL.md` updated with a short note clarifying changelog entries are added later, by `work-ticket`, not at ticket-creation time.
+- [x] This very ticket (TICKET-CHG-01) gets its own changelog entry added once it's completed, as a live proof the new `work-ticket` step works — added by whoever finishes this ticket, following the just-updated skill.
+- [x] Unit tests cover: the Changelog page rendering a sample set of entries grouped/sorted correctly.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: open `/changelog`, confirm entries render grouped and sorted newest-first.
 
 ## Notes
 

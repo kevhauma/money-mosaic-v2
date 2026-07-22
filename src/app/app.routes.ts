@@ -57,6 +57,10 @@ export const routes: Routes = [
         loadChildren: () => import('@/feature-help').then((m) => m.HELP_ROUTES),
       },
       {
+        path: 'changelog',
+        loadChildren: () => import('@/feature-changelog').then((m) => m.CHANGELOG_ROUTES),
+      },
+      {
         path: 'settings',
         loadChildren: () => import('@/feature-settings').then((m) => m.SETTINGS_ROUTES),
       },

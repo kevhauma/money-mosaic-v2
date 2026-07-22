@@ -92,3 +92,5 @@ Keep a traceability reference (FR-ID or spec/UI-layout section) in the trailing 
 ## Step 5 — Report back
 
 Tell the user which **version + section** the ticket was added to, and link both the new ticket file and its line in `overview.md`. Mention the `Recommended order` update. Do not run lint/test/build — these are docs, not code.
+
+Note: this new ticket does **not** get a Changelog entry now — it hasn't shipped yet. A changelog entry is added later, by the `work-ticket` skill's Step 6.5, once this ticket's acceptance criteria are actually all `[x]`. See the `changelog-entry` skill.

@@ -26,7 +26,7 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 
 ## Changelog track (independent)
 
-- [ ] [TICKET-CHG-01](./tickets/TICKET-CHG-01-changelog-page.md) — Changelog page, kept current via the `work-ticket`/`story-ticket` skill workflow (new capability) — independent of every other ticket in this version except being a prerequisite for PUB-05; also updates two `.claude/skills/` files, not just app code
+- [x] [TICKET-CHG-01](./tickets/TICKET-CHG-01-changelog-page.md) — Changelog page, kept current via the `work-ticket`/`story-ticket` skill workflow (new capability) — independent of every other ticket in this version except being a prerequisite for PUB-05; also updates two `.claude/skills/` files, not just app code
 
 ## Considered, not ticketed yet
 
