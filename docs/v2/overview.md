@@ -19,8 +19,8 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 
 - [x] [TICKET-PUB-01](./tickets/TICKET-PUB-01-home-landing-page.md) — Public home/landing page with click-through to Dashboard (new capability) — fully independent, safe to build any time
 - [x] [TICKET-PUB-06](./tickets/TICKET-PUB-06-github-repo-link.md) — GitHub repository link on the landing page, and optionally in Settings (new capability) — **needs TICKET-PUB-01** (landing page it's placed on); Settings half is optional/secondary
-- [ ] [TICKET-PUB-02](./tickets/TICKET-PUB-02-how-to-guides.md) — How-to guides for core workflows (new capability) — independent; pairs naturally with PUB-03's shared content-page pattern
-- [ ] [TICKET-PUB-03](./tickets/TICKET-PUB-03-faq.md) — FAQ for complex/non-obvious features (new capability) — independent; pairs naturally with PUB-02
+- [x] [TICKET-PUB-02](./tickets/TICKET-PUB-02-how-to-guides.md) — How-to guides for core workflows (new capability) — independent; pairs naturally with PUB-03's shared content-page pattern
+- [x] [TICKET-PUB-03](./tickets/TICKET-PUB-03-faq.md) — FAQ for complex/non-obvious features (new capability) — independent; pairs naturally with PUB-02
 - [ ] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Local-data & migration messaging, surfaced in-app (new capability) — **unblocked**: v1.4 TICKET-DAT-01 (export/import) has since shipped; build last among the PUB tickets regardless
 - [ ] [TICKET-PUB-05](./tickets/TICKET-PUB-05-roadmap-page.md) — Roadmap page listing planned/upcoming work, kept current via the `story-ticket`/`work-ticket` skill workflow (new capability) — **needs TICKET-CHG-01**; pairs naturally with PUB-02/PUB-03's shared content-page pattern otherwise
 

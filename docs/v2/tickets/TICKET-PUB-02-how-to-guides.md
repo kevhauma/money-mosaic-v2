@@ -36,7 +36,7 @@ The app has no in-app help content today — a new user has to figure out CSV im
 - [x] Add "keep guides up to date" to ticket worker.
 - [x] Unit tests cover: the guides index rendering the expected list; routing to an individual guide page.
 - [x] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: open the How-to's index, open each of the three initial guides, follow a "Try it" link and confirm it lands on the correct real route.
+- [x] Verified live in the browser: open the How-to's index, open each of the three initial guides, follow a "Try it" link and confirm it lands on the correct real route.
 
 ## Notes
 
