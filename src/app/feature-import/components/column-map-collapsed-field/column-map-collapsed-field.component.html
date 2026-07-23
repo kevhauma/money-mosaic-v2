@@ -1,0 +1,28 @@
+<button
+  type="button"
+  class="rounded-box border-base-300 hover:border-primary/50 flex w-full items-center justify-between gap-2 border px-3 py-2 text-left text-sm transition-colors"
+  (click)="opened.emit()"
+>
+  <span class="flex items-center gap-2">
+    <mm-text as="span" weight="medium">{{ field().label }}</mm-text>
+    @switch (state()) {
+      @case ('required') {
+        <mm-text as="span" variant="caption" color="error">Required</mm-text>
+      }
+      @case ('mapped') {
+        <mm-text as="span" variant="caption" class="text-base-content/60">
+          {{ control().value }}
+          @if (resolvedSample(); as sample) {
+            → {{ sample }}
+          }
+        </mm-text>
+      }
+      @default {
+        <mm-text as="span" variant="caption" class="text-base-content/40">Not set</mm-text>
+      }
+    }
+  </span>
+  @if (duplicateWarning(); as warning) {
+    <mm-text as="span" variant="caption" color="warning">{{ warning }}</mm-text>
+  }
+</button>

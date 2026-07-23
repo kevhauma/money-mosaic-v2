@@ -33,15 +33,15 @@ The mapper currently renders all nine column fields at once with no feedback bey
 
 ## Acceptance criteria
 
-- [ ] Column fields render as a sequential guided flow (one active field + collapsed summary rows for completed fields), replacing the flat simultaneous `@for` list, while the non-column settings fieldset group is unchanged.
-- [ ] The active field shows a live resolved sample value from the first row of `previewRows()` for the currently-selected source column, updating on selection change.
-- [ ] `date` and `description` show a required marker and an inline error message when empty/invalid, driven by the form's existing `Validators.required` state (no new validators introduced).
-- [ ] Two target fields mapped to the same source column both display a non-blocking inline "also mapped to X" warning.
-- [ ] When `import-wizard.component.ts`'s Confirm/Next button is disabled due to `!mapResult()` from an invalid mapping form, a visible message names the specific unmapped/invalid required field(s) — exposed via a new signal/getter on `ImportMapStepComponent` (e.g. `invalidFieldLabels()`) that the wizard or the mapper itself renders.
-- [ ] Clicking a collapsed/completed field's summary row re-opens it for editing in place without discarding the mapping already chosen for other fields.
-- [ ] No Dexie schema or repository changes — this is presentation/interaction only within `import-map-step.component.ts`/`.html`.
-- [ ] Unit tests cover: guided flow advances to the next field once the current one is valid; sample value updates when the active field's selection changes; required-field error message appears/disappears with control state; duplicate-column warning appears for two fields sharing a source column and clears when resolved; collapsed field re-opens for edit and preserves other fields' values; `invalidFieldLabels()` (or equivalent) lists exactly the unmapped required fields.
-- [ ] Verified via the fallow skill and coding-conventions skill, plus a live browser check (ask the user first per this repo's verification rule; continue without it if declined).
+- [x] Column fields render as a sequential guided flow (one active field + collapsed summary rows for completed fields), replacing the flat simultaneous `@for` list, while the non-column settings fieldset group is unchanged.
+- [x] The active field shows a live resolved sample value from the first row of `previewRows()` for the currently-selected source column, updating on selection change.
+- [x] `date` and `description` show a required marker and an inline error message when empty/invalid, driven by the form's existing `Validators.required` state (no new validators introduced).
+- [x] Two target fields mapped to the same source column both display a non-blocking inline "also mapped to X" warning.
+- [x] When `import-wizard.component.ts`'s Confirm/Next button is disabled due to `!mapResult()` from an invalid mapping form, a visible message names the specific unmapped/invalid required field(s) — exposed via a new signal/getter on `ImportMapStepComponent` (e.g. `invalidFieldLabels()`) that the wizard or the mapper itself renders.
+- [x] Clicking a collapsed/completed field's summary row re-opens it for editing in place without discarding the mapping already chosen for other fields.
+- [x] No Dexie schema or repository changes — this is presentation/interaction only within `import-map-step.component.ts`/`.html`.
+- [x] Unit tests cover: guided flow advances to the next field once the current one is valid; sample value updates when the active field's selection changes; required-field error message appears/disappears with control state; duplicate-column warning appears for two fields sharing a source column and clears when resolved; collapsed field re-opens for edit and preserves other fields' values; `invalidFieldLabels()` (or equivalent) lists exactly the unmapped required fields.
+- [x] Verified via the fallow skill and coding-conventions skill, plus a live browser check (ask the user first per this repo's verification rule; continue without it if declined).
 
 ## Notes
 

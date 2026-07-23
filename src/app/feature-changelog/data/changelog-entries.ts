@@ -193,4 +193,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Added a "Make rule from filter" button so a filtered transaction view can be turned straight into a categorisation rule',
     area: 'Categories',
   },
+  {
+    date: '2026-07-23',
+    versionFolder: 'v1.5_redesign',
+    ticketIds: ['TICKET-IMP-07'],
+    title:
+      'Redesigned the CSV import mapper into a guided, field-by-field flow with live sample values, required-field errors, and duplicate-column warnings',
+    area: 'Import',
+  },
 ];

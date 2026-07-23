@@ -23,12 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'Experience',
-    ticketId: 'TICKET-IMP-07',
-    title: 'Improve import flow, better UX',
-    area: 'Import',
-  },
-  {
-    versionFolder: 'Experience',
     ticketId: 'topic-import-flow',
     title: 'Improve import flow: Multi account csv,...',
     area: 'Import',

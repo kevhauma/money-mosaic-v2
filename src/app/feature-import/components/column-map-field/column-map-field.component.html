@@ -1,0 +1,19 @@
+@if (active()) {
+  <app-column-map-active-field
+    [field]="field()"
+    [control]="control()"
+    [headers]="headers()"
+    [isLast]="isLast()"
+    [resolvedSample]="resolvedSample()"
+    [duplicateWarning]="duplicateWarning()"
+    (advanced)="advanced.emit()"
+  />
+} @else {
+  <app-column-map-collapsed-field
+    [field]="field()"
+    [control]="control()"
+    [resolvedSample]="resolvedSample()"
+    [duplicateWarning]="duplicateWarning()"
+    (opened)="opened.emit()"
+  />
+}

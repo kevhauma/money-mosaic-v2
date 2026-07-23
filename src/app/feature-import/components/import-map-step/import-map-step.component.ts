@@ -1,14 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   model,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   SIGN_CONVENTIONS,
   SUPPORTED_DATE_FORMATS,
@@ -32,6 +33,7 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
+import { ColumnMapFieldComponent } from '../column-map-field/column-map-field.component';
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
 
@@ -41,11 +43,33 @@ const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
   'credit-negative': 'Credit negative',
 };
 
+/** A column-mapping field's key — one of `MappingProfileColumns`'s own properties. */
+export type ColumnFieldKey = keyof MappingProfileColumns;
+
+export type ColumnFieldDef = { key: ColumnFieldKey; label: string; required: boolean };
+
+/**
+ * The guided flow's field order (TICKET-IMP-07 to-be): `date` → `description` →
+ * `amount`/`debit`/`credit` → `counterpartyName` → `counterpartyIban` → `ownIban` → `balance`.
+ */
+const COLUMN_FIELDS: ColumnFieldDef[] = [
+  { key: 'date', label: 'Date', required: true },
+  { key: 'description', label: 'Description', required: true },
+  { key: 'amount', label: 'Amount (single column)', required: false },
+  { key: 'debit', label: 'Debit (if separate)', required: false },
+  { key: 'credit', label: 'Credit (if separate)', required: false },
+  { key: 'counterpartyName', label: 'Counterparty name', required: false },
+  { key: 'counterpartyIban', label: 'Counterparty IBAN', required: false },
+  { key: 'ownIban', label: 'Own account number/IBAN', required: false },
+  { key: 'balance', label: 'Running balance', required: false },
+];
+
 @Component({
   selector: 'app-import-map-step',
   imports: [
     ReactiveFormsModule,
     AlertComponent,
+    ColumnMapFieldComponent,
     DividerComponent,
     FieldsetComponent,
     FlexComponent,
@@ -98,6 +122,64 @@ export class ImportMapStepComponent {
     ownIban: [''],
     balance: [''],
     rememberForAccount: [false],
+  });
+
+  protected readonly columnFields = COLUMN_FIELDS;
+
+  /** Which column field is expanded for editing right now; `null` once the guided flow reaches the end (TICKET-IMP-07). */
+  protected readonly activeFieldKey = signal<ColumnFieldKey | null>(COLUMN_FIELDS[0].key);
+
+  private readonly formValue = toSignal(this.form.valueChanges, {
+    initialValue: this.form.getRawValue(),
+  });
+
+  /** The active field's live resolved sample — the first data row's value for whichever column is currently selected (TICKET-IMP-07). */
+  protected readonly resolvedSamples = computed<Partial<Record<ColumnFieldKey, string>>>(() => {
+    const value = this.formValue();
+    const headers = this.headers();
+    const sampleRow = this.previewRows()[value.headerRows ?? 1] ?? [];
+    const samples: Partial<Record<ColumnFieldKey, string>> = {};
+    for (const field of COLUMN_FIELDS) {
+      const columnName = value[field.key];
+      const index = columnName ? headers.indexOf(columnName) : -1;
+      if (index !== -1 && sampleRow[index] !== undefined) {
+        samples[field.key] = sampleRow[index];
+      }
+    }
+    return samples;
+  });
+
+  /** Non-blocking "also mapped to X" warning for any two fields sharing the same source column (TICKET-IMP-07). */
+  protected readonly duplicateWarnings = computed<Partial<Record<ColumnFieldKey, string>>>(() => {
+    const value = this.formValue();
+    const fieldsByColumn = new Map<string, ColumnFieldKey[]>();
+    for (const field of COLUMN_FIELDS) {
+      const columnName = value[field.key];
+      if (!columnName) continue;
+      const keys = fieldsByColumn.get(columnName) ?? [];
+      keys.push(field.key);
+      fieldsByColumn.set(columnName, keys);
+    }
+
+    const warnings: Partial<Record<ColumnFieldKey, string>> = {};
+    for (const keys of fieldsByColumn.values()) {
+      if (keys.length < 2) continue;
+      for (const key of keys) {
+        const otherLabels = keys
+          .filter((other) => other !== key)
+          .map((other) => COLUMN_FIELDS.find((field) => field.key === other)!.label);
+        warnings[key] = `Also mapped to ${otherLabels.join(', ')}`;
+      }
+    }
+    return warnings;
+  });
+
+  /** Required column fields still unmapped — surfaced so the wizard's Confirm/Next button can name what's blocking it (TICKET-IMP-07). */
+  readonly invalidFieldLabels = computed<string[]>(() => {
+    const value = this.formValue();
+    return COLUMN_FIELDS.filter((field) => field.required && !value[field.key]).map(
+      (field) => field.label,
+    );
   });
 
   // Tracks the file we last ran detection for, so re-detection reacts to the file reference itself
@@ -176,6 +258,32 @@ export class ImportMapStepComponent {
     );
     this.headers.set(rows[headerRows - 1] ?? []);
     this.previewRows.set(rows);
+  }
+
+  /** Type-safe dynamic control lookup for the template, since `form.controls['x']` doesn't narrow (TICKET-IMP-07). */
+  protected controlFor(key: ColumnFieldKey): FormControl<string> {
+    return this.form.controls[key];
+  }
+
+  protected isLastColumnField(key: ColumnFieldKey): boolean {
+    return COLUMN_FIELDS[COLUMN_FIELDS.length - 1].key === key;
+  }
+
+  /** Opens a field for editing — collapsing whichever field was previously active and marking it touched, so a skipped required field's error surfaces once the user moves away from it (TICKET-IMP-07). */
+  protected openField(key: ColumnFieldKey): void {
+    const current = this.activeFieldKey();
+    if (current && current !== key) this.controlFor(current).markAsTouched();
+    this.activeFieldKey.set(key);
+  }
+
+  /** Advances the guided flow past `key` once it's valid — a no-op while a required field is still empty (TICKET-IMP-07). */
+  protected advanceFrom(key: ColumnFieldKey): void {
+    const control = this.controlFor(key);
+    control.markAsTouched();
+    if (control.invalid) return;
+
+    const nextIndex = COLUMN_FIELDS.findIndex((field) => field.key === key) + 1;
+    this.activeFieldKey.set(COLUMN_FIELDS[nextIndex]?.key ?? null);
   }
 
   private updateResult(): void {

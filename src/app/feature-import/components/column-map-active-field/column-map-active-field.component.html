@@ -1,0 +1,35 @@
+<div class="rounded-box border border-primary/50 bg-base-200/40 p-3">
+  <mm-fieldset [legend]="field().label + (field().required ? ' *' : '')">
+    <mm-select [formControl]="control()" size="sm" class="w-full">
+      <option value="">{{ field().required ? '— select column —' : '— none —' }}</option>
+      @for (header of headers(); track header) {
+        <option [value]="header">{{ header }}</option>
+      }
+    </mm-select>
+  </mm-fieldset>
+
+  @if (resolvedSample(); as sample) {
+    <mm-text as="p" variant="caption" class="mt-1 text-base-content/60">→ {{ sample }}</mm-text>
+  }
+
+  @if (control().invalid && control().touched) {
+    <mm-label variant="error" class="mt-1"
+      >Required — pick a column for {{ field().label }}.</mm-label
+    >
+  }
+
+  @if (duplicateWarning(); as warning) {
+    <mm-text as="p" variant="caption" color="warning" class="mt-1">{{ warning }}</mm-text>
+  }
+
+  <mm-flex justify="end" class="mt-2">
+    <mm-button
+      size="xs"
+      variant="ghost"
+      [disabled]="field().required && control().invalid"
+      (click)="advanced.emit()"
+    >
+      {{ advanceLabel() }}
+    </mm-button>
+  </mm-flex>
+</div>

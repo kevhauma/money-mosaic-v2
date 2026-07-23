@@ -71,29 +71,27 @@
 
       <mm-divider class="my-1 text-xs">Columns</mm-divider>
 
-      @for (
-        field of [
-          { key: 'date', label: 'Date', required: true },
-          { key: 'amount', label: 'Amount (single column)', required: false },
-          { key: 'debit', label: 'Debit (if separate)', required: false },
-          { key: 'credit', label: 'Credit (if separate)', required: false },
-          { key: 'description', label: 'Description', required: true },
-          { key: 'counterpartyName', label: 'Counterparty name', required: false },
-          { key: 'counterpartyIban', label: 'Counterparty IBAN', required: false },
-          { key: 'ownIban', label: 'Own account number/IBAN', required: false },
-          { key: 'balance', label: 'Running balance', required: false },
-        ];
-        track field.key
-      ) {
-        <mm-fieldset [legend]="field.label">
-          <mm-select [formControlName]="field.key" size="sm" class="w-full">
-            <option value="">{{ field.required ? '— select column —' : '— none —' }}</option>
-            @for (header of headers(); track header) {
-              <option [value]="header">{{ header }}</option>
-            }
-          </mm-select>
-        </mm-fieldset>
+      @if (invalidFieldLabels().length > 0) {
+        <mm-alert status="warning" variant="soft" class="text-sm">
+          Map a column for: {{ invalidFieldLabels().join(', ') }}
+        </mm-alert>
       }
+
+      <div class="flex flex-col gap-2">
+        @for (field of columnFields; track field.key) {
+          <app-column-map-field
+            [field]="field"
+            [control]="controlFor(field.key)"
+            [headers]="headers()"
+            [active]="activeFieldKey() === field.key"
+            [isLast]="isLastColumnField(field.key)"
+            [resolvedSample]="resolvedSamples()[field.key]"
+            [duplicateWarning]="duplicateWarnings()[field.key]"
+            (opened)="openField(field.key)"
+            (advanced)="advanceFrom(field.key)"
+          />
+        }
+      </div>
 
       <mm-label as="label" class="mt-2 cursor-pointer justify-start gap-2">
         <input type="checkbox" formControlName="rememberForAccount" class="checkbox checkbox-sm" />
