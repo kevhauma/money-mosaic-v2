@@ -23,16 +23,36 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'Experience',
-    ticketId: 'topic-import-flow',
-    title: 'Improve import flow: Multi account csv, auto-create account,...',
+    ticketId: 'TICKET-IMP-07',
+    title: 'Improve import flow, better UX',
     area: 'Import',
   },
   {
     versionFolder: 'Experience',
-    ticketId: 'topic-rule-flow',
+    ticketId: 'topic-import-flow',
+    title: 'Improve import flow: Multi account csv,...',
+    area: 'Import',
+  },
+  {
+    versionFolder: 'Experience',
+    ticketId: 'TICKET-IMP-08',
+    title:
+      'A "+ New account" quick action on the import screen — nudges you to create one right away if you have none yet',
+    area: 'Import',
+  },
+  {
+    versionFolder: 'Experience',
+    ticketId: 'TICKET-CAT-07',
     title:
       'Improve rule flow: create rule from transaction filter, add category from rule screen,...',
     area: 'Rules',
+  },
+  {
+    versionFolder: 'Experience',
+    ticketId: 'TICKET-TXN-08',
+    title:
+      'Filter transactions by amount without typing negative numbers — pick Expenses or Income instead',
+    area: 'Transactions',
   },
   {
     versionFolder: 'Settings',

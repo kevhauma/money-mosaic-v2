@@ -35,6 +35,14 @@ Applies the actual new visual identity. **Do not start UI-11 until Phase A has l
 - [x] [TICKET-UI-13](./tickets/TICKET-UI-13-chart-visual-language.md) — Chart visual language & motion pass (adds FR-UI-13) — needs UI-11's tokens; independent of UI-12, can run in parallel
 - [x] [TICKET-UI-14](./tickets/TICKET-UI-14-app-shell-visual-pass.md) — App shell (nav/drawer) visual pass (adds FR-UI-14) — needs UI-09 + UI-11; build last
 
+## QoL addendum
+
+Not part of the redesign scope above — this section holds later quality-of-life tickets appended to this version folder at the user's request (mirroring how a similar QoL batch was appended to `docs/v1.1_joint_accounts` as its own section rather than mixed into that version's original tickets). Independent of Phase A/Phase B; no build-order dependency on any `TICKET-UI-*` ticket.
+
+- [ ] [TICKET-IMP-07](./tickets/TICKET-IMP-07-guided-mapper-feedback.md) — Guided, field-by-field feedback in the import mapper (FR-IMP-3) — independent, can ship any time
+- [ ] [TICKET-CAT-07](./tickets/TICKET-CAT-07-make-rule-from-filter.md) — Make rule from filter in the transaction overview (FR-CAT-2, FR-CAT-4) — independent, can ship any time
+- [ ] [TICKET-TXN-08](./tickets/TICKET-TXN-08-expense-income-amount-filter-switch.md) — Expense/Income switch for the amount filter (FR-TXN-3) — independent, can ship any time; coordinate with TICKET-CAT-07 if both are in flight (see ticket Notes)
+
 ## Considered, not ticketed yet
 
 - **Generic grid extraction beyond the Bento pattern** — explicitly out of scope; see the scope decision above. Plain `grid`/`grid-cols-*`/`col-span-*` usage stays inline per the existing coding-conventions styling rules. (`flex` was in this category too until TICKET-UI-15 reversed it for readability reasons — see the scope decision above.)

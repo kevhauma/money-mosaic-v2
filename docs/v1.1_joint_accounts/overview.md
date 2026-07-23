@@ -27,6 +27,7 @@ The net-worth contract (STAT-03) consumes the account fields (ACC-02 share + ACC
 - [x] [TICKET-ACC-04](./tickets/TICKET-ACC-04-manual-account-ordering.md) — Manual account ordering (extends FR-ACC-1) — same shape as CAT-03, build back-to-back so the reorder interaction stays consistent
 - [x] [TICKET-CAT-03](./tickets/TICKET-CAT-03-manual-category-ordering.md) — Manual category ordering (extends FR-CAT-1) — same shape as ACC-04, build back-to-back
 - [x] [TICKET-STAT-10](./tickets/TICKET-STAT-10-unified-date-range-picker.md) — Unified from/to date-range field (extends FR-STAT-7, touches FR-TXN-3) — touches two existing call sites, do last since it has the widest visual surface to verify
+- [ ] [TICKET-IMP-08](./tickets/TICKET-IMP-08-create-account-from-import.md) — Create a new account directly from the CSV import step (extends FR-IMP-1) — independent of the rest of this track; builds on the existing per-file IBAN auto-detect from TICKET-IMP-05, can ship any time
 
 ## Considered, not ticketed yet
 
