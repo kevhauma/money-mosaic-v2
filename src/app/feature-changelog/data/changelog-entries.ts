@@ -185,4 +185,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Added an Expense/Income switch to the transaction amount filter, so you can type a plain positive amount instead of remembering to enter it as negative',
     area: 'Transactions',
   },
+  {
+    date: '2026-07-23',
+    versionFolder: 'v1.5_redesign',
+    ticketIds: ['TICKET-CAT-07'],
+    title:
+      'Added a "Make rule from filter" button so a filtered transaction view can be turned straight into a categorisation rule',
+    area: 'Categories',
+  },
 ];

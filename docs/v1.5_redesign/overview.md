@@ -40,7 +40,7 @@ Applies the actual new visual identity. **Do not start UI-11 until Phase A has l
 Not part of the redesign scope above — this section holds later quality-of-life tickets appended to this version folder at the user's request (mirroring how a similar QoL batch was appended to `docs/v1.1_joint_accounts` as its own section rather than mixed into that version's original tickets). Independent of Phase A/Phase B; no build-order dependency on any `TICKET-UI-*` ticket.
 
 - [ ] [TICKET-IMP-07](./tickets/TICKET-IMP-07-guided-mapper-feedback.md) — Guided, field-by-field feedback in the import mapper (FR-IMP-3) — independent, can ship any time
-- [ ] [TICKET-CAT-07](./tickets/TICKET-CAT-07-make-rule-from-filter.md) — Make rule from filter in the transaction overview (FR-CAT-2, FR-CAT-4) — independent, can ship any time
+- [x] [TICKET-CAT-07](./tickets/TICKET-CAT-07-make-rule-from-filter.md) — Make rule from filter in the transaction overview (FR-CAT-2, FR-CAT-4) — independent, can ship any time
 - [x] [TICKET-TXN-08](./tickets/TICKET-TXN-08-expense-income-amount-filter-switch.md) — Expense/Income switch for the amount filter (FR-TXN-3) — independent, can ship any time; coordinate with TICKET-CAT-07 if both are in flight (see ticket Notes)
 
 ## Considered, not ticketed yet

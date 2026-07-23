@@ -122,6 +122,12 @@ export const RulesStore = signalStore(
 
       await store.runRules();
     },
+
+    /** "Make rule from filter" (TICKET-CAT-07) — same persist-then-backfill path as `createRuleFromCounterparty`. */
+    createRuleFromConditions: async (rule: Omit<Rule, 'id'>): Promise<void> => {
+      await store.addRule(rule);
+      await store.runRules();
+    },
   })),
   withMethods((store) => {
     const categoriesStore = inject(CategoriesStore);

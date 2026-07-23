@@ -29,7 +29,7 @@ import {
   debouncedTextSignal,
   structuralFiltersSignal,
 } from '@/shared/utils';
-import type { TransactionFilters } from '../../transaction-filters';
+import { filtersToRuleConditions, type TransactionFilters } from '../../transaction-filters';
 
 /** The filter fields that apply immediately, i.e. everything except the debounced free-text needle (CR-2.4). */
 type StructuralFilters = Omit<TransactionFilters, 'text'>;
@@ -82,6 +82,9 @@ export class TransactionFiltersComponent {
 
   /** Emits the combined filter set whenever a structural field changes or the text needle settles. */
   readonly filtersChange = output<TransactionFilters>();
+
+  /** "Make rule from filter" (TICKET-CAT-07) — parent owns the rule-form modal/store, this just signals intent. */
+  readonly makeRuleFromFilter = output<void>();
 
   protected readonly filterForm = this.formBuilder.nonNullable.group({
     accountId: [''],
@@ -157,12 +160,21 @@ export class TransactionFiltersComponent {
 
   protected readonly amountDirection = computed(() => this.structuralFilters().amountDirection);
 
+  /** Enabled only when at least one *convertible* axis is set — a date/category-only filter has nothing to turn into a rule (TICKET-CAT-07). */
+  protected readonly canMakeRuleFromFilter = computed(
+    () => filtersToRuleConditions(this.filterKey()).length > 0,
+  );
+
   protected onDateRangeChange(range: DateRangeValue): void {
     this.filterForm.patchValue({ dateFrom: range.from, dateTo: range.to });
   }
 
   protected setAmountDirection(direction: 'expense' | 'income'): void {
     this.filterForm.patchValue({ amountDirection: direction });
+  }
+
+  protected onMakeRuleFromFilter(): void {
+    this.makeRuleFromFilter.emit();
   }
 
   /** Called by the parent (e.g. the "still need a category" banner) to jump straight to the uncategorised filter. */

@@ -1,5 +1,9 @@
 <mm-modal [(open)]="open" class="max-w-2xl">
-  <span mm-modal-title>{{ rule() ? 'Edit rule' : 'Add rule' }}</span>
+  <span mm-modal-title>{{ isEditingExisting() ? 'Edit rule' : 'Add rule' }}</span>
+
+  @if (excludedFiltersNote()) {
+    <mm-alert status="info" class="mt-2 text-sm">{{ excludedFiltersNote() }}</mm-alert>
+  }
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
     <mm-fieldset legend="Name">
@@ -138,7 +142,7 @@
     <div class="modal-action">
       <mm-button (click)="cancel()">Cancel</mm-button>
       <mm-button type="submit" color="primary">
-        {{ rule() ? 'Save changes' : 'Add rule' }}
+        {{ isEditingExisting() ? 'Save changes' : 'Add rule' }}
       </mm-button>
     </div>
   </form>

@@ -76,3 +76,69 @@ describe('RuleFormComponent: regex pattern length cap (TICKET-PERF-02)', () => {
     expect(group.controls['value'].hasError('regexPatternMaxLength')).toBe(true);
   });
 });
+
+describe('RuleFormComponent: pre-filled draft without a persisted id (TICKET-CAT-07)', () => {
+  let component: RuleFormComponent;
+  let fixture: ComponentFixture<RuleFormComponent>;
+
+  const draftRule = {
+    name: 'Rule from filter (2026-07-23)',
+    priority: 10,
+    enabled: true,
+    continueOnMatch: false,
+    conditionMatch: 'all' as const,
+    conditions: [{ field: 'accountId' as const, operator: 'equals' as const, value: 1 }],
+    action: { setCategoryId: 0 },
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [RuleFormComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(RuleFormComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('treats an id-less draft as "add", not "edit"', async () => {
+    fixture.componentRef.setInput('rule', draftRule);
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    expect((component as unknown as { isEditingExisting: () => boolean }).isEditingExisting()).toBe(
+      false,
+    );
+  });
+
+  it('leaves categoryId unselected when the draft carries the 0 sentinel', async () => {
+    fixture.componentRef.setInput('rule', draftRule);
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    const form = (component as unknown as { form: { value: { categoryId: string } } }).form;
+    expect(form.value.categoryId).toBe('');
+  });
+
+  it('renders the excludedFiltersNote as a visible alert when provided', async () => {
+    fixture.componentRef.setInput('rule', draftRule);
+    fixture.componentRef.setInput(
+      'excludedFiltersNote',
+      "Date range filter isn't included — rules can't match on that yet.",
+    );
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const alertText = (fixture.nativeElement as HTMLElement).querySelector('mm-alert')?.textContent;
+    expect(alertText).toContain("Date range filter isn't included");
+  });
+
+  it('renders no alert when excludedFiltersNote is null', async () => {
+    fixture.componentRef.setInput('rule', draftRule);
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('mm-alert')).toBeNull();
+  });
+});

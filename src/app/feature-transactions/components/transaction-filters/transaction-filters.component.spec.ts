@@ -8,6 +8,8 @@ type Internals = {
   filterForm: { value: unknown; patchValue: (value: Record<string, string>) => void };
   hasActiveFilters: () => boolean;
   clearFilters: () => void;
+  canMakeRuleFromFilter: () => boolean;
+  onMakeRuleFromFilter: () => void;
 };
 
 describe('TransactionFiltersComponent', () => {
@@ -158,6 +160,62 @@ describe('TransactionFiltersComponent', () => {
       expect((internals().filterForm.value as { amountDirection: string }).amountDirection).toBe(
         'expense',
       );
+    });
+  });
+
+  describe('canMakeRuleFromFilter (TICKET-CAT-07)', () => {
+    it('is disabled when no filter is active', async () => {
+      await setup();
+      expect(internals().canMakeRuleFromFilter()).toBe(false);
+    });
+
+    it('is enabled once text is set', async () => {
+      await setup();
+      internals().filterForm.patchValue({ text: 'netflix' });
+      // `text` flows through the 150ms-debounced needle (CR-2.4) — real timers only, this app is
+      // zoneless and `fixture.whenStable()` needs real timers to settle (see category-comparison-
+      // panel.component.spec.ts), so fake timers aren't an option here.
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      await fixture.whenStable();
+      expect(internals().canMakeRuleFromFilter()).toBe(true);
+    });
+
+    it('is enabled once accountId is set', async () => {
+      await setup();
+      internals().filterForm.patchValue({ accountId: '2' });
+      await fixture.whenStable();
+      expect(internals().canMakeRuleFromFilter()).toBe(true);
+    });
+
+    it('is enabled once an amount bound is set', async () => {
+      await setup();
+      internals().filterForm.patchValue({ amountMin: '10' });
+      await fixture.whenStable();
+      expect(internals().canMakeRuleFromFilter()).toBe(true);
+    });
+
+    it('stays disabled for a date-only filter — no convertible axis is set', async () => {
+      await setup();
+      internals().filterForm.patchValue({ dateFrom: '2026-06-01' });
+      await fixture.whenStable();
+      expect(internals().canMakeRuleFromFilter()).toBe(false);
+    });
+
+    it('stays disabled for a category-only filter — no convertible axis is set', async () => {
+      await setup();
+      internals().filterForm.patchValue({ categoryId: '3' });
+      await fixture.whenStable();
+      expect(internals().canMakeRuleFromFilter()).toBe(false);
+    });
+
+    it('onMakeRuleFromFilter emits makeRuleFromFilter', async () => {
+      await setup();
+      let emittedCount = 0;
+      fixture.componentInstance.makeRuleFromFilter.subscribe(() => emittedCount++);
+
+      internals().onMakeRuleFromFilter();
+
+      expect(emittedCount).toBe(1);
     });
   });
 });

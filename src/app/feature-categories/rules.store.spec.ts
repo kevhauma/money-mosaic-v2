@@ -233,6 +233,66 @@ describe('RulesStore: createRuleFromCounterparty creates then backfills matching
   });
 });
 
+describe('RulesStore: createRuleFromConditions persists then backfills (TICKET-CAT-07)', () => {
+  const rulesRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(101),
+  };
+  const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const transactionsRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: RulesRepository, useValue: rulesRepository },
+        { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
+    });
+  });
+
+  it('persists the given draft rule and backfills matching transactions, same as createRuleFromCounterparty', async () => {
+    transactionsRepository.getAll.mockResolvedValue([
+      transaction({ id: 20, categoryManual: false }),
+      transaction({ id: 21, categoryManual: true }),
+    ]);
+    const store = TestBed.inject(RulesStore);
+    await store.hydrate();
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    rulesEngineService.runAndPersist.mockResolvedValue([{ id: 20, categoryId: 9 }]);
+
+    await store.createRuleFromConditions({
+      name: 'Rule from filter (2026-07-23)',
+      priority: 20,
+      enabled: true,
+      continueOnMatch: false,
+      conditionMatch: 'all',
+      conditions: [{ field: 'accountId', operator: 'equals', value: 1 }],
+      action: { setCategoryId: 9 },
+    });
+
+    expect(rulesRepository.add).toHaveBeenCalledWith({
+      name: 'Rule from filter (2026-07-23)',
+      priority: 20,
+      enabled: true,
+      continueOnMatch: false,
+      conditionMatch: 'all',
+      conditions: [{ field: 'accountId', operator: 'equals', value: 1 }],
+      action: { setCategoryId: 9 },
+    });
+    expect(store.rules().some((r) => r.id === 101)).toBe(true);
+
+    expect(rulesEngineService.runAndPersist).toHaveBeenCalled();
+    const byId = new Map(transactionsStore.transactions().map((t) => [t.id, t]));
+    expect(byId.get(20)).toMatchObject({ categoryId: 9 });
+    expect(byId.get(21)).toMatchObject({ categoryManual: true });
+  });
+});
+
 describe('RulesStore: exportRules resolves categories to portable labels (TICKET-CAT-06)', () => {
   const rulesRepository = { getAll: vi.fn().mockResolvedValue([]) };
   const categoriesRepository = { getAll: vi.fn().mockResolvedValue([]) };

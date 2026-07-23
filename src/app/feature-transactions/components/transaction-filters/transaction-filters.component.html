@@ -83,11 +83,27 @@
       />
     </mm-fieldset>
 
-    <mm-flex align="end">
+    <mm-flex align="end" gap="2" class="col-span-2">
+      <div
+        class="tooltip flex-1"
+        [attr.data-tip]="
+          canMakeRuleFromFilter() ? null : 'Set a text, account, or amount filter first'
+        "
+      >
+        <mm-button
+          variant="ghost"
+          size="sm"
+          class="w-full"
+          [disabled]="!canMakeRuleFromFilter()"
+          (click)="onMakeRuleFromFilter()"
+        >
+          Make rule from filter
+        </mm-button>
+      </div>
       <mm-button
         variant="ghost"
         size="sm"
-        class="w-full"
+        class="flex-1"
         [disabled]="!hasActiveFilters()"
         (click)="clearFilters()"
       >

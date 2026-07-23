@@ -4,11 +4,15 @@ import { vi } from 'vitest';
 import {
   AccountsRepository,
   CategoriesRepository,
+  RulesRepository,
   TransactionsRepository,
   type Category,
+  type Rule,
   type Transaction,
 } from '@/core/data-access';
+import { RulesEngineService } from '@/core/categorisation';
 import { AccountsStore, TransactionsStore } from '@/core/state';
+import { RulesStore, type RuleFormValue } from '@/feature-categories';
 import type { SelectionModel } from '@/shared/utils';
 import type { TransactionFilters } from '../../transaction-filters';
 import { TransactionsOverviewComponent } from './transactions-overview.component';
@@ -29,6 +33,11 @@ type Internals = {
   applyBulkCategory: (categoryId: number) => Promise<void>;
   showUncategorisedOnly: () => void;
   onCategoryChange: (transaction: Transaction, rawCategoryId: string) => Promise<void>;
+  openRuleFromFilter: () => void;
+  saveRuleFromFilter: (value: RuleFormValue) => Promise<void>;
+  ruleFormOpen: () => boolean;
+  ruleFormDraft: () => Rule | null;
+  ruleFormExcludedNote: () => string | null;
 };
 
 const noFilters: TransactionFilters = {
@@ -70,6 +79,13 @@ describe('TransactionsOverviewComponent', () => {
     getAll: vi.fn().mockResolvedValue([]),
   };
 
+  const rulesRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(55),
+  };
+
+  const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
@@ -79,6 +95,8 @@ describe('TransactionsOverviewComponent', () => {
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
+        { provide: RulesRepository, useValue: rulesRepository },
+        { provide: RulesEngineService, useValue: rulesEngineService },
       ],
     }).compileComponents();
 
@@ -275,5 +293,96 @@ describe('TransactionsOverviewComponent', () => {
       'Select transaction 2026-06-01 Row 2',
     ]);
     expect(labels[0]).not.toBe(labels[1]);
+  });
+
+  describe('"Make rule from filter" (TICKET-CAT-07)', () => {
+    it('does nothing when the active filter has no convertible axis', async () => {
+      await setup();
+      const component = internals();
+      component.filters.set({ ...noFilters, dateFrom: '2026-06-01' });
+
+      component.openRuleFromFilter();
+
+      expect(component.ruleFormOpen()).toBe(false);
+      expect(component.ruleFormDraft()).toBeNull();
+    });
+
+    it('opens the rule-form modal pre-filled with conditions converted from the active filter', async () => {
+      await setup();
+      const component = internals();
+      component.filters.set({ ...noFilters, text: 'netflix', accountId: '2' });
+
+      component.openRuleFromFilter();
+
+      expect(component.ruleFormOpen()).toBe(true);
+      const draft = component.ruleFormDraft();
+      expect(draft).toMatchObject({
+        enabled: true,
+        continueOnMatch: false,
+        conditionMatch: 'all',
+        conditions: [
+          { field: 'description', operator: 'contains', value: 'netflix' },
+          { field: 'accountId', operator: 'equals', value: 2 },
+        ],
+        action: { setCategoryId: 0 },
+      });
+      expect(draft?.id).toBeUndefined();
+      expect(draft?.name).toContain('Rule from filter');
+    });
+
+    it('sets an excluded-axis note when the date/category filter axes are active alongside a convertible one', async () => {
+      await setup();
+      const component = internals();
+      component.filters.set({
+        ...noFilters,
+        text: 'netflix',
+        dateFrom: '2026-06-01',
+        categoryId: '3',
+      });
+
+      component.openRuleFromFilter();
+
+      const note = component.ruleFormExcludedNote();
+      expect(note).toContain('Date range');
+      expect(note).toContain('Category');
+    });
+
+    it('leaves the note empty when every active axis converted cleanly', async () => {
+      await setup();
+      const component = internals();
+      component.filters.set({ ...noFilters, text: 'netflix' });
+
+      component.openRuleFromFilter();
+
+      expect(component.ruleFormExcludedNote()).toBeNull();
+    });
+
+    it('saveRuleFromFilter persists the rule through RulesStore (same path as createRuleFromCounterparty)', async () => {
+      await setup();
+      const component = internals();
+      component.filters.set({ ...noFilters, text: 'netflix' });
+      component.openRuleFromFilter();
+      const draft = component.ruleFormDraft()!;
+
+      await component.saveRuleFromFilter({
+        name: draft.name,
+        priority: draft.priority,
+        enabled: draft.enabled,
+        continueOnMatch: draft.continueOnMatch,
+        conditionMatch: draft.conditionMatch,
+        conditions: draft.conditions,
+        action: { setCategoryId: 4 },
+      });
+
+      expect(rulesRepository.add).toHaveBeenCalledWith(
+        expect.objectContaining({ action: { setCategoryId: 4 } }),
+      );
+      expect(rulesEngineService.runAndPersist).toHaveBeenCalled();
+      expect(
+        TestBed.inject(RulesStore)
+          .rules()
+          .some((r) => r.id === 55),
+      ).toBe(true);
+    });
   });
 });

@@ -15,8 +15,9 @@ import {
   tablerUnlink,
 } from '@ng-icons/tabler-icons';
 import { AccountsStore, CategoriesStore, TransactionsStore, TransfersStore } from '@/core/state';
-import type { Category, Transaction, Transfer } from '@/core/data-access';
+import type { Category, Rule, Transaction, Transfer } from '@/core/data-access';
 import { isLikelyTransfer, savingsAccountIbans } from '@/core/transfers';
+import { RuleFormComponent, RulesStore, type RuleFormValue } from '@/feature-categories';
 import {
   AlertComponent,
   BadgeComponent,
@@ -35,7 +36,13 @@ import {
   normalizeIban,
   SignedAmountPipe,
 } from '@/shared/utils';
-import { matchesTransactionFilters, type TransactionFilters } from '../../transaction-filters';
+import {
+  describeExcludedFilterAxes,
+  excludedFilterAxisLabels,
+  filtersToRuleConditions,
+  matchesTransactionFilters,
+  type TransactionFilters,
+} from '../../transaction-filters';
 import { TransactionBulkBarComponent } from '../transaction-bulk-bar/transaction-bulk-bar.component';
 import {
   TransactionEditFormComponent,
@@ -81,6 +88,7 @@ type TransactionRow = {
     LoadingSkeletonComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    RuleFormComponent,
     TableComponent,
     TransactionBulkBarComponent,
     TransactionEditFormComponent,
@@ -104,6 +112,7 @@ export class TransactionsOverviewComponent {
   protected readonly transfersStore = inject(TransfersStore);
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly categoriesStore = inject(CategoriesStore);
+  protected readonly rulesStore = inject(RulesStore);
 
   /** Drill-down inheritance (FR-STAT-6): bound from the route's query params via `withComponentInputBinding()`. */
   readonly accountId = input<string>();
@@ -202,8 +211,45 @@ export class TransactionsOverviewComponent {
   protected readonly formOpen = signal(false);
   protected readonly editingTransaction = signal<Transaction | null>(null);
 
+  /** "Make rule from filter" (TICKET-CAT-07) — reuses `feature-categories`' rule-form modal as-is. */
+  protected readonly ruleFormOpen = signal(false);
+  protected readonly ruleFormDraft = signal<Rule | null>(null);
+  protected readonly ruleFormExcludedNote = signal<string | null>(null);
+
+  private readonly nextRulePriority = computed(
+    () => Math.max(0, ...this.rulesStore.rules().map((rule) => rule.priority)) + 10,
+  );
+
   protected showUncategorisedOnly(): void {
     this.filterBar().showUncategorisedOnly();
+  }
+
+  /**
+   * Converts the active filter into a starting `RuleCondition[]` and opens the shared rule-form
+   * modal pre-filled with it — the target category is left for the user to pick (0 sentinel,
+   * never a real Dexie id) and any inconvertible axes (date range/category) are called out via
+   * `ruleFormExcludedNote` (TICKET-CAT-07).
+   */
+  protected openRuleFromFilter(): void {
+    const filters = this.filters();
+    const conditions = filtersToRuleConditions(filters);
+    if (conditions.length === 0) return;
+
+    this.ruleFormExcludedNote.set(describeExcludedFilterAxes(excludedFilterAxisLabels(filters)));
+    this.ruleFormDraft.set({
+      name: `Rule from filter (${new Date().toISOString().slice(0, 10)})`,
+      priority: this.nextRulePriority(),
+      enabled: true,
+      continueOnMatch: false,
+      conditionMatch: 'all',
+      conditions,
+      action: { setCategoryId: 0 },
+    });
+    this.ruleFormOpen.set(true);
+  }
+
+  protected async saveRuleFromFilter(value: RuleFormValue): Promise<void> {
+    await this.rulesStore.createRuleFromConditions(value);
   }
 
   /** Selects every row in the current filtered set — the full result, not only `pagedItems()` (TICKET-TXN-01). */

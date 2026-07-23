@@ -1,5 +1,11 @@
 import type { Transaction } from '@/core/data-access';
-import { matchesTransactionFilters, type TransactionFilters } from './transaction-filters';
+import {
+  describeExcludedFilterAxes,
+  excludedFilterAxisLabels,
+  filtersToRuleConditions,
+  matchesTransactionFilters,
+  type TransactionFilters,
+} from './transaction-filters';
 
 const noFilters: TransactionFilters = {
   accountId: '',
@@ -278,5 +284,135 @@ describe('matchesTransactionFilters', () => {
         new Set(),
       ),
     ).toBe(false);
+  });
+});
+
+describe('filtersToRuleConditions (TICKET-CAT-07)', () => {
+  it('returns nothing for an all-empty filter set', () => {
+    expect(filtersToRuleConditions(noFilters)).toEqual([]);
+  });
+
+  it('converts text alone into a description-contains condition', () => {
+    expect(filtersToRuleConditions({ ...noFilters, text: 'netflix' })).toEqual([
+      { field: 'description', operator: 'contains', value: 'netflix' },
+    ]);
+  });
+
+  it('converts accountId alone into an accountId-equals condition', () => {
+    expect(filtersToRuleConditions({ ...noFilters, accountId: '2' })).toEqual([
+      { field: 'accountId', operator: 'equals', value: 2 },
+    ]);
+  });
+
+  describe('amount axis, expense direction (default)', () => {
+    it('both bounds set converts to a between condition, re-signed negative', () => {
+      expect(filtersToRuleConditions({ ...noFilters, amountMin: '10', amountMax: '50' })).toEqual([
+        { field: 'amount', operator: 'between', value: [-50, -10] },
+      ]);
+    });
+
+    it('only amountMin set converts to a "<" condition against the re-signed bound', () => {
+      expect(filtersToRuleConditions({ ...noFilters, amountMin: '10' })).toEqual([
+        { field: 'amount', operator: '<', value: -10 },
+      ]);
+    });
+
+    it('only amountMax set converts to a ">" condition against the re-signed bound', () => {
+      expect(filtersToRuleConditions({ ...noFilters, amountMax: '50' })).toEqual([
+        { field: 'amount', operator: '>', value: -50 },
+      ]);
+    });
+  });
+
+  describe('amount axis, income direction', () => {
+    const income = { ...noFilters, amountDirection: 'income' as const };
+
+    it('both bounds set converts to a between condition, unsigned', () => {
+      expect(filtersToRuleConditions({ ...income, amountMin: '10', amountMax: '50' })).toEqual([
+        { field: 'amount', operator: 'between', value: [10, 50] },
+      ]);
+    });
+
+    it('only amountMin set converts to a ">" condition', () => {
+      expect(filtersToRuleConditions({ ...income, amountMin: '10' })).toEqual([
+        { field: 'amount', operator: '>', value: 10 },
+      ]);
+    });
+
+    it('only amountMax set converts to a "<" condition', () => {
+      expect(filtersToRuleConditions({ ...income, amountMax: '50' })).toEqual([
+        { field: 'amount', operator: '<', value: 50 },
+      ]);
+    });
+  });
+
+  it('combines every convertible axis at once', () => {
+    const filters: TransactionFilters = {
+      ...noFilters,
+      text: 'netflix',
+      accountId: '2',
+      amountMin: '10',
+      amountMax: '50',
+    };
+
+    expect(filtersToRuleConditions(filters)).toEqual([
+      { field: 'description', operator: 'contains', value: 'netflix' },
+      { field: 'accountId', operator: 'equals', value: 2 },
+      { field: 'amount', operator: 'between', value: [-50, -10] },
+    ]);
+  });
+
+  it('omits date range and category — they have no matching RuleCondition field', () => {
+    expect(
+      filtersToRuleConditions({
+        ...noFilters,
+        dateFrom: '2026-06-01',
+        dateTo: '2026-06-30',
+        categoryId: '3',
+      }),
+    ).toEqual([]);
+  });
+});
+
+describe('excludedFilterAxisLabels (TICKET-CAT-07)', () => {
+  it('returns nothing when no date/category filter is active', () => {
+    expect(excludedFilterAxisLabels({ ...noFilters, text: 'x', accountId: '1' })).toEqual([]);
+  });
+
+  it('flags an active date range', () => {
+    expect(excludedFilterAxisLabels({ ...noFilters, dateFrom: '2026-06-01' })).toEqual([
+      'Date range',
+    ]);
+    expect(excludedFilterAxisLabels({ ...noFilters, dateTo: '2026-06-30' })).toEqual([
+      'Date range',
+    ]);
+  });
+
+  it('flags an active category', () => {
+    expect(excludedFilterAxisLabels({ ...noFilters, categoryId: '3' })).toEqual(['Category']);
+  });
+
+  it('flags both together', () => {
+    expect(
+      excludedFilterAxisLabels({ ...noFilters, dateFrom: '2026-06-01', categoryId: '3' }),
+    ).toEqual(['Date range', 'Category']);
+  });
+});
+
+describe('describeExcludedFilterAxes (TICKET-CAT-07)', () => {
+  it('returns null for an empty label list', () => {
+    expect(describeExcludedFilterAxes([])).toBeNull();
+  });
+
+  it('describes a single excluded axis in the singular', () => {
+    expect(describeExcludedFilterAxes(['Date range'])).toBe(
+      "Date range filter isn't included — rules can't match on that yet.",
+    );
+  });
+
+  it('describes multiple excluded axes in the plural', () => {
+    expect(describeExcludedFilterAxes(['Date range', 'Category'])).toBe(
+      "Date range and Category filters aren't included — rules can't match on those yet.",
+    );
   });
 });

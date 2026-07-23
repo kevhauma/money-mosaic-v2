@@ -41,13 +41,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Import',
   },
   {
-    versionFolder: 'Experience',
-    ticketId: 'TICKET-CAT-07',
-    title:
-      'Improve rule flow: create rule from transaction filter, add category from rule screen,...',
-    area: 'Rules',
-  },
-  {
     versionFolder: 'Settings',
     ticketId: 'TICKET-SET-05',
     title: 'Foundation for app settings (accent color, currency, locale, privacy mode)',

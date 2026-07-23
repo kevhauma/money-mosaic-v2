@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -21,6 +22,7 @@ import type { Rule, RuleCondition } from '@/core/data-access';
 import { OPERATORS_BY_FIELD } from '@/core/categorisation';
 import { AccountsStore, CategoriesStore } from '@/core/state';
 import {
+  AlertComponent,
   ButtonComponent,
   DividerComponent,
   FieldsetComponent,
@@ -63,6 +65,7 @@ const regexPatternMaxLength = (control: AbstractControl): ValidationErrors | nul
   selector: 'app-rule-form',
   imports: [
     ReactiveFormsModule,
+    AlertComponent,
     ButtonComponent,
     DividerComponent,
     FieldsetComponent,
@@ -80,7 +83,12 @@ export class RuleFormComponent {
   readonly open = model(false);
   readonly rule = input<Rule | null>(null);
   readonly defaultPriority = input(10);
+  /** Shown as an inline note when opened pre-filled from a source that couldn't convert every axis (TICKET-CAT-07). */
+  readonly excludedFiltersNote = input<string | null>(null);
   readonly saved = output<RuleFormValue>();
+
+  /** True once `rule()` is a persisted rule (has an `id`) — false for a fresh add, including a pre-filled draft with no `id` yet (TICKET-CAT-07). */
+  protected readonly isEditingExisting = computed(() => this.rule()?.id != null);
 
   protected readonly categoriesStore = inject(CategoriesStore);
   protected readonly accountsStore = inject(AccountsStore);
@@ -191,7 +199,9 @@ export class RuleFormComponent {
 
     this.form.patchValue({
       name: existing?.name ?? '',
-      categoryId: existing ? String(existing.action.setCategoryId) : '',
+      // A pre-filled draft (TICKET-CAT-07) carries a `0` sentinel setCategoryId — Dexie
+      // autoIncrement ids never assign 0, so this leaves the category genuinely unselected.
+      categoryId: existing?.action.setCategoryId ? String(existing.action.setCategoryId) : '',
       priority: existing?.priority ?? this.defaultPriority(),
       enabled: existing?.enabled ?? true,
       continueOnMatch: existing?.continueOnMatch ?? false,

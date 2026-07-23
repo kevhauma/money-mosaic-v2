@@ -33,13 +33,13 @@ Adds a "Make rule from filter" action to the transaction overview's filter bar, 
 
 ## Acceptance criteria
 
-- [ ] A pure function (alongside `matchesTransactionFilters` in `transaction-filters.ts`, or a sibling file) converts `TransactionFilters` → `RuleCondition[]`, covering: text→description-contains, accountId→accountId-equals, amount min/max→amount between/`>`/`<`, and omitting date/category axes entirely.
-- [ ] "Make rule from filter" button appears in the transaction overview's filter bar, enabled only when at least one *convertible* axis (`text`, `accountId`, `amountMin`, `amountMax`) is set — not merely when `hasActiveFilters` is true, since a date-only or category-only filter has nothing to convert.
-- [ ] Clicking it opens the existing `RuleFormComponent` modal pre-populated with the generated conditions, `conditionMatch: 'all'`, and an empty target category left for the user to choose — no new rule-editing UI is built.
-- [ ] A visible note in the opened form names any active filter axes that were excluded from conversion (date range and/or category).
-- [ ] Saving goes through `RuleFormComponent`'s existing `saved` output into `RulesStore` (same persistence + backfill path as `createRuleFromCounterparty`) — no direct Dexie table writes from the transaction-overview feature.
-- [ ] Unit tests cover: the filter→conditions conversion function for each axis individually and in combination; the button's enabled/disabled state across filter combinations (text-only, account-only, amount-only, date/category-only, none); the modal receives the expected pre-filled `Rule` shape when opened.
-- [ ] Verified via the fallow skill and coding-conventions skill, plus a live browser check (ask the user first per this repo's verification rule; continue without it if declined).
+- [x] A pure function (alongside `matchesTransactionFilters` in `transaction-filters.ts`, or a sibling file) converts `TransactionFilters` → `RuleCondition[]`, covering: text→description-contains, accountId→accountId-equals, amount min/max→amount between/`>`/`<`, and omitting date/category axes entirely.
+- [x] "Make rule from filter" button appears in the transaction overview's filter bar, enabled only when at least one *convertible* axis (`text`, `accountId`, `amountMin`, `amountMax`) is set — not merely when `hasActiveFilters` is true, since a date-only or category-only filter has nothing to convert.
+- [x] Clicking it opens the existing `RuleFormComponent` modal pre-populated with the generated conditions, `conditionMatch: 'all'`, and an empty target category left for the user to choose — no new rule-editing UI is built.
+- [x] A visible note in the opened form names any active filter axes that were excluded from conversion (date range and/or category).
+- [x] Saving goes through `RuleFormComponent`'s existing `saved` output into `RulesStore` (same persistence + backfill path as `createRuleFromCounterparty`) — no direct Dexie table writes from the transaction-overview feature.
+- [x] Unit tests cover: the filter→conditions conversion function for each axis individually and in combination; the button's enabled/disabled state across filter combinations (text-only, account-only, amount-only, date/category-only, none); the modal receives the expected pre-filled `Rule` shape when opened.
+- [x] Verified via the fallow skill and coding-conventions skill, plus a live browser check (ask the user first per this repo's verification rule; continue without it if declined).
 
 ## Notes
 

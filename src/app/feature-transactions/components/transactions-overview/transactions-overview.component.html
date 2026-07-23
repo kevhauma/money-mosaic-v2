@@ -24,6 +24,7 @@
   [to]="to()"
   [categoryId]="categoryId()"
   (filtersChange)="filters.set($event)"
+  (makeRuleFromFilter)="openRuleFromFilter()"
 />
 
 @if (selection.count() > 0) {
@@ -161,4 +162,11 @@
   [transaction]="editingTransaction()"
   (saved)="saveEdit($event)"
   (deleteRequested)="deleteEditingTransaction()"
+/>
+
+<app-rule-form
+  [(open)]="ruleFormOpen"
+  [rule]="ruleFormDraft()"
+  [excludedFiltersNote]="ruleFormExcludedNote()"
+  (saved)="saveRuleFromFilter($event)"
 />
