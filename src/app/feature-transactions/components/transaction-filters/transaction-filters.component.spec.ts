@@ -52,6 +52,7 @@ describe('TransactionFiltersComponent', () => {
       text: '',
       amountMin: '',
       amountMax: '',
+      amountDirection: 'expense',
     });
   });
 
@@ -91,6 +92,7 @@ describe('TransactionFiltersComponent', () => {
       text: '',
       amountMin: '',
       amountMax: '',
+      amountDirection: 'expense',
     });
   });
 
@@ -123,7 +125,39 @@ describe('TransactionFiltersComponent', () => {
       text: '',
       amountMin: '',
       amountMax: '',
+      amountDirection: 'expense',
     });
     expect(internals().hasActiveFilters()).toBe(false);
+  });
+
+  describe('amountDirection (TICKET-TXN-08)', () => {
+    it('toggling the direction alone does not activate hasActiveFilters', async () => {
+      await setup();
+      internals().filterForm.patchValue({ amountDirection: 'income' });
+      await fixture.whenStable();
+
+      expect(internals().hasActiveFilters()).toBe(false);
+    });
+
+    it('a direction change together with a Min/Max value activates hasActiveFilters', async () => {
+      await setup();
+      internals().filterForm.patchValue({ amountDirection: 'income', amountMin: '10' });
+      await fixture.whenStable();
+
+      expect(internals().hasActiveFilters()).toBe(true);
+    });
+
+    it('clearFilters resets amountDirection back to expense', async () => {
+      await setup();
+      internals().filterForm.patchValue({ amountDirection: 'income', amountMin: '10' });
+      await fixture.whenStable();
+
+      internals().clearFilters();
+      await fixture.whenStable();
+
+      expect((internals().filterForm.value as { amountDirection: string }).amountDirection).toBe(
+        'expense',
+      );
+    });
   });
 });

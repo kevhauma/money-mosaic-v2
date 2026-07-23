@@ -32,14 +32,14 @@ Adds an Expense/Income segmented switch next to the filter bar's Min/Max amount 
 
 ## Acceptance criteria
 
-- [ ] Segmented Expense/Income switch renders next to the Min/Max amount fields, defaults to "Expenses", and is keyboard-operable (matches existing `mm-button`/segmented-control a11y patterns already in the codebase).
-- [ ] Min/Max amount inputs reject negative values at the input level (`min="0"`) and `matchesTransactionFilters` normalizes with `Math.abs()` regardless.
-- [ ] `TransactionFilters.amountDirection: 'expense' | 'income'` added; `matchesTransactionFilters` correctly matches expense-direction magnitudes against negative transactions and income-direction magnitudes against non-negative transactions.
-- [ ] A magnitude-only Min/Max with the "Expenses" switch active correctly finds transactions equivalent to today's manually-signed `-max` / `-min` inputs (regression check against the old behaviour).
-- [ ] Toggling the switch alone (no Min/Max entered) does not mark the filter bar's "Clear" button as enabled; entering a Min or Max value does.
-- [ ] `clearFilters()` resets `amountDirection` to `'expense'`.
-- [ ] Unit tests cover: `matchesTransactionFilters` for expense-direction (in-range, below-min, above-max, boundary-equal) and income-direction (same four cases), empty-min/max with a direction set (no filtering effect), and the `hasActiveFilters` interaction between `amountDirection` and empty vs. non-empty min/max.
-- [ ] Verified via the fallow skill and coding-conventions skill, plus a live browser check (ask the user first per this repo's verification rule; continue without it if declined).
+- [x] Segmented Expense/Income switch renders next to the Min/Max amount fields, defaults to "Expenses", and is keyboard-operable (matches existing `mm-button`/segmented-control a11y patterns already in the codebase).
+- [x] Min/Max amount inputs reject negative values at the input level (`min="0"`) and `matchesTransactionFilters` normalizes with `Math.abs()` regardless.
+- [x] `TransactionFilters.amountDirection: 'expense' | 'income'` added; `matchesTransactionFilters` correctly matches expense-direction magnitudes against negative transactions and income-direction magnitudes against non-negative transactions.
+- [x] A magnitude-only Min/Max with the "Expenses" switch active correctly finds transactions equivalent to today's manually-signed `-max` / `-min` inputs (regression check against the old behaviour).
+- [x] Toggling the switch alone (no Min/Max entered) does not mark the filter bar's "Clear" button as enabled; entering a Min or Max value does.
+- [x] `clearFilters()` resets `amountDirection` to `'expense'`.
+- [x] Unit tests cover: `matchesTransactionFilters` for expense-direction (in-range, below-min, above-max, boundary-equal) and income-direction (same four cases), empty-min/max with a direction set (no filtering effect), and the `hasActiveFilters` interaction between `amountDirection` and empty vs. non-empty min/max.
+- [x] Verified via the fallow skill and coding-conventions skill, plus a live browser check (ask the user first per this repo's verification rule; continue without it if declined).
 
 ## Notes
 

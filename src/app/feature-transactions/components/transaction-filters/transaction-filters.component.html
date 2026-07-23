@@ -28,12 +28,49 @@
       </mm-select>
     </mm-fieldset>
 
+    <mm-fieldset legend="Amount type">
+      <div class="join" role="group" aria-label="Amount direction">
+        <button
+          type="button"
+          class="btn btn-sm join-item"
+          [class.btn-primary]="amountDirection() === 'expense'"
+          [class.btn-outline]="amountDirection() !== 'expense'"
+          (click)="setAmountDirection('expense')"
+        >
+          Expenses
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm join-item"
+          [class.btn-primary]="amountDirection() === 'income'"
+          [class.btn-outline]="amountDirection() !== 'income'"
+          (click)="setAmountDirection('income')"
+        >
+          Income
+        </button>
+      </div>
+    </mm-fieldset>
+
     <mm-fieldset legend="Min amount">
-      <mm-input type="number" step="0.01" formControlName="amountMin" size="sm" class="w-full" />
+      <mm-input
+        type="number"
+        step="0.01"
+        min="0"
+        formControlName="amountMin"
+        size="sm"
+        class="w-full"
+      />
     </mm-fieldset>
 
     <mm-fieldset legend="Max amount">
-      <mm-input type="number" step="0.01" formControlName="amountMax" size="sm" class="w-full" />
+      <mm-input
+        type="number"
+        step="0.01"
+        min="0"
+        formControlName="amountMax"
+        size="sm"
+        class="w-full"
+      />
     </mm-fieldset>
 
     <mm-fieldset legend="Search" class="col-span-2 sm:col-span-3 lg:col-span-5">

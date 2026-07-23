@@ -48,13 +48,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Rules',
   },
   {
-    versionFolder: 'Experience',
-    ticketId: 'TICKET-TXN-08',
-    title:
-      'Filter transactions by amount without typing negative numbers — pick Expenses or Income instead',
-    area: 'Transactions',
-  },
-  {
     versionFolder: 'Settings',
     ticketId: 'TICKET-SET-05',
     title: 'Foundation for app settings (accent color, currency, locale, privacy mode)',

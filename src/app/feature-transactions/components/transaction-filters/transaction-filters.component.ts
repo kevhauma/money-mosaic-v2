@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -26,7 +27,6 @@ import {
 import {
   combinedFiltersSignal,
   debouncedTextSignal,
-  hasActiveFiltersSignal,
   structuralFiltersSignal,
 } from '@/shared/utils';
 import type { TransactionFilters } from '../../transaction-filters';
@@ -47,6 +47,7 @@ function structuralFiltersOf(value: Partial<TransactionFilters>): StructuralFilt
     categoryId: value.categoryId ?? '',
     amountMin: value.amountMin ?? '',
     amountMax: value.amountMax ?? '',
+    amountDirection: value.amountDirection ?? 'expense',
   };
 }
 
@@ -90,6 +91,7 @@ export class TransactionFiltersComponent {
     text: [''],
     amountMin: [''],
     amountMax: [''],
+    amountDirection: this.formBuilder.nonNullable.control<'expense' | 'income'>('expense'),
   });
 
   constructor() {
@@ -139,13 +141,28 @@ export class TransactionFiltersComponent {
     this.debouncedText,
   );
 
-  protected readonly hasActiveFilters = hasActiveFiltersSignal(
-    this.structuralFilters,
-    this.debouncedText,
-  );
+  /**
+   * Component-local override of the shared `hasActiveFiltersSignal` scan: `amountDirection` is
+   * always populated ('expense' by default), so the generic "any field non-empty" check would
+   * otherwise treat it as a permanently active filter. It only counts as active alongside a
+   * non-empty `amountMin`/`amountMax` (TICKET-TXN-08).
+   */
+  protected readonly hasActiveFilters = computed(() => {
+    const structural = this.structuralFilters();
+    const structuralActive = Object.entries(structural).some(
+      ([key, value]) => key !== 'amountDirection' && value !== '',
+    );
+    return this.debouncedText() !== '' || structuralActive;
+  });
+
+  protected readonly amountDirection = computed(() => this.structuralFilters().amountDirection);
 
   protected onDateRangeChange(range: DateRangeValue): void {
     this.filterForm.patchValue({ dateFrom: range.from, dateTo: range.to });
+  }
+
+  protected setAmountDirection(direction: 'expense' | 'income'): void {
+    this.filterForm.patchValue({ amountDirection: direction });
   }
 
   /** Called by the parent (e.g. the "still need a category" banner) to jump straight to the uncategorised filter. */
@@ -162,6 +179,7 @@ export class TransactionFiltersComponent {
       text: '',
       amountMin: '',
       amountMax: '',
+      amountDirection: 'expense',
     });
   }
 }

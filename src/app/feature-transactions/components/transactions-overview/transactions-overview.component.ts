@@ -55,6 +55,7 @@ const EMPTY_FILTERS: TransactionFilters = {
   text: '',
   amountMin: '',
   amountMax: '',
+  amountDirection: 'expense',
 };
 
 /** Joined-once-per-data-change view of a table row, so the template stops calling `.find()` methods per row (CR-2.3). */

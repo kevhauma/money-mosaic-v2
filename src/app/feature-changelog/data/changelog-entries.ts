@@ -177,4 +177,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     title: "Added a Roadmap tab to the Changelog page, showing what's planned next",
     area: 'Changelog',
   },
+  {
+    date: '2026-07-23',
+    versionFolder: 'v1.5_redesign',
+    ticketIds: ['TICKET-TXN-08'],
+    title:
+      'Added an Expense/Income switch to the transaction amount filter, so you can type a plain positive amount instead of remembering to enter it as negative',
+    area: 'Transactions',
+  },
 ];

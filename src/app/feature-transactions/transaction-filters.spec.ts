@@ -9,6 +9,7 @@ const noFilters: TransactionFilters = {
   text: '',
   amountMin: '',
   amountMax: '',
+  amountDirection: 'expense',
 };
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -150,23 +151,100 @@ describe('matchesTransactionFilters', () => {
     });
   });
 
-  describe('amount axis', () => {
-    it('rejects a transaction below amountMin', () => {
-      const filters = { ...noFilters, amountMin: '0' };
-      expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
-        false,
-      );
+  describe('amount axis (TICKET-TXN-08)', () => {
+    describe('expense direction (default)', () => {
+      it('matches a transaction with magnitude inside the range', () => {
+        const filters = { ...noFilters, amountMin: '10', amountMax: '50' };
+        expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
+          true,
+        );
+      });
+
+      it('rejects a transaction below amountMin', () => {
+        const filters = { ...noFilters, amountMin: '50' };
+        expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
+          false,
+        );
+      });
+
+      it('rejects a transaction above amountMax', () => {
+        const filters = { ...noFilters, amountMax: '10' };
+        expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
+          false,
+        );
+      });
+
+      it('matches on the boundary (magnitude equal to min and max)', () => {
+        const filters = { ...noFilters, amountMin: '42', amountMax: '42' };
+        expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
+          true,
+        );
+      });
+
+      it('rejects an income transaction even when its magnitude is in range', () => {
+        const filters = { ...noFilters, amountMin: '10', amountMax: '50' };
+        expect(matchesTransactionFilters(transaction({ amount: 42 }), filters, new Set())).toBe(
+          false,
+        );
+      });
+
+      it('is equivalent to the pre-TICKET-TXN-08 manually-signed range (regression)', () => {
+        // Old behaviour: raw signed Min=-50/Max=-10 matched amounts in [-50,-10].
+        // New behaviour: Expenses switch + magnitude Min=10/Max=50 matches the same set.
+        const filters = { ...noFilters, amountMin: '10', amountMax: '50' };
+        expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
+          true,
+        );
+        expect(matchesTransactionFilters(transaction({ amount: -5 }), filters, new Set())).toBe(
+          false,
+        );
+        expect(matchesTransactionFilters(transaction({ amount: -60 }), filters, new Set())).toBe(
+          false,
+        );
+      });
     });
 
-    it('rejects a transaction above amountMax', () => {
-      const filters = { ...noFilters, amountMax: '-50' };
-      expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
-        false,
-      );
+    describe('income direction', () => {
+      const income = { ...noFilters, amountDirection: 'income' as const };
+
+      it('matches a transaction with magnitude inside the range', () => {
+        const filters = { ...income, amountMin: '10', amountMax: '50' };
+        expect(matchesTransactionFilters(transaction({ amount: 42 }), filters, new Set())).toBe(
+          true,
+        );
+      });
+
+      it('rejects a transaction below amountMin', () => {
+        const filters = { ...income, amountMin: '50' };
+        expect(matchesTransactionFilters(transaction({ amount: 42 }), filters, new Set())).toBe(
+          false,
+        );
+      });
+
+      it('rejects a transaction above amountMax', () => {
+        const filters = { ...income, amountMax: '10' };
+        expect(matchesTransactionFilters(transaction({ amount: 42 }), filters, new Set())).toBe(
+          false,
+        );
+      });
+
+      it('matches on the boundary (magnitude equal to min and max)', () => {
+        const filters = { ...income, amountMin: '42', amountMax: '42' };
+        expect(matchesTransactionFilters(transaction({ amount: 42 }), filters, new Set())).toBe(
+          true,
+        );
+      });
+
+      it('rejects an expense transaction even when its magnitude is in range', () => {
+        const filters = { ...income, amountMin: '10', amountMax: '50' };
+        expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
+          false,
+        );
+      });
     });
 
-    it('matches a transaction inside the amount range', () => {
-      const filters = { ...noFilters, amountMin: '-100', amountMax: '0' };
+    it('has no filtering effect when amountMin/amountMax are empty, regardless of amountDirection', () => {
+      const filters = { ...noFilters, amountDirection: 'income' as const };
       expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
         true,
       );
@@ -180,8 +258,9 @@ describe('matchesTransactionFilters', () => {
       dateTo: '2026-06-30',
       categoryId: '',
       text: 'grocery',
-      amountMin: '-100',
-      amountMax: '0',
+      amountMin: '0',
+      amountMax: '100',
+      amountDirection: 'expense',
     };
     expect(
       matchesTransactionFilters(

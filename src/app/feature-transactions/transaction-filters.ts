@@ -10,6 +10,7 @@ export type TransactionFilters = {
   text: string;
   amountMin: string;
   amountMax: string;
+  amountDirection: 'expense' | 'income';
 };
 
 /**
@@ -50,11 +51,17 @@ export function matchesTransactionFilters(
     if (!haystack.includes(filters.text)) return false;
   }
 
-  const amountMin = filters.amountMin !== '' ? Number(filters.amountMin) : null;
-  if (amountMin !== null && transaction.amount < amountMin) return false;
+  const amountMin = filters.amountMin !== '' ? Math.abs(Number(filters.amountMin)) : null;
+  const amountMax = filters.amountMax !== '' ? Math.abs(Number(filters.amountMax)) : null;
 
-  const amountMax = filters.amountMax !== '' ? Number(filters.amountMax) : null;
-  if (amountMax !== null && transaction.amount > amountMax) return false;
+  if (amountMin !== null || amountMax !== null) {
+    const isExpense = filters.amountDirection !== 'income';
+    if (isExpense ? transaction.amount >= 0 : transaction.amount < 0) return false;
+
+    const magnitude = Math.abs(transaction.amount);
+    if (amountMin !== null && magnitude < amountMin) return false;
+    if (amountMax !== null && magnitude > amountMax) return false;
+  }
 
   return true;
 }

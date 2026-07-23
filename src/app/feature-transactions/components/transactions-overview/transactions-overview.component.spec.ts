@@ -39,6 +39,7 @@ const noFilters: TransactionFilters = {
   text: '',
   amountMin: '',
   amountMax: '',
+  amountDirection: 'expense',
 };
 
 const transaction = (id: number): Transaction => ({
