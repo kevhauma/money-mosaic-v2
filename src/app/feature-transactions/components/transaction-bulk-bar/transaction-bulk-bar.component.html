@@ -28,6 +28,12 @@
   </mm-flex>
 
   <mm-flex align="center" gap="2" class="ms-auto">
+    @if (canLink()) {
+      <mm-button color="primary" size="sm" (click)="linkRequested.emit()">
+        <ng-icon name="tablerLink" size="16" aria-hidden="true" />
+        Link as transfer
+      </mm-button>
+    }
     <mm-button variant="ghost" size="sm" (click)="selectAllRequested.emit()">
       Select all {{ filteredCount() }}
     </mm-button>

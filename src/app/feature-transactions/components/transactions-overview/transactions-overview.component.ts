@@ -8,12 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  tablerArrowsExchange,
-  tablerLink,
-  tablerPencil,
-  tablerUnlink,
-} from '@ng-icons/tabler-icons';
+import { tablerArrowsExchange, tablerPencil, tablerUnlink } from '@ng-icons/tabler-icons';
 import { AccountsStore, CategoriesStore, TransactionsStore, TransfersStore } from '@/core/state';
 import type { Category, Rule, Transaction, Transfer } from '@/core/data-access';
 import { isLikelyTransfer, savingsAccountIbans } from '@/core/transfers';
@@ -101,7 +96,6 @@ type TransactionRow = {
   viewProviders: [
     provideIcons({
       tablerPencil,
-      tablerLink,
       tablerUnlink,
       tablerArrowsExchange,
     }),

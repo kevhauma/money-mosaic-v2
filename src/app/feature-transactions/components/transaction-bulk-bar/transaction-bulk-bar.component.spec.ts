@@ -46,6 +46,25 @@ describe('TransactionBulkBarComponent', () => {
     expect(emitted).toEqual([]);
   });
 
+  it('shows and emits the link-as-transfer action only when canLink is true', async () => {
+    let linkCount = 0;
+    fixture.componentInstance.linkRequested.subscribe(() => linkCount++);
+
+    const findLinkButton = () =>
+      [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find((b) =>
+        b.textContent?.includes('Link as transfer'),
+      );
+
+    expect(findLinkButton()).toBeUndefined();
+
+    fixture.componentRef.setInput('canLink', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    findLinkButton()?.click();
+    expect(linkCount).toBe(1);
+  });
+
   it('emits selectAllRequested and clearRequested when their buttons are clicked', () => {
     let selectAllCount = 0;
     let clearCount = 0;

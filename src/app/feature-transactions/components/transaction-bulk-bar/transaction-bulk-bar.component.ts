@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerTag, tablerTrash, tablerX } from '@ng-icons/tabler-icons';
+import { tablerLink, tablerTag, tablerTrash, tablerX } from '@ng-icons/tabler-icons';
 import { CategoriesStore } from '@/core/state';
 import {
   ButtonComponent,
@@ -26,7 +26,7 @@ import {
   ],
   templateUrl: './transaction-bulk-bar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerTag, tablerTrash, tablerX })],
+  viewProviders: [provideIcons({ tablerLink, tablerTag, tablerTrash, tablerX })],
 })
 export class TransactionBulkBarComponent {
   protected readonly categoriesStore = inject(CategoriesStore);
@@ -34,8 +34,11 @@ export class TransactionBulkBarComponent {
   /** Rows currently selected, and the size of the filtered set "Select all" would grow the selection to. */
   readonly count = input.required<number>();
   readonly filteredCount = input.required<number>();
+  /** True when exactly two rows are selected, the only shape that can be linked as a transfer. */
+  readonly canLink = input(false);
 
   readonly applyCategory = output<number>();
+  readonly linkRequested = output<void>();
   readonly selectAllRequested = output<void>();
   readonly clearRequested = output<void>();
   readonly deleteRequested = output<void>();

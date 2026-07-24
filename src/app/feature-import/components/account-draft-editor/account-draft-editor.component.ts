@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { ACCOUNT_TYPE_OPTIONS } from '@/feature-accounts';
-import { BadgeComponent, ButtonComponent, FlexComponent } from '@/shared/ui';
+import { ButtonComponent, FlexComponent } from '@/shared/ui';
 import type { PendingAccountDraft } from '../import-select-step/import-select-step.component';
 
 /**
@@ -10,7 +10,7 @@ import type { PendingAccountDraft } from '../import-select-step/import-select-st
  */
 @Component({
   selector: 'app-account-draft-editor',
-  imports: [ButtonComponent, BadgeComponent, FlexComponent],
+  imports: [ButtonComponent, FlexComponent],
   templateUrl: './account-draft-editor.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

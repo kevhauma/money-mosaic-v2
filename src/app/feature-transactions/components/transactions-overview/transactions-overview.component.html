@@ -1,13 +1,4 @@
-<mm-page-header title="Transactions" subtitle="Search, filter, and edit every transaction.">
-  <div actions>
-    @if (canLinkSelection()) {
-      <mm-button color="primary" size="sm" (click)="linkSelection()">
-        <ng-icon name="tablerLink" size="16" aria-hidden="true" />
-        Link as transfer
-      </mm-button>
-    }
-  </div>
-</mm-page-header>
+<mm-page-header title="Transactions" subtitle="Search, filter, and edit every transaction." />
 
 @if (transactionsStore.uncategorisedCount(); as count) {
   <mm-alert status="warning" class="mb-4 flex items-center justify-between py-2 text-sm">
@@ -31,7 +22,9 @@
   <app-transaction-bulk-bar
     [count]="selection.count()"
     [filteredCount]="filteredTransactions().length"
+    [canLink]="canLinkSelection()"
     (applyCategory)="applyBulkCategory($event)"
+    (linkRequested)="linkSelection()"
     (selectAllRequested)="selectAllFiltered()"
     (clearRequested)="selection.clear()"
     (deleteRequested)="deleteSelection()"
