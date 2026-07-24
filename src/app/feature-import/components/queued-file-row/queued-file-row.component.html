@@ -4,7 +4,9 @@
     >{{ (row().file.size / 1024).toFixed(1) }} KB</mm-text
   >
 </div>
-
+@if (row().autoDetected) {
+  <mm-badge color="success" size="sm">Auto-detected</mm-badge>
+}
 @switch (mode()) {
   @case ('owner') {
     <app-account-draft-editor
@@ -47,9 +49,6 @@
   }
 }
 
-@if (row().autoDetected) {
-  <mm-badge color="success" size="sm">Auto-detected</mm-badge>
-}
 <mm-button
   variant="ghost"
   size="sm"

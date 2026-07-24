@@ -23,6 +23,13 @@ import type {
   ],
   templateUrl: './queued-file-row.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [
+    `
+      :host {
+        display: contents;
+      }
+    `,
+  ],
 })
 export class QueuedFileRowComponent {
   readonly row = input.required<QueuedImportFile>();
