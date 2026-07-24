@@ -6,42 +6,40 @@ import {
   FlexComponent,
   LabelComponent,
   SelectComponent,
-  TypographyComponent,
 } from '@/shared/ui';
 import type { ColumnFieldDef } from '../import-map-step/import-map-step.component';
+import { ColumnMapSampleCaptionComponent } from '../column-map-sample-caption/column-map-sample-caption.component';
 
 /**
- * The expanded, editable state of one guided-mapper row (TICKET-IMP-07) — split out of
- * `ColumnMapFieldComponent` purely to keep each state's own template small/flat (fallow flagged
- * the combined active+collapsed template as critically complex). Owns no state; binds straight to
- * the parent's `FormControl` instance via `[formControl]`.
+ * The single-select step editor for Date/Description/Own IBAN/Balance (TICKET-IMP-09) — the
+ * horizontal stepper's counterpart to TICKET-IMP-07's `ColumnMapActiveFieldComponent`, minus the
+ * `isLast`/"Done" handling: the guided flow's terminus is now the Summary step, so every field
+ * step always has a real next step to advance to.
  */
 @Component({
-  selector: 'app-column-map-active-field',
+  selector: 'app-column-map-simple-field',
   imports: [
     ReactiveFormsModule,
     ButtonComponent,
+    ColumnMapSampleCaptionComponent,
     FieldsetComponent,
     FlexComponent,
     LabelComponent,
     SelectComponent,
-    TypographyComponent,
   ],
-  templateUrl: './column-map-active-field.component.html',
+  templateUrl: './column-map-simple-field.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ColumnMapActiveFieldComponent {
+export class ColumnMapSimpleFieldComponent {
   readonly field = input.required<ColumnFieldDef>();
   readonly control = input.required<FormControl<string>>();
   readonly headers = input.required<string[]>();
-  readonly isLast = input(false);
   readonly resolvedSample = input<string>();
   readonly duplicateWarning = input<string>();
 
   readonly advanced = output<void>();
 
   protected advanceLabel(): string {
-    if (this.isLast()) return 'Done';
     if (this.field().required) return 'Next';
     return this.control().value ? 'Next' : 'Skip';
   }

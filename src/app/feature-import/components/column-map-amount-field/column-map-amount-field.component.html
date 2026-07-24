@@ -1,0 +1,59 @@
+<div class="rounded-box border border-primary/50 bg-base-200/40 p-3">
+  <mm-fieldset legend="Amount">
+    <div class="join mb-2" role="group" aria-label="Amount mode">
+      <button
+        type="button"
+        class="btn btn-sm join-item"
+        [class.btn-primary]="mode() === 'single'"
+        [class.btn-outline]="mode() !== 'single'"
+        (click)="modeChange.emit('single')"
+      >
+        Single column
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm join-item"
+        [class.btn-primary]="mode() === 'split'"
+        [class.btn-outline]="mode() !== 'split'"
+        (click)="modeChange.emit('split')"
+      >
+        Separate debit &#38; credit
+      </button>
+    </div>
+
+    @if (mode() === 'single') {
+      <mm-select [formControl]="amountControl()" size="sm" class="w-full">
+        <option value="">— none —</option>
+        @for (header of headers(); track header) {
+          <option [value]="header">{{ header }}</option>
+        }
+      </mm-select>
+      <app-column-map-sample-caption [sample]="amountSample()" [warning]="amountWarning()" />
+    } @else {
+      <div class="flex flex-col gap-3">
+        <mm-fieldset legend="Debit">
+          <mm-select [formControl]="debitControl()" size="sm" class="w-full">
+            <option value="">— none —</option>
+            @for (header of headers(); track header) {
+              <option [value]="header">{{ header }}</option>
+            }
+          </mm-select>
+          <app-column-map-sample-caption [sample]="debitSample()" [warning]="debitWarning()" />
+        </mm-fieldset>
+        <mm-fieldset legend="Credit">
+          <mm-select [formControl]="creditControl()" size="sm" class="w-full">
+            <option value="">— none —</option>
+            @for (header of headers(); track header) {
+              <option [value]="header">{{ header }}</option>
+            }
+          </mm-select>
+          <app-column-map-sample-caption [sample]="creditSample()" [warning]="creditWarning()" />
+        </mm-fieldset>
+      </div>
+    }
+  </mm-fieldset>
+
+  <mm-flex justify="end" class="mt-2">
+    <mm-button size="xs" variant="ghost" (click)="advanced.emit()">Next</mm-button>
+  </mm-flex>
+</div>

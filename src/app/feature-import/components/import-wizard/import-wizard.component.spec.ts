@@ -10,7 +10,6 @@ import { ImportBatchesStore } from '../../import-batches.store';
 import { ImportWizardComponent } from './import-wizard.component';
 import { ImportSelectStepComponent } from '../import-select-step/import-select-step.component';
 import { ImportMapStepComponent } from '../import-map-step/import-map-step.component';
-import { ImportPreviewStepComponent } from '../import-preview-step/import-preview-step.component';
 import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
 
 // Light stand-ins for the step children so the wizard's own control-flow is what's under test —
@@ -25,10 +24,14 @@ class MapStubComponent {
   readonly file = input.required<File>();
   readonly accountId = input.required<number>();
   readonly result = model<unknown>(null);
-}
-@Component({ selector: 'app-import-preview-step', template: '' })
-class PreviewStubComponent {
-  readonly rows = input.required<ParsedRowResult[]>();
+  readonly parsedRows = input<unknown[]>([]);
+  readonly parseError = input<string | null>(null);
+  readonly headerMismatchMessage = input<string | null>(null);
+  readonly parsing = input(false);
+  readonly parseWarnings = input<string[]>([]);
+  readonly canOfferApplyToRemaining = input(false);
+  readonly remainingFilesCount = input(0);
+  readonly applyToRemaining = model(false);
 }
 @Component({ selector: 'app-import-summary-step', template: '' })
 class SummaryStubComponent {
@@ -94,20 +97,10 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     })
       .overrideComponent(ImportWizardComponent, {
         remove: {
-          imports: [
-            ImportSelectStepComponent,
-            ImportMapStepComponent,
-            ImportPreviewStepComponent,
-            ImportSummaryStepComponent,
-          ],
+          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportSummaryStepComponent],
         },
         add: {
-          imports: [
-            SelectStubComponent,
-            MapStubComponent,
-            PreviewStubComponent,
-            SummaryStubComponent,
-          ],
+          imports: [SelectStubComponent, MapStubComponent, SummaryStubComponent],
         },
       })
       .compileComponents();
@@ -164,7 +157,9 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     expect(read<ParsedRowResult[]>('parsedRows')).toEqual([]);
     expect(read('parseError')).toBeNull();
     expect(read<string[]>('parseWarnings')).toEqual([]);
-    expect(fixture.nativeElement.textContent).toContain('Complete the required mapping fields');
+    // The "Complete the required mapping fields…" placeholder itself now renders inside
+    // ImportMapStepComponent (TICKET-IMP-09), stubbed empty here — the reset signals above are
+    // this spec's coverage; see import-map-step.component.spec.ts for the placeholder's rendering.
   });
 
   it('parsing() is true from the moment the mapping turns valid until fresh rows land', async () => {
@@ -263,9 +258,7 @@ describe('ImportWizardComponent: combined map + preview step', () => {
 
     expect(primaryButton().disabled).toBe(true);
     expect(read<ParsedRowResult[]>('parsedRows')).toEqual([]);
-    expect(fixture.nativeElement.textContent).toContain(
-      'Expected column "Bedrag" not found in a.csv.',
-    );
+    expect(read('headerMismatchMessage')).toBe('Expected column "Bedrag" not found in a.csv.');
   });
 
   it('clears the mismatch and re-enables confirm once the mapping is corrected', async () => {
@@ -288,7 +281,7 @@ describe('ImportWizardComponent: combined map + preview step', () => {
 
     expect(primaryButton().disabled).toBe(false);
     expect(read<ParsedRowResult[]>('parsedRows')).toHaveLength(1);
-    expect(fixture.nativeElement.textContent).not.toContain('not found in');
+    expect(read('headerMismatchMessage')).toBeNull();
   });
 
   it('commits each file in a 2-file batch under its own account and reaches Summary', async () => {
@@ -450,10 +443,11 @@ describe('ImportWizardComponent: combined map + preview step', () => {
       fixture.detectChanges();
       await settleParse();
 
+      // The "apply to remaining files" checkbox itself now renders inside ImportMapStepComponent's
+      // Summary step (TICKET-IMP-09) — stubbed empty here, so its DOM text isn't observable from this
+      // spec; see column-map-summary-step.component.spec.ts for that coverage. This spec only owns
+      // the gating signal fed to it as an input.
       expect(read('canOfferApplyToRemaining')).toBe(false);
-      expect(fixture.nativeElement.textContent).not.toContain(
-        'Apply this mapping to the remaining',
-      );
     });
   });
 });
@@ -517,20 +511,10 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
     })
       .overrideComponent(ImportWizardComponent, {
         remove: {
-          imports: [
-            ImportSelectStepComponent,
-            ImportMapStepComponent,
-            ImportPreviewStepComponent,
-            ImportSummaryStepComponent,
-          ],
+          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportSummaryStepComponent],
         },
         add: {
-          imports: [
-            SelectStubComponent,
-            MapStubComponent,
-            PreviewStubComponent,
-            SummaryStubComponent,
-          ],
+          imports: [SelectStubComponent, MapStubComponent, SummaryStubComponent],
         },
       })
       .compileComponents();

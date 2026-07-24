@@ -18,104 +18,218 @@
     >
   }
 
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-    <form [formGroup]="form" class="flex flex-col gap-3">
-      <mm-fieldset legend="Mapping profile name">
-        <mm-input type="text" formControlName="name" size="sm" class="w-full" />
-      </mm-fieldset>
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    <mm-fieldset legend="Mapping profile name">
+      <mm-input type="text" formControlName="name" size="sm" class="w-full" />
+    </mm-fieldset>
 
-      <div class="grid grid-cols-2 gap-3">
-        <mm-fieldset legend="Delimiter">
-          <mm-input
-            type="text"
-            formControlName="delimiter"
-            size="sm"
-            class="w-full"
-            [maxlength]="1"
-          />
-        </mm-fieldset>
-        <mm-fieldset legend="Decimal separator">
-          <mm-input
-            type="text"
-            formControlName="decimalSeparator"
-            size="sm"
-            class="w-full"
-            [maxlength]="1"
-          />
-        </mm-fieldset>
-        <mm-fieldset legend="Date format">
-          <mm-select formControlName="dateFormat" size="sm" class="w-full">
-            @for (format of dateFormats; track format) {
-              <option [value]="format">{{ format }}</option>
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <mm-fieldset legend="Delimiter">
+        <mm-input
+          type="text"
+          formControlName="delimiter"
+          size="sm"
+          class="w-full"
+          [maxlength]="1"
+        />
+      </mm-fieldset>
+      <mm-fieldset legend="Decimal separator">
+        <mm-input
+          type="text"
+          formControlName="decimalSeparator"
+          size="sm"
+          class="w-full"
+          [maxlength]="1"
+        />
+      </mm-fieldset>
+      <mm-fieldset legend="Date format">
+        <mm-select formControlName="dateFormat" size="sm" class="w-full">
+          @for (format of dateFormats; track format) {
+            <option [value]="format">{{ format }}</option>
+          }
+        </mm-select>
+      </mm-fieldset>
+      <mm-fieldset legend="Encoding">
+        <mm-select formControlName="encoding" size="sm" class="w-full">
+          @for (encoding of encodings; track encoding) {
+            <option [value]="encoding">{{ encoding }}</option>
+          }
+        </mm-select>
+      </mm-fieldset>
+      <mm-fieldset legend="Header rows">
+        <mm-input type="number" formControlName="headerRows" min="1" size="sm" class="w-full" />
+      </mm-fieldset>
+      <mm-fieldset legend="Sign convention">
+        <mm-select formControlName="signConvention" size="sm" class="w-full">
+          @for (option of signConventionOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </mm-select>
+      </mm-fieldset>
+    </div>
+
+    @if (canOfferApplyToRemaining()) {
+      <mm-label as="label" class="cursor-pointer justify-start gap-2">
+        <input
+          type="checkbox"
+          class="checkbox checkbox-sm"
+          [checked]="applyToRemaining()"
+          (change)="onApplyToRemainingChange($event)"
+        />
+        <mm-text variant="caption" color="base-content">
+          Apply this mapping to the remaining {{ remainingFilesCount() }} file{{
+            remainingFilesCount() === 1 ? '' : 's'
+          }}
+        </mm-text>
+      </mm-label>
+    }
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div>
+        <mm-text as="p" weight="medium" class="mb-2 text-xs text-base-content/60"
+          >Raw file preview</mm-text
+        >
+        <mm-table density="compact">
+          <tbody>
+            @for (row of previewRows(); track $index) {
+              <tr>
+                @for (cell of row; track $index) {
+                  <td class="whitespace-nowrap">{{ cell }}</td>
+                }
+              </tr>
             }
-          </mm-select>
-        </mm-fieldset>
-        <mm-fieldset legend="Encoding">
-          <mm-select formControlName="encoding" size="sm" class="w-full">
-            @for (encoding of encodings; track encoding) {
-              <option [value]="encoding">{{ encoding }}</option>
-            }
-          </mm-select>
-        </mm-fieldset>
-        <mm-fieldset legend="Header rows">
-          <mm-input type="number" formControlName="headerRows" min="1" size="sm" class="w-full" />
-        </mm-fieldset>
-        <mm-fieldset legend="Sign convention">
-          <mm-select formControlName="signConvention" size="sm" class="w-full">
-            @for (option of signConventionOptions; track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
-            }
-          </mm-select>
-        </mm-fieldset>
+          </tbody>
+        </mm-table>
       </div>
 
-      <mm-divider class="my-1 text-xs">Columns</mm-divider>
-
-      @if (invalidFieldLabels().length > 0) {
-        <mm-alert status="warning" variant="soft" class="text-sm">
-          Map a column for: {{ invalidFieldLabels().join(', ') }}
-        </mm-alert>
-      }
-
-      <div class="flex flex-col gap-2">
-        @for (field of columnFields; track field.key) {
-          <app-column-map-field
-            [field]="field"
-            [control]="controlFor(field.key)"
-            [headers]="headers()"
-            [active]="activeFieldKey() === field.key"
-            [isLast]="isLastColumnField(field.key)"
-            [resolvedSample]="resolvedSamples()[field.key]"
-            [duplicateWarning]="duplicateWarnings()[field.key]"
-            (opened)="openField(field.key)"
-            (advanced)="advanceFrom(field.key)"
-          />
+      <div>
+        <mm-flex align="center" gap="2" class="mb-2">
+          <mm-text as="p" weight="medium" class="text-xs text-base-content/60">Row preview</mm-text>
+          @if (parsedRows().length > 0) {
+            <mm-badge color="success" size="sm">{{ validRowCount() }} valid</mm-badge>
+            @if (invalidRowCount() > 0) {
+              <mm-badge color="error" size="sm">{{ invalidRowCount() }} invalid</mm-badge>
+            }
+          }
+        </mm-flex>
+        @if (!result()) {
+          <mm-text as="p" class="text-sm text-base-content/60">
+            Complete the required mapping fields to see a preview.
+          </mm-text>
+        } @else if (parseError(); as error) {
+          <mm-text as="p" color="error" class="text-sm"
+            >Couldn't parse this file: {{ error }}</mm-text
+          >
+        } @else if (headerMismatchMessage(); as message) {
+          <mm-text as="p" color="error" class="text-sm">{{ message }}</mm-text>
+          <mm-text as="p" class="mt-1 text-sm text-base-content/60">
+            Remap this file below to continue.
+          </mm-text>
+        } @else if (parsing() && parsedRows().length === 0) {
+          <mm-flex justify="center" class="py-8">
+            <span class="loading loading-spinner loading-md"></span>
+          </mm-flex>
+        } @else {
+          @if (parseWarnings().length > 0) {
+            <mm-alert status="warning" variant="soft" class="mb-3 block text-sm">
+              <div>
+                @for (warning of parseWarnings(); track warning) {
+                  <p>{{ warning }}</p>
+                }
+              </div>
+            </mm-alert>
+          }
+          <app-import-preview-step [rows]="parsedRows()" />
         }
       </div>
-
-      <mm-label as="label" class="mt-2 cursor-pointer justify-start gap-2">
-        <input type="checkbox" formControlName="rememberForAccount" class="checkbox checkbox-sm" />
-        <mm-text variant="caption" color="base-content"
-          >Remember this mapping for this account next time</mm-text
-        >
-      </mm-label>
-    </form>
-
-    <div>
-      <mm-text as="p" weight="medium" class="mb-2 text-xs text-base-content/60"
-        >Raw file preview</mm-text
-      >
-      <mm-table density="compact">
-        <tbody>
-          @for (row of previewRows(); track $index) {
-            <tr>
-              @for (cell of row; track $index) {
-                <td class="whitespace-nowrap">{{ cell }}</td>
-              }
-            </tr>
-          }
-        </tbody>
-      </mm-table>
     </div>
-  </div>
+
+    <mm-divider class="my-1 text-xs">Columns</mm-divider>
+
+    @if (invalidFieldLabels().length > 0) {
+      <mm-alert status="warning" variant="soft" class="text-sm">
+        Map a column for: {{ invalidFieldLabels().join(', ') }}
+      </mm-alert>
+    }
+
+    <app-column-map-stepper [items]="stepperItems()" (stepClicked)="openStep($event)" />
+
+    @switch (activeStepId()) {
+      @case ('date') {
+        <app-column-map-simple-field
+          [field]="fieldDef('date')"
+          [control]="controlFor('date')"
+          [headers]="headers()"
+          [resolvedSample]="resolvedSamples().date"
+          [duplicateWarning]="duplicateWarnings().date"
+          (advanced)="advanceFrom('date')"
+        />
+      }
+      @case ('description') {
+        <app-column-map-simple-field
+          [field]="fieldDef('description')"
+          [control]="controlFor('description')"
+          [headers]="headers()"
+          [resolvedSample]="resolvedSamples().description"
+          [duplicateWarning]="duplicateWarnings().description"
+          (advanced)="advanceFrom('description')"
+        />
+      }
+      @case ('amount') {
+        <app-column-map-amount-field
+          [mode]="amountMode()"
+          [headers]="headers()"
+          [amountControl]="controlFor('amount')"
+          [debitControl]="controlFor('debit')"
+          [creditControl]="controlFor('credit')"
+          [amountSample]="resolvedSamples().amount"
+          [debitSample]="resolvedSamples().debit"
+          [creditSample]="resolvedSamples().credit"
+          [amountWarning]="duplicateWarnings().amount"
+          [debitWarning]="duplicateWarnings().debit"
+          [creditWarning]="duplicateWarnings().credit"
+          (modeChange)="setAmountMode($event)"
+          (advanced)="advanceFrom('amount')"
+        />
+      }
+      @case ('counterparty') {
+        <app-column-map-counterparty-field
+          [headers]="headers()"
+          [nameControl]="controlFor('counterpartyName')"
+          [ibanControl]="controlFor('counterpartyIban')"
+          [nameSample]="resolvedSamples().counterpartyName"
+          [ibanSample]="resolvedSamples().counterpartyIban"
+          [nameWarning]="duplicateWarnings().counterpartyName"
+          [ibanWarning]="duplicateWarnings().counterpartyIban"
+          (advanced)="advanceFrom('counterparty')"
+        />
+      }
+      @case ('ownIban') {
+        <app-column-map-simple-field
+          [field]="fieldDef('ownIban')"
+          [control]="controlFor('ownIban')"
+          [headers]="headers()"
+          [resolvedSample]="resolvedSamples().ownIban"
+          [duplicateWarning]="duplicateWarnings().ownIban"
+          (advanced)="advanceFrom('ownIban')"
+        />
+      }
+      @case ('balance') {
+        <app-column-map-simple-field
+          [field]="fieldDef('balance')"
+          [control]="controlFor('balance')"
+          [headers]="headers()"
+          [resolvedSample]="resolvedSamples().balance"
+          [duplicateWarning]="duplicateWarnings().balance"
+          (advanced)="advanceFrom('balance')"
+        />
+      }
+      @case ('summary') {
+        <app-column-map-summary-step
+          [rows]="summaryRows()"
+          [rememberControl]="form.controls.rememberForAccount"
+        />
+      }
+    }
+  </form>
 }

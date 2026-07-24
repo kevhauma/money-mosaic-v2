@@ -1,11 +1,3 @@
-<mm-text as="p" variant="caption" color="base-content" class="mb-3">
-  <mm-text weight="semibold">{{ validCount() }}</mm-text> of
-  <mm-text weight="semibold">{{ rows().length }}</mm-text> rows are valid.
-  @if (invalidCount() > 0) {
-    <mm-text color="error">{{ invalidCount() }} row(s) will be skipped.</mm-text>
-  }
-</mm-text>
-
 <mm-table density="compact" scroll="auto" class="max-h-96">
   <thead>
     <tr>
@@ -20,16 +12,16 @@
     @for (row of previewRows(); track $index) {
       <tr>
         @if (row.valid) {
-          <td><mm-badge color="success" size="sm">valid</mm-badge></td>
-          <td>{{ row.transaction.bookingDate }}</td>
-          <td [class.text-error]="row.transaction.amount < 0">
+          <td class="whitespace-nowrap"><mm-badge color="success" size="sm">valid</mm-badge></td>
+          <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
+          <td class="whitespace-nowrap" [class.text-error]="row.transaction.amount < 0">
             {{ row.transaction.amount | signedAmount }}
           </td>
-          <td>{{ row.transaction.rawDescription }}</td>
-          <td>{{ row.transaction.counterpartyName }}</td>
+          <td class="whitespace-nowrap">{{ row.transaction.rawDescription }}</td>
+          <td class="whitespace-nowrap">{{ row.transaction.counterpartyName }}</td>
         } @else {
-          <td><mm-badge color="error" size="sm">invalid</mm-badge></td>
-          <td colspan="4" class="text-error">{{ row.errors.join(', ') }}</td>
+          <td class="whitespace-nowrap"><mm-badge color="error" size="sm">invalid</mm-badge></td>
+          <td colspan="4" class="whitespace-nowrap text-error">{{ row.errors.join(', ') }}</td>
         }
       </tr>
     }

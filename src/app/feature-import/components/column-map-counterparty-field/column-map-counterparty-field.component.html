@@ -1,0 +1,26 @@
+<div class="rounded-box border border-primary/50 bg-base-200/40 p-3">
+  <div class="flex flex-col gap-3">
+    <mm-fieldset legend="Counterparty name">
+      <mm-select [formControl]="nameControl()" size="sm" class="w-full">
+        <option value="">— none —</option>
+        @for (header of headers(); track header) {
+          <option [value]="header">{{ header }}</option>
+        }
+      </mm-select>
+      <app-column-map-sample-caption [sample]="nameSample()" [warning]="nameWarning()" />
+    </mm-fieldset>
+    <mm-fieldset legend="Counterparty IBAN">
+      <mm-select [formControl]="ibanControl()" size="sm" class="w-full">
+        <option value="">— none —</option>
+        @for (header of headers(); track header) {
+          <option [value]="header">{{ header }}</option>
+        }
+      </mm-select>
+      <app-column-map-sample-caption [sample]="ibanSample()" [warning]="ibanWarning()" />
+    </mm-fieldset>
+  </div>
+
+  <mm-flex justify="end" class="mt-2">
+    <mm-button size="xs" variant="ghost" (click)="advanced.emit()">Next</mm-button>
+  </mm-flex>
+</div>

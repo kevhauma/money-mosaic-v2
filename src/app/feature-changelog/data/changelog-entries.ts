@@ -209,4 +209,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Added a "+ New account" quick action to the CSV import screen, so a brand-new bank or account no longer needs to be set up before importing — including seeding its opening balance from the file\'s own running balance column when it has one',
     area: 'Import',
   },
+  {
+    date: '2026-07-24',
+    versionFolder: 'v1.5_redesign',
+    ticketIds: ['TICKET-IMP-09'],
+    title:
+      'The CSV import mapper now walks through Date, Description, Amount (with a single-column/separate debit-credit switch), Counterparty, Own IBAN, Balance, and a final summary as a short horizontal wizard, with the raw file preview and row preview shown side by side, instead of one long scrolling form',
+    area: 'Import',
+  },
 ];

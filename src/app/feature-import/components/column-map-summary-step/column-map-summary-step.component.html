@@ -1,0 +1,28 @@
+<div class="rounded-box border border-primary/50 bg-base-200/40 p-3">
+  <mm-text as="p" weight="medium" class="mb-2 text-sm">Mapping summary</mm-text>
+
+  @if (rows().length === 0) {
+    <mm-text as="p" variant="caption" class="text-base-content/60">No columns mapped yet.</mm-text>
+  } @else {
+    <div class="flex flex-col gap-1">
+      @for (row of rows(); track row.label) {
+        <mm-flex justify="between" class="text-sm">
+          <mm-text as="span" weight="medium">{{ row.label }}</mm-text>
+          <mm-text as="span" variant="caption" class="text-base-content/60">
+            {{ row.column }}
+            @if (row.sample; as sample) {
+              → {{ sample }}
+            }
+          </mm-text>
+        </mm-flex>
+      }
+    </div>
+  }
+
+  <mm-label as="label" class="mt-4 cursor-pointer justify-start gap-2">
+    <input type="checkbox" [formControl]="rememberControl()" class="checkbox checkbox-sm" />
+    <mm-text variant="caption" color="base-content"
+      >Remember this mapping for this account next time</mm-text
+    >
+  </mm-label>
+</div>

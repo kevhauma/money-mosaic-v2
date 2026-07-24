@@ -8,18 +8,12 @@
     </mm-select>
   </mm-fieldset>
 
-  @if (resolvedSample(); as sample) {
-    <mm-text as="p" variant="caption" class="mt-1 text-base-content/60">→ {{ sample }}</mm-text>
-  }
+  <app-column-map-sample-caption [sample]="resolvedSample()" [warning]="duplicateWarning()" />
 
   @if (control().invalid && control().touched) {
     <mm-label variant="error" class="mt-1"
       >Required — pick a column for {{ field().label }}.</mm-label
     >
-  }
-
-  @if (duplicateWarning(); as warning) {
-    <mm-text as="p" variant="caption" color="warning" class="mt-1">{{ warning }}</mm-text>
   }
 
   <mm-flex justify="end" class="mt-2">

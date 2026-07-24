@@ -20,9 +20,10 @@ import {
   type MappingProfileColumns,
   type SignConvention,
 } from '@/core/data-access';
-import { CsvImportService, guessDelimiter } from '@/core/import';
+import { CsvImportService, guessDelimiter, type ParsedRowResult } from '@/core/import';
 import {
   AlertComponent,
+  BadgeComponent,
   DividerComponent,
   FieldsetComponent,
   FlexComponent,
@@ -33,7 +34,18 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
-import { ColumnMapFieldComponent } from '../column-map-field/column-map-field.component';
+import { ColumnMapStepperComponent } from '../column-map-stepper/column-map-stepper.component';
+import { ColumnMapSimpleFieldComponent } from '../column-map-simple-field/column-map-simple-field.component';
+import {
+  ColumnMapAmountFieldComponent,
+  type AmountMode,
+} from '../column-map-amount-field/column-map-amount-field.component';
+import { ColumnMapCounterpartyFieldComponent } from '../column-map-counterparty-field/column-map-counterparty-field.component';
+import {
+  ColumnMapSummaryStepComponent,
+  type MapperSummaryRow,
+} from '../column-map-summary-step/column-map-summary-step.component';
+import { ImportPreviewStepComponent } from '../import-preview-step/import-preview-step.component';
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
 
@@ -48,20 +60,46 @@ export type ColumnFieldKey = keyof MappingProfileColumns;
 
 export type ColumnFieldDef = { key: ColumnFieldKey; label: string; required: boolean };
 
-/**
- * The guided flow's field order (TICKET-IMP-07 to-be): `date` → `description` →
- * `amount`/`debit`/`credit` → `counterpartyName` → `counterpartyIban` → `ownIban` → `balance`.
- */
-const COLUMN_FIELDS: ColumnFieldDef[] = [
+/** Flat per-control definitions — `resolvedSamples`/`duplicateWarnings`/`invalidFieldLabels` still
+ * operate at this 9-control granularity regardless of how the guided flow groups them into steps. */
+const COLUMN_FIELD_DEFS: ColumnFieldDef[] = [
   { key: 'date', label: 'Date', required: true },
+  { key: 'amount', label: 'Amount', required: false },
+  { key: 'debit', label: 'Debit', required: false },
+  { key: 'credit', label: 'Credit', required: false },
   { key: 'description', label: 'Description', required: true },
-  { key: 'amount', label: 'Amount (single column)', required: false },
-  { key: 'debit', label: 'Debit (if separate)', required: false },
-  { key: 'credit', label: 'Credit (if separate)', required: false },
   { key: 'counterpartyName', label: 'Counterparty name', required: false },
   { key: 'counterpartyIban', label: 'Counterparty IBAN', required: false },
   { key: 'ownIban', label: 'Own account number/IBAN', required: false },
   { key: 'balance', label: 'Running balance', required: false },
+];
+
+export type MapperStepId =
+  'date' | 'description' | 'amount' | 'counterparty' | 'ownIban' | 'balance' | 'summary';
+
+export type MapperStepDef = { id: MapperStepId; label: string; keys: ColumnFieldKey[] };
+
+export type MapperStepTrackerState = 'done' | 'current' | 'upcoming';
+export type MapperStepTrackerItem = {
+  id: MapperStepId;
+  label: string;
+  state: MapperStepTrackerState;
+};
+
+/**
+ * The horizontal guided flow's step order (TICKET-IMP-09) — consolidates TICKET-IMP-07's flat
+ * 9-field order into 7 steps: `amount` now covers `amount`/`debit`/`credit` behind a mode toggle,
+ * `counterparty` covers `counterpartyName`/`counterpartyIban` together, and `summary` is a new
+ * terminus (the flow no longer ends at a `null` active field).
+ */
+const MAPPER_STEPS: MapperStepDef[] = [
+  { id: 'date', label: 'Date', keys: ['date'] },
+  { id: 'description', label: 'Description', keys: ['description'] },
+  { id: 'amount', label: 'Amount', keys: ['amount', 'debit', 'credit'] },
+  { id: 'counterparty', label: 'Counterparty', keys: ['counterpartyName', 'counterpartyIban'] },
+  { id: 'ownIban', label: 'Own IBAN', keys: ['ownIban'] },
+  { id: 'balance', label: 'Balance', keys: ['balance'] },
+  { id: 'summary', label: 'Summary', keys: [] },
 ];
 
 @Component({
@@ -69,10 +107,16 @@ const COLUMN_FIELDS: ColumnFieldDef[] = [
   imports: [
     ReactiveFormsModule,
     AlertComponent,
-    ColumnMapFieldComponent,
+    BadgeComponent,
+    ColumnMapStepperComponent,
+    ColumnMapSimpleFieldComponent,
+    ColumnMapAmountFieldComponent,
+    ColumnMapCounterpartyFieldComponent,
+    ColumnMapSummaryStepComponent,
     DividerComponent,
     FieldsetComponent,
     FlexComponent,
+    ImportPreviewStepComponent,
     InputComponent,
     LabelComponent,
     SelectComponent,
@@ -86,6 +130,26 @@ export class ImportMapStepComponent {
   readonly file = input.required<File>();
   readonly accountId = input.required<number>();
   readonly result = model<ImportMappingResult | null>(null);
+
+  // Wizard-owned parse-state display values (TICKET-IMP-09) — the actual debounced worker-parse
+  // pipeline stays in ImportWizardComponent (it's wizard-lifecycle logic tied to batch auto-commit);
+  // only the resulting read-only values are pushed down so the row preview can render here, beside
+  // the raw file preview.
+  readonly parsedRows = input<ParsedRowResult[]>([]);
+  // `parseError`/`headerMismatchMessage` below are read in the template only via
+  // `@else if (fn(); as alias)` — a static-analysis false positive may flag them as unused inputs;
+  // both are genuinely read (see the row-preview branch in import-map-step.component.html).
+  readonly parseError = input<string | null>(null);
+  readonly headerMismatchMessage = input<string | null>(null);
+  readonly parsing = input(false);
+  readonly parseWarnings = input<string[]>([]);
+
+  // Wizard-owned "apply to remaining files" state (TICKET-IMP-09) — gating/state stay wizard-owned
+  // (tied to `runCommit()`/`batchMapping`); the checkbox itself renders in the always-visible
+  // global options here, not gated behind the guided flow reaching Summary.
+  readonly canOfferApplyToRemaining = input(false);
+  readonly remainingFilesCount = input(0);
+  readonly applyToRemaining = model(false);
 
   protected readonly dateFormats = SUPPORTED_DATE_FORMATS;
   protected readonly encodings = SUPPORTED_ENCODINGS;
@@ -124,22 +188,27 @@ export class ImportMapStepComponent {
     rememberForAccount: [false],
   });
 
-  protected readonly columnFields = COLUMN_FIELDS;
+  /** Which guided-flow step is expanded for editing right now — never `null`; the flow's terminus
+   * is the `'summary'` step rather than an empty active field (TICKET-IMP-09). */
+  protected readonly activeStepId = signal<MapperStepId>('date');
 
-  /** Which column field is expanded for editing right now; `null` once the guided flow reaches the end (TICKET-IMP-07). */
-  protected readonly activeFieldKey = signal<ColumnFieldKey | null>(COLUMN_FIELDS[0].key);
+  /** Single-vs-split display mode for the Amount step (TICKET-IMP-09) — transient UI state, not
+   * persisted; defaults from whichever of `amount`/`debit`+`credit` a preset/saved-profile prefill
+   * populated. */
+  protected readonly amountMode = signal<AmountMode>('single');
 
   private readonly formValue = toSignal(this.form.valueChanges, {
     initialValue: this.form.getRawValue(),
   });
 
-  /** The active field's live resolved sample — the first data row's value for whichever column is currently selected (TICKET-IMP-07). */
+  /** The active step's live resolved sample(s) — the first data row's value for whichever column is
+   * currently selected, per individual form control (TICKET-IMP-07; unchanged by the step regrouping). */
   protected readonly resolvedSamples = computed<Partial<Record<ColumnFieldKey, string>>>(() => {
     const value = this.formValue();
     const headers = this.headers();
     const sampleRow = this.previewRows()[value.headerRows ?? 1] ?? [];
     const samples: Partial<Record<ColumnFieldKey, string>> = {};
-    for (const field of COLUMN_FIELDS) {
+    for (const field of COLUMN_FIELD_DEFS) {
       const columnName = value[field.key];
       const index = columnName ? headers.indexOf(columnName) : -1;
       if (index !== -1 && sampleRow[index] !== undefined) {
@@ -149,11 +218,12 @@ export class ImportMapStepComponent {
     return samples;
   });
 
-  /** Non-blocking "also mapped to X" warning for any two fields sharing the same source column (TICKET-IMP-07). */
+  /** Non-blocking "also mapped to X" warning for any two fields sharing the same source column
+   * (TICKET-IMP-07; unchanged by the step regrouping). */
   protected readonly duplicateWarnings = computed<Partial<Record<ColumnFieldKey, string>>>(() => {
     const value = this.formValue();
     const fieldsByColumn = new Map<string, ColumnFieldKey[]>();
-    for (const field of COLUMN_FIELDS) {
+    for (const field of COLUMN_FIELD_DEFS) {
       const columnName = value[field.key];
       if (!columnName) continue;
       const keys = fieldsByColumn.get(columnName) ?? [];
@@ -167,20 +237,55 @@ export class ImportMapStepComponent {
       for (const key of keys) {
         const otherLabels = keys
           .filter((other) => other !== key)
-          .map((other) => COLUMN_FIELDS.find((field) => field.key === other)!.label);
+          .map((other) => COLUMN_FIELD_DEFS.find((field) => field.key === other)!.label);
         warnings[key] = `Also mapped to ${otherLabels.join(', ')}`;
       }
     }
     return warnings;
   });
 
-  /** Required column fields still unmapped — surfaced so the wizard's Confirm/Next button can name what's blocking it (TICKET-IMP-07). */
+  /** Required column fields still unmapped — surfaced so the wizard's Confirm/Next button can name
+   * what's blocking it (TICKET-IMP-07; unchanged by the step regrouping). */
   readonly invalidFieldLabels = computed<string[]>(() => {
     const value = this.formValue();
-    return COLUMN_FIELDS.filter((field) => field.required && !value[field.key]).map(
+    return COLUMN_FIELD_DEFS.filter((field) => field.required && !value[field.key]).map(
       (field) => field.label,
     );
   });
+
+  /** The horizontal tracker's precomputed items — done/current/upcoming; every step is freely
+   * clickable, so the user can jump anywhere in the guided flow, not just backward. */
+  protected readonly stepperItems = computed<MapperStepTrackerItem[]>(() => {
+    const activeIndex = MAPPER_STEPS.findIndex((step) => step.id === this.activeStepId());
+    return MAPPER_STEPS.map((step, index) => ({
+      id: step.id,
+      label: step.label,
+      state: index < activeIndex ? 'done' : index === activeIndex ? 'current' : 'upcoming',
+    }));
+  });
+
+  /** The Summary step's recap — every field that's actually mapped, in `COLUMN_FIELD_DEFS` order. */
+  protected readonly summaryRows = computed<MapperSummaryRow[]>(() => {
+    const value = this.formValue();
+    const samples = this.resolvedSamples();
+    const rows: MapperSummaryRow[] = [];
+    for (const field of COLUMN_FIELD_DEFS) {
+      const column = value[field.key];
+      if (!column) continue;
+      rows.push({ label: field.label, column, sample: samples[field.key] });
+    }
+    return rows;
+  });
+
+  /** Row-preview valid/invalid counts, shown as badges beside the "Row preview" header rather than
+   * inside `ImportPreviewStepComponent` itself — computed from the same `parsedRows` input that
+   * component renders, so the two never disagree. */
+  protected readonly validRowCount = computed(
+    () => this.parsedRows().filter((row) => row.valid).length,
+  );
+  protected readonly invalidRowCount = computed(
+    () => this.parsedRows().length - this.validRowCount(),
+  );
 
   // Tracks the file we last ran detection for, so re-detection reacts to the file reference itself
   // rather than a one-shot flag — correctness no longer depends on the wizard destroying/recreating
@@ -242,6 +347,9 @@ export class ImportMapStepComponent {
         this.form.patchValue({ delimiter: guessedDelimiter, name: 'Custom mapping' });
       }
 
+      const rawValue = this.form.getRawValue();
+      this.amountMode.set(rawValue.debit || rawValue.credit ? 'split' : 'single');
+
       await this.refreshPreview();
     } finally {
       this.loading.set(false);
@@ -260,30 +368,70 @@ export class ImportMapStepComponent {
     this.previewRows.set(rows);
   }
 
-  /** Type-safe dynamic control lookup for the template, since `form.controls['x']` doesn't narrow (TICKET-IMP-07). */
+  /** Type-safe dynamic control lookup for the template, since `form.controls['x']` doesn't narrow. */
   protected controlFor(key: ColumnFieldKey): FormControl<string> {
     return this.form.controls[key];
   }
 
-  protected isLastColumnField(key: ColumnFieldKey): boolean {
-    return COLUMN_FIELDS[COLUMN_FIELDS.length - 1].key === key;
+  /** Looks up a single-select step's field definition by key — returns the same `COLUMN_FIELD_DEFS`
+   * object reference every call, so passing it as a template input doesn't churn the child's
+   * `OnPush` change detection with a fresh object literal each cycle. */
+  protected fieldDef(key: ColumnFieldKey): ColumnFieldDef {
+    return COLUMN_FIELD_DEFS.find((field) => field.key === key)!;
   }
 
-  /** Opens a field for editing — collapsing whichever field was previously active and marking it touched, so a skipped required field's error surfaces once the user moves away from it (TICKET-IMP-07). */
-  protected openField(key: ColumnFieldKey): void {
-    const current = this.activeFieldKey();
-    if (current && current !== key) this.controlFor(current).markAsTouched();
-    this.activeFieldKey.set(key);
+  /** Switches the Amount step's mode, clearing the now-inactive control(s) so a stale `debit`/
+   * `credit` (or `amount`) value never silently survives into a saved/reused `MappingProfile` after
+   * the user switches away from it (`resolveAmount` gives `amount` priority whenever it's truthy). */
+  protected setAmountMode(mode: AmountMode): void {
+    if (mode === this.amountMode()) return;
+    this.amountMode.set(mode);
+    if (mode === 'single') {
+      this.form.patchValue({ debit: '', credit: '' });
+    } else {
+      this.form.patchValue({ amount: '' });
+    }
   }
 
-  /** Advances the guided flow past `key` once it's valid — a no-op while a required field is still empty (TICKET-IMP-07). */
-  protected advanceFrom(key: ColumnFieldKey): void {
-    const control = this.controlFor(key);
-    control.markAsTouched();
-    if (control.invalid) return;
+  protected onApplyToRemainingChange(event: Event): void {
+    this.applyToRemaining.set((event.target as HTMLInputElement).checked);
+  }
 
-    const nextIndex = COLUMN_FIELDS.findIndex((field) => field.key === key) + 1;
-    this.activeFieldKey.set(COLUMN_FIELDS[nextIndex]?.key ?? null);
+  /** Opens any step for editing — collapsing whichever step was previously active and marking its
+   * controls touched, so a skipped required field's error surfaces once the user moves away from
+   * it. Every step is reachable, including jumping ahead past ones not yet visited. */
+  protected openStep(id: MapperStepId): void {
+    const current = this.activeStepId();
+    if (id === current) return;
+
+    this.markStepTouched(current);
+    this.activeStepId.set(id);
+  }
+
+  /** Advances the guided flow past `id` once every required control in that step is valid — a
+   * no-op while a required field is still empty. */
+  protected advanceFrom(id: MapperStepId): void {
+    this.markStepTouched(id);
+    if (this.isStepBlocked(id)) return;
+
+    const currentIndex = MAPPER_STEPS.findIndex((step) => step.id === id);
+    const next = MAPPER_STEPS[currentIndex + 1];
+    if (next) this.activeStepId.set(next.id);
+  }
+
+  private markStepTouched(id: MapperStepId): void {
+    const step = MAPPER_STEPS.find((s) => s.id === id);
+    step?.keys.forEach((key) => this.controlFor(key).markAsTouched());
+  }
+
+  private isStepBlocked(id: MapperStepId): boolean {
+    const step = MAPPER_STEPS.find((s) => s.id === id);
+    return (
+      step?.keys.some((key) => {
+        const def = COLUMN_FIELD_DEFS.find((f) => f.key === key);
+        return !!def?.required && this.controlFor(key).invalid;
+      }) ?? false
+    );
   }
 
   private updateResult(): void {

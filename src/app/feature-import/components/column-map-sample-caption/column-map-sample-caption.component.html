@@ -1,0 +1,6 @@
+@if (sample(); as value) {
+  <mm-text as="p" variant="caption" class="mt-1 text-base-content/60">→ {{ value }}</mm-text>
+}
+@if (warning(); as value) {
+  <mm-text as="p" variant="caption" color="warning" class="mt-1">{{ value }}</mm-text>
+}

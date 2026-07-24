@@ -16,7 +16,6 @@ import {
   AlertComponent,
   ButtonComponent,
   FlexComponent,
-  LabelComponent,
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
@@ -31,7 +30,6 @@ import {
   ImportMapStepComponent,
   type ImportMappingResult,
 } from '../import-map-step/import-map-step.component';
-import { ImportPreviewStepComponent } from '../import-preview-step/import-preview-step.component';
 import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
 
 // Select → Map+Preview → Summary. Map and preview live on one screen (step 2); there is no
@@ -80,12 +78,10 @@ const earliestBalanceSeed = (rows: ValidParsedRow[]): OpeningBalanceSeed | null 
   imports: [
     ImportSelectStepComponent,
     ImportMapStepComponent,
-    ImportPreviewStepComponent,
     ImportSummaryStepComponent,
     ButtonComponent,
     AlertComponent,
     FlexComponent,
-    LabelComponent,
     PaperComponent,
     TypographyComponent,
   ],
@@ -381,10 +377,6 @@ export class ImportWizardComponent {
   protected mapFileIndividually(): void {
     this.manualOverrideActive.set(true);
     this.mapResult.set(null);
-  }
-
-  protected onApplyToRemainingChange(event: Event): void {
-    this.applyToRemaining.set((event.target as HTMLInputElement).checked);
   }
 
   protected async onUndo(result: CommitImportResult): Promise<void> {

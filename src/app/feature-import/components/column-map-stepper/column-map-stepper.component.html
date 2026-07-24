@@ -1,0 +1,14 @@
+<ul class="steps steps-horizontal w-full">
+  @for (item of items(); track item.id) {
+    <li class="step" [class.step-primary]="item.state !== 'upcoming'">
+      <button
+        type="button"
+        class="text-xs"
+        [attr.aria-current]="item.state === 'current' ? 'step' : null"
+        (click)="stepClicked.emit(item.id)"
+      >
+        {{ item.label }}
+      </button>
+    </li>
+  }
+</ul>
