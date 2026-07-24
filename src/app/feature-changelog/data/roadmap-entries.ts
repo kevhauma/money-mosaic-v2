@@ -28,13 +28,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Import',
   },
   {
-    versionFolder: 'Experience',
-    ticketId: 'TICKET-IMP-08',
-    title:
-      'A "+ New account" quick action on the import screen — nudges you to create one right away if you have none yet',
-    area: 'Import',
-  },
-  {
     versionFolder: 'Settings',
     ticketId: 'TICKET-SET-05',
     title: 'Foundation for app settings (accent color, currency, locale, privacy mode)',

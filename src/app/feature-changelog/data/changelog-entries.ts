@@ -201,4 +201,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Redesigned the CSV import mapper into a guided, field-by-field flow with live sample values, required-field errors, and duplicate-column warnings',
     area: 'Import',
   },
+  {
+    date: '2026-07-24',
+    versionFolder: 'v1.1_joint_accounts',
+    ticketIds: ['TICKET-IMP-08'],
+    title:
+      'Added a "+ New account" quick action to the CSV import screen, so a brand-new bank or account no longer needs to be set up before importing — including seeding its opening balance from the file\'s own running balance column when it has one',
+    area: 'Import',
+  },
 ];

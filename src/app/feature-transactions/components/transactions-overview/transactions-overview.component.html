@@ -86,8 +86,8 @@
           </td>
           <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
           <td>
-            <mm-flex align="center" gap="1">
-              <mm-text weight="medium">{{ row.transaction.rawDescription }}</mm-text>
+            <mm-flex align="start" gap="1">
+              <mm-text>{{ row.transaction.rawDescription }}</mm-text>
               @if (row.likelyTransfer) {
                 <mm-badge variant="outline" size="sm">Likely transfer</mm-badge>
               }

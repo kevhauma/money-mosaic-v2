@@ -457,3 +457,226 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     });
   });
 });
+
+describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08)', () => {
+  let fixture: ComponentFixture<ImportWizardComponent>;
+  let component: InstanceType<typeof ImportWizardComponent>;
+  let parse: Mock;
+  let commitImport: Mock;
+  let addAccount: Mock;
+
+  const set = (key: string, value: unknown): void =>
+    (component as unknown as Record<string, { set(v: unknown): void }>)[key].set(value);
+  const read = <T>(key: string): T => (component as unknown as Record<string, () => T>)[key]();
+  const goNext = (): Promise<void> =>
+    (component as unknown as { goNext(): Promise<void> }).goNext();
+
+  const wait = async (ms: number): Promise<void> => {
+    await new Promise<void>((resolve) => setTimeout(resolve, ms));
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+  const settleParse = (): Promise<void> => wait(350);
+
+  const csvFile = (name: string): File => new File(['Date;Desc\n01/01/2026;x'], name);
+
+  const draftRow = (
+    file: File,
+    pendingDraftId: string,
+  ): {
+    file: File;
+    accountId: number | null;
+    autoDetected: boolean;
+    pendingDraftId: string;
+    detectedIban: string | null;
+  } => ({ file, accountId: null, autoDetected: false, pendingDraftId, detectedIban: null });
+
+  beforeEach(async () => {
+    parse = vi
+      .fn()
+      .mockResolvedValue({ headers: ['Date', 'Desc'], rows: [validRow()], warnings: [] });
+    commitImport = vi.fn().mockImplementation(
+      async (input: { accountId: number }): Promise<CommitImportResult> =>
+        ({
+          batch: { id: input.accountId, accountId: input.accountId },
+          addedTransactions: [],
+          duplicateCount: 0,
+        }) as unknown as CommitImportResult,
+    );
+    addAccount = vi.fn().mockResolvedValue({ id: 99, name: 'New account' });
+
+    await TestBed.configureTestingModule({
+      imports: [ImportWizardComponent],
+      providers: [
+        provideRouter([]),
+        { provide: CsvImportService, useValue: { parse } },
+        { provide: ImportBatchesStore, useValue: { commitImport, undoImport: vi.fn() } },
+        { provide: MappingProfilesStore, useValue: { upsertForBankAndAccount: vi.fn() } },
+        { provide: AccountsStore, useValue: { activeAccounts: signal([]), addAccount } },
+      ],
+    })
+      .overrideComponent(ImportWizardComponent, {
+        remove: {
+          imports: [
+            ImportSelectStepComponent,
+            ImportMapStepComponent,
+            ImportPreviewStepComponent,
+            ImportSummaryStepComponent,
+          ],
+        },
+        add: {
+          imports: [
+            SelectStubComponent,
+            MapStubComponent,
+            PreviewStubComponent,
+            SummaryStubComponent,
+          ],
+        },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(ImportWizardComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('canAdvanceFromStep1 accepts a file whose account is a pending draft with a name', () => {
+    const file = csvFile('a.csv');
+    set('queue', [draftRow(file, 'draft-1')]);
+    set('pendingDrafts', [
+      { id: 'draft-1', ownerFile: file, name: 'New Account', iban: '', type: 'checking' },
+    ]);
+
+    expect(read('canAdvanceFromStep1')).toBe(true);
+  });
+
+  it('canAdvanceFromStep1 rejects a pending draft left with a blank name', () => {
+    const file = csvFile('a.csv');
+    set('queue', [draftRow(file, 'draft-1')]);
+    set('pendingDrafts', [
+      { id: 'draft-1', ownerFile: file, name: '  ', iban: '', type: 'checking' },
+    ]);
+
+    expect(read('canAdvanceFromStep1')).toBe(false);
+  });
+
+  it('resolves the owner and a linked file to the same real Account.id, creating the account only once', async () => {
+    const ownerFile = csvFile('owner.csv');
+    const linkedFile = csvFile('linked.csv');
+    set('queue', [draftRow(ownerFile, 'draft-1'), draftRow(linkedFile, 'draft-1')]);
+    set('pendingDrafts', [
+      { id: 'draft-1', ownerFile, name: 'Fresh Account', iban: 'BE00123', type: 'checking' },
+    ]);
+    set('currentFileIndex', 0);
+    set('step', 2);
+
+    // Owner file commits first.
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+    await goNext();
+
+    expect(addAccount).toHaveBeenCalledTimes(1);
+    expect(addAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Fresh Account', iban: 'BE00123', type: 'checking' }),
+    );
+    expect(commitImport.mock.calls[0][0]).toMatchObject({ accountId: 99 });
+    expect(read<{ accountId: number | null; pendingDraftId: string | null }[]>('queue')).toEqual([
+      expect.objectContaining({ accountId: 99, pendingDraftId: null }),
+      expect.objectContaining({ accountId: 99, pendingDraftId: null }),
+    ]);
+    expect(read('pendingDrafts')).toEqual([]);
+    expect(read('currentFileIndex')).toBe(1);
+
+    // Linked file commits second, already resolved — no second account creation.
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+    await goNext();
+
+    expect(addAccount).toHaveBeenCalledTimes(1);
+    expect(commitImport).toHaveBeenCalledTimes(2);
+    expect(commitImport.mock.calls[1][0]).toMatchObject({ accountId: 99 });
+    expect(read('step')).toBe(3);
+  });
+
+  it("seeds the new account's opening balance from the chronologically-first row with a running balance", async () => {
+    parse.mockResolvedValue({
+      headers: ['Date', 'Desc', 'Balance'],
+      rows: [
+        {
+          rowIndex: 0,
+          valid: true,
+          transaction: { bookingDate: '2026-01-15', amount: -10 },
+          balance: 490,
+        },
+        {
+          rowIndex: 1,
+          valid: true,
+          transaction: { bookingDate: '2026-01-10', amount: -5 },
+          balance: 500,
+        },
+        {
+          rowIndex: 2,
+          valid: true,
+          transaction: { bookingDate: '2026-01-20', amount: 20 },
+          balance: 510,
+        },
+      ],
+      warnings: [],
+    });
+    const file = csvFile('a.csv');
+    set('queue', [draftRow(file, 'draft-1')]);
+    set('pendingDrafts', [
+      { id: 'draft-1', ownerFile: file, name: 'Fresh Account', iban: '', type: 'checking' },
+    ]);
+    set('currentFileIndex', 0);
+    set('step', 2);
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+
+    await goNext();
+
+    expect(addAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ openingBalance: 500, openingBalanceDate: '2026-01-10' }),
+    );
+  });
+
+  it('defaults the opening balance to 0 when no parsed row carries a running balance', async () => {
+    const file = csvFile('a.csv');
+    set('queue', [draftRow(file, 'draft-1')]);
+    set('pendingDrafts', [
+      { id: 'draft-1', ownerFile: file, name: 'Fresh Account', iban: '', type: 'checking' },
+    ]);
+    set('currentFileIndex', 0);
+    set('step', 2);
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+
+    await goNext();
+
+    expect(addAccount).toHaveBeenCalledWith(expect.objectContaining({ openingBalance: 0 }));
+  });
+
+  it('surfaces a visible error and does not commit when account creation fails', async () => {
+    addAccount.mockRejectedValueOnce(new Error('write failed'));
+    const file = csvFile('a.csv');
+    set('queue', [draftRow(file, 'draft-1')]);
+    set('pendingDrafts', [
+      { id: 'draft-1', ownerFile: file, name: 'Fresh Account', iban: '', type: 'checking' },
+    ]);
+    set('currentFileIndex', 0);
+    set('step', 2);
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+
+    await goNext();
+
+    expect(read('accountCreationError')).toContain('a.csv');
+    expect(commitImport).not.toHaveBeenCalled();
+    expect(read('step')).toBe(2);
+    expect(read('currentFileIndex')).toBe(0);
+  });
+});

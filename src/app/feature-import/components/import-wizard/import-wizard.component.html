@@ -15,6 +15,10 @@
     </mm-text>
   }
 
+  @if (accountCreationError(); as message) {
+    <mm-alert status="error" class="mb-4 text-sm">{{ message }}</mm-alert>
+  }
+
   <mm-paper elevation="flat">
     @if (step() < 3) {
       <div class="card-actions mb-6 justify-between border-b border-base-300 pb-4">
@@ -59,7 +63,11 @@
 
     @switch (step()) {
       @case (1) {
-        <app-import-select-step [accounts]="accountsStore.activeAccounts()" [(queue)]="queue" />
+        <app-import-select-step
+          [accounts]="accountsStore.activeAccounts()"
+          [(queue)]="queue"
+          [(pendingDrafts)]="pendingDrafts"
+        />
       }
       @case (2) {
         <div class="grid gap-6 xl:grid-cols-12">

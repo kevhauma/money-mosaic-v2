@@ -16,10 +16,9 @@
 
     <mm-fieldset legend="Type">
       <mm-select formControlName="type" class="w-full">
-        <option value="checking">Checking</option>
-        <option value="savings">Savings</option>
-        <option value="joint">Joint</option>
-        <option value="invest">Invest</option>
+        @for (option of accountTypeOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
       </mm-select>
     </mm-fieldset>
 

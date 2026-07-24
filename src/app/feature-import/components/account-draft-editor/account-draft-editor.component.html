@@ -1,0 +1,23 @@
+<mm-flex align="center" gap="2" class="flex-wrap">
+  <input
+    type="text"
+    class="input input-sm w-36"
+    placeholder="Account name"
+    [value]="draft().name"
+    (input)="onNameInput($event)"
+  />
+  <input
+    type="text"
+    class="input input-sm w-40"
+    placeholder="IBAN (optional)"
+    [value]="draft().iban"
+    (input)="onIbanInput($event)"
+  />
+  <select class="select select-sm" [value]="draft().type" (change)="onTypeChange($event)">
+    @for (option of accountTypeOptions; track option.value) {
+      <option [value]="option.value">{{ option.label }}</option>
+    }
+  </select>
+  <mm-badge color="primary" size="sm">New account</mm-badge>
+  <mm-button variant="ghost" size="sm" (click)="cancelled.emit()">Cancel</mm-button>
+</mm-flex>

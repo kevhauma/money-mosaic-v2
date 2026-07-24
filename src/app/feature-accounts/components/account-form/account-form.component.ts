@@ -34,6 +34,7 @@ import { fractionToPercentage, normalizeIban, percentageToFraction } from '@/sha
 import { ibanValidator } from '@/shared/utils/validators/iban.validator';
 import { percentageValidator } from '@/shared/utils/validators/percentage.validator';
 import { ICON_BY_ACCOUNT_TYPE } from '../../account-icons';
+import { ACCOUNT_TYPE_OPTIONS } from '../../account-types';
 
 export type AccountFormValue = Omit<Account, 'id' | 'archived'>;
 
@@ -104,6 +105,8 @@ export class AccountFormComponent {
   readonly open = model(false);
   readonly account = input<Account | null>(null);
   readonly saved = output<AccountFormValue>();
+
+  protected readonly accountTypeOptions = ACCOUNT_TYPE_OPTIONS;
 
   private readonly formBuilder = inject(FormBuilder);
 

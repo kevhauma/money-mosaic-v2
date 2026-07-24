@@ -1,0 +1,61 @@
+<div class="min-w-0 flex-1">
+  <mm-text as="p" weight="medium" class="truncate text-sm">{{ row().file.name }}</mm-text>
+  <mm-text as="p" class="text-xs text-base-content/60"
+    >{{ (row().file.size / 1024).toFixed(1) }} KB</mm-text
+  >
+</div>
+
+@switch (mode()) {
+  @case ('owner') {
+    <app-account-draft-editor
+      [draft]="draftFor(row().pendingDraftId)!"
+      (nameChange)="draftNameChange.emit($event)"
+      (ibanChange)="draftIbanChange.emit($event)"
+      (typeChange)="draftTypeChange.emit($event)"
+      (cancelled)="draftCancelled.emit()"
+    />
+  }
+  @case ('empty-nudge') {
+    <mm-flex direction="col" gap="1">
+      <mm-text as="p" class="text-xs text-base-content/60">
+        No accounts yet — create one to import into.
+      </mm-text>
+      <mm-button color="primary" size="sm" (click)="newAccountRequested.emit()">
+        + New account
+      </mm-button>
+    </mm-flex>
+  }
+  @default {
+    <select
+      class="select select-sm w-48"
+      [value]="row().pendingDraftId ? 'draft:' + row().pendingDraftId : (row().accountId ?? '')"
+      (change)="onSelectChange($event)"
+    >
+      <option value="" disabled>Choose an account</option>
+      @for (account of accounts(); track account.id) {
+        <option [value]="account.id">{{ account.name }}</option>
+      }
+      @for (draft of pendingDrafts(); track draft.id) {
+        <option [value]="'draft:' + draft.id">
+          → New account (from {{ ownerFileNameFor(draft.id) }})
+        </option>
+      }
+    </select>
+    <mm-button variant="ghost" size="sm" (click)="newAccountRequested.emit()">
+      + New account
+    </mm-button>
+  }
+}
+
+@if (row().autoDetected) {
+  <mm-badge color="success" size="sm">Auto-detected</mm-badge>
+}
+<mm-button
+  variant="ghost"
+  size="sm"
+  shape="square"
+  ariaLabel="Remove file"
+  (click)="removed.emit()"
+>
+  ✕
+</mm-button>
