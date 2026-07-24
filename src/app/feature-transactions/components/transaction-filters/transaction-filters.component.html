@@ -9,7 +9,7 @@
       </mm-select>
     </mm-fieldset>
 
-    <mm-fieldset legend="Date range" class="col-span-2">
+    <mm-fieldset legend="Date range">
       <mm-date-range-input
         [value]="dateRangeValue()"
         (valueChange)="onDateRangeChange($event)"
@@ -83,7 +83,7 @@
       />
     </mm-fieldset>
 
-    <mm-flex align="end" gap="2" class="col-span-2">
+    <mm-flex align="center" justify="center" gap="2" class="h-full">
       <div
         class="tooltip flex-1"
         [attr.data-tip]="
