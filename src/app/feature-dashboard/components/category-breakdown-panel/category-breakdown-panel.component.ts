@@ -124,8 +124,8 @@ export class CategoryBreakdownPanelComponent {
   protected readonly columns = computed<BreakdownColumnVm[]>(() => {
     const expanded = this.expandedColumns();
     return [
-      this.buildColumn('expense', 'Expense', this.expenseEntries(), expanded.has('expense')),
       this.buildColumn('income', 'Income', this.incomeEntries(), expanded.has('income')),
+      this.buildColumn('expense', 'Expense', this.expenseEntries(), expanded.has('expense')),
     ];
   });
 
