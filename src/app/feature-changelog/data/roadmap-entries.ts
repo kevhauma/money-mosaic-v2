@@ -22,10 +22,22 @@ export type RoadmapEntry = {
  */
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
-    versionFolder: 'Experience',
-    ticketId: 'topic-import-flow',
-    title: 'Improve import flow: Multi account csv,...',
+    versionFolder: 'Import',
+    ticketId: 'topic-import-multi-account',
+    title: 'Multi account csv import',
     area: 'Import',
+  },
+  {
+    versionFolder: 'Import',
+    ticketId: 'topic-import-fees',
+    title: 'Ability to add transaction fees to import',
+    area: 'Import',
+  },
+  {
+    versionFolder: 'Transactions',
+    ticketId: 'topic-transactions-fees',
+    title: 'Figuring out how to handle transaction fees in the transactions list and statistics',
+    area: 'Transactions',
   },
   {
     versionFolder: 'Settings',
@@ -93,7 +105,7 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v9999_ideas',
     ticketId: 'topic-multi-device',
-    title: 'Sync between multiple devices (desktop, mobile, tablet) via E2E, P2P',
+    title: 'Sync between multiple devices (desktop, mobile, tablet) via E2E, P2P, QR code',
     area: 'Ideas',
     isTopic: true,
   },
