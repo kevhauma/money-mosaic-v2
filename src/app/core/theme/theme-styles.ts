@@ -91,6 +91,12 @@ export const THEME_STYLES: readonly ThemeStyle[] = [
 
 export const DEFAULT_STYLE: ThemeStyleId = 'deformable';
 
+/**
+ * The two catalogue entries the Settings page's accent-color picker applies to (TICKET-SET-02) —
+ * every other style keeps its own baked-in accent untouched.
+ */
+export const DEFAULT_THEME_STYLE_IDS: readonly ThemeStyleId[] = ['deformable', 'deformable-dark'];
+
 export function themeStyleById(id: string | null): ThemeStyle | undefined {
   return THEME_STYLES.find((style) => style.id === id);
 }

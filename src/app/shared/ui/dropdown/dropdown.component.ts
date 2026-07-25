@@ -29,7 +29,14 @@ export class DropdownComponent {
     daisyClasses('dropdown', [this.align() === 'end' && 'dropdown-end'], this.class()),
   );
 
+  // `dropdown-content`/`menu` are layout-only in daisyUI — neither sets a background, so every
+  // popover needs its own opaque surface or it renders see-through over whatever sits behind it.
+  // Baked in here instead of per-callsite so every `mm-dropdown` consumer gets it for free.
   protected readonly contentClasses = computed(() =>
-    daisyClasses('dropdown-content', [this.menu() && 'menu'], this.contentClass()),
+    daisyClasses(
+      'dropdown-content bg-base-100 rounded-box border border-base-300 shadow-lg',
+      [this.menu() && 'menu'],
+      this.contentClass(),
+    ),
   );
 }

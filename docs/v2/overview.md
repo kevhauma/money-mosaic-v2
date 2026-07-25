@@ -8,7 +8,7 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 
 ## Settings track (SET-05 first; SET-02/03/04 and PRIV-01 each depend only on SET-05, not on each other)
 
-- [ ] [TICKET-SET-05](./tickets/TICKET-SET-05-settings-store-foundation.md) — Settings store foundation: `appSettings` table/repository/store, no fields yet (new capability) — build first; no UI of its own
+- [x] [TICKET-SET-05](./tickets/TICKET-SET-05-settings-store-foundation.md) — Settings store foundation: `appSettings` table/repository/store, no fields yet (new capability) — build first; no UI of its own
 - [ ] [TICKET-SET-02](./tickets/TICKET-SET-02-primary-color-setting.md) — Primary accent color setting (new capability) — needs SET-05 only; independent of SET-03/SET-04/PRIV-01
 - [ ] [TICKET-SET-03](./tickets/TICKET-SET-03-currency-setting.md) — Currency setting (new capability) — needs SET-05 only; build before SET-04, which extends the same formatter refactor
 - [ ] [TICKET-SET-04](./tickets/TICKET-SET-04-locale-setting.md) — Locale setting for number/date formatting (new capability) — needs SET-05 + SET-03 (the only cross-sibling dependency in this track)

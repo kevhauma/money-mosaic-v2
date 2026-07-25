@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
+import { appDb } from '@/core/data-access';
+import { AppSettingsStore } from '@/core/state';
 import { SettingsOverviewComponent } from './settings-overview.component';
 
 describe('SettingsOverviewComponent', () => {
@@ -10,9 +13,14 @@ describe('SettingsOverviewComponent', () => {
     }).compileComponents();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     localStorage.removeItem('mm-theme-style');
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.style.removeProperty('--color-primary');
+    document.documentElement.style.removeProperty('--color-primary-content');
+    // fake-indexeddb is a global singleton and Vitest runs with isolate:false, so a row written
+    // here would otherwise leak into other spec files.
+    await appDb.appSettings.clear();
   });
 
   it('creates', () => {
@@ -47,5 +55,59 @@ describe('SettingsOverviewComponent', () => {
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('a[href="/settings/data"]'),
     ).toBeNull();
+  });
+
+  it('renders an accent-color swatch for every preset plus a Default option', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+
+    const swatches = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '[aria-label="Accent color"] button[aria-pressed]',
+    );
+    expect(swatches.length).toBe(7); // 6 presets + Default
+  });
+
+  it('selecting a swatch calls AppSettingsStore.setPrimaryColor with the chosen preset', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+    const setPrimaryColor = vi
+      .spyOn(TestBed.inject(AppSettingsStore), 'setPrimaryColor')
+      .mockResolvedValue();
+
+    const roseButton = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Accent color"] button[aria-label="Rose"]',
+    ) as HTMLButtonElement;
+    roseButton.click();
+
+    expect(setPrimaryColor).toHaveBeenCalledExactlyOnceWith('rose');
+  });
+
+  it('marks the currently-selected accent swatch as pressed', async () => {
+    await appDb.appSettings.put({ id: 1, primaryColor: 'rose' });
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+    await TestBed.inject(AppSettingsStore).hydrate();
+    fixture.detectChanges();
+
+    const roseButton = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Accent color"] button[aria-label="Rose"]',
+    );
+    const skyButton = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Accent color"] button[aria-label="Sky"]',
+    );
+
+    expect(roseButton?.getAttribute('aria-pressed')).toBe('true');
+    expect(skyButton?.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it("shows the Default option's own actual accent color, not an empty placeholder", () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+
+    const defaultSwatch = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Accent color"] button[aria-label="Default"] span',
+    );
+
+    expect((defaultSwatch as HTMLElement)?.style.backgroundColor).not.toBe('');
   });
 });

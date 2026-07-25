@@ -10,7 +10,9 @@ As a user, I want to pick my own accent color for the app, so the UI feels a lit
 
 ## Description
 
-Extends the Settings page from TICKET-SET-05 (the shared settings-store foundation) with a control: a small palette of accent-color choices that recolor daisyUI's `primary` token app-wide (buttons, active nav state, links, chart accents that key off `--color-primary`).
+Extends the Settings page from TICKET-SET-05 (the shared settings-store foundation) with a control: a small palette of accent-color choices that recolor daisyUI's `primary` token (buttons, active nav state, links, chart accents that key off `--color-primary`).
+
+**Scope narrowed during implementation (explicit user instruction):** the override only applies while a **Default Light/Dark** theme is active — every other catalogue theme (Textbook, Party, Nuclear, Clay, Clay Dark, Disco, Tech, Leather) keeps its own baked-in accent untouched, with no picker shown for them. The original text below described an all-themes override; see Notes for why this was deliberately narrowed.
 
 ## Current situation (as-is)
 
@@ -20,23 +22,25 @@ Extends the Settings page from TICKET-SET-05 (the shared settings-store foundati
 
 ## Desired result (to-be)
 
-- `AppSettings` (from TICKET-SET-05) gains an additive, non-indexed `primaryColor?: string` field (a hex value or a fixed palette key — see Notes) — no Dexie version bump needed, same pattern as `Category.smoothAnnually`.
-- The existing `/settings` page (`feature-settings/`) gains a "Primary color" section alongside its theme picker: a small fixed palette of preset swatches (5-8 curated options that read well against both the light and dark theme's `base-100`/`base-content`, not a full color picker — see Notes) that the user picks from.
-- Selecting a swatch updates `--color-primary` (and a correspondingly-computed `--color-primary-content` for contrast) at the document-root level via an `effect()` in `AppSettingsStore`, and persists through the repository.
-- The override applies on top of whichever theme style `ThemeService` currently has active — picking an accent color is independent of the theme choice, not a per-theme setting.
+- `AppSettings` (from TICKET-SET-05) gains an additive `primaryColor: AccentColorId | undefined` field — a fixed palette key, not a freeform hex (required-but-possibly-`undefined` rather than optional, to sidestep an `@ngrx/signals withState` typing quirk; see `AppSettings.id`'s own note in `app-db.ts`) — no Dexie version bump needed, same pattern as `Category.smoothAnnually`.
+- The existing `/settings` page (`feature-settings/`) gets an "Accent color" row inserted directly under the Default Light/Default Dark theme cards (not a separate page section, and not a popover — a plain inline row of swatches, `flex flex-wrap`, per user direction): 6 curated preset swatches plus a "Default" option, each with its own OKLCH light/dark pair (`core/theme/accent-colors.ts`), verified by script for WCAG contrast rather than picked by eye.
+- Selecting a swatch updates `--color-primary`/`--color-primary-content` as inline styles on `<html>` via an `effect()` in `AppSettingsStore` (injecting `ThemeService`), and persists through `AppSettingsRepository`.
+- The override applies **only** while a Default Light/Dark theme is active (`DEFAULT_THEME_STYLE_IDS` in `core/theme/theme-styles.ts`) — every other theme keeps its own accent regardless of the stored `primaryColor`, per the scope narrowed during implementation (see Description).
 
 ## Acceptance criteria
 
-- [ ] `AppSettings.primaryColor` added as an additive optional field on the TICKET-SET-05 table; no Dexie version bump.
-- [ ] Settings page renders a fixed palette of accent-color swatches; the currently-selected one is visually indicated.
-- [ ] Selecting a swatch updates the app's `--color-primary` CSS variable immediately, persists through `AppSettingsStore`/`AppSettingsRepository`, and survives a reload.
-- [ ] The chosen accent color remains legible (adequate contrast against `base-100`) in both Light and Dark theme, verified for every preset swatch — not just the default.
-- [ ] Leaving `primaryColor` unset falls back to each theme's original daisyUI default accent, with no visual change from pre-ticket behavior.
-- [ ] Unit tests cover: the setter persists through the repository; the CSS-variable-application logic for a selected swatch; the unset/default fallback case.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: pick a non-default swatch, confirm buttons/active-nav/links recolor app-wide immediately in both Light and Dark theme; reload and confirm the choice persisted.
+- [x] `AppSettings.primaryColor` added as an additive field on the TICKET-SET-05 table; no Dexie version bump.
+- [x] Settings page renders a fixed palette of accent-color swatches; the currently-selected one is visually indicated.
+- [x] Selecting a swatch updates the app's `--color-primary` CSS variable immediately, persists through `AppSettingsStore`/`AppSettingsRepository`, and survives a reload.
+- [x] The chosen accent color remains legible (adequate contrast against `base-100`) in both Light and Dark theme, verified for every preset swatch — not just the default. (Verified by script: every preset clears >=3.2:1 swatch-vs-`base-100` and >=4.3:1 `primaryContent`-vs-`primary`, both comfortably above the shipped theme's own primary/secondary/accent tokens' contrast, used as the calibration floor.)
+- [x] Leaving `primaryColor` unset falls back to each theme's original daisyUI default accent, with no visual change from pre-ticket behavior.
+- [x] Unit tests cover: the setter persists through the repository; the CSS-variable-application logic for a selected swatch; the unset/default fallback case.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [ ] Verified live in the browser: pick a non-default swatch, confirm buttons/active-nav/links recolor app-wide immediately in both Light and Dark theme; reload and confirm the choice persisted. **Not done** — user declined live browser verification for this session; only lint/test/build were run.
 
 ## Notes
 
 - A fixed preset palette (not a freeform color picker) is the deliberate choice here — an arbitrary user-picked hex can't be guaranteed to have a legible `primary-content` contrast pair, and computing accessible contrast on the fly for an arbitrary color is a meaningfully bigger feature (WCAG contrast math, live preview, fallback logic) than this ticket's "public ready, nice-to-have" scope justifies. If freeform color becomes a real ask later, that's a follow-up ticket, not a revision of this one.
 - Depends only on TICKET-SET-05 (settings-store foundation); independent of SET-03, SET-04, and PRIV-01 — any of the four can be built in any order relative to the others.
+- **Scope narrowed during implementation, by explicit user instruction:** rather than an all-themes override, the accent picker only affects the two Default Light/Dark themes; every other theme keeps its own accent, and no picker is shown for them. The control is a plain inline swatch row (`flex flex-wrap`) directly under the Default Light/Dark cards, not a separate page section or popover — an earlier popover-based (`mm-dropdown`) implementation was replaced per user feedback ("replace the dropdown with just the options in a row").
+- **Bonus fix, in scope for this session but not this ticket's original text:** while building the popover version, discovered `mm-dropdown`'s content wrapper (`DropdownComponent`) had no background by design gap — daisyUI's `dropdown-content`/`menu` classes are layout-only — so every popover in the app (date-range picker, category-comparison panel filter, categories/accounts overview action menus) was rendering see-through. Fixed at the shared component level (`bg-base-100 rounded-box border border-base-300 shadow-lg` baked into `DropdownComponent`'s content classes) so every consumer gets it for free; one consumer's now-redundant duplicate classes were trimmed.

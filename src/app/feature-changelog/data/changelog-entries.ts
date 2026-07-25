@@ -214,7 +214,21 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     versionFolder: 'v1.5_redesign',
     ticketIds: ['TICKET-IMP-09'],
     title:
-      'The CSV import mapper now walks through Date, Description, Amount (with a single-column/separate debit-credit switch), Counterparty, Own IBAN, Balance, and a final summary as a short horizontal wizard, with the raw file preview and row preview shown side by side, instead of one long scrolling form',
+      'The CSV import mapper now walks through the fields, and a final summary as a short horizontal wizard, with the raw file preview and row preview shown side by side, instead of one long scrolling form',
     area: 'Import',
+  },
+  {
+    date: '2026-07-26',
+    versionFolder: 'v2_settings',
+    ticketIds: ['TICKET-SET-05', 'TICKET-SET-02'],
+    title: 'Accent color picker for default themes',
+    area: 'Settings',
+  },
+  {
+    date: '2026-07-26',
+    versionFolder: 'v1.5_bugs',
+    ticketIds: [],
+    title: 'Popover menus now have a background. no longer transparent',
+    area: 'Bugfix',
   },
 ];

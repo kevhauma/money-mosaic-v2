@@ -5,6 +5,9 @@ import { computeFingerprint } from '@/shared/utils/fingerprint';
 // Deep import (not the `core/ml` barrel) for the same reason as above — the barrel's
 // rule-proposal-mining module pulls in an `@Injectable` service transitively.
 import type { FeatureConfig } from '@/core/ml/model-config';
+// Deep import (not the `core/theme` barrel) for the same reason as above — the barrel's
+// `ThemeService` pulls in an `@Injectable` service transitively.
+import type { AccentColorId } from '@/core/theme/accent-colors';
 
 /** A person sharing a `joint` account, and the IBAN(s) they pay in from (TICKET-ACC-03). */
 export type JointOwner = {
@@ -469,6 +472,32 @@ export const DEFAULT_CATEGORY_MODEL_SETTINGS: CategoryModelSettings = {
   trainingWindowYears: null,
 };
 
+/**
+ * Singleton row (id always 1) for app-wide settings that are genuinely portable/exportable data
+ * (currency, locale, privacy default, etc.) — as opposed to `ThemeService`'s per-browser
+ * appearance preference, which stays `localStorage`-only by design (TICKET-SET-05). Starts empty;
+ * SET-02/SET-03/SET-04/PRIV-01 each add their own additive optional field on top later.
+ */
+export type AppSettings = {
+  id: number;
+  /**
+   * Additive field (TICKET-SET-02) — a fixed palette key, not a freeform hex. `undefined` falls
+   * back to each theme's own baked-in accent. Only applied while a Default Light/Dark theme is
+   * active (`DEFAULT_THEME_STYLE_IDS` in `core/theme/theme-styles.ts`); every other theme keeps
+   * its own accent regardless of this field. Required-but-possibly-`undefined` rather than
+   * optional (`primaryColor?:`) — `@ngrx/signals`' `withState` preserves property optionality
+   * onto the generated store accessor, which would make `store.primaryColor` itself possibly
+   * `undefined` instead of a signal whose *value* can be `undefined` (same fix as `AppSettings.id`
+   * needed in TICKET-SET-05).
+   */
+  primaryColor: AccentColorId | undefined;
+};
+
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  id: 1,
+  primaryColor: undefined,
+};
+
 class AppDb extends Dexie {
   accounts!: Table<Account, number>;
   transactions!: Table<Transaction, number>;
@@ -482,6 +511,7 @@ class AppDb extends Dexie {
   categoryComparisonSettings!: Table<CategoryComparisonSettings, number>;
   dashboardLayoutSettings!: Table<DashboardLayoutSettings, number>;
   categoryModelSettings!: Table<CategoryModelSettings, number>;
+  appSettings!: Table<AppSettings, number>;
 
   constructor() {
     super('money-mosaic');
@@ -711,6 +741,15 @@ class AppDb extends Dexie {
     this.version(11).stores({
       transactions:
         '++id, accountId, bookingDate, categoryId, transferId, fingerprint, importBatchId, attributionOverride.reimbursementTransferId',
+    });
+
+    // Adds the `appSettings` singleton-row table for app-wide portable settings (currency, locale,
+    // privacy default, etc.) — the shared foundation SET-02/SET-03/SET-04/PRIV-01 each add their own
+    // field to (TICKET-SET-05). Purely additive — a brand-new, empty table — so no `.upgrade()` is
+    // needed; the repository's `get()` falls back to `DEFAULT_APP_SETTINGS` when the row hasn't been
+    // written yet, same as `categoryModel`/`categoryComparisonSettings`.
+    this.version(12).stores({
+      appSettings: 'id',
     });
 
     this.on('populate', () => {

@@ -43,23 +43,42 @@ describe('DropdownComponent', () => {
     expect(items.map((item) => item.textContent?.trim())).toEqual(['Item one', 'Item two']);
   });
 
-  it('renders a ul.menu wrapper by default', () => {
+  it('renders a ul.menu wrapper by default, with an opaque background so it never renders see-through', () => {
     fixture.detectChanges();
 
     const ul = fixture.nativeElement.querySelector('ul');
     expect(ul).toBeTruthy();
-    expect(new Set(ul.className.split(' '))).toEqual(new Set(['dropdown-content', 'menu']));
+    expect(new Set(ul.className.split(' '))).toEqual(
+      new Set([
+        'dropdown-content',
+        'bg-base-100',
+        'rounded-box',
+        'border',
+        'border-base-300',
+        'shadow-lg',
+        'menu',
+      ]),
+    );
     expect(fixture.nativeElement.querySelector('div.dropdown-content')).toBeNull();
   });
 
-  it('renders a div wrapper without the menu class when menu=false', () => {
+  it('renders a div wrapper without the menu class when menu=false, still with the opaque background', () => {
     host.menu = false;
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('ul')).toBeNull();
     const div = fixture.nativeElement.querySelector('div.dropdown-content');
     expect(div).toBeTruthy();
-    expect(div.className).toBe('dropdown-content');
+    expect(new Set(div.className.split(' '))).toEqual(
+      new Set([
+        'dropdown-content',
+        'bg-base-100',
+        'rounded-box',
+        'border',
+        'border-base-300',
+        'shadow-lg',
+      ]),
+    );
     expect(div.textContent).toContain('Custom content');
   });
 

@@ -14,7 +14,11 @@
 ## Food voucher support
 - ability to add food vouchers to an account, counts as income,
 - being able to set active date range, with linked expense category expense (eg. groceries)
-- 
+  
+## P2P multi-device sync
+- being able to sync between devides
+- WebRTC Datachannels, handshake via pair code? possibly needs server
+- scannable QR code that shares the data? needs compression
 
 ## Extra graphs
 - heatmaps, day of week/month/quarter (buckets), top 4 categories rows | example: https://echarts.apache.org/examples/en/editor.html?c=heatmap-cartesian or https://echarts.apache.org/examples/en/editor.html?c=matrix-simple

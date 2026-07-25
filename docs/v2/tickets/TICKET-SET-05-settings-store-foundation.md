@@ -27,13 +27,13 @@ Extracts the shared settings-storage foundation into its own ticket. Previously,
 
 ## Acceptance criteria
 
-- [ ] `AppSettings` type + `DEFAULT_APP_SETTINGS` (`{ id: 1 }`) defined in `core/data-access`.
-- [ ] `appDb` gains the `appSettings: 'id'` table via a new additive `.version(12).stores(...)` block; all previous version blocks are untouched.
-- [ ] `AppSettingsRepository` (`get()`) and `AppSettingsStore` added, following the `CategoryComparisonSettingsRepository`/`Store` shape; hydrated in `app.config.ts`'s bootstrap sequence.
-- [ ] Components/stores never touch `appDb.appSettings` directly — always through the repository.
-- [ ] Unit tests cover: `AppSettingsRepository.get()` falling back to `DEFAULT_APP_SETTINGS` when no row exists yet; `AppSettingsStore` hydrating through the repository at construction.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: confirm the app still boots and the existing `/settings` page (theme picker) renders unchanged — this ticket has no visible UI of its own; each of SET-02/SET-03/SET-04/PRIV-01 is responsible for verifying its own new section once built on top of this table.
+- [x] `AppSettings` type + `DEFAULT_APP_SETTINGS` (`{ id: 1 }`) defined in `core/data-access`.
+- [x] `appDb` gains the `appSettings: 'id'` table via a new additive `.version(12).stores(...)` block; all previous version blocks are untouched.
+- [x] `AppSettingsRepository` (`get()`) and `AppSettingsStore` added, following the `CategoryComparisonSettingsRepository`/`Store` shape; hydrated in `app.config.ts`'s bootstrap sequence.
+- [x] Components/stores never touch `appDb.appSettings` directly — always through the repository.
+- [x] Unit tests cover: `AppSettingsRepository.get()` falling back to `DEFAULT_APP_SETTINGS` when no row exists yet; `AppSettingsStore` hydrating through the repository at construction.
+- [x] Verified via the fallow skill and coding-conventions skill.
+- [x] Verified live in the browser: confirm the app still boots and the existing `/settings` page (theme picker) renders unchanged — this ticket has no visible UI of its own; each of SET-02/SET-03/SET-04/PRIV-01 is responsible for verifying its own new section once built on top of this table.
 
 ## Notes
 

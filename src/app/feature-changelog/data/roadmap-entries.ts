@@ -29,18 +29,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'Settings',
-    ticketId: 'TICKET-SET-05',
-    title: 'Foundation for app settings (accent color, currency, locale, privacy mode)',
-    area: 'App Settings',
-  },
-  {
-    versionFolder: 'Settings',
-    ticketId: 'TICKET-SET-02',
-    title: 'Pick your own accent color for the app',
-    area: 'App Settings',
-  },
-  {
-    versionFolder: 'Settings',
     ticketId: 'TICKET-SET-03',
     title: 'Choose your currency so amounts display correctly instead of defaulting to EUR',
     area: 'App Settings',

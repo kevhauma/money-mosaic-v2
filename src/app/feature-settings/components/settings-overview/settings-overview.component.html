@@ -37,6 +37,54 @@
         </span>
         <mm-text as="p" variant="caption" class="px-1 pb-1">{{ style.tagline }}</mm-text>
       </button>
+      @if (style.id === lastDefaultThemeId) {
+        <div class="col-span-full">
+          <mm-text as="span" weight="semibold" class="text-sm">Accent color</mm-text>
+          <mm-text as="p" variant="caption" class="mt-0.5">
+            Applies to the Default Light and Default Dark themes only.
+          </mm-text>
+          <div
+            class="mt-3 flex flex-wrap items-center gap-4"
+            role="group"
+            aria-label="Accent color"
+          >
+            <button
+              type="button"
+              class="flex flex-col items-center gap-1"
+              aria-label="Default"
+              [attr.aria-pressed]="isAccentSelected(undefined)"
+              (click)="onSelectAccent(undefined)"
+            >
+              <span
+                class="h-8 w-8 rounded border border-base-300"
+                [class.ring-2]="isAccentSelected(undefined)"
+                [class.ring-primary]="isAccentSelected(undefined)"
+                [class.ring-offset-2]="isAccentSelected(undefined)"
+                [class.ring-offset-base-100]="isAccentSelected(undefined)"
+                [style.background-color]="defaultAccentSwatch()"
+              ></span>
+            </button>
+            @for (color of accentColors; track color.id) {
+              <button
+                type="button"
+                class="flex flex-col items-center gap-1"
+                [attr.aria-label]="color.label"
+                [attr.aria-pressed]="isAccentSelected(color.id)"
+                (click)="onSelectAccent(color.id)"
+              >
+                <span
+                  class="h-8 w-8 rounded border border-base-300"
+                  [class.ring-2]="isAccentSelected(color.id)"
+                  [class.ring-primary]="isAccentSelected(color.id)"
+                  [class.ring-offset-2]="isAccentSelected(color.id)"
+                  [class.ring-offset-base-100]="isAccentSelected(color.id)"
+                  [style.background-color]="accentSwatch(color)"
+                ></span>
+              </button>
+            }
+          </div>
+        </div>
+      }
     }
   </div>
 </mm-paper>
