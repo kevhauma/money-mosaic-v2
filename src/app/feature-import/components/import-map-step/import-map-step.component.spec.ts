@@ -91,6 +91,35 @@ describe('ImportMapStepComponent: horizontal mapper stepper (TICKET-IMP-09)', ()
     expect(internals().activeStepId()).toBe('date');
   });
 
+  it('jumps straight to the summary step when a saved mapping profile matches', async () => {
+    vi.clearAllMocks();
+    detectHeaders.mockResolvedValue(['Date', 'Desc', 'Debit', 'Credit']);
+    previewRawRows.mockResolvedValue([
+      ['Date', 'Desc', 'Debit', 'Credit'],
+      ['14/07/2026', 'Coffee', '3.50', ''],
+    ]);
+    detectTemplateForFile.mockResolvedValue(SAVED_SPLIT_PROFILE);
+    findForBankAndAccount.mockReturnValue(SAVED_SPLIT_PROFILE);
+
+    await TestBed.configureTestingModule({
+      imports: [ImportMapStepComponent],
+      providers: [
+        { provide: CsvImportService, useValue: { detectHeaders, previewRawRows } },
+        {
+          provide: MappingProfilesStore,
+          useValue: { detectTemplateForFile, findForBankAndAccount },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ImportMapStepComponent);
+    fixture.componentRef.setInput('file', csvFile());
+    fixture.componentRef.setInput('accountId', 1);
+    await fixture.whenStable();
+
+    expect(internals().activeStepId()).toBe('summary');
+  });
+
   it('advanceFrom moves to the next step once the current one is valid', async () => {
     await setup();
     internals().form.patchValue({ date: 'Date' });
@@ -290,6 +319,62 @@ describe('ImportMapStepComponent: horizontal mapper stepper (TICKET-IMP-09)', ()
       await fixture.whenStable();
 
       expect(internals().controlFor('amount').value).toBe('Amount');
+    });
+  });
+
+  describe('stepperItems status', () => {
+    it('marks a required step incomplete while empty and complete once mapped', async () => {
+      await setup();
+      expect(
+        internals()
+          .stepperItems()
+          .find((i) => i.id === 'date')?.status,
+      ).toBe('incomplete');
+
+      internals().form.patchValue({ date: 'Date' });
+      await fixture.whenStable();
+
+      expect(
+        internals()
+          .stepperItems()
+          .find((i) => i.id === 'date')?.status,
+      ).toBe('complete');
+    });
+
+    it('marks an all-optional step empty while unmapped and complete once anything is mapped', async () => {
+      await setup();
+      expect(
+        internals()
+          .stepperItems()
+          .find((i) => i.id === 'balance')?.status,
+      ).toBe('empty');
+
+      internals().form.patchValue({ balance: 'Amount' });
+      await fixture.whenStable();
+
+      expect(
+        internals()
+          .stepperItems()
+          .find((i) => i.id === 'balance')?.status,
+      ).toBe('complete');
+    });
+
+    it('marks the summary step incomplete until every required field is mapped', async () => {
+      await setup();
+      expect(
+        internals()
+          .stepperItems()
+          .find((i) => i.id === 'summary')?.status,
+      ).toBe('incomplete');
+
+      internals().form.patchValue({ date: 'Date', description: 'Desc' });
+      await fixture.whenStable();
+
+      expect(
+        internals()
+          .stepperItems()
+          .find((i) => i.id === 'summary')?.status,
+      ).toBe('complete');
     });
   });
 

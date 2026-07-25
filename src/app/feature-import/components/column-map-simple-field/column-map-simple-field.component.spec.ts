@@ -41,18 +41,20 @@ describe('ColumnMapSimpleFieldComponent', () => {
     const control = new FormControl('', { nonNullable: true, validators: Validators.required });
     setup(requiredField, control);
 
-    const button = (fixture.nativeElement as HTMLElement).querySelector('button');
-    expect(button?.disabled).toBe(true);
-    expect(button?.textContent?.trim()).toBe('Next');
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll('button');
+    const advanceButton = buttons[1];
+    expect(advanceButton?.disabled).toBe(true);
+    expect(advanceButton?.textContent?.trim()).toBe('Next');
   });
 
   it('labels the advance button "Skip" for an empty optional field', () => {
     const control = new FormControl('', { nonNullable: true });
     setup(optionalField, control);
 
-    const button = (fixture.nativeElement as HTMLElement).querySelector('button');
-    expect(button?.disabled).toBe(false);
-    expect(button?.textContent?.trim()).toBe('Skip');
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll('button');
+    const advanceButton = buttons[1];
+    expect(advanceButton?.disabled).toBe(false);
+    expect(advanceButton?.textContent?.trim()).toBe('Skip');
   });
 
   it('shows the resolved sample and duplicate warning when provided', () => {
@@ -73,7 +75,20 @@ describe('ColumnMapSimpleFieldComponent', () => {
     const emitted: void[] = [];
     fixture.componentInstance.advanced.subscribe(() => emitted.push(undefined));
 
-    (fixture.nativeElement as HTMLElement).querySelector('button')?.click();
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll('button');
+    (buttons[1] as HTMLButtonElement)?.click();
+
+    expect(emitted).toHaveLength(1);
+  });
+
+  it('emits return when the Back button is clicked', () => {
+    const control = new FormControl('Date', { nonNullable: true });
+    setup(requiredField, control);
+    const emitted: void[] = [];
+    fixture.componentInstance.return.subscribe(() => emitted.push(undefined));
+
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll('button');
+    (buttons[0] as HTMLButtonElement)?.click();
 
     expect(emitted).toHaveLength(1);
   });

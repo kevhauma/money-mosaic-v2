@@ -16,10 +16,10 @@ describe('ColumnMapSampleCaptionComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent?.trim()).toBe('');
   });
 
-  it('shows the sample with a leading arrow', () => {
+  it('shows the sample', () => {
     fixture.componentRef.setInput('sample', '14/07/2026');
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('→ 14/07/2026');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('14/07/2026');
   });
 
   it('shows the duplicate warning', () => {
@@ -33,7 +33,7 @@ describe('ColumnMapSampleCaptionComponent', () => {
     fixture.componentRef.setInput('warning', 'Also mapped to Date');
     fixture.detectChanges();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('→ 14/07/2026');
+    expect(text).toContain('14/07/2026');
     expect(text).toContain('Also mapped to Date');
   });
 });

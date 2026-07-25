@@ -19,10 +19,6 @@
   }
 
   <form [formGroup]="form" class="flex flex-col gap-4">
-    <mm-fieldset legend="Mapping profile name">
-      <mm-input type="text" formControlName="name" size="sm" class="w-full" />
-    </mm-fieldset>
-
     <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       <mm-fieldset legend="Delimiter">
         <mm-input
@@ -68,20 +64,102 @@
       </mm-fieldset>
     </div>
 
-    @if (canOfferApplyToRemaining()) {
-      <mm-label as="label" class="cursor-pointer justify-start gap-2">
-        <input
-          type="checkbox"
-          class="checkbox checkbox-sm"
-          [checked]="applyToRemaining()"
-          (change)="onApplyToRemainingChange($event)"
+    <mm-divider class="my-1 text-xs">Columns</mm-divider>
+
+    @if (invalidFieldLabels().length > 0) {
+      <mm-alert status="warning" variant="soft" class="text-sm">
+        Map a column for: {{ invalidFieldLabels().join(', ') }}
+      </mm-alert>
+    }
+
+    <app-column-map-stepper [items]="stepperItems()" (stepClicked)="openStep($event)" />
+
+    @switch (activeStepId()) {
+      @case ('date') {
+        <app-column-map-simple-field
+          [field]="fieldDef('date')"
+          [control]="controlFor('date')"
+          [headers]="headers()"
+          [resolvedSample]="resolvedSamples().date"
+          [duplicateWarning]="duplicateWarnings().date"
+          (advanced)="advanceFrom('date')"
+          (return)="returnFrom('date')"
         />
-        <mm-text variant="caption" color="base-content">
-          Apply this mapping to the remaining {{ remainingFilesCount() }} file{{
-            remainingFilesCount() === 1 ? '' : 's'
-          }}
-        </mm-text>
-      </mm-label>
+      }
+      @case ('description') {
+        <app-column-map-simple-field
+          [field]="fieldDef('description')"
+          [control]="controlFor('description')"
+          [headers]="headers()"
+          [resolvedSample]="resolvedSamples().description"
+          [duplicateWarning]="duplicateWarnings().description"
+          (advanced)="advanceFrom('description')"
+          (return)="returnFrom('description')"
+        />
+      }
+      @case ('amount') {
+        <app-column-map-amount-field
+          [mode]="amountMode()"
+          [headers]="headers()"
+          [amountControl]="controlFor('amount')"
+          [debitControl]="controlFor('debit')"
+          [creditControl]="controlFor('credit')"
+          [amountSample]="resolvedSamples().amount"
+          [debitSample]="resolvedSamples().debit"
+          [creditSample]="resolvedSamples().credit"
+          [amountWarning]="duplicateWarnings().amount"
+          [debitWarning]="duplicateWarnings().debit"
+          [creditWarning]="duplicateWarnings().credit"
+          (modeChange)="setAmountMode($event)"
+          (advanced)="advanceFrom('amount')"
+          (return)="returnFrom('amount')"
+        />
+      }
+      @case ('counterparty') {
+        <app-column-map-counterparty-field
+          [headers]="headers()"
+          [nameControl]="controlFor('counterpartyName')"
+          [ibanControl]="controlFor('counterpartyIban')"
+          [nameSample]="resolvedSamples().counterpartyName"
+          [ibanSample]="resolvedSamples().counterpartyIban"
+          [nameWarning]="duplicateWarnings().counterpartyName"
+          [ibanWarning]="duplicateWarnings().counterpartyIban"
+          (advanced)="advanceFrom('counterparty')"
+          (return)="returnFrom('counterparty')"
+        />
+      }
+      @case ('ownIban') {
+        <app-column-map-simple-field
+          [field]="fieldDef('ownIban')"
+          [control]="controlFor('ownIban')"
+          [headers]="headers()"
+          [resolvedSample]="resolvedSamples().ownIban"
+          [duplicateWarning]="duplicateWarnings().ownIban"
+          (advanced)="advanceFrom('ownIban')"
+          (return)="returnFrom('ownIban')"
+        />
+      }
+      @case ('balance') {
+        <app-column-map-simple-field
+          [field]="fieldDef('balance')"
+          [control]="controlFor('balance')"
+          [headers]="headers()"
+          [resolvedSample]="resolvedSamples().balance"
+          [duplicateWarning]="duplicateWarnings().balance"
+          (advanced)="advanceFrom('balance')"
+          (return)="returnFrom('balance')"
+        />
+      }
+      @case ('summary') {
+        <app-column-map-summary-step
+          [rows]="summaryRows()"
+          [nameControl]="form.controls.name"
+          [rememberControl]="form.controls.rememberForAccount"
+          [canOfferApplyToRemaining]="canOfferApplyToRemaining()"
+          [remainingFilesCount]="remainingFilesCount()"
+          [(applyToRemaining)]="applyToRemaining"
+        />
+      }
     }
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -89,7 +167,7 @@
         <mm-text as="p" weight="medium" class="mb-2 text-xs text-base-content/60"
           >Raw file preview</mm-text
         >
-        <mm-table density="compact">
+        <mm-table density="compact" scroll="auto" class="h-96">
           <tbody>
             @for (row of previewRows(); track $index) {
               <tr>
@@ -143,93 +221,5 @@
         }
       </div>
     </div>
-
-    <mm-divider class="my-1 text-xs">Columns</mm-divider>
-
-    @if (invalidFieldLabels().length > 0) {
-      <mm-alert status="warning" variant="soft" class="text-sm">
-        Map a column for: {{ invalidFieldLabels().join(', ') }}
-      </mm-alert>
-    }
-
-    <app-column-map-stepper [items]="stepperItems()" (stepClicked)="openStep($event)" />
-
-    @switch (activeStepId()) {
-      @case ('date') {
-        <app-column-map-simple-field
-          [field]="fieldDef('date')"
-          [control]="controlFor('date')"
-          [headers]="headers()"
-          [resolvedSample]="resolvedSamples().date"
-          [duplicateWarning]="duplicateWarnings().date"
-          (advanced)="advanceFrom('date')"
-        />
-      }
-      @case ('description') {
-        <app-column-map-simple-field
-          [field]="fieldDef('description')"
-          [control]="controlFor('description')"
-          [headers]="headers()"
-          [resolvedSample]="resolvedSamples().description"
-          [duplicateWarning]="duplicateWarnings().description"
-          (advanced)="advanceFrom('description')"
-        />
-      }
-      @case ('amount') {
-        <app-column-map-amount-field
-          [mode]="amountMode()"
-          [headers]="headers()"
-          [amountControl]="controlFor('amount')"
-          [debitControl]="controlFor('debit')"
-          [creditControl]="controlFor('credit')"
-          [amountSample]="resolvedSamples().amount"
-          [debitSample]="resolvedSamples().debit"
-          [creditSample]="resolvedSamples().credit"
-          [amountWarning]="duplicateWarnings().amount"
-          [debitWarning]="duplicateWarnings().debit"
-          [creditWarning]="duplicateWarnings().credit"
-          (modeChange)="setAmountMode($event)"
-          (advanced)="advanceFrom('amount')"
-        />
-      }
-      @case ('counterparty') {
-        <app-column-map-counterparty-field
-          [headers]="headers()"
-          [nameControl]="controlFor('counterpartyName')"
-          [ibanControl]="controlFor('counterpartyIban')"
-          [nameSample]="resolvedSamples().counterpartyName"
-          [ibanSample]="resolvedSamples().counterpartyIban"
-          [nameWarning]="duplicateWarnings().counterpartyName"
-          [ibanWarning]="duplicateWarnings().counterpartyIban"
-          (advanced)="advanceFrom('counterparty')"
-        />
-      }
-      @case ('ownIban') {
-        <app-column-map-simple-field
-          [field]="fieldDef('ownIban')"
-          [control]="controlFor('ownIban')"
-          [headers]="headers()"
-          [resolvedSample]="resolvedSamples().ownIban"
-          [duplicateWarning]="duplicateWarnings().ownIban"
-          (advanced)="advanceFrom('ownIban')"
-        />
-      }
-      @case ('balance') {
-        <app-column-map-simple-field
-          [field]="fieldDef('balance')"
-          [control]="controlFor('balance')"
-          [headers]="headers()"
-          [resolvedSample]="resolvedSamples().balance"
-          [duplicateWarning]="duplicateWarnings().balance"
-          (advanced)="advanceFrom('balance')"
-        />
-      }
-      @case ('summary') {
-        <app-column-map-summary-step
-          [rows]="summaryRows()"
-          [rememberControl]="form.controls.rememberForAccount"
-        />
-      }
-    }
   </form>
 }

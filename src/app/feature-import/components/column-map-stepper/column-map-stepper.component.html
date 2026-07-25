@@ -1,13 +1,20 @@
 <ul class="steps steps-horizontal w-full">
   @for (item of items(); track item.id) {
-    <li class="step" [class.step-primary]="item.state !== 'upcoming'">
+    <li
+      class="step"
+      [class.step-primary]="item.state !== 'upcoming' && item.status !== 'incomplete'"
+      [class.step-error]="item.state !== 'upcoming' && item.status === 'incomplete'"
+      [attr.data-content]="
+        item.status === 'complete' ? '✓' : item.status === 'incomplete' ? '!' : null
+      "
+    >
       <button
         type="button"
-        class="text-xs"
+        class="cursor-pointer text-xs"
         [attr.aria-current]="item.state === 'current' ? 'step' : null"
         (click)="stepClicked.emit(item.id)"
       >
-        {{ item.label }}
+        <mm-text as="span" class="text-xs">{{ item.label }}</mm-text>
       </button>
     </li>
   }

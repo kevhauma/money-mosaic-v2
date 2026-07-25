@@ -28,7 +28,6 @@ import {
   FieldsetComponent,
   FlexComponent,
   InputComponent,
-  LabelComponent,
   SelectComponent,
   TableComponent,
   TypographyComponent,
@@ -80,10 +79,18 @@ export type MapperStepId =
 export type MapperStepDef = { id: MapperStepId; label: string; keys: ColumnFieldKey[] };
 
 export type MapperStepTrackerState = 'done' | 'current' | 'upcoming';
+
+/** Per-step valid/set indicator shown by the tracker (independent of `state`): `complete` means
+ * every required control in the step is filled (or, for an all-optional step, at least one
+ * control is); `incomplete` means a required control is still empty; `empty` means an all-optional
+ * step has nothing mapped yet. */
+export type MapperStepStatus = 'complete' | 'incomplete' | 'empty';
+
 export type MapperStepTrackerItem = {
   id: MapperStepId;
   label: string;
   state: MapperStepTrackerState;
+  status: MapperStepStatus;
 };
 
 /**
@@ -118,7 +125,6 @@ const MAPPER_STEPS: MapperStepDef[] = [
     FlexComponent,
     ImportPreviewStepComponent,
     InputComponent,
-    LabelComponent,
     SelectComponent,
     TableComponent,
     TypographyComponent,
@@ -253,16 +259,37 @@ export class ImportMapStepComponent {
     );
   });
 
-  /** The horizontal tracker's precomputed items — done/current/upcoming; every step is freely
-   * clickable, so the user can jump anywhere in the guided flow, not just backward. */
+  /** The horizontal tracker's precomputed items — done/current/upcoming state plus a valid/set
+   * status; every step is freely clickable, so the user can jump anywhere in the guided flow, not
+   * just backward. */
   protected readonly stepperItems = computed<MapperStepTrackerItem[]>(() => {
     const activeIndex = MAPPER_STEPS.findIndex((step) => step.id === this.activeStepId());
     return MAPPER_STEPS.map((step, index) => ({
       id: step.id,
       label: step.label,
       state: index < activeIndex ? 'done' : index === activeIndex ? 'current' : 'upcoming',
+      status: this.stepStatus(step),
     }));
   });
+
+  /** A step is `complete` once its required control(s) are filled (an all-optional step counts as
+   * complete once anything is mapped), `incomplete` while a required control is still empty, or
+   * `empty` for an all-optional step nothing has been mapped to yet. The Summary step mirrors
+   * `invalidFieldLabels` since it has no controls of its own. */
+  private stepStatus(step: MapperStepDef): MapperStepStatus {
+    if (step.id === 'summary') {
+      return this.invalidFieldLabels().length === 0 ? 'complete' : 'incomplete';
+    }
+
+    const value = this.formValue();
+    const requiredKeys = step.keys.filter(
+      (key) => COLUMN_FIELD_DEFS.find((field) => field.key === key)?.required,
+    );
+    if (requiredKeys.length > 0) {
+      return requiredKeys.every((key) => !!value[key]) ? 'complete' : 'incomplete';
+    }
+    return step.keys.some((key) => !!value[key]) ? 'complete' : 'empty';
+  }
 
   /** The Summary step's recap — every field that's actually mapped, in `COLUMN_FIELD_DEFS` order. */
   protected readonly summaryRows = computed<MapperSummaryRow[]>(() => {
@@ -332,6 +359,9 @@ export class ImportMapStepComponent {
           ...savedProfile.columns,
           rememberForAccount: true,
         });
+        // A saved mapping profile already has every column mapped — skip straight to the Summary
+        // step instead of walking the guided flow again.
+        this.activeStepId.set('summary');
       } else if (preset) {
         this.form.patchValue({
           name: preset.name,
@@ -362,7 +392,7 @@ export class ImportMapStepComponent {
       this.file(),
       delimiter,
       encoding,
-      headerRows + 5,
+      headerRows + 20,
     );
     this.headers.set(rows[headerRows - 1] ?? []);
     this.previewRows.set(rows);
@@ -393,10 +423,6 @@ export class ImportMapStepComponent {
     }
   }
 
-  protected onApplyToRemainingChange(event: Event): void {
-    this.applyToRemaining.set((event.target as HTMLInputElement).checked);
-  }
-
   /** Opens any step for editing — collapsing whichever step was previously active and marking its
    * controls touched, so a skipped required field's error surfaces once the user moves away from
    * it. Every step is reachable, including jumping ahead past ones not yet visited. */
@@ -417,6 +443,14 @@ export class ImportMapStepComponent {
     const currentIndex = MAPPER_STEPS.findIndex((step) => step.id === id);
     const next = MAPPER_STEPS[currentIndex + 1];
     if (next) this.activeStepId.set(next.id);
+  }
+  protected returnFrom(id: MapperStepId): void {
+    this.markStepTouched(id);
+    if (this.isStepBlocked(id)) return;
+
+    const currentIndex = MAPPER_STEPS.findIndex((step) => step.id === id);
+    const previous = MAPPER_STEPS[currentIndex - 1];
+    if (previous) this.activeStepId.set(previous.id);
   }
 
   private markStepTouched(id: MapperStepId): void {

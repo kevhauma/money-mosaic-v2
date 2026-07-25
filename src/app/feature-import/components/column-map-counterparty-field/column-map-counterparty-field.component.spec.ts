@@ -39,7 +39,18 @@ describe('ColumnMapCounterpartyFieldComponent', () => {
     const emitted: void[] = [];
     fixture.componentInstance.advanced.subscribe(() => emitted.push(undefined));
 
-    (fixture.nativeElement as HTMLElement).querySelector('button')?.click();
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll('button');
+    (buttons[1] as HTMLButtonElement)?.click();
+
+    expect(emitted).toHaveLength(1);
+  });
+
+  it('emits return when the Back button is clicked', () => {
+    const emitted: void[] = [];
+    fixture.componentInstance.return.subscribe(() => emitted.push(undefined));
+
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll('button');
+    (buttons[0] as HTMLButtonElement)?.click();
 
     expect(emitted).toHaveLength(1);
   });

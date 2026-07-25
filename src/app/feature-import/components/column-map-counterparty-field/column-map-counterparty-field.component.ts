@@ -30,4 +30,5 @@ export class ColumnMapCounterpartyFieldComponent {
   readonly ibanWarning = input<string>();
 
   readonly advanced = output<void>();
+  readonly return = output<void>();
 }

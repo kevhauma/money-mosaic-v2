@@ -39,4 +39,5 @@ export class ColumnMapAmountFieldComponent {
 
   readonly modeChange = output<AmountMode>();
   readonly advanced = output<void>();
+  readonly return = output<void>();
 }

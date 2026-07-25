@@ -1,22 +1,6 @@
 <div class="rounded-box border border-primary/50 bg-base-200/40 p-3">
-  <mm-fieldset [legend]="field().label + (field().required ? ' *' : '')">
-    <mm-select [formControl]="control()" size="sm" class="w-full">
-      <option value="">{{ field().required ? '— select column —' : '— none —' }}</option>
-      @for (header of headers(); track header) {
-        <option [value]="header">{{ header }}</option>
-      }
-    </mm-select>
-  </mm-fieldset>
-
-  <app-column-map-sample-caption [sample]="resolvedSample()" [warning]="duplicateWarning()" />
-
-  @if (control().invalid && control().touched) {
-    <mm-label variant="error" class="mt-1"
-      >Required — pick a column for {{ field().label }}.</mm-label
-    >
-  }
-
-  <mm-flex justify="end" class="mt-2">
+  <mm-flex justify="between" class="mb-2">
+    <mm-button size="xs" variant="ghost" (click)="return.emit()"> Back </mm-button>
     <mm-button
       size="xs"
       variant="ghost"
@@ -26,4 +10,22 @@
       {{ advanceLabel() }}
     </mm-button>
   </mm-flex>
+  <mm-flex gap="2">
+    <mm-fieldset [legend]="field().label + (field().required ? ' *' : '')">
+      <mm-flex gap="2" class="w-full">
+        <mm-select [formControl]="control()" size="sm" class="w-full">
+          <option value="">{{ field().required ? '— select column —' : '— none —' }}</option>
+          @for (header of headers(); track header) {
+            <option [value]="header">{{ header }}</option>
+          }
+        </mm-select>
+        <app-column-map-sample-caption [sample]="resolvedSample()" [warning]="duplicateWarning()" />
+      </mm-flex>
+    </mm-fieldset>
+  </mm-flex>
+  @if (control().invalid && control().touched) {
+    <mm-label variant="error" class="mt-1"
+      >Required — pick a column for {{ field().label }}.</mm-label
+    >
+  }
 </div>

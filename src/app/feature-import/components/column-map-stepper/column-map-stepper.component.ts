@@ -3,6 +3,7 @@ import type {
   MapperStepId,
   MapperStepTrackerItem,
 } from '../import-map-step/import-map-step.component';
+import { TypographyComponent } from '@/shared/ui';
 
 /**
  * Horizontal step tracker for the guided column-mapping flow (TICKET-IMP-09) — reuses the exact
@@ -12,7 +13,7 @@ import type {
  */
 @Component({
   selector: 'app-column-map-stepper',
-  imports: [],
+  imports: [TypographyComponent],
   templateUrl: './column-map-stepper.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -38,6 +38,7 @@ export class ColumnMapSimpleFieldComponent {
   readonly duplicateWarning = input<string>();
 
   readonly advanced = output<void>();
+  readonly return = output<void>();
 
   protected advanceLabel(): string {
     if (this.field().required) return 'Next';

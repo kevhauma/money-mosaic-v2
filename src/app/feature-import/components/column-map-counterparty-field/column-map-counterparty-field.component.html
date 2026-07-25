@@ -1,4 +1,8 @@
 <div class="rounded-box border border-primary/50 bg-base-200/40 p-3">
+  <mm-flex justify="between" class="mb-2">
+    <mm-button size="xs" variant="ghost" (click)="return.emit()">Back</mm-button>
+    <mm-button size="xs" variant="ghost" (click)="advanced.emit()">Next</mm-button>
+  </mm-flex>
   <div class="flex flex-col gap-3">
     <mm-fieldset legend="Counterparty name">
       <mm-select [formControl]="nameControl()" size="sm" class="w-full">
@@ -19,8 +23,4 @@
       <app-column-map-sample-caption [sample]="ibanSample()" [warning]="ibanWarning()" />
     </mm-fieldset>
   </div>
-
-  <mm-flex justify="end" class="mt-2">
-    <mm-button size="xs" variant="ghost" (click)="advanced.emit()">Next</mm-button>
-  </mm-flex>
 </div>

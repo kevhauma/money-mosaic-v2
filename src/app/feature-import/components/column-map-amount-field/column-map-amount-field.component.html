@@ -1,4 +1,8 @@
 <div class="rounded-box border border-primary/50 bg-base-200/40 p-3">
+  <mm-flex justify="between" class="mb-2">
+    <mm-button size="xs" variant="ghost" (click)="return.emit()">Back</mm-button>
+    <mm-button size="xs" variant="ghost" (click)="advanced.emit()">Next</mm-button>
+  </mm-flex>
   <mm-fieldset legend="Amount">
     <div class="join mb-2" role="group" aria-label="Amount mode">
       <button
@@ -52,8 +56,4 @@
       </div>
     }
   </mm-fieldset>
-
-  <mm-flex justify="end" class="mt-2">
-    <mm-button size="xs" variant="ghost" (click)="advanced.emit()">Next</mm-button>
-  </mm-flex>
 </div>
