@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RangeStore } from '@/core/stats';
 import { FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
-import { buildTransactionDrilldownParams } from '@/shared/utils';
+import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
-const EUR_FORMATTER = new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' });
 const RATIO_FORMATTER = new Intl.NumberFormat('en-BE', { maximumFractionDigits: 1 });
 
 /** How close two per-day averages must be to call them "about the same" rather than compute a ratio. */
@@ -29,11 +28,11 @@ export class WeekdayWeekendSplitPanelComponent {
   protected readonly split = computed(() => this.statsStore.weekdayWeekendSplit());
 
   protected readonly weekdayAvgValue = computed(() =>
-    EUR_FORMATTER.format(this.split()?.weekday.avgPerDay ?? 0),
+    formatCurrency(this.split()?.weekday.avgPerDay ?? 0),
   );
 
   protected readonly weekendAvgValue = computed(() =>
-    EUR_FORMATTER.format(this.split()?.weekend.avgPerDay ?? 0),
+    formatCurrency(this.split()?.weekend.avgPerDay ?? 0),
   );
 
   /** Bar widths relative to the larger of the two averages, so the bigger side always fills 100%. */

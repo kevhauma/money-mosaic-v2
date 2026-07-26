@@ -2,19 +2,41 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { AppSettingsRepository } from '@/core/data-access';
 import { ThemeService } from '@/core/theme';
+import {
+  DEFAULT_CURRENCY_SYMBOL,
+  DEFAULT_CURRENCY_SYMBOL_POSITION,
+  formatCurrency,
+  setCurrencySymbol,
+  setCurrencySymbolPosition,
+} from '@/shared/utils';
 import { AppSettingsStore } from './app-settings.store';
 
 describe('AppSettingsStore', () => {
-  const repository = { get: vi.fn(), setPrimaryColor: vi.fn() };
+  const repository = {
+    get: vi.fn(),
+    setPrimaryColor: vi.fn(),
+    setCurrencySymbol: vi.fn(),
+    setCurrencySymbolPosition: vi.fn(),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     repository.get.mockResolvedValue({ id: 1 });
     repository.setPrimaryColor.mockResolvedValue(1);
+    repository.setCurrencySymbol.mockResolvedValue(1);
+    repository.setCurrencySymbolPosition.mockResolvedValue(1);
 
     TestBed.configureTestingModule({
       providers: [{ provide: AppSettingsRepository, useValue: repository }],
     });
+  });
+
+  // The currency-format module signals are process-global (Vitest isolate:false), and this
+  // store's onInit effect writes to them — reset after every test so other spec files see the
+  // default symbol/position regardless of run order (TICKET-SET-03).
+  afterEach(() => {
+    setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
+    setCurrencySymbolPosition(DEFAULT_CURRENCY_SYMBOL_POSITION);
   });
 
   it('defaults to the empty settings before hydrate resolves', () => {
@@ -55,6 +77,42 @@ describe('AppSettingsStore', () => {
 
     expect(repository.setPrimaryColor).toHaveBeenCalledExactlyOnceWith('sky');
     expect(store.primaryColor()).toBe('sky');
+  });
+
+  it('setCurrencySymbol persists through the repository, updates local state, and reformats formatCurrency', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+
+    await store.setCurrencySymbol('$');
+    TestBed.tick();
+
+    expect(repository.setCurrencySymbol).toHaveBeenCalledExactlyOnceWith('$');
+    expect(store.currencySymbol()).toBe('$');
+    expect(formatCurrency(10)).toBe('$10.00');
+  });
+
+  it('setCurrencySymbolPosition persists through the repository, updates local state, and reformats formatCurrency', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+
+    await store.setCurrencySymbolPosition('after');
+    TestBed.tick();
+
+    expect(repository.setCurrencySymbolPosition).toHaveBeenCalledExactlyOnceWith('after');
+    expect(store.currencySymbolPosition()).toBe('after');
+    expect(formatCurrency(10)).toBe('10.00€');
+  });
+
+  it('hydrating a stored symbol/position syncs formatCurrency without an explicit setter call', async () => {
+    repository.get.mockResolvedValue({
+      id: 1,
+      currencySymbol: '£',
+      currencySymbolPosition: 'after',
+    });
+    const store = TestBed.inject(AppSettingsStore);
+
+    await store.hydrate();
+    TestBed.tick();
+
+    expect(formatCurrency(10)).toBe('10.00£');
   });
 });
 

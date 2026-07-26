@@ -8,6 +8,7 @@ import type { FeatureConfig } from '@/core/ml/model-config';
 // Deep import (not the `core/theme` barrel) for the same reason as above — the barrel's
 // `ThemeService` pulls in an `@Injectable` service transitively.
 import type { AccentColorId } from '@/core/theme/accent-colors';
+import type { CurrencySymbolPosition } from '@/shared/utils/currency-format';
 
 /** A person sharing a `joint` account, and the IBAN(s) they pay in from (TICKET-ACC-03). */
 export type JointOwner = {
@@ -491,11 +492,28 @@ export type AppSettings = {
    * needed in TICKET-SET-05).
    */
   primaryColor: AccentColorId | undefined;
+  /**
+   * Additive fields (TICKET-SET-03) — a display-only symbol overlay, not an ISO 4217 code: this
+   * app doesn't do currency conversion, so rather than a fixed code list (which would imply real
+   * multi-currency accounting), the user instead picks/types the symbol they want shown and which
+   * side of the number it renders on. `undefined` falls back to `DEFAULT_CURRENCY_SYMBOL`/
+   * `DEFAULT_CURRENCY_SYMBOL_POSITION` (`'€'`/`'before'`) — today's exact hardcoded behavior — so
+   * nobody's amounts change until they opt in. Required-but-possibly-`undefined` rather than
+   * optional, same `withState` accessor-optionality pitfall as `primaryColor` above.
+   */
+  currencySymbol: string | undefined;
+  currencySymbolPosition: CurrencySymbolPosition | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   id: 1,
   primaryColor: undefined,
+  // undefined, not a concrete '€'/'before' — same tri-state-via-undefined pattern as
+  // `primaryColor` above: keeps a fresh row's read-merge-put free of extra concrete fields (which
+  // would otherwise leak into every other setter's write), with the real default applied by each
+  // reader via `?? DEFAULT_CURRENCY_SYMBOL`/`?? DEFAULT_CURRENCY_SYMBOL_POSITION`.
+  currencySymbol: undefined,
+  currencySymbolPosition: undefined,
 };
 
 class AppDb extends Dexie {

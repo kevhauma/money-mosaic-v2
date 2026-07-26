@@ -7,6 +7,13 @@ import {
   ThemeService,
   type AccentColorId,
 } from '@/core/theme';
+import {
+  DEFAULT_CURRENCY_SYMBOL,
+  DEFAULT_CURRENCY_SYMBOL_POSITION,
+  setCurrencySymbol as setGlobalCurrencySymbol,
+  setCurrencySymbolPosition as setGlobalCurrencySymbolPosition,
+  type CurrencySymbolPosition,
+} from '@/shared/utils';
 
 export const AppSettingsStore = signalStore(
   { providedIn: 'root' },
@@ -31,6 +38,18 @@ export const AppSettingsStore = signalStore(
       setPrimaryColor: async (primaryColor: AccentColorId | undefined): Promise<void> => {
         await appSettingsRepository.setPrimaryColor(primaryColor);
         patchState(store, { primaryColor });
+      },
+
+      setCurrencySymbol: async (currencySymbol: string): Promise<void> => {
+        await appSettingsRepository.setCurrencySymbol(currencySymbol);
+        patchState(store, { currencySymbol });
+      },
+
+      setCurrencySymbolPosition: async (
+        currencySymbolPosition: CurrencySymbolPosition,
+      ): Promise<void> => {
+        await appSettingsRepository.setCurrencySymbolPosition(currencySymbolPosition);
+        patchState(store, { currencySymbolPosition });
       },
     };
   }),
@@ -62,6 +81,16 @@ export const AppSettingsStore = signalStore(
           rootStyle.removeProperty('--color-primary');
           rootStyle.removeProperty('--color-primary-content');
         }
+      });
+
+      // Keeps `currency-format.ts`'s module-level signals in sync with the store — covers both
+      // initial hydration and later edits, so every `formatCurrency` call site (pipe, dashboard
+      // formatters, chart tooltips) reformats without its own wiring (TICKET-SET-03).
+      effect(() => {
+        setGlobalCurrencySymbol(store.currencySymbol() ?? DEFAULT_CURRENCY_SYMBOL);
+        setGlobalCurrencySymbolPosition(
+          store.currencySymbolPosition() ?? DEFAULT_CURRENCY_SYMBOL_POSITION,
+        );
       });
     },
   }),

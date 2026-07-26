@@ -90,6 +90,73 @@
 </mm-paper>
 
 <mm-paper class="mt-6">
+  <mm-text variant="heading" as="h2">Currency</mm-text>
+  <mm-text as="p" variant="caption" class="mt-1">
+    Changes how amounts are displayed throughout the app — it doesn't convert between currencies, so
+    the underlying numbers stay exactly what your bank exported.
+  </mm-text>
+
+  <div class="mt-4 flex flex-wrap items-end gap-6">
+    <mm-fieldset legend="Symbol">
+      <div class="flex flex-wrap items-center gap-2">
+        @for (preset of currencySymbolPresets; track preset.symbol) {
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class.btn-primary]="currencySymbolControl.value === preset.symbol"
+            [class.btn-outline]="currencySymbolControl.value !== preset.symbol"
+            [attr.aria-pressed]="currencySymbolControl.value === preset.symbol"
+            [attr.aria-label]="preset.label"
+            (click)="onSelectCurrencySymbolPreset(preset.symbol)"
+          >
+            {{ preset.symbol }}
+          </button>
+        }
+        <mm-input
+          type="text"
+          [formControl]="currencySymbolControl"
+          [maxlength]="4"
+          size="sm"
+          class="w-20"
+          placeholder="Custom"
+        />
+      </div>
+    </mm-fieldset>
+
+    <mm-fieldset legend="Position">
+      <div class="join" role="group" aria-label="Symbol position">
+        <button
+          type="button"
+          class="btn btn-sm join-item"
+          [class.btn-primary]="isCurrencySymbolPositionSelected('before')"
+          [class.btn-outline]="!isCurrencySymbolPositionSelected('before')"
+          [attr.aria-pressed]="isCurrencySymbolPositionSelected('before')"
+          (click)="onSelectCurrencySymbolPosition('before')"
+        >
+          Before number
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm join-item"
+          [class.btn-primary]="isCurrencySymbolPositionSelected('after')"
+          [class.btn-outline]="!isCurrencySymbolPositionSelected('after')"
+          [attr.aria-pressed]="isCurrencySymbolPositionSelected('after')"
+          (click)="onSelectCurrencySymbolPosition('after')"
+        >
+          After number
+        </button>
+      </div>
+    </mm-fieldset>
+
+    <mm-fieldset legend="Preview">
+      <mm-text as="p" weight="semibold" class="text-lg" aria-label="Currency preview">
+        {{ currencyPreview() }}
+      </mm-text>
+    </mm-fieldset>
+  </div>
+</mm-paper>
+
+<mm-paper class="mt-6">
   <app-data-management-overview />
 </mm-paper>
 

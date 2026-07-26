@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import type { AccentColorId } from '@/core/theme';
+import type { CurrencySymbolPosition } from '@/shared/utils';
 import { appDb, DEFAULT_APP_SETTINGS, type AppSettings } from './app-db';
 
 @Injectable({ providedIn: 'root' })
@@ -11,5 +12,17 @@ export class AppSettingsRepository {
   setPrimaryColor = async (primaryColor: AccentColorId | undefined): Promise<number> => {
     const current = await this.get();
     return appDb.appSettings.put({ ...current, id: 1, primaryColor });
+  };
+
+  setCurrencySymbol = async (currencySymbol: string): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, currencySymbol });
+  };
+
+  setCurrencySymbolPosition = async (
+    currencySymbolPosition: CurrencySymbolPosition,
+  ): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, currencySymbolPosition });
   };
 }

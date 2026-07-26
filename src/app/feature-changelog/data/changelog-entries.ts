@@ -231,4 +231,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     title: 'Popover menus now have a background. no longer transparent',
     area: 'Bugfix',
   },
+  {
+    date: '2026-07-26',
+    versionFolder: 'v2',
+    ticketIds: ['TICKET-SET-03'],
+    title:
+      'Added a currency display setting — pick a symbol (€, $, £, ¥, ₹, or your own) and whether it shows before or after the number, everywhere amounts appear',
+    area: 'Settings',
+  },
 ];

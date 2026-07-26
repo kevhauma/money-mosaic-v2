@@ -41,4 +41,35 @@ describe('AppSettingsRepository', () => {
 
     expect(await repository.get()).toEqual({ id: 1, primaryColor: undefined });
   });
+
+  it('setCurrencySymbol writes the singleton row without one existing yet', async () => {
+    await repository.setCurrencySymbol('$');
+
+    expect(await repository.get()).toEqual({ id: 1, currencySymbol: '$' });
+  });
+
+  it('setCurrencySymbol overwrites the singleton row rather than adding a second one', async () => {
+    await repository.setCurrencySymbol('$');
+    await repository.setCurrencySymbol('£');
+
+    expect((await repository.get()).currencySymbol).toBe('£');
+    expect(await appDb.appSettings.count()).toBe(1);
+  });
+
+  it('setCurrencySymbolPosition writes the singleton row without one existing yet', async () => {
+    await repository.setCurrencySymbolPosition('after');
+
+    expect(await repository.get()).toEqual({ id: 1, currencySymbolPosition: 'after' });
+  });
+
+  it('setCurrencySymbol and setCurrencySymbolPosition together preserve each other', async () => {
+    await repository.setCurrencySymbol('$');
+    await repository.setCurrencySymbolPosition('after');
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      currencySymbol: '$',
+      currencySymbolPosition: 'after',
+    });
+  });
 });

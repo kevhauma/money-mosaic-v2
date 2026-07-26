@@ -41,12 +41,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'Settings',
-    ticketId: 'TICKET-SET-03',
-    title: 'Choose your currency so amounts display correctly instead of defaulting to EUR',
-    area: 'App Settings',
-  },
-  {
-    versionFolder: 'Settings',
     ticketId: 'TICKET-SET-04',
     title: 'Choose your locale so numbers and dates format the way you expect',
     area: 'App Settings',

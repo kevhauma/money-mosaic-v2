@@ -14,6 +14,7 @@ import {
 import {
   buildTransactionDrilldownParams,
   formatAlignedRangeLabel,
+  formatCurrency,
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
 import { CategoriesStore } from '@/core/state';
@@ -52,7 +53,6 @@ type ExcludableCategoryVm = {
   excluded: boolean;
 };
 
-const EUR_FORMATTER = new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' });
 /** Sign is conveyed by the up/down triangle next to the number, not by the number itself. */
 const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
   style: 'percent',
@@ -101,7 +101,7 @@ export class CategoryComparisonPanelComponent {
 
       const bars: ComparisonBarVm[] = entry.perPeriod.map((total, index) => {
         const period = comparison.window[index];
-        const formattedTotal = EUR_FORMATTER.format(total);
+        const formattedTotal = formatCurrency(total);
         const periodLabel =
           formatAlignedRangeLabel(period.from, period.to) ??
           `${formatDisplayDate(period.from)} – ${formatDisplayDate(period.to)}`;
@@ -132,9 +132,9 @@ export class CategoryComparisonPanelComponent {
         name: entry.name,
         color: entry.color,
         bars,
-        formattedAverage: EUR_FORMATTER.format(entry.average),
-        formattedHighest: EUR_FORMATTER.format(entry.highest),
-        formattedLowest: EUR_FORMATTER.format(entry.lowest),
+        formattedAverage: formatCurrency(entry.average),
+        formattedHighest: formatCurrency(entry.highest),
+        formattedLowest: formatCurrency(entry.lowest),
         deltaLabel:
           entry.deltaVsAveragePct == null
             ? null

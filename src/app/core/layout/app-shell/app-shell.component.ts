@@ -28,7 +28,7 @@ import {
   tablerTags,
 } from '@ng-icons/tabler-icons';
 import { RangeStore, computeFullHistoryRange } from '@/core/stats';
-import { AccountsStore, TransactionsStore } from '@/core/state';
+import { AccountsStore, AppSettingsStore, TransactionsStore } from '@/core/state';
 // Imported directly (not via the @/shared/ui barrel) to keep the rest of shared/ui — and the
 // @angular/forms it drags in via InputComponent/SelectComponent — out of the eager bundle;
 // Angular's @Component decorator has side effects, so esbuild can't tree-shake unused barrel
@@ -88,6 +88,12 @@ export class AppShellComponent {
   protected readonly transactionsStore = inject(TransactionsStore);
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly rangeStore = inject(RangeStore);
+  // Unused otherwise — injecting it is the point. `AppSettingsStore` only hydrates and wires up
+  // its settings-application effects (accent color, TICKET-SET-03's currency symbol/position) the
+  // first time something injects it (`providedIn: 'root'` + onInit, TICKET-PERF-07); previously
+  // nothing in the persistent app shell did, so those settings silently never applied outside of
+  // whichever page load happened to visit /settings first.
+  private readonly appSettingsStore = inject(AppSettingsStore);
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

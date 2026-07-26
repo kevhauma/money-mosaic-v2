@@ -3,7 +3,11 @@ import { RouterLink } from '@angular/router';
 import { RangeStore } from '@/core/stats';
 import { CategoriesStore } from '@/core/state';
 import { LoadingSkeletonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
-import { buildTransactionDrilldownParams, UNCATEGORISED_SENTINEL } from '@/shared/utils';
+import {
+  buildTransactionDrilldownParams,
+  formatCurrency,
+  UNCATEGORISED_SENTINEL,
+} from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
 /** Transaction with its category name/colour joined in, formatted amount, and its own drill-down link — the template stays method-free (CR-2.5). */
@@ -17,7 +21,6 @@ type TopTransactionVm = {
   queryParams: Record<string, string>;
 };
 
-const EUR_FORMATTER = new Intl.NumberFormat('en-BE', { style: 'currency', currency: 'EUR' });
 const UNCATEGORISED_COLOR = '#9ca3af';
 
 /**
@@ -54,7 +57,7 @@ export class TopTransactionsPanelComponent {
         description: transaction.counterpartyName ?? transaction.rawDescription,
         categoryName: category?.name ?? 'Uncategorised',
         categoryColor: category?.color ?? UNCATEGORISED_COLOR,
-        formattedAmount: EUR_FORMATTER.format(transaction.amount),
+        formattedAmount: formatCurrency(transaction.amount),
         queryParams: buildTransactionDrilldownParams({
           from: transaction.bookingDate,
           to: transaction.bookingDate,

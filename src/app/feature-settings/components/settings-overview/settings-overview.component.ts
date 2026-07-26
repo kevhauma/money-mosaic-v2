@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerBrandGithub } from '@ng-icons/tabler-icons';
@@ -16,7 +17,23 @@ import {
   type ThemeStyleId,
 } from '@/core/theme';
 import { DataManagementOverviewComponent } from '@/feature-data-management';
-import { PageHeaderComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import {
+  CURRENCY_SYMBOL_PRESETS,
+  DEFAULT_CURRENCY_SYMBOL,
+  DEFAULT_CURRENCY_SYMBOL_POSITION,
+  formatCurrency,
+  type CurrencySymbolPosition,
+} from '@/shared/utils';
+import {
+  FieldsetComponent,
+  InputComponent,
+  PageHeaderComponent,
+  PaperComponent,
+  TypographyComponent,
+} from '@/shared/ui';
+
+/** Sample amount for the live currency-format preview — arbitrary, just needs a sign and decimals to show both. */
+const CURRENCY_PREVIEW_AMOUNT = 1234.56;
 
 /**
  * Settings page — the theme picker, an accent-color row for the two default themes
@@ -31,9 +48,12 @@ import { PageHeaderComponent, PaperComponent, TypographyComponent } from '@/shar
 @Component({
   selector: 'app-settings-overview',
   imports: [
+    ReactiveFormsModule,
     PageHeaderComponent,
     PaperComponent,
     TypographyComponent,
+    InputComponent,
+    FieldsetComponent,
     RouterLink,
     NgIcon,
     DataManagementOverviewComponent,
@@ -48,8 +68,28 @@ export class SettingsOverviewComponent {
 
   protected readonly styles: readonly ThemeStyle[] = THEME_STYLES;
   protected readonly accentColors: readonly AccentColor[] = ACCENT_COLORS;
+  protected readonly currencySymbolPresets = CURRENCY_SYMBOL_PRESETS;
 
   protected readonly githubRepoUrl = GITHUB_REPO_URL;
+
+  protected readonly currencySymbolControl = inject(FormBuilder).nonNullable.control(
+    this.appSettingsStore.currencySymbol() ?? DEFAULT_CURRENCY_SYMBOL,
+  );
+
+  constructor() {
+    this.currencySymbolControl.valueChanges.subscribe((symbol) => {
+      void this.appSettingsStore.setCurrencySymbol(symbol);
+    });
+
+    // Keeps the control in step with the store after async hydration resolves (the control's
+    // initial value above is read before that promise settles) and with any other tab/reload.
+    effect(() => {
+      const symbol = this.appSettingsStore.currencySymbol() ?? DEFAULT_CURRENCY_SYMBOL;
+      if (this.currencySymbolControl.value !== symbol) {
+        this.currencySymbolControl.setValue(symbol, { emitEvent: false });
+      }
+    });
+  }
 
   /**
    * The accent-color popover renders right after the last `DEFAULT_THEME_STYLE_IDS` entry in
@@ -86,5 +126,25 @@ export class SettingsOverviewComponent {
     return this.themeService.style() === 'deformable-dark'
       ? DEFAULT_THEME_ACCENT.dark
       : DEFAULT_THEME_ACCENT.light;
+  }
+
+  protected onSelectCurrencySymbolPreset(symbol: string): void {
+    this.currencySymbolControl.setValue(symbol);
+  }
+
+  protected isCurrencySymbolPositionSelected(position: CurrencySymbolPosition): boolean {
+    return (
+      (this.appSettingsStore.currencySymbolPosition() ?? DEFAULT_CURRENCY_SYMBOL_POSITION) ===
+      position
+    );
+  }
+
+  protected onSelectCurrencySymbolPosition(position: CurrencySymbolPosition): void {
+    void this.appSettingsStore.setCurrencySymbolPosition(position);
+  }
+
+  /** Live preview of the configured symbol/position — reads through `formatCurrency` itself so it can never drift from what the rest of the app actually renders. */
+  protected currencyPreview(): string {
+    return formatCurrency(CURRENCY_PREVIEW_AMOUNT);
   }
 }

@@ -1,5 +1,6 @@
 export * from './signed-amount.pipe';
 export * from './currency-format';
+export * from './currency-symbol-presets';
 export * from './date-buckets';
 export * from './fingerprint';
 export * from './with-archivable';

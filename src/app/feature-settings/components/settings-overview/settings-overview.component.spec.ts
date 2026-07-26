@@ -3,6 +3,12 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { appDb } from '@/core/data-access';
 import { AppSettingsStore } from '@/core/state';
+import {
+  DEFAULT_CURRENCY_SYMBOL,
+  DEFAULT_CURRENCY_SYMBOL_POSITION,
+  setCurrencySymbol,
+  setCurrencySymbolPosition,
+} from '@/shared/utils';
 import { SettingsOverviewComponent } from './settings-overview.component';
 
 describe('SettingsOverviewComponent', () => {
@@ -21,6 +27,9 @@ describe('SettingsOverviewComponent', () => {
     // fake-indexeddb is a global singleton and Vitest runs with isolate:false, so a row written
     // here would otherwise leak into other spec files.
     await appDb.appSettings.clear();
+    // Same isolate:false leakage risk for currency-format's module-level signals (TICKET-SET-03).
+    setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
+    setCurrencySymbolPosition(DEFAULT_CURRENCY_SYMBOL_POSITION);
   });
 
   it('creates', () => {
@@ -83,7 +92,12 @@ describe('SettingsOverviewComponent', () => {
   });
 
   it('marks the currently-selected accent swatch as pressed', async () => {
-    await appDb.appSettings.put({ id: 1, primaryColor: 'rose' });
+    await appDb.appSettings.put({
+      id: 1,
+      primaryColor: 'rose',
+      currencySymbol: undefined,
+      currencySymbolPosition: undefined,
+    });
     const fixture = TestBed.createComponent(SettingsOverviewComponent);
     fixture.detectChanges();
     await TestBed.inject(AppSettingsStore).hydrate();
@@ -109,5 +123,71 @@ describe('SettingsOverviewComponent', () => {
     );
 
     expect((defaultSwatch as HTMLElement)?.style.backgroundColor).not.toBe('');
+  });
+
+  it('renders the Currency section with the default symbol/position preview', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+
+    const preview = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Currency preview"]',
+    );
+
+    expect(preview?.textContent?.trim()).toBe('€1,234.56');
+  });
+
+  it('selecting a preset symbol calls AppSettingsStore.setCurrencySymbol', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+    const setCurrencySymbol = vi
+      .spyOn(TestBed.inject(AppSettingsStore), 'setCurrencySymbol')
+      .mockResolvedValue();
+
+    const dollarButton = (fixture.nativeElement as HTMLElement).querySelector(
+      'button[aria-label="US Dollar"]',
+    ) as HTMLButtonElement;
+    dollarButton.click();
+
+    expect(setCurrencySymbol).toHaveBeenCalledExactlyOnceWith('$');
+  });
+
+  it('typing a custom symbol calls AppSettingsStore.setCurrencySymbol', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+    const setCurrencySymbol = vi
+      .spyOn(TestBed.inject(AppSettingsStore), 'setCurrencySymbol')
+      .mockResolvedValue();
+
+    const input = (fixture.nativeElement as HTMLElement).querySelector(
+      'input[placeholder="Custom"]',
+    ) as HTMLInputElement;
+    input.value = 'kr';
+    input.dispatchEvent(new Event('input'));
+
+    expect(setCurrencySymbol).toHaveBeenCalledExactlyOnceWith('kr');
+  });
+
+  it('selecting a position calls AppSettingsStore.setCurrencySymbolPosition', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+    const setCurrencySymbolPosition = vi
+      .spyOn(TestBed.inject(AppSettingsStore), 'setCurrencySymbolPosition')
+      .mockResolvedValue();
+
+    const afterButton = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Symbol position"] button:last-child',
+    ) as HTMLButtonElement;
+    afterButton.click();
+
+    expect(setCurrencySymbolPosition).toHaveBeenCalledExactlyOnceWith('after');
+  });
+
+  it('includes copy clarifying this is display-only, not currency conversion', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      "doesn't convert between currencies",
+    );
   });
 });
