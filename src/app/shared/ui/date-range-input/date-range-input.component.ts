@@ -7,16 +7,14 @@ import {
   output,
 } from '@angular/core';
 import 'cally';
-import { daisyClasses, formatAlignedRangeLabel } from '@/shared/utils';
+import { daisyClasses, formatAlignedRangeLabel, formatDate } from '@/shared/utils';
 import { DropdownComponent } from '../dropdown/dropdown.component';
 
 export type DateRangeValue = { from: string; to: string };
 export type DateRangeInputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export const formatDisplayDate = (iso: string): string => {
-  const [year, month, day] = iso.split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString('en-GB');
-};
+/** Delegates to the shared, settings-driven date formatter (TICKET-SET-04) — kept as its own named export since callers already import it by this name. */
+export const formatDisplayDate = (iso: string): string => formatDate(iso);
 
 /** Presentational single-field date-range picker (a Cally `calendar-range` popover) — holds no state of its own; the caller owns the value and reacts to `valueChange`. */
 @Component({

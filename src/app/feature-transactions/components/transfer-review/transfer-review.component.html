@@ -54,7 +54,8 @@
             <mm-flex align="center" gap="3" [wrap]="true" class="flex-1">
               <div>
                 <div class="whitespace-nowrap">
-                  {{ candidate.from.bookingDate }} · {{ accountName(candidate.from.accountId) }}
+                  {{ candidate.from.bookingDate | localeDate }} ·
+                  {{ accountName(candidate.from.accountId) }}
                 </div>
                 <mm-text as="p" class="text-base-content/60">{{
                   candidate.from.rawDescription
@@ -63,7 +64,8 @@
               <span aria-hidden="true">→</span>
               <div>
                 <div class="whitespace-nowrap">
-                  {{ candidate.to.bookingDate }} · {{ accountName(candidate.to.accountId) }}
+                  {{ candidate.to.bookingDate | localeDate }} ·
+                  {{ accountName(candidate.to.accountId) }}
                 </div>
                 <mm-text as="p" class="text-base-content/60">{{
                   candidate.to.rawDescription

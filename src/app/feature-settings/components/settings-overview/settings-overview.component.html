@@ -90,10 +90,10 @@
 </mm-paper>
 
 <mm-paper class="mt-6">
-  <mm-text variant="heading" as="h2">Currency</mm-text>
+  <mm-text variant="heading" as="h2">Currency &amp; locale</mm-text>
   <mm-text as="p" variant="caption" class="mt-1">
-    Changes how amounts are displayed throughout the app — it doesn't convert between currencies, so
-    the underlying numbers stay exactly what your bank exported.
+    Changes how amounts and dates are displayed throughout the app — it doesn't convert between
+    currencies, so the underlying numbers stay exactly what your bank exported.
   </mm-text>
 
   <div class="mt-4 flex flex-wrap items-end gap-6">
@@ -146,6 +146,14 @@
           After number
         </button>
       </div>
+    </mm-fieldset>
+
+    <mm-fieldset legend="Locale">
+      <mm-select [formControl]="localeControl" size="sm" class="w-56">
+        @for (preset of localePresets; track preset.locale) {
+          <option [value]="preset.locale">{{ preset.label }}</option>
+        }
+      </mm-select>
     </mm-fieldset>
 
     <mm-fieldset legend="Preview">

@@ -72,4 +72,29 @@ describe('AppSettingsRepository', () => {
       currencySymbolPosition: 'after',
     });
   });
+
+  it('setLocale writes the singleton row without one existing yet', async () => {
+    await repository.setLocale('en-GB');
+
+    expect(await repository.get()).toEqual({ id: 1, locale: 'en-GB' });
+  });
+
+  it('setLocale overwrites the singleton row rather than adding a second one', async () => {
+    await repository.setLocale('en-GB');
+    await repository.setLocale('nl-BE');
+
+    expect((await repository.get()).locale).toBe('nl-BE');
+    expect(await appDb.appSettings.count()).toBe(1);
+  });
+
+  it('setLocale preserves currency settings written alongside it', async () => {
+    await repository.setCurrencySymbol('$');
+    await repository.setLocale('en-GB');
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      currencySymbol: '$',
+      locale: 'en-GB',
+    });
+  });
 });

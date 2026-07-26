@@ -19,13 +19,14 @@ import {
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { SignedAmountPipe } from '@/shared/utils';
+import { LocaleDatePipe, SignedAmountPipe } from '@/shared/utils';
 
 @Component({
   selector: 'app-transfer-review',
   imports: [
     ReactiveFormsModule,
     NgIcon,
+    LocaleDatePipe,
     SignedAmountPipe,
     ButtonComponent,
     FieldsetComponent,

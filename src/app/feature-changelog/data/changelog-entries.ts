@@ -239,4 +239,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Added a currency display setting — pick a symbol (€, $, £, ¥, ₹, or your own) and whether it shows before or after the number, everywhere amounts appear',
     area: 'Settings',
   },
+  {
+    date: '2026-07-26',
+    versionFolder: 'v2',
+    ticketIds: ['TICKET-SET-04'],
+    title:
+      "Added a locale setting, so number grouping/decimal separators and dates throughout the app are formatted the way you're used to reading them, not hardcoded to one convention",
+    area: 'Settings',
+  },
 ];

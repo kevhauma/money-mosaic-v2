@@ -41,12 +41,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'Settings',
-    ticketId: 'TICKET-SET-04',
-    title: 'Choose your locale so numbers and dates format the way you expect',
-    area: 'App Settings',
-  },
-  {
-    versionFolder: 'Settings',
     ticketId: 'TICKET-PRIV-01',
     title: 'Privacy mode: blur Dashboard amounts with one click',
     area: 'Privacy Mode',

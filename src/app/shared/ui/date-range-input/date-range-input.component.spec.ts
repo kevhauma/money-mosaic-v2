@@ -67,7 +67,8 @@ describe('DateRangeInputComponent', () => {
     fixture.detectChanges();
 
     const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
-    expect(button.textContent?.trim()).toBe('05/07/2026 – 20/07/2026');
+    // en-US default (TICKET-SET-04) — MM/DD/YYYY, not the previously-hardcoded en-GB DD/MM/YYYY.
+    expect(button.textContent?.trim()).toBe('07/05/2026 – 07/20/2026');
   });
 
   it('shows a placeholder label when no range is set', () => {

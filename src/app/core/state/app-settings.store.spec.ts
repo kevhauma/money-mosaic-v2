@@ -5,9 +5,13 @@ import { ThemeService } from '@/core/theme';
 import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
+  DEFAULT_LOCALE,
   formatCurrency,
+  formatDate,
+  setCurrencyLocale,
   setCurrencySymbol,
   setCurrencySymbolPosition,
+  setDateLocale,
 } from '@/shared/utils';
 import { AppSettingsStore } from './app-settings.store';
 
@@ -17,6 +21,7 @@ describe('AppSettingsStore', () => {
     setPrimaryColor: vi.fn(),
     setCurrencySymbol: vi.fn(),
     setCurrencySymbolPosition: vi.fn(),
+    setLocale: vi.fn(),
   };
 
   beforeEach(() => {
@@ -25,18 +30,21 @@ describe('AppSettingsStore', () => {
     repository.setPrimaryColor.mockResolvedValue(1);
     repository.setCurrencySymbol.mockResolvedValue(1);
     repository.setCurrencySymbolPosition.mockResolvedValue(1);
+    repository.setLocale.mockResolvedValue(1);
 
     TestBed.configureTestingModule({
       providers: [{ provide: AppSettingsRepository, useValue: repository }],
     });
   });
 
-  // The currency-format module signals are process-global (Vitest isolate:false), and this
-  // store's onInit effect writes to them — reset after every test so other spec files see the
-  // default symbol/position regardless of run order (TICKET-SET-03).
+  // The currency-format/date-format module signals are process-global (Vitest isolate:false), and
+  // this store's onInit effect writes to them — reset after every test so other spec files see
+  // the default symbol/position/locale regardless of run order (TICKET-SET-03/TICKET-SET-04).
   afterEach(() => {
     setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
     setCurrencySymbolPosition(DEFAULT_CURRENCY_SYMBOL_POSITION);
+    setCurrencyLocale(DEFAULT_LOCALE);
+    setDateLocale(DEFAULT_LOCALE);
   });
 
   it('defaults to the empty settings before hydrate resolves', () => {
@@ -113,6 +121,29 @@ describe('AppSettingsStore', () => {
     TestBed.tick();
 
     expect(formatCurrency(10)).toBe('10.00£');
+  });
+
+  it('setLocale persists through the repository, updates local state, and reformats both formatCurrency and formatDate', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+
+    await store.setLocale('en-BE');
+    TestBed.tick();
+
+    expect(repository.setLocale).toHaveBeenCalledExactlyOnceWith('en-BE');
+    expect(store.locale()).toBe('en-BE');
+    expect(formatCurrency(1234.56)).toBe('€1.234,56');
+    expect(formatDate('2026-07-26')).toBe('26/07/2026');
+  });
+
+  it('hydrating a stored locale syncs formatCurrency/formatDate without an explicit setter call', async () => {
+    repository.get.mockResolvedValue({ id: 1, locale: 'en-BE' });
+    const store = TestBed.inject(AppSettingsStore);
+
+    await store.hydrate();
+    TestBed.tick();
+
+    expect(formatCurrency(1234.56)).toBe('€1.234,56');
+    expect(formatDate('2026-07-26')).toBe('26/07/2026');
   });
 });
 

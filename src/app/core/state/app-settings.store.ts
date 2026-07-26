@@ -10,8 +10,11 @@ import {
 import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
+  DEFAULT_LOCALE,
+  setCurrencyLocale as setGlobalCurrencyLocale,
   setCurrencySymbol as setGlobalCurrencySymbol,
   setCurrencySymbolPosition as setGlobalCurrencySymbolPosition,
+  setDateLocale as setGlobalDateLocale,
   type CurrencySymbolPosition,
 } from '@/shared/utils';
 
@@ -50,6 +53,11 @@ export const AppSettingsStore = signalStore(
       ): Promise<void> => {
         await appSettingsRepository.setCurrencySymbolPosition(currencySymbolPosition);
         patchState(store, { currencySymbolPosition });
+      },
+
+      setLocale: async (locale: string): Promise<void> => {
+        await appSettingsRepository.setLocale(locale);
+        patchState(store, { locale });
       },
     };
   }),
@@ -91,6 +99,15 @@ export const AppSettingsStore = signalStore(
         setGlobalCurrencySymbolPosition(
           store.currencySymbolPosition() ?? DEFAULT_CURRENCY_SYMBOL_POSITION,
         );
+      });
+
+      // Same sync for the locale-driven grouping/decimal separator (currency-format.ts) and the
+      // shared date-formatting helper (date-format.ts) — one setting, two independent module
+      // signals, mirroring the currency-symbol pattern above (TICKET-SET-04).
+      effect(() => {
+        const locale = store.locale() ?? DEFAULT_LOCALE;
+        setGlobalCurrencyLocale(locale);
+        setGlobalDateLocale(locale);
       });
     },
   }),

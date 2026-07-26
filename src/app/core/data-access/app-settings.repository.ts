@@ -25,4 +25,9 @@ export class AppSettingsRepository {
     const current = await this.get();
     return appDb.appSettings.put({ ...current, id: 1, currencySymbolPosition });
   };
+
+  setLocale = async (locale: string): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, locale });
+  };
 }

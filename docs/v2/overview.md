@@ -11,7 +11,7 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 - [x] [TICKET-SET-05](./tickets/TICKET-SET-05-settings-store-foundation.md) — Settings store foundation: `appSettings` table/repository/store, no fields yet (new capability) — build first; no UI of its own
 - [x] [TICKET-SET-02](./tickets/TICKET-SET-02-primary-color-setting.md) — Primary accent color setting (new capability) — needs SET-05 only; independent of SET-03/SET-04/PRIV-01
 - [x] [TICKET-SET-03](./tickets/TICKET-SET-03-currency-setting.md) — Currency setting (new capability) — needs SET-05 only; build before SET-04, which extends the same formatter refactor
-- [ ] [TICKET-SET-04](./tickets/TICKET-SET-04-locale-setting.md) — Locale setting for number/date formatting (new capability) — needs SET-05 + SET-03 (the only cross-sibling dependency in this track)
+- [x] [TICKET-SET-04](./tickets/TICKET-SET-04-locale-setting.md) — Locale setting for number/date formatting (new capability) — needs SET-05 + SET-03 (the only cross-sibling dependency in this track)
 - [ ] [TICKET-PRIV-01](./tickets/TICKET-PRIV-01-privacy-mode-dashboard.md) — Privacy mode: blur amounts on the Dashboard (new capability) — needs SET-05 only; independent of SET-02/03/04
 - [ ] [TICKET-SET-06](./tickets/TICKET-SET-06-move-data-nav-into-settings.md) — Move Data Management nav item/route under Settings (`/settings/data`) (refactor, relocates FR-DAT-1/2/3) — independent of SET-02/03/04/05/PRIV-01, no schema or store involved; safe to build any time
 

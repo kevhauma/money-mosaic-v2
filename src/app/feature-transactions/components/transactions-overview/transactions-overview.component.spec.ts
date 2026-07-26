@@ -289,8 +289,8 @@ describe('TransactionsOverviewComponent', () => {
     const labels = Array.from(checkboxes).map((checkbox) => checkbox.getAttribute('aria-label'));
 
     expect(labels).toEqual([
-      'Select transaction 2026-06-01 Row 1',
-      'Select transaction 2026-06-01 Row 2',
+      'Select transaction 06/01/2026 Row 1',
+      'Select transaction 06/01/2026 Row 2',
     ]);
     expect(labels[0]).not.toBe(labels[1]);
   });

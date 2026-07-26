@@ -503,6 +503,15 @@ export type AppSettings = {
    */
   currencySymbol: string | undefined;
   currencySymbolPosition: CurrencySymbolPosition | undefined;
+  /**
+   * Additive field (TICKET-SET-04) — a BCP 47 tag (e.g. `'en-BE'`, `'en-US'`) driving both
+   * `formatCurrency`'s number grouping/decimal separator and the shared date-formatting helper.
+   * `undefined` falls back to `DEFAULT_LOCALE` (`'en-US'`, in `shared/utils/currency-format.ts`) —
+   * today's exact hardcoded decimal-grouping behavior — so nobody's formatting changes until they
+   * opt in. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as
+   * `primaryColor`/`currencySymbol` above.
+   */
+  locale: string | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -514,6 +523,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   // reader via `?? DEFAULT_CURRENCY_SYMBOL`/`?? DEFAULT_CURRENCY_SYMBOL_POSITION`.
   currencySymbol: undefined,
   currencySymbolPosition: undefined,
+  locale: undefined,
 };
 
 class AppDb extends Dexie {

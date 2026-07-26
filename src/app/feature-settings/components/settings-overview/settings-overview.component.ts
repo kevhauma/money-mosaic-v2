@@ -21,7 +21,9 @@ import {
   CURRENCY_SYMBOL_PRESETS,
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
+  DEFAULT_LOCALE,
   formatCurrency,
+  LOCALE_PRESETS,
   type CurrencySymbolPosition,
 } from '@/shared/utils';
 import {
@@ -29,6 +31,7 @@ import {
   InputComponent,
   PageHeaderComponent,
   PaperComponent,
+  SelectComponent,
   TypographyComponent,
 } from '@/shared/ui';
 
@@ -37,13 +40,14 @@ const CURRENCY_PREVIEW_AMOUNT = 1234.56;
 
 /**
  * Settings page — the theme picker, an accent-color row for the two default themes
- * (TICKET-SET-02), a low-key link back to the public landing page (TICKET-PUB-01), the Data
- * Management section (export/import/delete-all, embedded directly rather than routed —
- * TICKET-SET-06), and an About/GitHub link. One flat list of every catalogue theme; picking one
- * applies it immediately (ThemeService.select). Each option renders a live mini preview by
- * nesting the style's `data-theme` attribute — daisyUI tokens and the `--mm-*` hooks resolve from
- * the nearest `data-theme` ancestor, so the swatch shows the real palette/radius/type without
- * screenshots.
+ * (TICKET-SET-02), a Currency & locale section (symbol/position — TICKET-SET-03; number/date
+ * formatting locale — TICKET-SET-04), a low-key link back to the public landing page
+ * (TICKET-PUB-01), the Data Management section (export/import/delete-all, embedded directly
+ * rather than routed — TICKET-SET-06), and an About/GitHub link. One flat list of every catalogue
+ * theme; picking one applies it immediately (ThemeService.select). Each option renders a live mini
+ * preview by nesting the style's `data-theme` attribute — daisyUI tokens and the `--mm-*` hooks
+ * resolve from the nearest `data-theme` ancestor, so the swatch shows the real palette/radius/type
+ * without screenshots.
  */
 @Component({
   selector: 'app-settings-overview',
@@ -53,6 +57,7 @@ const CURRENCY_PREVIEW_AMOUNT = 1234.56;
     PaperComponent,
     TypographyComponent,
     InputComponent,
+    SelectComponent,
     FieldsetComponent,
     RouterLink,
     NgIcon,
@@ -69,6 +74,7 @@ export class SettingsOverviewComponent {
   protected readonly styles: readonly ThemeStyle[] = THEME_STYLES;
   protected readonly accentColors: readonly AccentColor[] = ACCENT_COLORS;
   protected readonly currencySymbolPresets = CURRENCY_SYMBOL_PRESETS;
+  protected readonly localePresets = LOCALE_PRESETS;
 
   protected readonly githubRepoUrl = GITHUB_REPO_URL;
 
@@ -76,9 +82,17 @@ export class SettingsOverviewComponent {
     this.appSettingsStore.currencySymbol() ?? DEFAULT_CURRENCY_SYMBOL,
   );
 
+  protected readonly localeControl = inject(FormBuilder).nonNullable.control(
+    this.appSettingsStore.locale() ?? DEFAULT_LOCALE,
+  );
+
   constructor() {
     this.currencySymbolControl.valueChanges.subscribe((symbol) => {
       void this.appSettingsStore.setCurrencySymbol(symbol);
+    });
+
+    this.localeControl.valueChanges.subscribe((locale) => {
+      void this.appSettingsStore.setLocale(locale);
     });
 
     // Keeps the control in step with the store after async hydration resolves (the control's
@@ -87,6 +101,13 @@ export class SettingsOverviewComponent {
       const symbol = this.appSettingsStore.currencySymbol() ?? DEFAULT_CURRENCY_SYMBOL;
       if (this.currencySymbolControl.value !== symbol) {
         this.currencySymbolControl.setValue(symbol, { emitEvent: false });
+      }
+    });
+
+    effect(() => {
+      const locale = this.appSettingsStore.locale() ?? DEFAULT_LOCALE;
+      if (this.localeControl.value !== locale) {
+        this.localeControl.setValue(locale, { emitEvent: false });
       }
     });
   }

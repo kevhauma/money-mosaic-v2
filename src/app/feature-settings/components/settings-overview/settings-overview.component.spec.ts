@@ -6,8 +6,11 @@ import { AppSettingsStore } from '@/core/state';
 import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
+  DEFAULT_LOCALE,
+  setCurrencyLocale,
   setCurrencySymbol,
   setCurrencySymbolPosition,
+  setDateLocale,
 } from '@/shared/utils';
 import { SettingsOverviewComponent } from './settings-overview.component';
 
@@ -30,6 +33,9 @@ describe('SettingsOverviewComponent', () => {
     // Same isolate:false leakage risk for currency-format's module-level signals (TICKET-SET-03).
     setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
     setCurrencySymbolPosition(DEFAULT_CURRENCY_SYMBOL_POSITION);
+    // Same leakage risk for the locale signals in currency-format.ts/date-format.ts (TICKET-SET-04).
+    setCurrencyLocale(DEFAULT_LOCALE);
+    setDateLocale(DEFAULT_LOCALE);
   });
 
   it('creates', () => {
@@ -97,6 +103,7 @@ describe('SettingsOverviewComponent', () => {
       primaryColor: 'rose',
       currencySymbol: undefined,
       currencySymbolPosition: undefined,
+      locale: undefined,
     });
     const fixture = TestBed.createComponent(SettingsOverviewComponent);
     fixture.detectChanges();
@@ -189,5 +196,54 @@ describe('SettingsOverviewComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       "doesn't convert between currencies",
     );
+  });
+
+  it('renders a locale select defaulting to the fallback locale', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+
+    const select = (fixture.nativeElement as HTMLElement).querySelector(
+      'select',
+    ) as HTMLSelectElement;
+
+    expect(select.value).toBe(DEFAULT_LOCALE);
+  });
+
+  it('selecting a locale calls AppSettingsStore.setLocale and reformats the currency preview', () => {
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+    const setLocale = vi.spyOn(TestBed.inject(AppSettingsStore), 'setLocale').mockResolvedValue();
+
+    const select = (fixture.nativeElement as HTMLElement).querySelector(
+      'select',
+    ) as HTMLSelectElement;
+    select.value = 'en-BE';
+    select.dispatchEvent(new Event('change'));
+
+    expect(setLocale).toHaveBeenCalledExactlyOnceWith('en-BE');
+  });
+
+  it('reflects a hydrated locale in both the select and the currency preview', async () => {
+    await appDb.appSettings.put({
+      id: 1,
+      primaryColor: undefined,
+      currencySymbol: undefined,
+      currencySymbolPosition: undefined,
+      locale: 'en-BE',
+    });
+    const fixture = TestBed.createComponent(SettingsOverviewComponent);
+    fixture.detectChanges();
+    await TestBed.inject(AppSettingsStore).hydrate();
+    fixture.detectChanges();
+
+    const select = (fixture.nativeElement as HTMLElement).querySelector(
+      'select',
+    ) as HTMLSelectElement;
+    const preview = (fixture.nativeElement as HTMLElement).querySelector(
+      '[aria-label="Currency preview"]',
+    );
+
+    expect(select.value).toBe('en-BE');
+    expect(preview?.textContent?.trim()).toBe('€1.234,56');
   });
 });

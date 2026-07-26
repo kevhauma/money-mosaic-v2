@@ -28,6 +28,8 @@ import {
 import {
   createPagination,
   createSelectionModel,
+  formatDate,
+  LocaleDatePipe,
   normalizeIban,
   SignedAmountPipe,
 } from '@/shared/utils';
@@ -74,6 +76,7 @@ type TransactionRow = {
   selector: 'app-transactions-overview',
   imports: [
     NgIcon,
+    LocaleDatePipe,
     SignedAmountPipe,
     AlertComponent,
     BadgeComponent,
@@ -107,6 +110,9 @@ export class TransactionsOverviewComponent {
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly categoriesStore = inject(CategoriesStore);
   protected readonly rulesStore = inject(RulesStore);
+
+  /** Exposed for the row aria-label, which needs a plain string rather than the `localeDate` pipe (TICKET-SET-04). */
+  protected readonly formatDate = formatDate;
 
   /** Drill-down inheritance (FR-STAT-6): bound from the route's query params via `withComponentInputBinding()`. */
   readonly accountId = input<string>();
