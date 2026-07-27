@@ -1,0 +1,30 @@
+/**
+ * Loose mosaic tiles drifting around the hero dashboard picture — the brand mark
+ * (`.mm-brand-icon`) scaled up and scattered, so each theme's own tile shape and gradient carry
+ * through automatically. The fallbacks mirror the default (deformable) brand tokens.
+ */
+.mock-tile {
+  background: var(
+    --mm-brand-icon-bg,
+    linear-gradient(135deg, var(--color-primary), var(--color-accent))
+  );
+  border-radius: var(--mm-brand-icon-radius, 50%);
+  animation: mock-tile-drift 6s ease-in-out infinite alternate;
+}
+
+@keyframes mock-tile-drift {
+  from {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  to {
+    translate: 0 -8px;
+    rotate: 8deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mock-tile {
+    animation: none;
+  }
+}

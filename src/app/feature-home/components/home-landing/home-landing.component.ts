@@ -8,6 +8,7 @@ import {
   tablerCoin,
   tablerFileImport,
   tablerPalette,
+  tablerPencil,
   tablerShieldLock,
   tablerSparkles,
   tablerTags,
@@ -32,6 +33,38 @@ type FeatureGroup = {
   readonly title: string;
   readonly items: readonly string[];
 };
+
+type CategoryRow = {
+  readonly label: string;
+  readonly amount: string;
+  readonly share: string;
+};
+
+type AccountCard = {
+  readonly name: string;
+  readonly balance: string;
+};
+
+/**
+ * Demo data for the hero dashboard picture, mirroring the real dashboard's panels (net-worth
+ * header pill, stat cards, trend bars, category breakdown donut + rows, accounts strip).
+ * Deliberately internally consistent so the picture itself demonstrates "numbers you can trace":
+ * income 3.210 − expenses 2.798 = net cash flow +412 at a 13 % savings rate, the account balances
+ * sum to exactly the € 24.380,12 net worth, and the category shares are those amounts over the
+ * expenses figure (the donut's two hidden slices — transport € 214, other € 776 — sit behind the
+ * "Show more (2)" toggle, as on the real panel).
+ */
+const CATEGORY_ROWS: readonly CategoryRow[] = [
+  { label: 'Rent', amount: '€ 980', share: '35 %' },
+  { label: 'Groceries', amount: '€ 486', share: '17 %' },
+  { label: 'Leisure', amount: '€ 342', share: '12 %' },
+];
+
+const ACCOUNT_CARDS: readonly AccountCard[] = [
+  { name: 'Checking', balance: '€ 1.842,55' },
+  { name: 'Savings', balance: '€ 15.300,00' },
+  { name: 'Joint', balance: '€ 7.237,57' },
+];
 
 /**
  * The positioning pitch — why this app over the sync-everything, subscription-priced competitors
@@ -173,6 +206,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
   selector: 'app-home-landing',
   imports: [ButtonComponent, FlexComponent, NgIcon, PaperComponent, TypographyComponent],
   templateUrl: './home-landing.component.html',
+  styleUrl: './home-landing.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     provideIcons({
@@ -187,6 +221,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
       tablerTags,
       tablerChartBar,
       tablerBrandGithub,
+      tablerPencil,
     }),
   ],
 })
@@ -195,4 +230,6 @@ export class HomeLandingComponent {
   protected readonly processSteps = PROCESS_STEPS;
   protected readonly featureGroups = FEATURE_GROUPS;
   protected readonly githubRepoUrl = GITHUB_REPO_URL;
+  protected readonly categoryRows = CATEGORY_ROWS;
+  protected readonly accountCards = ACCOUNT_CARDS;
 }
