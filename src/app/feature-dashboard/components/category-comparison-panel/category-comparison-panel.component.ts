@@ -1,7 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler-icons/fill';
 import {
   ButtonComponent,
   DropdownComponent,
@@ -21,31 +18,8 @@ import {
 import { CategoriesStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { StatsStore } from '../../stats.store';
-
-/** One drill-down-linked bar in a category's mini chart, with its height pre-scaled to the category's own window max. */
-type ComparisonBarVm = {
-  key: string;
-  formattedTotal: string;
-  periodLabel: string;
-  tooltipLabel: string;
-  heightPercent: number;
-  isSelected: boolean;
-  queryParams: Record<string, string>;
-};
-
-/** A comparison category with figures/links joined once, so the template stays method-free (CR-2.5). */
-type CategoryComparisonVm = {
-  categoryId: number | null;
-  name: string;
-  color: string;
-  bars: ComparisonBarVm[];
-  formattedAverage: string;
-  formattedHighest: string;
-  formattedLowest: string;
-  deltaLabel: string | null;
-  deltaTone: 'warning' | 'success' | undefined;
-  deltaDirection: 'up' | 'down' | null;
-};
+import type { CategoryComparisonVm, ComparisonBarVm } from '../../category-comparison-vm';
+import { ComparisonCategoryCardComponent } from '../comparison-category-card/comparison-category-card.component';
 
 /** One row in the "exclude categories" checklist. */
 type ExcludableCategoryVm = {
@@ -66,9 +40,8 @@ type ExcludableCategoryVm = {
 @Component({
   selector: 'app-category-comparison-panel',
   imports: [
-    RouterLink,
-    NgIcon,
     ButtonComponent,
+    ComparisonCategoryCardComponent,
     DropdownComponent,
     FlexComponent,
     LabelComponent,
@@ -77,7 +50,6 @@ type ExcludableCategoryVm = {
   ],
   templateUrl: './category-comparison-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerTriangleFill, tablerTriangleInvertedFill })],
 })
 export class CategoryComparisonPanelComponent {
   private readonly statsStore = inject(StatsStore);
@@ -114,12 +86,13 @@ export class CategoryComparisonPanelComponent {
         };
       });
 
-      const deltaTone: 'warning' | 'success' | undefined =
-        entry.deltaVsAveragePct == null || entry.deltaVsAveragePct === 0
-          ? undefined
-          : entry.deltaVsAveragePct > 0
-            ? 'warning'
-            : 'success';
+      // `undefined` (no delta at all, or exactly zero — a flat "no change" reads as neither an
+      // overspend warning nor a saving worth celebrating) vs. `'warning'` (spent more than
+      // average) vs. `'success'` (spent less) — the VM carries the resolved color/icon directly
+      // (TICKET-STAT-23) so neither this class nor the card template re-derives them from a
+      // separate tone/direction pair.
+      const isOverAverage = entry.deltaVsAveragePct != null && entry.deltaVsAveragePct > 0;
+      const hasDelta = entry.deltaVsAveragePct != null && entry.deltaVsAveragePct !== 0;
 
       return {
         categoryId: entry.categoryId,
@@ -133,13 +106,12 @@ export class CategoryComparisonPanelComponent {
           entry.deltaVsAveragePct == null
             ? null
             : formatPercent(entry.deltaVsAveragePct, 'sign-by-icon'),
-        deltaTone,
-        deltaDirection:
-          entry.deltaVsAveragePct == null || entry.deltaVsAveragePct === 0
-            ? null
-            : entry.deltaVsAveragePct > 0
-              ? 'up'
-              : 'down',
+        deltaColor: !hasDelta ? undefined : isOverAverage ? 'warning' : 'success',
+        deltaIcon: !hasDelta
+          ? undefined
+          : isOverAverage
+            ? 'tablerTriangleFill'
+            : 'tablerTriangleInvertedFill',
       };
     });
   });

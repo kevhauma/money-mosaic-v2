@@ -24,12 +24,14 @@ The clearest unfinished-view-model case in the app: the VM exposes `deltaTone`/`
 
 ## Acceptance criteria
 
-- [ ] No nested ternaries or display-fact derivation remain in the panel or card templates; the VM spec extends to cover `deltaColor`/`deltaIcon` per tone/direction.
-- [ ] Panel renders identically (live browser check, including drill-down params and the exclude dropdown).
-- [ ] `ng lint`, `ng test`, `ng build --configuration development` pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] No nested ternaries or display-fact derivation remain in the panel or card templates; the VM spec extends to cover `deltaColor`/`deltaIcon` per tone/direction.
+- [ ] Panel renders identically (live browser check, including drill-down params and the exclude dropdown) — **skipped**: the user explicitly asked to skip live browser verification for this whole ticket batch. Automated coverage (panel + card specs) confirms the delta color/icon resolution and card rendering, but this was never exercised in a real browser.
+- [x] `ng lint`, `ng test`, `ng build --configuration development` pass.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
 - Land after TICKET-NG-10 (its `PERCENT_FORMATTER` in this file is replaced there — don't "fix" it locally here).
 - If the class-side `categories` computed grows again, splitting bar-VM assembly into a module function is the natural next seam (noted, not in scope).
+- **Fallow finding (recorded, not chased further):** the panel's component-rollup complexity (class + template combined) shows as cognitive 28/cyclomatic 16, "high" severity — the template's own remaining branching (exclude-dropdown `@if`/`@for`, `hasEnoughData` `@if`/`@else`, the categories `@for`) is legitimate page-level orchestration, the same kind CR4-1 already accepted for `accounts-detail.component.html`. This ticket's scope was specifically VM completion + card extraction (CR4-1 §2 Options A+B), not a deeper page rewrite; the fallow-noise calibration itself is TICKET-CLEANUP-06's job.
+- **Incidental fix:** `src/app/shared/echarts/tooltip-formatter.spec.ts` had a pre-existing test-isolation gap (introduced by TICKET-NG-10's format-settings consolidation, surfaced here only because this ticket's new spec files shifted Vitest's file-run order) — it never reset the shared locale/currency-symbol signals itself, so it could inherit stale state from whichever spec ran before it. Fixed with a `beforeEach` resetting to `DEFAULT_LOCALE`, matching the pattern other specs already use.

@@ -286,4 +286,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Fixed a bug where dashboard percentages, ratios, and month names always showed Belgian-style formatting regardless of your locale setting',
     area: 'Dashboard insights',
   },
+  {
+    date: '2026-07-28',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-STAT-23'],
+    title:
+      "Tidied up the category-comparison dashboard panel's internals for easier future maintenance — no visible change",
+    area: 'Dashboard insights',
+  },
 ];

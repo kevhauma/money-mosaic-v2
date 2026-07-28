@@ -102,6 +102,87 @@ describe('CategoryComparisonPanelComponent', () => {
     expect(link).toBeTruthy();
   });
 
+  describe('delta color/icon (TICKET-STAT-23 — VM carries the resolved display facts directly)', () => {
+    const readCategories = (): {
+      deltaColor: 'warning' | 'success' | undefined;
+      deltaIcon: 'tablerTriangleFill' | 'tablerTriangleInvertedFill' | undefined;
+    }[] =>
+      (
+        fixture.componentInstance as unknown as {
+          categories: () => {
+            deltaColor: 'warning' | 'success' | undefined;
+            deltaIcon: 'tablerTriangleFill' | 'tablerTriangleInvertedFill' | undefined;
+          }[];
+        }
+      ).categories();
+
+    it('spending more than the prior-period average resolves to the warning color and up-triangle icon', async () => {
+      await TestBed.inject(CategoriesStore).addCategory(groceries);
+      TestBed.inject(TransactionsStore).addMany([
+        {
+          id: 1,
+          accountId: 1,
+          bookingDate: '2026-06-10',
+          amount: -40,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-1',
+          createdAt: '2026-06-10T00:00:00.000Z',
+          categoryId: 1,
+        },
+        {
+          id: 2,
+          accountId: 1,
+          bookingDate: '2026-07-10',
+          amount: -60,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-2',
+          createdAt: '2026-07-10T00:00:00.000Z',
+          categoryId: 1,
+        },
+      ]);
+      fixture.detectChanges();
+
+      const [category] = readCategories();
+      expect(category.deltaColor).toBe('warning');
+      expect(category.deltaIcon).toBe('tablerTriangleFill');
+    });
+
+    it('spending less than the prior-period average resolves to the success color and down-triangle icon', async () => {
+      await TestBed.inject(CategoriesStore).addCategory(groceries);
+      TestBed.inject(TransactionsStore).addMany([
+        {
+          id: 1,
+          accountId: 1,
+          bookingDate: '2026-06-10',
+          amount: -60,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-1',
+          createdAt: '2026-06-10T00:00:00.000Z',
+          categoryId: 1,
+        },
+        {
+          id: 2,
+          accountId: 1,
+          bookingDate: '2026-07-10',
+          amount: -40,
+          currency: 'EUR',
+          rawDescription: 'Supermarket',
+          fingerprint: 'fp-2',
+          createdAt: '2026-07-10T00:00:00.000Z',
+          categoryId: 1,
+        },
+      ]);
+      fixture.detectChanges();
+
+      const [category] = readCategories();
+      expect(category.deltaColor).toBe('success');
+      expect(category.deltaIcon).toBe('tablerTriangleInvertedFill');
+    });
+  });
+
   describe('bar tooltip period label', () => {
     it('shows "<Month> <year>" for a month-aligned window period', async () => {
       TestBed.inject(RangeStore).setPreset('this-month');
