@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RangeStore } from '@/core/stats';
 import { FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
-import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
+import { buildTransactionDrilldownParams, formatCurrency, formatRatio } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
-
-const RATIO_FORMATTER = new Intl.NumberFormat('en-BE', { maximumFractionDigits: 1 });
 
 /** How close two per-day averages must be to call them "about the same" rather than compute a ratio. */
 const RATIO_EQUALITY_THRESHOLD = 1.05;
@@ -63,7 +61,7 @@ export class WeekdayWeekendSplitPanelComponent {
     if (ratio < RATIO_EQUALITY_THRESHOLD) return 'About the same per day on weekdays and weekends';
 
     const target = weekendAvg >= weekdayAvg ? 'weekends' : 'weekdays';
-    return `${RATIO_FORMATTER.format(ratio)}× more per day on ${target}`;
+    return `${formatRatio(ratio)}× more per day on ${target}`;
   });
 
   protected readonly drilldownParams = computed(() =>

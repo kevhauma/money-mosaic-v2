@@ -1,10 +1,12 @@
 export * from './signed-amount.pipe';
+export * from './format-settings';
 export * from './currency-format';
 export * from './currency-symbol-presets';
 export * from './date-format';
 export * from './date-format.pipe';
 export * from './locale-presets';
 export * from './date-buckets';
+export { formatPercent, formatRatio, type PercentVariant } from './number-format';
 export * from './fingerprint';
 export * from './with-archivable';
 export * from './daisy-classes';

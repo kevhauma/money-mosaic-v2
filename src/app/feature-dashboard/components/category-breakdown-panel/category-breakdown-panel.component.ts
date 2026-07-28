@@ -19,6 +19,7 @@ import {
 import {
   buildTransactionDrilldownParams,
   formatCurrency,
+  formatPercent,
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
@@ -56,11 +57,6 @@ type PieTooltipParam = {
   name: string;
   data: { formattedTotal: string };
 };
-
-const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
-  style: 'percent',
-  maximumFractionDigits: 1,
-});
 
 /**
  * Item-trigger (`trigger: 'item'`) pie tooltip formatter (TICKET-STAT-12): reuses the hovered
@@ -137,7 +133,7 @@ export class CategoryBreakdownPanelComponent {
 
     return {
       formattedTotal: formatCurrency(entry.total),
-      formattedShare: PERCENT_FORMATTER.format(entry.share),
+      formattedShare: formatPercent(entry.share),
       transactionCount: entry.transactionCount,
     };
   });
@@ -178,7 +174,7 @@ export class CategoryBreakdownPanelComponent {
             ? (category?.color ?? CHART_NO_COLOR_FALLBACK)
             : CHART_NO_COLOR_FALLBACK,
         formattedTotal: formatCurrency(entry.total),
-        formattedShare: PERCENT_FORMATTER.format(entry.share),
+        formattedShare: formatPercent(entry.share),
       };
     });
   }

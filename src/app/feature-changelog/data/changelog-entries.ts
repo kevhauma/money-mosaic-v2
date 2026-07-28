@@ -278,4 +278,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "Tidied up the batch-import waiting screen's internals for easier future maintenance — no visible change",
     area: 'Import',
   },
+  {
+    date: '2026-07-28',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-NG-10'],
+    title:
+      'Fixed a bug where dashboard percentages, ratios, and month names always showed Belgian-style formatting regardless of your locale setting',
+    area: 'Dashboard insights',
+  },
 ];

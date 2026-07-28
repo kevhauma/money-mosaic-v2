@@ -1,3 +1,6 @@
+import { computed } from '@angular/core';
+import { locale } from './format-settings';
+
 export type Granularity = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 export type RangePreset =
@@ -262,7 +265,14 @@ export const shiftRangeByDayCount = (
   };
 };
 
-const MONTH_NAME_FORMATTER = new Intl.DateTimeFormat('en-BE', { month: 'long', timeZone: 'UTC' });
+// `computed`, not a module-level constant — rebuilt (memoized here) whenever `locale` changes
+// (TICKET-NG-10). Display-only: `.label` is only ever rendered as text (see
+// `formatAlignedRangeLabel`'s callers), never re-parsed or compared as a bucketing key — the
+// actual bucket identity (`.unit`, and `bucketKeyForDate` elsewhere in this file) is derived
+// independently of this formatted string, so localizing it changes no behavior but the display.
+const MONTH_NAME_FORMATTER = computed(
+  () => new Intl.DateTimeFormat(locale(), { month: 'long', timeZone: 'UTC' }),
+);
 
 const isFullCalendarYear = (from: string, to: string): boolean => {
   const start = parseIsoDate(from);
@@ -304,7 +314,7 @@ const detectCalendarAlignment = (from: string, to: string): CalendarAlignment | 
       case 'month':
         return {
           unit: 'month',
-          label: `${MONTH_NAME_FORMATTER.format(parseIsoDate(from))} ${year}`,
+          label: `${MONTH_NAME_FORMATTER().format(parseIsoDate(from))} ${year}`,
         };
       case 'week':
         return { unit: 'week', label: `W${key.split('-W')[1]} ${year}` };

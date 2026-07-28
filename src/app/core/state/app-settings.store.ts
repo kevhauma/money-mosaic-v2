@@ -7,16 +7,7 @@ import {
   ThemeService,
   type AccentColorId,
 } from '@/core/theme';
-import {
-  DEFAULT_CURRENCY_SYMBOL,
-  DEFAULT_CURRENCY_SYMBOL_POSITION,
-  DEFAULT_LOCALE,
-  setCurrencyLocale as setGlobalCurrencyLocale,
-  setCurrencySymbol as setGlobalCurrencySymbol,
-  setCurrencySymbolPosition as setGlobalCurrencySymbolPosition,
-  setDateLocale as setGlobalDateLocale,
-  type CurrencySymbolPosition,
-} from '@/shared/utils';
+import { syncFormatSettings, type CurrencySymbolPosition } from '@/shared/utils';
 
 export const AppSettingsStore = signalStore(
   { providedIn: 'root' },
@@ -91,23 +82,17 @@ export const AppSettingsStore = signalStore(
         }
       });
 
-      // Keeps `currency-format.ts`'s module-level signals in sync with the store — covers both
-      // initial hydration and later edits, so every `formatCurrency` call site (pipe, dashboard
-      // formatters, chart tooltips) reformats without its own wiring (TICKET-SET-03).
+      // Keeps `shared/utils/format-settings.ts`'s module-level signals in sync with the store —
+      // covers both initial hydration and later edits, so every formatter call site (pipes,
+      // dashboard formatters, chart tooltips) reformats without its own wiring. One sync point for
+      // symbol/position/locale together (TICKET-SET-03/TICKET-SET-04/TICKET-NG-10 — previously two
+      // separate effects, one per module-signal channel).
       effect(() => {
-        setGlobalCurrencySymbol(store.currencySymbol() ?? DEFAULT_CURRENCY_SYMBOL);
-        setGlobalCurrencySymbolPosition(
-          store.currencySymbolPosition() ?? DEFAULT_CURRENCY_SYMBOL_POSITION,
-        );
-      });
-
-      // Same sync for the locale-driven grouping/decimal separator (currency-format.ts) and the
-      // shared date-formatting helper (date-format.ts) — one setting, two independent module
-      // signals, mirroring the currency-symbol pattern above (TICKET-SET-04).
-      effect(() => {
-        const locale = store.locale() ?? DEFAULT_LOCALE;
-        setGlobalCurrencyLocale(locale);
-        setGlobalDateLocale(locale);
+        syncFormatSettings({
+          currencySymbol: store.currencySymbol(),
+          currencySymbolPosition: store.currencySymbolPosition(),
+          locale: store.locale(),
+        });
       });
     },
   }),

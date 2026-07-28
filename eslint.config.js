@@ -37,6 +37,26 @@ module.exports = defineConfig([
     },
   },
   {
+    // Recurrence guard for the CR4-6/TICKET-NG-10 locale-drift finding: a hardcoded string-literal
+    // locale in a new Intl.NumberFormat/DateTimeFormat means the result ignores the user's locale
+    // setting. shared/utils owns the settings-driven formatters (formatCurrency, formatDate,
+    // formatPercent, formatRatio) — anywhere else should call those instead of constructing its own
+    // Intl formatter.
+    files: ['**/*.ts'],
+    ignores: ['src/app/shared/utils/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'NewExpression[callee.object.name="Intl"][callee.property.name=/^(NumberFormat|DateTimeFormat)$/][arguments.0.type="Literal"]',
+          message:
+            "Hardcoded Intl locale ignores the user's locale setting (TICKET-NG-10) — use a shared/utils formatter (formatCurrency/formatDate/formatPercent/formatRatio) instead of `new Intl.NumberFormat/DateTimeFormat(<string-literal>, ...)`.",
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {},

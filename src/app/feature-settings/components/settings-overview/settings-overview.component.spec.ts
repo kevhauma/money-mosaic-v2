@@ -7,10 +7,7 @@ import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
   DEFAULT_LOCALE,
-  setCurrencyLocale,
-  setCurrencySymbol,
-  setCurrencySymbolPosition,
-  setDateLocale,
+  syncFormatSettings,
 } from '@/shared/utils';
 import { SettingsOverviewComponent } from './settings-overview.component';
 
@@ -30,12 +27,13 @@ describe('SettingsOverviewComponent', () => {
     // fake-indexeddb is a global singleton and Vitest runs with isolate:false, so a row written
     // here would otherwise leak into other spec files.
     await appDb.appSettings.clear();
-    // Same isolate:false leakage risk for currency-format's module-level signals (TICKET-SET-03).
-    setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
-    setCurrencySymbolPosition(DEFAULT_CURRENCY_SYMBOL_POSITION);
-    // Same leakage risk for the locale signals in currency-format.ts/date-format.ts (TICKET-SET-04).
-    setCurrencyLocale(DEFAULT_LOCALE);
-    setDateLocale(DEFAULT_LOCALE);
+    // Same isolate:false leakage risk for format-settings.ts's module-level signals
+    // (TICKET-SET-03/TICKET-SET-04/TICKET-NG-10).
+    syncFormatSettings({
+      currencySymbol: DEFAULT_CURRENCY_SYMBOL,
+      currencySymbolPosition: DEFAULT_CURRENCY_SYMBOL_POSITION,
+      locale: DEFAULT_LOCALE,
+    });
   });
 
   it('creates', () => {

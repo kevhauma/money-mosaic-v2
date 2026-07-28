@@ -6,7 +6,6 @@ import {
   ButtonComponent,
   DropdownComponent,
   FlexComponent,
-  formatDisplayDate,
   LabelComponent,
   PaperComponent,
   TypographyComponent,
@@ -15,6 +14,8 @@ import {
   buildTransactionDrilldownParams,
   formatAlignedRangeLabel,
   formatCurrency,
+  formatDate,
+  formatPercent,
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
 import { CategoriesStore } from '@/core/state';
@@ -52,13 +53,6 @@ type ExcludableCategoryVm = {
   name: string;
   excluded: boolean;
 };
-
-/** Sign is conveyed by the up/down triangle next to the number, not by the number itself. */
-const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
-  style: 'percent',
-  maximumFractionDigits: 0,
-  signDisplay: 'never',
-});
 
 /**
  * Top expense categories for the selected range, each compared against the nearest same-length
@@ -104,7 +98,7 @@ export class CategoryComparisonPanelComponent {
         const formattedTotal = formatCurrency(total);
         const periodLabel =
           formatAlignedRangeLabel(period.from, period.to) ??
-          `${formatDisplayDate(period.from)} – ${formatDisplayDate(period.to)}`;
+          `${formatDate(period.from)} – ${formatDate(period.to)}`;
         return {
           key: period.from,
           formattedTotal,
@@ -138,7 +132,7 @@ export class CategoryComparisonPanelComponent {
         deltaLabel:
           entry.deltaVsAveragePct == null
             ? null
-            : PERCENT_FORMATTER.format(entry.deltaVsAveragePct),
+            : formatPercent(entry.deltaVsAveragePct, 'sign-by-icon'),
         deltaTone,
         deltaDirection:
           entry.deltaVsAveragePct == null || entry.deltaVsAveragePct === 0

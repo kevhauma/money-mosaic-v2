@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { appDb, CategoriesRepository, type Category } from '@/core/data-access';
 import { RangeStore } from '@/core/stats';
 import { CategoriesStore, TransactionsStore } from '@/core/state';
-import { formatDisplayDate } from '@/shared/ui';
+import { formatDate } from '@/shared/utils';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { CategoryComparisonPanelComponent } from './category-comparison-panel.component';
 
@@ -203,7 +203,7 @@ describe('CategoryComparisonPanelComponent', () => {
       const selectedBar = fixture.nativeElement.querySelector('.bg-primary') as HTMLElement;
       const selectedAnchor = selectedBar.closest('a.tooltip') as HTMLElement;
       expect(selectedAnchor.getAttribute('data-tip')?.split('\n')[0]).toBe(
-        `${formatDisplayDate('2026-06-15')} – ${formatDisplayDate('2026-06-24')}`,
+        `${formatDate('2026-06-15')} – ${formatDate('2026-06-24')}`,
       );
     });
   });

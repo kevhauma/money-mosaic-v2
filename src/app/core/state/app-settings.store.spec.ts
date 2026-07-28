@@ -8,10 +8,7 @@ import {
   DEFAULT_LOCALE,
   formatCurrency,
   formatDate,
-  setCurrencyLocale,
-  setCurrencySymbol,
-  setCurrencySymbolPosition,
-  setDateLocale,
+  syncFormatSettings,
 } from '@/shared/utils';
 import { AppSettingsStore } from './app-settings.store';
 
@@ -41,10 +38,11 @@ describe('AppSettingsStore', () => {
   // this store's onInit effect writes to them — reset after every test so other spec files see
   // the default symbol/position/locale regardless of run order (TICKET-SET-03/TICKET-SET-04).
   afterEach(() => {
-    setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
-    setCurrencySymbolPosition(DEFAULT_CURRENCY_SYMBOL_POSITION);
-    setCurrencyLocale(DEFAULT_LOCALE);
-    setDateLocale(DEFAULT_LOCALE);
+    syncFormatSettings({
+      currencySymbol: DEFAULT_CURRENCY_SYMBOL,
+      currencySymbolPosition: DEFAULT_CURRENCY_SYMBOL_POSITION,
+      locale: DEFAULT_LOCALE,
+    });
   });
 
   it('defaults to the empty settings before hydrate resolves', () => {

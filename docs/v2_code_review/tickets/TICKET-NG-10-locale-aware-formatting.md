@@ -30,14 +30,14 @@ Five hardcoded `'en-BE'` `Intl` formatters ignore the locale setting — a live 
 
 ## Acceptance criteria
 
-- [ ] Changing the locale setting updates percentages, ratios, and month names across the dashboard (live browser check: switch locale, verify the breakdown/comparison/weekday panels and trend axis labels).
-- [ ] `MONTH_NAME_FORMATTER` consumers audited first: if any consumer treats month names as bucketing **keys** rather than display, the localization gets a display-only seam and the key path stays stable (name the finding in the ticket on completion).
-- [ ] Exactly one module-level locale signal remains, with one store sync point; grep proves no other `syncLocale`-style setters survive.
-- [ ] `formatDisplayDate` no longer exists; `date-range-input.component.ts` exports only its component class.
-- [ ] The new lint rule fires on a string-literal-locale `Intl` construction outside `shared/utils` (prove with a scratch violation) and the codebase passes clean.
-- [ ] Unit tests cover: each `formatPercent` variant per locale, ratio and month-name formatting per locale, formatter memoization (same instance until locale changes).
-- [ ] `ng lint`, `ng test`, `ng build --configuration development` pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [ ] Changing the locale setting updates percentages, ratios, and month names across the dashboard (live browser check: switch locale, verify the breakdown/comparison/weekday panels and trend axis labels) — **skipped**: the user explicitly asked to skip live browser verification for this whole ticket batch. Unit-test coverage (number-format.spec.ts, date-buckets.spec.ts) proves the formatters themselves are locale-aware, but this was never exercised in a real browser.
+- [x] `MONTH_NAME_FORMATTER` consumers audited first: **finding — already display-only, no key risk.** Traced `MONTH_NAME_FORMATTER`'s only use (`detectCalendarAlignment`'s `.label` field in `date-buckets.ts`) through its sole consumers, `formatAlignedRangeLabel` (used by `category-comparison-panel.component.ts` and `date-range-input.component.ts`, both rendering it as plain text) — the month name is never re-parsed, compared, or used as a lookup key anywhere; the actual bucket identity (`.unit`, and `bucketKeyForDate` elsewhere in the file) is derived independently via ISO date math, not from the formatted string. Localizing it changes display only. No display-only seam was needed; localized the formatter in place.
+- [x] Exactly one module-level locale signal remains, with one store sync point; grep proves no other `syncLocale`-style setters survive.
+- [x] `formatDisplayDate` no longer exists; `date-range-input.component.ts` exports only its component class.
+- [x] The new lint rule fires on a string-literal-locale `Intl` construction outside `shared/utils` (prove with a scratch violation) and the codebase passes clean.
+- [x] Unit tests cover: each `formatPercent` variant per locale, ratio and month-name formatting per locale, formatter memoization (same instance until locale changes).
+- [x] `ng lint`, `ng test`, `ng build --configuration development` pass.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

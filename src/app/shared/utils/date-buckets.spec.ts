@@ -7,6 +7,7 @@ import {
   resolvePresetRange,
   shiftRangeByDayCount,
 } from './date-buckets';
+import { DEFAULT_LOCALE, syncFormatSettings } from './format-settings';
 
 describe('bucketKeyForDate', () => {
   it('formats a day bucket as the ISO date itself', () => {
@@ -218,6 +219,13 @@ describe('shiftRangeByDayCount', () => {
 });
 
 describe('formatAlignedRangeLabel', () => {
+  // Vitest runs this suite with isolate:false, so the shared locale signal persists across spec
+  // files — reset it so the month-name assertions below aren't sensitive to run order
+  // (TICKET-NG-10).
+  beforeEach(() => {
+    syncFormatSettings({ locale: DEFAULT_LOCALE });
+  });
+
   it('formats a range matching a full ISO week as "W<week> <year>"', () => {
     // Mon 2026-06-29 .. Sun 2026-07-05 is ISO week 27 of 2026 (see resolvePresetRange tests above).
     expect(formatAlignedRangeLabel('2026-06-29', '2026-07-05')).toBe('W27 2026');
@@ -241,6 +249,19 @@ describe('formatAlignedRangeLabel', () => {
 
   it('handles a non-leap-year February with its shorter length', () => {
     expect(formatAlignedRangeLabel('2026-02-01', '2026-02-28')).toBe('February 2026');
+  });
+
+  it('renders the month name in the current locale (TICKET-NG-10)', () => {
+    syncFormatSettings({ locale: 'fr-FR' });
+    expect(formatAlignedRangeLabel('2026-07-01', '2026-07-31')).toBe('juillet 2026');
+  });
+
+  it('rebuilds the month-name formatter once the locale changes back', () => {
+    syncFormatSettings({ locale: 'fr-FR' });
+    expect(formatAlignedRangeLabel('2026-07-01', '2026-07-31')).toBe('juillet 2026');
+
+    syncFormatSettings({ locale: DEFAULT_LOCALE });
+    expect(formatAlignedRangeLabel('2026-07-01', '2026-07-31')).toBe('July 2026');
   });
 });
 

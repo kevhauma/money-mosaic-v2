@@ -3,7 +3,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerCheck, tablerPencil } from '@ng-icons/tabler-icons';
 import { computeNetMargin, computePeriodizedRate, RangeStore } from '@/core/stats';
 import { AccountsStore } from '@/core/state';
-import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
+import { buildTransactionDrilldownParams, formatCurrency, formatPercent } from '@/shared/utils';
 import {
   ButtonComponent,
   LoadingSkeletonComponent,
@@ -23,11 +23,6 @@ import { NetWorthHeaderComponent } from '../net-worth-header/net-worth-header.co
 import { TopTransactionsPanelComponent } from '../top-transactions-panel/top-transactions-panel.component';
 import { TrendChartPanelComponent } from '../trend-chart-panel/trend-chart-panel.component';
 import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-panel/weekday-weekend-split-panel.component';
-
-const PERCENT_FORMATTER = new Intl.NumberFormat('en-BE', {
-  style: 'percent',
-  maximumFractionDigits: 1,
-});
 
 @Component({
   selector: 'app-dashboard-overview',
@@ -102,7 +97,7 @@ export class DashboardOverviewComponent {
     const { net, income } = this.statsStore.periodStats();
     const margin = computeNetMargin(net, income);
     if (margin == null) return undefined;
-    const formatted = PERCENT_FORMATTER.format(Math.abs(margin));
+    const formatted = formatPercent(Math.abs(margin));
     return this.netColor() === 'success'
       ? `${formatted} of income kept`
       : `${formatted} of income overspent`;
@@ -110,7 +105,7 @@ export class DashboardOverviewComponent {
 
   protected readonly savingsRateValue = computed(() => {
     const rate = this.statsStore.periodStats().savingsRate;
-    return rate == null ? '—' : PERCENT_FORMATTER.format(rate);
+    return rate == null ? '—' : formatPercent(rate);
   });
 
   protected readonly savingsSubLabel = computed(() =>

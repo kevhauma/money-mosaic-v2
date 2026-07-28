@@ -13,9 +13,6 @@ import { DropdownComponent } from '../dropdown/dropdown.component';
 export type DateRangeValue = { from: string; to: string };
 export type DateRangeInputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-/** Delegates to the shared, settings-driven date formatter (TICKET-SET-04) — kept as its own named export since callers already import it by this name. */
-export const formatDisplayDate = (iso: string): string => formatDate(iso);
-
 /** Presentational single-field date-range picker (a Cally `calendar-range` popover) — holds no state of its own; the caller owns the value and reacts to `valueChange`. */
 @Component({
   selector: 'mm-date-range-input',
@@ -51,9 +48,7 @@ export class DateRangeInputComponent {
     if (!from || !to) {
       return 'Select date range';
     }
-    return (
-      formatAlignedRangeLabel(from, to) ?? `${formatDisplayDate(from)} – ${formatDisplayDate(to)}`
-    );
+    return formatAlignedRangeLabel(from, to) ?? `${formatDate(from)} – ${formatDate(to)}`;
   });
 
   protected onCalendarChange(event: Event): void {

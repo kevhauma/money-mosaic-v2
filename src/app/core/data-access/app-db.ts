@@ -8,7 +8,7 @@ import type { FeatureConfig } from '@/core/ml/model-config';
 // Deep import (not the `core/theme` barrel) for the same reason as above — the barrel's
 // `ThemeService` pulls in an `@Injectable` service transitively.
 import type { AccentColorId } from '@/core/theme/accent-colors';
-import type { CurrencySymbolPosition } from '@/shared/utils/currency-format';
+import type { CurrencySymbolPosition } from '@/shared/utils/format-settings';
 
 /** A person sharing a `joint` account, and the IBAN(s) they pay in from (TICKET-ACC-03). */
 export type JointOwner = {
@@ -506,7 +506,7 @@ export type AppSettings = {
   /**
    * Additive field (TICKET-SET-04) — a BCP 47 tag (e.g. `'en-BE'`, `'en-US'`) driving both
    * `formatCurrency`'s number grouping/decimal separator and the shared date-formatting helper.
-   * `undefined` falls back to `DEFAULT_LOCALE` (`'en-US'`, in `shared/utils/currency-format.ts`) —
+   * `undefined` falls back to `DEFAULT_LOCALE` (`'en-US'`, in `shared/utils/format-settings.ts`) —
    * today's exact hardcoded decimal-grouping behavior — so nobody's formatting changes until they
    * opt in. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as
    * `primaryColor`/`currencySymbol` above.
