@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { ACCOUNT_TYPE_OPTIONS } from '@/feature-accounts';
 import { ButtonComponent, FlexComponent } from '@/shared/ui';
-import type { PendingAccountDraft } from '../import-select-step/import-select-step.component';
+import type { PendingAccountDraft } from '../../import-queue';
 
 /**
  * Inline name/IBAN/type editor for a queued file's not-yet-created account (TICKET-IMP-08) — split

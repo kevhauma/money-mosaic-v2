@@ -3,14 +3,10 @@ import { vi } from 'vitest';
 import type { MappingProfile } from '@/core/data-access';
 import { CsvImportService } from '@/core/import';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
-import {
-  ImportMapStepComponent,
-  type ColumnFieldKey,
-  type MapperStepId,
-  type MapperStepTrackerItem,
-} from './import-map-step.component';
+import { ImportMapStepComponent } from './import-map-step.component';
+import type { ColumnFieldKey, MapperSummaryRow } from '../../column-mapping';
+import type { MapperStepId, MapperStepTrackerItem } from '../../mapper-steps';
 import type { AmountMode } from '../column-map-amount-field/column-map-amount-field.component';
-import type { MapperSummaryRow } from '../column-map-summary-step/column-map-summary-step.component';
 
 /** Protected surface we reach into for guided-flow assertions (TICKET-IMP-09). */
 type Internals = {

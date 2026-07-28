@@ -24,11 +24,11 @@ The mechanical floor of the CR4-4 decision (deeper cuts C1/D were explicitly def
 
 ## Acceptance criteria
 
-- [ ] No type, constant, or interface consumed by more than its host component remains exported from a `*.component.ts` file in `feature-import/`.
-- [ ] All importers (siblings + wizard) updated; cross-feature consumers keep importing via the `@/feature-import` barrel; no behavior change.
-- [ ] The five lifted functions get TestBed-free unit specs (cases: sample resolution per field kind, duplicate warning triggering, invalid-field labeling, summary-row assembly, step-status derivation).
-- [ ] `ng lint`, `ng test`, `ng build --configuration development` pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] No type, constant, or interface consumed by more than its host component remains exported from a `*.component.ts` file in `feature-import/`.
+- [x] All importers (siblings + wizard) updated; cross-feature consumers keep importing via the `@/feature-import` barrel; no behavior change.
+- [x] The five lifted functions get TestBed-free unit specs (cases: sample resolution per field kind, duplicate warning triggering, invalid-field labeling, summary-row assembly, step-status derivation).
+- [x] `ng lint`, `ng test`, `ng build --configuration development` pass.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

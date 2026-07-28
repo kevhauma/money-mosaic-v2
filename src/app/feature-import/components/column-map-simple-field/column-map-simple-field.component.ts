@@ -7,7 +7,7 @@ import {
   LabelComponent,
   SelectComponent,
 } from '@/shared/ui';
-import type { ColumnFieldDef } from '../import-map-step/import-map-step.component';
+import type { ColumnFieldDef } from '../../column-mapping';
 import { ColumnMapSampleCaptionComponent } from '../column-map-sample-caption/column-map-sample-caption.component';
 
 /**

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import type { PendingAccountDraft } from '../import-select-step/import-select-step.component';
+import type { PendingAccountDraft } from '../../import-queue';
 import { AccountDraftEditorComponent } from './account-draft-editor.component';
 
 const draft: PendingAccountDraft = {

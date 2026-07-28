@@ -1,10 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import type { Account } from '@/core/data-access';
-import type {
-  PendingAccountDraft,
-  QueuedImportFile,
-} from '../import-select-step/import-select-step.component';
+import type { PendingAccountDraft, QueuedImportFile } from '../../import-queue';
 import { QueuedFileRowComponent } from './queued-file-row.component';
 
 const account = (overrides: Partial<Account> = {}): Account => ({

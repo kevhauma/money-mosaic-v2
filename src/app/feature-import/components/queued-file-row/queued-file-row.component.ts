@@ -2,10 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import type { Account } from '@/core/data-access';
 import { BadgeComponent, ButtonComponent, FlexComponent, TypographyComponent } from '@/shared/ui';
 import { AccountDraftEditorComponent } from '../account-draft-editor/account-draft-editor.component';
-import type {
-  PendingAccountDraft,
-  QueuedImportFile,
-} from '../import-select-step/import-select-step.component';
+import type { PendingAccountDraft, QueuedImportFile } from '../../import-queue';
 
 /**
  * One queued file's row in step 1 (TICKET-IMP-08) — split out of `ImportSelectStepComponent`'s own

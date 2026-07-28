@@ -198,7 +198,7 @@ describe('CategoryBreakdownPanelComponent', () => {
       ]);
       fixture.detectChanges();
 
-      let [expenseColumn, incomeColumn] = fixture.componentInstance['columns']();
+      let [incomeColumn, expenseColumn] = fixture.componentInstance['columns']();
       expect(expenseColumn.visibleEntries.length).toBe(5);
       expect(expenseColumn.remainingCount).toBe(2);
       expect(expenseColumn.toggleLabel).toBe('Show more (2)');
@@ -208,7 +208,7 @@ describe('CategoryBreakdownPanelComponent', () => {
       // change detection pass (and thus no extra echarts repaint) needed.
       fixture.componentInstance['toggleColumn']('expense');
 
-      [expenseColumn, incomeColumn] = fixture.componentInstance['columns']();
+      [incomeColumn, expenseColumn] = fixture.componentInstance['columns']();
       expect(expenseColumn.visibleEntries.length).toBe(7);
       expect(expenseColumn.expanded).toBe(true);
       expect(expenseColumn.toggleLabel).toBe('Show less');
@@ -238,14 +238,14 @@ describe('CategoryBreakdownPanelComponent', () => {
       fixture.detectChanges();
 
       fixture.componentInstance['toggleColumn']('expense');
-      expect(fixture.componentInstance['columns']()[0].expanded).toBe(true);
+      expect(fixture.componentInstance['columns']()[1].expanded).toBe(true);
 
       // `expandedColumns` is a `linkedSignal` sourced from the range — its reset recomputes
       // lazily on next read, synchronously, no change-detection flush needed.
       TestBed.inject(RangeStore).setCustomRange('2026-08-01', '2026-08-31');
 
-      expect(fixture.componentInstance['columns']()[0].expanded).toBe(false);
-      expect(fixture.componentInstance['columns']()[0].visibleEntries.length).toBeLessThanOrEqual(
+      expect(fixture.componentInstance['columns']()[1].expanded).toBe(false);
+      expect(fixture.componentInstance['columns']()[1].visibleEntries.length).toBeLessThanOrEqual(
         5,
       );
     });

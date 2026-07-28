@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { ColumnMapSummaryStepComponent } from './column-map-summary-step.component';
-import type { MapperSummaryRow } from './column-map-summary-step.component';
+import type { MapperSummaryRow } from '../../column-mapping';
 
 describe('ColumnMapSummaryStepComponent', () => {
   let fixture: ComponentFixture<ColumnMapSummaryStepComponent>;

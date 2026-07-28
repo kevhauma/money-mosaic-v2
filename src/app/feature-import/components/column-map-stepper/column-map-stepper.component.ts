@@ -1,8 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import type {
-  MapperStepId,
-  MapperStepTrackerItem,
-} from '../import-map-step/import-map-step.component';
+import type { MapperStepId, MapperStepTrackerItem } from '../../mapper-steps';
 import { TypographyComponent } from '@/shared/ui';
 
 /**

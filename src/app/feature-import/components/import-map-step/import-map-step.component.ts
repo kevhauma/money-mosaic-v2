@@ -33,6 +33,24 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
+import {
+  COLUMN_FIELD_DEFS,
+  SIGN_CONVENTION_LABELS,
+  duplicateWarnings as computeDuplicateWarnings,
+  invalidFieldLabels as computeInvalidFieldLabels,
+  resolvedSamples as computeResolvedSamples,
+  summaryRows as computeSummaryRows,
+  type ColumnFieldDef,
+  type ColumnFieldKey,
+  type ImportMappingResult,
+  type MapperSummaryRow,
+} from '../../column-mapping';
+import {
+  MAPPER_STEPS,
+  stepStatus as computeStepStatus,
+  type MapperStepId,
+  type MapperStepTrackerItem,
+} from '../../mapper-steps';
 import { ColumnMapStepperComponent } from '../column-map-stepper/column-map-stepper.component';
 import { ColumnMapSimpleFieldComponent } from '../column-map-simple-field/column-map-simple-field.component';
 import {
@@ -40,74 +58,8 @@ import {
   type AmountMode,
 } from '../column-map-amount-field/column-map-amount-field.component';
 import { ColumnMapCounterpartyFieldComponent } from '../column-map-counterparty-field/column-map-counterparty-field.component';
-import {
-  ColumnMapSummaryStepComponent,
-  type MapperSummaryRow,
-} from '../column-map-summary-step/column-map-summary-step.component';
+import { ColumnMapSummaryStepComponent } from '../column-map-summary-step/column-map-summary-step.component';
 import { ImportPreviewStepComponent } from '../import-preview-step/import-preview-step.component';
-
-export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
-
-const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
-  'as-is': 'As-is',
-  'debit-negative': 'Debit negative (default)',
-  'credit-negative': 'Credit negative',
-};
-
-/** A column-mapping field's key — one of `MappingProfileColumns`'s own properties. */
-export type ColumnFieldKey = keyof MappingProfileColumns;
-
-export type ColumnFieldDef = { key: ColumnFieldKey; label: string; required: boolean };
-
-/** Flat per-control definitions — `resolvedSamples`/`duplicateWarnings`/`invalidFieldLabels` still
- * operate at this 9-control granularity regardless of how the guided flow groups them into steps. */
-const COLUMN_FIELD_DEFS: ColumnFieldDef[] = [
-  { key: 'date', label: 'Date', required: true },
-  { key: 'amount', label: 'Amount', required: false },
-  { key: 'debit', label: 'Debit', required: false },
-  { key: 'credit', label: 'Credit', required: false },
-  { key: 'description', label: 'Description', required: true },
-  { key: 'counterpartyName', label: 'Counterparty name', required: false },
-  { key: 'counterpartyIban', label: 'Counterparty IBAN', required: false },
-  { key: 'ownIban', label: 'Own account number/IBAN', required: false },
-  { key: 'balance', label: 'Running balance', required: false },
-];
-
-export type MapperStepId =
-  'date' | 'description' | 'amount' | 'counterparty' | 'ownIban' | 'balance' | 'summary';
-
-export type MapperStepDef = { id: MapperStepId; label: string; keys: ColumnFieldKey[] };
-
-export type MapperStepTrackerState = 'done' | 'current' | 'upcoming';
-
-/** Per-step valid/set indicator shown by the tracker (independent of `state`): `complete` means
- * every required control in the step is filled (or, for an all-optional step, at least one
- * control is); `incomplete` means a required control is still empty; `empty` means an all-optional
- * step has nothing mapped yet. */
-export type MapperStepStatus = 'complete' | 'incomplete' | 'empty';
-
-export type MapperStepTrackerItem = {
-  id: MapperStepId;
-  label: string;
-  state: MapperStepTrackerState;
-  status: MapperStepStatus;
-};
-
-/**
- * The horizontal guided flow's step order (TICKET-IMP-09) — consolidates TICKET-IMP-07's flat
- * 9-field order into 7 steps: `amount` now covers `amount`/`debit`/`credit` behind a mode toggle,
- * `counterparty` covers `counterpartyName`/`counterpartyIban` together, and `summary` is a new
- * terminus (the flow no longer ends at a `null` active field).
- */
-const MAPPER_STEPS: MapperStepDef[] = [
-  { id: 'date', label: 'Date', keys: ['date'] },
-  { id: 'description', label: 'Description', keys: ['description'] },
-  { id: 'amount', label: 'Amount', keys: ['amount', 'debit', 'credit'] },
-  { id: 'counterparty', label: 'Counterparty', keys: ['counterpartyName', 'counterpartyIban'] },
-  { id: 'ownIban', label: 'Own IBAN', keys: ['ownIban'] },
-  { id: 'balance', label: 'Balance', keys: ['balance'] },
-  { id: 'summary', label: 'Summary', keys: [] },
-];
 
 @Component({
   selector: 'app-import-map-step',
@@ -209,55 +161,21 @@ export class ImportMapStepComponent {
 
   /** The active step's live resolved sample(s) — the first data row's value for whichever column is
    * currently selected, per individual form control (TICKET-IMP-07; unchanged by the step regrouping). */
-  protected readonly resolvedSamples = computed<Partial<Record<ColumnFieldKey, string>>>(() => {
-    const value = this.formValue();
-    const headers = this.headers();
-    const sampleRow = this.previewRows()[value.headerRows ?? 1] ?? [];
-    const samples: Partial<Record<ColumnFieldKey, string>> = {};
-    for (const field of COLUMN_FIELD_DEFS) {
-      const columnName = value[field.key];
-      const index = columnName ? headers.indexOf(columnName) : -1;
-      if (index !== -1 && sampleRow[index] !== undefined) {
-        samples[field.key] = sampleRow[index];
-      }
-    }
-    return samples;
-  });
+  protected readonly resolvedSamples = computed<Partial<Record<ColumnFieldKey, string>>>(() =>
+    computeResolvedSamples(this.formValue(), this.headers(), this.previewRows()),
+  );
 
   /** Non-blocking "also mapped to X" warning for any two fields sharing the same source column
    * (TICKET-IMP-07; unchanged by the step regrouping). */
-  protected readonly duplicateWarnings = computed<Partial<Record<ColumnFieldKey, string>>>(() => {
-    const value = this.formValue();
-    const fieldsByColumn = new Map<string, ColumnFieldKey[]>();
-    for (const field of COLUMN_FIELD_DEFS) {
-      const columnName = value[field.key];
-      if (!columnName) continue;
-      const keys = fieldsByColumn.get(columnName) ?? [];
-      keys.push(field.key);
-      fieldsByColumn.set(columnName, keys);
-    }
-
-    const warnings: Partial<Record<ColumnFieldKey, string>> = {};
-    for (const keys of fieldsByColumn.values()) {
-      if (keys.length < 2) continue;
-      for (const key of keys) {
-        const otherLabels = keys
-          .filter((other) => other !== key)
-          .map((other) => COLUMN_FIELD_DEFS.find((field) => field.key === other)!.label);
-        warnings[key] = `Also mapped to ${otherLabels.join(', ')}`;
-      }
-    }
-    return warnings;
-  });
+  protected readonly duplicateWarnings = computed<Partial<Record<ColumnFieldKey, string>>>(() =>
+    computeDuplicateWarnings(this.formValue()),
+  );
 
   /** Required column fields still unmapped — surfaced so the wizard's Confirm/Next button can name
    * what's blocking it (TICKET-IMP-07; unchanged by the step regrouping). */
-  readonly invalidFieldLabels = computed<string[]>(() => {
-    const value = this.formValue();
-    return COLUMN_FIELD_DEFS.filter((field) => field.required && !value[field.key]).map(
-      (field) => field.label,
-    );
-  });
+  readonly invalidFieldLabels = computed<string[]>(() =>
+    computeInvalidFieldLabels(this.formValue()),
+  );
 
   /** The horizontal tracker's precomputed items — done/current/upcoming state plus a valid/set
    * status; every step is freely clickable, so the user can jump anywhere in the guided flow, not
@@ -268,41 +186,14 @@ export class ImportMapStepComponent {
       id: step.id,
       label: step.label,
       state: index < activeIndex ? 'done' : index === activeIndex ? 'current' : 'upcoming',
-      status: this.stepStatus(step),
+      status: computeStepStatus(step, this.formValue()),
     }));
   });
 
-  /** A step is `complete` once its required control(s) are filled (an all-optional step counts as
-   * complete once anything is mapped), `incomplete` while a required control is still empty, or
-   * `empty` for an all-optional step nothing has been mapped to yet. The Summary step mirrors
-   * `invalidFieldLabels` since it has no controls of its own. */
-  private stepStatus(step: MapperStepDef): MapperStepStatus {
-    if (step.id === 'summary') {
-      return this.invalidFieldLabels().length === 0 ? 'complete' : 'incomplete';
-    }
-
-    const value = this.formValue();
-    const requiredKeys = step.keys.filter(
-      (key) => COLUMN_FIELD_DEFS.find((field) => field.key === key)?.required,
-    );
-    if (requiredKeys.length > 0) {
-      return requiredKeys.every((key) => !!value[key]) ? 'complete' : 'incomplete';
-    }
-    return step.keys.some((key) => !!value[key]) ? 'complete' : 'empty';
-  }
-
   /** The Summary step's recap — every field that's actually mapped, in `COLUMN_FIELD_DEFS` order. */
-  protected readonly summaryRows = computed<MapperSummaryRow[]>(() => {
-    const value = this.formValue();
-    const samples = this.resolvedSamples();
-    const rows: MapperSummaryRow[] = [];
-    for (const field of COLUMN_FIELD_DEFS) {
-      const column = value[field.key];
-      if (!column) continue;
-      rows.push({ label: field.label, column, sample: samples[field.key] });
-    }
-    return rows;
-  });
+  protected readonly summaryRows = computed<MapperSummaryRow[]>(() =>
+    computeSummaryRows(this.formValue(), this.headers(), this.previewRows()),
+  );
 
   /** Row-preview valid/invalid counts, shown as badges beside the "Row preview" header rather than
    * inside `ImportPreviewStepComponent` itself — computed from the same `parsedRows` input that

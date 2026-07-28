@@ -247,4 +247,11 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "Added a locale setting, so number grouping/decimal separators and dates throughout the app are formatted the way you're used to reading them, not hardcoded to one convention",
     area: 'Settings',
   },
+  {
+    date: '2026-07-28',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-IMP-10'],
+    title: "Tidied up the CSV import mapping screen's internals for easier future maintenance",
+    area: 'Import',
+  },
 ];

@@ -21,15 +21,10 @@ import {
 } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportBatchesStore } from '../../import-batches.store';
-import {
-  ImportSelectStepComponent,
-  type PendingAccountDraft,
-  type QueuedImportFile,
-} from '../import-select-step/import-select-step.component';
-import {
-  ImportMapStepComponent,
-  type ImportMappingResult,
-} from '../import-map-step/import-map-step.component';
+import type { PendingAccountDraft, QueuedImportFile } from '../../import-queue';
+import type { ImportMappingResult } from '../../column-mapping';
+import { ImportSelectStepComponent } from '../import-select-step/import-select-step.component';
+import { ImportMapStepComponent } from '../import-map-step/import-map-step.component';
 import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
 
 // Select → Map+Preview → Summary. Map and preview live on one screen (step 2); there is no

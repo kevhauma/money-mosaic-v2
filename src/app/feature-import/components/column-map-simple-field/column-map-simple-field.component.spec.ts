@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, Validators } from '@angular/forms';
 import { ColumnMapSimpleFieldComponent } from './column-map-simple-field.component';
-import type { ColumnFieldDef } from '../import-map-step/import-map-step.component';
+import type { ColumnFieldDef } from '../../column-mapping';
 
 describe('ColumnMapSimpleFieldComponent', () => {
   let fixture: ComponentFixture<ColumnMapSimpleFieldComponent>;

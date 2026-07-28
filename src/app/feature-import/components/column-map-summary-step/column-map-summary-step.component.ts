@@ -7,8 +7,7 @@ import {
   LabelComponent,
   TypographyComponent,
 } from '@/shared/ui';
-
-export type MapperSummaryRow = { label: string; column: string; sample?: string };
+import type { MapperSummaryRow } from '../../column-mapping';
 
 /**
  * The guided flow's terminus (TICKET-IMP-09) — recaps every mapped column and hosts the mapping

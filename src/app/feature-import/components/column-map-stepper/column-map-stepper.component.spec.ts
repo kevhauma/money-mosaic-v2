@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ColumnMapStepperComponent } from './column-map-stepper.component';
-import type { MapperStepTrackerItem } from '../import-map-step/import-map-step.component';
+import type { MapperStepTrackerItem } from '../../mapper-steps';
 
 describe('ColumnMapStepperComponent', () => {
   let fixture: ComponentFixture<ColumnMapStepperComponent>;

@@ -3,11 +3,8 @@ import { vi } from 'vitest';
 import type { Account } from '@/core/data-access';
 import { CsvImportService } from '@/core/import';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
-import {
-  ImportSelectStepComponent,
-  type PendingAccountDraft,
-  type QueuedImportFile,
-} from './import-select-step.component';
+import { ImportSelectStepComponent } from './import-select-step.component';
+import type { PendingAccountDraft, QueuedImportFile } from '../../import-queue';
 
 /** Protected surface we reach into for TICKET-IMP-08 assertions. */
 type Internals = {
