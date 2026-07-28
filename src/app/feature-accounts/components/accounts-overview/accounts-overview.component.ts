@@ -1,83 +1,81 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  tablerArchive,
-  tablerArchiveOff,
-  tablerChevronDown,
-  tablerChevronUp,
-  tablerDotsVertical,
-  tablerPencil,
-  tablerPlus,
-  tablerTrash,
-} from '@ng-icons/tabler-icons';
+import { tablerPlus } from '@ng-icons/tabler-icons';
 import type { Account } from '@/core/data-access';
 import {
-  BadgeComponent,
   ButtonComponent,
   ConfirmDialogComponent,
-  DropdownComponent,
   EmptyStateComponent,
   FlexComponent,
   LabelComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
-  PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { createConfirmState, SignedAmountPipe } from '@/shared/utils';
+import { createConfirmState } from '@/shared/utils';
 import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
 import { AccountsStore } from '@/core/state';
+import type { AccountCardVm } from '../../account-card-vm';
 import {
   AccountFormComponent,
   type AccountFormValue,
 } from '../account-form/account-form.component';
+import { AccountCardComponent } from '../account-card/account-card.component';
 import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-worth-history-chart.component';
 
 @Component({
   selector: 'app-accounts-overview',
   imports: [
-    RouterLink,
-    NgIcon,
+    AccountCardComponent,
     AccountFormComponent,
-    BadgeComponent,
     ButtonComponent,
     ConfirmDialogComponent,
-    DropdownComponent,
     EmptyStateComponent,
     FlexComponent,
     LabelComponent,
     LoadingSkeletonComponent,
     NetWorthHistoryChartComponent,
+    NgIcon,
     PageHeaderComponent,
-    PaperComponent,
-    SignedAmountPipe,
     TypographyComponent,
   ],
   templateUrl: './accounts-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [
-    provideIcons({
-      ...ACCOUNT_ICON_SET,
-      tablerPlus,
-      tablerDotsVertical,
-      tablerPencil,
-      tablerArchive,
-      tablerArchiveOff,
-      tablerTrash,
-      tablerChevronUp,
-      tablerChevronDown,
-    }),
-  ],
+  viewProviders: [provideIcons({ accountWallet: ACCOUNT_ICON_SET.accountWallet, tablerPlus })],
 })
 export class AccountsOverviewComponent {
   protected readonly accountsStore = inject(AccountsStore);
-  protected readonly accountIconName = accountIconName;
 
   protected readonly showArchived = signal(false);
   protected readonly visibleAccounts = computed(() =>
     this.showArchived() ? this.accountsStore.accounts() : this.accountsStore.activeAccounts(),
   );
+
+  /** One row per visible account, joining balance/share/position/icon so the `@for` below never
+   * calls a component method per row (TICKET-ACC-05). */
+  protected readonly accountCards = computed<AccountCardVm[]>(() => {
+    const accounts = this.visibleAccounts();
+    const ordered = this.accountsStore.accounts();
+    const balancesById = this.accountsStore.balancesById();
+    const jointStakeById = this.accountsStore.jointAccountStakeById();
+    const firstId = ordered[0]?.id;
+    const lastId = ordered[ordered.length - 1]?.id;
+
+    return accounts.map((account) => ({
+      account,
+      balance:
+        account.id != null
+          ? (balancesById.get(account.id) ?? account.openingBalance)
+          : account.openingBalance,
+      hasShare: account.type === 'joint' && account.id != null,
+      shareDisplay:
+        account.type === 'joint' && account.id != null ? (jointStakeById.get(account.id) ?? 0) : 0,
+      isFirst: account.id === firstId,
+      isLast: account.id === lastId,
+      iconName: accountIconName(account.icon),
+      ibanTail: account.iban ? account.iban.slice(-4) : null,
+    }));
+  });
 
   protected readonly formOpen = signal(false);
   protected readonly editingAccount = signal<Account | null>(null);
@@ -120,15 +118,6 @@ export class AccountsOverviewComponent {
     void this.accountsStore.moveAccount(account.id, direction);
   }
 
-  protected isFirst(account: Account): boolean {
-    return this.accountsStore.accounts()[0]?.id === account.id;
-  }
-
-  protected isLast(account: Account): boolean {
-    const ordered = this.accountsStore.accounts();
-    return ordered[ordered.length - 1]?.id === account.id;
-  }
-
   protected toggleArchive(account: Account): void {
     if (account.id == null) {
       return;
@@ -153,18 +142,5 @@ export class AccountsOverviewComponent {
     return account.id != null
       ? (this.accountsStore.transactionCountById().get(account.id) ?? 0)
       : 0;
-  }
-
-  protected balanceFor(account: Account): number {
-    return account.id != null
-      ? (this.accountsStore.balancesById().get(account.id) ?? account.openingBalance)
-      : account.openingBalance;
-  }
-
-  /** My net-worth stake in a joint account (TICKET-STAT-03) — null for a non-joint account. */
-  protected shareFor(account: Account): number | null {
-    return account.type === 'joint' && account.id != null
-      ? (this.accountsStore.jointAccountStakeById().get(account.id) ?? null)
-      : null;
   }
 }

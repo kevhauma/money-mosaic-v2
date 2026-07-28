@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
+  AppSettingsRepository,
   CategoriesRepository,
   RulesRepository,
   TransactionsRepository,
@@ -86,6 +87,12 @@ describe('TransactionsOverviewComponent', () => {
 
   const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
 
+  // Deterministic, not the real repository — this component's `formatDate` reads the shared,
+  // settings-driven locale (TICKET-NG-10), and the real AppSettingsStore hydrates from the shared
+  // fake-indexeddb singleton (Vitest isolate:false), which can carry a non-default locale left
+  // behind by whatever spec ran last. Row-label assertions below assume the default (en-US) locale.
+  const appSettingsRepository = { get: vi.fn().mockResolvedValue({ id: 1 }) };
+
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
@@ -97,6 +104,7 @@ describe('TransactionsOverviewComponent', () => {
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: RulesRepository, useValue: rulesRepository },
         { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: AppSettingsRepository, useValue: appSettingsRepository },
       ],
     }).compileComponents();
 

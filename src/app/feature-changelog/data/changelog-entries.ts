@@ -294,4 +294,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "Tidied up the category-comparison dashboard panel's internals for easier future maintenance — no visible change",
     area: 'Dashboard insights',
   },
+  {
+    date: '2026-07-28',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-ACC-05'],
+    title:
+      "Tidied up the Accounts page's internals for easier future maintenance — no visible change",
+    area: 'Accounts',
+  },
 ];

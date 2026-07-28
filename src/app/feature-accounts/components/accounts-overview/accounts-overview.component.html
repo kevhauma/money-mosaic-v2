@@ -32,97 +32,16 @@
   </mm-empty-state>
 } @else {
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    @for (account of visibleAccounts(); track account.id) {
-      <mm-paper
-        elevation="flat"
-        bodyClass="card-body gap-3"
-        [style]="'border-inline-start: 4px solid ' + account.color"
-      >
-        <mm-flex align="start" justify="between">
-          <mm-flex align="center" gap="2">
-            <ng-icon [name]="accountIconName(account.icon)" size="20" aria-hidden="true" />
-            <a [routerLink]="[account.id]" class="card-title text-base hover:underline">
-              {{ account.name }}
-            </a>
-          </mm-flex>
-          <mm-flex align="center" gap="1">
-            <mm-button
-              variant="ghost"
-              shape="square"
-              size="sm"
-              [disabled]="isFirst(account)"
-              (click)="moveAccount(account, 'up')"
-              ariaLabel="Move account up"
-            >
-              <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
-            </mm-button>
-            <mm-button
-              variant="ghost"
-              shape="square"
-              size="sm"
-              [disabled]="isLast(account)"
-              (click)="moveAccount(account, 'down')"
-              ariaLabel="Move account down"
-            >
-              <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
-            </mm-button>
-            <mm-dropdown align="end" contentClass="z-10 w-44">
-              <mm-button
-                trigger
-                variant="ghost"
-                shape="square"
-                size="sm"
-                ariaLabel="Account actions"
-              >
-                <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
-              </mm-button>
-              <li>
-                <button type="button" (click)="openEditForm(account)">
-                  <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
-                  Edit
-                </button>
-              </li>
-              <li>
-                <button type="button" (click)="toggleArchive(account)">
-                  <ng-icon
-                    [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
-                    size="14"
-                    aria-hidden="true"
-                  />
-                  {{ account.archived ? 'Unarchive' : 'Archive' }}
-                </button>
-              </li>
-              <li>
-                <button type="button" class="text-error" (click)="confirmDelete(account)">
-                  <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
-                  Delete
-                </button>
-              </li>
-            </mm-dropdown>
-          </mm-flex>
-        </mm-flex>
-
-        <mm-badge variant="outline" size="sm" class="w-fit capitalize">{{ account.type }}</mm-badge>
-
-        @if (accountsStore.dataReady()) {
-          <mm-text as="p" variant="display" [color]="balanceFor(account) < 0 ? 'error' : undefined">
-            {{ balanceFor(account) | signedAmount }}
-          </mm-text>
-          @if (shareFor(account) !== null) {
-            <mm-text as="p" class="text-xs text-base-content/60">
-              Your share: {{ shareFor(account)! | signedAmount }}
-            </mm-text>
-          }
-        } @else {
-          <span class="skeleton inline-block h-8 w-24"></span>
-        }
-
-        @if (account.iban) {
-          <mm-text as="p" class="text-xs text-base-content/60"
-            >···· {{ account.iban.slice(-4) }}</mm-text
-          >
-        }
-      </mm-paper>
+    @for (card of accountCards(); track card.account.id) {
+      <app-account-card
+        [vm]="card"
+        [dataReady]="accountsStore.dataReady()"
+        (edit)="openEditForm(card.account)"
+        (archive)="toggleArchive(card.account)"
+        (delete)="confirmDelete(card.account)"
+        (moveUp)="moveAccount(card.account, 'up')"
+        (moveDown)="moveAccount(card.account, 'down')"
+      />
     }
   </div>
 }
