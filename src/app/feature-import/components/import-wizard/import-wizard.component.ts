@@ -8,6 +8,7 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { ImportWizardSession } from '../../import-wizard-session';
+import { BatchWaitCardComponent } from '../batch-wait-card/batch-wait-card.component';
 import { ImportSelectStepComponent } from '../import-select-step/import-select-step.component';
 import { ImportMapStepComponent } from '../import-map-step/import-map-step.component';
 import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
@@ -20,6 +21,7 @@ import { ImportSummaryStepComponent } from '../import-summary-step/import-summar
 @Component({
   selector: 'app-import-wizard',
   imports: [
+    BatchWaitCardComponent,
     ImportSelectStepComponent,
     ImportMapStepComponent,
     ImportSummaryStepComponent,

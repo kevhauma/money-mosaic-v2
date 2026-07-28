@@ -270,4 +270,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "Simplified the CSV import wizard's internals into a single, more reliable session — no behavior change, but the Confirm button and mapping screen logic are now more consistent under the hood",
     area: 'Import',
   },
+  {
+    date: '2026-07-28',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-IMP-12'],
+    title:
+      "Tidied up the batch-import waiting screen's internals for easier future maintenance — no visible change",
+    area: 'Import',
+  },
 ];

@@ -1,0 +1,13 @@
+<mm-paper elevation="flat" background="bg-base-200/40" bodyClass="p-4 text-sm">
+  @if (mismatchMessage(); as message) {
+    <mm-text as="p" color="error">{{ message }}</mm-text>
+  } @else {
+    <mm-text as="p" weight="medium">
+      Using the batch mapping — this file imports automatically once parsed.
+    </mm-text>
+  }
+  <mm-text as="p" variant="caption" class="mt-1">{{ fileName() }}</mm-text>
+  <mm-button variant="ghost" size="sm" class="mt-3" (click)="mapIndividually.emit()">
+    Map this file individually
+  </mm-button>
+</mm-paper>

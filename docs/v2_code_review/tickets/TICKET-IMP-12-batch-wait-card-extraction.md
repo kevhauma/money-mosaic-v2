@@ -22,10 +22,10 @@ The user-selected remainder of CR4-1 §1 after TICKET-IMP-11 absorbs Options A/B
 
 ## Acceptance criteria
 
-- [ ] The card renders identically (live browser check during a batch import with a header mismatch).
-- [ ] No logic in the child beyond inputs/outputs; wizard passes data from the session's computeds.
-- [ ] `ng lint`, `ng test`, `ng build --configuration development` pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [ ] The card renders identically (live browser check during a batch import with a header mismatch) — **skipped**: the user explicitly asked to skip live browser verification for this whole ticket batch. Component-level spec (`batch-wait-card.component.spec.ts`) confirms the waiting/mismatch text and file name render and the output emits, but this was never exercised in a real browser.
+- [x] No logic in the child beyond inputs/outputs; wizard passes data from the session's computeds.
+- [x] `ng lint`, `ng test`, `ng build --configuration development` pass.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
