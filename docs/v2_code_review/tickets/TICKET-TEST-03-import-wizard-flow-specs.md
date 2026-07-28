@@ -28,10 +28,10 @@ Specs (component-level, driving the wizard through its public surface) that pin:
 
 ## Acceptance criteria
 
-- [ ] All four invariants have failing-if-broken specs (verify each by temporarily inverting the guarded condition locally).
-- [ ] Specs go through stores/repositories and fake-indexeddb — no direct `appDb` table writes from test arrangement helpers beyond what existing spec utilities already do.
-- [ ] `ng lint`, `ng test`, `ng build --configuration development` pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] All four invariants have failing-if-broken specs (verify each by temporarily inverting the guarded condition locally).
+- [x] Specs go through stores/repositories and fake-indexeddb — no direct `appDb` table writes from test arrangement helpers beyond what existing spec utilities already do.
+- [x] `ng lint`, `ng test`, `ng build --configuration development` pass.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

@@ -4,7 +4,8 @@ import { provideRouter } from '@angular/router';
 import { vi, type Mock } from 'vitest';
 import type { CommitImportResult, ParsedRowResult } from '@/core/import';
 import { CsvImportService } from '@/core/import';
-import { AccountsStore } from '@/core/state';
+import { AccountsRepository, appDb } from '@/core/data-access';
+import { AccountsStore, TransactionsStore } from '@/core/state';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportBatchesStore } from '../../import-batches.store';
 import { ImportWizardComponent } from './import-wizard.component';
@@ -662,5 +663,204 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
     expect(commitImport).not.toHaveBeenCalled();
     expect(read('step')).toBe(2);
     expect(read('currentFileIndex')).toBe(0);
+  });
+});
+
+/**
+ * TICKET-TEST-03 — the four commit-flow invariants CR4-2 named as the regression suite this flow
+ * has never had at the flow level, pinned against the *current* component (pre-IMP-11 session-store
+ * extraction) so that refactor has a safety net. Unlike the describe blocks above, only
+ * `CsvImportService.parse` is stubbed (it drives a real Web Worker); every store the wizard talks to
+ * — `AccountsStore`, `ImportBatchesStore`, `MappingProfilesStore`, `TransactionsStore`, and everything
+ * they call through to (`ImportService`, `RulesEngineService`, `TransfersStore`, ...) — is the real,
+ * `providedIn: 'root'` instance backed by the global fake-indexeddb (`src/test-setup.ts`), so each
+ * invariant is asserted against what's actually persisted, not against a mock's call count.
+ */
+describe('ImportWizardComponent: commit-flow invariants (TICKET-TEST-03)', () => {
+  let fixture: ComponentFixture<ImportWizardComponent>;
+  let component: InstanceType<typeof ImportWizardComponent>;
+  let parse: Mock;
+
+  const set = (key: string, value: unknown): void =>
+    (component as unknown as Record<string, { set(v: unknown): void }>)[key].set(value);
+  const read = <T>(key: string): T => (component as unknown as Record<string, () => T>)[key]();
+  const goNext = (): Promise<void> =>
+    (component as unknown as { goNext(): Promise<void> }).goNext();
+  const onUndo = (result: CommitImportResult): Promise<void> =>
+    (component as unknown as { onUndo(result: CommitImportResult): Promise<void> }).onUndo(result);
+
+  const wait = async (ms: number): Promise<void> => {
+    await new Promise<void>((resolve) => setTimeout(resolve, ms));
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+  const settleParse = (): Promise<void> => wait(350);
+
+  const csvFile = (name: string): File => new File(['Date;Desc\n01/01/2026;x'], name);
+  const validRow = (): ParsedRowResult =>
+    ({
+      valid: true,
+      transaction: { bookingDate: '2026-01-01', amount: 10, currency: 'EUR', rawDescription: 'x' },
+    }) as unknown as ParsedRowResult;
+
+  const enterStep2WithQueue = (accountIds: number[]): void => {
+    set(
+      'queue',
+      accountIds.map((accountId, i) => ({
+        file: csvFile(`${String.fromCharCode(97 + i)}.csv`),
+        accountId,
+        autoDetected: false,
+        pendingDraftId: null,
+        detectedIban: null,
+      })),
+    );
+    set('currentFileIndex', 0);
+    set('step', 2);
+  };
+
+  beforeEach(async () => {
+    parse = vi
+      .fn()
+      .mockResolvedValue({ headers: ['Date', 'Desc'], rows: [validRow()], warnings: [] });
+
+    await TestBed.configureTestingModule({
+      imports: [ImportWizardComponent],
+      providers: [provideRouter([]), { provide: CsvImportService, useValue: { parse } }],
+    })
+      .overrideComponent(ImportWizardComponent, {
+        remove: {
+          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportSummaryStepComponent],
+        },
+        add: {
+          imports: [SelectStubComponent, MapStubComponent, SummaryStubComponent],
+        },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(ImportWizardComponent);
+    component = fixture.componentInstance;
+  });
+
+  afterEach(async () => {
+    // The real stores above all persist through the shared, global `appDb` (fake-indexeddb is a
+    // singleton and Vitest runs with isolate:false) — clear every table a test in this block could
+    // have written to, so nothing leaks into a later test.
+    await appDb.transactions.clear();
+    await appDb.importBatches.clear();
+    await appDb.accounts.clear();
+    await appDb.transfers.clear();
+  });
+
+  it('invariant 1: commits exactly one import batch per file under batch auto-advance', async () => {
+    enterStep2WithQueue([11, 22, 33]);
+
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+    set('applyToRemaining', true);
+    await goNext(); // file 1 — the one manual click this flow still requires
+
+    // Files 2 and 3 auto-parse and auto-commit under the shared mapping — no further goNext() calls.
+    await settleParse();
+    await settleParse();
+    await settleParse();
+
+    const batches = TestBed.inject(ImportBatchesStore).batches();
+    expect(batches).toHaveLength(3);
+    expect(new Set(batches.map((batch) => batch.accountId))).toEqual(new Set([11, 22, 33]));
+    expect(read('step')).toBe(3);
+  });
+
+  it('invariant 2: a header mismatch pauses the batch — the mismatched file is never committed', async () => {
+    enterStep2WithQueue([11, 22]);
+
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+    set('applyToRemaining', true);
+    parse.mockResolvedValueOnce({
+      headerMismatch: true,
+      missingColumns: ['Bedrag'],
+      headers: ['Date', 'Desc'],
+    });
+    await goNext(); // commits file 1; file 2 auto-parses next and hits the mismatch
+
+    await settleParse();
+
+    expect(TestBed.inject(ImportBatchesStore).batches()).toHaveLength(1);
+    expect(TestBed.inject(ImportBatchesStore).batches()[0].accountId).toBe(11);
+    expect(read('headerMismatchMessage')).toContain('not found in b.csv');
+    expect(read('currentFileIndex')).toBe(1); // still on file 2, waiting on the user
+  });
+
+  it('invariant 3: a failed account creation stops that file and its linked drafts — nothing commits for either', async () => {
+    const accountsRepository = TestBed.inject(AccountsRepository);
+    vi.spyOn(accountsRepository, 'add').mockRejectedValueOnce(new Error('write failed'));
+
+    const ownerFile = csvFile('owner.csv');
+    const linkedFile = csvFile('linked.csv');
+    set('queue', [
+      {
+        file: ownerFile,
+        accountId: null,
+        autoDetected: false,
+        pendingDraftId: 'draft-1',
+        detectedIban: null,
+      },
+      {
+        file: linkedFile,
+        accountId: null,
+        autoDetected: false,
+        pendingDraftId: 'draft-1',
+        detectedIban: null,
+      },
+    ]);
+    set('pendingDrafts', [
+      { id: 'draft-1', ownerFile, name: 'Fresh Account', iban: '', type: 'checking' },
+    ]);
+    set('currentFileIndex', 0);
+    set('step', 2);
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+
+    await goNext();
+
+    expect(read('accountCreationError')).toContain('owner.csv');
+    expect(TestBed.inject(ImportBatchesStore).batches()).toHaveLength(0);
+    expect(read('currentFileIndex')).toBe(0); // never advanced past the owner file
+    expect(read<{ pendingDraftId: string | null }[]>('queue')[1].pendingDraftId).toBe('draft-1'); // the linked file is still stuck on the same unresolved draft, untouched
+    expect(read('pendingDrafts')).toEqual([
+      expect.objectContaining({ id: 'draft-1', name: 'Fresh Account' }),
+    ]);
+  });
+
+  it('invariant 4: undo removes exactly the undone batch, leaving the other batch and its transactions intact', async () => {
+    enterStep2WithQueue([11, 22]);
+
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+    await goNext(); // commits file 1 under account 11
+
+    set('mapResult', VALID_RESULT);
+    fixture.detectChanges();
+    await settleParse();
+    await goNext(); // commits file 2 under account 22
+
+    const results = read<CommitImportResult[]>('commitResults');
+    expect(results).toHaveLength(2);
+    expect(TestBed.inject(ImportBatchesStore).batches()).toHaveLength(2);
+
+    await onUndo(results[0]);
+
+    const remainingBatches = TestBed.inject(ImportBatchesStore).batches();
+    expect(remainingBatches).toHaveLength(1);
+    expect(remainingBatches[0].accountId).toBe(22);
+    expect(read<CommitImportResult[]>('commitResults')).toHaveLength(1);
+
+    const transactions = TestBed.inject(TransactionsStore).transactions();
+    expect(transactions.length).toBeGreaterThan(0);
+    expect(transactions.every((transaction) => transaction.accountId === 22)).toBe(true);
   });
 });

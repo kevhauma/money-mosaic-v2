@@ -254,4 +254,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     title: "Tidied up the CSV import mapping screen's internals for easier future maintenance",
     area: 'Import',
   },
+  {
+    date: '2026-07-28',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-TEST-03'],
+    title:
+      "Added a safety-net test suite pinning the import wizard's commit behavior ahead of upcoming internal changes",
+    area: 'Import',
+  },
 ];
