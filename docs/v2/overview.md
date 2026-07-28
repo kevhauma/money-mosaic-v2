@@ -28,6 +28,10 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 
 - [x] [TICKET-CHG-01](./tickets/TICKET-CHG-01-changelog-page.md) — Changelog page, kept current via the `work-ticket`/`story-ticket` skill workflow (new capability) — independent of every other ticket in this version except being a prerequisite for PUB-05; also updates two `.claude/skills/` files, not just app code
 
+## Dashboard track (independent)
+
+- [ ] [TICKET-STAT-22](./tickets/TICKET-STAT-22-empty-dashboard-state.md) — Empty dashboard state directing to Import (new capability) — independent of every other v2 ticket; no schema/`appSettings` involvement, safe to build any time; complements but doesn't overlap TICKET-PUB-01 (see its Notes)
+
 ## Considered, not ticketed yet
 
 - **TICKET-SET-01 was dropped, not completed — TICKET-SET-05 replaces it with a narrower scope.** SET-01's original scope (dark/light/system theme + a Dexie `appSettings` table/`AppSettingsRepository`/`Store`/`/settings` page shell) was superseded by a separately-shipped, much larger theming system (`ThemeService` in [theme.service.ts](../../src/app/core/theme/theme.service.ts), a 9-theme catalogue, built under the v1.5 redesign / TICKET-UI-16..21 "theme picker unification" work, not this version). That system is deliberately `localStorage`-only per its own code comment — explicitly *not* the Dexie-backed `appSettings` table SET-01 would have introduced, since appearance was judged a per-browser preference rather than portable data. A `/settings` route does exist (`feature-settings/`) but only hosts the theme picker. Net effect: no `appSettings` table, repository, or store existed for SET-02/03/04/PRIV-01 to depend on. Rather than have those four each assume one of them would build it (which quietly made them depend on each other's build order), [TICKET-SET-05](./tickets/TICKET-SET-05-settings-store-foundation.md) was ticketed to build just the empty table/repository/store — no theme, no fields, no UI — so all four Settings tickets depend only on SET-05 and can ship in any order relative to one another.

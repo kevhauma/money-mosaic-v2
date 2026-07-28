@@ -46,6 +46,12 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Privacy Mode',
   },
   {
+    versionFolder: 'v2',
+    ticketId: 'TICKET-STAT-22',
+    title: 'Empty dashboard view that points you to Import when you have no transactions yet',
+    area: 'Dashboard',
+  },
+  {
     versionFolder: 'v1.6_income_growth',
     ticketId: 'topic-income-growth',
     title:

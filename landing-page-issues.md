@@ -12,8 +12,8 @@ Scope decisions (2026-07-27): hero visual first, then everything else; **all cop
 | # | Sev | Issue | Fix | Command | Status |
 |---|-----|-------|-----|---------|--------|
 | 1 | P1 | **No product imagery anywhere.** The page says "See it for yourself" and shows nothing; persuasion rests 100% on reading. No mosaic motif despite the product name. | Theme-aware dashboard visual in/under the hero — real screenshot with demo seed data, or inline SVG mock (no image assets, keeps local-first purity). | `/impeccable bolder` | ✅ Done 2026-07-27 (theme-aware dashboard mock + loose brand-tile mosaic motif; not yet browser-verified) |
-| 2 | P1 | **"Everything included" is a documentation dump.** 7 cards, ~31 bullets, ~40% of page height at 13px/70%-opacity; buries the closing CTA (no CTA between 542px and ~5,900px on mobile). Fails cognitive-load checks: chunking, ≤4 options per decision point, progressive disclosure. | Collapse/accordion per group with one-line summaries, or cut each group to its 2–3 differentiating bullets and move the rest to the repo README. | `/impeccable distill` | Open |
-| 3 | P2 | **Template-tell card styling.** Three step cards carry a colored glow (#ff756f) on dark background plus 1px border + 16px shadow blur — detector-flagged generic-template signature. | Flat elevation or border-color shift consistent with the app's own surface system. | `/impeccable polish` | Open |
+| 2 | P1 | **"Everything included" is a documentation dump.** 7 cards, ~31 bullets, ~40% of page height at 13px/70%-opacity; buries the closing CTA (no CTA between 542px and ~5,900px on mobile). Fails cognitive-load checks: chunking, ≤4 options per decision point, progressive disclosure. | Collapse/accordion per group with one-line summaries, or cut each group to its 2–3 differentiating bullets and move the rest to the repo README. | `/impeccable distill` | ✅ Done 2026-07-27 (7 `mm-collapse` panels, all copy preserved behind disclosure; browser check declined) |
+| 3 | P2 | **Template-tell card styling.** Three step cards carry a colored glow (#ff756f) on dark background plus 1px border + 16px shadow blur — detector-flagged generic-template signature. | Flat elevation or border-color shift consistent with the app's own surface system. | `/impeccable polish` | ✅ Done 2026-07-27 — root cause was a theme-token leak, fixed in `styles.css`: `deformable-dark` left `--mm-glow/elev-*-shadow` unset, so the light theme's `:root` colored shadows leaked through in auto-dark, recomputed with dark's coral primary (`oklch(74% 0.18 25)` = the detector's #ff756f). Now pinned to `none` per the design-language intent ("dark steps the surface instead of shadows"). App-wide fix, not landing-only. |
 | 4 | P2 | **Local-first trade-off spun, banks unnamed.** "No company holding your history hostage" invites "one browser profile holds it hostage instead"; KBC/Belfius never named. | Candid data-location card + name the supported banks. | `/impeccable clarify` | ⛔ Out of scope (copy frozen by user decision) |
 | 5 | P2 | **Page unreachable after one click.** `homeRedirectGuard` redirects `''` to `/dashboard` forever; nothing in the app links back, so the pitch can't be re-read or shared. | Expose as `/welcome` (or `/about`) linked from settings or shell footer; keep the guard's behavior on `''`. | `/impeccable shape` | Open |
 
@@ -31,13 +31,13 @@ Scope decisions (2026-07-27): hero visual first, then everything else; **all cop
 
 - **Jordan (first-timer):** eyebrow leads with the jargon "Local-first personal finance"; bullets like "virtualized table" and "fingerprint match" are engineer-speak (⛔ copy); CTA drops onto an **empty dashboard** with no preview/softening of that first empty moment.
 - **Riley (stress tester):** absolutist claims — "**Every** other finance app…", "**Nothing** to breach" (⛔ copy); "what if I clear browser data / switch laptops?" answered only by a buried bullet; GitHub repo named `money-mosaic-v2`, not the brand.
-- **Casey (distracted mobile):** 6,147px mobile page with no CTA between hero and footer; "Everything included" all at 13px/70%-opacity on phone; trust chips wrap raggedly at 375px (one chip alone on first row).
+- **Casey (distracted mobile):** 6,147px mobile page with no CTA between hero and footer; "Everything included" all at 13px/70%-opacity on phone; ~~trust chips wrap raggedly at 375px (one chip alone on first row)~~ ✅ 2026-07-27: chips stack centered below `sm:`, wrap as a row above.
 
 ## Minor observations
 
 - "Free" appears 4×, "data never leaves" ~5× — repetition starting to dilute (⛔ copy).
-- Step cards: "STEP 1" number label floats oddly next to the icon on a separate visual row.
-- Zero motion anywhere; a single reduced-motion-safe hero fade-up would add polish cheaply.
+- ~~Step cards: "STEP 1" number label floats oddly next to the icon on a separate visual row.~~ ✅ 2026-07-27: label now sits directly above the title as one block beside the icon.
+- ~~Zero motion anywhere; a single reduced-motion-safe hero fade-up would add polish cheaply.~~ ✅ 2026-07-27: one authored entrance (`landing-rise`) — hero pitch, then the dashboard picture 0.15s later; reduced-motion disables it; nothing below the fold animates.
 - Value-prop card title lengths vary widely → uneven rhythm in the 3-column grid.
 - "MoneyMosaic" (header brand mark) vs "Money Mosaic" (body copy); "Get started — it's free" vs "Open dashboard" label mismatch for the same destination (⛔ copy).
 - No footer (license, version, contact) — the mid-hero GitHub link carries all that weight.
@@ -45,6 +45,6 @@ Scope decisions (2026-07-27): hero visual first, then everything else; **all cop
 ## Planned order
 
 1. `/impeccable bolder` — hero dashboard visual + mosaic motif
-2. `/impeccable distill` — shrink "Everything included"
+2. ~~`/impeccable distill` — shrink "Everything included"~~ ✅ done 2026-07-27
 3. `/impeccable shape` — expose landing at `/welcome`/`/about`
-4. `/impeccable polish` — card glows, chip wrap, step labels, optional hero fade-up
+4. ~~`/impeccable polish` — card glows, chip wrap, step labels, optional hero fade-up~~ ✅ done 2026-07-27 (lint/test/build/fallow green; the 2 failing `category-breakdown-panel` specs pre-exist on main, spun off as a separate task)

@@ -15,7 +15,13 @@ import {
   tablerUsers,
 } from '@ng-icons/tabler-icons';
 import { GITHUB_REPO_URL } from '@/core/links';
-import { ButtonComponent, FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  CollapseComponent,
+  FlexComponent,
+  PaperComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 
 type ValueProp = {
   readonly icon: string;
@@ -136,6 +142,8 @@ const PROCESS_STEPS: readonly ProcessStep[] = [
  * transactions → transfers → joint accounts → dashboard → data), so a first-time visitor gets a
  * genuinely complete picture rather than a marketing summary. Sits below the positioning pitch
  * (`VALUE_PROPS`) as the "everything included" detail section for a visitor who wants specifics.
+ * Rendered as collapsed disclosure panels: the full list must stay available, but expanded it
+ * dominated ~40 % of page height and buried the closing CTA (critique 2026-07-27, issue 2).
  */
 const FEATURE_GROUPS: readonly FeatureGroup[] = [
   {
@@ -204,7 +212,14 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
 
 @Component({
   selector: 'app-home-landing',
-  imports: [ButtonComponent, FlexComponent, NgIcon, PaperComponent, TypographyComponent],
+  imports: [
+    ButtonComponent,
+    CollapseComponent,
+    FlexComponent,
+    NgIcon,
+    PaperComponent,
+    TypographyComponent,
+  ],
   templateUrl: './home-landing.component.html',
   styleUrl: './home-landing.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

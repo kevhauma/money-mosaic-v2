@@ -15,7 +15,6 @@ import {
   LoadingSkeletonComponent,
   PaperComponent,
   TypographyComponent,
-  DividerComponent,
 } from '@/shared/ui';
 import {
   buildTransactionDrilldownParams,

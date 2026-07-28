@@ -23,8 +23,29 @@
   }
 }
 
+/**
+ * The page's one authored entrance: the hero pitch rises first, the dashboard picture follows a
+ * beat later (inline `animation-delay`); `backwards` keeps the delayed picture hidden until its
+ * turn. Nothing below the fold animates in — one moment, not a per-section effect.
+ */
+.landing-rise {
+  animation: landing-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mock-tile {
+  .mock-tile,
+  .landing-rise {
     animation: none;
   }
 }

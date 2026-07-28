@@ -30,6 +30,8 @@ Note that (a) and (b) are the *same state* rendered twice — the conditions tha
 - **Option C — extract the batch-wait card (P3).** The lines 90–102 paper (message + filename + "Map this file individually" button) as a dumb component. Only worth it if Option B alone doesn't get the template under control — it's a small, single-use unit, so the component boundary buys less here than elsewhere.
 - **Interaction:** any deeper restructuring of the wizard (CR4-2's state machine options) would produce Option A/B's computeds as a side effect — if CR4-2 Option A or B is chosen, do *not* spend effort here first. If CR4-2 is deferred, A+B here are safe standalone moves that don't prejudge it.
 
+Option C
+
 ## 2. `category-comparison-panel.component.html` — cognitive 48 (109 lines)
 
 The clearest **P1** case in the app, with irony attached: the class already builds `CategoryComparisonVm` explicitly "so the template stays method-free (CR-2.5)" — but the VM carries `deltaTone` and `deltaDirection`, and the template then re-maps both:
@@ -42,6 +44,8 @@ The clearest **P1** case in the app, with irony attached: the class already buil
 - **Option C — nothing beyond A.** Defensible: after Option A the remaining branching (`hasEnoughData`, the exclude dropdown, the bar loop) is genuinely this panel's job. B is an improvement, not a necessity.
 - **Also worth knowing:** the class-side `categories` computed does windowing, formatting, scaling, and drill-down param assembly in one pass — if it grows again, splitting bar-VM assembly into a module function (testable without TestBed) is the natural seam. Its `PERCENT_FORMATTER` is part of CR4-6 and should not be "fixed" locally here.
 
+Option A and B
+
 ## 3. `accounts-overview.component.html` — cognitive 26 (139 lines)
 
 The clearest **P2** case: the `@for` card calls five component methods per account — `balanceFor(account)` (twice: color + value), `shareFor(account)` (twice, plus a `!` assertion), `isFirst(account)`, `isLast(account)`, `accountIconName(account.icon)` — exactly the per-row `.find()` shape the project eliminated from the transactions table in CR-2.3.
@@ -50,6 +54,8 @@ The clearest **P2** case: the `@for` card calls five component methods per accou
 - **Option B — extract an `account-card` component (P3), fed by Option A's VM.** Takes the VM row plus emits `edit`/`archive`/`delete`/`moveUp`/`moveDown`. Worth it if the accounts overview is expected to keep growing (it's on an accelerating churn trend — 13 commits); otherwise A alone halves the template.
 - **Shared-fragment note:** the `dataReady() ? balance : skeleton` + "Your share" block appears here *and* in `accounts-detail` (below). If both A here and the detail page's option are taken, a tiny shared `account-balance-block` presentational component would deduplicate it — but don't create it pre-emptively for one-and-a-half uses; note it and let the second real need decide.
 
+Option A and B
+
 ## 4. `accounts-detail.component.html` — cognitive 25 (109 lines)
 
 **The mildest of the six — acceptance is a legitimate option here.** Its score comes from breadth (page header actions, balance block, contributor breakdown, two confirm dialogs, not-found state), not from any single knot. There is no ladder deeper than two levels and no inline derivation worse than `account.archived ? 'Unarchive' : 'Archive'`.
@@ -57,6 +63,8 @@ The clearest **P2** case: the `@for` card calls five component methods per accou
 - **Option A — accept, with the two micro-cleanups.** Precompute `shareDisplay` (kills the `share()!` assertion) and the archive label/icon pair (one tiny VM for the toggle button, shared in shape with the overview card's identical dropdown item). Total diff is a few lines.
 - **Option B — only if pattern-hunting:** the balance block extraction shared with `accounts-overview` (see above). Nothing else here justifies a component boundary.
 - Flagging this one honestly matters for calibration: if a future gate is added on template complexity (see "Guarding" below), this file is evidence that the threshold should sit above ~25, not at it.
+
+Option A and B
 
 ## 5. `transactions-overview.component.html` — cognitive 25 (166 lines)
 
@@ -71,6 +79,8 @@ Page-level orchestration (alert → transfer review → filters → bulk bar →
 - **Option C — a full `transaction-row` component.** Probably **over-extraction**: the row's cells are heterogeneous and coupled to the page's selection/edit/unlink handlers; the boundary would be seven inputs and five outputs wide. The interesting complexity is (a)–(c), which A+B already cover. Recording this as a considered-and-rejected option is worth as much as the accepted ones.
 - **Note:** the top-level skeleton/empty/table ladder should stay — replacing legitimate page states with indirection would be worse than the score it saves.
 
+Option A, B, and C
+
 ## 6. `rule-form.component.html` — cognitive 22 (149 lines)
 
 One cause: the per-condition row (lines 58–134) with its **four-way value-editor branch** (`isAccountField` → account select; `isBetween` → min/max pair; `isNumericField` → number input; else → text input + regex-length error). Everything else in the modal is a flat form.
@@ -78,6 +88,8 @@ One cause: the per-condition row (lines 58–134) with its **four-way value-edit
 - **Option A — a single editor discriminant (P4).** Replace the three boolean helpers with one `editorKindFor(group): 'account' | 'between' | 'numeric' | 'text'` and one `@switch`. The branch count is unchanged but becomes exhaustive, ordered, and nameable — and the class loses two of three semi-redundant helpers. Cheapest.
 - **Option B — extract a `rule-condition-row` component (P3).** The row is used from a `FormArray`, so the child needs the standard `ControlContainer`/`viewProviders` wiring (or takes the `ConditionGroup` as an input, which the codebase already does informally — the template passes `group` to helpers). Prior art in-repo: TICKET-SOLID-06 extracted `attribution-override-fieldset` out of the transaction edit form under the same constraints, so the pattern is proven here. Moves `operatorsFor`, the field/operator change handlers, and Option A's discriminant into the child, where they're cohesive.
 - **Which:** A alone if the rule form is considered done; B if rule conditions are expected to grow more editor kinds (the operator/label single-sourcing from CAT-05 suggests this area does keep growing). B without A would be a missed opportunity — do A inside B.
+
+Option A and B
 
 ---
 
@@ -88,3 +100,5 @@ Whatever subset above is taken, the finding's *systemic* half — "complexity mi
 - **Option G1 — put template findings in the Fallow gate.** Fallow already scores Angular templates (that's where these numbers come from); the audit baseline (CR4-14's doc) can include them so a template crossing the threshold fails the same pre-commit/`fallow:audit` path as class code. Needs a threshold calibrated against the survivors — per §4 above, somewhere above the mid-20s, so page orchestrators pass and the wizard/comparison-panel shapes don't.
 - **Option G2 — write the rule down.** One paragraph in the coding-conventions skill (lands naturally in CR4-12's edit): *"templates may branch on state; they may not derive state — no nested ternaries, no method calls inside `@for`, display mappings (colors/icons/labels) belong on the VM."* All four patterns above are instances of that sentence.
 - **Option G3 — do nothing systemic** and rely on review culture. Given this exact drift happened while three reviews were actively watching the `.ts` side, this option is listed for completeness rather than advocacy.
+
+Option G1 and G2
