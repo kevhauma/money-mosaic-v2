@@ -68,8 +68,11 @@ describe('ImportWizardComponent: combined map + preview step', () => {
   let commitImport: Mock;
 
   const set = (key: string, value: unknown): void =>
-    (component as unknown as Record<string, { set(v: unknown): void }>)[key].set(value);
-  const read = <T>(key: string): T => (component as unknown as Record<string, () => T>)[key]();
+    (component as unknown as { session: Record<string, { set(v: unknown): void }> }).session[
+      key
+    ].set(value);
+  const read = <T>(key: string): T =>
+    (component as unknown as { session: Record<string, () => T> }).session[key]();
   const primaryButton = (): HTMLButtonElement =>
     fixture.nativeElement.querySelectorAll('button')[1] as HTMLButtonElement;
 
@@ -297,7 +300,7 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     set('mapResult', VALID_RESULT);
     fixture.detectChanges();
     await settleParse();
-    await (component as unknown as { goNext(): Promise<void> }).goNext();
+    await (component as unknown as { session: { goNext(): Promise<void> } }).session.goNext();
 
     expect(commitImport).toHaveBeenCalledTimes(1);
     expect(commitImport.mock.calls[0][0]).toMatchObject({ accountId: 11 });
@@ -308,7 +311,7 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     set('mapResult', VALID_RESULT);
     fixture.detectChanges();
     await settleParse();
-    await (component as unknown as { goNext(): Promise<void> }).goNext();
+    await (component as unknown as { session: { goNext(): Promise<void> } }).session.goNext();
 
     expect(commitImport).toHaveBeenCalledTimes(2);
     expect(commitImport.mock.calls[1][0]).toMatchObject({ accountId: 22 });
@@ -318,9 +321,11 @@ describe('ImportWizardComponent: combined map + preview step', () => {
 
   describe('batch mapping (TICKET-IMP-02)', () => {
     const goNext = (): Promise<void> =>
-      (component as unknown as { goNext(): Promise<void> }).goNext();
+      (component as unknown as { session: { goNext(): Promise<void> } }).session.goNext();
     const mapFileIndividually = (): void =>
-      (component as unknown as { mapFileIndividually(): void }).mapFileIndividually();
+      (
+        component as unknown as { session: { mapFileIndividually(): void } }
+      ).session.mapFileIndividually();
 
     const enterStep2WithQueue = (accountIds: number[]): void => {
       set(
@@ -461,10 +466,13 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
   let addAccount: Mock;
 
   const set = (key: string, value: unknown): void =>
-    (component as unknown as Record<string, { set(v: unknown): void }>)[key].set(value);
-  const read = <T>(key: string): T => (component as unknown as Record<string, () => T>)[key]();
+    (component as unknown as { session: Record<string, { set(v: unknown): void }> }).session[
+      key
+    ].set(value);
+  const read = <T>(key: string): T =>
+    (component as unknown as { session: Record<string, () => T> }).session[key]();
   const goNext = (): Promise<void> =>
-    (component as unknown as { goNext(): Promise<void> }).goNext();
+    (component as unknown as { session: { goNext(): Promise<void> } }).session.goNext();
 
   const wait = async (ms: number): Promise<void> => {
     await new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -682,12 +690,17 @@ describe('ImportWizardComponent: commit-flow invariants (TICKET-TEST-03)', () =>
   let parse: Mock;
 
   const set = (key: string, value: unknown): void =>
-    (component as unknown as Record<string, { set(v: unknown): void }>)[key].set(value);
-  const read = <T>(key: string): T => (component as unknown as Record<string, () => T>)[key]();
+    (component as unknown as { session: Record<string, { set(v: unknown): void }> }).session[
+      key
+    ].set(value);
+  const read = <T>(key: string): T =>
+    (component as unknown as { session: Record<string, () => T> }).session[key]();
   const goNext = (): Promise<void> =>
-    (component as unknown as { goNext(): Promise<void> }).goNext();
+    (component as unknown as { session: { goNext(): Promise<void> } }).session.goNext();
   const onUndo = (result: CommitImportResult): Promise<void> =>
-    (component as unknown as { onUndo(result: CommitImportResult): Promise<void> }).onUndo(result);
+    (
+      component as unknown as { session: { onUndo(result: CommitImportResult): Promise<void> } }
+    ).session.onUndo(result);
 
   const wait = async (ms: number): Promise<void> => {
     await new Promise<void>((resolve) => setTimeout(resolve, ms));

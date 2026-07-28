@@ -25,16 +25,18 @@ The chosen fix for the hardest-to-reason-about code in the app. Move the whole w
 
 ## Acceptance criteria
 
-- [ ] All session state listed above lives in `ImportWizardSession`; the wizard component holds no commit-ordering logic and no guard fields.
-- [ ] The TICKET-TEST-03 flow specs pass unchanged in behavior (arrangement may move to driving the session).
-- [ ] Session-level specs cover: double-advance cannot double-commit; `reset()`/`startNewImport()` clears all session state (explicit reset discipline if root-provided); manual override pauses batch mode.
-- [ ] Template: Next-button `disabled` and CTA label bind to one CTA view model; step-2 nesting collapses to a single `@switch` on the view discriminant.
-- [ ] All persistence still flows through existing repositories/stores — the session orchestrates, it does not touch `appDb` tables.
-- [ ] `ng lint`, `ng test`, `ng build --configuration development` pass; live browser check of a full CSV import (single + batch + mismatch + undo).
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] All session state listed above lives in `ImportWizardSession`; the wizard component holds no commit-ordering logic and no guard fields.
+- [x] The TICKET-TEST-03 flow specs pass unchanged in behavior (arrangement may move to driving the session).
+- [x] Session-level specs cover: double-advance cannot double-commit; `reset()`/`startNewImport()` clears all session state (explicit reset discipline if root-provided); manual override pauses batch mode.
+- [x] Template: Next-button `disabled` and CTA label bind to one CTA view model; step-2 nesting collapses to a single `@switch` on the view discriminant.
+- [x] All persistence still flows through existing repositories/stores — the session orchestrates, it does not touch `appDb` tables.
+- [x] `ng lint`, `ng test`, `ng build --configuration development` pass.
+- [ ] Live browser check of a full CSV import (single + batch + mismatch + undo) — **skipped**: the user explicitly asked to skip live browser verification for this whole ticket batch (v2_code_review). Automated coverage (the TICKET-TEST-03 flow specs plus the new session-level specs) passed unchanged, but this specific sub-criterion was never actually exercised in a real browser and should not be treated as verified.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 
 - Needs TICKET-IMP-10 (types out first) and TICKET-TEST-03 (safety net) — in that order.
 - Route-scoped store providers are new to this app (all stores are `providedIn: 'root'`); if root-provided instead, `reset()` discipline is mandatory — record the choice in the ticket on completion.
+- **Scoping decision (recorded on completion):** `ImportWizardSession` is a plain `@Injectable()` class (not a `signalStore`, not `providedIn: 'root'`), provided via `ImportWizardComponent`'s own `providers: [ImportWizardSession]`. A fresh instance is created and torn down with every mount of the `/import` route, so no explicit reset-on-navigate discipline is needed — `startNewImport()` still resets the session in place for the in-page "start a new import" action once the wizard reaches Summary (unchanged from the original component's own behavior). This pattern is now documented in `.claude/skills/coding-conventions/SKILL.md`'s State Management section as the precedent for future component-scoped session state.
 - CR4-2 Options B/C/D were considered and rejected in favor of A (superset). CR4-4 Option D (prefill service) may be revisited afterward — the session may become prefill's natural owner.

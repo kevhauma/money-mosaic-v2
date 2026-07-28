@@ -262,4 +262,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "Added a safety-net test suite pinning the import wizard's commit behavior ahead of upcoming internal changes",
     area: 'Import',
   },
+  {
+    date: '2026-07-28',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-IMP-11'],
+    title:
+      "Simplified the CSV import wizard's internals into a single, more reliable session — no behavior change, but the Confirm button and mapping screen logic are now more consistent under the hood",
+    area: 'Import',
+  },
 ];
