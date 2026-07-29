@@ -2,8 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AccountsRepository, type Account, type Transaction } from '@/core/data-access';
-import { RangeStore } from '@/core/stats';
-import { AccountsStore, TransactionsStore } from '@/core/state';
+import { AccountsStore, RangeStore, TransactionsStore } from '@/core/state';
 import { resolvePresetRange, STAT_QUERY_PARAMS } from '@/shared/utils';
 import { AppShellComponent } from './app-shell.component';
 

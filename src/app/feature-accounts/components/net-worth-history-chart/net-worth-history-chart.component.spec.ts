@@ -8,9 +8,9 @@ import {
   type Account,
   type Transaction,
 } from '@/core/data-access';
-import { computeNetWorthTrend, pickGranularityForSpan, RangeStore } from '@/core/stats';
+import { computeNetWorthTrend, pickGranularityForSpan } from '@/core/stats';
 import { echarts } from '@/shared/echarts';
-import { AccountsStore } from '@/core/state';
+import { AccountsStore, RangeStore } from '@/core/state';
 import {
   buildNetWorthHistoryChartOption,
   NetWorthHistoryChartComponent,

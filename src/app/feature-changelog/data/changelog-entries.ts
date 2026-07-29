@@ -350,4 +350,11 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Rebuilt the Settings page as separate sections so new settings are quicker to add — no visible change',
     area: 'Settings',
   },
+  {
+    date: '2026-07-29',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-SOLID-07'],
+    title: 'Moved the shared date-range state to where the rest of the app-wide state lives',
+    area: 'Foundation',
+  },
 ];

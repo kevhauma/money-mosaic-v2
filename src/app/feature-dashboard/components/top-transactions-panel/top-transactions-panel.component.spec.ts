@@ -2,8 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { CategoriesRepository, type Category } from '@/core/data-access';
-import { RangeStore } from '@/core/stats';
-import { CategoriesStore, TransactionsStore } from '@/core/state';
+import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { TopTransactionsPanelComponent } from './top-transactions-panel.component';
 
 const groceries: Category = {

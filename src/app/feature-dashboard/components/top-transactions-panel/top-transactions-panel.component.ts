@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { RangeStore } from '@/core/stats';
-import { CategoriesStore } from '@/core/state';
+import { CategoriesStore, RangeStore } from '@/core/state';
 import { LoadingSkeletonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import {
   buildTransactionDrilldownParams,

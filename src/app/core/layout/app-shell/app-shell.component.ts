@@ -27,8 +27,8 @@ import {
   tablerSettings,
   tablerTags,
 } from '@ng-icons/tabler-icons';
-import { RangeStore, computeFullHistoryRange } from '@/core/stats';
-import { AccountsStore, AppSettingsStore, TransactionsStore } from '@/core/state';
+import { computeFullHistoryRange } from '@/core/stats';
+import { AccountsStore, AppSettingsStore, RangeStore, TransactionsStore } from '@/core/state';
 // Imported directly (not via the @/shared/ui barrel) to keep the rest of shared/ui — and the
 // @angular/forms it drags in via InputComponent/SelectComponent — out of the eager bundle;
 // Angular's @Component decorator has side effects, so esbuild can't tree-shake unused barrel

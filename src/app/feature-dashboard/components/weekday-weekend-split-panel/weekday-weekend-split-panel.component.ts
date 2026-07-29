@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RangeStore } from '@/core/stats';
+import { RangeStore } from '@/core/state';
 import { FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams, formatCurrency, formatRatio } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';

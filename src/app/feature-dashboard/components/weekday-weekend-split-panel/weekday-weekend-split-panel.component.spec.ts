@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { RangeStore } from '@/core/stats';
-import { TransactionsStore } from '@/core/state';
+import { RangeStore, TransactionsStore } from '@/core/state';
 import { WeekdayWeekendSplitPanelComponent } from './weekday-weekend-split-panel.component';
 
 describe('WeekdayWeekendSplitPanelComponent', () => {

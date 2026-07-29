@@ -2,8 +2,8 @@
 import { RouterLink } from '@angular/router';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
-import { RangeStore, type CategoryBreakdownEntry } from '@/core/stats';
-import { CategoriesStore } from '@/core/state';
+import { type CategoryBreakdownEntry } from '@/core/stats';
+import { CategoriesStore, RangeStore } from '@/core/state';
 import {
   resolveChartAnimation,
   CHART_NO_COLOR_FALLBACK,

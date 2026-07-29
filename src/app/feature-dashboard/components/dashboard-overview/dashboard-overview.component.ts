@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerCheck, tablerPencil } from '@ng-icons/tabler-icons';
-import { computeNetMargin, computePeriodizedRate, RangeStore } from '@/core/stats';
-import { AccountsStore } from '@/core/state';
+import { computeNetMargin, computePeriodizedRate } from '@/core/stats';
+import { AccountsStore, RangeStore } from '@/core/state';
 import { buildTransactionDrilldownParams, formatCurrency, formatPercent } from '@/shared/utils';
 import {
   ButtonComponent,

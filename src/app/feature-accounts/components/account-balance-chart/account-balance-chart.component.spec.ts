@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
-import { pickGranularityForSpan, RangeStore } from '@/core/stats';
+import { pickGranularityForSpan } from '@/core/stats';
+import { RangeStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import {
   AccountBalanceChartComponent,

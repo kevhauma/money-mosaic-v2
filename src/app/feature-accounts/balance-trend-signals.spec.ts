@@ -9,8 +9,14 @@ import {
   type Account,
   type Transaction,
 } from '@/core/data-access';
-import { AccountsStore, CategoriesStore, TransactionsStore, TransfersStore } from '@/core/state';
-import { computeZoomWindow, pickGranularityForSpan, RangeStore } from '@/core/stats';
+import {
+  AccountsStore,
+  CategoriesStore,
+  RangeStore,
+  TransactionsStore,
+  TransfersStore,
+} from '@/core/state';
+import { computeZoomWindow, pickGranularityForSpan } from '@/core/stats';
 import { balanceTrendSignals } from './balance-trend-signals';
 
 const account = (overrides: Partial<Account> = {}): Account => ({

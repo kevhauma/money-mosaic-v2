@@ -3,9 +3,8 @@ import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import { CategoriesRepository, type Category } from '@/core/data-access';
-import { RangeStore } from '@/core/stats';
 import { echarts } from '@/shared/echarts';
-import { CategoriesStore, TransactionsStore } from '@/core/state';
+import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { CategoryBreakdownPanelComponent } from './category-breakdown-panel.component';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.

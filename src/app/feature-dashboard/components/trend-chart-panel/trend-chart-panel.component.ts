@@ -5,11 +5,10 @@ import { NgxEchartsDirective } from 'ngx-echarts';
 import {
   computeCategoryCompositionTrend,
   pickGranularityForSpan,
-  RangeStore,
   type CategorySeriesEntry,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import {
   resolveChartAnimation,
   formatAxisTooltip,

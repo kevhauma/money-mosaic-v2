@@ -7,8 +7,7 @@ import {
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { appDb, type Transaction } from '@/core/data-access';
-import { TransactionsStore } from '@/core/state';
-import { RangeStore } from '@/core/stats';
+import { RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
 import { DashboardOverviewComponent } from './dashboard-overview.component';

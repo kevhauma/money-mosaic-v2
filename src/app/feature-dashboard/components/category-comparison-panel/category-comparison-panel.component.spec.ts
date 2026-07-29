@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { appDb, CategoriesRepository, type Category } from '@/core/data-access';
-import { RangeStore } from '@/core/stats';
-import { CategoriesStore, TransactionsStore } from '@/core/state';
+import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { formatDate } from '@/shared/utils';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { CategoryComparisonPanelComponent } from './category-comparison-panel.component';

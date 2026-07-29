@@ -8,10 +8,9 @@ import {
   computeTopTransactions,
   computeWeekdayWeekendSplit,
   computeYearOverYearComparison,
-  RangeStore,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from './category-comparison-settings.store';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);

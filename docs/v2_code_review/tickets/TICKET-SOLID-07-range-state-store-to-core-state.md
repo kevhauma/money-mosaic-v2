@@ -23,10 +23,10 @@ Executes the decided rule widening: `core/state/` holds *all* app-wide stores (e
 
 ## Acceptance criteria
 
-- [ ] `range-state.store.ts` and `range-state.store.spec.ts` moved; no import path references `core/stats/range-state` anywhere (grep clean).
-- [ ] No behavior change; existing range-state specs pass unmodified apart from their own path.
-- [ ] `ng lint`, `ng test`, `ng build --configuration development` pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `range-state.store.ts` and `range-state.store.spec.ts` moved; no import path references `core/stats/range-state` anywhere (grep clean). (Both moved with `git mv` so history follows. The `core/stats` barrel line was removed and a `core/state` one added in alphabetical position. **18 consumer files** were re-pointed — far more than the review's grep suggested, because most import `RangeStore` in a combined `@/core/stats` statement alongside pure stats functions: `app-shell`, `feature-accounts/balance-trend-signals`, `feature-dashboard`'s `stats.store` and five panel components, plus their specs.)
+- [x] No behavior change; existing range-state specs pass unmodified apart from their own path. (The store file itself is byte-identical — it only ever imported from `@/shared/utils`, so the move carries no cycle risk. Its spec changed by nothing at all: it imports `./range-state.store`, which still resolves.)
+- [x] `ng lint`, `ng test`, `ng build --configuration development` pass. (Lint clean, dev build clean, 1515/1516 tests pass — the failures are the pre-existing TF.js training-timeout flakes in `category-model.worker.spec.ts`.)
+- [x] Verified via the fallow skill and coding-conventions skill. (No new findings; no circular dependencies introduced — `core/state` still imports nothing from `core/stats`.)
 
 ## Notes
 

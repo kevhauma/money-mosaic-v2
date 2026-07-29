@@ -5,12 +5,17 @@ import {
   computeFullHistoryRange,
   computeZoomWindow,
   pickGranularityForSpan,
-  RangeStore,
   type AccountBalanceSeries,
   type ChartZoomWindow,
   type JointLegContext,
 } from '@/core/stats';
-import { AccountsStore, CategoriesStore, TransactionsStore, TransfersStore } from '@/core/state';
+import {
+  AccountsStore,
+  CategoriesStore,
+  RangeStore,
+  TransactionsStore,
+  TransfersStore,
+} from '@/core/state';
 import type { Granularity } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
