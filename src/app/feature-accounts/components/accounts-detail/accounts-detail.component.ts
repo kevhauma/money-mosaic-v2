@@ -20,6 +20,7 @@ import {
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 import { AccountsStore } from '@/core/state';
+import { AccountBalanceBlockComponent } from '../account-balance-block/account-balance-block.component';
 import { AccountBalanceChartComponent } from '../account-balance-chart/account-balance-chart.component';
 import {
   AccountFormComponent,
@@ -34,6 +35,7 @@ import {
     KeyValuePipe,
     SignedAmountPipe,
     AccountFormComponent,
+    AccountBalanceBlockComponent,
     AccountBalanceChartComponent,
     ButtonComponent,
     ConfirmDialogComponent,
@@ -67,12 +69,22 @@ export class AccountsDetailComponent {
   });
 
   /** My net-worth stake in this account (TICKET-STAT-03) — null for a non-joint account. */
-  protected readonly share = computed<number | null>(() => {
+  private readonly share = computed<number | null>(() => {
     const account = this.account();
     return account?.type === 'joint' && account.id != null
       ? (this.accountsStore.jointAccountStakeById().get(account.id) ?? null)
       : null;
   });
+
+  /** Flag + non-nullable number split, same rationale as `AccountCardVm.hasShare`/`shareDisplay`. */
+  protected readonly hasShare = computed(() => this.share() !== null);
+  protected readonly shareDisplay = computed(() => this.share() ?? 0);
+
+  protected readonly archiveToggle = computed(() =>
+    this.account()?.archived
+      ? { label: 'Unarchive', icon: 'tablerArchiveOff' }
+      : { label: 'Archive', icon: 'tablerArchive' },
+  );
 
   protected readonly contributorBreakdown = computed(() => {
     const account = this.account();

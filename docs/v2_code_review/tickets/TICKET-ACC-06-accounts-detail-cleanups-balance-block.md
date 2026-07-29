@@ -24,11 +24,11 @@ The mildest CR4-1 finding — the chosen scope is the two micro-cleanups (precom
 
 ## Acceptance criteria
 
-- [ ] No `!` assertion and no archive-label ternary remain in the detail template.
-- [ ] Both consumers render through `account-balance-block`; the fragment exists once (grep the skeleton/share markup).
+- [x] No `!` assertion and no archive-label ternary remain in the detail template.
+- [x] Both consumers render through `account-balance-block`; the fragment exists once (grep the skeleton/share markup).
 - [ ] Detail page states still render: normal, archived, joint contributor breakdown, not-found (live browser check).
-- [ ] `ng lint`, `ng test`, `ng build --configuration development` pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `ng lint`, `ng test`, `ng build --configuration development` pass.
+- [x] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
 

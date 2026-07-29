@@ -63,18 +63,12 @@
 
   <mm-badge variant="outline" size="sm" class="w-fit capitalize">{{ vm().account.type }}</mm-badge>
 
-  @if (dataReady()) {
-    <mm-text as="p" variant="display" [color]="vm().balance < 0 ? 'error' : undefined">
-      {{ vm().balance | signedAmount }}
-    </mm-text>
-    @if (vm().hasShare) {
-      <mm-text as="p" class="text-xs text-base-content/60">
-        Your share: {{ vm().shareDisplay | signedAmount }}
-      </mm-text>
-    }
-  } @else {
-    <span class="skeleton inline-block h-8 w-24"></span>
-  }
+  <app-account-balance-block
+    [dataReady]="dataReady()"
+    [balance]="vm().balance"
+    [hasShare]="vm().hasShare"
+    [shareDisplay]="vm().shareDisplay"
+  />
 
   @if (vm().ibanTail; as ibanTail) {
     <mm-text as="p" class="text-xs text-base-content/60">···· {{ ibanTail }}</mm-text>

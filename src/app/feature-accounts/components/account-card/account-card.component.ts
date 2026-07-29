@@ -18,9 +18,9 @@ import {
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { SignedAmountPipe } from '@/shared/utils';
 import type { AccountCardVm } from '../../account-card-vm';
 import { ACCOUNT_ICON_SET } from '../../account-icons';
+import { AccountBalanceBlockComponent } from '../account-balance-block/account-balance-block.component';
 
 /**
  * One account's card in the accounts overview grid (TICKET-ACC-05, CR4-1 §3 Options A+B) —
@@ -33,12 +33,12 @@ import { ACCOUNT_ICON_SET } from '../../account-icons';
   imports: [
     RouterLink,
     NgIcon,
+    AccountBalanceBlockComponent,
     BadgeComponent,
     ButtonComponent,
     DropdownComponent,
     FlexComponent,
     PaperComponent,
-    SignedAmountPipe,
     TypographyComponent,
   ],
   templateUrl: './account-card.component.html',

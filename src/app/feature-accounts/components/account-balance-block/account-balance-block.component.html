@@ -1,0 +1,18 @@
+@if (dataReady()) {
+  <mm-text
+    as="p"
+    [variant]="spec().variant"
+    [weight]="spec().weight"
+    [color]="balanceColor()"
+    [class]="spec().balanceClass"
+  >
+    {{ balance() | signedAmount }}
+  </mm-text>
+  @if (hasShare()) {
+    <mm-text as="p" [class]="spec().shareClass">
+      Your share: {{ shareDisplay() | signedAmount }}
+    </mm-text>
+  }
+} @else {
+  <span [class]="spec().skeletonClass"></span>
+}

@@ -7,12 +7,8 @@
         Edit
       </mm-button>
       <mm-button size="sm" (click)="toggleArchive()">
-        <ng-icon
-          [name]="account.archived ? 'tablerArchiveOff' : 'tablerArchive'"
-          size="14"
-          aria-hidden="true"
-        />
-        {{ account.archived ? 'Unarchive' : 'Archive' }}
+        <ng-icon [name]="archiveToggle().icon" size="14" aria-hidden="true" />
+        {{ archiveToggle().label }}
       </mm-button>
       <mm-button
         variant="outline"
@@ -32,23 +28,13 @@
 
   <mm-paper elevation="flat">
     <mm-text as="p" class="text-sm text-base-content/60">Current balance</mm-text>
-    @if (accountsStore.dataReady()) {
-      <mm-text
-        as="p"
-        weight="semibold"
-        class="text-4xl"
-        [color]="balance() < 0 ? 'error' : undefined"
-      >
-        {{ balance() | signedAmount }}
-      </mm-text>
-      @if (share() !== null) {
-        <mm-text as="p" class="text-sm text-base-content/60"
-          >Your share: {{ share()! | signedAmount }}</mm-text
-        >
-      }
-    } @else {
-      <span class="skeleton inline-block h-10 w-32"></span>
-    }
+    <app-account-balance-block
+      size="lg"
+      [dataReady]="accountsStore.dataReady()"
+      [balance]="balance()"
+      [hasShare]="hasShare()"
+      [shareDisplay]="shareDisplay()"
+    />
     @if (account.iban) {
       <mm-text as="p" class="mt-2 text-sm text-base-content/60"
         >IBAN ···· {{ account.iban.slice(-4) }}</mm-text
