@@ -15,8 +15,6 @@ export * from './date-range-input/date-range-input.component';
 export * from './loading-skeleton/loading-skeleton.component';
 export * from './typography/typography.component';
 export * from './paper/paper.component';
-export * from './bento-grid/bento-grid.component';
-export * from './bento-grid/bento-item.component';
 export * from './tabs/tabs.component';
 export * from './label/label.component';
 export * from './fieldset/fieldset.component';
