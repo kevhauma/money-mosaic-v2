@@ -5,49 +5,84 @@ description: Map of the MoneyMosaicVibe codebase — which feature, store, servi
 
 # Project Map
 
-`src/app/` tiers: `core/` (domain logic + persistence + shared entity stores), `feature-*/` (routed UI + feature-specific signal stores), `shared/` (UI primitives + utils). Routes in `app.routes.ts` lazy-load each feature; `app.config.ts` opens the DB and hydrates every store before render.
+`src/app/` tiers: `core/` (domain logic + persistence + app-wide stores), `feature-*/` (routed UI + feature-specific signal stores), `shared/` (UI primitives + utils + ECharts setup). `app.routes.ts` lazy-loads every feature.
 
-## Features (routed, lazy)
+**Bootstrap does not hydrate anything.** `app.config.ts` opens the Dexie database, fire-and-forgets a persistent-storage request, and (dev only, behind a dynamic import) runs the sample-data seed. Every store hydrates *itself* on first injection via `withHooks({ onInit })` (TICKET-PERF-07) — whichever route injects it first kicks that off, and `hydrate()` is idempotent/cached, so calling it again is a no-op re-fetch. Specs that need seeded data must therefore mock the repository **before** the component is created.
 
-| Route | Folder | Store(s) | Key components |
+This file is hand-maintained and describes a moving codebase. Where it points at a registry (a barrel, a folder) rather than listing contents, follow the pointer — the registry is the source of truth, this map is the index.
+
+## Features
+
+Ten feature folders are routed. `feature-data-management/` is the eleventh and is **not** routed — it renders as an embedded section of the Settings page (TICKET-SET-06, ratified by TICKET-DAT-04); there is no `/data` or `/settings/data` URL, and navigating to one fails to match rather than redirecting.
+
+| Route | Folder | Store(s) it owns | What's there |
 |---|---|---|---|
-| `/dashboard` (default) | `feature-dashboard/` | `stats.store.ts`, `category-comparison-settings.store.ts`, `dashboard-layout-settings.store.ts` | dashboard-overview, net-worth-header, account-balance-strip, category-breakdown-panel, category-comparison-panel, trend-chart-panel, weekday-weekend-split-panel, top-transactions-panel, action-queue-panel, dashboard-customize-panel (drag-to-reorder rows, `@angular/cdk/drag-drop`, lazy-`@defer`-loaded); `dashboard-row-order.ts`; `shared/echarts/echarts-setup.ts` registers ECharts modules |
-| `/accounts` | `feature-accounts/` | *(consumes `AccountsStore` from `@/core/state`)* | accounts-overview, accounts-detail, account-form, account-balance-chart, net-worth-history-chart; `account-icons.ts` |
-| `/transactions` | `feature-transactions/` | *(consumes `TransactionsStore`/`TransfersStore`/`TransferSettingsStore` from `@/core/state`)* | transactions-overview, transaction-edit-form, transaction-filters, transaction-bulk-bar, transfer-review; `transaction-filters.ts` |
-| `/import` | `feature-import/` | `mapping-profiles.store.ts`, `import-batches.store.ts` | import-wizard steps: import-select-step, import-map-step, import-preview-step, import-summary-step |
-| `/categories` | `feature-categories/` | `rules.store.ts`, `category-model.store.ts` *(consumes `CategoriesStore` from `@/core/state`)* | categories-overview, category-form, rules-overview, rule-form, rule-filters; `category-icons.ts`, `rule-summary.ts`, `rule-filters.ts`; also owns the trained auto-categoriser model state (`category-model.store.ts` + `category-model.service.ts`, backed by `core/ml`) even though its UI lives under `/learning` |
-| `/learning` | `feature-learning/` | *(consumes `CategoryModelStore` from `@/feature-categories`, entity stores from `@/core/state`)* | learning-overview, model-status, suggestions-table, rule-proposals — surfaces the ML auto-categoriser: model status/training control, per-transaction category suggestions, and mined rule proposals |
-| `/data` | `feature-data-management/` | *(none — calls `DataManagementRepository` from `@/core/data-access` directly)* | data-management-overview — full-database JSON export/import (replace vs. merge), TICKET-DAT-01. Standalone route rather than under a Settings shell since `TICKET-SET-01` hasn't landed |
+| `/` + `/home` | `feature-home/` | — | home-landing — the public landing page. `/` redirects returning visitors to `/dashboard` (`homeRedirectGuard`); `/home` stays reachable, linked from Settings. Rendered *outside* the app shell. |
+| `/dashboard` | `feature-dashboard/` | `stats.store.ts`, `category-comparison-settings.store.ts`, `dashboard-layout-settings.store.ts` | dashboard-overview + one component per panel (net-worth-header, account-balance-strip, category-breakdown, category-comparison, trend-chart, weekday-weekend-split, top-transactions, action-queue, customize-panel). Drag-to-reorder rows via `@angular/cdk/drag-drop`, lazily `@defer`-loaded; `dashboard-row-order.ts` |
+| `/accounts` | `feature-accounts/` | *(consumes `AccountsStore`)* | accounts-overview, accounts-detail, account-form, account-card, account-balance-block, account-balance-chart, net-worth-history-chart; `account-card-vm.ts`, `account-icons.ts` |
+| `/transactions` | `feature-transactions/` | *(consumes `TransactionsStore`/`TransfersStore`/`TransferSettingsStore`)* | transactions-overview, transaction-row, category-select-cell, transaction-edit-form, transaction-filters, transaction-bulk-bar, transfer-review, attribution-override-fieldset; `transaction-filters.ts`, `transaction-row-vm.ts` |
+| `/import` | `feature-import/` | `mapping-profiles.store.ts`, `import-batches.store.ts` import-wizard drives four steps (select → map → preview → summary), with the mapping step further split into `column-map-*` field/stepper components; `import-wizard-session.ts` is the component-scoped `@Injectable()` state machine the wizard provides itself, and `column-mapping.ts` / `mapper-steps.ts` / `import-queue.ts` hold its pure logic |
+| `/categories` | `feature-categories/` | `rules.store.ts`, `category-model.store.ts` *(consumes `CategoriesStore`)* | categories-overview, category-form, rules-overview, rule-form, rule-condition-row, rule-filters, rule-share-bar; `category-icons.ts`, `rule-summary.ts`, `rule-filters.ts`, `rule-labels.ts`, `rule-condition-editor.ts`. Also owns the auto-categoriser model state (`category-model.store.ts` + `category-model.service.ts`, backed by `core/ml`) even though its UI lives under `/learning` |
+| `/learning` | `feature-learning/` | *(consumes `CategoryModelStore` from `@/feature-categories`)* | learning-overview, model-status, suggestions-table, rule-proposals — the ML auto-categoriser's UI: training control, per-transaction suggestions, mined rule proposals |
+| `/help` | `feature-help/` | — | faq-page, guides-index, guide-detail; content is data, not markup — `data/faq.ts` and `data/guides.ts` |
+| `/changelog` | `feature-changelog/` | — | changelog-page (Changelog + Roadmap tabs); content in `data/changelog-entries.ts` + `data/roadmap-entries.ts`, grouped by `group-changelog-entries.ts` / `group-roadmap-entries.ts`. Append-only — see the **changelog-entry** and **roadmap-entry** skills |
+| `/settings` | `feature-settings/` | *(consumes `AppSettingsStore`, `ThemeService`)* | settings-overview is composition only; one component per section: settings-theme-section, settings-currency-locale-section, settings-data-section, settings-about-section (TICKET-SET-07). **A new setting ships as a new section component**, not another block on the page |
+| *(none — embedded in `/settings`)* | `feature-data-management/` | *(none — calls `DataManagementRepository` directly)* | data-management-overview — whole-database JSON export/import (replace vs. merge) and delete-all |
 
-Each feature: `{feature}.routes.ts`, feature-specific `*.store.ts` (if any), `index.ts` barrel, `components/` (one folder per component). Import cross-feature via `@/feature-x` barrel only. `feature-learning` importing `CategoryModelStore`/types from `@/feature-categories` is the intentional shape here — the model lives with the category domain, its dedicated review UI lives under `/learning`.
+Each feature: `{feature}.routes.ts` (if routed), its own `*.store.ts` (if any), an `index.ts` barrel, and `components/` with one folder per component. Cross-feature imports go through `@/feature-x` barrels only — with one deliberate exception, `app.routes.ts` importing `feature-transactions/transactions.routes` directly to break a barrel cycle (don't "fix" it). Feature-internal components need not be barrel-exported; several aren't, on purpose.
+
+`feature-learning` importing `CategoryModelStore` from `@/feature-categories` is the intended shape: the model lives with the category domain, its review UI lives under `/learning`.
+
+## Store registry
+
+Every store in the app. The placement rule (CR4-10): **any store consumed across features lives in `core/state/`, entity or not**; a store only one feature touches stays in that feature folder. It's a lookup, not a judgment call.
+
+| Store | Location | Why there |
+|---|---|---|
+| `AccountsStore` | `core/state/` | consumed by accounts, transactions, dashboard, stats |
+| `CategoriesStore` | `core/state/` | consumed by categories, transactions, dashboard, learning |
+| `TransactionsStore` | `core/state/` | consumed almost everywhere |
+| `TransfersStore` | `core/state/` | transactions + stats |
+| `TransferSettingsStore` | `core/state/` | transactions + the transfer services |
+| `AppSettingsStore` | `core/state/` | app-wide singleton (theme accent, currency symbol/position, locale) — not an entity store, still cross-feature |
+| `RangeStore` (`range-state.store.ts`) | `core/state/` | the selected date range/grouping, read by the app shell, dashboard panels, and account charts. Moved here from `core/stats/` by TICKET-SOLID-07 |
+| `RulesStore` | `feature-categories/` | single feature |
+| `CategoryModelStore` | `feature-categories/` | owned by categories; `feature-learning` consumes it through that barrel |
+| `StatsStore` | `feature-dashboard/` | single feature |
+| `CategoryComparisonSettingsStore` | `feature-dashboard/` | single feature |
+| `DashboardLayoutSettingsStore` | `feature-dashboard/` | single feature |
+| `MappingProfilesStore` | `feature-import/` | single feature |
+| `ImportBatchesStore` | `feature-import/` | single feature |
+
+Cross-check with `git ls-files '*.store.ts'`. Note that ephemeral, component-scoped flow state is **not** a store: `ImportWizardSession` is a plain `@Injectable()` named `*Session`, provided by the owning component — see the coding-conventions skill.
 
 ## Core domain logic (`core/`)
 
-- `core/state/` — the shared entity stores consumed across 2+ features: `AccountsStore`, `CategoriesStore`, `TransactionsStore`, `TransfersStore`, `TransferSettingsStore`. A store belongs here once components/stores in more than one feature need it directly (the original signal was the `feature-accounts` ↔ `feature-categories` barrel cycle these used to create); a store only one feature touches (`RulesStore`, `CategoryModelStore`, `StatsStore`, `ImportBatchesStore`, ...) stays in that feature folder. Own `index.ts` barrel, consumed via `@/core/state` like any other `core` module.
-- `core/data-access/` — Dexie `AppDb` + one repository per entity → see the **data-model** skill.
-- `core/import/` — CSV pipeline: `csv-parse.worker.ts` (PapaParse Web Worker) + `csv-worker.types.ts`, `csv-parse.ts`, `csv-import.service.ts`, `csv-row-mapper.ts`, `delimiter-guess.ts`, `account-detection.ts` (ownIban → account), `import.service.ts` (orchestrates insert + dedupe + batch record).
-- `core/categorisation/` — `rule-matching.ts` (pure predicate logic), `rules-engine.service.ts` (applies rules; respects `categoryManual`), `co-owner-contribution.ts` + `co-owner-contribution.service.ts` (attributes a joint-account transaction to a registered co-owner IBAN).
-- `core/transfers/` — `transfer-matching.ts` (pure candidate matching), `transfer-matching.service.ts`, `transfer-linking.service.ts`, `transfer-cleanup.service.ts` (unlinks/cleans up transfer pairs on delete).
-- `core/accounts/` — `account-deletion.service.ts` (cascades transaction/transfer cleanup), `joint-owner-lookup.ts` (resolve a co-owner from an IBAN).
-- `core/transactions/` — `attribution-override.ts` (per-transaction net-worth/income weighting override for joint accounts), `nullify-transaction.ts` (exclude a transaction from income/expense stats without deleting it), `transaction-deletion.service.ts`.
-- `core/ml/` — the auto-categoriser: `model-config.ts` (feature config/thresholds), `feature-hashing.ts` (hashing-trick text features), `category-model.worker.ts` + `.types.ts` (trains a model off the main thread), `rule-proposal-mining.ts` (mines candidate rules from confident predictions), `training-window.ts` (bounds training data by configurable year window).
-- `core/stats/` — pure aggregation, one file per statistic: `period-stats.ts`, `net-worth-trend.ts`, `account-balance-trend.ts`, `category-breakdown.ts`, `category-composition-trend.ts`, `category-kind-contribution.ts`, `category-period-comparison.ts`, `date-buckets.ts`, `granularity-for-span.ts`, `chart-zoom-window.ts`, `full-history-range.ts`, `period-window.ts`, `spending-rate.ts`, `top-transactions.ts`, `weekday-weekend-split.ts`, `year-over-year.ts`, `classify-joint-leg.ts` / `joint-account-stake.ts` / `joint-contributor-breakdown.ts` (joint-account ownership weighting); `range-state.store.ts` holds the selected date range/grouping.
+- `core/state/` — the store registry above. Own `index.ts`, consumed via `@/core/state`.
+- `core/data-access/` — Dexie `AppDb` + one repository per entity → see the **data-model** skill. Nothing outside this folder touches `appDb` tables.
+- `core/import/` — CSV pipeline: `csv-parse.worker.ts` (PapaParse in a Web Worker) + `csv-worker.types.ts`, `csv-parse.ts`, `csv-import.service.ts`, `csv-row-mapper.ts`, `delimiter-guess.ts`, `account-detection.ts` (ownIban → account), `import.service.ts` (insert + dedupe + batch record).
+- `core/categorisation/` — `rule-matching.ts` (pure predicates + `OPERATORS_BY_FIELD`), `rules-engine.service.ts` (applies rules, respects `categoryManual`), `co-owner-contribution.ts` + its service.
+- `core/transfers/` — `transfer-matching.ts` (pure candidate matching, `isSavingsMovement`), plus the matching/linking/cleanup services.
+- `core/accounts/` — `account-deletion.service.ts` (cascades transaction/transfer cleanup), `joint-owner-lookup.ts`.
+- `core/transactions/` — `attribution-override.ts` (per-transaction joint-account weighting override), `nullify-transaction.ts`, `transaction-deletion.service.ts`.
+- `core/ml/` — the auto-categoriser: `model-config.ts`, `feature-hashing.ts`, `category-model.worker.ts` + `.types.ts` (trains off the main thread), `rule-proposal-mining.ts`, `training-window.ts`.
+- `core/stats/` — pure aggregation, roughly one file per statistic — `ls` it rather than trusting a list here. The one entry point worth knowing: `classify-for-stats.ts`, the single per-transaction classification pipeline every income/expense/savings aggregation shares (its exclusion *ordering* is load-bearing; see its two spec files).
+- `core/theme/` — `theme.service.ts` (applies the selected style + accent to `<html>`, persists to `localStorage`), `theme-styles.ts` (the theme catalogue), `accent-colors.ts` (accent presets + swatch resolution).
+- `core/onboarding/` — `visited.service.ts` plus `home-redirect.guard.ts` / `mark-visited.guard.ts`, which decide whether `/` shows the landing page or redirects to the dashboard.
+- `core/layout/` — `app-shell/`, the drawer/sidebar/topbar shell every routed feature renders inside.
+- `core/storage/` — `storage-status.service.ts` (the persistent-storage request, FR-DAT-4).
+- `core/links/` — `external-links.ts` (the GitHub repo URL and friends).
 
-Pure logic files (`*-matching.ts`, `stats/*.ts`, `csv-row-mapper.ts`, `fingerprint.ts`, `core/ml/*`) have TestBed-free spec files beside them — extend those when changing logic.
+Pure logic files (`*-matching.ts`, `core/stats/*`, `csv-row-mapper.ts`, `fingerprint.ts`, `core/ml/*`) have TestBed-free specs beside them — extend those when changing logic.
 
 ## Shared
 
-- `shared/ui/` — `mm-`-prefixed daisyUI wrapper primitives: button, input, select, badge, alert, modal, page-header, empty-state, confirm-dialog, stat-card, paginator, date-range-input, granularity-picker, range-grouping-switcher, loading-skeleton, typography (selector `mm-text` — the folder/selector names diverge intentionally, per TICKET-UI-02). Variant-driven typed inputs; never expose raw daisy classes (see coding-conventions skill).
-- `shared/utils/` — `fingerprint.ts` (txn dedupe hash), `iban.ts` + `validators/iban.validator.ts`, `signed-amount.pipe.ts`, `currency-format.ts`, `percentage.ts`, `confidence-color.ts` (ML suggestion confidence → badge color), `debounced-text.ts`, `pagination.ts`, `selection-model.ts` (bulk-select state), `sortable.ts`, `search-params.ts` (URL param keys), `with-archivable.ts` (signalStore feature for archive/unarchive), `daisy-classes.ts`.
-- `shared/echarts/` — `echarts-setup.ts` (registers the ECharts modules actually used, keeping the bundle lean), `tooltip-formatter.ts`.
+- `shared/ui/` — `mm-`-prefixed daisyUI wrapper primitives. **The list is `shared/ui/index.ts`** — read it rather than a copy here. They take typed, variant-driven inputs and never expose raw daisyUI classes (see the coding-conventions skill). One naming quirk: the `typography` folder's selector is `mm-text` (TICKET-UI-02).
+- `shared/utils/` — signals, pipes, validators, and pure helpers; `ls` it for the current set. The ones worth knowing by name: `format-settings.ts` (the app-wide currency/locale signals every formatter reads), `currency-format.ts` / `date-format.ts` / `number-format.ts` and their pipes, `pagination.ts`, `selection-model.ts`, `debounced-text.ts`, `structural-filters.ts`, `link-control-to-setting.ts` (the only place the control↔store write-back pattern lives), `with-archivable.ts` + `with-persisted-crud.ts` (signalStore features), `date-buckets.ts`, `fingerprint.ts`, `iban.ts`, `search-params.ts`.
+- `shared/echarts/` — `echarts-setup.ts` (registers only the ECharts modules actually used, keeping the bundle lean) and `tooltip-formatter.ts`.
 
 ## Docs
 
-- `docs/v1.0_foundation/finance-app-spec.md` — functional requirements (FR-TXN-*, FR-CAT-*, FR-TRF-*, FR-IMP-*...), referenced from code comments.
-- `docs/v1.0_foundation/overview.md`, `docs/v1.0_foundation/ui-layout-spec.md` — v1 scope and layout.
-- `docs/v1.1_joint_accounts/`, `docs/v1.2_auto_categorise/`, `docs/v1.3_dashboard_insights/` — shipped: joint/co-owner accounts, the ML auto-categoriser (`/learning`), and dashboard/insights panels. Each has its own `overview.md` + `tickets/`.
-- `docs/v1.4_data_management/` — TICKET-DAT-01 (export/import) shipped as `feature-data-management/`; TICKET-DAT-02/03 still open.
-- `docs/v1.6_income_growth/`, `docs/v1.7_loan_tracker/` — specced but **not yet implemented** (no `feature-income`/`feature-loans` code exists yet); ticket-shaped like the shipped versions.
-- `docs/v1.5_redesign/prepare.md`, `docs/v1.8_extended_date_range_picker/requirements.md` — free-form design/spec notes, not the ticket+overview.md shape.
-- `docs/v2/overview.md` — deferred v2+ backlog (settings, public pages, privacy mode, changelog).
-- `docs/v9999_ideas/requirements.md` — unscoped idea backlog.
+`docs/` holds one folder per version/milestone, each with `overview.md` (the ticket checklist) + `tickets/`, alongside code-review backlogs. **`docs/README.md` explains the folder-naming scheme and lists what's shipped versus specced — read that instead of a version list here, which would go stale immediately.**
+
+Two anchors that don't move: `docs/v1.0_foundation/finance-app-spec.md` (the FR-* functional requirements referenced from code comments) and `docs/v1.0_foundation/ui-layout-spec.md`. For "what does the spec say about X", ask the **spec-navigator** subagent rather than grepping.

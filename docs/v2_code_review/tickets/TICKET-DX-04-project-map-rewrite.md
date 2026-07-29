@@ -26,11 +26,11 @@ Full correction pass over `.claude/skills/project-map/SKILL.md` (the skill preda
 
 ## Acceptance criteria
 
-- [ ] Every remaining factual claim in the skill spot-checked against the working tree (routes, store list, file placements) — no stale claims survive.
-- [ ] The two exhaustive inventories are gone, replaced by pointers.
-- [ ] Store registry includes all stores (`git ls-files '**/*.store.ts'` cross-check) with placement rationale.
-- [ ] Docs-only change: no lint/test/build impact.
-- [ ] Verified via the coding-conventions skill for consistency with TICKET-DX-05's edits (fallow not applicable — no code).
+- [x] Every remaining factual claim in the skill spot-checked against the working tree (routes, store list, file placements) — no stale claims survive. (Checked against `app.routes.ts`, `app.config.ts`, `ls src/app/core`, `ls src/app/feature-*`, `ls src/app/shared/*`, and `git ls-files '*.store.ts'`. Corrections made: the reversed hydration claim (bootstrap → self-hydrate on first injection, with the spec consequence spelled out); four missing routed features added (`/help`, `/changelog`, `/settings`, and `feature-home`'s `/` + `/home`); the `/data` route row replaced by an explicit "not routed, embedded in Settings" note; `date-buckets.ts` moved from the `core/stats` claim to `shared/utils`, where it lives; the stale `core/stats` file list (which still named a `spending-rate.ts` that is now `periodized-rate.ts`, and omitted `classify-for-stats.ts` and `net-margin.ts`) dropped entirely; five missing `core/` modules documented (`theme`, `onboarding`, `layout`, `storage`, `links`); component lists per feature refreshed for the components this backlog added.)
+- [x] The two exhaustive inventories are gone, replaced by pointers. (`shared/ui` → "the list is `shared/ui/index.ts` — read it rather than a copy here"; `core/stats` → "roughly one file per statistic — `ls` it", keeping only `classify-for-stats.ts` called out as the entry point worth knowing. `shared/utils` got the same treatment, keeping a named shortlist of the load-bearing ones. The docs section now defers to `docs/README.md` instead of re-listing every version folder.)
+- [x] Store registry includes all stores (`git ls-files '**/*.store.ts'` cross-check) with placement rationale. (All **14** stores in one table with location + why, cross-checked against `git ls-files '*.store.ts'`. Includes `AppSettingsStore` (previously absent) and `RangeStore` at its new `core/state/` home, headed by the CR4-10 placement sentence, and a closing note that `ImportWizardSession` is deliberately *not* a store.)
+- [x] Docs-only change: no lint/test/build impact. (Only `.claude/skills/project-map/SKILL.md` changed; nothing under `src/`.)
+- [x] Verified via the coding-conventions skill for consistency with TICKET-DX-05's edits (fallow not applicable — no code). (Same session, cross-checked both ways: the two files now tell one hydration story, project-map defers to conventions for the `*Session` rule and store-shape conventions, and conventions defers to project-map for the store registry rather than repeating a list that went stale before. Every `../../../src/...` exemplar link in both skills was resolved against the working tree — 6 links, all present.)
 
 ## Notes
 
