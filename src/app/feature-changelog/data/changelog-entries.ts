@@ -342,4 +342,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Data export, import, and delete-all now live inside Settings instead of their own sidebar item',
     area: 'Data management',
   },
+  {
+    date: '2026-07-29',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-SET-07'],
+    title:
+      'Rebuilt the Settings page as separate sections so new settings are quicker to add — no visible change',
+    area: 'Settings',
+  },
 ];

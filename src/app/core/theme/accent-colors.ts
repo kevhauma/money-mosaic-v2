@@ -1,3 +1,5 @@
+import type { ThemeStyleId } from './theme-styles';
+
 export type AccentColorId = 'amber' | 'sky' | 'violet' | 'rose' | 'teal' | 'lime';
 
 export type AccentColor = {
@@ -69,3 +71,17 @@ export const DEFAULT_THEME_ACCENT: { light: string; dark: string } = {
   light: 'oklch(68% 0.19 25)',
   dark: 'oklch(74% 0.18 25)',
 };
+
+/** The Default *Dark* catalogue entry — the one style whose tuned `dark` accent pair applies. */
+const DARK_DEFAULT_STYLE_ID: ThemeStyleId = 'deformable-dark';
+
+/**
+ * The pair actually applied for `color` under `styleId` right now (TICKET-SET-07 moved this off
+ * the Settings page) — Dark's own tuned pair, not a light preview, while Default Dark is active.
+ */
+export const accentSwatchColor = (color: AccentColor, styleId: ThemeStyleId): string =>
+  styleId === DARK_DEFAULT_STYLE_ID ? color.dark.primary : color.light.primary;
+
+/** The "Default" option's own fill — the theme's actual baked-in accent, not a placeholder. */
+export const defaultAccentSwatchColor = (styleId: ThemeStyleId): string =>
+  styleId === DARK_DEFAULT_STYLE_ID ? DEFAULT_THEME_ACCENT.dark : DEFAULT_THEME_ACCENT.light;
