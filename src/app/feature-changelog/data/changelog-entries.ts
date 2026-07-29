@@ -334,4 +334,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Added an exhaustive test suite pinning how every transaction is counted towards income, expense, and savings',
     area: 'Dashboard insights',
   },
+  {
+    date: '2026-07-29',
+    versionFolder: 'v2',
+    ticketIds: ['TICKET-SET-06', 'TICKET-DAT-04'],
+    title:
+      'Data export, import, and delete-all now live inside Settings instead of their own sidebar item',
+    area: 'Data management',
+  },
 ];

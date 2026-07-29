@@ -13,7 +13,7 @@ Split out of the "Public Ready" section of [v9999_ideas/requirements.md](../v999
 - [x] [TICKET-SET-03](./tickets/TICKET-SET-03-currency-setting.md) — Currency setting (new capability) — needs SET-05 only; build before SET-04, which extends the same formatter refactor
 - [x] [TICKET-SET-04](./tickets/TICKET-SET-04-locale-setting.md) — Locale setting for number/date formatting (new capability) — needs SET-05 + SET-03 (the only cross-sibling dependency in this track)
 - [ ] [TICKET-PRIV-01](./tickets/TICKET-PRIV-01-privacy-mode-dashboard.md) — Privacy mode: blur amounts on the Dashboard (new capability) — needs SET-05 only; independent of SET-02/03/04
-- [ ] [TICKET-SET-06](./tickets/TICKET-SET-06-move-data-nav-into-settings.md) — Move Data Management nav item/route under Settings (`/settings/data`) (refactor, relocates FR-DAT-1/2/3) — independent of SET-02/03/04/05/PRIV-01, no schema or store involved; safe to build any time
+- [x] [TICKET-SET-06](./tickets/TICKET-SET-06-move-data-nav-into-settings.md) — Move Data Management nav item/route under Settings (refactor, relocates FR-DAT-1/2/3) — shipped 2026-07-22 as an **embedded Settings section**, not the planned `/settings/data` child route; see the ticket's dated implementation note (record repaired by [TICKET-DAT-04](../v2_code_review/tickets/TICKET-DAT-04-commit-to-embed-set06-repair.md), live browser check still open)
 
 ## Public content track (independent of the Settings track and of each other, except PUB-05)
 

@@ -28,16 +28,24 @@ As a user, I want data export/import/delete-all to live inside Settings rather t
 - `settings-overview.component.html` gains a small link/section pointing into `/settings/data` (e.g. a `mm-paper` card with an icon, label, and short description — "Data — Export, import, or delete all app data"), so the feature stays discoverable from the page that now owns it.
 - No change to `DataManagementOverviewComponent`'s own behaviour (export/import/delete-all logic, `DataManagementRepository` usage) — this ticket only moves where it's mounted and linked from.
 
+## Implementation note (added 2026-07-29 by TICKET-DAT-04)
+
+**Shipped as an embedded section, superseding the route-based criteria below.** Data management is not a sub-route of Settings: `settings-overview.component.html` renders `<app-data-management-overview />` inline, below the theme picker. There is no `/settings/data` route and no link card.
+
+Reconstructed from history: the single implementation commit ([e142f88](../../../), 2026-07-22) never touched `settings.routes.ts` at all while ticking the two route/link criteria in the same commit — so the pivot to embedding was a decision made during implementation and the ticks were simply premature, not a later drift away from a route that once existed.
+
+The criteria below are re-marked to describe what shipped. [TICKET-DAT-04](../../v2_code_review/tickets/TICKET-DAT-04-commit-to-embed-set06-repair.md) ratified the embed as the intended design (CR4-8 Option A, with CR4-5's "Settings stays one page" decision) and deleted the leftover `data-management.routes.ts` / `DATA_MANAGEMENT_ROUTES` that the route-based plan had left behind.
+
 ## Acceptance criteria
 
 - [x] `app.routes.ts` no longer registers a top-level `path: 'data'` route.
-- [x] `feature-settings/settings.routes.ts` adds a `path: 'data'` child route resolving to `DATA_MANAGEMENT_ROUTES` (imported from the `@/feature-data-management` barrel), so `/settings/data` renders `DataManagementOverviewComponent`.
+- [x] ~~`feature-settings/settings.routes.ts` adds a `path: 'data'` child route resolving to `DATA_MANAGEMENT_ROUTES`~~ — **superseded**: no child route was added. `DataManagementOverviewComponent` is embedded directly in `settings-overview.component.html`, imported from the `@/feature-data-management` barrel by the component rather than a route. `DATA_MANAGEMENT_ROUTES` was deleted entirely by TICKET-DAT-04.
 - [x] The "Data" `<li>` is removed from `app-shell.component.html`'s primary sidebar `<ul>`; no other primary nav items are reordered or altered.
-- [x] `settings-overview.component.html` renders a link/card into `/settings/data`, positioned below the existing theme-picker section.
+- [x] ~~`settings-overview.component.html` renders a link/card into `/settings/data`~~ — **superseded**: it renders the section itself, below the existing theme-picker section, so no link is needed.
 - [x] Export, import, and delete-all continue to work unchanged at their new location (no regression in `DataManagementRepository` calls or dialogs).
-- [x] Unit tests cover: `app-shell` no longer rendering a "Data" nav item; `settings.routes.ts` resolving its `data` child to `DataManagementOverviewComponent`; `settings-overview` rendering a link to `/settings/data`.
+- [x] Unit tests cover: `app-shell` no longer rendering a "Data" nav item; `settings-overview` rendering the embedded `app-data-management-overview` (`settings-overview.component.spec.ts`); and, since TICKET-DAT-04, that `/data` no longer resolves (`app.routes.spec.ts`). The `settings.routes.ts` child-route assertion is void with the route.
 - [x] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: sidebar no longer shows a separate "Data" item; navigating to `/settings` shows a link into the Data section; clicking it lands on `/settings/data` with export/import/delete-all all still functioning; a direct visit to the old `/data` URL no longer resolves.
+- [ ] Verified live in the browser: sidebar no longer shows a separate "Data" item; `/settings` shows the embedded data-management section with export/import/delete-all all still functioning; a direct visit to the old `/data` URL no longer resolves — **still open**: TICKET-DAT-04 re-attempted this and the user asked to skip live browser verification for that whole ticket batch. What *is* verified automatically: `app.routes.spec.ts` shows `/data` rejects with Angular's "Cannot match any routes" (no wildcard route exists, so the navigation fails rather than redirecting), and the two component specs above cover the sidebar and the embed.
 
 ## Notes
 
