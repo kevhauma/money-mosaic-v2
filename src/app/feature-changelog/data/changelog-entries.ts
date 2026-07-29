@@ -326,4 +326,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "Tidied up the rule editor's condition rows for easier future maintenance — no visible change",
     area: 'Categories',
   },
+  {
+    date: '2026-07-29',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-STAT-24'],
+    title:
+      'Added an exhaustive test suite pinning how every transaction is counted towards income, expense, and savings',
+    area: 'Dashboard insights',
+  },
 ];
