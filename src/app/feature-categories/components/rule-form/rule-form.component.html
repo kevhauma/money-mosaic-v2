@@ -56,82 +56,11 @@
 
     <mm-flex formArrayName="conditions" direction="col" gap="3">
       @for (group of conditionsArray.controls; track $index) {
-        <div [formGroup]="group" class="grid grid-cols-12 items-start gap-2">
-          <mm-select
-            formControlName="field"
-            size="sm"
-            class="col-span-3"
-            (change)="onFieldChange(group)"
-          >
-            @for (option of fieldOptions; track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
-            }
-          </mm-select>
-
-          <mm-select
-            formControlName="operator"
-            size="sm"
-            class="col-span-3"
-            (change)="onOperatorChange(group)"
-          >
-            @for (operator of operatorsFor(group); track operator) {
-              <option [value]="operator">{{ operatorLabels[operator] }}</option>
-            }
-          </mm-select>
-
-          @if (isAccountField(group)) {
-            <mm-select formControlName="value" size="sm" class="col-span-5">
-              <option value="" disabled>Choose an account</option>
-              @for (account of accountsStore.accounts(); track account.id) {
-                <option [value]="account.id">{{ account.name }}</option>
-              }
-            </mm-select>
-          } @else if (isBetween(group)) {
-            <mm-input
-              type="number"
-              step="0.01"
-              formControlName="value"
-              size="sm"
-              class="col-span-2"
-              placeholder="Min"
-            />
-            <mm-input
-              type="number"
-              step="0.01"
-              formControlName="valueTo"
-              size="sm"
-              class="col-span-2"
-              placeholder="Max"
-            />
-          } @else if (isNumericField(group)) {
-            <mm-input
-              type="number"
-              step="0.01"
-              formControlName="value"
-              size="sm"
-              class="col-span-5"
-            />
-          } @else {
-            <mm-input type="text" formControlName="value" size="sm" class="col-span-5" />
-            @if (group.controls.value.hasError('regexPatternMaxLength')) {
-              <mm-label variant="error" class="col-span-12">
-                Pattern is too long (max {{ maxRegexPatternLength }} characters).
-              </mm-label>
-            }
-          }
-
-          <mm-button
-            variant="ghost"
-            shape="square"
-            size="sm"
-            class="col-span-1"
-            [disabled]="conditionsArray.length === 1"
-            (click)="removeCondition($index)"
-            ariaLabel="Remove condition"
-          >
-            &times;
-          </mm-button>
-        </div>
+        <app-rule-condition-row
+          [group]="group"
+          [canRemove]="conditionsArray.length > 1"
+          (removed)="removeCondition($index)"
+        />
       }
     </mm-flex>
 

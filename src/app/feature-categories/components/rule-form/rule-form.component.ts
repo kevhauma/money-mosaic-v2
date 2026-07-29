@@ -8,19 +8,9 @@ import {
   model,
   output,
 } from '@angular/core';
-import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Rule, RuleCondition } from '@/core/data-access';
-import { OPERATORS_BY_FIELD } from '@/core/categorisation';
-import { AccountsStore, CategoriesStore } from '@/core/state';
+import { CategoriesStore } from '@/core/state';
 import {
   AlertComponent,
   ButtonComponent,
@@ -33,33 +23,14 @@ import {
   SelectComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { FIELD_LABELS, OPERATOR_LABELS } from '../../rule-labels';
+import {
+  NUMERIC_CONDITION_FIELDS,
+  regexPatternMaxLength,
+  type ConditionGroup,
+} from '../../rule-condition-editor';
+import { RuleConditionRowComponent } from '../rule-condition-row/rule-condition-row.component';
 
 export type RuleFormValue = Omit<Rule, 'id'>;
-
-type ConditionGroup = FormGroup<{
-  field: FormControl<RuleCondition['field']>;
-  operator: FormControl<RuleCondition['operator']>;
-  value: FormControl<string>;
-  valueTo: FormControl<string>;
-}>;
-
-const NUMERIC_FIELDS: RuleCondition['field'][] = ['amount', 'accountId'];
-
-/** Cheap ReDoS damage limitation on user-authored regex patterns (TICKET-PERF-02) — not a safety analysis. */
-export const MAX_REGEX_PATTERN_LENGTH = 200;
-
-/** Only applies to a condition whose sibling `operator` control is currently `regex`. */
-const regexPatternMaxLength = (control: AbstractControl): ValidationErrors | null => {
-  const group = control.parent;
-  if (!(group instanceof FormGroup) || group.get('operator')?.value !== 'regex') {
-    return null;
-  }
-  const length = String(control.value ?? '').length;
-  return length > MAX_REGEX_PATTERN_LENGTH
-    ? { regexPatternMaxLength: { requiredLength: MAX_REGEX_PATTERN_LENGTH, actualLength: length } }
-    : null;
-};
 
 @Component({
   selector: 'app-rule-form',
@@ -72,6 +43,7 @@ const regexPatternMaxLength = (control: AbstractControl): ValidationErrors | nul
     FlexComponent,
     InputComponent,
     LabelComponent,
+    RuleConditionRowComponent,
     SelectComponent,
     MmModalComponent,
     TypographyComponent,
@@ -91,16 +63,6 @@ export class RuleFormComponent {
   protected readonly isEditingExisting = computed(() => this.rule()?.id != null);
 
   protected readonly categoriesStore = inject(CategoriesStore);
-  protected readonly accountsStore = inject(AccountsStore);
-  protected readonly maxRegexPatternLength = MAX_REGEX_PATTERN_LENGTH;
-
-  protected readonly fieldOptions: { value: RuleCondition['field']; label: string }[] =
-    Object.entries(FIELD_LABELS).map(([value, label]) => ({
-      value: value as RuleCondition['field'],
-      label,
-    }));
-
-  protected readonly operatorLabels = OPERATOR_LABELS;
 
   private readonly formBuilder = inject(FormBuilder);
 
@@ -124,35 +86,6 @@ export class RuleFormComponent {
         this.resetForm();
       }
     });
-  }
-
-  protected operatorsFor(group: ConditionGroup): RuleCondition['operator'][] {
-    return OPERATORS_BY_FIELD[group.controls.field.value];
-  }
-
-  protected isNumericField(group: ConditionGroup): boolean {
-    return NUMERIC_FIELDS.includes(group.controls.field.value);
-  }
-
-  protected isAccountField(group: ConditionGroup): boolean {
-    return group.controls.field.value === 'accountId';
-  }
-
-  protected isBetween(group: ConditionGroup): boolean {
-    return group.controls.operator.value === 'between';
-  }
-
-  protected onFieldChange(group: ConditionGroup): void {
-    const validOperators = this.operatorsFor(group);
-    if (!validOperators.includes(group.controls.operator.value)) {
-      group.controls.operator.setValue(validOperators[0]);
-    }
-    group.controls.value.updateValueAndValidity();
-  }
-
-  /** The pattern-length cap only applies for `regex`, so switching operator can flip the value control's validity. */
-  protected onOperatorChange(group: ConditionGroup): void {
-    group.controls.value.updateValueAndValidity();
   }
 
   protected addCondition(): void {
@@ -242,7 +175,7 @@ export class RuleFormComponent {
     value: string;
     valueTo: string;
   }): RuleCondition['value'] {
-    const isNumeric = NUMERIC_FIELDS.includes(condition.field);
+    const isNumeric = NUMERIC_CONDITION_FIELDS.includes(condition.field);
     if (condition.operator === 'between') {
       return [Number(condition.value), Number(condition.valueTo)];
     }

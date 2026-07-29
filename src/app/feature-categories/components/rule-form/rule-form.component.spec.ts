@@ -65,13 +65,17 @@ describe('RuleFormComponent: regex pattern length cap (TICKET-PERF-02)', () => {
     expect(group.controls['value'].hasError('regexPatternMaxLength')).toBe(false);
   });
 
+  // The `updateValueAndValidity` nudge that makes this flip moved to `app-rule-condition-row`
+  // with the operator select (TICKET-CAT-08); see that component's spec for the handler test.
+  // What stays pinned here is that the validator the rule form attaches reads the *current*
+  // operator, so a re-validation on an unchanged value is enough to surface the error.
   it('re-validates when switching from contains to regex on the same long value', () => {
     const group = conditions().at(0);
     group.patchValue({ field: 'description', operator: 'contains', value: 'a'.repeat(201) });
     expect(group.controls['value'].hasError('regexPatternMaxLength')).toBe(false);
 
     group.controls['operator'].setValue('regex');
-    component['onOperatorChange'](group as never);
+    group.controls['value'].updateValueAndValidity();
 
     expect(group.controls['value'].hasError('regexPatternMaxLength')).toBe(true);
   });

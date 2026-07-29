@@ -318,4 +318,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "Tidied up the transactions table's internals for easier future maintenance — no visible change",
     area: 'Transactions',
   },
+  {
+    date: '2026-07-29',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-CAT-08'],
+    title:
+      "Tidied up the rule editor's condition rows for easier future maintenance — no visible change",
+    area: 'Categories',
+  },
 ];
