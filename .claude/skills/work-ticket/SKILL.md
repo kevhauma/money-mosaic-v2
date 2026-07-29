@@ -73,6 +73,14 @@ resist unrelated refactors; if you spot out-of-scope work, note it rather than d
 If this ticket meaningfully changes any behavior that's documented in the how-to guides, also update the matching how-to guide in
 `src/app/feature-help/data/guides.ts` (TICKET-PUB-02) so its steps keep matching the real UI. If the ticket is big and complex enough, include it into a how-to guide
 
+**If the implementation diverges from an acceptance criterion, record the divergence at the
+moment you pivot** — edit the criterion then, in the same change, not at the end. Amend the
+line to describe what you are actually building and why (strike through the superseded
+wording, or add a dated implementation note above the criteria). A criterion is never
+silently outgrown: a ticket whose boxes describe code that doesn't exist is worse than one
+with open boxes, because it stops anyone from noticing. This is exactly how TICKET-SET-06
+ended up with two checked route criteria and no route.
+
 ## Step 5 — Verify, then tick each criterion
 
 A criterion gets ticked **only when it verifiably passes** — never on hope.
@@ -84,9 +92,19 @@ A criterion gets ticked **only when it verifiably passes** — never on hope.
    with the `preview_*` tools (launch config `dev`, port 4210): reproduce the scenario the
    criterion describes and capture proof (snapshot/screenshot/logs).
 3. For each satisfied criterion, edit the **ticket file**, changing that line
-   `- [ ]` → `- [x]`.
+   `- [ ]` → `- [x]` **and appending the evidence in parentheses** — the file, spec name, or
+   observed behaviour that proves it. "Which file? which test? what did you observe?" must be
+   answerable from the ticket alone, months later, without re-deriving anything. A tick with
+   no evidence is not a tick.
 4. Do **not** tick a criterion that fails or that you couldn't verify — report it and keep
-   working. Only genuinely-met criteria get checked.
+   working. Only genuinely-met criteria get checked. If a criterion was deliberately skipped
+   (the user waived a live browser check, say), leave it `- [ ]` and append **why** to the
+   line — an honest open box, not a checked one.
+5. **Final AC↔diff pass before Step 6.** Re-read every `- [x]` on the ticket against the
+   actual working tree — `git diff`, the file, the passing spec. Any box whose evidence you
+   cannot point at right now gets unticked and either finished or recorded as a divergence.
+   Run this pass even when you ticked each box carefully on the way through; the failure mode
+   it catches is a criterion that was true when ticked and stopped being true two steps later.
 
 Optionally run the **`conventions-reviewer` subagent** on the diff before finalizing to
 catch convention drift.
@@ -119,6 +137,31 @@ remove this ticket's row (matching on `ticketId`) from
 when the ticket was created, and now that the ticket has shipped it's no longer "planned." If no
 matching row exists (the ticket predates TICKET-PUB-05, or the roadmap feature/skill doesn't
 exist yet in the repo), there's nothing to remove — skip silently.
+
+## Step 6.6 — Update the knowledge skills if this ticket moved the map
+
+The `project-map` and `coding-conventions` skills are what the next agent reads *instead of*
+exploring, so a stale one actively misdirects — TICKET-DX-04 found the project-map describing
+a hydration model that had been reversed a whole version earlier, plus a route that no longer
+existed. Keeping them current is part of the ticket that changed them, not a later cleanup.
+
+Update `.claude/skills/project-map/SKILL.md` in this same change if the ticket:
+
+- added, removed, or moved a **route** or a feature folder;
+- added, removed, or moved a **store** (and re-check the store registry table's placement column);
+- added or removed a **`core/` module**, a **`shared/ui` primitive**, or a **`shared/utils` helper**
+  other code is expected to reuse;
+- changed **where a kind of file lives**.
+
+Update `.claude/skills/coding-conventions/SKILL.md` in this same change if the ticket:
+
+- changed a **pattern the skill describes** (persistence, hydration, state placement,
+  component/template structure, styling, forms, testing), or
+- established a **new convention** future work should follow — write it as one or two
+  sentences in the matching section, not a paragraph.
+
+Prefer pointing at a registry or an exemplar file over restating its contents: a link that
+resolves stays true, a copied list does not.
 
 ## Step 7 — Report and stop
 

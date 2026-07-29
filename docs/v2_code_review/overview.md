@@ -21,7 +21,7 @@ The list is in recommended build order: the import-feature sequence first (mecha
 - [x] [TICKET-CLEANUP-05](./tickets/TICKET-CLEANUP-05-delete-bento-grid.md) — Delete the unrendered `bento-grid`/`bento-item` (CR4-9 A) — tiny, independent; before CLEANUP-06
 - [x] [TICKET-DX-04](./tickets/TICKET-DX-04-project-map-rewrite.md) — Rewrite the project-map skill, shrink its claim surface, add the store registry (CR4-11 A+C-lite, CR4-10 C) — after DAT-04 + SOLID-07; same session as DX-05
 - [x] [TICKET-DX-05](./tickets/TICKET-DX-05-conventions-skill-correction.md) — Correct the conventions skill + land the five CR4 rules (CR4-12 A+B, carries CR4-1 G2 / CR4-7 / CR4-10 / CR4-5 / CR4-4 E) — same session as DX-04
-- [ ] [TICKET-DX-06](./tickets/TICKET-DX-06-work-ticket-skill-guards.md) — Doc-freshness + AC-honesty guards in the `work-ticket` skill (CR4-11 B, CR4-12 C, CR4-13 P2) — one skill edit, any time after DX-04/05
+- [x] [TICKET-DX-06](./tickets/TICKET-DX-06-work-ticket-skill-guards.md) — Doc-freshness + AC-honesty guards in the `work-ticket` skill (CR4-11 B, CR4-12 C, CR4-13 P2) — one skill edit, any time after DX-04/05
 - [ ] [TICKET-CLEANUP-06](./tickets/TICKET-CLEANUP-06-fallow-zero-noise-gate.md) — Drive Fallow to zero on a clean tree and gate on new findings (CR4-14 A+B2, CR4-1 G1) — last; needs DAT-04 + CLEANUP-05
 
 Not ticketed by design: CR4-2 Options B/C/D, CR4-3 A/B (deferred until the file is next opened hot), CR4-4 C/D (revisit after IMP-11 — the session may own prefill), CR4-5 B/C, CR4-6 B/C, CR4-9 B/C, CR4-10 B — considered and rejected/deferred; each ticket's Notes records its rejected siblings. CR4-7's enforcement tooling is deliberately not built until a third instance appears.
