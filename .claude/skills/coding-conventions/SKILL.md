@@ -50,6 +50,11 @@ feature-{name}/
 
 A component's own folder may still `import` a sibling within that same folder using `./`; reaching the parent feature's store/service from inside a component folder now needs `../../` (one level for `components/`, one more for the component's own folder) — double-check relative import depth after moving or adding files.
 
+Two features have a standing shape for the work most likely to land in them next:
+
+- **Settings:** each new setting ships as its own section component under `feature-settings/components/`, composed by `settings-overview` (TICKET-SET-07) — never another block on the page. Bind its control to the store with `linkControlToSetting` from `shared/utils`; that helper is the only place the `emitEvent: false` write-back belongs.
+- **Import mapping:** a new mapping concern goes into a `feature-import` module (`column-mapping.ts`, `mapper-steps.ts`, `import-wizard-session.ts`, ...), not onto the `import-map-step` component class.
+
 ## Naming Conventions
 
 | Thing | Convention | Example |
@@ -73,6 +78,8 @@ A component's own folder may still `import` a sibling within that same folder us
 - **`inject()`** for dependency injection instead of constructor injection
 - **Signal-based inputs/outputs** — `input()` / `output()` / `model()` instead of `@Input()` / `@Output()` decorators
 - **Native control flow** in templates — `@if` / `@for` / `@switch`, never `*ngIf` / `*ngFor`
+- **Templates branch on state; they never derive it.** No nested ternaries, no method calls inside `@for`, no string assembly in a binding — display facts (labels, icons, colors, accessible names, pre-stringified option values) are resolved once on a view-model in the class and read as plain fields. When a row grows past a couple of such facts, give it a `*-vm.ts` type and a `computed()` that joins it (e.g. [`feature-transactions/transaction-row-vm.ts`](../../../src/app/feature-transactions/transaction-row-vm.ts)).
+- **A component file exports its component class, and I/O types only its direct host consumes.** Vocabulary shared more widely — view-model types, discriminants, option lists, constants — lives in a plain `.ts` module in the feature root (e.g. [`feature-categories/rule-condition-editor.ts`](../../../src/app/feature-categories/rule-condition-editor.ts)), which also keeps a child from importing through its own parent. Formatting helpers live in `shared/utils`, never `shared/ui`.
 - **`type` over `interface`** for all type definitions
 - Use `@/*` path alias for cross-tier imports (`@/feature-transactions/...`, not relative `../../...`)
 - Single quotes — enforced by Prettier and pre-commit hook
@@ -91,9 +98,11 @@ Apply SOLID as it maps onto this codebase's existing tiers — don't import Java
 
 ## State Management (signals-first)
 
-- **Source signals are the source of truth**, held inside injectable `providedIn: 'root'` store services — one per aggregate. Entity stores consumed across 2+ features (`AccountsStore`, `CategoriesStore`, `TransactionsStore`, `TransfersStore`, `TransferSettingsStore`) live in `core/state/` and are imported via `@/core/state`; stores only one feature touches (`RulesStore`, `CategoryModelStore`, `StatsStore`, ...) stay in that feature folder — see the **project-map** skill.
+- **Source signals are the source of truth**, held inside injectable `providedIn: 'root'` store services — one per aggregate.
+- **Store placement is a lookup, not a judgment call:** any store consumed across features lives in `core/state/` and is imported via `@/core/state` — entity store or not, which is why the app-wide `AppSettingsStore` and `RangeStore` live there too. Only a store a single feature touches (`RulesStore`, `StatsStore`, `MappingProfilesStore`, ...) stays in that feature folder. The **project-map** skill carries the full registry.
+- **The canonical store shape is [`core/state/accounts.store.ts`](../../../src/app/core/state/accounts.store.ts) — copy it** rather than working from a description here. What matters and doesn't change: `signalStore({ providedIn: 'root' })` + `withEntities`, `computed()` derivations, and explicit `await` on the repository before patching state.
 - **Every statistic is a `computed()` derivation** of source signals — never a manually maintained/mutated field
-- **Persistence via `effect()`** — each store service's constructor registers an `effect()` that mirrors signal writes into IndexedDB through the matching repository; app bootstrap hydrates source signals from IndexedDB before the app renders
+- **Persistence is an explicit awaited repository call, and hydration happens on first injection.** A store method awaits its repository, then patches state — there is no `effect()` mirroring signal writes into IndexedDB. Each store exposes an idempotent, cached `hydrate()` invoked from `withHooks({ onInit })` (TICKET-PERF-07), so the first injection of a store starts its load; `app.config.ts` only opens the database. In specs this means **mock the repository before creating the component** — re-mocking afterwards hits the cached hydration and changes nothing.
 - **Memoize expensive aggregates** (e.g. per `(accountId, yearMonth)`) with a `computed()` backed by a `Map` cache, so a single edit invalidates only the touched bucket, not all history
 - Reach for RxJS only at boundaries that are inherently stream-based (router events, `fromEvent`, Web Worker messages for CSV parsing) — convert to a signal with `toSignal()` at the boundary rather than threading Observables through component state
 - **Component-scoped session state** (ephemeral, multi-step flow orchestration that never persists to IndexedDB, e.g. `ImportWizardSession`) is a plain `@Injectable()` class — not a `signalStore`, not `providedIn: 'root'` — named `*Session` and provided via the owning component's own `providers: [...]`, so a fresh instance is created and torn down with each mount instead of needing an explicit `reset()` discipline
@@ -105,7 +114,7 @@ Apply SOLID as it maps onto this codebase's existing tiers — don't import Java
 - **Schema changes are additive** — add a new `.version(n + 1).stores(...)` (+ `.upgrade()` block if data needs transforming); never edit a shipped version in place
 - Each entity gets a thin repository in `core/data-access/` (e.g. `TransactionsRepository`) wrapping the Dexie table — components and store services never touch `db.transactions` directly
 - Multi-table writes (e.g. import batch insert + fingerprint dedupe check) run inside `db.transaction('rw', [...tables], async () => { ... })` for atomicity
-- All repository methods are `async`/`await`, called from store service effects/methods — never awaited directly inside a template or component constructor
+- All repository methods are `async`/`await`, called from store service methods — never awaited directly inside a template or component constructor
 
 ## Styling
 

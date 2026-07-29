@@ -29,12 +29,13 @@ One coherent pass over `.claude/skills/coding-conventions/SKILL.md`: fix the sel
 
 ## Acceptance criteria
 
-- [ ] The contradiction is gone: grep the skill for `effect`-mirroring/bootstrap-hydration phrasing — no match presents it as current.
-- [ ] Exemplar links point at files that exist (each link resolves in the working tree).
-- [ ] All five rules present, each ≤2 sentences, placed in their matching sections.
-- [ ] Docs-only change: no lint/test/build impact.
-- [ ] Reviewed alongside TICKET-DX-04 in the same session for cross-consistency.
+- [x] The contradiction is gone: grep the skill for `effect`-mirroring/bootstrap-hydration phrasing — no match presents it as current. (The old "Persistence via `effect()` … app bootstrap hydrates source signals before the app renders" bullet is deleted. Grepping both skills for `effect()`/`bootstrap` now returns exactly two lines, and each *negates* the retired pattern rather than teaching it: "there is no `effect()` mirroring signal writes into IndexedDB" and "Bootstrap does not hydrate anything.")
+- [x] Exemplar links point at files that exist (each link resolves in the working tree). (All 6 `../../../src/...` links in the skill resolved: the 3 pre-existing `shared/ui` ones plus the 3 new ones — `core/state/accounts.store.ts`, `feature-transactions/transaction-row-vm.ts`, `feature-categories/rule-condition-editor.ts`.)
+- [x] All five rules present, each ≤2 sentences, placed in their matching sections. (Templates and exports → **Code Style**, beside the control-flow rule they qualify; store placement → **State Management**, replacing the old hardcoded entity-store list; settings and import-mapping → **Feature Folder Structure**, as a short "standing shape" pair under the folder rules.)
+- [x] Docs-only change: no lint/test/build impact. (Only `.claude/skills/coding-conventions/SKILL.md` changed; nothing under `src/`.)
+- [x] Reviewed alongside TICKET-DX-04 in the same session for cross-consistency. (Same pass. The two now defer to each other instead of duplicating: conventions points at project-map for the store registry, project-map points at conventions for the `*Session` and store-shape rules.)
 
 ## Notes
 
 - The recurrence guard (work-ticket process hook covering both skills) is TICKET-DX-06 — implement once, cover both files.
+- Two additions beyond the five listed rules, both consequences of correcting the hydration story rather than new policy: the store-shape bullet now designates `core/state/accounts.store.ts` as the exemplar to copy (per the to-be section's "volatile mechanics by exemplar"), and the persistence bullet spells out the spec-level consequence — **mock the repository before creating the component**, because re-mocking afterwards hits the cached `hydrate()`. That footgun cost time in two earlier tickets, so it is written down where it will be read.
