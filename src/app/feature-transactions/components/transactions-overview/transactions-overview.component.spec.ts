@@ -12,10 +12,12 @@ import {
   type Transaction,
 } from '@/core/data-access';
 import { RulesEngineService } from '@/core/categorisation';
-import { AccountsStore, TransactionsStore } from '@/core/state';
+import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { RulesStore, type RuleFormValue } from '@/feature-categories';
 import type { SelectionModel } from '@/shared/utils';
 import type { TransactionFilters } from '../../transaction-filters';
+import type { TransactionRowVm } from '../../transaction-row-vm';
+import type { CategorySelectOption } from '../category-select-cell/category-select-cell.component';
 import { TransactionsOverviewComponent } from './transactions-overview.component';
 
 /** Protected surface we reach into for selection/bulk/filter assertions. */
@@ -26,14 +28,12 @@ type Internals = {
   filteredTransactions: () => Transaction[];
   filters: { set: (value: TransactionFilters) => void };
   pagination: { pagedItems: () => Transaction[] };
-  rows: () => {
-    transaction: Transaction;
-    category: Category | undefined;
-  }[];
+  rows: () => TransactionRowVm[];
+  categoryOptions: () => CategorySelectOption[];
   selectAllFiltered: () => void;
   applyBulkCategory: (categoryId: number) => Promise<void>;
   showUncategorisedOnly: () => void;
-  onCategoryChange: (transaction: Transaction, rawCategoryId: string) => Promise<void>;
+  onCategoryChange: (transaction: Transaction, categoryId: number | undefined) => Promise<void>;
   openRuleFromFilter: () => void;
   saveRuleFromFilter: (value: RuleFormValue) => Promise<void>;
   ruleFormOpen: () => boolean;
@@ -244,7 +244,7 @@ describe('TransactionsOverviewComponent', () => {
     store.addMany([transaction(1)]);
     const component = internals();
 
-    await component.onCategoryChange(store.transactions()[0], '7');
+    await component.onCategoryChange(store.transactions()[0], 7);
 
     expect(transactionsRepository.update).toHaveBeenCalledWith(1, {
       categoryId: 7,
@@ -260,7 +260,7 @@ describe('TransactionsOverviewComponent', () => {
     store.addMany([{ ...transaction(1), categoryId: 7 }]);
     const component = internals();
 
-    await component.onCategoryChange(store.transactions()[0], '');
+    await component.onCategoryChange(store.transactions()[0], undefined);
 
     expect(transactionsRepository.update).toHaveBeenCalledWith(1, {
       categoryId: undefined,
@@ -275,7 +275,7 @@ describe('TransactionsOverviewComponent', () => {
     store.addMany([{ ...transaction(1), categoryId: 7 }]);
     const component = internals();
 
-    await component.onCategoryChange(store.transactions()[0], '7');
+    await component.onCategoryChange(store.transactions()[0], 7);
 
     expect(transactionsRepository.update).not.toHaveBeenCalled();
   });
@@ -301,6 +301,87 @@ describe('TransactionsOverviewComponent', () => {
       'Select transaction 06/01/2026 Row 2',
     ]);
     expect(labels[0]).not.toBe(labels[1]);
+  });
+
+  describe('row view-model (TICKET-TXN-09)', () => {
+    const category = (id: number, name: string, archived = false): Category => ({
+      id,
+      name,
+      kind: 'expense',
+      color: '#7F77DD',
+      icon: 'tag',
+      archived,
+      isSystem: false,
+      sortOrder: id,
+    });
+
+    /** Seeds both repositories before `setup()` so the stores' on-injection hydrate picks them up. */
+    const setupWith = async (
+      transactions: Transaction[],
+      categories: Category[] = [],
+    ): Promise<Internals> => {
+      transactionsRepository.getAll.mockResolvedValue(transactions);
+      categoriesRepository.getAll.mockResolvedValue(categories);
+      await setup();
+      await TestBed.inject(TransactionsStore).hydrate();
+      await TestBed.inject(CategoriesStore).hydrate();
+      await fixture.whenStable();
+      return internals();
+    };
+
+    it('assembles the checkbox aria-label from the formatted date and the counterparty', async () => {
+      const component = await setupWith([
+        { ...transaction(1), counterpartyName: 'Carrefour', rawDescription: 'CARD PAYMENT' },
+      ]);
+
+      expect(component.rows()[0].ariaLabel).toBe('Select transaction 06/01/2026 Carrefour');
+    });
+
+    it('falls back to the raw description when the row has no counterparty', async () => {
+      const component = await setupWith([transaction(1)]);
+
+      expect(component.rows()[0].ariaLabel).toBe('Select transaction 06/01/2026 Row 1');
+    });
+
+    it("derives categoryId as the option's string value for a known category", async () => {
+      const component = await setupWith(
+        [{ ...transaction(1), categoryId: 7 }],
+        [category(7, 'Groceries')],
+      );
+
+      expect(component.rows()[0].categoryId).toBe('7');
+    });
+
+    it('derives an empty categoryId for an uncategorised row', async () => {
+      const component = await setupWith([transaction(1)], [category(7, 'Groceries')]);
+
+      expect(component.rows()[0].categoryId).toBe('');
+    });
+
+    it('collapses a category id the store does not know to Uncategorised', async () => {
+      const component = await setupWith(
+        [{ ...transaction(1), categoryId: 999 }],
+        [category(7, 'Groceries')],
+      );
+
+      expect(component.rows()[0].categoryId).toBe('');
+    });
+
+    it('carries the linked transfer id and drops it for an unlinked row', async () => {
+      const component = await setupWith([transaction(1)]);
+
+      expect(component.rows()[0].transferId).toBeUndefined();
+      expect(component.rows()[0].id).toBe(1);
+    });
+
+    it('stringifies the quick-set option list once, excluding archived categories', async () => {
+      const component = await setupWith(
+        [transaction(1)],
+        [category(7, 'Groceries'), category(9, 'Rent', true)],
+      );
+
+      expect(component.categoryOptions()).toEqual([{ value: '7', label: 'Groceries' }]);
+    });
   });
 
   describe('"Make rule from filter" (TICKET-CAT-07)', () => {

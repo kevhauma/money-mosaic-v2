@@ -7,32 +7,20 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerArrowsExchange, tablerPencil, tablerUnlink } from '@ng-icons/tabler-icons';
 import { AccountsStore, CategoriesStore, TransactionsStore, TransfersStore } from '@/core/state';
-import type { Category, Rule, Transaction, Transfer } from '@/core/data-access';
+import type { Rule, Transaction } from '@/core/data-access';
 import { isLikelyTransfer, savingsAccountIbans } from '@/core/transfers';
 import { RuleFormComponent, RulesStore, type RuleFormValue } from '@/feature-categories';
 import {
   AlertComponent,
-  BadgeComponent,
   ButtonComponent,
   EmptyStateComponent,
-  FlexComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
   PaginatorComponent,
   TableComponent,
-  TypographyComponent,
 } from '@/shared/ui';
-import {
-  createPagination,
-  createSelectionModel,
-  formatDate,
-  LocaleDatePipe,
-  normalizeIban,
-  SignedAmountPipe,
-} from '@/shared/utils';
+import { createPagination, createSelectionModel, formatDate, normalizeIban } from '@/shared/utils';
 import {
   describeExcludedFilterAxes,
   excludedFilterAxisLabels,
@@ -40,12 +28,15 @@ import {
   matchesTransactionFilters,
   type TransactionFilters,
 } from '../../transaction-filters';
+import type { TransactionRowVm } from '../../transaction-row-vm';
+import type { CategorySelectOption } from '../category-select-cell/category-select-cell.component';
 import { TransactionBulkBarComponent } from '../transaction-bulk-bar/transaction-bulk-bar.component';
 import {
   TransactionEditFormComponent,
   type TransactionEditResult,
 } from '../transaction-edit-form/transaction-edit-form.component';
 import { TransactionFiltersComponent } from '../transaction-filters/transaction-filters.component';
+import { TransactionRowComponent } from '../transaction-row/transaction-row.component';
 import { TransferReviewComponent } from '../transfer-review/transfer-review.component';
 
 /** Rows rendered per page — keeps the table from materialising thousands of `<tr>` at once (CR-2.1). */
@@ -62,27 +53,12 @@ const EMPTY_FILTERS: TransactionFilters = {
   amountDirection: 'expense',
 };
 
-/** Joined-once-per-data-change view of a table row, so the template stops calling `.find()` methods per row (CR-2.3). */
-type TransactionRow = {
-  transaction: Transaction;
-  accountName: string;
-  category: Category | undefined;
-  transfer: Transfer | undefined;
-  likelyTransfer: boolean;
-  selected: boolean;
-};
-
 @Component({
   selector: 'app-transactions-overview',
   imports: [
-    NgIcon,
-    LocaleDatePipe,
-    SignedAmountPipe,
     AlertComponent,
-    BadgeComponent,
     ButtonComponent,
     EmptyStateComponent,
-    FlexComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
     PaginatorComponent,
@@ -91,18 +67,11 @@ type TransactionRow = {
     TransactionBulkBarComponent,
     TransactionEditFormComponent,
     TransactionFiltersComponent,
+    TransactionRowComponent,
     TransferReviewComponent,
-    TypographyComponent,
   ],
   templateUrl: './transactions-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [
-    provideIcons({
-      tablerPencil,
-      tablerUnlink,
-      tablerArrowsExchange,
-    }),
-  ],
 })
 export class TransactionsOverviewComponent {
   protected readonly transactionsStore = inject(TransactionsStore);
@@ -110,9 +79,6 @@ export class TransactionsOverviewComponent {
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly categoriesStore = inject(CategoriesStore);
   protected readonly rulesStore = inject(RulesStore);
-
-  /** Exposed for the row aria-label, which needs a plain string rather than the `localeDate` pipe (TICKET-SET-04). */
-  protected readonly formatDate = formatDate;
 
   /** Drill-down inheritance (FR-STAT-6): bound from the route's query params via `withComponentInputBinding()`. */
   readonly accountId = input<string>();
@@ -185,12 +151,21 @@ export class TransactionsOverviewComponent {
     );
   });
 
+  /** The inline category quick-set's `<option>` list, stringified once per category change rather
+   * than once per option per row (TICKET-TXN-09). */
+  protected readonly categoryOptions = computed<CategorySelectOption[]>(() =>
+    this.categoriesStore
+      .activeCategories()
+      .map((category) => ({ value: String(category.id), label: category.name })),
+  );
+
   /**
-   * Joins each visible row's account name, category, transfer, likely-transfer, and selected flag once per
-   * data change, so the template renders plain fields instead of running `.find()` methods per change
-   * detection pass (CR-2.3). Only the paged slice is joined, keeping the work bounded to `PAGE_SIZE`.
+   * Joins each visible row's account name, category, transfer, likely-transfer, selected flag, and
+   * accessible name once per data change, so the template renders plain fields instead of running
+   * `.find()` methods and string concatenation per change detection pass (CR-2.3, TICKET-TXN-09).
+   * Only the paged slice is joined, keeping the work bounded to `PAGE_SIZE`.
    */
-  protected readonly rows = computed<TransactionRow[]>(() => {
+  protected readonly rows = computed<TransactionRowVm[]>(() => {
     const accountsById = this.accountsStore.accountsById();
     const categoriesById = this.categoriesStore.categoriesById();
     const transferByTransactionId = this.transfersStore.transferByTransactionId();
@@ -198,13 +173,19 @@ export class TransactionsOverviewComponent {
     const selectedIds = this.selection.selectedIds();
 
     return this.pagination.pagedItems().map((transaction) => ({
+      id: transaction.id!,
       transaction,
       accountName: accountsById.get(transaction.accountId)?.name ?? '—',
-      category:
-        transaction.categoryId != null ? categoriesById.get(transaction.categoryId) : undefined,
-      transfer: transferByTransactionId.get(transaction.id!),
+      transferId: transferByTransactionId.get(transaction.id!)?.id,
       likelyTransfer: likelyTransferIds.has(transaction.id!),
       selected: selectedIds.has(transaction.id!),
+      ariaLabel: `Select transaction ${formatDate(transaction.bookingDate)} ${
+        transaction.counterpartyName ?? transaction.rawDescription
+      }`,
+      categoryId:
+        transaction.categoryId != null && categoriesById.has(transaction.categoryId)
+          ? String(transaction.categoryId)
+          : '',
     }));
   });
 
@@ -314,10 +295,15 @@ export class TransactionsOverviewComponent {
     this.selection.clear();
   }
 
-  /** Inline category quick-set (TICKET-TXN-05) — writes immediately, no modal/save step. */
-  protected async onCategoryChange(transaction: Transaction, rawCategoryId: string): Promise<void> {
+  /**
+   * Inline category quick-set (TICKET-TXN-05) — writes immediately, no modal/save step. The picked
+   * id arrives already typed from `app-category-select-cell` (`undefined` = uncategorised).
+   */
+  protected async onCategoryChange(
+    transaction: Transaction,
+    categoryId: number | undefined,
+  ): Promise<void> {
     if (transaction.id == null) return;
-    const categoryId = rawCategoryId === '' ? undefined : Number(rawCategoryId);
     if (categoryId === transaction.categoryId) return;
     await this.transactionsStore.updateTransaction(transaction.id, {
       categoryId,

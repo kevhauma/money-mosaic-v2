@@ -1,0 +1,63 @@
+<tr>
+  <td>
+    <input
+      type="checkbox"
+      class="checkbox checkbox-sm"
+      [attr.aria-label]="row().ariaLabel"
+      [checked]="row().selected"
+      (change)="selectionToggled.emit()"
+    />
+  </td>
+  <td class="whitespace-nowrap">{{ row().transaction.bookingDate | localeDate }}</td>
+  <td>
+    <mm-flex align="start" gap="1">
+      <mm-text>{{ row().transaction.rawDescription }}</mm-text>
+      @if (row().likelyTransfer) {
+        <mm-badge variant="outline" size="sm">Likely transfer</mm-badge>
+      }
+      @if (row().transaction.nullified) {
+        <mm-badge variant="outline" color="warning" size="sm">Nullified</mm-badge>
+      }
+    </mm-flex>
+    @if (row().transaction.counterpartyName) {
+      <mm-text as="p" class="text-xs text-base-content/60">
+        {{ row().transaction.counterpartyName }}
+      </mm-text>
+    }
+  </td>
+  <td>{{ row().accountName }}</td>
+  <td>
+    <app-category-select-cell
+      [options]="categoryOptions()"
+      [selectedId]="row().categoryId"
+      (categoryChange)="categoryChanged.emit($event)"
+    />
+  </td>
+  <td class="text-right" [class.text-error]="row().transaction.amount < 0">
+    {{ row().transaction.amount | signedAmount }}
+  </td>
+  <td>
+    <mm-flex align="center" justify="end" gap="1">
+      @if (row().transferId; as transferId) {
+        <mm-button
+          variant="ghost"
+          shape="square"
+          size="xs"
+          ariaLabel="Unlink transfer"
+          (click)="unlinkRequested.emit(transferId)"
+        >
+          <ng-icon name="tablerUnlink" size="14" aria-hidden="true" />
+        </mm-button>
+      }
+      <mm-button
+        variant="ghost"
+        shape="square"
+        size="xs"
+        ariaLabel="Edit transaction"
+        (click)="editRequested.emit()"
+      >
+        <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+      </mm-button>
+    </mm-flex>
+  </td>
+</tr>

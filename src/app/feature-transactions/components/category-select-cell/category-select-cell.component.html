@@ -1,0 +1,8 @@
+<select class="select select-sm w-40" aria-label="Category" (change)="onChange($event)">
+  <option value="" [selected]="selectedId() === ''">Uncategorised</option>
+  @for (option of options(); track option.value) {
+    <option [value]="option.value" [selected]="option.value === selectedId()">
+      {{ option.label }}
+    </option>
+  }
+</select>

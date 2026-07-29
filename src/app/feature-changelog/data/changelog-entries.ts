@@ -310,4 +310,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The account detail page and the accounts list now share one balance display, so they stay in sync — no visible change',
     area: 'Accounts',
   },
+  {
+    date: '2026-07-29',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-TXN-09'],
+    title:
+      "Tidied up the transactions table's internals for easier future maintenance — no visible change",
+    area: 'Transactions',
+  },
 ];
