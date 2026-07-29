@@ -52,6 +52,15 @@ const expectedCategoryIds = (samples: TrainRequest['samples']): number[] =>
   samples.map((sample) => sample.categoryId);
 
 describe('category-model.worker: message handling', () => {
+  // Loading tfjs-core/-layers/-backend-cpu and registering the CPU backend is a one-time cost of
+  // ~20s under Vitest, and `loadTf()` is memoized at module scope — so without this warm-up the
+  // whole bill lands on whichever test touches TensorFlow first, timing it out on CI while every
+  // later test (identical workload) finishes in ~2s. Paying it in a hook with its own budget keeps
+  // the per-test timeouts measuring training, not module loading.
+  beforeAll(async () => {
+    await getTensorCount();
+  }, 120000);
+
   it('replies with an ErrorResponse (not a throw) when PREDICT is called before INIT/TRAIN', async () => {
     const { handleRequest } = createCategoryModelWorkerHandler();
 
