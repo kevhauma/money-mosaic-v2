@@ -94,9 +94,12 @@ export class ImportMapStepComponent {
   // only the resulting read-only values are pushed down so the row preview can render here, beside
   // the raw file preview.
   readonly parsedRows = input<ParsedRowResult[]>([]);
-  // `parseError`/`headerMismatchMessage` below are read in the template only via
-  // `@else if (fn(); as alias)` — a static-analysis false positive may flag them as unused inputs;
-  // both are genuinely read (see the row-preview branch in import-map-step.component.html).
+  // `parseError`/`headerMismatchMessage` are read in the template only via
+  // `@else if (fn(); as alias)` (import-map-step.component.html:197,201), which fallow's input
+  // analysis doesn't resolve — it reports both as unused inputs. Fallow 3.5.1 ignores both
+  // `fallow-ignore-next-line` and `fallow-ignore-file` for this family (it parses the comment,
+  // then reports it stale *and* still emits the finding), so the two live in the committed
+  // baseline instead: `.fallow/baseline.json`, see TICKET-CLEANUP-06.
   readonly parseError = input<string | null>(null);
   readonly headerMismatchMessage = input<string | null>(null);
   readonly parsing = input(false);

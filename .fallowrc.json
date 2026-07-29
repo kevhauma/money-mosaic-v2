@@ -1,6 +1,18 @@
 {
   // Verified false-positive families for this repo — see docs/v1.3_code_review/code-review-fallow.md §5
   // (TICKET-CLEANUP-02) before changing or removing any of these.
+  //
+  // HOUSE RULE (TICKET-CLEANUP-06): an in-code comment claiming "this is a false positive" must be
+  // accompanied by the suppression it predicts — a prose warning the tool can't read leaves the
+  // finding in the report forever, which is how the clean-tree report accumulated noise before.
+  // Where a suppression provably doesn't work, say so in the comment and point at what handles it
+  // instead. The one live instance: `parseError`/`headerMismatchMessage` in
+  // import-map-step.component.ts, read via `@else if (fn(); as alias)`. Fallow 3.5.1 does not honour
+  // `fallow-ignore-next-line`/`-file` for `unused-component-input` (it parses the comment, marks it
+  // stale, and still emits the finding), so those two are carried in `.fallow-baseline.json`.
+  //
+  // The pre-commit gate (.husky/pre-commit) fails on *new* findings only, measured against that
+  // baseline plus the complexity thresholds calibrated in TICKET-CLEANUP-06.
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
   "ignorePatterns": ["**/*.spec.ts", "**/*.d.ts"],
   "production": false,

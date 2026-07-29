@@ -6,3 +6,17 @@ if git diff --cached --name-only --diff-filter=ACMR | grep -qE '^(src/app/|\.dep
   node scripts/update-dependency-graphs.mjs
   git add reports/dependency-graph.html reports/dependency-graph.mmd reports/dependency-graph-deep.mmd docs/dependency-graph.md
 fi
+
+# Fallow gate (TICKET-CLEANUP-06). Both commands fail only on findings that are *new* relative to
+# the committed state, so a clean tree always passes:
+#   - dead code: anything not in .fallow-baseline.json. Re-save that file deliberately
+#     (`npx fallow dead-code --save-baseline .fallow-baseline.json`) — never to silence a finding
+#     you just introduced.
+#   - complexity: thresholds calibrated in TICKET-CLEANUP-06 to sit above every unit in the tree at
+#     the time, so they fire on genuinely new complexity, not on the existing baseline. --max-crap
+#     is parked high on purpose: fallow has no coverage data for this repo, so it estimates zero
+#     coverage and nearly every function over ~cc 5 would otherwise trip the CRAP score.
+# If this gate's friction proves real, revert it to advisory (drop --fail-on-issues) rather than
+# letting suppressed noise accumulate — CR4-14's Option C fallback.
+npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet
+npx fallow health --complexity --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet

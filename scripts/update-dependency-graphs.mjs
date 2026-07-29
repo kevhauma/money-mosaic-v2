@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// fallow-ignore-file unused-file -- invoked by .husky/pre-commit, not imported by any module
 // Regenerates reports/dependency-graph.html (simple: features collapsed to one
 // node each, core/shared expanded one folder deep) and docs/dependency-graph.md
 // (deep: same tiers expanded three folders further). Run by .husky/pre-commit
