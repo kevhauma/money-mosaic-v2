@@ -26,7 +26,7 @@ The mildest CR4-1 finding — the chosen scope is the two micro-cleanups (precom
 
 - [x] No `!` assertion and no archive-label ternary remain in the detail template.
 - [x] Both consumers render through `account-balance-block`; the fragment exists once (grep the skeleton/share markup).
-- [ ] Detail page states still render: normal, archived, joint contributor breakdown, not-found (live browser check).
+- [ ] Detail page states still render: normal, archived, joint contributor breakdown, not-found (live browser check) — **skipped**: the user explicitly asked to skip live browser verification for this whole ticket batch. `account-balance-block.component.spec.ts` covers the balance/skeleton/share rendering branches, but the detail page was never exercised in a real browser.
 - [x] `ng lint`, `ng test`, `ng build --configuration development` pass.
 - [x] Verified via the fallow skill and coding-conventions skill.
 

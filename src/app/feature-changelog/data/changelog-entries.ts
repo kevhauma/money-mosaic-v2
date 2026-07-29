@@ -302,4 +302,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "Tidied up the Accounts page's internals for easier future maintenance — no visible change",
     area: 'Accounts',
   },
+  {
+    date: '2026-07-29',
+    versionFolder: 'v2_code_review',
+    ticketIds: ['TICKET-ACC-06'],
+    title:
+      'The account detail page and the accounts list now share one balance display, so they stay in sync — no visible change',
+    area: 'Accounts',
+  },
 ];
