@@ -61,7 +61,7 @@ comparison, annual-smoothing, step-change/gap detection). Two schema-level addit
 
 This set introduces a new requirement family, **FR-INC**, and is the first version to ship an entirely new routed feature area rather than extending an existing one. **Unlike v1.3's set, these tickets are *not* mutually independent**, so the list below is ordered by dependency, not by FR number:
 
-- [ ] [TICKET-INC-01](./tickets/TICKET-INC-01-income-page-scaffold.md) — Dedicated Income page (route, store, nav) (adds FR-INC-1) — prerequisite for every other ticket having somewhere to render
+- [x] [TICKET-INC-01](./tickets/TICKET-INC-01-income-page-scaffold.md) — Dedicated Income page (route, store, nav) (adds FR-INC-1) — prerequisite for every other ticket having somewhere to render
 - [ ] [TICKET-INC-03](./tickets/TICKET-INC-03-income-category-selection.md) — Choose which income categories count toward growth (adds FR-INC-3) — almost every later aggregate is parameterised by `IncomeStore.selectedIncomeCategoryIds()`
 - [ ] [TICKET-INC-02](./tickets/TICKET-INC-02-income-by-category-trend-chart.md) — Income-by-category trend chart (adds FR-INC-2, builds on `category-composition-trend.ts`'s `CategorySeriesEntry` shape) — needs INC-03; the base series every later ticket builds on
 - [ ] [TICKET-INC-06](./tickets/TICKET-INC-06-yearly-income-view.md) — Yearly income view, one bar per calendar year (adds FR-INC-6) — independent of INC-02's monthly series, can run in parallel with it

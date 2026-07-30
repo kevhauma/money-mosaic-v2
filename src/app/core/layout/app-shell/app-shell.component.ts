@@ -26,6 +26,7 @@ import {
   tablerMenu2,
   tablerSettings,
   tablerTags,
+  tablerTrendingUp,
 } from '@ng-icons/tabler-icons';
 import { computeFullHistoryRange } from '@/core/stats';
 import { AccountsStore, AppSettingsStore, RangeStore, TransactionsStore } from '@/core/state';
@@ -72,6 +73,7 @@ const NAV_ITEM_CLASS =
     provideIcons({
       tablerMenu2,
       tablerHome,
+      tablerTrendingUp,
       tablerBuildingBank,
       tablerFileImport,
       tablerArrowsExchange,

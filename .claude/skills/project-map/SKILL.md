@@ -13,12 +13,13 @@ This file is hand-maintained and describes a moving codebase. Where it points at
 
 ## Features
 
-Ten feature folders are routed. `feature-data-management/` is the eleventh and is **not** routed — it renders as an embedded section of the Settings page (TICKET-SET-06, ratified by TICKET-DAT-04); there is no `/data` or `/settings/data` URL, and navigating to one fails to match rather than redirecting.
+Eleven feature folders are routed. `feature-data-management/` is the twelfth and is **not** routed — it renders as an embedded section of the Settings page (TICKET-SET-06, ratified by TICKET-DAT-04); there is no `/data` or `/settings/data` URL, and navigating to one fails to match rather than redirecting.
 
 | Route | Folder | Store(s) it owns | What's there |
 |---|---|---|---|
 | `/` + `/home` | `feature-home/` | — | home-landing — the public landing page. `/` redirects returning visitors to `/dashboard` (`homeRedirectGuard`); `/home` stays reachable, linked from Settings. Rendered *outside* the app shell. |
 | `/dashboard` | `feature-dashboard/` | `stats.store.ts`, `category-comparison-settings.store.ts`, `dashboard-layout-settings.store.ts` | dashboard-overview + one component per panel (net-worth-header, account-balance-strip, category-breakdown, category-comparison, trend-chart, weekday-weekend-split, top-transactions, action-queue, customize-panel). Drag-to-reorder rows via `@angular/cdk/drag-drop`, lazily `@defer`-loaded; `dashboard-row-order.ts` |
+| `/income` | `feature-income/` | `income.store.ts` | income-overview — the v1.6 income page. Currently a scaffold (page header + placeholder empty state, TICKET-INC-01); TICKET-INC-02 onwards each add a panel here |
 | `/accounts` | `feature-accounts/` | *(consumes `AccountsStore`)* | accounts-overview, accounts-detail, account-form, account-card, account-balance-block, account-balance-chart, net-worth-history-chart; `account-card-vm.ts`, `account-icons.ts` |
 | `/transactions` | `feature-transactions/` | *(consumes `TransactionsStore`/`TransfersStore`/`TransferSettingsStore`)* | transactions-overview, transaction-row, category-select-cell, transaction-edit-form, transaction-filters, transaction-bulk-bar, transfer-review, attribution-override-fieldset; `transaction-filters.ts`, `transaction-row-vm.ts` |
 | `/import` | `feature-import/` | `mapping-profiles.store.ts`, `import-batches.store.ts` import-wizard drives four steps (select → map → preview → summary), with the mapping step further split into `column-map-*` field/stepper components; `import-wizard-session.ts` is the component-scoped `@Injectable()` state machine the wizard provides itself, and `column-mapping.ts` / `mapper-steps.ts` / `import-queue.ts` hold its pure logic |
@@ -46,6 +47,7 @@ Every store in the app. The placement rule (CR4-10): **any store consumed across
 | `TransferSettingsStore` | `core/state/` | transactions + the transfer services |
 | `AppSettingsStore` | `core/state/` | app-wide singleton (theme accent, currency symbol/position, locale) — not an entity store, still cross-feature |
 | `RangeStore` (`range-state.store.ts`) | `core/state/` | the selected date range/grouping, read by the app shell, dashboard panels, and account charts. Moved here from `core/stats/` by TICKET-SOLID-07 |
+| `IncomeStore` | `feature-income/` | single feature; derives only (no repository of its own yet) — reads `CategoriesStore` for `incomeCategories` |
 | `RulesStore` | `feature-categories/` | single feature |
 | `CategoryModelStore` | `feature-categories/` | owned by categories; `feature-learning` consumes it through that barrel |
 | `StatsStore` | `feature-dashboard/` | single feature |

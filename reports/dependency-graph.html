@@ -300,9 +300,9 @@
     </p>
     <div class="stats">
       <!-- GENERATED:STATS:START -->
-      <div class="stat"><span class="value">28</span><span class="label">Nodes</span></div>
-      <div class="stat"><span class="value">88</span><span class="label">Edges</span></div>
-      <div class="stat"><span class="value">11</span><span class="label">Features</span></div>
+      <div class="stat"><span class="value">29</span><span class="label">Nodes</span></div>
+      <div class="stat"><span class="value">90</span><span class="label">Edges</span></div>
+      <div class="stat"><span class="value">12</span><span class="label">Features</span></div>
       <div class="stat"><span class="value">14</span><span class="label">Core modules</span></div>
       <div class="stat"><span class="value">3</span><span class="label">Shared modules</span></div>
       <!-- GENERATED:STATS:END -->
@@ -402,114 +402,117 @@ L["feature-data-management"]
 M["feature-help"]
 N["feature-home"]
 O["feature-import"]
-P["feature-learning"]
-Q["feature-settings"]
-R["feature-transactions"]
+P["feature-income"]
+Q["feature-learning"]
+R["feature-settings"]
+S["feature-transactions"]
 end
-subgraph S["shared"]
-T["echarts"]
-U["ui"]
-V["utils"]
+subgraph T["shared"]
+U["echarts"]
+V["ui"]
+W["utils"]
 end
 end
 end
 3-->5
 3-->G
-3-->V
+3-->W
 4-->5
 4-->3
 5-->9
 5-->E
-5-->V
+5-->W
 6-->5
-6-->V
+6-->W
 6-->G
 7-->B
 7-->C
-7-->U
 7-->V
+7-->W
 9-->4
 9-->5
 B-->3
 B-->5
 B-->C
 B-->G
-B-->V
+B-->W
 B-->F
 B-->E
 C-->5
-C-->V
+C-->W
 C-->3
 C-->G
 F-->5
 F-->G
 G-->5
 G-->3
-G-->V
+G-->W
 H-->5
-H-->T
-H-->B
 H-->U
+H-->B
 H-->V
+H-->W
 H-->C
 I-->5
 I-->B
-I-->U
 I-->V
+I-->W
 I-->4
 I-->9
-J-->U
+J-->V
 K-->5
 K-->B
-K-->U
 K-->V
+K-->W
 K-->G
 K-->C
-K-->T
+K-->U
 L-->5
 L-->D
-L-->U
 L-->V
-M-->U
+L-->W
+M-->V
 N-->8
-N-->U
+N-->V
 O-->5
 O-->H
-O-->U
-O-->6
 O-->V
+O-->6
+O-->W
 O-->B
 O-->4
-P-->U
-P-->9
-P-->B
-P-->I
-P-->5
 P-->V
-Q-->U
-Q-->8
-Q-->B
+P-->B
 Q-->V
-Q-->L
-Q-->E
-R-->5
-R-->B
-R-->F
-R-->U
+Q-->9
+Q-->B
+Q-->I
+Q-->5
+Q-->W
 R-->V
-R-->I
-R-->G
-T-->V
-U-->V
+R-->8
+R-->B
+R-->W
+R-->L
+R-->E
+S-->5
+S-->B
+S-->F
+S-->V
+S-->W
+S-->I
+S-->G
+U-->W
+V-->W
 
 classDef core fill:#E4F3F1,stroke:#2C7A73,color:#173F3B,stroke-width:1.5px;
 classDef shared fill:#EFEBFA,stroke:#6C5B9E,color:#332B54,stroke-width:1.5px;
 classDef feature fill:#FBEADC,stroke:#C2703A,color:#5C3111,stroke-width:1.5px;
 class 3,4,5,6,7,8,9,A,B,C,D,E,F,G core
-class T,U,V shared
-class H,I,J,K,L,M,N,O,P,Q,R feature
+class U,V,W shared
+class H,I,J,K,L,M,N,O,P,Q,R,S feature
 style 2 fill:#F5FBFA,stroke:#2C7A73,stroke-width:1px
-style S fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
+style T fill:#F8F6FC,stroke:#6C5B9E,stroke-width:1px
 style FEAT fill:#FDF6F0,stroke:#C2703A,stroke-width:1px
 </pre>
       </div>

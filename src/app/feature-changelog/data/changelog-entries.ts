@@ -357,4 +357,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     title: 'Moved the shared date-range state to where the rest of the app-wide state lives',
     area: 'Foundation',
   },
+  {
+    date: '2026-07-30',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-01'],
+    title:
+      'Added an Income page to the sidebar — your income trends move off the dashboard and into their own home, filling up panel by panel',
+    area: 'Income',
+  },
 ];
