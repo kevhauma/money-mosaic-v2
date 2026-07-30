@@ -14,11 +14,11 @@ Warns when a category that used to show up regularly has gone quiet longer than 
 
 ## Current situation (as-is)
 
-- No cadence/gap detection exists. The closest precedent for "surface what's missing" is v1.3's [TICKET-STAT-09](../../v1.3_dashboard_insights/tickets/TICKET-STAT-09-uncategorised-spend-visibility.md) (uncategorised-spend visibility), but that's a static snapshot, not a time-series gap detector.
+- No cadence/gap detection exists. The closest precedent for "surface what's missing" is v1.3's [TICKET-STAT-09](../../v1.3_dashboard_insights/tickets/TICKET-STAT-09-uncategorised-spend-visibility.md) (uncategorised-spend visibility), now shipped as part of the dashboard's [action-queue-panel](../../../src/app/feature-dashboard/components/action-queue-panel/action-queue-panel.component.ts) — still a static snapshot, not a time-series gap detector.
 
 ## Desired result (to-be)
 
-- New pure helper `detectIncomeGaps(series, categoriesById, todayBucketKey)` in `core/stats/income-gap-detection.ts`, operating on the **raw** (unsmoothed — a gap is a gap regardless of the smoothing flag) monthly `computeIncomeCategorySeries()` output:
+- New pure helper `detectIncomeGaps(trend, categoriesById, todayBucketKey)` in `core/stats/income-gap-detection.ts`, operating on the **raw** (unsmoothed — a gap is a gap regardless of the smoothing flag) monthly `{ bucketKeys, series }` output of `computeIncomeCategorySeries()`:
   - For each category, compute its historical cadence: the count of non-zero months among all months since its first non-zero month, up to (but excluding) the most recent 3 months (a trailing exclusion window so the detector doesn't need the gap to already be "over" to flag it).
   - A category with a cadence of at least **75%** non-zero months and at least 6 months of history is treated as "recurring."
   - Flag a gap when a recurring category has had **zero** total in each of the most recent 2 months.
@@ -37,4 +37,5 @@ Warns when a category that used to show up regularly has gone quiet longer than 
 ## Notes
 
 - Deliberately operates on the raw series, not FR-INC-4's smoothed one — smoothing redistributes a real deposit across months for *display* purposes but must never manufacture a fake non-zero month that hides a real gap.
-- Threshold constants (75% cadence, 6-month minimum, 2-month gap) mirror FR-INC-8's fixed-constant approach; same v1.7 tuning-surface follow-up note applies.
+- Threshold constants (75% cadence, 6-month minimum, 2-month gap) mirror FR-INC-8's fixed-constant approach; the same unscheduled tuning-surface follow-up note applies (originally written as "v1.7", which is now the Loan tracker).
+- Dates in the callout copy go through the `localeDate` pipe / locale-aware formatting (TICKET-SET-04), not a hardcoded `en-US`-shaped month name.

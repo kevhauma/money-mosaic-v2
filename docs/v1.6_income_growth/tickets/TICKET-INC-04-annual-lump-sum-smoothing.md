@@ -14,22 +14,24 @@ Optional per-category flag so a once-a-year deposit (13th month, vacation pay, h
 
 ## Current situation (as-is)
 
-- `Category` ([app-db.ts](../../../src/app/core/data-access/app-db.ts)) has no field for this; `kind` only distinguishes expense/income/neutral.
-- `computeIncomeCategorySeries()` (FR-INC-2) returns the true per-bucket amount for every category, so a June bonus shows as a one-bucket spike.
+- `Category` ([app-db.ts](../../../src/app/core/data-access/app-db.ts)) has no field for this; `kind` only distinguishes expense/income/neutral. `sortOrder?: number` (TICKET-CAT-03) is the standing precedent for an optional, non-indexed `Category` field added without a schema version bump.
+- `computeIncomeCategorySeries()` (FR-INC-2) returns `{ bucketKeys, series: CategorySeriesEntry[] }` — the true per-bucket amount for every category, so a June bonus shows as a one-bucket spike.
+- Data management (v1.4) exports/imports whole Dexie rows, so a new `Category` field round-trips without touching [data-management.repository.ts](../../../src/app/core/data-access/data-management.repository.ts) — worth confirming rather than assuming when building.
 
 ## Desired result (to-be)
 
-- New optional field on `Category`: `smoothAnnually?: boolean`. Non-indexed, so **no Dexie version bump** — `.stores()` only declares indexes, and this field is never queried by one. Reuses `CategoriesStore.updateCategory(id, { smoothAnnually: true })` (already generic over `Partial<Category>`); a checkbox in [category-form.component.html](../../../src/app/feature-categories/components/category-form/category-form.component.html) ("Spread this category evenly across the year (e.g. a 13th month or holiday bonus)"), visible only when `kind === 'income'`.
-- New pure helper `smoothAnnualLumpSums(series, categoriesById, granularity)` in `core/stats/annual-lump-sum-smoothing.ts`: takes `computeIncomeCategorySeries()`'s output; for each category with `smoothAnnually === true`, groups that category's bucket values by calendar year (from `bucketStart`), sums each year's total, and replaces every bucket belonging to that year with `yearTotal / bucketsInThatYear` — only when `granularity === 'month'` (the only granularity where "one big bucket vs. twelve small ones" is the actual problem). For `day`/`week`/`quarter` granularity the function is a documented pass-through no-op for flagged categories.
+- New optional field on `Category`: `smoothAnnually?: boolean`. Non-indexed, so **no Dexie version bump** — `.stores()` only declares indexes, and this field is never queried by one (same as `sortOrder`). Reuses `CategoriesStore.updateCategory(id, { smoothAnnually: true })` (already generic over `Partial<Category>`); a checkbox in [category-form.component.html](../../../src/app/feature-categories/components/category-form/category-form.component.html) ("Spread this category evenly across the year (e.g. a 13th month or holiday bonus)"), visible only when the form's `kind` control is `'income'`.
+- New pure helper `smoothAnnualLumpSums(trend, categoriesById, granularity)` in `core/stats/annual-lump-sum-smoothing.ts`: takes `computeIncomeCategorySeries()`'s `{ bucketKeys, series }` output; for each series whose category has `smoothAnnually === true`, groups its `values` by calendar year (`bucketKeys[i].slice(0, 4)`), sums each year's total, and replaces every value in that year with `yearTotal / bucketsInThatYear` — only when `granularity === 'month'` (the only granularity where "one big bucket vs. twelve small ones" is the actual problem). For `day`/`week`/`quarter` granularity the function is a documented pass-through no-op for flagged categories.
 - FR-INC-2's chart, FR-INC-5's growth panel, and FR-INC-8's step-change detector all consume `smoothAnnualLumpSums(computeIncomeCategorySeries(...), ...)` instead of the raw series directly.
 
 ## Acceptance criteria
 
 - [ ] `smoothAnnualLumpSums()` preserves each year's category total exactly (sum of smoothed buckets in a year ≈ sum of raw buckets in that year, within rounding) — unit test asserts this for a category with an all-months-flat pattern plus one spike month.
-- [ ] Unflagged categories pass through completely unchanged (reference-equal totals, not just numerically equal) — unit test.
+- [ ] Unflagged categories pass through completely unchanged (reference-equal `values` array, not just numerically equal) — unit test.
 - [ ] `granularity !== 'month'` returns the input series unchanged for every category, flagged or not.
 - [ ] Category form shows the "spread evenly" checkbox only for `kind === 'income'`, and it persists via `updateCategory` (no new store method needed).
-- [ ] `angular.json` bundle budgets not raised; no Dexie version bump.
+- [ ] `angular.json` bundle budgets not raised; no Dexie version bump (schema stays at v12, or at whatever FR-INC-10 lands it on).
+- [ ] A category flagged before an export still round-trips through data-management export → import with the flag intact.
 - [ ] Verified live in the browser: flag "Other Income" as annual lump-sum, add a one-off bonus transaction, confirm the FR-INC-2 chart shows it spread across the year's months rather than a single spike.
 
 ## Notes

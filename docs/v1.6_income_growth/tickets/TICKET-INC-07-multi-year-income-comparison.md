@@ -15,6 +15,8 @@ Lets the user pick a multi-year span (last 3, last 5, or all-time) and see the a
 ## Current situation (as-is)
 
 - FR-INC-6's `computeYearlyIncomeSummary()` produces per-year totals but only adjacent-year `%`; nothing aggregates across a chosen span.
+- TICKET-STAT-07 has since shipped: [year-over-year.ts](../../../src/app/core/stats/year-over-year.ts)'s `computeYearOverYearComparison(..., yearsBack = 3)` already truncates to however many prior years actually exist — the truncation behaviour this ticket mirrors is real code now, not a planned one.
+- [granularity-picker.component.ts](../../../src/app/shared/ui/granularity-picker/granularity-picker.component.ts) (`mm-granularity-picker`) is the shipped precedent for a small stateless segmented toggle: the caller owns the value, the component just emits `valueChange`. The span selector should follow that shape (and, if it grows a second use, become its own `shared/ui` primitive rather than inline markup).
 
 ## Desired result (to-be)
 

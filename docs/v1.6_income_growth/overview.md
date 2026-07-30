@@ -30,16 +30,32 @@ onto FR-INC-3.
 
 **Architecture:** a new routed feature, `/income` → `feature-income/` (own `income.store.ts`,
 `income.routes.ts`, nav entry — same shape as `feature-accounts`/`feature-transactions`), *not* a
-dashboard panel. New pure aggregation lives in `core/stats/` alongside the existing helpers (yearly
-rollup, multi-year comparison, annual-smoothing, step-change/gap detection). Two schema-level additions:
+dashboard panel. The route is a lazy child of the `AppShellComponent` layout route in `app.routes.ts`,
+and the nav item goes in `core/layout/app-shell/app-shell.component.html` (the sidebar moved out of
+`app.html` during the shell extraction). Collaborator stores come from `@/core/state`
+(`TransactionsStore`/`CategoriesStore`/`AccountsStore`/`RangeStore`) since TICKET-SOLID-05. New pure
+aggregation lives in `core/stats/` alongside the existing helpers (yearly rollup, multi-year
+comparison, annual-smoothing, step-change/gap detection). Two schema-level additions:
 - The "annual lump sum" flag (FR-INC-4) is a new optional, non-indexed field on `Category` (e.g.
   `smoothAnnually?: boolean`) — additive with no Dexie version bump needed, since Dexie's `.stores()`
-  only declares indexes, not the full field set.
+  only declares indexes, not the full field set (same as `Category.sortOrder`).
 - The gross wage figure (FR-INC-10) is the one new piece of **user input** this version adds — bank CSVs
   never contain gross pay, so it can't be derived. That needs an actual new table,
-  `grossWageEntries` (schema **v7**, no `.upgrade()` needed — new empty table), with its own thin
+  `grossWageEntries` (schema **v13**, no `.upgrade()` needed — new empty table), with its own thin
   repository (`gross-wage.repository.ts`) following the existing one-repository-per-entity convention,
   keyed by month (`yearMonth: 'YYYY-MM'`, `grossAmount`).
+
+> **Refreshed 2026-07-30.** These tickets were written when the app was at schema v6 with a flat
+> five-feature route list; v1.3–v1.5 and the v2 code review have shipped since. The as-is sections
+> below and in each ticket now describe the code as it actually stands. The four changes that most
+> affect implementation: (1) `trend-buckets.ts`/`computeTrendBuckets()` are gone, replaced by
+> `category-composition-trend.ts`'s `computeCategoryCompositionTrend()` — which already does per-bucket
+> per-category income series, capped at top-5 and scoped to the topbar range; (2) transfer exclusion is
+> no longer a `transferId != null` check — `classifyForStats()` is the single classification pipeline
+> every aggregate must route through; (3) bucket granularity is chart-local state (TICKET-STAT-15),
+> there is no `RangeStore.groupBy`; (4) schema is at v12, and from `.version(11)` onward a version block
+> declares only its new/changed tables, not the full table map. One product decision is reopened by what
+> shipped since — see TICKET-INC-03's note on persisting the category selection.
 
 ## Income (FR-INC — new)
 
@@ -47,7 +63,7 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
 
 - [ ] [TICKET-INC-01](./tickets/TICKET-INC-01-income-page-scaffold.md) — Dedicated Income page (route, store, nav) (adds FR-INC-1) — prerequisite for every other ticket having somewhere to render
 - [ ] [TICKET-INC-03](./tickets/TICKET-INC-03-income-category-selection.md) — Choose which income categories count toward growth (adds FR-INC-3) — almost every later aggregate is parameterised by `IncomeStore.selectedIncomeCategoryIds()`
-- [ ] [TICKET-INC-02](./tickets/TICKET-INC-02-income-by-category-trend-chart.md) — Income-by-category trend chart (adds FR-INC-2, reuses `trend-buckets.ts`'s pattern) — needs INC-03; the base series every later ticket builds on
+- [ ] [TICKET-INC-02](./tickets/TICKET-INC-02-income-by-category-trend-chart.md) — Income-by-category trend chart (adds FR-INC-2, builds on `category-composition-trend.ts`'s `CategorySeriesEntry` shape) — needs INC-03; the base series every later ticket builds on
 - [ ] [TICKET-INC-06](./tickets/TICKET-INC-06-yearly-income-view.md) — Yearly income view, one bar per calendar year (adds FR-INC-6) — independent of INC-02's monthly series, can run in parallel with it
 - [ ] [TICKET-INC-07](./tickets/TICKET-INC-07-multi-year-income-comparison.md) — Multi-year income comparison (adds FR-INC-7) — needs INC-06's per-year output
 - [ ] [TICKET-INC-04](./tickets/TICKET-INC-04-annual-lump-sum-smoothing.md) — Annual lump-sum smoothing for a category (adds FR-INC-4) — needs INC-02, rewrites the series INC-02 renders
@@ -73,8 +89,11 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
 - **Auto-deriving gross wage** (payslip import/OCR, tax-bracket estimation from net alone) — manual
   monthly entry only for v1.6; deriving gross from net would need country-specific tax-bracket logic
   that's a whole feature on its own.
-- **Forecasting/projected income** — already parked in [../v2/requirements.md](../v2/requirements.md)
-  under v3 "forecasting/insights"; step-change detection (FR-INC-8) is retrospective only, not a
+- **Forecasting/projected income** — already parked under "v3" in
+  [../v1.0_foundation/finance-app-spec.md](../v1.0_foundation/finance-app-spec.md)'s deferred list
+  ("forecasting/insights"), and explored further in
+  [../v9999_ideas/competitive-analysis.md](../v9999_ideas/competitive-analysis.md) §4 (cash-flow
+  forecasting); step-change detection (FR-INC-8) is retrospective only, not a
   predictive model, and the gross/net ratio (FR-INC-11) is a historical trend, not a tax projection —
   neither should grow into one here.
 - **Income vs. expense growth comparison** ("is my income growing faster than my spending") — natural
@@ -82,8 +101,9 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
   carry; worth a ticket once income growth alone has shipped and proven useful.
 - **User-configurable step-change/gap-detection thresholds** — FR-INC-8/FR-INC-9 ship with fixed
   constants (±15% / 3-month window; 75% cadence / 6-month minimum). A settings surface for tuning them
-  is a reasonable v1.7 follow-up once real usage shows whether the defaults are too noisy or too quiet.
+  is a reasonable follow-up once real usage shows whether the defaults are too noisy or too quiet.
+  (Originally noted as "v1.7"; v1.7 is now the Loan tracker, so this is unscheduled.)
 
 ## Definition of Done (applies to every ticket)
 
-Per [../../CLAUDE.md](../../CLAUDE.md): `ng lint` + `ng test` + `ng build --configuration development` all pass, plus a live browser check for any UI-visible change. **This set does add one Dexie schema change** (INC-10's `grossWageEntries` table, schema v7 — additive, no `.upgrade()` needed) and one new non-indexed `Category` field (INC-04's `smoothAnnually`, no version bump). Every other ticket derives from existing `Transaction`/`Category`/`Account` data. The production bundle budget in `angular.json` is never raised. Components/stores never touch `appDb` tables directly — always through a repository (`GrossWageRepository` for the new table). Every new aggregate excludes linked transfers the same way the existing `core/stats/` helpers do, so "income" means the same thing across the whole page.
+Per [../../CLAUDE.md](../../CLAUDE.md): `ng lint` + `ng test` + `ng build --configuration development` all pass, plus the `Fallow` code-quality check, plus a live browser check for any UI-visible change. **This set does add one Dexie schema change** (INC-10's `grossWageEntries` table, schema **v13** — additive, minimal `.stores()` declaration per the v11+ convention, no `.upgrade()` needed) and one new non-indexed `Category` field (INC-04's `smoothAnnually`, no version bump). Every other ticket derives from existing `Transaction`/`Category`/`Account` data. The production bundle budget in `angular.json` is never raised. Components/stores never touch `appDb` tables directly — always through a repository (`GrossWageRepository` for the new table). Every new aggregate routes per-transaction decisions through `classifyForStats()` (directly or via `computeCategoryBreakdown()`) rather than re-checking `transferId`/`nullified`/savings itself, so "income" means the same thing across the whole page and can't drift from the dashboard's numbers. User-facing amounts and dates go through `formatCurrency()`/`localeDate` (TICKET-SET-03/04 made both settings-driven), and charts through `@/shared/echarts`'s theme helpers.

@@ -14,11 +14,13 @@ Flags when a recurring income category's typical monthly amount has sustained a 
 
 ## Current situation (as-is)
 
-- No step-change/anomaly detection exists anywhere in the codebase — this is genuinely new logic, not a reuse of an existing pattern (already flagged in the v1.6 vision's "Considered, not ticketed" section as the one story with no existing infra to build on).
+- No step-change/anomaly detection exists anywhere in the codebase — this is genuinely new logic, not a reuse of an existing pattern (already flagged in the v1.6 vision's "Considered, not ticketed" section as the one story with no existing infra to build on). Still true as of this refresh.
+- The closest *presentation* precedent is the dashboard's [action-queue-panel](../../../src/app/feature-dashboard/components/action-queue-panel/action-queue-panel.component.ts) — derived "here's what changed / needs you" cards, each hidden when its count is zero, computed live from stores rather than persisted.
+- Amounts in any user-facing copy must go through `formatCurrency()` ([currency-format.ts](../../../src/app/shared/utils/currency-format.ts)) — the currency symbol, its position, and the number locale are user settings since TICKET-SET-03/04, so a hardcoded `€` in a callout string is now wrong.
 
 ## Desired result (to-be)
 
-- New pure helper `detectIncomeStepChanges(series, categoriesById)` in `core/stats/income-step-change-detection.ts`, operating on `smoothAnnualLumpSums(computeIncomeCategorySeries(...))`'s **monthly** series (this detector only runs at `granularity === 'month'` — a step-change concept doesn't translate cleanly to day/week/quarter buckets):
+- New pure helper `detectIncomeStepChanges(trend, categoriesById, granularity)` in `core/stats/income-step-change-detection.ts`, operating on `smoothAnnualLumpSums(computeIncomeCategorySeries(...))`'s **monthly** `{ bucketKeys, series }` output (this detector only runs at `granularity === 'month'` — a step-change concept doesn't translate cleanly to day/week/quarter buckets):
   - For each category, compare the trailing 3-month average ending at bucket _i_ against the trailing 3-month average ending at bucket _i-3_ (a non-overlapping before/after window).
   - Flag a step-change when the relative difference exceeds a fixed threshold (**±15%**) and holds for **all 3 months** of the "after" window (not just the boundary month) — this rejects a single unusually-high/low month from registering as a "raise."
   - Returns `{ categoryId: number; changedAtBucketKey: string; direction: 'increase' | 'decrease'; fromAvg: number; toAvg: number; pctChange: number }[]`, one entry per detected change (a category can have more than one over its history, e.g. a raise then later a pay cut).
@@ -32,10 +34,11 @@ Flags when a recurring income category's typical monthly amount has sustained a 
 - [ ] A single one-off high/low month (not sustained) does **not** trigger a false positive; unit test.
 - [ ] Categories with less than 6 months of history never flag; unit test.
 - [ ] Runs only at `granularity === 'month'`; other granularities return an empty result rather than misapplying the 3-month window.
+- [ ] Callout copy formats amounts via `formatCurrency()` — no hardcoded currency symbol or separator.
 - [ ] `angular.json` bundle budgets not raised.
 - [ ] Verified live in the browser: seed a salary category with a step increase partway through the history, confirm a callout appears; confirm a flagged annual-bonus category produces no callout.
 
 ## Notes
 
-- Threshold (±15%) and window (3 months) are fixed constants for this ticket, not user-configurable — a settings surface for tuning sensitivity is a reasonable v1.7 follow-up if the fixed threshold proves too noisy/quiet in practice.
+- Threshold (±15%) and window (3 months) are fixed constants for this ticket, not user-configurable — a settings surface for tuning sensitivity is a reasonable follow-up version if the fixed threshold proves too noisy/quiet in practice. (The original note said "v1.7"; v1.7 is now the Loan tracker, so this is an unscheduled follow-up, not a v1.7 commitment.)
 - Depends on FR-INC-4 (consumes the smoothed series) — build after it.
