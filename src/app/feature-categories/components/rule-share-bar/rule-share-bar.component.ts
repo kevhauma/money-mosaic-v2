@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerDownload, tablerUpload } from '@ng-icons/tabler-icons';
 import { AlertComponent, ButtonComponent, FlexComponent } from '@/shared/ui';
@@ -19,22 +19,24 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
 export class RuleShareBarComponent {
   private readonly rulesStore = inject(RulesStore);
 
-  /** Ids of the rules currently selected in the parent table — drives "Export selected". */
+  /** Ids of the rules currently selected in the parent table — narrows the export to just those rules. */
   readonly selectedIds = input<number[]>([]);
 
   protected readonly shareError = signal<string | null>(null);
   protected readonly importSummary = signal<ImportRulesResult | null>(null);
   protected readonly importing = signal(false);
 
-  protected exportAllRules(): void {
-    this.shareError.set(null);
-    downloadJson(this.rulesStore.exportRules(), `money-mosaic-rules-${todayIso()}.json`);
-  }
+  /** The single export button exports the selection when there is one, otherwise every rule. */
+  protected readonly exportLabel = computed(() => {
+    const count = this.selectedIds().length;
+    return count === 0 ? 'Export all rules' : `Export selected (${count})`;
+  });
 
-  protected exportSelectedRules(): void {
+  protected exportRules(): void {
     this.shareError.set(null);
+    const selectedIds = this.selectedIds();
     downloadJson(
-      this.rulesStore.exportRules(this.selectedIds()),
+      this.rulesStore.exportRules(selectedIds.length > 0 ? selectedIds : undefined),
       `money-mosaic-rules-${todayIso()}.json`,
     );
   }

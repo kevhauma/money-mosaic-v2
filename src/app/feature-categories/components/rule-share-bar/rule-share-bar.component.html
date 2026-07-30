@@ -1,11 +1,7 @@
 <mm-flex align="center" gap="3" [wrap]="true" class="mb-4">
-  <mm-button size="sm" (click)="exportSelectedRules()" [disabled]="selectedIds().length === 0">
+  <mm-button size="sm" (click)="exportRules()">
     <ng-icon name="tablerDownload" size="16" aria-hidden="true" />
-    Export selected ({{ selectedIds().length }})
-  </mm-button>
-  <mm-button size="sm" (click)="exportAllRules()">
-    <ng-icon name="tablerDownload" size="16" aria-hidden="true" />
-    Export all rules
+    {{ exportLabel() }}
   </mm-button>
   <mm-button
     size="sm"

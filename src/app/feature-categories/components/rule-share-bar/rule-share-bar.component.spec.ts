@@ -37,6 +37,15 @@ describe('RuleShareBarComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('labels the single export button "all" until rules are selected', () => {
+    expect(fixture.componentInstance['exportLabel']()).toBe('Export all rules');
+
+    fixture.componentRef.setInput('selectedIds', [1, 2]);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['exportLabel']()).toBe('Export selected (2)');
+  });
+
   it('surfaces a readable error for a file that is not valid JSON', async () => {
     const file = new File(['not json'], 'rules.json', { type: 'application/json' });
     const input = { files: [file], value: 'rules.json' } as unknown as HTMLInputElement;

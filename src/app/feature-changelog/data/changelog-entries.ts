@@ -365,4 +365,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Added an Income page to the sidebar — your income trends move off the dashboard and into their own home, filling up panel by panel',
     area: 'Income',
   },
+  {
+    date: '2026-07-30',
+    versionFolder: 'v2',
+    ticketIds: [],
+    title:
+      'The rules page now has a single export button that switches to "Export selected" once you tick some rules, instead of two separate buttons',
+    area: 'Categories',
+  },
 ];
