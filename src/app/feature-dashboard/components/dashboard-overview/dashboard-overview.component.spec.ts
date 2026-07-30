@@ -57,22 +57,36 @@ const noopCanvasContext = new Proxy(
 HTMLCanvasElement.prototype.getContext = (() =>
   noopCanvasContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 
+const configureTestBed = async (): Promise<void> => {
+  await TestBed.configureTestingModule({
+    imports: [DashboardOverviewComponent],
+    providers: [provideRouter([]), provideEchartsCore({ echarts })],
+    // Below-fold panels are wrapped in `@defer (on viewport)` (TICKET-PERF-06); jsdom has no real
+    // IntersectionObserver to fire that trigger, so tests render deferred content explicitly via
+    // the defer-block testing API instead of waiting on a trigger that would never fire.
+    deferBlockBehavior: DeferBlockBehavior.Manual,
+  }).compileComponents();
+};
+
 describe('DashboardOverviewComponent', () => {
   let component: DashboardOverviewComponent;
   let fixture: ComponentFixture<DashboardOverviewComponent>;
 
+  /**
+   * The zero-transaction empty state (TICKET-STAT-22) replaces the whole row switch, so every test
+   * about row rendering has to put at least one transaction in the store first — hydrating against
+   * the empty fake-indexeddb-backed repo alone would land on the empty branch instead.
+   */
+  const seedOneTransaction = (): void => {
+    TestBed.inject(TransactionsStore).addMany([transaction()]);
+  };
+
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [DashboardOverviewComponent],
-      providers: [provideRouter([]), provideEchartsCore({ echarts })],
-      // Below-fold panels are wrapped in `@defer (on viewport)` (TICKET-PERF-06); jsdom has no real
-      // IntersectionObserver to fire that trigger, so tests render deferred content explicitly via
-      // the defer-block testing API instead of waiting on a trigger that would never fire.
-      deferBlockBehavior: DeferBlockBehavior.Manual,
-    }).compileComponents();
+    await configureTestBed();
 
     fixture = TestBed.createComponent(DashboardOverviewComponent);
     component = fixture.componentInstance;
+    await TestBed.inject(TransactionsStore).hydrate();
     await fixture.whenStable();
   });
 
@@ -90,6 +104,7 @@ describe('DashboardOverviewComponent', () => {
   it("omits a user-hidden row entirely, composing without error with the row's own zero-count self-hide", async () => {
     // action-queue-panel already self-hides its cards when counts are zero (no data hydrated in
     // this spec); hiding the whole row on top of that must not double-hide or throw (TICKET-STAT-14).
+    seedOneTransaction();
     await TestBed.inject(DashboardLayoutSettingsStore).toggleRowHidden('action-queue');
 
     expect(() => fixture.detectChanges()).not.toThrow();
@@ -97,12 +112,14 @@ describe('DashboardOverviewComponent', () => {
   });
 
   it('does not instantiate a below-fold panel until its defer block is triggered (TICKET-PERF-06)', () => {
+    seedOneTransaction();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-action-queue-panel')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-trend-chart-panel')).toBeNull();
   });
 
   it('renders a visible row that has no hidden preference once its defer block completes', async () => {
+    seedOneTransaction();
     fixture.detectChanges();
 
     await renderAllDeferBlocks(fixture);
@@ -112,12 +129,10 @@ describe('DashboardOverviewComponent', () => {
   });
 
   describe('periodized sub-labels (TICKET-STAT-21)', () => {
-    // The 'stats' row gates on `statsStore.dataReady()` (TICKET-PERF-05); hydrate against the empty
-    // fake-indexeddb-backed repo first so it's true before each test's `addMany` seeds local state,
-    // otherwise the row would show its loading skeleton instead of the real stat cards.
-    beforeEach(async () => {
-      await TestBed.inject(TransactionsStore).hydrate();
-    });
+    // The 'stats' row gates on `statsStore.dataReady()` (TICKET-PERF-05), which the outer
+    // `beforeEach`'s hydrate against the empty fake-indexeddb-backed repo already satisfies before
+    // each test's `addMany` seeds local state — otherwise the row would show its loading skeleton
+    // instead of the real stat cards.
 
     // Each `mm-stat-card` renders its own `.stat` block with a `.stat-title` and `.stat-desc`;
     // scope by title text rather than DOM order since the row is a plain `@for` over static markup.
@@ -195,11 +210,79 @@ describe('DashboardOverviewComponent', () => {
     });
 
     it('no longer renders a "Spending rate" stat card', () => {
+      seedOneTransaction();
       fixture.detectChanges();
       const titles = Array.from(
         fixture.nativeElement.querySelectorAll('.stat-title') as NodeListOf<HTMLElement>,
       ).map((el) => el.textContent?.trim());
       expect(titles).not.toContain('Spending rate');
     });
+  });
+
+  describe('empty state (TICKET-STAT-22)', () => {
+    it('replaces the dashboard rows with mm-empty-state when hydration finds zero transactions', () => {
+      fixture.detectChanges();
+
+      const emptyState = fixture.nativeElement.querySelector('mm-empty-state');
+      expect(emptyState).not.toBeNull();
+      expect(emptyState.textContent).toContain('No transactions yet');
+      expect(fixture.nativeElement.querySelector('.stat')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-account-balance-strip')).toBeNull();
+    });
+
+    it('points the call-to-action at /import via routerLink', () => {
+      fixture.detectChanges();
+
+      const cta = fixture.nativeElement.querySelector('mm-empty-state a');
+      expect(cta.getAttribute('href')).toBe('/import');
+      expect(cta.textContent.trim()).toBe('Import transactions');
+    });
+
+    it('hides the customize-dashboard toggle while the empty state is showing', () => {
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[aria-label="Customize dashboard"]')).toBeNull();
+    });
+
+    it('swaps back to the row-based dashboard as soon as a transaction exists, without a reload', () => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('mm-empty-state')).not.toBeNull();
+
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('mm-empty-state')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.stat')).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[aria-label="Customize dashboard"]'),
+      ).not.toBeNull();
+    });
+
+    it('stays hidden for a date range with no hits, since the dataset itself is not empty', () => {
+      TestBed.inject(TransactionsStore).addMany([
+        transaction({ id: 1, bookingDate: '2020-01-01', amount: 100 }),
+      ]);
+      TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('mm-empty-state')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.stat')).not.toBeNull();
+    });
+  });
+});
+
+describe('DashboardOverviewComponent before hydration (TICKET-STAT-22)', () => {
+  // Its own TestBed setup, deliberately *not* awaiting `TransactionsStore.hydrate()`: the empty state
+  // must not flash while the first repository read is still in flight. Angular's per-test TestBed
+  // reset gives this block a fresh (un-hydrated) root store.
+  beforeEach(configureTestBed);
+
+  it('shows the loading skeleton rather than the empty state while transactions are still hydrating', () => {
+    const fixture = TestBed.createComponent(DashboardOverviewComponent);
+    fixture.detectChanges();
+
+    expect(TestBed.inject(TransactionsStore).hydrated()).toBe(false);
+    expect(fixture.nativeElement.querySelector('mm-empty-state')).toBeNull();
+    expect(fixture.nativeElement.querySelector('mm-loading-skeleton')).not.toBeNull();
   });
 });

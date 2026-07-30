@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerCheck, tablerPencil } from '@ng-icons/tabler-icons';
+import { tablerCheck, tablerFileImport, tablerPencil } from '@ng-icons/tabler-icons';
 import { computeNetMargin, computePeriodizedRate } from '@/core/stats';
-import { AccountsStore, RangeStore } from '@/core/state';
+import { AccountsStore, RangeStore, TransactionsStore } from '@/core/state';
 import { buildTransactionDrilldownParams, formatCurrency, formatPercent } from '@/shared/utils';
 import {
   ButtonComponent,
+  EmptyStateComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
   PaperComponent,
@@ -29,6 +30,7 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
   imports: [
     NgIcon,
     ButtonComponent,
+    EmptyStateComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
     PaperComponent,
@@ -45,15 +47,26 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
   ],
   templateUrl: './dashboard-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerCheck, tablerPencil })],
+  viewProviders: [provideIcons({ tablerCheck, tablerFileImport, tablerPencil })],
 })
 export class DashboardOverviewComponent {
   protected readonly statsStore = inject(StatsStore);
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly rangeStore = inject(RangeStore);
+  protected readonly transactionsStore = inject(TransactionsStore);
   protected readonly dashboardLayoutSettingsStore = inject(DashboardLayoutSettingsStore);
 
   protected readonly customizeMode = signal(false);
+
+  /**
+   * Deliberately read off `TransactionsStore` rather than `StatsStore`'s period-filtered stats
+   * (TICKET-STAT-22): the empty state means "no data at all", not "no data in the selected range" —
+   * a range with zero hits must still show the normal zeroed dashboard. Gated on `hydrated()` so the
+   * rows' own loading skeletons keep showing while the first read is in flight.
+   */
+  protected readonly hasNoTransactions = computed(
+    () => this.transactionsStore.hydrated() && this.transactionsStore.transactions().length === 0,
+  );
 
   protected readonly visibleRows = computed(() =>
     visibleDashboardRows(
