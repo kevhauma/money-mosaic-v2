@@ -4,7 +4,6 @@ import { tablerTrendingUp } from '@ng-icons/tabler-icons';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import {
-  computeFullHistoryRange,
   computeIncomeCategorySeries,
   type CategorySeriesEntry,
   type ChartZoomWindow,
@@ -26,8 +25,7 @@ import {
 import { formatCurrency, type Granularity } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 import { IncomeCategoryFilterComponent } from '../income-category-filter/income-category-filter.component';
-
-const todayIso = (): string => new Date().toISOString().slice(0, 10);
+import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
 
 /**
  * The whole Income page buckets by calendar month — deliberately fixed rather than a per-chart
@@ -71,7 +69,10 @@ export const buildIncomeTrendChartOption = (
 
 /**
  * The `/income` page container (FR-INC-1, TICKET-INC-01), now hosting the income-by-category trend
- * chart (FR-INC-2, TICKET-INC-02) parameterised by the user's category selection (FR-INC-3).
+ * chart (FR-INC-2, TICKET-INC-02) parameterised by the user's category selection (FR-INC-3), plus
+ * the yearly view beneath it (`IncomeYearlyPanelComponent`, FR-INC-6) — a sibling panel with its
+ * own aggregate rather than a second chart on this class, following the dashboard's
+ * `trend-chart-panel` shape. Both read the page-level `IncomeStore.fullHistoryRange`.
  *
  * Series span every account's entire history (`computeFullHistoryRange`), bucketed into calendar
  * months (`INCOME_GRANULARITY`) rather than a user-selectable granularity — see that constant's
@@ -91,6 +92,7 @@ export const buildIncomeTrendChartOption = (
     EmptyStateComponent,
     FlexComponent,
     IncomeCategoryFilterComponent,
+    IncomeYearlyPanelComponent,
     NgIcon,
     NgxEchartsDirective,
     PageHeaderComponent,
@@ -110,13 +112,7 @@ export class IncomeOverviewComponent {
     () => this.incomeStore.selectedIncomeCategoryIds().size > 0,
   );
 
-  private readonly range = computed(() =>
-    computeFullHistoryRange(
-      this.accountsStore.activeAccounts(),
-      this.transactionsStore.transactions(),
-      todayIso(),
-    ),
-  );
+  private readonly range = this.incomeStore.fullHistoryRange;
 
   private readonly trend = computed(() =>
     computeIncomeCategorySeries(

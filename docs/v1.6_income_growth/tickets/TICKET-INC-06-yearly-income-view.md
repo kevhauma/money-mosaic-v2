@@ -26,13 +26,25 @@ A bar chart with one bar per calendar year across the user's full history, each 
 
 ## Acceptance criteria
 
-- [ ] One entry per calendar year touched by `computeFullHistoryRange()`'s span, including years with zero selected-category income (rendered as a zero bar, not skipped) — matches the existing gap-filled-bucket convention used elsewhere in `core/stats/`.
-- [ ] `pctVsPriorYear` is `null` (not `±∞%`) for the first year or a zero-total prior year; unit test covers both.
-- [ ] Exclusions run through `classifyForStats()` — a linked transfer leg, a `nullified` row, and a savings movement are each ignored without any local re-check; unit test.
-- [ ] Only counts `selectedIncomeCategoryIds` (FR-INC-3).
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified live in the browser on 2+ years of seeded data: one bar per year, each with a visible %-change vs. the year before.
+> **Implementation note (2026-07-31).** The to-be above says "`IncomeOverviewComponent` renders this
+> as a bar chart". It's built instead as a child panel, `IncomeYearlyPanelComponent`
+> (`feature-income/components/income-yearly-panel/`), composed by `IncomeOverviewComponent` inside
+> its existing `hasSelectedCategories` branch — one component renders one view, following the
+> dashboard's `trend-chart-panel` precedent rather than growing the page class to two charts and two
+> aggregates. No criterion below names the component, so none is superseded. Two related moves:
+> the full-history span both charts read moved onto `IncomeStore.fullHistoryRange` (page-level, so
+> the monthly and yearly views can't disagree about where history starts), and `shared/utils`'
+> `formatPercent` gained a `'signed'` variant (`signDisplay: 'exceptZero'`) so a standalone bar
+> label reads `+8.2%` without hand-assembling a `+` outside the locale formatter (TICKET-NG-10).
+
+- [x] One entry per calendar year touched by `computeFullHistoryRange()`'s span, including years with zero selected-category income (rendered as a zero bar, not skipped) — matches the existing gap-filled-bucket convention used elsewhere in `core/stats/`. (`core/stats/yearly-income-summary.ts` gap-fills via `bucketKeysInRange(from, to, 'year')`; the span comes from `IncomeStore.fullHistoryRange`'s `computeFullHistoryRange` call, not the topbar. Specs: `yearly-income-summary.spec.ts` "returns one entry per calendar year touched by the range, ascending" and "renders a year with no selected-category income as a zero total, not a skipped year" (`[1000, 0, 1000]` across 2024–2026); `income-yearly-panel.component.spec.ts` "keeps a year with no income as a zero row rather than dropping it off the axis" and "spans the full history regardless of a narrower topbar range".)
+- [x] `pctVsPriorYear` is `null` (not `±∞%`) for the first year or a zero-total prior year; unit test covers both. (`percentVsPrior` in `yearly-income-summary.ts` returns `null` for `undefined`/`0` prior. Spec block `computeYearlyIncomeSummary: pctVsPriorYear` — "is null for the first year", "is null (not ±∞%) when the prior year's total is zero", plus rise/drop/no-change cases.)
+- [x] Exclusions run through `classifyForStats()` — a linked transfer leg, a `nullified` row, and a savings movement are each ignored without any local re-check; unit test. (Per-year totals come from the shared `computePerBucketBreakdowns` → `computeCategoryBreakdown` → `classifyForStats` chain; the file contains no `transferId`/`nullified` check of its own. Spec block `computeYearlyIncomeSummary: classification is delegated to classifyForStats` — transfer leg, nullified row, own-savings withdrawal, and refund-netting cases.)
+- [x] Only counts `selectedIncomeCategoryIds` (FR-INC-3). (`computeYearlyIncomeSummary` filters `incomeBySource` to ids in `selectedCategoryIds`; the panel passes `IncomeStore.selectedIncomeCategoryIds()`. Spec block `computeYearlyIncomeSummary: selection (FR-INC-3)` — selected-only total, total after re-selecting, uncategorised income excluded, all-zero when nothing is selected; `income-yearly-panel.component.spec.ts` "counts nothing once every income category is deselected".)
+- [x] `angular.json` bundle budgets not raised. (`angular.json` untouched — not in `git status` for this change; `ng build --configuration development` completed with no budget warnings, initial total 2.15 MB.)
+- [ ] Verified live in the browser on 2+ years of seeded data: one bar per year, each with a visible %-change vs. the year before. — **Deliberately skipped:** the user waived the live browser check on 2026-07-31 when asked. Everything else is verified (`ng lint` clean, `ng test` green for both new specs and the amended `income-overview` spec, `ng build --configuration development` clean, `fallow audit` verdict `pass` with 0 dead-code/duplication/complexity findings), but nobody has seen these bars render.
 
 ## Notes
 
+- **Open product question surfaced during implementation (2026-07-31), deliberately not decided here:** the current calendar year is compared against a *full* prior year, so for most of any year the last bar reads as a large negative %-change purely because the year isn't over (mid-2026: ~58% elapsed). The code is faithful to this ticket's stated formula and no criterion covers it, but it's user-visible and should get a decision — suppress the % on the in-progress year, mark it, or annualize — before TICKET-INC-07 builds on this output.
 - Independent of FR-INC-02/04/05's monthly series — its own aggregator over raw transactions, not a re-bucketing of the monthly one. Can be built in parallel with FR-INC-02.

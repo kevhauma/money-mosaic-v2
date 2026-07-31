@@ -184,6 +184,16 @@ describe('IncomeOverviewComponent', () => {
     fixture.detectChanges();
   };
 
+  /**
+   * The monthly chart's own visually-hidden mirror table. Scoped with `:scope >` on purpose: the
+   * yearly panel (TICKET-INC-06) renders a `table.sr-only` of its own, so an unscoped
+   * `table.sr-only` query would silently mix that panel's `YYYY` rows into these monthly-bucket
+   * assertions.
+   */
+  const monthlyBucketRows = (selector: string): HTMLElement[] => [
+    ...fixture.nativeElement.querySelectorAll(`:scope > mm-paper table.sr-only ${selector}`),
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -213,6 +223,12 @@ describe('IncomeOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('app-income-category-filter')).not.toBeNull();
   });
 
+  it('renders the yearly panel beneath the monthly chart (FR-INC-6, TICKET-INC-06)', async () => {
+    await setup([salary]);
+
+    expect(fixture.nativeElement.querySelector('app-income-yearly-panel')).not.toBeNull();
+  });
+
   it('offers no granularity control — the page is fixed to calendar months (TICKET-INC-02 divergence)', async () => {
     await setup([salary]);
 
@@ -229,7 +245,7 @@ describe('IncomeOverviewComponent', () => {
     const option = (
       fixture.componentInstance as unknown as { chartOption: () => { dataZoom: ChartZoomWindow[] } }
     ).chartOption();
-    const bucketCount = fixture.nativeElement.querySelectorAll('table.sr-only tbody tr').length;
+    const bucketCount = monthlyBucketRows('tbody tr').length;
 
     expect(bucketCount).toBeGreaterThan(1);
     expect(option.dataZoom.every((zoom) => zoom.startValue === 0)).toBe(true);
@@ -239,9 +255,7 @@ describe('IncomeOverviewComponent', () => {
   it('buckets by calendar month regardless of the topbar range, so bucket keys are YYYY-MM', async () => {
     await setup([salary]);
 
-    const rows = [...fixture.nativeElement.querySelectorAll('table.sr-only tbody th')].map(
-      (cell) => (cell as HTMLElement).textContent?.trim() ?? '',
-    );
+    const rows = monthlyBucketRows('tbody th').map((cell) => cell.textContent?.trim() ?? '');
 
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((key) => /^\d{4}-\d{2}$/.test(key))).toBe(true);

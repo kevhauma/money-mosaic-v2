@@ -1,6 +1,9 @@
 import { computed, inject } from '@angular/core';
 import { signalStore, withComputed, withMethods } from '@ngrx/signals';
-import { AppSettingsStore, CategoriesStore } from '@/core/state';
+import { computeFullHistoryRange } from '@/core/stats';
+import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 /**
  * State for the `/income` page (FR-INC-1, TICKET-INC-01).
@@ -15,7 +18,9 @@ import { AppSettingsStore, CategoriesStore } from '@/core/state';
 export const IncomeStore = signalStore(
   { providedIn: 'root' },
   withComputed(() => {
+    const accountsStore = inject(AccountsStore);
     const categoriesStore = inject(CategoriesStore);
+    const transactionsStore = inject(TransactionsStore);
     const appSettingsStore = inject(AppSettingsStore);
 
     /**
@@ -30,6 +35,21 @@ export const IncomeStore = signalStore(
 
     return {
       incomeCategories,
+
+      /**
+       * The span every chart on the page covers: earliest account/transaction date through today,
+       * across all active accounts. Page-level rather than per-panel because the Income page is
+       * deliberately topbar-range-independent (see `IncomeOverviewComponent`'s class doc and
+       * FR-INC-6) — one growth story, one span, so the monthly and yearly views can't disagree
+       * about where history starts.
+       */
+      fullHistoryRange: computed(() =>
+        computeFullHistoryRange(
+          accountsStore.activeAccounts(),
+          transactionsStore.transactions(),
+          todayIso(),
+        ),
+      ),
 
       /**
        * The income categories that count toward growth (FR-INC-3) — every active income category

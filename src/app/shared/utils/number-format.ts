@@ -22,17 +22,35 @@ export const SIGN_BY_ICON_PERCENT_FORMATTER = computed(
     }),
 );
 
-export type PercentVariant = 'default' | 'sign-by-icon';
+/** Direction carried by the number itself, with an explicit `+` on a rise — for a standalone
+ * change figure with no icon or neighbouring value to read the sign from (the yearly income
+ * chart's per-bar %-change label, TICKET-INC-06). `'default'`'s `signDisplay: 'auto'` leaves a
+ * rise bare, which reads as an absolute amount rather than a delta when the label stands alone. */
+export const SIGNED_PERCENT_FORMATTER = computed(
+  () =>
+    new Intl.NumberFormat(locale(), {
+      style: 'percent',
+      maximumFractionDigits: 1,
+      signDisplay: 'exceptZero',
+    }),
+);
+
+export type PercentVariant = 'default' | 'sign-by-icon' | 'signed';
+
+const PERCENT_FORMATTERS: Record<PercentVariant, () => Intl.NumberFormat> = {
+  default: PERCENT_FORMATTER,
+  'sign-by-icon': SIGN_BY_ICON_PERCENT_FORMATTER,
+  signed: SIGNED_PERCENT_FORMATTER,
+};
 
 /**
- * Locale-aware percent display (TICKET-NG-10) — `variant` selects one of the app's two current
- * conventions: `'default'` (1 fraction digit, signed) for a plain percentage, `'sign-by-icon'`
- * (0 fraction digits, never signed) when an adjacent icon already conveys direction.
+ * Locale-aware percent display (TICKET-NG-10) — `variant` selects one of the app's current
+ * conventions: `'default'` (1 fraction digit, `-` only) for a plain percentage, `'sign-by-icon'`
+ * (0 fraction digits, never signed) when an adjacent icon already conveys direction, and
+ * `'signed'` (1 fraction digit, explicit `+`/`-`) for a standalone change figure.
  */
 export function formatPercent(value: number, variant: PercentVariant = 'default'): string {
-  const formatter =
-    variant === 'sign-by-icon' ? SIGN_BY_ICON_PERCENT_FORMATTER() : PERCENT_FORMATTER();
-  return formatter.format(value);
+  return PERCENT_FORMATTERS[variant]().format(value);
 }
 
 export const RATIO_FORMATTER = computed(

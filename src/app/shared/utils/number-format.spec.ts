@@ -32,6 +32,19 @@ describe('formatPercent', () => {
     });
   });
 
+  describe('signed variant', () => {
+    it('shows an explicit + on a rise, a - on a drop, and neither on no change', () => {
+      expect(formatPercent(0.082, 'signed')).toBe('+8.2%');
+      expect(formatPercent(-0.25, 'signed')).toBe('-25%');
+      expect(formatPercent(0, 'signed')).toBe('0%');
+    });
+
+    it('reflects a changed locale the same way as the default variant', () => {
+      syncFormatSettings({ locale: 'en-BE' });
+      expect(formatPercent(1234.5, 'signed')).toBe('+123.450%');
+    });
+  });
+
   it('reuses the same Intl.NumberFormat instance until the locale changes, then rebuilds it', () => {
     // `PERCENT_FORMATTER` is exported (over `currency-format.ts`'s private-formatter precedent)
     // specifically so this can assert on instance identity — `Intl.NumberFormat` can't be reliably
