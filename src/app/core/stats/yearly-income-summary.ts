@@ -1,18 +1,33 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { computePerBucketBreakdowns } from './category-composition-trend';
-import { bucketKeysInRange } from '@/shared/utils';
+import { bucketDateBoundaries, bucketKeysInRange } from '@/shared/utils';
 
 export type YearlyIncomeEntry = {
   /** Calendar year as a bucket key, `YYYY` (`bucketKeyForDate`'s `'year'` format). */
   year: string;
   total: number;
-  /** Fractional change vs. the preceding entry (0.08 = +8%); `null` for the first year in the series or when the prior year's total is exactly zero. */
+  /** True when `[from, to]` doesn't span the whole calendar year — the in-progress current year, and a first year the history starts partway into. Its `total` is a real but incomplete figure. */
+  isPartialYear: boolean;
+  /** Fractional change vs. the preceding entry (0.08 = +8%); `null` whenever the comparison would mislead — see `percentVsPrior`. */
   pctVsPriorYear: number | null;
 };
 
-/** `null` rather than `±∞%` when there's nothing to divide by — same guard as `year-over-year.ts`'s `percentDelta`. */
-const percentVsPrior = (total: number, priorTotal: number | undefined): number | null =>
-  priorTotal === undefined || priorTotal === 0 ? null : (total - priorTotal) / Math.abs(priorTotal);
+type YearTotal = { total: number; isPartialYear: boolean };
+
+/**
+ * A year the data only half-covers is a smaller number for a reason that has nothing to do with
+ * income, so neither side of the comparison may be partial: an in-progress year against a full one
+ * reads as a collapse every year until December, and the year *after* a partial first year reads as
+ * a surge. Both are artefacts of where the history starts and ends.
+ */
+const bothYearsComplete = (year: YearTotal, prior: YearTotal): boolean =>
+  !year.isPartialYear && !prior.isPartialYear;
+
+/** `null` rather than a misleading number — no prior year to compare against (`year-over-year.ts`'s `percentDelta` guard), a zero prior total that would read as `±∞%`, or a partial year on either side (see `bothYearsComplete`). */
+const percentVsPrior = (year: YearTotal, prior: YearTotal | undefined): number | null =>
+  prior === undefined || prior.total === 0 || !bothYearsComplete(year, prior)
+    ? null
+    : (year.total - prior.total) / Math.abs(prior.total);
 
 /**
  * One entry per calendar year in `[from, to]` with its %-change vs. the year before (FR-INC-6,
@@ -32,6 +47,10 @@ const percentVsPrior = (total: number, priorTotal: number | undefined): number |
  *
  * Totals are **raw**, not smoothed: FR-INC-4's annual-lump-sum smoothing redistributes a lump sum
  * *within* a year, which by definition changes nothing once the bucket is the whole year.
+ *
+ * The first and last years of a history are usually only partly covered by `[from, to]`; those are
+ * flagged `isPartialYear` and take no percentage (see `percentVsPrior`). Their `total` is still
+ * reported — an incomplete year is real data worth a bar, it just isn't comparable to a full one.
  */
 export const computeYearlyIncomeSummary = (
   transactions: Transaction[],
@@ -52,15 +71,19 @@ export const computeYearlyIncomeSummary = (
     accountsById,
   );
 
-  const totals = perYearBreakdowns.map((breakdown) =>
-    breakdown.incomeBySource
-      .filter((entry) => entry.categoryId != null && selectedCategoryIds.has(entry.categoryId))
-      .reduce((sum, entry) => sum + entry.total, 0),
-  );
+  const totals: YearTotal[] = years.map((year, index) => {
+    const { start, end } = bucketDateBoundaries(year, 'year');
+    return {
+      total: perYearBreakdowns[index].incomeBySource
+        .filter((entry) => entry.categoryId != null && selectedCategoryIds.has(entry.categoryId))
+        .reduce((sum, entry) => sum + entry.total, 0),
+      isPartialYear: from > start || to < end,
+    };
+  });
 
   return years.map((year, index) => ({
     year,
-    total: totals[index],
+    ...totals[index],
     pctVsPriorYear: percentVsPrior(totals[index], totals[index - 1]),
   }));
 };

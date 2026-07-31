@@ -73,7 +73,9 @@ describe('computeYearlyIncomeSummary: gap-filled calendar years (FR-INC-6)', () 
       '2024-12-31',
     );
 
-    expect(result).toEqual([{ year: '2024', total: 6000, pctVsPriorYear: null }]);
+    expect(result).toEqual([
+      { year: '2024', total: 6000, isPartialYear: false, pctVsPriorYear: null },
+    ]);
   });
 });
 
@@ -111,6 +113,57 @@ describe('computeYearlyIncomeSummary: pctVsPriorYear', () => {
 
   it('is 0 for a year that exactly matches the year before it', () => {
     expect(overTwoYears(1000, 1000)[1].pctVsPriorYear).toBe(0);
+  });
+});
+
+describe('computeYearlyIncomeSummary: partial years take no percentage', () => {
+  const twoYears = (from: string, to: string) =>
+    computeYearlyIncomeSummary(
+      [
+        transaction({ id: 1, bookingDate: '2025-06-01', amount: 12000, categoryId: 1 }),
+        transaction({ id: 2, bookingDate: '2026-06-01', amount: 6000, categoryId: 1 }),
+      ],
+      salaryAndOther,
+      new Set([1]),
+      from,
+      to,
+    );
+
+  it('flags a year the range only partly covers, and a fully-covered one as complete', () => {
+    // History starts mid-2025 and stops mid-2026: neither end year is a whole calendar year.
+    const result = twoYears('2025-06-01', '2026-06-30');
+
+    expect(result.map((entry) => entry.isPartialYear)).toEqual([true, true]);
+    expect(twoYears('2025-01-01', '2026-12-31').map((entry) => entry.isPartialYear)).toEqual([
+      false,
+      false,
+    ]);
+  });
+
+  it('suppresses the % on an in-progress year rather than reading half a year as a collapse', () => {
+    const result = twoYears('2025-01-01', '2026-06-30');
+
+    // 6000 against a full prior year of 12000 would render as -50% purely because June isn't December.
+    expect(result[1].isPartialYear).toBe(true);
+    expect(result[1].pctVsPriorYear).toBeNull();
+  });
+
+  it('suppresses the % on the year after a partial first year, whose basis is incomplete', () => {
+    const result = twoYears('2025-06-01', '2026-12-31');
+
+    expect(result[1].isPartialYear).toBe(false);
+    expect(result[0].isPartialYear).toBe(true);
+    expect(result[1].pctVsPriorYear).toBeNull();
+  });
+
+  it('still reports a partial year’s own total — incomplete data is real data', () => {
+    const result = twoYears('2025-01-01', '2026-06-30');
+
+    expect(result[1].total).toBe(6000);
+  });
+
+  it('keeps the % between two fully-covered years', () => {
+    expect(twoYears('2025-01-01', '2026-12-31')[1].pctVsPriorYear).toBeCloseTo(-0.5);
   });
 });
 
@@ -203,6 +256,8 @@ describe('computeYearlyIncomeSummary: selection (FR-INC-3)', () => {
       '2026-12-31',
     );
 
-    expect(result).toEqual([{ year: '2026', total: 0, pctVsPriorYear: null }]);
+    expect(result).toEqual([
+      { year: '2026', total: 0, isPartialYear: false, pctVsPriorYear: null },
+    ]);
   });
 });

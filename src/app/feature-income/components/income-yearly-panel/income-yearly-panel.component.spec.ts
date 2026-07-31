@@ -28,6 +28,7 @@ import {
 } from '@/shared/utils';
 import {
   buildYearlyIncomeChartOption,
+  describeYearOverYearChange,
   formatYearOverYearChange,
   IncomeYearlyPanelComponent,
 } from './income-yearly-panel.component';
@@ -43,6 +44,7 @@ globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObse
 const entry = (overrides: Partial<YearlyIncomeEntry> = {}): YearlyIncomeEntry => ({
   year: '2025',
   total: 24000,
+  isPartialYear: false,
   pctVsPriorYear: null,
   ...overrides,
 });
@@ -58,6 +60,24 @@ describe('formatYearOverYearChange (FR-INC-6, TICKET-INC-06)', () => {
 
   it('renders an em dash rather than a percentage when there is no prior year to compare', () => {
     expect(formatYearOverYearChange(null)).toBe('—');
+  });
+});
+
+describe('describeYearOverYearChange (FR-INC-6, TICKET-INC-06)', () => {
+  it('says why an incomplete year carries no percentage, rather than a bare dash', () => {
+    expect(describeYearOverYearChange(entry({ isPartialYear: true, pctVsPriorYear: null }))).toBe(
+      'incomplete year — not comparable',
+    );
+  });
+
+  it('falls back to the bare dash when the year is complete but has nothing to compare against', () => {
+    expect(describeYearOverYearChange(entry({ isPartialYear: false, pctVsPriorYear: null }))).toBe(
+      '—',
+    );
+  });
+
+  it('reads as the percentage whenever there is one', () => {
+    expect(describeYearOverYearChange(entry({ pctVsPriorYear: 0.2 }))).toBe('+20%');
   });
 });
 
@@ -118,6 +138,16 @@ describe('buildYearlyIncomeChartOption (FR-INC-6, TICKET-INC-06)', () => {
 
   it('inherits the bar colour for its label, so the text follows the theme palette on dark themes', () => {
     expect(build(threeYears).series[0].label.color).toBe('inherit');
+  });
+
+  it('keeps the bar label compact on an incomplete year but explains it in the tooltip', () => {
+    const option = build([
+      entry({ year: '2025', total: 24000, pctVsPriorYear: null }),
+      entry({ year: '2026', total: 11000, isPartialYear: true, pctVsPriorYear: null }),
+    ]);
+
+    expect(option.series[0].label.formatter({ dataIndex: 1 })).toBe('—');
+    expect(option.tooltip.formatter([{ dataIndex: 1, value: 11000 }])).toContain('incomplete year');
   });
 
   it('has no dataZoom — a full history is a handful of bars, all of which fit on the axis', () => {
@@ -259,10 +289,22 @@ describe('IncomeYearlyPanelComponent', () => {
     expect(gapYear[2]).toBe('-100%');
   });
 
+  it('shows no percentage for the in-progress current year, which runs only to today', async () => {
+    await setup([payslip(1, '2024-06-01', 20000), payslip(2, '2025-06-01', 24000)]);
+
+    // The last row is always the current calendar year: `computeFullHistoryRange` ends at today.
+    const currentYear = accessibleRows().at(-1)!;
+
+    expect(currentYear[2]).toBe('incomplete year — not comparable');
+  });
+
   it('counts nothing once every income category is deselected (FR-INC-3)', async () => {
     await setup([payslip(1, '2024-06-01', 20000), payslip(2, '2025-06-01', 24000)], [1]);
 
-    expect(accessibleRows().every((row) => row[2] === '—')).toBe(true);
+    // Every year's total, not its change label — the last row is the in-progress year, which is
+    // suppressed for its own reason and would pass a change-label assertion for free.
+    expect(accessibleRows().every((row) => row[1].includes('0.00'))).toBe(true);
+    expect(accessibleRows().every((row) => !row[1].includes('20,000'))).toBe(true);
   });
 
   it('renders the chart host with an accessible label pointing at the table', async () => {

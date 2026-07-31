@@ -15,12 +15,21 @@ import { IncomeStore } from '../../income.store';
 
 export type YearlyIncomeAccessibleRow = { year: string; total: string; change: string };
 
-/** Placeholder for a year with no comparison to make — the first year, or one following a zero year (`pctVsPriorYear: null`). Printed rather than left blank, so the bar reads as "no prior year" instead of as a missing value. */
-const NO_PRIOR_YEAR = '—';
+/** Placeholder for a year with no comparison to make (`pctVsPriorYear: null`). Printed rather than left blank, so the bar reads as "nothing to compare" instead of as a missing value. */
+const NO_CHANGE_SHOWN = '—';
+
+/** Why a bar carries no percentage, for the tooltip — where there's room to say it. The compact `—` above the bar can't. */
+const INCOMPLETE_YEAR_REASON = 'incomplete year — not comparable';
 
 /** `+8.2%` / `-25%` / `—`, via the `'signed'` percent variant so a rise carries an explicit `+`: the label stands alone above its bar, with no icon or neighbouring figure to read direction from. */
 export const formatYearOverYearChange = (pctVsPriorYear: number | null): string =>
-  pctVsPriorYear === null ? NO_PRIOR_YEAR : formatPercent(pctVsPriorYear, 'signed');
+  pctVsPriorYear === null ? NO_CHANGE_SHOWN : formatPercent(pctVsPriorYear, 'signed');
+
+/** The tooltip's change line: the percentage when there is one, otherwise the reason there isn't. */
+export const describeYearOverYearChange = (entry: YearlyIncomeEntry): string =>
+  entry.pctVsPriorYear === null && entry.isPartialYear
+    ? INCOMPLETE_YEAR_REASON
+    : formatYearOverYearChange(entry.pctVsPriorYear);
 
 /** Only the fields this chart's tooltip/label callbacks read off echarts' callback params. */
 type YearlyTooltipParam = { dataIndex: number; value: number };
@@ -29,13 +38,15 @@ type YearlyTooltipParam = { dataIndex: number; value: number };
  * Pure echarts-option builder for the yearly income bars, kept separate from the component so it's
  * testable without TestBed. One bar per calendar year with its %-change vs. the prior year printed
  * above it, and the same change repeated in the tooltip beneath the amount — the label is the
- * at-a-glance read, the tooltip the precise one.
+ * at-a-glance read, the tooltip the precise one. A year with no percentage shows `—` above the bar
+ * and, when that's because the year is incomplete, says so in the tooltip.
  *
  * No `dataZoom` (unlike the monthly chart's `bucketedZoomAxisOption`): a full history is a handful
  * of years, so every bar fits on the axis and a slider would only add chrome to hide data behind.
  */
 export const buildYearlyIncomeChartOption = (entries: YearlyIncomeEntry[]): EChartsCoreOption => {
   const changeLabels = entries.map((entry) => formatYearOverYearChange(entry.pctVsPriorYear));
+  const changeDescriptions = entries.map(describeYearOverYearChange);
 
   return {
     ...resolveChartAnimation(),
@@ -44,9 +55,10 @@ export const buildYearlyIncomeChartOption = (entries: YearlyIncomeEntry[]): ECha
       trigger: 'axis',
       formatter: (params: YearlyTooltipParam | YearlyTooltipParam[]): string => {
         // Axis trigger over a single bar series: always exactly one hovered bar, so its index is
-        // always a real position in `changeLabels`.
+        // always a real position in `changeDescriptions`.
         const [hovered] = Array.isArray(params) ? params : [params];
-        return `${formatAxisTooltip(params)}<br/>vs. prior year: ${changeLabels[hovered.dataIndex]}`;
+        const change = changeDescriptions[hovered.dataIndex];
+        return `${formatAxisTooltip(params)}<br/>vs. prior year: ${change}`;
       },
     },
     grid: { left: 56, right: 24, top: 40, bottom: 32 },
@@ -121,7 +133,9 @@ export class IncomeYearlyPanelComponent {
     this.yearlyIncome().map((entry) => ({
       year: entry.year,
       total: formatCurrency(entry.total),
-      change: formatYearOverYearChange(entry.pctVsPriorYear),
+      // The tooltip's wording, not the bar label's `—`: a screen-reader user has no bar to hover
+      // for the reason, so the table is where it has to be said.
+      change: describeYearOverYearChange(entry),
     })),
   );
 
