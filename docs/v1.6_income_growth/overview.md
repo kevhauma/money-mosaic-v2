@@ -35,10 +35,15 @@ and the nav item goes in `core/layout/app-shell/app-shell.component.html` (the s
 `app.html` during the shell extraction). Collaborator stores come from `@/core/state`
 (`TransactionsStore`/`CategoriesStore`/`AccountsStore`/`RangeStore`) since TICKET-SOLID-05. New pure
 aggregation lives in `core/stats/` alongside the existing helpers (yearly rollup, multi-year
-comparison, annual-smoothing, step-change/gap detection). Two schema-level additions:
+comparison, annual-smoothing, step-change/gap detection). Three schema-level additions:
 - The "annual lump sum" flag (FR-INC-4) is a new optional, non-indexed field on `Category` (e.g.
   `smoothAnnually?: boolean`) — additive with no Dexie version bump needed, since Dexie's `.stores()`
   only declares indexes, not the full field set (same as `Category.sortOrder`).
+- The income-category selection (FR-INC-3) is persisted as `excludedIncomeCategoryIds` on the
+  already-shipped `appSettings` singleton (schema v12) — same "additive optional field, no version
+  bump" reasoning as above. Stored as an *exclusion* list, mirroring
+  `categoryComparisonSettings.excludedCategoryIds`, so a newly created income category counts by
+  default without a sync effect. **Shipped 2026-07-30.**
 - The gross wage figure (FR-INC-10) is the one new piece of **user input** this version adds — bank CSVs
   never contain gross pay, so it can't be derived. That needs an actual new table,
   `grossWageEntries` (schema **v13**, no `.upgrade()` needed — new empty table), with its own thin
@@ -62,8 +67,8 @@ comparison, annual-smoothing, step-change/gap detection). Two schema-level addit
 This set introduces a new requirement family, **FR-INC**, and is the first version to ship an entirely new routed feature area rather than extending an existing one. **Unlike v1.3's set, these tickets are *not* mutually independent**, so the list below is ordered by dependency, not by FR number:
 
 - [x] [TICKET-INC-01](./tickets/TICKET-INC-01-income-page-scaffold.md) — Dedicated Income page (route, store, nav) (adds FR-INC-1) — prerequisite for every other ticket having somewhere to render
-- [ ] [TICKET-INC-03](./tickets/TICKET-INC-03-income-category-selection.md) — Choose which income categories count toward growth (adds FR-INC-3) — almost every later aggregate is parameterised by `IncomeStore.selectedIncomeCategoryIds()`
-- [ ] [TICKET-INC-02](./tickets/TICKET-INC-02-income-by-category-trend-chart.md) — Income-by-category trend chart (adds FR-INC-2, builds on `category-composition-trend.ts`'s `CategorySeriesEntry` shape) — needs INC-03; the base series every later ticket builds on
+- [x] [TICKET-INC-03](./tickets/TICKET-INC-03-income-category-selection.md) — Choose which income categories count toward growth (adds FR-INC-3) — almost every later aggregate is parameterised by `IncomeStore.selectedIncomeCategoryIds()`
+- [x] [TICKET-INC-02](./tickets/TICKET-INC-02-income-by-category-trend-chart.md) — Income-by-category trend chart (adds FR-INC-2, builds on `category-composition-trend.ts`'s `CategorySeriesEntry` shape) — needs INC-03; the base series every later ticket builds on
 - [ ] [TICKET-INC-06](./tickets/TICKET-INC-06-yearly-income-view.md) — Yearly income view, one bar per calendar year (adds FR-INC-6) — independent of INC-02's monthly series, can run in parallel with it
 - [ ] [TICKET-INC-07](./tickets/TICKET-INC-07-multi-year-income-comparison.md) — Multi-year income comparison (adds FR-INC-7) — needs INC-06's per-year output
 - [ ] [TICKET-INC-04](./tickets/TICKET-INC-04-annual-lump-sum-smoothing.md) — Annual lump-sum smoothing for a category (adds FR-INC-4) — needs INC-02, rewrites the series INC-02 renders

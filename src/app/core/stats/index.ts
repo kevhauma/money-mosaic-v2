@@ -8,6 +8,7 @@ export * from './periodized-rate';
 export * from './net-margin';
 export * from './category-breakdown';
 export * from './category-composition-trend';
+export * from './income-category-series';
 export * from './net-worth-trend';
 export * from './account-balance-trend';
 export * from './full-history-range';

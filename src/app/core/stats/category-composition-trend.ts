@@ -14,32 +14,64 @@ export type CategorySeriesEntry = {
   values: number[];
 };
 
+export type CategoryBreakdownKind = 'expenseByCategory' | 'incomeBySource';
+
 export type CategoryCompositionTrend = {
   bucketKeys: string[];
   expenseSeries: CategorySeriesEntry[];
   incomeSeries: CategorySeriesEntry[];
 };
 
-const buildSeries = (
-  kind: 'expenseByCategory' | 'incomeBySource',
-  wholeRangeBreakdown: CategoryBreakdown,
+/**
+ * One `computeCategoryBreakdown()` per gap-filled bucket in `[from, to]` — the shared, expensive
+ * half of every per-bucket-per-category series in `core/stats/`. Reusing `computeCategoryBreakdown`
+ * (rather than reimplementing the grouping) is what keeps these series from drifting from the app's
+ * transfer/nullified/savings-movement/joint-ownership/signed-netting rules, since it routes every
+ * transaction through `classifyForStats()`.
+ */
+export const computePerBucketBreakdowns = (
+  bucketKeys: string[],
+  transactions: Transaction[],
+  categoriesById: Map<number, Category>,
+  granularity: Granularity,
+  ownSavingsIbans: ReadonlySet<string>,
+  accountsById: ReadonlyMap<number, Account>,
+): CategoryBreakdown[] =>
+  bucketKeys.map((bucketKey) => {
+    const { start, end } = bucketDateBoundaries(bucketKey, granularity);
+    return computeCategoryBreakdown(
+      transactions,
+      categoriesById,
+      start,
+      end,
+      ownSavingsIbans,
+      accountsById,
+    );
+  });
+
+/**
+ * Projects an already-chosen list of category ids onto one gap-filled `CategorySeriesEntry` each,
+ * in the order given — a bucket with no activity in that category contributes 0 rather than a hole,
+ * so every series has exactly one value per bucket. Which ids get a series is the caller's
+ * decision (`computeCategoryCompositionTrend` ranks them and caps at top-N;
+ * `computeIncomeCategorySeries` takes the user's FR-INC-3 selection uncapped), and it's the only
+ * thing those two callers differ on.
+ */
+export const buildCategorySeries = (
+  kind: CategoryBreakdownKind,
+  categoryIds: (number | null)[],
   perBucketBreakdowns: CategoryBreakdown[],
   categoriesById: Map<number, Category>,
 ): CategorySeriesEntry[] =>
-  wholeRangeBreakdown[kind].slice(0, TOP_CATEGORY_COUNT).map((topEntry) => {
-    const category =
-      topEntry.categoryId != null ? categoriesById.get(topEntry.categoryId) : undefined;
+  categoryIds.map((categoryId) => {
+    const category = categoryId != null ? categoriesById.get(categoryId) : undefined;
 
     return {
-      categoryId: topEntry.categoryId,
-      name: topEntry.categoryId != null ? (category?.name ?? 'Unknown') : UNCATEGORISED_NAME,
-      color:
-        topEntry.categoryId != null
-          ? (category?.color ?? UNCATEGORISED_COLOR)
-          : UNCATEGORISED_COLOR,
+      categoryId,
+      name: categoryId != null ? (category?.name ?? 'Unknown') : UNCATEGORISED_NAME,
+      color: categoryId != null ? (category?.color ?? UNCATEGORISED_COLOR) : UNCATEGORISED_COLOR,
       values: perBucketBreakdowns.map(
-        (breakdown) =>
-          breakdown[kind].find((entry) => entry.categoryId === topEntry.categoryId)?.total ?? 0,
+        (breakdown) => breakdown[kind].find((entry) => entry.categoryId === categoryId)?.total ?? 0,
       ),
     };
   });
@@ -74,29 +106,29 @@ export const computeCategoryCompositionTrend = (
   );
 
   const bucketKeys = bucketKeysInRange(from, to, granularity);
-  const perBucketBreakdowns = bucketKeys.map((bucketKey) => {
-    const { start, end } = bucketDateBoundaries(bucketKey, granularity);
-    return computeCategoryBreakdown(
-      transactions,
-      categoriesById,
-      start,
-      end,
-      ownSavingsIbans,
-      accountsById,
-    );
-  });
+  const perBucketBreakdowns = computePerBucketBreakdowns(
+    bucketKeys,
+    transactions,
+    categoriesById,
+    granularity,
+    ownSavingsIbans,
+    accountsById,
+  );
+
+  const topCategoryIds = (kind: CategoryBreakdownKind): (number | null)[] =>
+    wholeRangeBreakdown[kind].slice(0, TOP_CATEGORY_COUNT).map((entry) => entry.categoryId);
 
   return {
     bucketKeys,
-    expenseSeries: buildSeries(
+    expenseSeries: buildCategorySeries(
       'expenseByCategory',
-      wholeRangeBreakdown,
+      topCategoryIds('expenseByCategory'),
       perBucketBreakdowns,
       categoriesById,
     ),
-    incomeSeries: buildSeries(
+    incomeSeries: buildCategorySeries(
       'incomeBySource',
-      wholeRangeBreakdown,
+      topCategoryIds('incomeBySource'),
       perBucketBreakdowns,
       categoriesById,
     ),

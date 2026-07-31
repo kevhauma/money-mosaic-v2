@@ -3,10 +3,53 @@
   subtitle="How your income moves over time — by source, year over year, and against the noise."
 />
 
-<mm-empty-state
-  class="mt-6"
-  title="Nothing to show here yet"
-  message="This page is where your income trends, growth rate, and gross/net ratio will live. They arrive one panel at a time."
->
-  <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
-</mm-empty-state>
+@if (hasSelectedCategories()) {
+  <mm-paper class="mt-6">
+    <mm-flex align="center" justify="between" gap="2">
+      <h2 class="card-title text-base">Income by month</h2>
+      <app-income-category-filter />
+    </mm-flex>
+
+    <div
+      echarts
+      [options]="chartOption()"
+      class="h-80 w-full"
+      role="img"
+      [attr.aria-label]="chartAriaLabel()"
+    ></div>
+
+    <!-- Screen-reader-only companion table for the chart above — not a visible data table, so it
+         skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
+    <table class="sr-only">
+      <caption>
+        Total income per period, underlying the chart above
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Period</th>
+          <th scope="col">Income</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of accessibleRows(); track row.bucketKey) {
+          <tr>
+            <th scope="row">{{ row.bucketKey }}</th>
+            <td>{{ row.total }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </mm-paper>
+} @else {
+  <mm-flex justify="end" class="mt-6">
+    <app-income-category-filter />
+  </mm-flex>
+
+  <mm-empty-state
+    class="mt-2"
+    title="No income categories are counted yet"
+    message="Pick at least one income category above to see how your income moves over time. Categories with kind “income” show up here as soon as you add them."
+  >
+    <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
+  </mm-empty-state>
+}

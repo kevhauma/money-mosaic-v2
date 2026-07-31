@@ -373,4 +373,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The rules page now has a single export button that switches to "Export selected" once you tick some rules, instead of two separate buttons',
     area: 'Categories',
   },
+  {
+    date: '2026-07-30',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-03', 'TICKET-INC-02'],
+    title:
+      'The Income page now charts your income over time with one line per source, so you can see whether growth is coming from your salary or elsewhere — and you can pick which income categories count, to keep one-off gifts or refunds out of the trend',
+    area: 'Income',
+  },
 ];

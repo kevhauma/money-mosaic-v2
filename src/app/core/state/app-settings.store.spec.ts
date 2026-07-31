@@ -19,6 +19,7 @@ describe('AppSettingsStore', () => {
     setCurrencySymbol: vi.fn(),
     setCurrencySymbolPosition: vi.fn(),
     setLocale: vi.fn(),
+    setExcludedIncomeCategoryIds: vi.fn(),
   };
 
   beforeEach(() => {
@@ -28,6 +29,7 @@ describe('AppSettingsStore', () => {
     repository.setCurrencySymbol.mockResolvedValue(1);
     repository.setCurrencySymbolPosition.mockResolvedValue(1);
     repository.setLocale.mockResolvedValue(1);
+    repository.setExcludedIncomeCategoryIds.mockResolvedValue(1);
 
     TestBed.configureTestingModule({
       providers: [{ provide: AppSettingsRepository, useValue: repository }],
@@ -142,6 +144,21 @@ describe('AppSettingsStore', () => {
 
     expect(formatCurrency(1234.56)).toBe('€1.234,56');
     expect(formatDate('2026-07-26')).toBe('26/07/2026');
+  });
+
+  it('setExcludedIncomeCategoryIds persists through the repository and updates local state (TICKET-INC-03)', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+
+    await store.setExcludedIncomeCategoryIds([4, 7]);
+
+    expect(repository.setExcludedIncomeCategoryIds).toHaveBeenCalledExactlyOnceWith([4, 7]);
+    expect(store.excludedIncomeCategoryIds()).toEqual([4, 7]);
+  });
+
+  it('excludedIncomeCategoryIds is undefined until the user excludes something (TICKET-INC-03)', () => {
+    const store = TestBed.inject(AppSettingsStore);
+
+    expect(store.excludedIncomeCategoryIds()).toBeUndefined();
   });
 });
 

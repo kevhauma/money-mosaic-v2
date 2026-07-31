@@ -512,6 +512,18 @@ export type AppSettings = {
    * `primaryColor`/`currencySymbol` above.
    */
   locale: string | undefined;
+  /**
+   * Additive field (TICKET-INC-03) — income categories the user has opted *out* of "my income
+   * growth" (FR-INC-3). Stored as an exclusion list rather than the selection itself, mirroring
+   * `CategoryComparisonSettings.excludedCategoryIds`, so a newly created income category is
+   * included by default without any sync effect keeping a stored selection in step with the
+   * category list. `undefined`/empty = every income category counts. Lives here rather than in its
+   * own singleton table because it's user-portable preference data and needs no schema version of
+   * its own — `.stores()` declares indexes, not fields (same as `Category.sortOrder`).
+   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as
+   * `primaryColor`/`currencySymbol`/`locale` above.
+   */
+  excludedIncomeCategoryIds: number[] | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -524,6 +536,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   currencySymbol: undefined,
   currencySymbolPosition: undefined,
   locale: undefined,
+  excludedIncomeCategoryIds: undefined,
 };
 
 class AppDb extends Dexie {

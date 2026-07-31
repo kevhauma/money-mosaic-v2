@@ -97,4 +97,23 @@ describe('AppSettingsRepository', () => {
       locale: 'en-GB',
     });
   });
+
+  it('setExcludedIncomeCategoryIds writes the singleton row without one existing yet (TICKET-INC-03)', async () => {
+    await repository.setExcludedIncomeCategoryIds([2, 5]);
+
+    expect(await repository.get()).toEqual({ id: 1, excludedIncomeCategoryIds: [2, 5] });
+  });
+
+  it('setExcludedIncomeCategoryIds preserves unrelated settings and stays a single row', async () => {
+    await repository.setLocale('en-GB');
+    await repository.setExcludedIncomeCategoryIds([2]);
+    await repository.setExcludedIncomeCategoryIds([]);
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      locale: 'en-GB',
+      excludedIncomeCategoryIds: [],
+    });
+    expect(await appDb.appSettings.count()).toBe(1);
+  });
 });

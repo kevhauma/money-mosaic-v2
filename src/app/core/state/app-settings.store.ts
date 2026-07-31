@@ -50,6 +50,11 @@ export const AppSettingsStore = signalStore(
         await appSettingsRepository.setLocale(locale);
         patchState(store, { locale });
       },
+
+      setExcludedIncomeCategoryIds: async (excludedIncomeCategoryIds: number[]): Promise<void> => {
+        await appSettingsRepository.setExcludedIncomeCategoryIds(excludedIncomeCategoryIds);
+        patchState(store, { excludedIncomeCategoryIds });
+      },
     };
   }),
   withHooks({

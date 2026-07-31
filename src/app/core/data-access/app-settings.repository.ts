@@ -30,4 +30,9 @@ export class AppSettingsRepository {
     const current = await this.get();
     return appDb.appSettings.put({ ...current, id: 1, locale });
   };
+
+  setExcludedIncomeCategoryIds = async (excludedIncomeCategoryIds: number[]): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, excludedIncomeCategoryIds });
+  };
 }

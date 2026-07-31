@@ -1,0 +1,19 @@
+@if (categories().length > 0) {
+  <mm-dropdown align="end" contentClass="z-10 w-60">
+    <mm-button trigger variant="ghost" size="sm">Income categories ({{ summary() }})</mm-button>
+    @for (category of categories(); track category.id) {
+      <li>
+        <mm-label as="label" class="justify-start gap-2">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm"
+            [checked]="category.selected"
+            (change)="toggle(category.id)"
+          />
+          <mm-badge size="xs" class="w-3 px-0" [style]="category.swatchStyle" aria-hidden="true" />
+          <mm-text variant="caption" color="base-content">{{ category.name }}</mm-text>
+        </mm-label>
+      </li>
+    }
+  </mm-dropdown>
+}

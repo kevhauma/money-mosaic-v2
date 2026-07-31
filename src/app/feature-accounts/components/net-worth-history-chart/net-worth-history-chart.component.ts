@@ -6,6 +6,7 @@ import type { Account } from '@/core/data-access';
 import type { AccountBalanceSeries, ChartZoomWindow } from '@/core/stats';
 import { AccountsStore } from '@/core/state';
 import {
+  bucketedZoomAxisOption,
   resolveChartAnimation,
   formatAxisTooltip,
   resolveChartCategoricalColors,
@@ -27,13 +28,7 @@ export const buildNetWorthHistoryChartOption = (
     color: resolveChartCategoricalColors(),
     tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
     legend: { data: accounts.map((account) => account.name) },
-    grid: { left: 56, right: 24, top: 48, bottom: 64 },
-    xAxis: { type: 'category', data: bucketKeys },
-    yAxis: { type: 'value' },
-    dataZoom: [
-      { type: 'inside', xAxisIndex: 0, ...zoomWindow },
-      { type: 'slider', xAxisIndex: 0, height: 20, bottom: 8, ...zoomWindow },
-    ],
+    ...bucketedZoomAxisOption(bucketKeys, zoomWindow),
     series: series.map(({ accountId, points }) => {
       const account = accountsById.get(accountId);
       return {

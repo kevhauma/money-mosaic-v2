@@ -54,6 +54,7 @@ describe('SettingsThemeSectionComponent', () => {
       currencySymbol: undefined,
       currencySymbolPosition: undefined,
       locale: undefined,
+      excludedIncomeCategoryIds: undefined,
     });
     const fixture = TestBed.createComponent(SettingsThemeSectionComponent);
     fixture.detectChanges();
