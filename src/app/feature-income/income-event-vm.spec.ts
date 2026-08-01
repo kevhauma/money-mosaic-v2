@@ -41,6 +41,17 @@ const PAY_CUT: IncomeEvent = {
 
 const BONUS: IncomeEvent = { kind: 'bonus', bucketKey: '2025-12', amount: 1800 };
 
+const NET_RISE: IncomeEvent = {
+  kind: 'wage-change',
+  series: 'net',
+  bucketKey: '2026-03',
+  fromBucketKey: '2026-02',
+  from: 2000,
+  to: 2100,
+  delta: 100,
+  pct: 0.05,
+};
+
 const STOPPED: IncomeEvent = {
   kind: 'stream-stopped',
   bucketKey: '2025-06',
@@ -78,6 +89,40 @@ describe('buildIncomeEventVm (TICKET-INC-17)', () => {
 
   it('reports a bonus with its amount', () => {
     expect(buildIncomeEventVm(BONUS, categoriesById).message).toContain('€1,800.00');
+  });
+
+  it('phrases a wage rise as “went up by x% (x)”, naming which figure moved', () => {
+    const vm = buildIncomeEventVm(NET_RISE, categoriesById);
+
+    expect(vm.message).toContain('Net went up by 5% (€100.00)');
+    expect(vm.message).toContain('€2,000.00 to €2,100.00');
+    expect(vm.icon).toBe('tablerTrendingUp');
+    expect(vm.toneClass).toBe('text-success');
+  });
+
+  it('phrases a wage cut as “went down by”, with the magnitude unsigned', () => {
+    const vm = buildIncomeEventVm(
+      { ...NET_RISE, to: 1900, delta: -100, pct: -0.05 },
+      categoriesById,
+    );
+
+    expect(vm.message).toContain('Net went down by 5% (€100.00)');
+    expect(vm.message).not.toContain('-5%');
+    expect(vm.icon).toBe('tablerTrendingDown');
+    expect(vm.toneClass).toBe('text-warning');
+  });
+
+  it('names the gross figure as gross', () => {
+    expect(buildIncomeEventVm({ ...NET_RISE, series: 'gross' }, categoriesById).message).toContain(
+      'Gross went up by',
+    );
+  });
+
+  it('keys a net and a gross move in the same month apart', () => {
+    const net = buildIncomeEventVm(NET_RISE, categoriesById).key;
+    const gross = buildIncomeEventVm({ ...NET_RISE, series: 'gross' }, categoriesById).key;
+
+    expect(net).not.toBe(gross);
   });
 
   it('pluralises a stopped stream’s missing months', () => {

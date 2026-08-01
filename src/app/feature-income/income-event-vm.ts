@@ -25,6 +25,8 @@ const ICON_BY_KIND: Record<IncomeEventKind, string> = {
   'pay-cut': 'tablerTrendingDown',
   bonus: 'tablerGift',
   'stream-stopped': 'tablerAlertTriangle',
+  // Overridden per direction below — a wage change is the one kind that can go either way.
+  'wage-change': 'tablerTrendingUp',
 };
 
 const TONE_BY_KIND: Record<IncomeEventKind, string> = {
@@ -32,6 +34,7 @@ const TONE_BY_KIND: Record<IncomeEventKind, string> = {
   'pay-cut': 'text-warning',
   bonus: 'text-info',
   'stream-stopped': 'text-warning',
+  'wage-change': 'text-success',
 };
 
 const VERB_BY_KIND: Record<'raise' | 'pay-cut', string> = {
@@ -52,16 +55,30 @@ const categoryName = (
  * number/date locale are all user settings since TICKET-SET-03/04 — a hardcoded `€` or an
  * `en-US`-shaped "April 2026" would be wrong for anyone who changed them.
  */
-const messageOf = (event: IncomeEvent, categoriesById: ReadonlyMap<number, Category>): string => {
-  if (event.kind === 'bonus') {
-    return `Bonus of ${formatCurrency(event.amount)} recorded on your salary details.`;
-  }
-  if (event.kind === 'stream-stopped') {
-    const name = categoryName(categoriesById, event.categoryId, 'An income category');
-    const months = event.monthsMissing === 1 ? 'month' : 'months';
-    return `${name} hasn’t shown up since — ${event.monthsMissing} ${months} with nothing, where it used to arrive most months.`;
-  }
+/** "Net went up by 4.2% (€120.00) — €2,850.00 to €2,970.00." */
+const wageChangeMessage = (event: Extract<IncomeEvent, { kind: 'wage-change' }>): string => {
+  const label = event.series === 'net' ? 'Net' : 'Gross';
+  const direction = event.pct > 0 ? 'up' : 'down';
+  return (
+    `${label} went ${direction} by ${formatPercent(Math.abs(event.pct))} ` +
+    `(${formatCurrency(Math.abs(event.delta))}) — ` +
+    `${formatCurrency(event.from)} to ${formatCurrency(event.to)}.`
+  );
+};
 
+const streamStoppedMessage = (
+  event: Extract<IncomeEvent, { kind: 'stream-stopped' }>,
+  categoriesById: ReadonlyMap<number, Category>,
+): string => {
+  const name = categoryName(categoriesById, event.categoryId, 'An income category');
+  const months = event.monthsMissing === 1 ? 'month' : 'months';
+  return `${name} hasn’t shown up since — ${event.monthsMissing} ${months} with nothing, where it used to arrive most months.`;
+};
+
+const stepChangeMessage = (
+  event: Extract<IncomeEvent, { kind: 'raise' | 'pay-cut' }>,
+  categoriesById: ReadonlyMap<number, Category>,
+): string => {
   const name = categoryName(categoriesById, event.categoryId, 'Income');
   return (
     `${name} ${VERB_BY_KIND[event.kind]} ${formatPercent(Math.abs(event.pctChange))} — ` +
@@ -69,19 +86,37 @@ const messageOf = (event: IncomeEvent, categoriesById: ReadonlyMap<number, Categ
   );
 };
 
+const messageOf = (event: IncomeEvent, categoriesById: ReadonlyMap<number, Category>): string => {
+  if (event.kind === 'wage-change') return wageChangeMessage(event);
+  if (event.kind === 'stream-stopped') return streamStoppedMessage(event, categoriesById);
+  if (event.kind === 'bonus') {
+    return `Bonus of ${formatCurrency(event.amount)} recorded on your salary details.`;
+  }
+  return stepChangeMessage(event, categoriesById);
+};
+
 /** The `@for` key: unique per event even when two of the same kind land in one month. */
-const keyOf = (event: IncomeEvent): string =>
-  event.kind === 'bonus'
-    ? `bonus:${event.bucketKey}`
-    : `${event.kind}:${event.categoryId}:${event.bucketKey}`;
+const keyOf = (event: IncomeEvent): string => {
+  if (event.kind === 'bonus') return `bonus:${event.bucketKey}`;
+  // Net and gross can both move in the same month, so the series is part of the identity.
+  if (event.kind === 'wage-change') return `wage-change:${event.series}:${event.bucketKey}`;
+  return `${event.kind}:${event.categoryId}:${event.bucketKey}`;
+};
+
+/** A wage change is the one kind that can go either way, so its icon and tone follow the sign. */
+const iconOf = (event: IncomeEvent): string =>
+  event.kind === 'wage-change' && event.pct < 0 ? 'tablerTrendingDown' : ICON_BY_KIND[event.kind];
+
+const toneOf = (event: IncomeEvent): string =>
+  event.kind === 'wage-change' && event.pct < 0 ? 'text-warning' : TONE_BY_KIND[event.kind];
 
 export const buildIncomeEventVm = (
   event: IncomeEvent,
   categoriesById: ReadonlyMap<number, Category>,
 ): IncomeEventVm => ({
   key: keyOf(event),
-  icon: ICON_BY_KIND[event.kind],
-  toneClass: TONE_BY_KIND[event.kind],
+  icon: iconOf(event),
+  toneClass: toneOf(event),
   when: formatDate(bucketDateBoundaries(event.bucketKey, INCOME_GRANULARITY).start),
   message: messageOf(event, categoriesById),
 });

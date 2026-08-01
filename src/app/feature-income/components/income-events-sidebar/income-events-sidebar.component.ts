@@ -8,8 +8,10 @@ import {
 } from '@ng-icons/tabler-icons';
 import {
   collectIncomeEvents,
+  computeGrossNetRatio,
   detectIncomeGaps,
   detectIncomeStepChanges,
+  detectWageChanges,
   groupIncomeEventsByYear,
   lastCompleteBucketKey,
 } from '@/core/stats';
@@ -38,7 +40,9 @@ import { IncomeStore } from '../../income.store';
  * - gaps off `rawIncomeTrend()` (unsmoothed), because FR-INC-4's spreading would paint a non-zero
  *   amount over exactly the silence being looked for, and judged through the newest *complete*
  *   month, since a salary paid on the 25th is "missing" for three weeks of every month;
- * - bonuses straight off `salaryMetadataByMonth()`.
+ * - bonuses straight off `salaryMetadataByMonth()`;
+ * - month-on-month wage moves off `computeGrossNetRatio()`'s plain-salary basis, so a lump sum
+ *   can't list as a raise and a cut two months apart.
  */
 @Component({
   selector: 'app-income-events-sidebar',
@@ -63,6 +67,21 @@ export class IncomeEventsSidebarComponent {
     return detectIncomeGaps(trend, INCOME_GRANULARITY, through);
   });
 
+  /**
+   * Month-on-month moves in take-home and gross pay, on the **plain-salary** basis: the annual
+   * lump-sum categories are excluded and any recorded bonus subtracted, exactly as the "Net vs
+   * gross" section does. A 13th month therefore never lists as a raise followed by a cut.
+   */
+  private readonly wageChanges = computed(() =>
+    detectWageChanges(
+      computeGrossNetRatio(
+        this.incomeStore.rawIncomeTrend(),
+        this.incomeStore.salaryMetadataByMonth(),
+        this.incomeStore.smoothedBonusCategoryIds(),
+      ),
+    ),
+  );
+
   protected readonly years = computed<IncomeEventYearVm[]>(() =>
     buildIncomeEventYearVms(
       groupIncomeEventsByYear(
@@ -70,6 +89,7 @@ export class IncomeEventsSidebarComponent {
           detectIncomeStepChanges(this.incomeStore.incomeTrend(), INCOME_GRANULARITY),
           this.gaps(),
           this.incomeStore.salaryMetadataByMonth().values(),
+          this.wageChanges(),
         ),
       ),
       this.categoriesStore.categoriesById(),

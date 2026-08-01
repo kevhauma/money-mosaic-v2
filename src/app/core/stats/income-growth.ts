@@ -22,6 +22,16 @@ export type IncomeGrowth = {
    * 0% by construction) or when the series doesn't reach it.
    */
   yearStart: IncomeGrowthWindow | null;
+  /**
+   * The **first month the user actually earned anything** — the start of their career as this page
+   * can see it, `incomeRange` already being clamped to the career start date (FR-INC-12). `null`
+   * when the compared window *is* that month.
+   *
+   * The first *earning* bucket rather than simply the first bucket: a range that opens on an
+   * account's opening-balance date routinely starts a few weeks before the first salary lands, and
+   * a baseline of zero renders as a dash — a card that can never say anything.
+   */
+  careerStart: IncomeGrowthWindow | null;
   /** The same window one calendar year back; `null` when the series doesn't cover it in full — "hide, don't lie", as in `computeYearOverYearComparison`. */
   priorYear: IncomeGrowthWindow | null;
 };
@@ -82,10 +92,11 @@ const totalOverSpan = (
 };
 
 /**
- * Year-to-date and year-over-year income growth for one window (FR-INC-5, TICKET-INC-05/INC-15) —
- * "am I actually getting ahead", as opposed to the dashboard's whole-portfolio income/expense/net
- * delta badge. The two baselines answer genuinely different questions: how far this year, and how
- * far since last year.
+ * Income growth for one window against three baselines (FR-INC-5, TICKET-INC-05/INC-15) — "am I
+ * actually getting ahead", as opposed to the dashboard's whole-portfolio income/expense/net delta
+ * badge. Each baseline answers a genuinely different question, and they are returned oldest-first
+ * because that is the order the panel reads them in: how far since I started, how far since last
+ * year, how far this year.
  *
  * The year-to-date baseline replaced a month-over-month one (TICKET-INC-15): on a salary that
  * changes once or twice a year a one-month delta is almost always 0%, and when it isn't it is a
@@ -136,6 +147,16 @@ export const computeIncomeGrowth = (
     return startIndex === -1 || startIndex >= span[0] ? null : windowOf([startIndex, startIndex]);
   };
 
+  /** The first bucket that paid anything at all — see `IncomeGrowth.careerStart` for why not simply the first. */
+  const firstEarningIndex = (): number =>
+    bucketKeys.findIndex((_, index) => totalOverSpan(trend, [index, index]) !== 0);
+
+  const careerStart = (): IncomeGrowthWindow | null => {
+    if (span === null) return null;
+    const startIndex = firstEarningIndex();
+    return startIndex === -1 || startIndex >= span[0] ? null : windowOf([startIndex, startIndex]);
+  };
+
   const priorYear = (): IncomeGrowthWindow | null => {
     if (span === null) return null;
     const shifted = shiftRangeByYears(from, to, 1);
@@ -147,5 +168,12 @@ export const computeIncomeGrowth = (
       : windowOf(shiftedSpan);
   };
 
-  return { from, to, current, yearStart: yearStart(), priorYear: priorYear() };
+  return {
+    from,
+    to,
+    current,
+    careerStart: careerStart(),
+    priorYear: priorYear(),
+    yearStart: yearStart(),
+  };
 };

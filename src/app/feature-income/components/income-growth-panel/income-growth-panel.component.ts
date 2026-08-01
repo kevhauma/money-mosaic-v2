@@ -74,8 +74,9 @@ export const buildIncomeGrowthCard = (
 
 /**
  * Income growth-rate panel (FR-INC-5, TICKET-INC-05/INC-15): is the income actually rising, or was
- * that just one good month? Answers it twice over — against the first month of the same calendar
- * year, and against the same month a year earlier — for the categories the user counts (FR-INC-3),
+ * that just one good month? Answers it three times over — against the first month on record, the
+ * same month a year earlier, and the first month of this year, in that (oldest-baseline-first)
+ * order — for the categories the user counts (FR-INC-3),
  * on the lump-sum-smoothed series (FR-INC-4 and TICKET-INC-13's embedded-bonus pass) so a 13th month
  * can't masquerade as a raise or as a year-to-date jump.
  *
@@ -126,18 +127,26 @@ export class IncomeGrowthPanelComponent {
   protected readonly cards = computed<IncomeGrowthCardVm[]>(() => {
     const growth = this.growth();
     if (growth === null) return [];
+    // Chronological by *baseline*, oldest first: how far since I started, since last year, this
+    // year. Reading them left to right is then reading the story forwards.
     return [
       buildIncomeGrowthCard(
-        'vs. start of year',
+        'vs. start of career',
         growth.current,
-        growth.yearStart,
-        'no earlier month this year to compare against',
+        growth.careerStart,
+        'no earlier month on record to compare against',
       ),
       buildIncomeGrowthCard(
         'vs. same month last year',
         growth.current,
         growth.priorYear,
         'no data from a year ago yet',
+      ),
+      buildIncomeGrowthCard(
+        'vs. start of year',
+        growth.current,
+        growth.yearStart,
+        'no earlier month this year to compare against',
       ),
     ];
   });

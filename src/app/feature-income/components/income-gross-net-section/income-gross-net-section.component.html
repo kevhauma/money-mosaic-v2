@@ -33,21 +33,21 @@
         />
 
         <app-income-chart-cell
-          heading="Change since your first recorded month, in %"
-          ariaLabel="Percentage change in gross and net since the first month both were known; table with values follows"
-          caption="Percentage change in gross wage and net income since the first month both were known"
-          [option]="pctFromStartOption()"
-          [columnHeaders]="['Month', 'Net', 'Gross']"
-          [rows]="pctFromStartRows()"
-        />
-
-        <app-income-chart-cell
           heading="Change since your first recorded month"
           ariaLabel="Change in gross and net since the first month both were known; table with values follows"
           caption="Change in gross wage and net income since the first month both were known"
           [option]="fromStartOption()"
           [columnHeaders]="['Month', 'Net', 'Gross']"
           [rows]="fromStartRows()"
+        />
+
+        <app-income-chart-cell
+          heading="Change since your first recorded month, in %"
+          ariaLabel="Percentage change in gross and net since the first month both were known; table with values follows"
+          caption="Percentage change in gross wage and net income since the first month both were known"
+          [option]="pctFromStartOption()"
+          [columnHeaders]="['Month', 'Net', 'Gross']"
+          [rows]="pctFromStartRows()"
         />
       </div>
     </div>

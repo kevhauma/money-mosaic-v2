@@ -221,18 +221,29 @@ describe('IncomeGrowthPanelComponent', () => {
     });
   });
 
-  it('compares the last complete month against the start of its year and the same month a year back', async () => {
+  it('compares the last complete month against three baselines, oldest first', async () => {
     await setup([
-      payslip(1, '2025-07-15', 2000),
-      payslip(2, '2026-01-15', 2500),
-      payslip(3, '2026-06-15', 9000), // June must not be the baseline — the year's start is.
-      payslip(4, '2026-07-15', 3000),
+      payslip(1, '2024-03-15', 1500), // The first month anything was earned at all.
+      payslip(2, '2025-07-15', 2000),
+      payslip(3, '2026-01-15', 2500),
+      payslip(4, '2026-06-15', 9000), // June must not be a baseline — the year's start is.
+      payslip(5, '2026-07-15', 3000),
     ]);
 
+    // Chronological by baseline: since I started, since last year, since January.
     expect(cards()).toEqual([
-      { label: 'vs. start of year', value: '+20%' },
+      { label: 'vs. start of career', value: '+100%' },
       { label: 'vs. same month last year', value: '+50%' },
+      { label: 'vs. start of year', value: '+20%' },
     ]);
+  });
+
+  it('starts the career from the first month that earned anything, not the first empty bucket', async () => {
+    // The account opens 2024-01-01 but nothing arrives until March; a baseline of zero would
+    // render as a dash and the card could never say anything.
+    await setup([payslip(1, '2024-03-15', 1500), payslip(2, '2026-07-15', 3000)]);
+
+    expect(cards()[0]).toEqual({ label: 'vs. start of career', value: '+100%' });
   });
 
   it('names the baseline month and its figure in the card’s sub-label and tooltip', async () => {
@@ -318,15 +329,17 @@ describe('IncomeGrowthPanelComponent', () => {
   });
 
   describe('free-standing cards (TICKET-INC-15)', () => {
-    const withTwoMonths = (): Promise<void> =>
+    /** Enough history for all three baselines to land on three different months. */
+    const withThreeBaselines = (): Promise<void> =>
       setup([
-        payslip(1, '2025-07-15', 2000),
-        payslip(2, '2026-01-15', 2500),
-        payslip(3, '2026-07-15', 3000),
+        payslip(1, '2024-03-15', 1500),
+        payslip(2, '2025-07-15', 2000),
+        payslip(3, '2026-01-15', 2500),
+        payslip(4, '2026-07-15', 3000),
       ]);
 
     it('renders the cards outside any mm-paper, in the dashboard’s own stat-row container', async () => {
-      await withTwoMonths();
+      await withThreeBaselines();
 
       const card = fixture.nativeElement.querySelector('mm-stat-card') as HTMLElement;
 
@@ -338,7 +351,7 @@ describe('IncomeGrowthPanelComponent', () => {
     });
 
     it('alternates the tilt hooks, like the dashboard’s row', async () => {
-      await withTwoMonths();
+      await withThreeBaselines();
 
       const tilts = [...fixture.nativeElement.querySelectorAll('mm-stat-card')].map(
         (card) => (card as HTMLElement).firstElementChild?.className ?? '',
@@ -349,25 +362,26 @@ describe('IncomeGrowthPanelComponent', () => {
     });
 
     it('keeps the heading and the compared-month caption above the row', async () => {
-      await withTwoMonths();
+      await withThreeBaselines();
 
       expect(fixture.nativeElement.querySelector('h2')?.textContent?.trim()).toBe('Income growth');
       expect(fixture.nativeElement.textContent).toContain('last complete month');
     });
 
-    it('links each card to its own baseline month, so the two differ', async () => {
-      await withTwoMonths();
+    it('links each card to its own baseline month, so all three differ', async () => {
+      await withThreeBaselines();
 
       const links = [...fixture.nativeElement.querySelectorAll('mm-stat-card a')].map(
         (anchor) => (anchor as HTMLAnchorElement).getAttribute('href') ?? '',
       );
 
-      expect(links).toHaveLength(2);
-      expect(links[0]).toContain('/transactions');
-      // The year's opening month for the first card, the same month last year for the second.
-      expect(links[0]).toContain('2026-01-01');
+      expect(links).toHaveLength(3);
+      expect(links.every((link) => link.includes('/transactions'))).toBe(true);
+      // Career start, then the same month last year, then this year's opening month.
+      expect(links[0]).toContain('2024-03-01');
       expect(links[1]).toContain('2025-07-01');
-      expect(links[0]).not.toBe(links[1]);
+      expect(links[2]).toContain('2026-01-01');
+      expect(new Set(links).size).toBe(3);
     });
 
     it('renders a card with no comparable window as plain text, not a dead link', async () => {

@@ -14,6 +14,7 @@ export * from './embedded-bonus-smoothing';
 export * from './income-growth';
 export * from './income-step-change-detection';
 export * from './income-gap-detection';
+export * from './wage-change-detection';
 export * from './income-events';
 export * from './gross-net-ratio';
 export * from './gross-net-growth';

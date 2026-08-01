@@ -2,6 +2,7 @@ import type { SalaryMetadata } from '@/core/data-access';
 import { collectIncomeEvents, groupIncomeEventsByYear } from './income-events';
 import type { IncomeGap } from './income-gap-detection';
 import type { IncomeStepChange } from './income-step-change-detection';
+import type { WageChange } from './wage-change-detection';
 
 const stepChange = (
   changedAtBucketKey: string,
@@ -24,6 +25,16 @@ const gap = (lastSeenBucketKey: string, categoryId = 2): IncomeGap => ({
 
 const salaryRow = (yearMonth: string, overrides: Partial<SalaryMetadata> = {}): SalaryMetadata =>
   ({ yearMonth, grossWage: 3000, ...overrides }) as SalaryMetadata;
+
+const wageChange = (bucketKey: string, series: WageChange['series'], pct: number): WageChange => ({
+  series,
+  bucketKey,
+  fromBucketKey: '2026-02',
+  from: 2000,
+  to: 2000 * (1 + pct),
+  delta: 2000 * pct,
+  pct,
+});
 
 describe('collectIncomeEvents (FR-INC-14, TICKET-INC-17)', () => {
   it('merges all three sources into one list, newest first', () => {
@@ -87,6 +98,46 @@ describe('collectIncomeEvents (FR-INC-14, TICKET-INC-17)', () => {
 
   it('returns an empty list when nothing was detected anywhere', () => {
     expect(collectIncomeEvents([], [], [])).toEqual([]);
+  });
+
+  it('merges month-on-month wage moves in alongside the rest', () => {
+    const events = collectIncomeEvents([], [], [], [wageChange('2026-03', 'net', 0.05)]);
+
+    expect(events[0]).toMatchObject({
+      kind: 'wage-change',
+      series: 'net',
+      bucketKey: '2026-03',
+      pct: 0.05,
+    });
+  });
+
+  it('keeps a net and a gross move in the same month as two separate events', () => {
+    const events = collectIncomeEvents(
+      [],
+      [],
+      [],
+      [wageChange('2026-03', 'net', 0.05), wageChange('2026-03', 'gross', 0.07)],
+    );
+
+    expect(events).toHaveLength(2);
+    expect(events.map((event) => event.bucketKey)).toEqual(['2026-03', '2026-03']);
+  });
+
+  it('sorts a wage move after the structural events of the same month', () => {
+    // A sustained step change and a month-on-month move are often the same event seen two ways;
+    // the structural reading leads.
+    const events = collectIncomeEvents(
+      [stepChange('2026-03', 'increase')],
+      [],
+      [salaryRow('2026-03', { bonus: 500 })],
+      [wageChange('2026-03', 'net', 0.05)],
+    );
+
+    expect(events.map((event) => event.kind)).toEqual(['raise', 'bonus', 'wage-change']);
+  });
+
+  it('defaults to no wage moves when the argument is omitted', () => {
+    expect(collectIncomeEvents([stepChange('2026-03', 'increase')], [], [])).toHaveLength(1);
   });
 });
 

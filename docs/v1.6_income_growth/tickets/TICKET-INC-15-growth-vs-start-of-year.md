@@ -145,6 +145,16 @@ transactions behind its own comparison.
       display facts are derived, drilldown params go through `shared/utils`'s
       `buildTransactionDrilldownParams` rather than hand-built query strings, and the row copies the
       dashboard's own markup rather than forking it.)
+- [x] **Added 2026-08-01, at the user's request** — a third card, **"vs. start of career"**, and the three
+      ordered chronologically by *baseline*: start of career, same month last year, start of year. Reading
+      them left to right is then reading the story forwards. `IncomeGrowth.careerStart` is the first
+      bucket that earned **anything**, not simply the first bucket: a range opening on an account's
+      opening-balance date routinely starts weeks before the first salary lands, and a baseline of zero
+      renders as a dash — a card that could never say anything. (`income-growth.ts`'s `careerStart()`;
+      panel spec "compares the last complete month against three baselines, oldest first" and "starts the
+      career from the first month that earned anything, not the first empty bucket"; "links each card to
+      its own baseline month, so all three differ" pins the three distinct drilldowns. The `tilt` hooks
+      alternate on `$even` rather than `$first`, so a third card doesn't break the dashboard's pattern.)
 - [ ] Verified live in the browser: the growth panel's left card reads "vs. start of year" with a plausible
       figure; in January (or with a mid-year career start) it shows `—` and its reason, not a broken value;
       the two cards sit free-standing like the dashboard's and each opens `/transactions` filtered to its own

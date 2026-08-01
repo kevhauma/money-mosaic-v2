@@ -130,11 +130,11 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       ),
     );
 
-  /** The take-home cell, in the grid's reading order: absolute, take-home, % from start, from start. */
-  const TAKE_HOME = 1;
+  /** The grid's reading order: levels, take-home rate, then the two "since the start" readings. */
   const ABSOLUTE = 0;
-  const PCT_FROM_START = 2;
-  const FROM_START = 3;
+  const TAKE_HOME = 1;
+  const FROM_START = 2;
+  const PCT_FROM_START = 3;
 
   const optionOf = (name: 'takeHomeOption' | 'absoluteOption' | 'pctFromStartOption') =>
     (fixture.componentInstance as unknown as Record<string, () => unknown>)[name]() as {
@@ -176,8 +176,8 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       expect(cells().map((cell) => cell.querySelector('h3')?.textContent?.trim())).toEqual([
         'Gross and net per month',
         'Take-home rate',
-        'Change since your first recorded month, in %',
         'Change since your first recorded month',
+        'Change since your first recorded month, in %',
       ]);
     });
 

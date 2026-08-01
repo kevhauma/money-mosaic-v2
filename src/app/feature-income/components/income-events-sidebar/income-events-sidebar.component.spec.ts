@@ -244,6 +244,70 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       expect(events()).toEqual([]);
     });
 
+    it('lists a month-on-month move in take-home pay, with the percentage and the amount', async () => {
+      // 2,500/mo for the first half of 2025, 2,900 from July — a +16% move in that one month.
+      await setup(A_RAISE());
+
+      const move = events().find((text) => text.includes('Net went up'));
+
+      expect(move).toContain('Net went up by 16% (€400.00)');
+      expect(move).toContain('€2,500.00 to €2,900.00');
+    });
+
+    it('lists a move in gross pay separately from the one in net', async () => {
+      await setup(
+        deposits(monthsOf('2025', 12), () => 2500),
+        [salary],
+        {},
+        [
+          { id: 1, yearMonth: '2025-01', grossWage: 3000 } as SalaryMetadata,
+          { id: 2, yearMonth: '2025-02', grossWage: 3300 } as SalaryMetadata,
+        ],
+      );
+
+      // Net is flat all year; only gross moved, which is a rising deduction rate worth seeing.
+      expect(events().some((text) => text.includes('Net went'))).toBe(false);
+      expect(events().find((text) => text.includes('Gross went up'))).toContain('10% (€300.00)');
+    });
+
+    it('states a fall as “went down”, on the same footing as a rise', async () => {
+      await setup(deposits(monthsOf('2025', 12), (_, index) => (index < 6 ? 2900 : 2500)));
+
+      expect(events().find((text) => text.includes('Net went'))).toContain(
+        'Net went down by 13.8% (€400.00)',
+      );
+    });
+
+    it('ignores a move of 1% or less — rounding and a shifted pay date are not raises', async () => {
+      await setup(deposits(monthsOf('2025', 12), (_, index) => (index < 6 ? 2500 : 2520)));
+
+      expect(events().some((text) => text.includes('Net went'))).toBe(false);
+    });
+
+    it('measures wage moves on plain salary, so a flagged lump sum is not a raise then a cut', async () => {
+      const bonus: Transaction = {
+        id: 99,
+        accountId: 1,
+        bookingDate: '2025-06-15',
+        amount: 6000,
+        currency: 'EUR',
+        rawDescription: 'Bonus',
+        fingerprint: 'fp-bonus',
+        categoryId: 2,
+        createdAt: '2025-06-15T00:00:00.000Z',
+      };
+
+      await setup(
+        [...deposits(monthsOf('2025', 12), () => 2500), bonus],
+        [salary, { ...sideIncome, name: 'Holiday bonus' }],
+        { smoothedBonusCategoryIds: [2] },
+      );
+
+      // Unexcluded, June's 8,500 would list as +240% and July as -71%.
+      expect(events().some((text) => text.includes('went up'))).toBe(false);
+      expect(events().some((text) => text.includes('went down'))).toBe(false);
+    });
+
     it('makes no event from a salary row with a gross wage but no bonus', async () => {
       await setup(
         deposits(monthsOf('2025', 12), () => 2500),
@@ -281,7 +345,7 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
 
       expect(heading).toBeTruthy();
       expect(fixture.nativeElement.querySelector(`#${heading}`)?.textContent?.trim()).toBe(
-        'Events',
+        'Notable changes',
       );
       expect(region.querySelector('ol')).not.toBeNull();
     });

@@ -130,6 +130,26 @@ raises and lost streams as an event in its own right.
       `verdict: pass`, every `*_introduced` counter at 0 and no unused exports left behind by the two
       deleted components. Conventions: pure merge in `core/stats`, view-model builders in a feature-root
       `.ts` module, one folder per component, all amounts/dates through the settings-driven formatters.)
+- [x] **Added 2026-08-01, at the user's request** — every month-on-month move in take-home or gross pay
+      past **1%** is listed too, phrased "Net went up by 4.2% (€120.00) — €2,850.00 to €2,970.00", with
+      the icon and tone following the sign. Measured on the **plain-salary** basis
+      (`computeGrossNetRatio` with the annual lump-sum categories excluded and any recorded bonus
+      subtracted), so a 13th month can't list as a raise followed by a cut. Distinct from FR-INC-8's
+      step changes, which look for a *sustained* shift in a trailing average and are deliberately slow
+      to fire; these are the literal month-on-month record, and sort after the structural events of the
+      same month. (New `core/stats/wage-change-detection.ts` + `wage-change-detection.spec.ts`;
+      `income-events.spec.ts` → "merges month-on-month wage moves in alongside the rest", "keeps a net
+      and a gross move in the same month as two separate events", "sorts a wage move after the
+      structural events of the same month"; `income-event-vm.spec.ts` → "phrases a wage rise as “went
+      up by x% (x)”…", "…as “went down by”, with the magnitude unsigned", "names the gross figure as
+      gross"; sidebar spec → "lists a month-on-month move in take-home pay, with the percentage and the
+      amount", "lists a move in gross pay separately from the one in net", "ignores a move of 1% or
+      less", "measures wage moves on plain salary, so a flagged lump sum is not a raise then a cut".
+      **One edge case found while building**: `computeGrossNetRatio` subtracts a recorded bonus from
+      what the counted categories received, so a bonus noted against a month with *no* counted income
+      lands below zero — which would have listed as a several-hundred-percent swing describing
+      bookkeeping rather than pay. Non-positive months are skipped; spec "skips a month whose net came
+      out negative rather than reporting a wild swing".)
 - [x] **Added while building** — the "Net vs gross" 2×2 grid still breathes beside the rail, per this
       ticket's own last Note: its grid became a **container** query (`@container` + `@2xl:grid-cols-2`)
       rather than a viewport one, so it drops to a single column whenever the charts column is narrow

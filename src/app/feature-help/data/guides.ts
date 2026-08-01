@@ -175,7 +175,7 @@ export const GUIDES: readonly Guide[] = [
       {
         title: 'What each part of the page then tells you',
         description:
-          'The monthly chart is your income by source over time. The growth figures compare your last complete month against the start of that year and against the same month a year earlier. "Net vs gross" holds four charts comparing what you earn against what reaches you. The yearly view is one bar per calendar year. The Events list beside the charts is your history of raises, bonuses and streams that stopped, grouped by year.',
+          'The monthly chart is your income by source over time. The growth figures compare your last complete month against three baselines — when you started, the same month last year, and the start of this year. "Net vs gross" holds four charts comparing what you earn against what reaches you. The yearly view is one bar per calendar year. The list beside the charts is your history of raises, bonuses, wage moves and streams that stopped, grouped by year.',
       },
       {
         title: 'If the page still looks empty',
@@ -200,12 +200,12 @@ export const GUIDES: readonly Guide[] = [
       {
         title: 'Read the growth figures',
         description:
-          'Two cards compare your last complete month against two baselines: the first month of that same year, and the same month a year earlier. Two comparisons, because they answer different questions — how far this year, and how far since last year. Each card links to the transactions behind its own baseline month. A card shows a dash rather than a number when there is nothing to compare against, and says why.',
+          'Three cards compare your last complete month against three baselines, oldest first: the first month you ever earned anything, the same month a year earlier, and the first month of this year. Reading them left to right is reading the story forwards — how far since you started, since last year, since January. Each card links to the transactions behind its own baseline month. A card shows a dash rather than a number when there is nothing to compare against, and says why.',
       },
       {
-        title: 'Check the Events list for what changed and when',
+        title: 'Check the notable changes for what moved and when',
         description:
-          'Beside the charts, every raise, pay cut, recorded bonus and income stream that went quiet is listed under its year, newest first. Nothing here is cleared away once read — it is a history to scroll back through, not a queue to work off, so you can still find when a raise landed months later. A raise shows the size of the move and roughly when it took effect; a quiet stream shows how many months it has been missing.',
+          'Beside the charts, every raise, pay cut, recorded bonus and income stream that went quiet is listed under its year, newest first — along with every month where your take-home or gross pay moved by more than 1%, phrased as "Net went up by 4.2% (…)" with both the old and new figures. Nothing here is cleared away once read: it is a history to scroll back through, not a queue to work off, so you can still find when a raise landed months later. Those wage moves are measured on your plain salary, with annual lump sums left out, so a 13th month never shows up as a raise followed by a cut.',
       },
       {
         title: 'Compare net against gross',
