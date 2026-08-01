@@ -8,6 +8,7 @@ import {
   shiftRangeByDayCount,
 } from './date-buckets';
 import { DEFAULT_LOCALE, syncFormatSettings } from './format-settings';
+import { withCleanFormatSettings } from './format-settings.testing';
 
 describe('bucketKeyForDate', () => {
   it('formats a day bucket as the ISO date itself', () => {
@@ -219,12 +220,7 @@ describe('shiftRangeByDayCount', () => {
 });
 
 describe('formatAlignedRangeLabel', () => {
-  // Vitest runs this suite with isolate:false, so the shared locale signal persists across spec
-  // files — reset it so the month-name assertions below aren't sensitive to run order
-  // (TICKET-NG-10).
-  beforeEach(() => {
-    syncFormatSettings({ locale: DEFAULT_LOCALE });
-  });
+  withCleanFormatSettings();
 
   it('formats a range matching a full ISO week as "W<week> <year>"', () => {
     // Mon 2026-06-29 .. Sun 2026-07-05 is ISO week 27 of 2026 (see resolvePresetRange tests above).

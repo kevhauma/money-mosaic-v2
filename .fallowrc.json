@@ -14,7 +14,12 @@
   // The pre-commit gate (.husky/pre-commit) fails on *new* findings only, measured against that
   // baseline plus the complexity thresholds calibrated in TICKET-CLEANUP-06.
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "ignorePatterns": ["**/*.spec.ts", "**/*.d.ts"],
+  // `*.testing.ts` sits alongside `*.spec.ts` here for the same reason: a test-only helper is
+  // imported solely by specs, and specs are already out of the graph — so without this it reports
+  // as an unreachable `unused-file` no matter how many specs use it. An inline
+  // `fallow-ignore-file unused-file` does *not* work for this (3.3.0 marks it stale, once per line
+  // of the file), which is the "say what handles it instead" half of the house rule above.
+  "ignorePatterns": ["**/*.spec.ts", "**/*.testing.ts", "**/*.d.ts"],
   "production": false,
   "ignoreExportsUsedInFile": true, // clears the in-file/spec-used "unused export" family (§5.1)
   "ignoreDependencies": ["tailwindcss"], // build-time-only Tailwind 4 dep, correct in devDependencies (§5.3)

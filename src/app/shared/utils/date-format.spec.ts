@@ -1,12 +1,9 @@
 import { formatDate } from './date-format';
-import { DEFAULT_LOCALE, syncFormatSettings } from './format-settings';
+import { syncFormatSettings } from './format-settings';
+import { withCleanFormatSettings } from './format-settings.testing';
 
 describe('formatDate', () => {
-  // Vitest runs this suite with isolate:false, so the module-level locale signal persists across
-  // spec files unless reset here (TICKET-SET-04/TICKET-NG-10).
-  beforeEach(() => {
-    syncFormatSettings({ locale: DEFAULT_LOCALE });
-  });
+  withCleanFormatSettings();
 
   it('formats an ISO date under the default (en-US) locale as MM/DD/YYYY', () => {
     expect(formatDate('2026-07-26')).toBe('07/26/2026');

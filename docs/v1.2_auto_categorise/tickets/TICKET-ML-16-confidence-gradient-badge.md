@@ -74,10 +74,16 @@ is unchanged; only the badge's colour becomes confidence-driven.
 
 after using it, I'd prefer if the category name is prepended by a dot colored with the category color, then folowed by the percentage being the gradient, implement both the badge with background and also a dot with the color of the confidence. I will delete manually the one I don't like.
 
-**Resolved:** the suggestions-table "Suggested" cell now renders both variants side by side —
-the original background-gradient badge (`.suggestion-badge--gradient`, unchanged) and a new
-`.suggestion-badge--dot` badge: a small dot coloured by the row's category colour, followed by the
-category name and a confidence-gradient-coloured percentage (`confidenceTextColor()` in
-[suggestions-table.component.ts](../../../src/app/feature-learning/components/suggestions-table/suggestions-table.component.ts),
-reusing the same `confidenceToColor` helper). Delete whichever `mm-badge` block you don't want from
-[suggestions-table.component.html](../../../src/app/feature-learning/components/suggestions-table/suggestions-table.component.html).
+**Resolved:** the suggestions-table "Suggested" cell first shipped both variants side by side as two
+self-contained alternates — the background-gradient badge (`.suggestion-badge--gradient`) and a new
+`.suggestion-badge--dot` badge, each carrying the category name *and* the percentage — so whichever
+one wasn't wanted could just be deleted.
+
+**Superseded 2026-07-30 (commit `46d07e2`):** neither was deleted. Instead the pair was kept and the
+duplicated text split one fact per badge — the gradient badge now carries only the percentage, the
+dot badge only the coloured dot and the category name — so the two read as one unit rather than
+printing "Groceries (84%)" twice in the same cell. Confidence is therefore expressed *only* by the
+gradient badge's background; the dot is coloured by the category. `confidenceTextColor()` existed
+solely for the dot badge's percentage span and was removed on 2026-08-01, along with the two
+spec assertions still expecting the pre-split markup — that commit changed the template without
+touching either (`suggestions-table.component.spec.ts` had been failing on `main` since).

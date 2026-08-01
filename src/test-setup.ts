@@ -4,18 +4,16 @@
 // `appDb` is a module-level singleton, so this must be installed before the first spec file
 // imports `app-db.ts`, not from within an individual spec file.
 import 'fake-indexeddb/auto';
-// Relative, not the `@/shared/utils` alias — that alias isn't resolvable from this file's location
-// (outside `src/app/`), and a deep import keeps this global setup file minimal regardless.
-import { syncFormatSettings } from './app/shared/utils/format-settings';
 
-// `shared/utils/format-settings.ts`'s locale/currencySymbol/currencySymbolPosition signals are a
-// process-global module singleton (TICKET-NG-10) and Vitest runs with isolate:false, so any spec
-// that changes them (directly, or indirectly via AppSettingsStore) leaks that state into whichever
-// spec file happens to run next — surfacing as spurious locale/currency-symbol mismatches in
-// completely unrelated formatCurrency/formatPercent/formatDate/signedAmount assertions. Resetting
-// here, once, after every test in every file, is cheaper and more reliable than adding the same
-// `beforeEach` to every spec that happens to render formatted currency/percent/date text.
-// `syncFormatSettings({})` defaults every field (each falls back internally when omitted).
-afterEach(() => {
-  syncFormatSettings({});
-});
+// NOTE (2026-08-01): this file cannot reset `shared/utils/format-settings.ts`'s module-level
+// signals, however natural a home for that it looks like. It used to try, and the attempt was a
+// silent no-op for its whole life: the builder pre-bundles each spec through the Angular compiler
+// while Vite transforms this file separately, so this file gets its *own copy* of any app module it
+// imports, and writing to that copy reaches no spec. (Proven with a throwaway probe spec — the hook
+// here ran, and the specs' `locale` signal kept its leaked value. Neither the `@/` alias nor a
+// relative path nor moving this file inside `src/app/` changes that; the alias doesn't even resolve
+// from here.)
+//
+// Specs that read or write formatted currency/date/percent text call `withCleanFormatSettings()`
+// from `shared/utils/format-settings.testing.ts` instead — registered from inside the spec graph,
+// where it actually lands.

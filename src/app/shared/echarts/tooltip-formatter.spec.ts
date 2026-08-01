@@ -1,13 +1,8 @@
-import { DEFAULT_LOCALE, syncFormatSettings } from '@/shared/utils';
+import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { formatAxisTooltip } from './tooltip-formatter';
 
 describe('formatAxisTooltip', () => {
-  // Vitest runs this suite with isolate:false, so the shared format-settings signals persist
-  // across spec files — reset them so these EUR-formatting assertions aren't sensitive to
-  // whatever locale/currency-symbol another spec last left behind.
-  beforeEach(() => {
-    syncFormatSettings({ locale: DEFAULT_LOCALE });
-  });
+  withCleanFormatSettings();
 
   it('formats every series in the hovered bucket as 2-decimal EUR (multi-series axis trigger)', () => {
     const result = formatAxisTooltip([

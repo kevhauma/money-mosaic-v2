@@ -6,6 +6,7 @@ import { CategoriesRepository, type Category } from '@/core/data-access';
 import { echarts } from '@/shared/echarts';
 import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { CategoryBreakdownPanelComponent } from './category-breakdown-panel.component';
+import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
 class ResizeObserverStub {
@@ -38,6 +39,10 @@ const buildExpenseCategories = (count: number): Category[] =>
   }));
 
 describe('CategoryBreakdownPanelComponent', () => {
+  // These assertions read formatted currency, and format-settings.ts's signals are process-global
+  // under isolate:false — pin them so another spec file's locale/symbol can't reach in here.
+  withCleanFormatSettings();
+
   let fixture: ComponentFixture<CategoryBreakdownPanelComponent>;
 
   beforeEach(async () => {

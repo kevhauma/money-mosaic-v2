@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { CategoriesRepository, type Category } from '@/core/data-access';
 import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { TopTransactionsPanelComponent } from './top-transactions-panel.component';
+import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 
 const groceries: Category = {
   id: 1,
@@ -16,6 +17,10 @@ const groceries: Category = {
 };
 
 describe('TopTransactionsPanelComponent', () => {
+  // These assertions read formatted currency, and format-settings.ts's signals are process-global
+  // under isolate:false — pin them so another spec file's locale/symbol can't reach in here.
+  withCleanFormatSettings();
+
   let fixture: ComponentFixture<TopTransactionsPanelComponent>;
 
   beforeEach(async () => {

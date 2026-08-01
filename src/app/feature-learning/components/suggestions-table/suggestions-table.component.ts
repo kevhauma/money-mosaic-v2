@@ -106,15 +106,6 @@ export class SuggestionsTableComponent {
   }
 
   /**
-   * Alternate presentation requested after using the background-gradient badge above (FR-ML-16
-   * feedback): a category-colour dot plus a confidence-coloured percentage, left in place
-   * alongside the original so the user can delete whichever they don't prefer.
-   */
-  protected confidenceTextColor(confidence: number): string {
-    return confidenceToColor(confidence);
-  }
-
-  /**
    * The select always starts at "Uncategorised" (FR-ML-13 feedback) — pre-filling it with the
    * suggestion made a still-uncategorised row visually read as already categorised. Picking a real
    * category here writes immediately, same as the transactions table's inline select.

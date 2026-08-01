@@ -9,6 +9,7 @@ import {
   AccountBalanceChartComponent,
   buildAccountBalanceChartOption,
 } from './account-balance-chart.component';
+import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
 class ResizeObserverStub {
@@ -31,6 +32,10 @@ const account: Account = {
 };
 
 describe('AccountBalanceChartComponent', () => {
+  // These assertions read formatted currency, and format-settings.ts's signals are process-global
+  // under isolate:false — pin them so another spec file's locale/symbol can't reach in here.
+  withCleanFormatSettings();
+
   let fixture: ComponentFixture<AccountBalanceChartComponent>;
 
   beforeEach(async () => {

@@ -1,12 +1,9 @@
 import { formatPercent, formatRatio, PERCENT_FORMATTER } from './number-format';
-import { DEFAULT_LOCALE, syncFormatSettings } from './format-settings';
+import { syncFormatSettings } from './format-settings';
+import { withCleanFormatSettings } from './format-settings.testing';
 
 describe('formatPercent', () => {
-  // Vitest runs this suite with isolate:false, so the shared locale signal persists across spec
-  // files unless reset here (TICKET-NG-10).
-  beforeEach(() => {
-    syncFormatSettings({ locale: DEFAULT_LOCALE });
-  });
+  withCleanFormatSettings();
 
   describe('default variant', () => {
     it('formats with 1 fraction digit and a sign under the default locale', () => {
@@ -63,9 +60,7 @@ describe('formatPercent', () => {
 });
 
 describe('formatRatio', () => {
-  beforeEach(() => {
-    syncFormatSettings({ locale: DEFAULT_LOCALE });
-  });
+  withCleanFormatSettings();
 
   it('rounds to 1 fraction digit under the default locale', () => {
     expect(formatRatio(1.048)).toBe('1');

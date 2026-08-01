@@ -1,21 +1,11 @@
 import { formatCurrency } from './currency-format';
-import {
-  DEFAULT_CURRENCY_SYMBOL,
-  DEFAULT_CURRENCY_SYMBOL_POSITION,
-  DEFAULT_LOCALE,
-  syncFormatSettings,
-} from './format-settings';
+import { syncFormatSettings } from './format-settings';
+import { withCleanFormatSettings } from './format-settings.testing';
 
 describe('formatCurrency', () => {
-  // Vitest runs this suite with isolate:false, so the module-level symbol/position/locale signals
-  // persist across spec files unless reset here (TICKET-SET-03/TICKET-SET-04/TICKET-NG-10).
-  beforeEach(() => {
-    syncFormatSettings({
-      currencySymbol: DEFAULT_CURRENCY_SYMBOL,
-      currencySymbolPosition: DEFAULT_CURRENCY_SYMBOL_POSITION,
-      locale: DEFAULT_LOCALE,
-    });
-  });
+  // Both directions matter here: this suite's last test leaves `en-BE`/`$` set, and those signals
+  // are process-global under isolate:false (TICKET-SET-03/TICKET-SET-04/TICKET-NG-10).
+  withCleanFormatSettings();
 
   it('rounds to exactly 2 decimals for values with more precision', () => {
     expect(formatCurrency(1234.5600000000002)).toBe('€1,234.56');

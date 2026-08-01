@@ -142,8 +142,11 @@ describe('SuggestionsTableComponent', () => {
     const badgeText = (
       fixture.debugElement.query(By.css('.suggestion-badge--gradient')).nativeElement as HTMLElement
     ).textContent;
-    expect(badgeText).toContain('Groceries');
     expect(badgeText).toContain('84%');
+    // The two badges sit side by side in one cell and split the row's facts between them (see the
+    // dot-badge spec below): the gradient one carries the percentage, its neighbour the name. It
+    // used to carry both, which printed "Groceries" twice in the same cell.
+    expect(badgeText).not.toContain('Groceries');
   });
 
   it('colours the suggestion badge on a red-to-green gradient by confidence (FR-ML-16)', async () => {
@@ -177,7 +180,7 @@ describe('SuggestionsTableComponent', () => {
     expect(lowConfidenceBg).not.toBe(highConfidenceBg);
   });
 
-  it('renders an alternate dot-style badge: a category-colour dot plus a confidence-coloured percentage (FR-ML-16 feedback)', async () => {
+  it('renders a companion dot-style badge: a category-colour dot plus the category name (FR-ML-16 feedback)', async () => {
     await setup();
     seedGroceries();
     transactionsStore.uncategorisedTransactions.set([
@@ -196,7 +199,8 @@ describe('SuggestionsTableComponent', () => {
     const dotBadges = fixture.debugElement.queryAll(By.css('mm-badge.suggestion-badge--dot'));
     expect(dotBadges).toHaveLength(2);
     expect((dotBadges[0].nativeElement as HTMLElement).textContent).toContain('Groceries');
-    expect((dotBadges[0].nativeElement as HTMLElement).textContent).toContain('50%');
+    // The percentage lives on the gradient badge next door, not here — this badge is the name.
+    expect((dotBadges[0].nativeElement as HTMLElement).textContent).not.toContain('50%');
 
     // The dot is coloured by the category's own colour, not by confidence — both rows share the
     // same (Groceries) category, so both dots match its colour regardless of differing confidence.
@@ -210,14 +214,9 @@ describe('SuggestionsTableComponent', () => {
     expect(dots[0]).toBe(reference.style.backgroundColor);
     expect(dots[1]).toBe(reference.style.backgroundColor);
 
-    // The percentage text, in contrast, is confidence-coloured on the same red→green gradient.
-    const percentSpans = dotBadges.map((badge) => badge.queryAll(By.css('span'))[2]);
-    const lowConfidenceText = (percentSpans[0].nativeElement as HTMLElement).style.color;
-    const highConfidenceText = (percentSpans[1].nativeElement as HTMLElement).style.color;
-    reference.style.color = confidenceToColor(0.5);
-    expect(lowConfidenceText).toBe(reference.style.color);
-    reference.style.color = confidenceToColor(1);
-    expect(highConfidenceText).toBe(reference.style.color);
+    // The dot is the badge's only styled element: confidence is expressed entirely by the gradient
+    // badge beside it, so there is no second, confidence-coloured span in here to find.
+    expect(dotBadges[0].queryAll(By.css('span'))).toHaveLength(2);
   });
 
   it('the category select always starts at "Uncategorised", never pre-filled with the suggestion (FR-ML-13 feedback)', async () => {

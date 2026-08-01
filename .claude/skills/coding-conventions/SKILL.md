@@ -147,6 +147,7 @@ Apply SOLID as it maps onto this codebase's existing tiers — don't import Java
 - Format: `describe('{Service/Component}: {operation}', () => { it('{scenario}', ...) })`
 - Use `TestBed` for component/service tests; assert on signal `.value()`/computed output directly rather than over-relying on `fixture.detectChanges()` timing
 - Unit tests for pure logic (fingerprinting, rule matching, transfer-linking, aggregation math) should not require `TestBed` at all — test the plain functions/classes directly
+- **A spec that reads or writes formatted currency/date/percent text calls `withCleanFormatSettings()`** ([format-settings.testing.ts](../../../src/app/shared/utils/format-settings.testing.ts)) at the top of its `describe` — never a hand-rolled reset hook. `format-settings.ts`'s locale/symbol signals are module-level and Vitest runs `isolate: false`, so they are shared by every spec file in the process; the helper brackets each test on both sides, so a file neither leaks outward nor inherits inward. `src/test-setup.ts` **cannot** do this globally — setup files are transformed separately from the pre-bundled specs and get their own copy of any app module they import (that hook was a silent no-op until 2026-08-01). Shared *testing-only* helpers are `*.testing.ts`, colocated with what they support and excluded from `tsconfig.app.json`.
 
 ## Verification
 
