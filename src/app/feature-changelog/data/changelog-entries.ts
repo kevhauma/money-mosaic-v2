@@ -4,6 +4,11 @@ export type ChangelogEntry = {
   readonly ticketIds: readonly string[];
   readonly title: string;
   readonly area: string;
+  /**
+   * Optional per-feature lines shown under `title`, for an entry that lands a whole feature area at
+   * once — the entry reads as one release, not as a run of small updates.
+   */
+  readonly details?: readonly string[];
 };
 
 /**
@@ -359,14 +364,6 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-30',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-01'],
-    title:
-      'Added an Income page to the sidebar — your income trends move off the dashboard and into their own home, filling up panel by panel',
-    area: 'Income',
-  },
-  {
-    date: '2026-07-30',
     versionFolder: 'v2',
     ticketIds: [],
     title:
@@ -374,75 +371,38 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     area: 'Categories',
   },
   {
-    date: '2026-07-30',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-03', 'TICKET-INC-02'],
-    title:
-      'The Income page now charts your income over time with one line per source, so you can see whether growth is coming from your salary or elsewhere — and you can pick which income categories count, to keep one-off gifts or refunds out of the trend',
-    area: 'Income',
-  },
-  {
     date: '2026-08-01',
     versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-12'],
-    title:
-      'You can now tell the Income page when your career started, so its charts begin where your working life did',
-    area: 'Income',
-  },
-  {
-    date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-07'],
-    title:
-      'The yearly income panel can now answer “how has my income changed over the last 3 or 5 years, or ever” with a single headline figure, instead of only comparing each year to the one before it',
-    area: 'Income',
-  },
-  {
-    date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-04'],
-    title:
-      'Every Income page setting now sits behind one “Income settings” button, and you can mark a category as an annual lump sum — a 13th month or holiday bonus spreads across its year instead of drawing one spike on the chart',
-    area: 'Income',
-  },
-  {
-    date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-05'],
-    title:
-      'The Income page now shows how your last complete month compares to the month before it and to the same month a year ago, so you can tell real growth from one good month',
-    area: 'Income',
-  },
-  {
-    date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-08'],
-    title:
-      'The Income page now calls out a raise or a pay cut — when a category’s typical monthly amount shifts and stays shifted, you get a notice instead of having to spot it in the chart',
-    area: 'Income',
-  },
-  {
-    date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-09'],
-    title:
-      'The Income page now warns you when an income stream that used to arrive every month has gone quiet, so an ended contract or lapsed side income doesn’t just silently disappear from your trend',
-    area: 'Income',
-  },
-  {
-    date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-10'],
-    title:
-      'You can now record your gross wage per month under “Salary details” — plus how much of a month’s deposit was a bonus — since a bank export only ever shows what actually landed; clicking a point on the income chart jumps straight to that month',
-    area: 'Income',
-  },
-  {
-    date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
-    ticketIds: ['TICKET-INC-11'],
-    title:
-      'Once you’ve entered a gross wage, the Income page charts your take-home rate month by month, so you can see it drifting even while your net income rises',
+    ticketIds: [
+      'TICKET-INC-01',
+      'TICKET-INC-03',
+      'TICKET-INC-02',
+      'TICKET-INC-06',
+      'TICKET-INC-12',
+      'TICKET-INC-07',
+      'TICKET-INC-04',
+      'TICKET-INC-05',
+      'TICKET-INC-08',
+      'TICKET-INC-09',
+      'TICKET-INC-10',
+      'TICKET-INC-11',
+    ],
+    title: 'Added the Income page: a home of its own for your income, turning it into graphs',
+    details: [
+      'An Income page in the sidebar, with your income trends off the dashboard and in one place',
+      'A trend chart with one line per income source, so you can see whether growth comes from your salary or elsewhere',
+      'A yearly view, one bar per calendar year, next to the month-by-month picture',
+      'Pick which income categories count, to keep one-off gifts or refunds out of the trend',
+      'Tell the page when your career started, so its charts begin where your working life did',
+      '“How has my income changed over the last 3 or 5 years, or ever”',
+      'Mark a category as an annual lump sum, so a 13th month or holiday bonus spreads across its year instead of drawing one spike',
+      'One “Income settings” button holding every setting on the page',
+      'Your last complete month compared to the month before it and to the same month a year ago, so you can tell real growth from one good month',
+      'A notice when a raise or a pay cut lands. S typical monthly amount that shifts and stays shifted, instead of something to spot in the chart',
+      'A warning when an income stream that used to arrive every month goes quiet, so an ended contract doesn’t silently vanish from your trend',
+      'Record your gross wage per month under “Salary details”. plus how much of a deposit was a bonus — since a bank export only ever shows what actually landed; clicking a point on the chart jumps straight to that month',
+      'Your take-home rate charted month by month, so you can see it drifting even while your net income rises',
+    ],
     area: 'Income',
   },
 ];

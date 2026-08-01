@@ -24,6 +24,9 @@ describe('ChangelogPageComponent', () => {
       for (const entry of group.entries) {
         expect(text).toContain(entry.title);
         expect(text).toContain(entry.area);
+        for (const detail of entry.details ?? []) {
+          expect(text).toContain(detail);
+        }
       }
     }
 

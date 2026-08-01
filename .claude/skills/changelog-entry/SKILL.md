@@ -22,6 +22,7 @@ export type ChangelogEntry = {
   readonly ticketIds: readonly string[]; // e.g. ["TICKET-CHG-01"] — more than one for a batched entry
   readonly title: string; // plain language, see below
   readonly area: string; // short tag, e.g. "Changelog", "Transactions", "Settings"
+  readonly details?: readonly string[]; // optional bullets under the title, for a whole-feature entry
 };
 
 export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
@@ -40,6 +41,10 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   instead of one row per `TICKET-ML-*`. Reach for this only when adding entries retroactively for
   a whole already-shipped version/milestone in one pass; a single ticket finishing today still
   gets its own single-`ticketIds` entry via Step 6.5.
+- **`details` turns a batched entry into one release, not a list of small updates.** When several
+  tickets together land a whole feature area (e.g. v1.6's Income page), consolidate them into a
+  single entry whose `title` states the feature and whose `details` lists what it includes, one
+  bullet per capability. Omit `details` entirely for a normal single-ticket entry.
 - **Append, don't reorder.** The page itself groups and sorts by `date` newest-first
   (`groupChangelogEntries` in `group-changelog-entries.ts`) — the array's own order doesn't
   matter, so always add new entries at the end and never edit or reorder past ones.

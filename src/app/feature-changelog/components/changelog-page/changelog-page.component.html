@@ -16,16 +16,11 @@
         <mm-text as="h2" variant="subheading" class="block">{{ group.heading }}</mm-text>
         <div class="mt-2 flex flex-col gap-3">
           @for (entry of group.entries; track entry.key) {
-            <div class="flex items-start gap-2">
-              <mm-badge
-                color="primary"
-                variant="soft"
-                size="sm"
-                class="h-auto w-24 whitespace-normal py-1 text-center leading-tight"
-                >{{ entry.area }}</mm-badge
-              >
-              <mm-text as="span" class="block">{{ entry.title }}</mm-text>
-            </div>
+            <app-changelog-entry-row
+              [area]="entry.area"
+              [title]="entry.title"
+              [details]="entry.details"
+            />
           }
         </div>
       </div>

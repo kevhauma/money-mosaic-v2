@@ -4,15 +4,20 @@ import { ROADMAP_ENTRIES } from '../../data/roadmap-entries';
 import { groupChangelogEntries } from '../../group-changelog-entries';
 import { formatRoadmapHeading, groupRoadmapEntries } from '../../group-roadmap-entries';
 import {
-  BadgeComponent,
   DividerComponent,
   PageHeaderComponent,
   TabsComponent,
   TypographyComponent,
   type TabDefinition,
 } from '@/shared/ui';
+import { ChangelogEntryRowComponent } from '../changelog-entry-row/changelog-entry-row.component';
 
-type DisplayEntry = { readonly key: string; readonly area: string; readonly title: string };
+type DisplayEntry = {
+  readonly key: string;
+  readonly area: string;
+  readonly title: string;
+  readonly details: readonly string[];
+};
 type DisplayGroup = { readonly heading: string; readonly entries: readonly DisplayEntry[] };
 
 const TABS: TabDefinition[] = [
@@ -28,6 +33,7 @@ const CHANGELOG_GROUPS: readonly DisplayGroup[] = groupChangelogEntries(CHANGELO
       key: entry.title,
       area: entry.area,
       title: entry.title,
+      details: entry.details ?? [],
     })),
   }),
 );
@@ -39,6 +45,7 @@ const ROADMAP_GROUPS: readonly DisplayGroup[] = groupRoadmapEntries(ROADMAP_ENTR
       key: entry.ticketId,
       area: entry.area,
       title: entry.title,
+      details: [],
     })),
   }),
 );
@@ -51,7 +58,7 @@ const EMPTY_MESSAGES = {
 @Component({
   selector: 'app-changelog-page',
   imports: [
-    BadgeComponent,
+    ChangelogEntryRowComponent,
     DividerComponent,
     PageHeaderComponent,
     TabsComponent,
