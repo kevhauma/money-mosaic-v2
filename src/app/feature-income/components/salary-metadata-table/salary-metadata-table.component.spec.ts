@@ -65,8 +65,8 @@ describe('SalaryMetadataTableComponent (FR-INC-10, TICKET-INC-10)', () => {
       ],
     }).compileComponents();
 
-    // Every store must be hydrated *before* the component is created: it snapshots the store's
-    // values in its constructor rather than syncing them (see the component's class doc).
+    // Every store must be hydrated *before* the component initialises: it snapshots the store's
+    // values in `ngOnInit` rather than syncing them (see the component's class doc).
     await Promise.all([
       TestBed.inject(AccountsStore).hydrate(),
       TestBed.inject(CategoriesStore).hydrate(),
