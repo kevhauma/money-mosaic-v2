@@ -76,10 +76,13 @@
     <app-income-events-sidebar class="block" />
   </div>
 } @else {
+  <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
+       ticked" and "nothing is categorised as income yet" look identical from here, and a first-time
+       user almost always has the second. -->
   <mm-empty-state
     class="mt-6"
-    title="No income categories are counted yet"
-    message="Pick at least one income category to see how your income moves over time. Categories with kind “income” show up there as soon as you add them."
+    title="No income is being counted yet"
+    message="Two things cause this. If you have income categories, tick at least one under Income settings. If that list is empty, no category has kind “income” yet — set that under Categories, and make sure your imported transactions are assigned to it."
   >
     <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
     <mm-button action color="primary" class="mt-2" link="/income/settings">

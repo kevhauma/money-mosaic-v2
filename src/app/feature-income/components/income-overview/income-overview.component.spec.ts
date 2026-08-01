@@ -320,6 +320,17 @@ describe('IncomeOverviewComponent', () => {
     expect(link?.getAttribute('href')).toBe('/income/settings');
   });
 
+  it('names both causes of an empty page, not just the ticked-box one (TICKET-PUB-07)', async () => {
+    await setup([]);
+
+    const text = fixture.nativeElement.querySelector('mm-empty-state')?.textContent as string;
+
+    // "Nothing is ticked" and "nothing is categorised as income yet" look identical from here, and
+    // a first-time user almost always has the second.
+    expect(text).toContain('tick at least one under Income settings');
+    expect(text).toContain('no category has kind “income” yet');
+  });
+
   it('starts the monthly chart at the career start date rather than the first transaction (FR-INC-12)', async () => {
     await setup([salary], undefined, '2026-04-01');
 

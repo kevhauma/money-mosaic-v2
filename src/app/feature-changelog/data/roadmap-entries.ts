@@ -53,12 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-PUB-07',
-    title: 'A getting-started guide for the Income page, written for your first visit',
-    area: 'Help',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'TICKET-PUB-08',
     title:
       'Your first visit to the Income page: what it does, a quick setup, and a walk to the settings',

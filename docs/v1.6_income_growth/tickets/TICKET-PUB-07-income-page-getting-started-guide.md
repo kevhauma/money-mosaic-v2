@@ -82,37 +82,60 @@ re-typed into a component template, so the three surfaces cannot drift.
 
 ## Acceptance criteria
 
-- [ ] New `getting-started-with-the-income-page` entry in `GUIDES`, listed before
+- [x] New `getting-started-with-the-income-page` entry in `GUIDES`, listed before
       `reading-your-income-growth`, rendering at its `/help/:slug` route and on the `/help` index — the
       existing guides-index/guide-detail specs stay data-driven and keep passing with no per-guide
-      hardcoding.
-- [ ] Its `summary` states what the page is for in plain language, and its **first three steps are exactly
+      hardcoding. (`guides.ts`; new `guides.spec.ts` → "lists the getting-started guide before the
+      read-the-numbers one"; both existing help specs iterate `GUIDES` and pass unedited.)
+- [x] Its `summary` states what the page is for in plain language, and its **first three steps are exactly
       the quick-setup path** in the order above — a spec asserts the count and order, since PUB-08's
       arrival surface renders `steps.slice(0, 3)` and would silently change meaning if they were reordered.
-- [ ] Step 1 names the prerequisites (imported transactions, a category with kind *income*) and points at
-      the existing import and rules guides by title.
-- [ ] A later step lists the three empty-page causes with a concrete fix for each.
-- [ ] `/income/settings` carries first-timer explanations for all three sections, and `/income/salary` for
+      (Specs "says what the page is for in its summary, before any step" and "opens with exactly the three
+      quick-setup steps, in order", which pins all three titles *and* that more steps follow.)
+- [x] Step 1 names the prerequisites (imported transactions, a category with kind *income*) and points at
+      the existing import and rules guides by title. (Spec "names the prerequisites and points at the
+      guides that cover them".)
+- [x] A later step lists the three empty-page causes with a concrete fix for each. (Step "If the page still
+      looks empty"; spec "lists the three empty-page causes with a fix for each".)
+- [x] `/income/settings` carries first-timer explanations for all three sections, and `/income/salary` for
       gross and bonus — each naming which panels the setting changes and what it does *not* change;
-      component specs assert the copy is present, so a later refactor can't quietly drop it.
-- [ ] `reading-your-income-growth` is updated so no step contradicts the shipped UI: the growth comparison
+      component specs assert the copy is present, so a later refactor can't quietly drop it. (Copy shipped
+      with TICKET-INC-18's structure — that ticket's "gives each section room to say what it changes and
+      which panels it changes" and "explains what gross means here and what the bonus column does to the
+      charts" are the assertions, and both name the not-changed half: "Your transactions are never changed"
+      / "it changes no figure anywhere". **Four** sections, not three, since TICKET-SET-08 added the chart
+      colour to this page.)
+- [x] `reading-your-income-growth` is updated so no step contradicts the shipped UI: the growth comparison
       (INC-15), the "Net vs gross" section (INC-16), the events sidebar replacing dismissable notices
       (INC-17), the bonus's effect on the chart (INC-13) and on the take-home rate (INC-14), the gross
-      colour setting (SET-08), and the settings/salary pages and one-month modal (INC-18).
-- [ ] A spec asserts no guide step refers to a removed surface — at minimum, no guide text mentions
+      colour setting (SET-08), and the settings/salary pages and one-month modal (INC-18). (Rewritten
+      end to end and re-scoped as the "now read the numbers" companion — all five original steps replaced
+      by seven, one per shipped surface.)
+- [x] A spec asserts no guide step refers to a removed surface — at minimum, no guide text mentions
       dismissing a notice, "vs. previous month", or opening the settings *popup* / salary *modal*.
-- [ ] The Income page's empty state covers the no-transactions and no-income-categories cases and links to
-      `/income/settings`; component spec asserts the `routerLink`.
-- [ ] Copy carries no hardcoded currency symbol, locale-shaped date or theme colour name — all user
-      settings (SET-02/03/04, SET-08), so guide text describes controls, not values.
-- [ ] Guide content stays static and hand-written in `guides.ts` — no new data source, no runtime fetch, no
+      (`guides.spec.ts` → "no step describes a surface that no longer exists", an `it.each` over five
+      banned patterns. **Scoped to the two Income guides**, because the Learning guide's suggestions table
+      genuinely still has a Dismiss button and a project-wide ban would be false.)
+- [x] The Income page's empty state covers the no-transactions and no-income-categories cases and links to
+      `/income/settings`; component spec asserts the `routerLink`. (Retitled "No income is being counted
+      yet" and rewritten to name both causes; overview specs "links its empty state to the settings page
+      rather than only naming it" and "names both causes of an empty page, not just the ticked-box one".)
+- [x] Copy carries no hardcoded currency symbol, locale-shaped date or theme colour name — all user
+      settings (SET-02/03/04, SET-08), so guide text describes controls, not values. (`guides.spec.ts` →
+      "copy carries no user-settable value", an `it.each` over all three patterns across every guide.)
+- [x] Guide content stays static and hand-written in `guides.ts` — no new data source, no runtime fetch, no
       new route; consistent with TICKET-PUB-02. No step text is duplicated into a component template.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (`git diff` adds one spec and edits one data file; no component template gained guide prose.)
+- [x] No persistence changes, no Dexie version bump. (`git diff` touches no `app-db.ts` and no repository.)
+- [x] `angular.json` bundle budgets not raised. (`git diff` touches no `angular.json`;
+      `ng build --configuration development` completes with no budget warning.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD` →
+      `verdict: pass`, `complexity_introduced: 0`. Conventions: content stays data in `feature-help/data/`,
+      the guide describes controls rather than settings-driven values, and the empty state keeps
+      `mm-empty-state`'s existing `[action]` slot rather than growing bespoke markup.)
 - [ ] Verified live in the browser: the guide reads correctly end to end against the real page, its "Try it"
       button lands on `/income`, the settings and salary pages carry their explanations, and the empty state
-      links back.
+      links back. — **skipped at the user's request** ("skip the browser check"), not verified.
 
 ## Notes
 

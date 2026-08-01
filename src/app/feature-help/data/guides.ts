@@ -144,35 +144,88 @@ export const GUIDES: readonly Guide[] = [
     tryItRoute: '/learning',
   },
   {
-    slug: 'reading-your-income-growth',
-    title: 'Reading your income growth',
+    slug: 'getting-started-with-the-income-page',
+    title: 'Getting started with the Income page',
     summary:
-      'Set up the Income page so its charts answer "is my income actually growing" — and so a bonus month, a raise, or an ended contract each read as what they are.',
+      'The Income page takes the money coming *in* and turns it into a trend you can trust: is it growing, shrinking, or just noisy. It reads your existing transactions — there is nothing to log by hand — but it needs three things set up first.',
+    // The first three steps are the quick-setup path, in the order they must be done, and are what
+    // TICKET-PUB-08's first-visit surface renders (`steps.slice(0, 3)`). Reordering them changes
+    // what a first-time user is shown, so `guides.spec.ts` pins the count and the order.
     steps: [
       {
-        title: 'Choose what counts as your income',
+        title: 'Get income transactions in, and categorised as income',
         description:
-          'Open "Income settings" in the page header. Every income category is counted by default; untick one — a noisy "Other Income" full of one-off gifts and refunds, say — to keep it out of every figure on the page at once. The same choice feeds the charts, the growth panel and the take-home rate, so "my income" means one thing throughout.',
+          'The page reads transactions you have already imported, so start there: bring in a statement (see "Importing a bank statement"), then make sure the money coming in sits in a category whose kind is "income" — that kind is set on the category itself, under Categories. A rule can do it for you every time (see "Setting up categorisation rules"). Until at least one income category has transactions in it, the page has nothing to read and will say so.',
       },
       {
         title: 'Tell the page when your career started',
         description:
-          'Also in "Income settings": a career start date trims the page back to where your working life began, rather than where your imported history happens to begin. Student-era income and a back-dated opening balance stop dragging on the trend. Leave it empty to keep the full history.',
+          'On the Income settings page, set the date your working life began. That is rarely the same date your imported history begins, and the difference matters: a few student-era months or a back-dated opening balance sit at the front of every chart and drag the whole growth story down. Every panel starts from this date. Leave it empty to use your full history.',
       },
       {
-        title: 'Flag your annual lump sums',
+        title: 'Choose which categories count, and flag any annual lump sums',
         description:
-          'If a 13th month, vacation pay or holiday bonus arrives as its own category, tick it under "Annual lump sums". Its yearly total is then spread across that year\'s months on the charts, so one deposit stops reading as a spike — and stops being mistaken for a raise. Your transactions are never changed; untick it and the spike comes straight back.',
+          'Still on the Income settings page: every income category counts by default, and unticking one removes it from every figure at once — the charts, the growth figures, the yearly totals, the take-home rate and the events list. That is what you want for a category full of one-off gifts and refunds, where a good month would otherwise read as sustained growth. Separately, tick a 13th month or vacation-pay category under "Annual lump sums" so its yearly total is spread across the year instead of drawn as one spike. Neither setting ever changes a transaction.',
+      },
+      {
+        title: 'Add your gross wage, if you want the take-home rate',
+        description:
+          'Optional, and the one place on this page where you type rather than configure. A bank export only records what landed in your account, never what you earned before deductions — so open Salary details and fill in a gross wage per month. Leaving a field saves it; there is no save button. Clicking a point on the income chart opens just that month, which is quicker when you only want to explain one spike.',
+      },
+      {
+        title: 'What each part of the page then tells you',
+        description:
+          'The monthly chart is your income by source over time. The growth figures compare your last complete month against the start of that year and against the same month a year earlier. "Net vs gross" holds four charts comparing what you earn against what reaches you. The yearly view is one bar per calendar year. The Events list beside the charts is your history of raises, bonuses and streams that stopped, grouped by year.',
+      },
+      {
+        title: 'If the page still looks empty',
+        description:
+          'Three things cause it, and each has a different fix. No transactions in range — check the career start date is not set after your data begins, and that the import actually landed. No income categories counted — open Income settings and tick at least one; if the list there is empty, no category has kind "income" yet, which is set under Categories. Everything counted but the charts are flat — that usually means the transactions are there but categorised as something other than income.',
+      },
+    ],
+    tryItLabel: 'Try it — go to Income',
+    tryItRoute: '/income',
+  },
+  {
+    slug: 'reading-your-income-growth',
+    title: 'Reading your income growth',
+    summary:
+      'Once the Income page is set up, this is how to read what it shows — so a bonus month, a raise, or an ended contract each register as what they are. New here? Start with "Getting started with the Income page".',
+    steps: [
+      {
+        title: 'Read the monthly chart by source, not just by total',
+        description:
+          "Each income category is its own series, so a total that holds steady while one stream shrinks and another grows is visible rather than hidden. Clicking a month opens that month's salary details, which is the quickest way to annotate a spike you are looking at.",
       },
       {
         title: 'Read the growth figures',
         description:
-          'The growth panel compares your last complete month against the month before it and against the same month a year earlier — two comparisons because one good month moves the first and leaves the second alone. Above the chart, notices call out a sustained raise or pay cut, and warn when an income stream that used to arrive every month has gone quiet.',
+          'Two cards compare your last complete month against two baselines: the first month of that same year, and the same month a year earlier. Two comparisons, because they answer different questions — how far this year, and how far since last year. Each card links to the transactions behind its own baseline month. A card shows a dash rather than a number when there is nothing to compare against, and says why.',
       },
       {
-        title: 'Add your gross wage to see your take-home rate',
+        title: 'Check the Events list for what changed and when',
         description:
-          "A bank export only ever shows what landed in your account. Open \"Salary details\" and type a gross wage into any month — it saves as you leave the field, no save button. If part of that month's deposit was a bonus rather than regular pay, put it in the Bonus column so it doesn't inflate that month. The take-home rate chart then shows what share of gross actually reached you, month by month, with a gap for any month you haven't filled in.",
+          'Beside the charts, every raise, pay cut, recorded bonus and income stream that went quiet is listed under its year, newest first. Nothing here is cleared away once read — it is a history to scroll back through, not a queue to work off, so you can still find when a raise landed months later. A raise shows the size of the move and roughly when it took effect; a quiet stream shows how many months it has been missing.',
+      },
+      {
+        title: 'Compare net against gross',
+        description:
+          'Once you have entered gross wages, the "Net vs gross" section answers what "my income is up" cannot. The take-home rate is drawn as a full 0–100% band, so a rate that drifts from 68% to 64% is visible rather than lost in an axis that rescales itself. The other three charts plot gross against net — their levels, and how far each has moved since your first recorded month, in currency and as a percentage. The two lines rising together means your raises are passing through intact; gross pulling away from net means your deduction rate is climbing.',
+      },
+      {
+        title: 'Know what a bonus does to the numbers',
+        description:
+          'A lump sum is handled two ways, depending on how it was paid, and they agree with each other. If it arrives in its own category, tick that category under "Annual lump sums". If it is baked into your regular salary deposit, record it in the Bonus column of Salary details instead. Either way it is spread across its year on the income chart, so it stops reading as a raise — and left out of the take-home rate entirely, since that comparison is about your plain monthly wage. Your yearly totals are unchanged: smoothing only redistributes.',
+      },
+      {
+        title: 'Compare whole years',
+        description:
+          'The yearly view is one bar per calendar year, with a span picker for how many years to set side by side. The year in progress is left out rather than shown short — a part-year against whole ones reads as a collapse that has nothing to do with your income.',
+      },
+      {
+        title: 'Make gross and net easier to tell apart',
+        description:
+          'If the two lines in the "Net vs gross" section are hard to distinguish, pick a colour for the gross series under Income settings. It applies to every gross-pay series on the page and changes no figure anywhere.',
       },
     ],
     tryItLabel: 'Try it — go to Income',
