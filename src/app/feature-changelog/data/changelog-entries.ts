@@ -421,4 +421,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The Income page now calls out a raise or a pay cut — when a category’s typical monthly amount shifts and stays shifted, you get a notice instead of having to spot it in the chart',
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-09'],
+    title:
+      'The Income page now warns you when an income stream that used to arrive every month has gone quiet, so an ended contract or lapsed side income doesn’t just silently disappear from your trend',
+    area: 'Income',
+  },
 ];

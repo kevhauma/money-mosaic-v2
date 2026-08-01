@@ -114,6 +114,31 @@ export const IncomeStore = signalStore(
       () => new Set(appSettingsStore.smoothedBonusCategoryIds() ?? []),
     );
 
+    /**
+     * The page's monthly income series as the transactions actually record it: per-category totals
+     * over `incomeRange` (FR-INC-2), scoped to the growth selection (FR-INC-3), **unsmoothed**.
+     *
+     * Lives on the store rather than on a component because every panel derives from it — one
+     * `computed()` re-buckets the user's whole transaction history once per change instead of once
+     * per panel, and no two panels can drift apart by passing slightly different arguments.
+     *
+     * Read this one only where a real deposit in a real month is the question — gap detection
+     * (FR-INC-9), which must not let display smoothing manufacture a non-zero month over a genuine
+     * silence. Everything else wants `incomeTrend` below.
+     */
+    const rawIncomeTrend = computed(() =>
+      computeIncomeCategorySeries(
+        transactionsStore.transactions(),
+        categoriesStore.categoriesById(),
+        selectedIncomeCategoryIds(),
+        incomeRange().from,
+        incomeRange().to,
+        INCOME_GRANULARITY,
+        savingsAccountIbans(accountsStore.accounts()),
+        accountsStore.accountsById(),
+      ),
+    );
+
     return {
       incomeCategories,
       fullHistoryRange,
@@ -121,35 +146,18 @@ export const IncomeStore = signalStore(
       incomeRange,
       selectedIncomeCategoryIds,
       smoothedBonusCategoryIds,
+      rawIncomeTrend,
 
       /** The user's career start date (FR-INC-12), or `undefined` while unset. */
       careerStartDate: computed(() => appSettingsStore.careerStartDate()),
 
       /**
-       * The page's one monthly income series: per-category totals over `incomeRange` (FR-INC-2),
-       * scoped to the growth selection (FR-INC-3) and smoothed for annual lump sums (FR-INC-4).
-       *
-       * Lives on the store rather than on `IncomeOverviewComponent` because three panels now read
-       * it — the trend chart, the growth-rate panel (FR-INC-5) and, later, step-change detection
-       * (FR-INC-8). A `computed()` here is derived once per change and shared; one copy per panel
-       * would re-bucket every transaction in the user's history that many times over, and let the
-       * panels disagree the moment one of them passed a slightly different argument.
+       * `rawIncomeTrend` with annual lump sums spread across their year (FR-INC-4) — what the trend
+       * chart draws, and what the growth-rate panel (FR-INC-5) and step-change detector (FR-INC-8)
+       * measure, so a 13th month never reads as a raise.
        */
       incomeTrend: computed(() =>
-        smoothAnnualLumpSums(
-          computeIncomeCategorySeries(
-            transactionsStore.transactions(),
-            categoriesStore.categoriesById(),
-            selectedIncomeCategoryIds(),
-            incomeRange().from,
-            incomeRange().to,
-            INCOME_GRANULARITY,
-            savingsAccountIbans(accountsStore.accounts()),
-            accountsStore.accountsById(),
-          ),
-          smoothedBonusCategoryIds(),
-          INCOME_GRANULARITY,
-        ),
+        smoothAnnualLumpSums(rawIncomeTrend(), smoothedBonusCategoryIds(), INCOME_GRANULARITY),
       ),
     };
   }),

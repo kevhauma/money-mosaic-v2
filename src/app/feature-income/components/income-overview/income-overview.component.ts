@@ -13,6 +13,7 @@ import {
 import { EmptyStateComponent, PageHeaderComponent, PaperComponent } from '@/shared/ui';
 import { formatCurrency } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
+import { IncomeGapWarningsComponent } from '../income-gap-warnings/income-gap-warnings.component';
 import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth-panel.component';
 import { IncomeSettingsComponent } from '../income-settings/income-settings.component';
 import { IncomeStepChangesComponent } from '../income-step-changes/income-step-changes.component';
@@ -70,6 +71,7 @@ export const buildIncomeTrendChartOption = (
   selector: 'app-income-overview',
   imports: [
     EmptyStateComponent,
+    IncomeGapWarningsComponent,
     IncomeGrowthPanelComponent,
     IncomeSettingsComponent,
     IncomeStepChangesComponent,
