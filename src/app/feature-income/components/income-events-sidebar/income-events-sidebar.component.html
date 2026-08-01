@@ -1,4 +1,11 @@
-<mm-paper>
+<!-- fallow-ignore-file complexity -->
+<!-- Reason: CRAP only, from an assumed-zero coverage estimate — the same artifact as
+     `income-overview.component.html`. This template's own numbers are fine (cyclomatic 5 of 20,
+     cognitive 12 of 15); the score comes from `estimated_component_inherited` coverage on a rail
+     that `income-events-sidebar.component.spec.ts` exercises with ~20 cases. If this trips a third
+     template, the fix is to feed fallow real coverage (`--coverage`) rather than keep suppressing,
+     or to split the row into its own component. -->
+<mm-paper class="h-full">
   <!-- A labelled region rather than a bare column, so the rail is reachable as a landmark and its
        heading names it when jumped to. -->
   <section aria-labelledby="income-events-heading">
@@ -6,31 +13,42 @@
 
     @if (hasEvents()) {
       <!-- Its own scroll region, so a long history doesn't stretch the page next to the charts. -->
-      <div class="mt-3 max-h-[32rem] overflow-y-auto pr-1">
+      <div class="mt-3 overflow-y-auto pr-1">
         @for (year of years(); track year.year) {
-          <mm-text as="h3" weight="semibold" class="mt-3 text-sm first:mt-0">{{
+          <mm-text as="h3" weight="semibold" class="mt-6 text-sm first:mt-0">{{
             year.year
           }}</mm-text>
 
           <ol class="mt-1 space-y-3">
             @for (event of year.events; track event.key) {
-              <li class="flex gap-2">
-                <ng-icon
-                  [name]="event.icon"
-                  size="18"
-                  class="mt-0.5 shrink-0"
-                  [class]="event.toneClass"
-                  aria-hidden="true"
-                />
-                <span class="min-w-0">
-                  <mm-text as="span" variant="caption" color="base-content" class="block">{{
-                    event.message
-                  }}</mm-text>
-                  <mm-text as="span" variant="caption" class="block">{{ event.when }}</mm-text>
-                </span>
+              <li class="flex items-start align-baseline gap-2">
+                <mm-text as="span" weight="bold" class="w-8 shrink-0 text-xs uppercase">{{
+                  event.when
+                }}</mm-text>
+                @if (event.wageChange; as wage) {
+                  <mm-text as="span" variant="caption" color="base-content" class="min-w-0 grow">
+                    {{ wage.label }}: {{ wage.delta }} → {{ wage.to }}
+                  </mm-text>
+                  <mm-text
+                    as="span"
+                    weight="bold"
+                    class="flex shrink-0 items-center gap-1 text-sm"
+                    [color]="wage.deltaColor"
+                  >
+                    <ng-icon [name]="wage.deltaIcon" size="10" aria-hidden="true" />
+                    {{ wage.deltaLabel }}
+                  </mm-text>
+                } @else {
+                  <span class="min-w-0">
+                    <mm-text as="span" variant="caption" color="base-content" class="block">{{
+                      event.message
+                    }}</mm-text>
+                  </span>
+                }
               </li>
             }
           </ol>
+          <mm-divider />
         }
       </div>
     } @else {

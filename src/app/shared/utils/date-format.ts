@@ -24,3 +24,20 @@ const DATE_FORMATTER = computed(
 export function formatDate(isoDate: string): string {
   return DATE_FORMATTER().format(parseIsoDate(isoDate));
 }
+
+const SHORT_MONTH_FORMATTER = computed(
+  () => new Intl.DateTimeFormat(locale(), { month: 'short', timeZone: 'UTC' }),
+);
+
+/**
+ * Just the month, abbreviated — `Mar` under `en-US`, `mrt` under `nl-BE`. For a surface that has
+ * already established the year in a heading, where repeating it on every row is noise.
+ *
+ * Locale-aware like `formatDate` above, and for the same reason: `Intl`'s `'short'` month is the
+ * portable spelling of "the three-letter one", and hardcoding an English table would be wrong for
+ * anyone who changed the locale setting (TICKET-SET-04). Some locales abbreviate to four
+ * characters or none at all, which is correct for them.
+ */
+export function formatMonthShort(isoDate: string): string {
+  return SHORT_MONTH_FORMATTER().format(parseIsoDate(isoDate));
+}

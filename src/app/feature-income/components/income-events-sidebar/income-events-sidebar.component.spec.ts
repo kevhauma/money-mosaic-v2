@@ -116,6 +116,14 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       (item) => (item as HTMLElement).textContent?.replace(/\s+/g, ' ').trim() ?? '',
     );
 
+  /** The month cell of the row whose text matches — `mm-text` puts its classes on an inner span. */
+  const monthCellOf = (rowText: string): HTMLElement => {
+    const row = [...fixture.nativeElement.querySelectorAll('ol li')].find(
+      (item) => ((item as HTMLElement).textContent?.replace(/\s+/g, ' ').trim() ?? '') === rowText,
+    ) as HTMLElement;
+    return row.querySelector('mm-text > span') as HTMLElement;
+  };
+
   const yearHeadings = (): string[] =>
     [...fixture.nativeElement.querySelectorAll('h3')].map(
       (heading) => (heading as HTMLElement).textContent?.trim() ?? '',
@@ -159,7 +167,8 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       expect(events()[0]).toContain('16%');
       expect(events()[0]).toContain('€2,500.00');
       expect(events()[0]).toContain('€2,900.00');
-      expect(events()[0]).toContain('07/01/2025');
+      // Month only — the year sits in the section heading above these rows.
+      expect(events()[0]).toContain('Jul');
     });
 
     it('states a decrease as a drop rather than an increase', async () => {
@@ -248,10 +257,14 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       // 2,500/mo for the first half of 2025, 2,900 from July — a +16% move in that one month.
       await setup(A_RAISE());
 
-      const move = events().find((text) => text.includes('Net went up'));
+      // Columns, not a sentence: month, what moved, then the delta chip.
+      const move = events().find((text) => text.includes('Net:'));
 
-      expect(move).toContain('Net went up by 16% (€400.00)');
-      expect(move).toContain('€2,500.00 to €2,900.00');
+      // Uppercased by CSS, not in the data, so a screen reader still announces "Jul".
+      expect(move).toContain('Jul');
+      expect(monthCellOf(move!).className).toContain('uppercase');
+      expect(move).toContain('Net: +€400.00 → €2,900.00');
+      expect(move).toContain('16%');
     });
 
     it('lists a move in gross pay separately from the one in net', async () => {
@@ -266,22 +279,28 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       );
 
       // Net is flat all year; only gross moved, which is a rising deduction rate worth seeing.
-      expect(events().some((text) => text.includes('Net went'))).toBe(false);
-      expect(events().find((text) => text.includes('Gross went up'))).toContain('10% (€300.00)');
+      expect(events().some((text) => text.includes('Net:'))).toBe(false);
+      const move = events().find((text) => text.includes('Gross:'));
+      expect(move).toContain('Gross: +€300.00 → €3,300.00');
+      expect(move).toContain('10%');
     });
 
-    it('states a fall as “went down”, on the same footing as a rise', async () => {
+    it('shows a fall in the same columns, its direction carried by the chip', async () => {
       await setup(deposits(monthsOf('2025', 12), (_, index) => (index < 6 ? 2900 : 2500)));
 
-      expect(events().find((text) => text.includes('Net went'))).toContain(
-        'Net went down by 13.8% (€400.00)',
-      );
+      const move = events().find((text) => text.includes('Net:'));
+
+      expect(move).toContain('Net: -€400.00 → €2,500.00');
+      // Rounded to whole percent and unsigned, exactly as the dashboard's card renders a delta —
+      // the downward triangle beside it says which way.
+      expect(move).toContain('14%');
+      expect(move).not.toContain('-14%');
     });
 
     it('ignores a move of 1% or less — rounding and a shifted pay date are not raises', async () => {
       await setup(deposits(monthsOf('2025', 12), (_, index) => (index < 6 ? 2500 : 2520)));
 
-      expect(events().some((text) => text.includes('Net went'))).toBe(false);
+      expect(events().some((text) => text.includes('Net:'))).toBe(false);
     });
 
     it('measures wage moves on plain salary, so a flagged lump sum is not a raise then a cut', async () => {
@@ -304,8 +323,8 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       );
 
       // Unexcluded, June's 8,500 would list as +240% and July as -71%.
-      expect(events().some((text) => text.includes('went up'))).toBe(false);
-      expect(events().some((text) => text.includes('went down'))).toBe(false);
+      expect(events().some((text) => text.includes('Net:'))).toBe(false);
+      expect(events().some((text) => text.includes('Gross:'))).toBe(false);
     });
 
     it('makes no event from a salary row with a gross wage but no bonus', async () => {
@@ -348,6 +367,21 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
         'Notable changes',
       );
       expect(region.querySelector('ol')).not.toBeNull();
+    });
+
+    it('renders the delta chip exactly as the dashboard’s comparison card does', async () => {
+      await setup(A_RAISE());
+
+      const chip = [...fixture.nativeElement.querySelectorAll('ol li mm-text > span')].find(
+        (span) => (span as HTMLElement).querySelector('ng-icon') !== null,
+      ) as HTMLElement;
+
+      // A colour token off `mm-text`'s own `color` input rather than a raw Tailwind class bound
+      // onto the icon — the rule every variant-driven primitive follows. Which triangle it is, is
+      // pinned on the view-model in `income-event-vm.spec.ts`.
+      expect(chip.querySelector('ng-icon')).not.toBeNull();
+      expect(chip.className).toContain('text-success');
+      expect(chip.textContent).toContain('16%');
     });
 
     it('hides its decorative icons from assistive tech', async () => {

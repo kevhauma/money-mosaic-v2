@@ -205,7 +205,7 @@ export const GUIDES: readonly Guide[] = [
       {
         title: 'Check the notable changes for what moved and when',
         description:
-          'Beside the charts, every raise, pay cut, recorded bonus and income stream that went quiet is listed under its year, newest first — along with every month where your take-home or gross pay moved by more than 1%, phrased as "Net went up by 4.2% (…)" with both the old and new figures. Nothing here is cleared away once read: it is a history to scroll back through, not a queue to work off, so you can still find when a raise landed months later. Those wage moves are measured on your plain salary, with annual lump sums left out, so a 13th month never shows up as a raise followed by a cut.',
+          'Beside the charts, every raise, pay cut, recorded bonus and income stream that went quiet is listed under its year, newest first — along with every month where your take-home or gross pay moved by more than 1%, as a row reading month, what moved and by how much, and the percentage beside a triangle for its direction. Nothing here is cleared away once read: it is a history to scroll back through, not a queue to work off, so you can still find when a raise landed months later. Those wage moves are measured on your plain salary, with annual lump sums left out, so a 13th month never shows up as a raise followed by a cut.',
       },
       {
         title: 'Compare net against gross',

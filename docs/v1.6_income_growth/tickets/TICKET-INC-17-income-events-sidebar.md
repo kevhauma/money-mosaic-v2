@@ -131,8 +131,12 @@ raises and lost streams as an event in its own right.
       deleted components. Conventions: pure merge in `core/stats`, view-model builders in a feature-root
       `.ts` module, one folder per component, all amounts/dates through the settings-driven formatters.)
 - [x] **Added 2026-08-01, at the user's request** — every month-on-month move in take-home or gross pay
-      past **1%** is listed too, phrased "Net went up by 4.2% (€120.00) — €2,850.00 to €2,970.00", with
-      the icon and tone following the sign. Measured on the **plain-salary** basis
+      past **1%** is listed too. Rendered as **columns rather than a sentence** — month (abbreviated,
+      uppercased in CSS so a screen reader still hears "Jul"), then `Net: +€400.00 → €2,900.00`, then
+      the dashboard's own period-comparison delta chip: the same `tablerTriangleFill` /
+      `tablerTriangleInvertedFill` pair, the same `sign-by-icon` unsigned percentage, and the same
+      `deltaColor` field name and `success`/`warning` values as `CategoryComparisonVm`, so the two
+      indicators can't drift. Measured on the **plain-salary** basis
       (`computeGrossNetRatio` with the annual lump-sum categories excluded and any recorded bonus
       subtracted), so a 13th month can't list as a raise followed by a cut. Distinct from FR-INC-8's
       step changes, which look for a *sustained* shift in a trailing average and are deliberately slow

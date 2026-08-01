@@ -1,11 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  tablerAlertTriangle,
-  tablerGift,
-  tablerTrendingDown,
-  tablerTrendingUp,
-} from '@ng-icons/tabler-icons';
+import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler-icons/fill';
 import {
   collectIncomeEvents,
   computeGrossNetRatio,
@@ -16,7 +11,7 @@ import {
   lastCompleteBucketKey,
 } from '@/core/stats';
 import { CategoriesStore } from '@/core/state';
-import { PaperComponent, TypographyComponent } from '@/shared/ui';
+import { PaperComponent, TypographyComponent, DividerComponent } from '@/shared/ui';
 import { buildIncomeEventYearVms, type IncomeEventYearVm } from '../../income-event-vm';
 import { INCOME_GRANULARITY } from '../../income-granularity';
 import { IncomeStore } from '../../income.store';
@@ -46,12 +41,12 @@ import { IncomeStore } from '../../income.store';
  */
 @Component({
   selector: 'app-income-events-sidebar',
-  imports: [NgIcon, PaperComponent, TypographyComponent],
+  imports: [NgIcon, PaperComponent, TypographyComponent, DividerComponent],
   templateUrl: './income-events-sidebar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [
-    provideIcons({ tablerAlertTriangle, tablerGift, tablerTrendingDown, tablerTrendingUp }),
-  ],
+  // The delta chip's pair, shared with the dashboard's period-comparison card. The only icons on
+  // the rail: every row leads with its month instead, so a per-kind icon would be decoration.
+  viewProviders: [provideIcons({ tablerTriangleFill, tablerTriangleInvertedFill })],
 })
 export class IncomeEventsSidebarComponent {
   private readonly categoriesStore = inject(CategoriesStore);

@@ -77,7 +77,8 @@ describe('buildIncomeEventVm (TICKET-INC-17)', () => {
     expect(vm.message).toContain('12%');
     expect(vm.message).toContain('€2,500.00');
     expect(vm.message).toContain('€2,800.00');
-    expect(vm.when).toBe('03/01/2026');
+    // Month only: the rail groups by year, so the year is already in the heading above the row.
+    expect(vm.when).toBe('Mar');
   });
 
   it('states a decrease as a drop', () => {
@@ -91,31 +92,43 @@ describe('buildIncomeEventVm (TICKET-INC-17)', () => {
     expect(buildIncomeEventVm(BONUS, categoriesById).message).toContain('€1,800.00');
   });
 
-  it('phrases a wage rise as “went up by x% (x)”, naming which figure moved', () => {
+  it('gives a wage rise columns rather than a sentence, with the dashboard’s delta chip', () => {
     const vm = buildIncomeEventVm(NET_RISE, categoriesById);
 
-    expect(vm.message).toContain('Net went up by 5% (€100.00)');
-    expect(vm.message).toContain('€2,000.00 to €2,100.00');
-    expect(vm.icon).toBe('tablerTrendingUp');
-    expect(vm.toneClass).toBe('text-success');
+    expect(vm.wageChange).toEqual({
+      label: 'Net',
+      delta: '+€100.00',
+      to: '€2,100.00',
+      deltaLabel: '5%',
+      deltaIcon: 'tablerTriangleFill',
+      deltaColor: 'success',
+    });
+    // The columns *are* the row — no sentence is built for this kind.
+    expect(vm.message).toBe('');
   });
 
-  it('phrases a wage cut as “went down by”, with the magnitude unsigned', () => {
+  it('points the chip’s triangle down for a cut, keeping the percentage unsigned', () => {
     const vm = buildIncomeEventVm(
       { ...NET_RISE, to: 1900, delta: -100, pct: -0.05 },
       categoriesById,
     );
 
-    expect(vm.message).toContain('Net went down by 5% (€100.00)');
-    expect(vm.message).not.toContain('-5%');
-    expect(vm.icon).toBe('tablerTrendingDown');
-    expect(vm.toneClass).toBe('text-warning');
+    expect(vm.wageChange?.deltaIcon).toBe('tablerTriangleInvertedFill');
+    // Unsigned like the dashboard's card: the triangle already says which way.
+    expect(vm.wageChange?.deltaLabel).toBe('5%');
+    expect(vm.wageChange?.deltaColor).toBe('warning');
   });
 
   it('names the gross figure as gross', () => {
-    expect(buildIncomeEventVm({ ...NET_RISE, series: 'gross' }, categoriesById).message).toContain(
-      'Gross went up by',
-    );
+    expect(
+      buildIncomeEventVm({ ...NET_RISE, series: 'gross' }, categoriesById).wageChange?.label,
+    ).toBe('Gross');
+  });
+
+  it('leaves every other kind without a wage-change row', () => {
+    for (const event of [RAISE, PAY_CUT, BONUS, STOPPED]) {
+      expect(buildIncomeEventVm(event, categoriesById).wageChange).toBeUndefined();
+    }
   });
 
   it('keys a net and a gross move in the same month apart', () => {
@@ -141,27 +154,18 @@ describe('buildIncomeEventVm (TICKET-INC-17)', () => {
     syncFormatSettings({
       currencySymbol: '$',
       currencySymbolPosition: DEFAULT_CURRENCY_SYMBOL_POSITION,
-      locale: 'en-GB',
+      locale: 'nl-BE',
     });
 
     const raise = buildIncomeEventVm(RAISE, categoriesById);
     const bonus = buildIncomeEventVm(BONUS, categoriesById);
 
-    expect(raise.message).toContain('$2,500.00');
+    expect(raise.message).toContain('$2.500,00');
     expect(raise.message).not.toContain('€');
     expect(bonus.message).not.toContain('€');
-    // en-GB puts the day first, so a hardcoded en-US date would show as 03/01/2026 here too.
-    expect(raise.when).toBe('01/03/2026');
-  });
-
-  it('gives each kind its own icon and tone, so the rail is scannable', () => {
-    const kinds = [RAISE, PAY_CUT, BONUS, STOPPED].map((event) =>
-      buildIncomeEventVm(event, categoriesById),
-    );
-
-    expect(new Set(kinds.map((vm) => vm.icon)).size).toBe(4);
-    expect(kinds[0].toneClass).toBe('text-success');
-    expect(kinds[1].toneClass).toBe('text-warning');
+    // The month name follows the locale too — a hardcoded English table would print "Mar" here.
+    expect(raise.when).not.toBe('Mar');
+    expect(raise.when.toLowerCase()).toContain('mrt');
   });
 
   it('keys events uniquely, so two in one month never collide', () => {
