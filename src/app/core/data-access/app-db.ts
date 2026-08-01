@@ -535,6 +535,16 @@ export type AppSettings = {
    * above.
    */
   careerStartDate: string | undefined;
+  /**
+   * Additive field (TICKET-INC-04) — income categories the user has marked as an *annual lump sum*
+   * (13th month, vacation pay, a holiday bonus): real income, but deposited once a year, so the
+   * `/income` trend spreads each year's total across that year's months instead of drawing one
+   * spike (FR-INC-4). Unlike `excludedIncomeCategoryIds` this is an **inclusion** list defaulting
+   * to empty — "count this category" is a sensible default for a new income category, "smooth this
+   * category" never is. Same "additive optional field, no version bump" reasoning as the two fields
+   * above. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   */
+  smoothedBonusCategoryIds: number[] | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -549,6 +559,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   locale: undefined,
   excludedIncomeCategoryIds: undefined,
   careerStartDate: undefined,
+  smoothedBonusCategoryIds: undefined,
 };
 
 class AppDb extends Dexie {

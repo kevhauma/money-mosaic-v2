@@ -25,6 +25,7 @@ import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
   DEFAULT_LOCALE,
+  formatCurrency,
   syncFormatSettings,
 } from '@/shared/utils';
 import { buildIncomeTrendChartOption, IncomeOverviewComponent } from './income-overview.component';
@@ -154,14 +155,16 @@ describe('IncomeOverviewComponent', () => {
     categories: Category[],
     excludedIncomeCategoryIds?: number[],
     careerStartDate?: string,
+    extra: { smoothedBonusCategoryIds?: number[]; transactions?: Transaction[] } = {},
   ): Promise<void> => {
     accountsRepository.getAll.mockResolvedValue([account]);
     categoriesRepository.getAll.mockResolvedValue(categories);
-    transactionsRepository.getAll.mockResolvedValue([payslip]);
+    transactionsRepository.getAll.mockResolvedValue(extra.transactions ?? [payslip]);
     appSettingsRepository.get.mockResolvedValue({
       id: 1,
       excludedIncomeCategoryIds,
       careerStartDate,
+      smoothedBonusCategoryIds: extra.smoothedBonusCategoryIds,
     } as AppSettings);
 
     await TestBed.configureTestingModule({
@@ -218,11 +221,10 @@ describe('IncomeOverviewComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Income');
   });
 
-  it('renders the chart panel and the category filter once a category is selected', async () => {
+  it('renders the chart panel once a category is selected', async () => {
     await setup([salary]);
 
     expect(fixture.nativeElement.querySelector('[echarts]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-income-category-filter')).not.toBeNull();
   });
 
   it('renders the yearly panel beneath the monthly chart (FR-INC-6, TICKET-INC-06)', async () => {
@@ -231,11 +233,17 @@ describe('IncomeOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('app-income-yearly-panel')).not.toBeNull();
   });
 
-  it('renders the career-start control in the page header (FR-INC-12, TICKET-INC-12)', async () => {
+  it('mounts every page setting behind the header’s settings popup (TICKET-INC-04)', async () => {
     await setup([salary]);
 
+    // Career start and the category filter used to sit in the header and beside the chart; both
+    // now live inside `app-income-settings`, and neither has a second mounting point.
     expect(
-      fixture.nativeElement.querySelector('mm-page-header app-income-career-start'),
+      fixture.nativeElement.querySelector('mm-page-header app-income-settings'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('app-income-career-start')).toHaveLength(1);
+    expect(
+      fixture.nativeElement.querySelector('app-income-settings app-income-career-start'),
     ).not.toBeNull();
   });
 
@@ -279,6 +287,64 @@ describe('IncomeOverviewComponent', () => {
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((key) => /^\d{4}-\d{2}$/.test(key))).toBe(true);
     expect(rows).toContain('2026-01');
+  });
+
+  describe('annual lump-sum smoothing (FR-INC-4, TICKET-INC-04)', () => {
+    const bonusCategory: Category = { ...salary, id: 2, name: 'Holiday bonus' };
+
+    const bonusDeposit: Transaction = {
+      ...payslip,
+      id: 2,
+      bookingDate: '2026-03-20',
+      amount: 800,
+      fingerprint: 'fp-2',
+      categoryId: 2,
+    };
+
+    /** Every monthly bucket's total, as rendered in the chart's companion table. */
+    const monthlyTotals = (): string[] =>
+      monthlyBucketRows('tbody td').map((cell) => cell.textContent?.trim() ?? '');
+
+    it('draws an unflagged bonus as the single-month spike it really was', async () => {
+      await setup([salary, bonusCategory], undefined, undefined, {
+        transactions: [payslip, bonusDeposit],
+      });
+
+      expect(monthlyTotals()[2]).toContain('800');
+    });
+
+    it('spreads a flagged bonus across the year instead of spiking one month', async () => {
+      await setup([salary, bonusCategory], undefined, undefined, {
+        transactions: [payslip, bonusDeposit],
+        smoothedBonusCategoryIds: [2],
+      });
+
+      const totals = monthlyTotals();
+
+      // History runs 2026-01 through today's month, so the 800 splits evenly across those buckets.
+      // March keeps only its share; February and the last month, previously empty, carry the rest.
+      const perMonth = 800 / totals.length;
+      expect(totals[2]).toBe(formatCurrency(perMonth));
+      expect(totals[1]).toBe(formatCurrency(perMonth));
+      expect(totals.at(-1)).toBe(formatCurrency(perMonth));
+      // Only January also holds real salary.
+      expect(totals[0]).toBe(formatCurrency(2000 + perMonth));
+    });
+
+    it('keeps the year’s total unchanged — smoothing redistributes, it never adds or removes income', async () => {
+      await setup([salary, bonusCategory], undefined, undefined, {
+        transactions: [payslip, bonusDeposit],
+        smoothedBonusCategoryIds: [2],
+      });
+
+      const total = monthlyTotals().reduce(
+        (sum, text) => sum + Number(text.replace(/[^0-9.-]/g, '')),
+        0,
+      );
+
+      // The two deposits, unchanged: 2000 salary + 800 bonus.
+      expect(total).toBeCloseTo(2800, 1);
+    });
   });
 
   it('falls back to the empty state when every income category is deselected', async () => {

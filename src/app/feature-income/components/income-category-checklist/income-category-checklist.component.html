@@ -1,0 +1,20 @@
+<mm-fieldset [legend]="legend()">
+  @if (hint(); as hint) {
+    <mm-label variant="fieldset">{{ hint }}</mm-label>
+  }
+
+  @for (category of categories(); track category.id) {
+    <mm-label as="label" class="justify-start gap-2">
+      <input
+        type="checkbox"
+        class="checkbox checkbox-sm"
+        [checked]="category.checked"
+        (change)="toggled.emit(category.id)"
+      />
+      <mm-badge size="xs" class="w-3 px-0" [style]="category.swatchStyle" aria-hidden="true" />
+      <mm-text variant="caption" color="base-content">{{ category.name }}</mm-text>
+    </mm-label>
+  } @empty {
+    <mm-text variant="caption">{{ emptyMessage() }}</mm-text>
+  }
+</mm-fieldset>

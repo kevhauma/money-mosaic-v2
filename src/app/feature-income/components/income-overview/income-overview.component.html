@@ -2,15 +2,12 @@
   title="Income"
   subtitle="How your income moves over time — by source, year over year, and against the noise."
 >
-  <app-income-career-start actions />
+  <app-income-settings actions />
 </mm-page-header>
 
 @if (hasSelectedCategories()) {
   <mm-paper class="mt-6">
-    <mm-flex align="center" justify="between" gap="2">
-      <h2 class="card-title text-base">Income by month</h2>
-      <app-income-category-filter />
-    </mm-flex>
+    <h2 class="card-title text-base">Income by month</h2>
 
     <div
       echarts
@@ -45,14 +42,10 @@
 
   <app-income-yearly-panel class="mt-6 block" />
 } @else {
-  <mm-flex justify="end" class="mt-6">
-    <app-income-category-filter />
-  </mm-flex>
-
   <mm-empty-state
-    class="mt-2"
+    class="mt-6"
     title="No income categories are counted yet"
-    message="Pick at least one income category above to see how your income moves over time. Categories with kind “income” show up here as soon as you add them."
+    message="Pick at least one income category under “Income settings” to see how your income moves over time. Categories with kind “income” show up there as soon as you add them."
   >
     <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
   </mm-empty-state>

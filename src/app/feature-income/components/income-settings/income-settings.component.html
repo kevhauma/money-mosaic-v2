@@ -1,0 +1,25 @@
+<mm-dropdown align="end" [menu]="false" contentClass="z-10 w-80 p-4">
+  <mm-button trigger variant="ghost" size="sm">Income settings ({{ summary() }})</mm-button>
+
+  <app-income-career-start />
+
+  <mm-divider class="my-1" />
+
+  <app-income-category-checklist
+    legend="Income categories"
+    hint="Which categories count toward your income growth."
+    emptyMessage="You have no income categories yet."
+    [categories]="countedCategories()"
+    (toggled)="toggleCounted($event)"
+  />
+
+  <mm-divider class="my-1" />
+
+  <app-income-category-checklist
+    legend="Annual lump sums"
+    hint="Spread these across their year instead of drawing one spike — a 13th month, vacation pay, a holiday bonus."
+    emptyMessage="Nothing to smooth: no income category is counted right now."
+    [categories]="smoothableCategories()"
+    (toggled)="toggleSmoothed($event)"
+  />
+</mm-dropdown>

@@ -5,6 +5,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import {
   computeIncomeCategorySeries,
+  smoothAnnualLumpSums,
   type CategorySeriesEntry,
   type ChartZoomWindow,
 } from '@/core/stats';
@@ -16,16 +17,10 @@ import {
   resolveChartAnimation,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
-import {
-  EmptyStateComponent,
-  FlexComponent,
-  PageHeaderComponent,
-  PaperComponent,
-} from '@/shared/ui';
+import { EmptyStateComponent, PageHeaderComponent, PaperComponent } from '@/shared/ui';
 import { formatCurrency, type Granularity } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
-import { IncomeCareerStartComponent } from '../income-career-start/income-career-start.component';
-import { IncomeCategoryFilterComponent } from '../income-category-filter/income-category-filter.component';
+import { IncomeSettingsComponent } from '../income-settings/income-settings.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
 
 /**
@@ -91,9 +86,7 @@ export const buildIncomeTrendChartOption = (
   selector: 'app-income-overview',
   imports: [
     EmptyStateComponent,
-    FlexComponent,
-    IncomeCareerStartComponent,
-    IncomeCategoryFilterComponent,
+    IncomeSettingsComponent,
     IncomeYearlyPanelComponent,
     NgIcon,
     NgxEchartsDirective,
@@ -117,16 +110,25 @@ export class IncomeOverviewComponent {
   /** The career-start-clamped span (FR-INC-12), which is the full data history until the user sets a date. */
   private readonly range = this.incomeStore.incomeRange;
 
+  /**
+   * The raw per-category series, then FR-INC-4's annual-lump-sum smoothing over it — a query-time
+   * wrapper, not a replacement, so the flag stays freely toggleable and no stored amount changes.
+   * Nothing is smoothed until the user marks a category in the settings popup.
+   */
   private readonly trend = computed(() =>
-    computeIncomeCategorySeries(
-      this.transactionsStore.transactions(),
-      this.categoriesStore.categoriesById(),
-      this.incomeStore.selectedIncomeCategoryIds(),
-      this.range().from,
-      this.range().to,
+    smoothAnnualLumpSums(
+      computeIncomeCategorySeries(
+        this.transactionsStore.transactions(),
+        this.categoriesStore.categoriesById(),
+        this.incomeStore.selectedIncomeCategoryIds(),
+        this.range().from,
+        this.range().to,
+        INCOME_GRANULARITY,
+        savingsAccountIbans(this.accountsStore.accounts()),
+        this.accountsStore.accountsById(),
+      ),
+      this.incomeStore.smoothedBonusCategoryIds(),
       INCOME_GRANULARITY,
-      savingsAccountIbans(this.accountsStore.accounts()),
-      this.accountsStore.accountsById(),
     ),
   );
 

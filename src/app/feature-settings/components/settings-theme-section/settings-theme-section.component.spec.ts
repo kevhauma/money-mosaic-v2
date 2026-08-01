@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { appDb } from '@/core/data-access';
+import { appDb, DEFAULT_APP_SETTINGS } from '@/core/data-access';
 import { AppSettingsStore } from '@/core/state';
 import { SettingsThemeSectionComponent } from './settings-theme-section.component';
 
@@ -48,15 +48,9 @@ describe('SettingsThemeSectionComponent', () => {
   });
 
   it('marks the currently-selected accent swatch as pressed', async () => {
-    await appDb.appSettings.put({
-      id: 1,
-      primaryColor: 'rose',
-      currencySymbol: undefined,
-      currencySymbolPosition: undefined,
-      locale: undefined,
-      excludedIncomeCategoryIds: undefined,
-      careerStartDate: undefined,
-    });
+    // Spread the defaults rather than enumerating every field — `AppSettings` grows an additive
+    // optional field most versions, and this test cares about exactly one of them.
+    await appDb.appSettings.put({ ...DEFAULT_APP_SETTINGS, primaryColor: 'rose' });
     const fixture = TestBed.createComponent(SettingsThemeSectionComponent);
     fixture.detectChanges();
     await TestBed.inject(AppSettingsStore).hydrate();

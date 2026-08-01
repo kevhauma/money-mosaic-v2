@@ -86,29 +86,75 @@ settings entry point instead of three scattered controls.
 
 ## Acceptance criteria
 
-- [ ] `smoothAnnualLumpSums()` preserves each year's category total exactly (sum of smoothed buckets
+**Implementation notes, 2026-08-01 — three deviations from the to-be above, recorded as built:**
+
+1. **`IncomeCategoryFilterComponent` was replaced, not re-mounted.** The to-be assumed it could be
+   composed "unchanged internally — only its mounting location moves", but that component *is* an
+   `mm-dropdown`, and a dropdown inside the settings popup's dropdown panel is broken markup and
+   broken UX. Its checkbox-row markup moved to a new presentational
+   `IncomeCategoryChecklistComponent` (`legend`/`categories`/`hint`/`emptyMessage` inputs, `toggled`
+   output — the `mm-granularity-picker` shape), which the popup renders **twice**: once for the
+   income-category selection, once for the annual-lump-sum list. That removes the duplicate
+   checklist markup section 3 would otherwise have needed. `IncomeCategoryFilterComponent` and its
+   folder are deleted; its spec's assertions live on in `income-settings.component.spec.ts`. The row
+   view-model moved to `feature-income/income-category-vm.ts` per the "shared vocabulary lives in a
+   feature-root module" convention.
+2. **`smoothedBonusCategoryIds` is stored as `undefined`, not `[]`, on a fresh row** — the tri-state
+   default every other `AppSettings` field uses (see `DEFAULT_APP_SETTINGS`'s own comment: a
+   concrete default would leak into every other setter's read-merge-put). The *observable* default
+   is what the criterion asks for: `IncomeStore.smoothedBonusCategoryIds()` reads `?? []`, so
+   nothing is smoothed until the user opts a category in.
+3. **`smoothAnnualLumpSums` also short-circuits when the flagged set is empty**, returning the input
+   object by reference — the overwhelmingly common case, and it keeps the chart's `computed()` from
+   rebuilding an identical series on every read. Not a behaviour change, just the same pass-through
+   the non-`month` granularities already take.
+
+- [x] `smoothAnnualLumpSums()` preserves each year's category total exactly (sum of smoothed buckets
       in a year ≈ sum of raw buckets in that year, within rounding) — unit test asserts this for a
-      category with an all-months-flat pattern plus one spike month.
-- [ ] Categories not in `smoothedBonusCategoryIds` pass through completely unchanged
-      (reference-equal `values` array, not just numerically equal) — unit test.
-- [ ] `granularity !== 'month'` returns the input series unchanged for every category, flagged or
-      not.
-- [ ] `smoothedBonusCategoryIds` defaults to `[]` for a fresh `appSettings` row — no category is
-      smoothed until the user opts one in via the popup.
-- [ ] Deselecting a category in the "income categories to include" section also removes it from
-      `smoothedBonusCategoryIds` if present; unit test.
-- [ ] `IncomeSettingsComponent` hosts all three sections (career start, income categories, bonus
+      category with an all-months-flat pattern plus one spike month. (Specs `preserves the flagged
+      category’s annual total exactly` and `preserves each year’s total independently rather than
+      averaging across the whole history` in
+      [annual-lump-sum-smoothing.spec.ts](../../../src/app/core/stats/annual-lump-sum-smoothing.spec.ts),
+      over exactly that fixture — flat 2000/month salary plus a 6000 June bonus.)
+- [x] Categories not in `smoothedBonusCategoryIds` pass through completely unchanged
+      (reference-equal `values` array, not just numerically equal) — unit test. (Spec `returns the
+      very same values array for a category that is not flagged` asserts with `toBe`, plus `never
+      smooths an uncategorised series, which has no id to flag`.)
+- [x] `granularity !== 'month'` returns the input series unchanged for every category, flagged or
+      not. (Spec `returns the input series unchanged at %s granularity`, `it.each` over
+      day/week/quarter/year with *both* categories flagged, asserting `toBe` on the input object.)
+- [x] `smoothedBonusCategoryIds` defaults to `[]` for a fresh `appSettings` row — no category is
+      smoothed until the user opts one in via the popup. (Store spec `is empty for a fresh
+      appSettings row — smoothing is opt-in, never a default`; component spec `starts with nothing
+      marked for smoothing`. Stored as `undefined` — see implementation note 2.)
+- [x] Deselecting a category in the "income categories to include" section also removes it from
+      `smoothedBonusCategoryIds` if present; unit test. (Store spec `deselecting a category from the
+      growth selection also drops it from the smoothing list`, plus its two negative cases: an
+      unmarked category writes nothing, and re-selecting never re-marks.)
+- [x] `IncomeSettingsComponent` hosts all three sections (career start, income categories, bonus
       categories to smooth out) behind one trigger button in the page header; the standalone
       `<app-income-category-filter />` next to the chart and the bare header career-start control
-      are both removed from `income-overview.component.html`.
-- [ ] `angular.json` bundle budgets not raised; no Dexie version bump (schema stays at whatever
-      TICKET-INC-10 lands it on).
-- [ ] A `smoothedBonusCategoryIds` value set before an export still round-trips through
-      data-management export → import intact.
+      are both removed from `income-overview.component.html`. (Component spec `hosts all three
+      settings sections behind one trigger`; overview spec `mounts every page setting behind the
+      header’s settings popup (TICKET-INC-04)` asserts exactly one `app-income-career-start`, nested
+      under `app-income-settings`. `app-income-category-filter` no longer exists anywhere in the
+      tree — see implementation note 1.)
+- [x] `angular.json` bundle budgets not raised; no Dexie version bump (schema stays at whatever
+      TICKET-INC-10 lands it on). (`git diff` touches neither `angular.json` nor any `.version(n)`
+      block; `smoothedBonusCategoryIds` is a non-indexed field on the existing `appSettings` row.)
+- [x] A `smoothedBonusCategoryIds` value set before an export still round-trips through
+      data-management export → import intact. (Spec `round-trips through export → import intact` in
+      [data-management.repository.spec.ts](../../../src/app/core/data-access/data-management.repository.spec.ts)
+      — writes all three non-indexed `appSettings` fields, exports, clears, re-imports in `replace`
+      mode, asserts all three come back.)
 - [ ] Verified live in the browser: open the Income settings popup, mark "Other Income" as a bonus
       category to smooth out, add a one-off bonus transaction, confirm the FR-INC-2 chart shows it
       spread across the year's months rather than a single spike; confirm the career-start and
-      category-filter controls still work identically from inside the popup.
+      category-filter controls still work identically from inside the popup. — **not done:** the
+      user waived live browser checks for this v1.6 batch. Covered instead by the overview spec's
+      `annual lump-sum smoothing (FR-INC-4, TICKET-INC-04)` block, which renders the real page with
+      a flagged bonus category and asserts the chart's companion table shows `800` split evenly
+      across every month instead of a single March spike.
 
 ## Notes
 

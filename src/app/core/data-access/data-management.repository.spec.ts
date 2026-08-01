@@ -87,6 +87,34 @@ describe('DataManagementRepository', () => {
     });
   });
 
+  describe('non-indexed appSettings fields', () => {
+    // `.stores()` declares indexes, not fields, and export/import moves whole rows — so an additive
+    // field like these needs no repository change. Asserted rather than assumed, because a
+    // round-trip that silently drops a setting looks exactly like the user never set it
+    // (TICKET-INC-03/TICKET-INC-04).
+    it('round-trips through export → import intact', async () => {
+      await appDb.appSettings.put({
+        id: 1,
+        primaryColor: undefined,
+        currencySymbol: undefined,
+        currencySymbolPosition: undefined,
+        locale: undefined,
+        excludedIncomeCategoryIds: [7],
+        careerStartDate: '2019-09-01',
+        smoothedBonusCategoryIds: [3, 5],
+      });
+
+      const exported = await repository.exportAll();
+      await appDb.appSettings.clear();
+      await repository.importAll(exported, 'replace');
+
+      const restored = await appDb.appSettings.get(1);
+      expect(restored?.smoothedBonusCategoryIds).toEqual([3, 5]);
+      expect(restored?.excludedIncomeCategoryIds).toEqual([7]);
+      expect(restored?.careerStartDate).toBe('2019-09-01');
+    });
+  });
+
   describe('importAll merge mode', () => {
     it('upserts imported rows without clearing pre-existing non-colliding rows', async () => {
       await appDb.accounts.clear();

@@ -77,10 +77,12 @@ const appSettingsRepository = {
   get: vi.fn(),
   setExcludedIncomeCategoryIds: vi.fn(),
   setCareerStartDate: vi.fn(),
+  setSmoothedBonusCategoryIds: vi.fn(),
 };
 
 type SetupOptions = {
   excludedIncomeCategoryIds?: number[];
+  smoothedBonusCategoryIds?: number[];
   careerStartDate?: string;
   accounts?: Account[];
   transactions?: Transaction[];
@@ -92,17 +94,25 @@ const setup = async (
   categories: Category[],
   options: SetupOptions = {},
 ): Promise<InstanceType<typeof IncomeStore>> => {
-  const { excludedIncomeCategoryIds, careerStartDate, accounts = [], transactions = [] } = options;
+  const {
+    excludedIncomeCategoryIds,
+    smoothedBonusCategoryIds,
+    careerStartDate,
+    accounts = [],
+    transactions = [],
+  } = options;
   categoriesRepository.getAll.mockResolvedValue(categories);
   accountsRepository.getAll.mockResolvedValue(accounts);
   transactionsRepository.getAll.mockResolvedValue(transactions);
   appSettingsRepository.get.mockResolvedValue({
     id: 1,
     excludedIncomeCategoryIds,
+    smoothedBonusCategoryIds,
     careerStartDate,
   } as AppSettings);
   appSettingsRepository.setExcludedIncomeCategoryIds.mockResolvedValue(1);
   appSettingsRepository.setCareerStartDate.mockResolvedValue(1);
+  appSettingsRepository.setSmoothedBonusCategoryIds.mockResolvedValue(1);
   TestBed.configureTestingModule({
     providers: [
       { provide: CategoriesRepository, useValue: categoriesRepository },
@@ -240,6 +250,76 @@ describe('IncomeStore: selectedIncomeCategoryIds (FR-INC-3, TICKET-INC-03)', () 
     expect(appSettingsRepository.setExcludedIncomeCategoryIds).toHaveBeenCalledExactlyOnceWith([
       2, 3,
     ]);
+  });
+});
+
+describe('IncomeStore: smoothedBonusCategoryIds (FR-INC-4, TICKET-INC-04)', () => {
+  const TWO_INCOME_CATEGORIES = [
+    category(1, 'Salary', 'income'),
+    category(2, 'Holiday bonus', 'income'),
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(restoreFormatSettings);
+
+  it('is empty for a fresh appSettings row — smoothing is opt-in, never a default', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES);
+
+    expect([...store.smoothedBonusCategoryIds()]).toEqual([]);
+  });
+
+  it('reads the persisted inclusion list', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { smoothedBonusCategoryIds: [2] });
+
+    expect([...store.smoothedBonusCategoryIds()]).toEqual([2]);
+  });
+
+  it('toggleSmoothedBonusCategory marks a category, persisting the list', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES);
+
+    await store.toggleSmoothedBonusCategory(2);
+
+    expect(appSettingsRepository.setSmoothedBonusCategoryIds).toHaveBeenCalledExactlyOnceWith([2]);
+    expect([...store.smoothedBonusCategoryIds()]).toEqual([2]);
+  });
+
+  it('toggleSmoothedBonusCategory unmarks a marked category', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { smoothedBonusCategoryIds: [1, 2] });
+
+    await store.toggleSmoothedBonusCategory(2);
+
+    expect(appSettingsRepository.setSmoothedBonusCategoryIds).toHaveBeenCalledExactlyOnceWith([1]);
+  });
+
+  it('deselecting a category from the growth selection also drops it from the smoothing list', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { smoothedBonusCategoryIds: [2] });
+
+    await store.toggleIncomeCategory(2);
+
+    expect(appSettingsRepository.setSmoothedBonusCategoryIds).toHaveBeenCalledExactlyOnceWith([]);
+    expect([...store.smoothedBonusCategoryIds()]).toEqual([]);
+    expect([...store.selectedIncomeCategoryIds()]).toEqual([1]);
+  });
+
+  it('leaves the smoothing list alone when the deselected category was never marked', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { smoothedBonusCategoryIds: [1] });
+
+    await store.toggleIncomeCategory(2);
+
+    expect(appSettingsRepository.setSmoothedBonusCategoryIds).not.toHaveBeenCalled();
+    expect([...store.smoothedBonusCategoryIds()]).toEqual([1]);
+  });
+
+  it('re-selecting a category does not re-mark it for smoothing', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { excludedIncomeCategoryIds: [2] });
+
+    await store.toggleIncomeCategory(2);
+
+    expect(appSettingsRepository.setSmoothedBonusCategoryIds).not.toHaveBeenCalled();
+    expect([...store.smoothedBonusCategoryIds()]).toEqual([]);
   });
 });
 

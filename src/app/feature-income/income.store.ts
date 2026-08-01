@@ -14,12 +14,13 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
  * State for the `/income` page (FR-INC-1, TICKET-INC-01).
  *
  * Mostly derived: every income figure v1.6 shows is a reading of `Transaction`/`Category` data the
- * entity stores in `@/core/state` already own (TICKET-SOLID-05 moved them there). Its one piece of
- * genuine state — which income categories count toward "my income growth" (FR-INC-3,
- * TICKET-INC-03) and where the user's career started (FR-INC-12, TICKET-INC-12) — is persisted on
- * the `appSettings` singleton rather than held here, so it survives a reload; this store only
- * projects it into the selected-id set and the clamped span the page's aggregates take. The
- * gross-wage entries (INC-10, through their own repository) are still to come.
+ * entity stores in `@/core/state` already own (TICKET-SOLID-05 moved them there). Its genuine
+ * state — which income categories count toward "my income growth" (FR-INC-3, TICKET-INC-03), which
+ * of those are an annual lump sum to smooth out (FR-INC-4, TICKET-INC-04), and where the user's
+ * career started (FR-INC-12, TICKET-INC-12) — is persisted on the `appSettings` singleton rather
+ * than held here, so it survives a reload; this store only projects it into the id sets and the
+ * clamped span the page's aggregates take. The gross-wage entries (INC-10, through their own
+ * repository) are still to come.
  */
 export const IncomeStore = signalStore(
   { providedIn: 'root' },
@@ -104,6 +105,17 @@ export const IncomeStore = signalStore(
             .filter((id) => !excluded.has(id)),
         );
       }),
+
+      /**
+       * The income categories the user has marked as an annual lump sum (FR-INC-4) — an
+       * *inclusion* list, unlike the exclusion list above: smoothing is opt-in per category, so an
+       * unset field means nothing is smoothed. `toggleIncomeCategory` prunes this list when a
+       * category leaves the growth selection, so an id in here is always one the settings popup
+       * still shows.
+       */
+      smoothedBonusCategoryIds: computed(
+        () => new Set(appSettingsStore.smoothedBonusCategoryIds() ?? []),
+      ),
     };
   }),
   withMethods((store) => {
@@ -115,12 +127,31 @@ export const IncomeStore = signalStore(
        * list back through `AppSettingsStore` (which persists it), keeping ids for categories that
        * aren't currently active — archiving and un-archiving a deselected category shouldn't
        * silently re-select it.
+       *
+       * Deselecting also drops the category from the smoothing list (FR-INC-4): the settings popup
+       * only offers smoothing for categories that count toward income, so a lingering id would be a
+       * setting the user can no longer see, let alone turn off.
        */
-      toggleIncomeCategory: (categoryId: number): Promise<void> => {
+      toggleIncomeCategory: async (categoryId: number): Promise<void> => {
         const excluded = new Set(appSettingsStore.excludedIncomeCategoryIds() ?? []);
-        if (store.selectedIncomeCategoryIds().has(categoryId)) excluded.add(categoryId);
+        const deselecting = store.selectedIncomeCategoryIds().has(categoryId);
+        if (deselecting) excluded.add(categoryId);
         else excluded.delete(categoryId);
-        return appSettingsStore.setExcludedIncomeCategoryIds([...excluded]);
+
+        if (deselecting && store.smoothedBonusCategoryIds().has(categoryId)) {
+          const smoothed = new Set(store.smoothedBonusCategoryIds());
+          smoothed.delete(categoryId);
+          await appSettingsStore.setSmoothedBonusCategoryIds([...smoothed]);
+        }
+        await appSettingsStore.setExcludedIncomeCategoryIds([...excluded]);
+      },
+
+      /** Flips one income category's annual-lump-sum smoothing (FR-INC-4), persisting the inclusion list. */
+      toggleSmoothedBonusCategory: (categoryId: number): Promise<void> => {
+        const smoothed = new Set(store.smoothedBonusCategoryIds());
+        if (smoothed.has(categoryId)) smoothed.delete(categoryId);
+        else smoothed.add(categoryId);
+        return appSettingsStore.setSmoothedBonusCategoryIds([...smoothed]);
       },
 
       /**

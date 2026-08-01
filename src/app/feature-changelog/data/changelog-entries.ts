@@ -397,4 +397,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The yearly income panel can now answer “how has my income changed over the last 3 or 5 years, or ever” with a single headline figure, instead of only comparing each year to the one before it',
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-04'],
+    title:
+      'Every Income page setting now sits behind one “Income settings” button, and you can mark a category as an annual lump sum — a 13th month or holiday bonus spreads across its year instead of drawing one spike on the chart',
+    area: 'Income',
+  },
 ];

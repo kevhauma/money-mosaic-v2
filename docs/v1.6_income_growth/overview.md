@@ -83,7 +83,7 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
 - [x] [TICKET-INC-06](./tickets/TICKET-INC-06-yearly-income-view.md) — Yearly income view, one bar per calendar year (adds FR-INC-6) — independent of INC-02's monthly series, can run in parallel with it
 - [x] [TICKET-INC-12](./tickets/TICKET-INC-12-career-start-date.md) — Career start date filters the Income page from where your working life started, not where the data does
 - [x] [TICKET-INC-07](./tickets/TICKET-INC-07-multi-year-income-comparison.md) — Multi-year income comparison (adds FR-INC-7) — needs INC-06's per-year output
-- [ ] [TICKET-INC-04](./tickets/TICKET-INC-04-annual-lump-sum-smoothing.md) — Annual lump-sum smoothing for a category, plus the consolidated Income settings popup (adds FR-INC-4) — needs INC-02/03/12, rewrites the series INC-02 renders
+- [x] [TICKET-INC-04](./tickets/TICKET-INC-04-annual-lump-sum-smoothing.md) — Annual lump-sum smoothing for a category, plus the consolidated Income settings popup (adds FR-INC-4) — needs INC-02/03/12, rewrites the series INC-02 renders
 - [ ] [TICKET-INC-05](./tickets/TICKET-INC-05-income-growth-rate-panel.md) — Income growth-rate panel, period-over-period and YoY (adds FR-INC-5) — needs INC-02 + INC-04
 - [ ] [TICKET-INC-08](./tickets/TICKET-INC-08-raise-pay-cut-step-change-detection.md) — Raise/pay-cut step-change detection (adds FR-INC-8) — needs INC-04's smoothed series
 - [ ] [TICKET-INC-09](./tickets/TICKET-INC-09-lost-income-stream-warning.md) — Lost income stream warning (adds FR-INC-9) — only needs INC-02's raw series, can slot in any time after it

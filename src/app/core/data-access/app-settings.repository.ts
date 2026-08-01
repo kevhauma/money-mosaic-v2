@@ -42,4 +42,9 @@ export class AppSettingsRepository {
     const current = await this.get();
     return appDb.appSettings.put({ ...current, id: 1, careerStartDate });
   };
+
+  setSmoothedBonusCategoryIds = async (smoothedBonusCategoryIds: number[]): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, smoothedBonusCategoryIds });
+  };
 }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { appDb } from '@/core/data-access';
+import { appDb, DEFAULT_APP_SETTINGS } from '@/core/data-access';
 import { AppSettingsStore } from '@/core/state';
 import {
   DEFAULT_CURRENCY_SYMBOL,
@@ -101,15 +101,9 @@ describe('SettingsCurrencyLocaleSectionComponent', () => {
   });
 
   it('reflects a hydrated locale in both the select and the currency preview', async () => {
-    await appDb.appSettings.put({
-      id: 1,
-      primaryColor: undefined,
-      currencySymbol: undefined,
-      currencySymbolPosition: undefined,
-      locale: 'en-BE',
-      excludedIncomeCategoryIds: undefined,
-      careerStartDate: undefined,
-    });
+    // Spread the defaults rather than enumerating every field — `AppSettings` grows an additive
+    // optional field most versions, and this test cares about exactly one of them.
+    await appDb.appSettings.put({ ...DEFAULT_APP_SETTINGS, locale: 'en-BE' });
     const fixture = TestBed.createComponent(SettingsCurrencyLocaleSectionComponent);
     fixture.detectChanges();
     await TestBed.inject(AppSettingsStore).hydrate();

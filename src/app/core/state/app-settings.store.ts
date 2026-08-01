@@ -60,6 +60,11 @@ export const AppSettingsStore = signalStore(
         await appSettingsRepository.setCareerStartDate(careerStartDate);
         patchState(store, { careerStartDate });
       },
+
+      setSmoothedBonusCategoryIds: async (smoothedBonusCategoryIds: number[]): Promise<void> => {
+        await appSettingsRepository.setSmoothedBonusCategoryIds(smoothedBonusCategoryIds);
+        patchState(store, { smoothedBonusCategoryIds });
+      },
     };
   }),
   withHooks({
