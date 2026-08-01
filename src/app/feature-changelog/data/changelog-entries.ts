@@ -413,4 +413,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The Income page now shows how your last complete month compares to the month before it and to the same month a year ago, so you can tell real growth from one good month',
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-08'],
+    title:
+      'The Income page now calls out a raise or a pay cut — when a category’s typical monthly amount shifts and stays shifted, you get a notice instead of having to spot it in the chart',
+    area: 'Income',
+  },
 ];

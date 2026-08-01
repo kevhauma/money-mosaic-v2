@@ -15,6 +15,7 @@ import { formatCurrency } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth-panel.component';
 import { IncomeSettingsComponent } from '../income-settings/income-settings.component';
+import { IncomeStepChangesComponent } from '../income-step-changes/income-step-changes.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
 
 export type IncomeTrendAccessibleRow = { bucketKey: string; total: string };
@@ -71,6 +72,7 @@ export const buildIncomeTrendChartOption = (
     EmptyStateComponent,
     IncomeGrowthPanelComponent,
     IncomeSettingsComponent,
+    IncomeStepChangesComponent,
     IncomeYearlyPanelComponent,
     NgIcon,
     NgxEchartsDirective,
