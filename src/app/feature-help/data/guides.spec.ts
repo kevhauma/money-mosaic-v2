@@ -62,6 +62,23 @@ describe('GUIDES: the Income onboarding pair (TICKET-PUB-07)', () => {
     expect(first.description).toContain('Setting up categorisation rules');
   });
 
+  it('spells out both ways to record an annual lump sum, and when each applies', () => {
+    // The quick-setup step is what the first-visit intro shows, and this is the part a first-timer
+    // gets wrong: they look for their bonus category, don't have one because payroll bundles it
+    // into the salary deposit, and conclude the feature doesn't apply to them.
+    const [, , third] = gettingStarted().steps;
+
+    expect(third.description).toContain('two ways to record one');
+    // Route 1 — its own category, ticked on the settings page.
+    expect(third.description).toContain('its own transaction in its own category');
+    expect(third.description).toContain('tick that category under "Annual lump sums"');
+    // Route 2 — no category to tick, so it goes on the month itself.
+    expect(third.description).toContain('paid inside your regular salary deposit');
+    expect(third.description).toContain('Bonus column');
+    // …and that the two are equivalent, so the reader doesn't hunt for a difference.
+    expect(third.description).toContain('Both do the same thing');
+  });
+
   it('lists the three empty-page causes with a fix for each', () => {
     const step = gettingStarted().steps.find((entry) => entry.title.includes('still looks empty'));
 

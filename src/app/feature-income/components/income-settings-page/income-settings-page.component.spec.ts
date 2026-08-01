@@ -142,6 +142,22 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
       expect(text).toContain('it changes no figure anywhere');
     });
 
+    it('spells out both ways to record an annual lump sum, beside the control itself', async () => {
+      await setup([category(1, 'Salary', 'income')]);
+
+      const text = fixture.nativeElement.textContent as string;
+
+      // The same two routes the getting-started guide's third step gives. Repeated here on purpose:
+      // a first-timer looks for their bonus category, doesn't have one because payroll bundles it
+      // into the salary deposit, and concludes the feature doesn't apply to them.
+      expect(text).toContain('There are two ways to record one');
+      expect(text).toContain('its own transaction, in its own category');
+      expect(text).toContain('Tick that category in the list below');
+      expect(text).toContain('paid inside your regular salary deposit');
+      expect(text).toContain('type the bonus part into its Bonus column');
+      expect(text).toContain('Both do the same thing to the charts');
+    });
+
     it('shows the onboarding hand-off banner only when arrived from the intro (TICKET-PUB-08)', async () => {
       await setup([category(1, 'Salary', 'income')]);
 

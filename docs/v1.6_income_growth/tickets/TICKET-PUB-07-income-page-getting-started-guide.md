@@ -126,6 +126,17 @@ re-typed into a component template, so the three surfaces cannot drift.
 - [x] Guide content stays static and hand-written in `guides.ts` — no new data source, no runtime fetch, no
       new route; consistent with TICKET-PUB-02. No step text is duplicated into a component template.
       (`git diff` adds one spec and edits one data file; no component template gained guide prose.)
+      **Amended 2026-08-01, at the user's request:** the annual-lump-sum explanation — that a lump sum can
+      be recorded *either* as a whole category *or* per month on the salary details — is now stated in
+      **both** the guide's third step and the settings page's own section. That is depth 1 and depth 2 of
+      this ticket's own content architecture covering the same fact, not a copy of the step text: the
+      settings-page version is written for a reader looking straight at the control ("the list below",
+      numbered routes) and shares no sentence with the guide's. Repeated rather than cross-linked because
+      it is the specific thing a first-timer gets wrong — they look for their bonus category, don't have
+      one because payroll bundles it into the salary deposit, and conclude the feature isn't for them.
+      Both copies are pinned by spec (`guides.spec.ts` → "spells out both ways to record an annual lump
+      sum, and when each applies"; `income-settings-page.component.spec.ts` → "spells out both ways to
+      record an annual lump sum, beside the control itself").
 - [x] No persistence changes, no Dexie version bump. (`git diff` touches no `app-db.ts` and no repository.)
 - [x] `angular.json` bundle budgets not raised. (`git diff` touches no `angular.json`;
       `ng build --configuration development` completes with no budget warning.)
