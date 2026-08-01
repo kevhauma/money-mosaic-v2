@@ -133,7 +133,10 @@ describe('SalaryMetadataTableComponent (FR-INC-10, TICKET-INC-10)', () => {
     // 2026 runs January–March on the pinned clock; 2025 is a full twelve.
     expect(rowsIn(0)).toHaveLength(3);
     expect(rowsIn(1)).toHaveLength(12);
-    expect(rowsIn(0)[0].textContent).toContain('January 2026');
+    // Newest first, matching the year sections above them.
+    expect(rowsIn(0)[0].textContent).toContain('March 2026');
+    expect(rowsIn(0)[2].textContent).toContain('January 2026');
+    expect(rowsIn(1)[0].textContent).toContain('December 2025');
   });
 
   it('expands the current year and leaves every other year collapsed', async () => {

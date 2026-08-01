@@ -37,7 +37,9 @@ export const monthLabel = (yearMonth: string): string => {
 };
 
 /**
- * Turns the income page's months into editable rows, newest year first (TICKET-INC-10).
+ * Turns the income page's months into editable rows, newest first (TICKET-INC-10) — December before
+ * January inside a year, matching the newest-first order of the year sections themselves. The month
+ * a user came to fill in is almost always a recent one, so it sits at the top of both lists.
  *
  * **Every month in range gets a row**, whether or not it has a stored entry — a blank row is the
  * normal state for most months, and typing into one is what creates the entry. Driving the table
@@ -62,8 +64,9 @@ export const buildSalaryMetadataSections = (
     byYear.set(year, rows);
   }
 
-  // Newest year first: the month a user came to fill in is almost always a recent one.
+  // Newest first at both levels — years descending, and months descending inside each year, so the
+  // rows read in one consistent direction rather than reversing halfway down.
   return [...byYear.entries()]
-    .map(([year, rows]) => ({ year, rows }))
+    .map(([year, rows]) => ({ year, rows: [...rows].reverse() }))
     .sort((a, b) => b.year.localeCompare(a.year));
 };

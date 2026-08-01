@@ -22,7 +22,7 @@ describe('buildSalaryMetadataSections (FR-INC-10, TICKET-INC-10)', () => {
     );
 
     expect(sections).toHaveLength(1);
-    expect(sections[0].rows.map((row) => row.yearMonth)).toEqual(['2026-01', '2026-02', '2026-03']);
+    expect(sections[0].rows.map((row) => row.yearMonth)).toEqual(['2026-03', '2026-02', '2026-01']);
     expect(sections[0].rows.every((row) => row.grossWage === null && row.bonus === null)).toBe(
       true,
     );
@@ -35,8 +35,9 @@ describe('buildSalaryMetadataSections (FR-INC-10, TICKET-INC-10)', () => {
 
     const [{ rows }] = buildSalaryMetadataSections(months('2026-01', '2026-02'), byMonth);
 
-    expect(rows[1]).toMatchObject({ grossWage: 3500, bonus: 900 });
-    expect(rows[0]).toMatchObject({ grossWage: null, bonus: null });
+    // Months run newest first, so February is the first row.
+    expect(rows[0]).toMatchObject({ yearMonth: '2026-02', grossWage: 3500, bonus: 900 });
+    expect(rows[1]).toMatchObject({ yearMonth: '2026-01', grossWage: null, bonus: null });
   });
 
   it('leaves a field null when only the other one is stored', () => {
@@ -60,16 +61,16 @@ describe('buildSalaryMetadataSections (FR-INC-10, TICKET-INC-10)', () => {
     expect(sections[2].rows).toHaveLength(2);
   });
 
-  it('keeps months ascending within a year', () => {
+  it('runs months newest first within a year, the same direction as the year sections', () => {
     const sections = buildSalaryMetadataSections(
       months('2025-01', '2025-06', '2025-12'),
       new Map(),
     );
 
     expect(sections[0].rows.map((row) => row.label)).toEqual([
-      'January 2025',
-      'June 2025',
       'December 2025',
+      'June 2025',
+      'January 2025',
     ]);
   });
 
