@@ -23,49 +23,56 @@
 </mm-modal>
 
 @if (hasSelectedCategories()) {
-  <app-income-step-changes class="block" />
-  <app-income-gap-warnings class="block" />
+  <!-- Two columns from `lg:` (TICKET-INC-17): charts in the main column, the events rail beside
+       them, so events never push the charts down on a wide screen. Below `lg:` the rail stacks
+       under the charts, which is why it comes second in the DOM. `min-w-0` on the charts column
+       stops a wide chart from forcing the grid past the viewport. -->
+  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0">
+      <mm-paper>
+        <h2 class="card-title text-base">Income by month</h2>
 
-  <mm-paper class="mt-6">
-    <h2 class="card-title text-base">Income by month</h2>
+        <div
+          echarts
+          [options]="chartOption()"
+          class="h-80 w-full"
+          role="img"
+          [attr.aria-label]="chartAriaLabel()"
+          (chartClick)="onChartClick($event)"
+        ></div>
 
-    <div
-      echarts
-      [options]="chartOption()"
-      class="h-80 w-full"
-      role="img"
-      [attr.aria-label]="chartAriaLabel()"
-      (chartClick)="onChartClick($event)"
-    ></div>
+        <!-- Screen-reader-only companion table for the chart above — not a visible data table, so
+             it skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
+        <table class="sr-only">
+          <caption>
+            Total income per period, underlying the chart above
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Period</th>
+              <th scope="col">Income</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of accessibleRows(); track row.bucketKey) {
+              <tr>
+                <th scope="row">{{ row.bucketKey }}</th>
+                <td>{{ row.total }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </mm-paper>
 
-    <!-- Screen-reader-only companion table for the chart above — not a visible data table, so it
-         skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
-    <table class="sr-only">
-      <caption>
-        Total income per period, underlying the chart above
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col">Period</th>
-          <th scope="col">Income</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of accessibleRows(); track row.bucketKey) {
-          <tr>
-            <th scope="row">{{ row.bucketKey }}</th>
-            <td>{{ row.total }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </mm-paper>
+      <app-income-growth-panel class="mt-6 block" />
 
-  <app-income-growth-panel class="mt-6 block" />
+      <app-income-gross-net-section class="mt-6 block" />
 
-  <app-income-gross-net-section class="mt-6 block" />
+      <app-income-yearly-panel class="mt-6 block" />
+    </div>
 
-  <app-income-yearly-panel class="mt-6 block" />
+    <app-income-events-sidebar class="block" />
+  </div>
 } @else {
   <mm-empty-state
     class="mt-6"

@@ -213,13 +213,16 @@ describe('IncomeOverviewComponent', () => {
   };
 
   /**
-   * The monthly chart's own visually-hidden mirror table. Scoped with `:scope >` on purpose: the
-   * yearly panel (TICKET-INC-06) renders a `table.sr-only` of its own, so an unscoped
-   * `table.sr-only` query would silently mix that panel's `YYYY` rows into these monthly-bucket
-   * assertions.
+   * The monthly chart's own visually-hidden mirror table. Tightly scoped on purpose: the yearly
+   * panel (TICKET-INC-06) and the "Net vs gross" section's four cells (TICKET-INC-16) each render
+   * a `table.sr-only` of their own, so an unscoped query would silently mix their rows into these
+   * monthly-bucket assertions. The path is the page's two-column grid (TICKET-INC-17) → the charts
+   * column → the chart's own `mm-paper`, which is that column's only direct `mm-paper` child.
    */
   const monthlyBucketRows = (selector: string): HTMLElement[] => [
-    ...fixture.nativeElement.querySelectorAll(`:scope > mm-paper table.sr-only ${selector}`),
+    ...fixture.nativeElement.querySelectorAll(
+      `:scope > div > div > mm-paper:first-of-type table.sr-only ${selector}`,
+    ),
   ];
 
   beforeEach(() => {

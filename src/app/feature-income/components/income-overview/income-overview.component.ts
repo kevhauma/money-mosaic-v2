@@ -19,11 +19,10 @@ import {
 } from '@/shared/ui';
 import { formatCurrency } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
-import { IncomeGapWarningsComponent } from '../income-gap-warnings/income-gap-warnings.component';
+import { IncomeEventsSidebarComponent } from '../income-events-sidebar/income-events-sidebar.component';
 import { IncomeGrossNetSectionComponent } from '../income-gross-net-section/income-gross-net-section.component';
 import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth-panel.component';
 import { IncomeSettingsComponent } from '../income-settings/income-settings.component';
-import { IncomeStepChangesComponent } from '../income-step-changes/income-step-changes.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
 import { SalaryMetadataTableComponent } from '../salary-metadata-table/salary-metadata-table.component';
 
@@ -90,11 +89,10 @@ export const buildIncomeTrendChartOption = (
   imports: [
     ButtonComponent,
     EmptyStateComponent,
-    IncomeGapWarningsComponent,
+    IncomeEventsSidebarComponent,
     IncomeGrossNetSectionComponent,
     IncomeGrowthPanelComponent,
     IncomeSettingsComponent,
-    IncomeStepChangesComponent,
     IncomeYearlyPanelComponent,
     MmModalComponent,
     NgIcon,

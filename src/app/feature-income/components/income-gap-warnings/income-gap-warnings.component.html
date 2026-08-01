@@ -1,9 +1,0 @@
-@if (warnings().length > 0) {
-  <!-- Wrapped rather than margined per-alert so nothing at all — not even a stray gap — renders
-       when every income stream is still arriving. -->
-  <div class="mt-6 space-y-2">
-    @for (warning of warnings(); track warning.key) {
-      <mm-alert status="warning" variant="soft">{{ warning.message }}</mm-alert>
-    }
-  </div>
-}

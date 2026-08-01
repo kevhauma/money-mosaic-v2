@@ -1,0 +1,47 @@
+<mm-paper>
+  <!-- A labelled region rather than a bare column, so the rail is reachable as a landmark and its
+       heading names it when jumped to. -->
+  <section aria-labelledby="income-events-heading">
+    <h2 id="income-events-heading" class="card-title text-base">Events</h2>
+
+    @if (hasEvents()) {
+      <mm-text variant="caption" as="p">
+        Every raise, bonus and stream that went quiet, newest first.
+      </mm-text>
+
+      <!-- Its own scroll region, so a long history doesn't stretch the page next to the charts. -->
+      <div class="mt-3 max-h-[32rem] overflow-y-auto pr-1">
+        @for (year of years(); track year.year) {
+          <mm-text as="h3" weight="semibold" class="mt-3 text-sm first:mt-0">{{
+            year.year
+          }}</mm-text>
+
+          <ol class="mt-1 space-y-3">
+            @for (event of year.events; track event.key) {
+              <li class="flex gap-2">
+                <ng-icon
+                  [name]="event.icon"
+                  size="18"
+                  class="mt-0.5 shrink-0"
+                  [class]="event.toneClass"
+                  aria-hidden="true"
+                />
+                <span class="min-w-0">
+                  <mm-text as="span" variant="caption" color="base-content" class="block">{{
+                    event.message
+                  }}</mm-text>
+                  <mm-text as="span" variant="caption" class="block">{{ event.when }}</mm-text>
+                </span>
+              </li>
+            }
+          </ol>
+        }
+      </div>
+    } @else {
+      <mm-text variant="caption" as="p">
+        No notable changes detected yet — raises, bonuses and streams that stop showing up will
+        appear here.
+      </mm-text>
+    }
+  </section>
+</mm-paper>

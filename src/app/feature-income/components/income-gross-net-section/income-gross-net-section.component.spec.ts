@@ -181,7 +181,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       ]);
     });
 
-    it('is one column on narrow screens and two from md:', async () => {
+    it('is one column when its column is narrow and two when it is wide', async () => {
       await setup(
         [payslip(1, '2026-01-25', 2160)],
         [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
@@ -190,7 +190,10 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       const grid = cells()[0].closest('.grid');
 
       expect(grid?.classList.contains('grid-cols-1')).toBe(true);
-      expect(grid?.classList.contains('md:grid-cols-2')).toBe(true);
+      // A *container* query, not a viewport one (TICKET-INC-17): from `lg:` this section shares the
+      // page with the events rail, so its own width is what decides whether two cells fit.
+      expect(grid?.classList.contains('@2xl:grid-cols-2')).toBe(true);
+      expect(grid?.parentElement?.classList.contains('@container')).toBe(true);
     });
 
     it('sizes each cell from its grid track rather than a fixed width', async () => {

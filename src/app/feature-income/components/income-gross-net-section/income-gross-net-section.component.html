@@ -8,42 +8,48 @@
       gross wage entered breaks the gross line.
     </mm-text>
 
-    <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
-      <app-income-chart-cell
-        heading="Gross and net per month"
-        ariaLabel="Gross wage and net income per month; table with values follows"
-        caption="Gross wage and net income per month, underlying the chart above"
-        [option]="absoluteOption()"
-        [columnHeaders]="['Month', 'Net', 'Gross']"
-        [rows]="absoluteRows()"
-      />
+    <!-- A *container* query, not a viewport one (TICKET-INC-17): from `lg:` this section sits in the
+         page's charts column beside the events rail, so what decides whether two cells fit is this
+         card's own width, not the window's. Falls back to one column whenever the column is narrow,
+         which is exactly the check that ticket's Notes asked for. -->
+    <div class="@container mt-4">
+      <div class="grid grid-cols-1 gap-6 @2xl:grid-cols-2">
+        <app-income-chart-cell
+          heading="Gross and net per month"
+          ariaLabel="Gross wage and net income per month; table with values follows"
+          caption="Gross wage and net income per month, underlying the chart above"
+          [option]="absoluteOption()"
+          [columnHeaders]="['Month', 'Net', 'Gross']"
+          [rows]="absoluteRows()"
+        />
 
-      <app-income-chart-cell
-        heading="Take-home rate"
-        ariaLabel="Take-home rate per month as a share of gross pay; table with values follows"
-        caption="Net income against gross wage per month, underlying the chart above"
-        [option]="takeHomeOption()"
-        [columnHeaders]="['Month', 'Net', 'Gross', 'Take-home rate']"
-        [rows]="takeHomeRows()"
-      />
+        <app-income-chart-cell
+          heading="Take-home rate"
+          ariaLabel="Take-home rate per month as a share of gross pay; table with values follows"
+          caption="Net income against gross wage per month, underlying the chart above"
+          [option]="takeHomeOption()"
+          [columnHeaders]="['Month', 'Net', 'Gross', 'Take-home rate']"
+          [rows]="takeHomeRows()"
+        />
 
-      <app-income-chart-cell
-        heading="Change since your first recorded month, in %"
-        ariaLabel="Percentage change in gross and net since the first month both were known; table with values follows"
-        caption="Percentage change in gross wage and net income since the first month both were known"
-        [option]="pctFromStartOption()"
-        [columnHeaders]="['Month', 'Net', 'Gross']"
-        [rows]="pctFromStartRows()"
-      />
+        <app-income-chart-cell
+          heading="Change since your first recorded month, in %"
+          ariaLabel="Percentage change in gross and net since the first month both were known; table with values follows"
+          caption="Percentage change in gross wage and net income since the first month both were known"
+          [option]="pctFromStartOption()"
+          [columnHeaders]="['Month', 'Net', 'Gross']"
+          [rows]="pctFromStartRows()"
+        />
 
-      <app-income-chart-cell
-        heading="Change since your first recorded month"
-        ariaLabel="Change in gross and net since the first month both were known; table with values follows"
-        caption="Change in gross wage and net income since the first month both were known"
-        [option]="fromStartOption()"
-        [columnHeaders]="['Month', 'Net', 'Gross']"
-        [rows]="fromStartRows()"
-      />
+        <app-income-chart-cell
+          heading="Change since your first recorded month"
+          ariaLabel="Change in gross and net since the first month both were known; table with values follows"
+          caption="Change in gross wage and net income since the first month both were known"
+          [option]="fromStartOption()"
+          [columnHeaders]="['Month', 'Net', 'Gross']"
+          [rows]="fromStartRows()"
+        />
+      </div>
     </div>
   } @else {
     <mm-text variant="caption" as="p">

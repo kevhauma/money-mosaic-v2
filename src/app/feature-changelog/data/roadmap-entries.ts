@@ -53,12 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-INC-17',
-    title: 'An Events sidebar listing raises, bonuses and stopped income streams by year',
-    area: 'Income',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'TICKET-INC-18',
     title:
       'Income settings and Salary details as their own pages, with room to explain each control',
