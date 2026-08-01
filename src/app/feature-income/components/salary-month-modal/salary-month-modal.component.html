@@ -1,0 +1,38 @@
+<mm-text variant="caption" as="p">
+  Your bank export only records what landed in your account for {{ label() }}. Fill in what you
+  earned before deductions to see your take-home rate for this month.
+</mm-text>
+
+<div class="mt-4 flex flex-wrap gap-4">
+  <mm-label as="label" class="flex-col items-start gap-1">
+    <span class="text-sm">Gross wage</span>
+    <mm-input
+      type="number"
+      step="0.01"
+      class="w-40"
+      [ariaLabel]="'Gross wage, ' + label()"
+      [formControl]="grossWageControl"
+      (blurred)="persist()"
+    />
+  </mm-label>
+
+  <mm-label as="label" class="flex-col items-start gap-1">
+    <span class="text-sm">Bonus</span>
+    <mm-input
+      type="number"
+      step="0.01"
+      class="w-40"
+      [ariaLabel]="'Bonus, ' + label()"
+      [formControl]="bonusControl"
+      (blurred)="persist()"
+    />
+  </mm-label>
+</div>
+
+<mm-text variant="caption" as="p" class="mt-2">{{ bonusHint }}</mm-text>
+
+<div class="mt-4">
+  <mm-button variant="ghost" size="sm" link="/income/salary">
+    Edit every month on the Salary details page
+  </mm-button>
+</div>

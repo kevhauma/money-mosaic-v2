@@ -1,0 +1,38 @@
+<mm-page-header
+  title="Salary details"
+  subtitle="Gross pay and embedded bonuses, month by month — the one thing your bank export can't tell us."
+>
+  <mm-button actions variant="ghost" size="sm" link="/income">Back to income</mm-button>
+</mm-page-header>
+
+<mm-paper>
+  <mm-text variant="caption" as="p">
+    A bank CSV only ever records what <em>landed</em> in your account. Your gross wage — what you
+    earned before tax and social contributions — never appears in it, which is why this is the one
+    place on the Income page where you type rather than configure.
+  </mm-text>
+  <mm-text variant="caption" as="p" class="mt-2">
+    <strong>Gross wage</strong> is that month's full pay before deductions. Filling it in unlocks
+    the "Net vs gross" section: what share of your gross actually reached your account, and whether
+    your raises are passing through or being eaten by a rising deduction rate. Months you leave
+    empty simply leave a gap there — an unanswered month is not a zero.
+  </mm-text>
+  <mm-text variant="caption" as="p" class="mt-2">
+    <strong>Bonus</strong> is the part of that month's deposit that was a 13th month, vacation or
+    holiday pay rather than regular wage. Recording it does two things: it's subtracted before your
+    take-home rate is worked out, so a bonus month can't read as a take-home rate you never had; and
+    it's spread across its year on the income chart, so the spike you already explained stops being
+    drawn as one. Use this when the bonus arrives inside your normal salary deposit — if it has its
+    own category, tick that category under Income settings instead.
+  </mm-text>
+  <mm-text variant="caption" as="p" class="mt-2">
+    Nothing here needs saving: leaving a cell writes it. Clearing both of a month's cells removes
+    that month again — an amount of 0 is a real claim, and different from having said nothing.
+  </mm-text>
+</mm-paper>
+
+<mm-paper class="mt-6">
+  <!-- No focus month: this page is the "fill in several years" surface, and the one-month question
+       a chart click asks is answered by its own modal without leaving the chart (TICKET-INC-18). -->
+  <app-salary-metadata-table />
+</mm-paper>

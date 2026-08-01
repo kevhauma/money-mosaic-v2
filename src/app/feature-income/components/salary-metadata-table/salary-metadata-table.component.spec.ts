@@ -42,10 +42,7 @@ describe('SalaryMetadataTableComponent (FR-INC-10, TICKET-INC-10)', () => {
     archived: false,
   };
 
-  const setup = async (
-    salaryMetadata: SalaryMetadata[] = [],
-    focusMonth?: string,
-  ): Promise<void> => {
+  const setup = async (salaryMetadata: SalaryMetadata[] = []): Promise<void> => {
     accountsRepository.getAll.mockResolvedValue([account]);
     categoriesRepository.getAll.mockResolvedValue([]);
     transactionsRepository.getAll.mockResolvedValue([]);
@@ -76,7 +73,6 @@ describe('SalaryMetadataTableComponent (FR-INC-10, TICKET-INC-10)', () => {
     ]);
 
     fixture = TestBed.createComponent(SalaryMetadataTableComponent);
-    if (focusMonth !== undefined) fixture.componentRef.setInput('focusMonth', focusMonth);
     fixture.detectChanges();
     await fixture.whenStable();
   };
@@ -232,24 +228,15 @@ describe('SalaryMetadataTableComponent (FR-INC-10, TICKET-INC-10)', () => {
     });
   });
 
-  describe('arriving from a chart click', () => {
-    it('expands the clicked month’s year instead of the current one', async () => {
-      await setup([], '2025-06');
-
-      expect(sections()[0].className).not.toContain('collapse-open');
-      expect(sections()[1].className).toContain('collapse-open');
-    });
-
-    it('focuses that month’s gross-wage cell', async () => {
-      await setup([], '2025-06');
-
-      expect(document.activeElement).toBe(cellsFor('2025-06')[0]);
-    });
-
-    it('leaves the current year expanded and nothing focused without a target month', async () => {
+  describe('which year opens first (TICKET-INC-18)', () => {
+    // The `focusMonth` input this block used to exercise went with its last caller: a chart click
+    // now opens `SalaryMonthModalComponent` for that one month rather than navigating here and
+    // scrolling to a row. What remains is the plain default.
+    it('expands the current year and focuses nothing', async () => {
       await setup();
 
       expect(sections()[0].className).toContain('collapse-open');
+      expect(sections()[1]?.className).not.toContain('collapse-open');
       expect(document.activeElement?.tagName).not.toBe('INPUT');
     });
   });

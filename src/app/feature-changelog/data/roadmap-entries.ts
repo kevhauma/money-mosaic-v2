@@ -53,13 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-INC-18',
-    title:
-      'Income settings and Salary details as their own pages, with room to explain each control',
-    area: 'Income',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'TICKET-PUB-07',
     title: 'A getting-started guide for the Income page, written for your first visit',
     area: 'Help',

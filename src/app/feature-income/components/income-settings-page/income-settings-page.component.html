@@ -1,0 +1,83 @@
+<mm-page-header
+  title="Income settings"
+  subtitle="What the Income page counts, where it starts, and how it draws what it finds."
+>
+  <mm-button actions variant="ghost" size="sm" link="/income">Back to income</mm-button>
+</mm-page-header>
+
+<mm-paper>
+  <h2 class="card-title text-base">Career start</h2>
+  <mm-text variant="caption" as="p">
+    The date your working life started, which is not the same as the date your imported history
+    happens to begin. Every panel on the Income page reads from here: the trend chart, the growth
+    figures, the yearly view and the events rail all start at this date, so a stretch of student-era
+    income or a back-imported opening balance stops distorting the growth story. Leave it empty to
+    use your full history.
+  </mm-text>
+
+  <div class="mt-3">
+    <app-income-career-start />
+  </div>
+</mm-paper>
+
+<mm-paper class="mt-6">
+  <h2 class="card-title text-base">Income categories ({{ summary() }})</h2>
+  <mm-text variant="caption" as="p">
+    Which of your income categories count as "your income". Unticking one removes it from every
+    figure on the page at once — the trend chart, the growth cards, the yearly totals, the take-home
+    rate and the events rail. Useful for a category that's mostly one-off gifts or refunds, where a
+    good month would otherwise read as sustained growth. A new income category counts by default.
+  </mm-text>
+
+  <div class="mt-3">
+    <app-income-category-checklist
+      legend="Counted toward income growth"
+      hint="Tick the categories that make up your income."
+      emptyMessage="You have no income categories yet. Any category with kind “income” shows up here as soon as you add it."
+      [categories]="countedCategories()"
+      (toggled)="toggleCounted($event)"
+    />
+  </div>
+</mm-paper>
+
+<mm-paper class="mt-6">
+  <h2 class="card-title text-base">Annual lump sums</h2>
+  <mm-text variant="caption" as="p">
+    A 13th month, vacation pay or a holiday bonus is real income you earned all year, but it lands
+    in one deposit. Ticking a category here spreads each year’s total evenly across that year’s
+    months on the trend chart, so it stops drawing a spike, stops reading as a raise in the growth
+    figures and events rail, and is left out of the take-home rate entirely — that comparison is
+    about your plain monthly wage. Your yearly totals are unchanged either way: smoothing only
+    redistributes.
+  </mm-text>
+  <mm-text variant="caption" as="p" class="mt-2">
+    Only categories you count above are offered here — smoothing changes how a category is
+    <em>drawn</em>, so there'd be nothing to act on for one you've already excluded. If the bonus is
+    baked into your regular salary deposit instead of having its own category, record it under
+    Salary details and it's smoothed the same way.
+  </mm-text>
+
+  <div class="mt-3">
+    <app-income-category-checklist
+      legend="Spread across their year"
+      hint="Tick a category that pays out once a year rather than monthly."
+      emptyMessage="Nothing to smooth: no income category is counted right now."
+      [categories]="smoothableCategories()"
+      (toggled)="toggleSmoothed($event)"
+    />
+  </div>
+</mm-paper>
+
+<mm-paper class="mt-6">
+  <h2 class="card-title text-base">Chart colours</h2>
+  <mm-text variant="caption" as="p">
+    Gross pay and net income are always drawn together in the "Net vs gross" section, so telling
+    them apart matters. Pick the colour used for every gross-pay series there — the withheld band
+    and the three growth lines. Default follows your theme's own chart palette. This one is
+    appearance only: it changes no figure anywhere.
+  </mm-text>
+
+  <div class="mt-3">
+    <app-income-gross-color />
+  </div>
+</mm-paper>

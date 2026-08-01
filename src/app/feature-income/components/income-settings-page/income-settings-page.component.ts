@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ButtonComponent, DividerComponent, DropdownComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  PageHeaderComponent,
+  PaperComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import {
   toSelectableIncomeCategories,
   type SelectableIncomeCategoryVm,
@@ -10,33 +15,34 @@ import { IncomeCategoryChecklistComponent } from '../income-category-checklist/i
 import { IncomeGrossColorComponent } from '../income-gross-color/income-gross-color.component';
 
 /**
- * The Income page's single settings entry point (TICKET-INC-04): one popover in the page header
- * holding every choice that re-anchors what the page means — where the user's career started
- * (FR-INC-12), which income categories count toward growth (FR-INC-3), which of those are an
- * annual lump sum to smooth across their year (FR-INC-4), and the colour its gross-pay series are
- * drawn in (TICKET-SET-08).
+ * The Income page's settings, as their own route (`/income/settings`, TICKET-INC-18) rather than the
+ * 320px dropdown TICKET-INC-04 consolidated them into.
  *
- * Consolidated rather than scattered because all three change *every* panel at once: before this,
- * the career-start control sat bare in the header and the category filter beside the trend chart,
- * which read as "this control belongs to that chart" for a setting the yearly panel obeys too.
+ * That consolidation isn't reversed — this is still *one* entry point for every choice that
+ * re-anchors what the page means: where the user's career started (FR-INC-12), which income
+ * categories count toward growth (FR-INC-3), which of those are an annual lump sum (FR-INC-4), and
+ * what colour gross pay is drawn in (TICKET-SET-08). What changes is that a page has room to
+ * *explain* each one, which a panel sized for a control list never did — and these are the settings
+ * that most need explaining, since each silently changes every figure on the page.
  *
- * `menu="false"` — the panel is a form, not a list of menu items, and a `<ul><li>` wrapper around a
- * date field and two fieldsets would be markup lying about its content.
+ * Being a route also makes them linkable, reloadable and reachable with the back button, which the
+ * dropdown never was.
  */
 @Component({
-  selector: 'app-income-settings',
+  selector: 'app-income-settings-page',
   imports: [
     ButtonComponent,
-    DividerComponent,
-    DropdownComponent,
     IncomeCareerStartComponent,
     IncomeCategoryChecklistComponent,
     IncomeGrossColorComponent,
+    PageHeaderComponent,
+    PaperComponent,
+    TypographyComponent,
   ],
-  templateUrl: './income-settings.component.html',
+  templateUrl: './income-settings-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IncomeSettingsComponent {
+export class IncomeSettingsPageComponent {
   private readonly incomeStore = inject(IncomeStore);
 
   /** Every active income category, ticked when it counts toward growth (FR-INC-3). */
@@ -60,7 +66,7 @@ export class IncomeSettingsComponent {
     );
   });
 
-  /** `counted/total` on the trigger, so the popup says whether anything is filtered without being opened. */
+  /** `counted/total`, so the page says at a glance whether anything is filtered out. */
   protected readonly summary = computed(() => {
     const categories = this.countedCategories();
     return `${categories.filter((category) => category.checked).length}/${categories.length}`;

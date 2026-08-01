@@ -225,6 +225,10 @@ describe('IncomeOverviewComponent', () => {
     ),
   ];
 
+  /** The chart's bucket keys in render order, read off that same companion table. */
+  const monthlyBucketKeys = (): string[] =>
+    monthlyBucketRows('tbody th').map((cell) => cell.textContent?.trim() ?? '');
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -267,18 +271,53 @@ describe('IncomeOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('app-income-gross-net-panel')).toBeNull();
   });
 
-  it('mounts every page setting behind the header’s settings popup (TICKET-INC-04)', async () => {
+  it('links to both configuration pages from the header (TICKET-INC-04, TICKET-INC-18)', async () => {
     await setup([salary]);
 
-    // Career start and the category filter used to sit in the header and beside the chart; both
-    // now live inside `app-income-settings`, and neither has a second mounting point.
-    expect(
-      fixture.nativeElement.querySelector('mm-page-header app-income-settings'),
-    ).not.toBeNull();
-    expect(fixture.nativeElement.querySelectorAll('app-income-career-start')).toHaveLength(1);
-    expect(
-      fixture.nativeElement.querySelector('app-income-settings app-income-career-start'),
-    ).not.toBeNull();
+    // The settings dropdown and the full salary table are gone from this page entirely: each is a
+    // route now, so the header holds two links rather than an overlay trigger and a modal button.
+    const links = [...fixture.nativeElement.querySelectorAll('mm-page-header a')].map((anchor) =>
+      (anchor as HTMLAnchorElement).getAttribute('href'),
+    );
+
+    expect(links).toEqual(['/income/settings', '/income/salary']);
+    expect(fixture.nativeElement.querySelector('app-income-settings-page')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-salary-metadata-table')).toBeNull();
+    expect(fixture.nativeElement.querySelector('mm-dropdown')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-income-career-start')).toBeNull();
+  });
+
+  it('leaves the one-month salary modal as its only overlay (TICKET-INC-18)', async () => {
+    await setup([salary]);
+
+    expect(fixture.nativeElement.querySelectorAll('mm-modal')).toHaveLength(1);
+    // Closed until a chart point is clicked, so nothing is mounted inside it yet.
+    expect(fixture.nativeElement.querySelector('app-salary-month-modal')).toBeNull();
+  });
+
+  it('opens the one-month modal on the clicked month (FR-INC-10, TICKET-INC-18)', async () => {
+    await setup([salary]);
+
+    const component = fixture.componentInstance as unknown as {
+      onChartClick: (event: { dataIndex: number }) => void;
+      salaryMonth: () => string | undefined;
+      salaryMonthOpen: () => boolean;
+    };
+    component.onChartClick({ dataIndex: 1 });
+    fixture.detectChanges();
+
+    expect(component.salaryMonthOpen()).toBe(true);
+    expect(component.salaryMonth()).toBe(monthlyBucketKeys()[1]);
+    expect(fixture.nativeElement.querySelector('app-salary-month-modal')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Salary details —');
+  });
+
+  it('links its empty state to the settings page rather than only naming it (TICKET-INC-18)', async () => {
+    await setup([]);
+
+    const link = fixture.nativeElement.querySelector('mm-empty-state a');
+
+    expect(link?.getAttribute('href')).toBe('/income/settings');
   });
 
   it('starts the monthly chart at the career start date rather than the first transaction (FR-INC-12)', async () => {
@@ -381,33 +420,21 @@ describe('IncomeOverviewComponent', () => {
     });
   });
 
-  describe('salary details modal (FR-INC-10, TICKET-INC-10)', () => {
-    /** The component's own handlers, which the template wires to the header button and the chart. */
-    type SalaryDetailsHost = {
-      openSalaryDetails: () => void;
+  describe('one-month salary modal (FR-INC-10, TICKET-INC-10/TICKET-INC-18)', () => {
+    /** The component's own chart handler, which the template wires to the trend chart. */
+    type SalaryMonthHost = {
       onChartClick: (event: { dataIndex: number }) => void;
-      salaryDetailsOpen: () => boolean;
-      salaryDetailsFocusMonth: () => string | undefined;
+      salaryMonthOpen: () => boolean;
+      salaryMonth: () => string | undefined;
     };
 
-    const host = (): SalaryDetailsHost => fixture.componentInstance as unknown as SalaryDetailsHost;
+    const host = (): SalaryMonthHost => fixture.componentInstance as unknown as SalaryMonthHost;
 
     it('is closed until asked for, so the page isn’t hosting a data-entry form every visit', async () => {
       await setup([salary]);
 
-      expect(host().salaryDetailsOpen()).toBe(false);
-      expect(fixture.nativeElement.querySelector('app-salary-metadata-table')).toBeNull();
-    });
-
-    it('opens from the header button, with no month singled out', async () => {
-      await setup([salary]);
-
-      host().openSalaryDetails();
-      fixture.detectChanges();
-
-      expect(host().salaryDetailsOpen()).toBe(true);
-      expect(host().salaryDetailsFocusMonth()).toBeUndefined();
-      expect(fixture.nativeElement.querySelector('app-salary-metadata-table')).not.toBeNull();
+      expect(host().salaryMonthOpen()).toBe(false);
+      expect(fixture.nativeElement.querySelector('app-salary-month-modal')).toBeNull();
     });
 
     it('opens on the clicked month when the trend chart is clicked', async () => {
@@ -416,9 +443,10 @@ describe('IncomeOverviewComponent', () => {
       host().onChartClick({ dataIndex: 0 });
       fixture.detectChanges();
 
-      expect(host().salaryDetailsOpen()).toBe(true);
+      expect(host().salaryMonthOpen()).toBe(true);
       // The seeded history starts 2026-01, which is the chart's first bucket.
-      expect(host().salaryDetailsFocusMonth()).toBe('2026-01');
+      expect(host().salaryMonth()).toBe('2026-01');
+      expect(fixture.nativeElement.querySelector('app-salary-month-modal')).not.toBeNull();
     });
 
     it('ignores a click that resolves to no bucket', async () => {
@@ -427,7 +455,7 @@ describe('IncomeOverviewComponent', () => {
       host().onChartClick({ dataIndex: 999 });
       fixture.detectChanges();
 
-      expect(host().salaryDetailsOpen()).toBe(false);
+      expect(host().salaryMonthOpen()).toBe(false);
     });
   });
 

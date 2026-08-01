@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerReceipt2, tablerTrendingUp } from '@ng-icons/tabler-icons';
+import { tablerAdjustments, tablerReceipt2, tablerTrendingUp } from '@ng-icons/tabler-icons';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { CategorySeriesEntry, ChartZoomWindow } from '@/core/stats';
@@ -22,9 +22,9 @@ import { IncomeStore } from '../../income.store';
 import { IncomeEventsSidebarComponent } from '../income-events-sidebar/income-events-sidebar.component';
 import { IncomeGrossNetSectionComponent } from '../income-gross-net-section/income-gross-net-section.component';
 import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth-panel.component';
-import { IncomeSettingsComponent } from '../income-settings/income-settings.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
-import { SalaryMetadataTableComponent } from '../salary-metadata-table/salary-metadata-table.component';
+import { SalaryMonthModalComponent } from '../salary-month-modal/salary-month-modal.component';
+import { monthLabel } from '../../salary-metadata-rows';
 
 export type IncomeTrendAccessibleRow = { bucketKey: string; total: string };
 
@@ -92,18 +92,17 @@ export const buildIncomeTrendChartOption = (
     IncomeEventsSidebarComponent,
     IncomeGrossNetSectionComponent,
     IncomeGrowthPanelComponent,
-    IncomeSettingsComponent,
     IncomeYearlyPanelComponent,
     MmModalComponent,
     NgIcon,
     NgxEchartsDirective,
     PageHeaderComponent,
     PaperComponent,
-    SalaryMetadataTableComponent,
+    SalaryMonthModalComponent,
   ],
   templateUrl: './income-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerReceipt2, tablerTrendingUp })],
+  viewProviders: [provideIcons({ tablerAdjustments, tablerReceipt2, tablerTrendingUp })],
 })
 export class IncomeOverviewComponent {
   private readonly incomeStore = inject(IncomeStore);
@@ -151,25 +150,35 @@ export class IncomeOverviewComponent {
       `Income by category, monthly, ${this.range().from}–${this.range().to}; table with values follows`,
   );
 
-  /** Whether the salary-details modal (FR-INC-10) is showing. */
-  protected readonly salaryDetailsOpen = signal(false);
+  /** Whether the one-month salary modal (FR-INC-10, TICKET-INC-18) is showing. */
+  protected readonly salaryMonthOpen = signal(false);
 
-  /** The month the modal should expand and focus — set only when it was opened by clicking the chart. */
-  protected readonly salaryDetailsFocusMonth = signal<string | undefined>(undefined);
+  /** The `YYYY-MM` the user clicked; the modal is only ever opened with one. */
+  protected readonly salaryMonth = signal<string | undefined>(undefined);
 
-  protected openSalaryDetails(): void {
-    this.salaryDetailsFocusMonth.set(undefined);
-    this.salaryDetailsOpen.set(true);
-  }
+  protected readonly salaryMonthTitle = computed(() => {
+    const month = this.salaryMonth();
+    return month === undefined ? 'Salary details' : `Salary details — ${monthLabel(month)}`;
+  });
 
   /**
-   * Clicking a point on the trend chart opens the salary table straight at that month (FR-INC-10):
-   * a spike the user wants to explain is usually a spike they want to annotate.
+   * The month to mount the modal's fields for, or `undefined` while it's closed — so the template
+   * asks one question instead of `open && month`. Mounting only while open is what keeps the fields
+   * a fresh snapshot of stored values per opening rather than a form syncing mid-edit.
+   */
+  protected readonly openSalaryMonth = computed(() =>
+    this.salaryMonthOpen() ? this.salaryMonth() : undefined,
+  );
+
+  /**
+   * Clicking a point on the trend chart opens *that month's* gross and bonus fields (FR-INC-10): a
+   * spike the user wants to explain is usually a spike they want to annotate, and it's a one-month
+   * question best answered without leaving the chart.
    */
   protected onChartClick(event: ECElementEvent): void {
     const bucketKey = bucketKeyForChartClick(event, this.trend().bucketKeys);
     if (bucketKey === undefined) return;
-    this.salaryDetailsFocusMonth.set(bucketKey);
-    this.salaryDetailsOpen.set(true);
+    this.salaryMonth.set(bucketKey);
+    this.salaryMonthOpen.set(true);
   }
 }

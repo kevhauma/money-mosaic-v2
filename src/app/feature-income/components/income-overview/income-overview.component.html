@@ -2,23 +2,25 @@
   title="Income"
   subtitle="How your income moves over time — by source, year over year, and against the noise."
 >
-  <app-income-settings actions />
-  <mm-button actions variant="ghost" size="sm" (click)="openSalaryDetails()">
+  <mm-button actions variant="ghost" size="sm" link="/income/settings">
+    <ng-icon name="tablerAdjustments" size="16" aria-hidden="true" />
+    Income settings
+  </mm-button>
+  <mm-button actions variant="ghost" size="sm" link="/income/salary">
     <ng-icon name="tablerReceipt2" size="16" aria-hidden="true" />
     Salary details
   </mm-button>
 </mm-page-header>
 
-<mm-modal [(open)]="salaryDetailsOpen" class="max-w-3xl">
-  <span mm-modal-title>Salary details</span>
-  <p class="mt-1 text-sm opacity-70">
-    Gross pay never appears in a bank export — record it here to see what share of it actually
-    reaches your account.
-  </p>
-  <!-- Mounted only while the modal is open, so the table builds its controls from fresh stored
-       values each time instead of syncing them against the store mid-edit (TICKET-INC-10). -->
-  @if (salaryDetailsOpen()) {
-    <app-salary-metadata-table [focusMonth]="salaryDetailsFocusMonth()" />
+<!-- The *one-month* salary surface (TICKET-INC-18): a click on a chart point is the question "what
+     was June?", and answering it shouldn't mean leaving the chart for a multi-year table. The full
+     table is `/income/salary`'s job, and this links there. -->
+<mm-modal [(open)]="salaryMonthOpen" class="max-w-lg">
+  <span mm-modal-title>{{ salaryMonthTitle() }}</span>
+  <!-- Mounted only while the modal is open, so it builds its controls from fresh stored values each
+       time instead of syncing them against the store mid-edit (TICKET-INC-10). -->
+  @if (openSalaryMonth(); as month) {
+    <app-salary-month-modal [yearMonth]="month" />
   }
 </mm-modal>
 
@@ -77,8 +79,11 @@
   <mm-empty-state
     class="mt-6"
     title="No income categories are counted yet"
-    message="Pick at least one income category under “Income settings” to see how your income moves over time. Categories with kind “income” show up there as soon as you add them."
+    message="Pick at least one income category to see how your income moves over time. Categories with kind “income” show up there as soon as you add them."
   >
     <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
+    <mm-button action color="primary" class="mt-2" link="/income/settings">
+      Open income settings
+    </mm-button>
   </mm-empty-state>
 }

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
@@ -15,7 +16,7 @@ import {
   DEFAULT_LOCALE,
   syncFormatSettings,
 } from '@/shared/utils';
-import { IncomeSettingsComponent } from './income-settings.component';
+import { IncomeSettingsPageComponent } from './income-settings-page.component';
 
 const category = (
   id: number,
@@ -34,7 +35,7 @@ const category = (
   ...overrides,
 });
 
-describe('IncomeSettingsComponent (FR-INC-3/4/12, TICKET-INC-04)', () => {
+describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-18)', () => {
   const accountsRepository = { getAll: vi.fn() };
   const categoriesRepository = { getAll: vi.fn() };
   const transactionsRepository = { getAll: vi.fn() };
@@ -45,7 +46,7 @@ describe('IncomeSettingsComponent (FR-INC-3/4/12, TICKET-INC-04)', () => {
     setCareerStartDate: vi.fn(),
   };
 
-  let fixture: ComponentFixture<IncomeSettingsComponent>;
+  let fixture: ComponentFixture<IncomeSettingsPageComponent>;
 
   const setup = async (
     categories: Category[],
@@ -60,8 +61,10 @@ describe('IncomeSettingsComponent (FR-INC-3/4/12, TICKET-INC-04)', () => {
     appSettingsRepository.setCareerStartDate.mockResolvedValue(1);
 
     await TestBed.configureTestingModule({
-      imports: [IncomeSettingsComponent],
+      imports: [IncomeSettingsPageComponent],
       providers: [
+        // A page since TICKET-INC-18, so its back link needs a router.
+        provideRouter([]),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
@@ -69,7 +72,7 @@ describe('IncomeSettingsComponent (FR-INC-3/4/12, TICKET-INC-04)', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IncomeSettingsComponent);
+    fixture = TestBed.createComponent(IncomeSettingsPageComponent);
     await Promise.all([
       TestBed.inject(AccountsStore).hydrate(),
       TestBed.inject(CategoriesStore).hydrate(),
@@ -103,7 +106,7 @@ describe('IncomeSettingsComponent (FR-INC-3/4/12, TICKET-INC-04)', () => {
     });
   });
 
-  it('hosts every settings section behind one trigger', async () => {
+  it('hosts every settings section on one page', async () => {
     await setup([category(1, 'Salary', 'income')]);
 
     expect(fixture.nativeElement.querySelector('app-income-career-start')).not.toBeNull();
@@ -112,7 +115,45 @@ describe('IncomeSettingsComponent (FR-INC-3/4/12, TICKET-INC-04)', () => {
     expect(fixture.nativeElement.textContent).toContain('Annual lump sums');
     // TICKET-SET-08 — the gross-series color lives here too, beside the other page-level choices.
     expect(fixture.nativeElement.querySelector('app-income-gross-color')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Gross pay color');
+    expect(fixture.nativeElement.textContent).toContain('Chart colours');
+  });
+
+  describe('as a page (TICKET-INC-18)', () => {
+    it('is a real page with a header and a way back, not an overlay', async () => {
+      await setup([category(1, 'Salary', 'income')]);
+
+      expect(fixture.nativeElement.querySelector('mm-page-header')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('mm-dropdown')).toBeNull();
+      expect(fixture.nativeElement.querySelector('a[href="/income"]')?.textContent).toContain(
+        'Back to income',
+      );
+    });
+
+    it('gives each section room to say what it changes and which panels it changes', async () => {
+      await setup([category(1, 'Salary', 'income')]);
+
+      const text = fixture.nativeElement.textContent as string;
+
+      // Asserted so a later refactor can't quietly drop the explanations back to one-line hints,
+      // which is the whole reason these controls became a page.
+      expect(text).toContain('Every panel on the Income page reads from here');
+      expect(text).toContain('removes it from every figure on the page at once');
+      expect(text).toContain('spreads each year’s total evenly across that year’s months');
+      expect(text).toContain('it changes no figure anywhere');
+    });
+
+    it('keeps a one-line hint on each control alongside the section copy', async () => {
+      await setup([category(1, 'Salary', 'income')]);
+
+      const hints = [...fixture.nativeElement.querySelectorAll('mm-label')].map(
+        (label) => (label as HTMLElement).textContent ?? '',
+      );
+
+      expect(
+        hints.some((hint) => hint.includes('Tick the categories that make up your income')),
+      ).toBe(true);
+      expect(hints.some((hint) => hint.includes('pays out once a year'))).toBe(true);
+    });
   });
 
   it('lists one checked row per active income category, and no expense/neutral ones', async () => {
