@@ -7,12 +7,14 @@ import {
 import { IncomeStore } from '../../income.store';
 import { IncomeCareerStartComponent } from '../income-career-start/income-career-start.component';
 import { IncomeCategoryChecklistComponent } from '../income-category-checklist/income-category-checklist.component';
+import { IncomeGrossColorComponent } from '../income-gross-color/income-gross-color.component';
 
 /**
  * The Income page's single settings entry point (TICKET-INC-04): one popover in the page header
  * holding every choice that re-anchors what the page means — where the user's career started
- * (FR-INC-12), which income categories count toward growth (FR-INC-3), and which of those are an
- * annual lump sum to smooth across their year (FR-INC-4).
+ * (FR-INC-12), which income categories count toward growth (FR-INC-3), which of those are an
+ * annual lump sum to smooth across their year (FR-INC-4), and the colour its gross-pay series are
+ * drawn in (TICKET-SET-08).
  *
  * Consolidated rather than scattered because all three change *every* panel at once: before this,
  * the career-start control sat bare in the header and the category filter beside the trend chart,
@@ -29,6 +31,7 @@ import { IncomeCategoryChecklistComponent } from '../income-category-checklist/i
     DropdownComponent,
     IncomeCareerStartComponent,
     IncomeCategoryChecklistComponent,
+    IncomeGrossColorComponent,
   ],
   templateUrl: './income-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

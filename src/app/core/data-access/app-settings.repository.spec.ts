@@ -150,4 +150,38 @@ describe('AppSettingsRepository', () => {
       careerStartDate: undefined,
     });
   });
+
+  it('setGrossColor writes the singleton row without one existing yet (TICKET-SET-08)', async () => {
+    await repository.setGrossColor('violet');
+
+    expect(await repository.get()).toEqual({ id: 1, grossColor: 'violet' });
+  });
+
+  it('setGrossColor preserves unrelated settings and stays a single row', async () => {
+    await repository.setLocale('en-GB');
+    await repository.setPrimaryColor('rose');
+    await repository.setGrossColor('violet');
+    await repository.setGrossColor('teal');
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      locale: 'en-GB',
+      primaryColor: 'rose',
+      grossColor: 'teal',
+    });
+    expect(await appDb.appSettings.count()).toBe(1);
+  });
+
+  it('setGrossColor(undefined) clears the color without touching the rest of the row', async () => {
+    await repository.setPrimaryColor('rose');
+    await repository.setGrossColor('violet');
+
+    await repository.setGrossColor(undefined);
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      primaryColor: 'rose',
+      grossColor: undefined,
+    });
+  });
 });

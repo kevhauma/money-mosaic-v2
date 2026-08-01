@@ -1,0 +1,40 @@
+<mm-fieldset legend="Gross pay color">
+  <mm-label variant="fieldset">
+    Colors the gross-pay series on this page's charts. Default follows your theme's chart palette.
+  </mm-label>
+
+  <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Gross pay color">
+    <button
+      type="button"
+      aria-label="Default"
+      [attr.aria-pressed]="isSelected(undefined)"
+      (click)="onSelect(undefined)"
+    >
+      <span
+        class="block h-6 w-6 rounded border border-base-300"
+        [class.ring-2]="isSelected(undefined)"
+        [class.ring-primary]="isSelected(undefined)"
+        [class.ring-offset-2]="isSelected(undefined)"
+        [class.ring-offset-base-100]="isSelected(undefined)"
+        [style.background-color]="swatch(undefined)"
+      ></span>
+    </button>
+    @for (color of colors; track color.id) {
+      <button
+        type="button"
+        [attr.aria-label]="color.label"
+        [attr.aria-pressed]="isSelected(color.id)"
+        (click)="onSelect(color.id)"
+      >
+        <span
+          class="block h-6 w-6 rounded border border-base-300"
+          [class.ring-2]="isSelected(color.id)"
+          [class.ring-primary]="isSelected(color.id)"
+          [class.ring-offset-2]="isSelected(color.id)"
+          [class.ring-offset-base-100]="isSelected(color.id)"
+          [style.background-color]="swatch(color.id)"
+        ></span>
+      </button>
+    }
+  </div>
+</mm-fieldset>

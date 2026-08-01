@@ -53,6 +53,63 @@ export function resolveChartCategoricalColors(): string[] {
   return [...(CHART_CATEGORICAL_COLORS[activeDataTheme()] ?? DEFORMABLE_LIGHT)];
 }
 
+/**
+ * The categorical slot the Income page's *gross pay* series takes when the user hasn't picked a
+ * gross colour (TICKET-SET-08) — slot 1, leaving slot 0 to net, which is the page's established
+ * income colour. Not slot 0 for both: gross and net are always drawn together.
+ */
+const GROSS_FALLBACK_SLOT = 1;
+
+/**
+ * Canvas hexes for the gross-pay series, keyed by the same `AccentColorId` presets the accent
+ * picker offers (TICKET-SET-08). These duplicate the presets' *hues*, not their OKLCH values:
+ * `ACCENT_COLORS` tunes lightness/chroma for a swatch's contrast against `base-100`, while a
+ * one-pixel line or a translucent band on a plot needs to read against the plot's own background —
+ * so light mode sits darker and slightly more saturated, dark mode brighter. A deliberate second
+ * tuning, not a conversion; canvas can't consume the `oklch(...)` strings either way.
+ */
+const GROSS_SERIES_COLORS = {
+  amber: { light: '#9c6600', dark: '#e1af37' },
+  sky: { light: '#007fbc', dark: '#35c7ff' },
+  violet: { light: '#8451c9', dark: '#c89dff' },
+  rose: { light: '#bc3181', dark: '#ff85c7' },
+  teal: { light: '#00898b', dark: '#32d0d0' },
+  lime: { light: '#448502', dark: '#8fcb6b' },
+} satisfies Record<string, { light: string; dark: string }>;
+
+/**
+ * The preset ids the gross-series palette offers. Structurally the same union as `core/theme`'s
+ * `AccentColorId` — one preset vocabulary across the app — but declared from this map's own keys
+ * because `shared/` never imports `@/core`. `chart-theme.spec.ts` asserts the two stay in step, and
+ * a preset added to `ACCENT_COLORS` alone fails to compile at every call site until it lands here.
+ */
+export type GrossSeriesColorId = keyof typeof GROSS_SERIES_COLORS;
+
+/**
+ * `data-theme` names whose plot background is dark, so the `dark` half of `GROSS_SERIES_COLORS`
+ * applies. Everything else — including an unknown theme — takes `light`.
+ */
+const DARK_PLOT_THEMES: readonly string[] = [
+  'deformable-dark',
+  'neumorphism-dark',
+  'liquid-glass',
+  'cyberpunk',
+];
+
+/**
+ * The gross-pay series' colour for the active theme: the user's picked preset tuned for this
+ * theme's plot background, or — when unset — the theme's own categorical slot reserved for gross,
+ * which is exactly the behaviour before the setting existed (TICKET-SET-08). Always a
+ * canvas-consumable hex literal, never an `oklch(...)` string or a CSS variable.
+ */
+export function resolveGrossSeriesColor(id: GrossSeriesColorId | undefined): string {
+  const theme = activeDataTheme();
+  if (!id) return (CHART_CATEGORICAL_COLORS[theme] ?? DEFORMABLE_LIGHT)[GROSS_FALLBACK_SLOT];
+
+  const preset = GROSS_SERIES_COLORS[id];
+  return DARK_PLOT_THEMES.includes(theme) ? preset.dark : preset.light;
+}
+
 /** Single source for the "no color assigned" neutral gray (an uncategorised entry, or an account/category predating the color-picker feature) — previously duplicated as a hardcoded hex literal per chart component. Theme-neutral: this hex also leaks into computed stat series (core/stats), so it stays one global value. */
 export const CHART_NO_COLOR_FALLBACK = '#9ca3af';
 

@@ -1,7 +1,10 @@
+import { ACCENT_COLORS } from '@/core/theme';
 import {
   CHART_NO_COLOR_FALLBACK,
   resolveChartAnimation,
   resolveChartCategoricalColors,
+  resolveGrossSeriesColor,
+  type GrossSeriesColorId,
 } from './chart-theme';
 
 const setDataTheme = (theme: string | null): void => {
@@ -82,6 +85,64 @@ describe('resolveChartAnimation', () => {
       animationEasing: 'linear',
       animationEasingUpdate: 'linear',
     });
+  });
+});
+
+describe('resolveGrossSeriesColor (TICKET-SET-08)', () => {
+  const HEX = /^#[0-9a-f]{6}$/;
+
+  it("returns the picked preset's light-mode hex under a light theme", () => {
+    setDataTheme('deformable');
+
+    expect(resolveGrossSeriesColor('violet')).toBe('#8451c9');
+  });
+
+  it("returns the picked preset's dark-mode hex under a dark theme", () => {
+    setDataTheme('deformable-dark');
+
+    expect(resolveGrossSeriesColor('violet')).toBe('#c89dff');
+  });
+
+  it("falls back to the theme's own categorical slot when no color is picked", () => {
+    setDataTheme('deformable');
+
+    expect(resolveGrossSeriesColor(undefined)).toBe('#7c8cf0');
+  });
+
+  it("falls back to a non-default theme's own categorical slot when no color is picked", () => {
+    setDataTheme('cyberpunk');
+
+    expect(resolveGrossSeriesColor(undefined)).toBe('#ff2ec4');
+  });
+
+  it('treats an unknown data-theme as light, and its unset fallback as the deformable palette', () => {
+    setDataTheme('not-a-theme');
+
+    expect(resolveGrossSeriesColor('violet')).toBe('#8451c9');
+    expect(resolveGrossSeriesColor(undefined)).toBe('#7c8cf0');
+  });
+
+  it("offers exactly the accent picker's presets — one color vocabulary across the app", () => {
+    // `shared/` can't import `@/core` in shipped code, so this spec is what keeps
+    // `GrossSeriesColorId` in step with `core/theme`'s `AccentColorId`.
+    const ids = ACCENT_COLORS.map((color) => color.id as GrossSeriesColorId);
+
+    for (const id of ids) {
+      setDataTheme('deformable');
+      expect(resolveGrossSeriesColor(id)).toMatch(HEX);
+      setDataTheme('deformable-dark');
+      expect(resolveGrossSeriesColor(id)).toMatch(HEX);
+    }
+  });
+
+  it('never emits an oklch()/CSS-variable string an echarts canvas option could not consume', () => {
+    for (const theme of ['deformable', 'deformable-dark', 'cyberpunk', 'not-a-theme']) {
+      setDataTheme(theme);
+      for (const color of ACCENT_COLORS) {
+        expect(resolveGrossSeriesColor(color.id as GrossSeriesColorId)).toMatch(HEX);
+      }
+      expect(resolveGrossSeriesColor(undefined)).toMatch(HEX);
+    }
   });
 });
 

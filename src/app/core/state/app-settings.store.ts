@@ -65,6 +65,11 @@ export const AppSettingsStore = signalStore(
         await appSettingsRepository.setSmoothedBonusCategoryIds(smoothedBonusCategoryIds);
         patchState(store, { smoothedBonusCategoryIds });
       },
+
+      setGrossColor: async (grossColor: AccentColorId | undefined): Promise<void> => {
+        await appSettingsRepository.setGrossColor(grossColor);
+        patchState(store, { grossColor });
+      },
     };
   }),
   withHooks({

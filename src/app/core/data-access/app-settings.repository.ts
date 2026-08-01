@@ -47,4 +47,11 @@ export class AppSettingsRepository {
     const current = await this.get();
     return appDb.appSettings.put({ ...current, id: 1, smoothedBonusCategoryIds });
   };
+
+  // `undefined` clears the setting (TICKET-SET-08) — the Income page's gross series fall back to
+  // the active theme's categorical palette, which is what an unset field already means.
+  setGrossColor = async (grossColor: AccentColorId | undefined): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, grossColor });
+  };
 }

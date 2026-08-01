@@ -102,6 +102,7 @@ describe('DataManagementRepository', () => {
         excludedIncomeCategoryIds: [7],
         careerStartDate: '2019-09-01',
         smoothedBonusCategoryIds: [3, 5],
+        grossColor: 'violet',
       });
 
       const exported = await repository.exportAll();
@@ -112,6 +113,7 @@ describe('DataManagementRepository', () => {
       expect(restored?.smoothedBonusCategoryIds).toEqual([3, 5]);
       expect(restored?.excludedIncomeCategoryIds).toEqual([7]);
       expect(restored?.careerStartDate).toBe('2019-09-01');
+      expect(restored?.grossColor).toBe('violet');
     });
   });
 

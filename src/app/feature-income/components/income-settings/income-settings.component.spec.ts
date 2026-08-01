@@ -103,13 +103,16 @@ describe('IncomeSettingsComponent (FR-INC-3/4/12, TICKET-INC-04)', () => {
     });
   });
 
-  it('hosts all three settings sections behind one trigger', async () => {
+  it('hosts every settings section behind one trigger', async () => {
     await setup([category(1, 'Salary', 'income')]);
 
     expect(fixture.nativeElement.querySelector('app-income-career-start')).not.toBeNull();
     expect(checklists()).toHaveLength(2);
     expect(fixture.nativeElement.textContent).toContain('Income categories');
     expect(fixture.nativeElement.textContent).toContain('Annual lump sums');
+    // TICKET-SET-08 — the gross-series color lives here too, beside the other page-level choices.
+    expect(fixture.nativeElement.querySelector('app-income-gross-color')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Gross pay color');
   });
 
   it('lists one checked row per active income category, and no expense/neutral ones', async () => {

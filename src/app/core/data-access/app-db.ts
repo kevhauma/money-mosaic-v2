@@ -545,6 +545,17 @@ export type AppSettings = {
    * above. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    */
   smoothedBonusCategoryIds: number[] | undefined;
+  /**
+   * Additive field (TICKET-SET-08) — the preset the `/income` page's *gross pay* series take, so
+   * gross and net are told apart by a colour the user picked rather than by whichever categorical
+   * slot the theme handed out. Reuses `AccentColorId` rather than minting a second colour
+   * vocabulary (and rather than a freeform hex, which could be invisible against the plot);
+   * `undefined` falls back to the active theme's categorical palette, i.e. today's behaviour.
+   * Unlike `primaryColor` it applies under *every* theme style, because it colours canvas rather
+   * than daisyUI tokens. Same "additive optional field, no version bump" reasoning as the three
+   * fields above. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   */
+  grossColor: AccentColorId | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -560,6 +571,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   excludedIncomeCategoryIds: undefined,
   careerStartDate: undefined,
   smoothedBonusCategoryIds: undefined,
+  grossColor: undefined,
 };
 
 /**

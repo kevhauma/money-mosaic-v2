@@ -53,12 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-SET-08',
-    title: 'Pick the color used for gross pay on the Income page’s charts',
-    area: 'Settings',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'TICKET-INC-13',
     title: 'Spread a bonus recorded on your salary details across its year on the income chart',
     area: 'Income',

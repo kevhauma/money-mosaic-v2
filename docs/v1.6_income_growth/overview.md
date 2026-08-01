@@ -99,7 +99,7 @@ gives the page's two configuration surfaces room to explain themselves (INC-18),
 first-time user's guide in place and in front of them (PUB-07, PUB-08). Ordered by dependency, same as the
 list above:
 
-- [ ] [TICKET-SET-08](./tickets/TICKET-SET-08-gross-series-color-setting.md) — Gross series color setting (extends FR-SET) — first: INC-14 and INC-16 both read its resolver, and it has no dependency of its own
+- [x] [TICKET-SET-08](./tickets/TICKET-SET-08-gross-series-color-setting.md) — Gross series color setting (~~extends FR-SET~~ — relocated during implementation into the Income settings popup, see the ticket's Description) — first: INC-14 and INC-16 both read its resolver, and it has no dependency of its own
 - [ ] [TICKET-INC-13](./tickets/TICKET-INC-13-embedded-bonus-smoothing.md) — Smooth an embedded bonus out of the income-by-month chart (bug fix, extends FR-INC-4/10 — `SalaryMetadata.bonus` has no category id, so `smoothAnnualLumpSums` never sees it and its deposit month keeps the spike) — independent, can ship any time
 - [ ] [TICKET-INC-14](./tickets/TICKET-INC-14-take-home-rate-full-band-chart.md) — Take-home rate as a full 0–100% band on plain salary (revises FR-INC-11) — needs SET-08 for the band color; defines the gross/net basis INC-16 reuses
 - [ ] [TICKET-INC-16](./tickets/TICKET-INC-16-gross-net-growth-charts.md) — "Net vs gross" section: a 2×2 grid of the take-home rate plus absolute, from-start and %-from-start growth charts (adds FR-INC-13) — needs INC-14 (both the net basis and the take-home chart it absorbs) + SET-08's color

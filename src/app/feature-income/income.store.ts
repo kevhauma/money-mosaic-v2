@@ -14,6 +14,7 @@ import {
   smoothAnnualLumpSums,
 } from '@/core/stats';
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import type { AccentColorId } from '@/core/theme';
 import { savingsAccountIbans } from '@/core/transfers';
 import {
   clampRangeToCareerStart,
@@ -165,6 +166,13 @@ export const IncomeStore = signalStore(
       /** The user's career start date (FR-INC-12), or `undefined` while unset. */
       careerStartDate: computed(() => appSettingsStore.careerStartDate()),
 
+      /**
+       * The preset this page's gross-pay series take (TICKET-SET-08), or `undefined` for the active
+       * theme's own chart palette. Exposed here rather than read from `AppSettingsStore` at each
+       * chart, so every gross series on the page can't drift apart.
+       */
+      grossColor: computed(() => appSettingsStore.grossColor()),
+
       /** The salary metadata keyed by `YYYY-MM` (FR-INC-10) — how every consumer actually reads it: one month at a time. */
       salaryMetadataByMonth: computed(
         () => new Map(store.salaryMetadata().map((entry) => [entry.yearMonth, entry])),
@@ -228,6 +236,10 @@ export const IncomeStore = signalStore(
       /** Persists the career start date, or clears it when given `undefined`. */
       setCareerStartDate: (careerStartDate: string | undefined): Promise<void> =>
         appSettingsStore.setCareerStartDate(careerStartDate),
+
+      /** Persists the gross-series colour (TICKET-SET-08), or clears it back to the theme's palette. */
+      setGrossColor: (grossColor: AccentColorId | undefined): Promise<void> =>
+        appSettingsStore.setGrossColor(grossColor),
     };
   }),
   withMethods((store) => {
