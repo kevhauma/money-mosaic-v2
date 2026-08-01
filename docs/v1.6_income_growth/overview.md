@@ -92,10 +92,12 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
 
 ### Follow-up batch (added 2026-08-01, from using the shipped page)
 
-The twelve tickets above all shipped; these six come from the first real read of the page against real
+The twelve tickets above all shipped; these nine come from the first real read of the page against real
 data. Two are corrections to what shipped (INC-13, INC-14), two are new views on data already collected
-(INC-16, INC-17), one is a re-aim (INC-15), and one is the settings surface the new charts need (SET-08).
-Ordered by dependency, same as the list above:
+(INC-16, INC-17), one is a re-aim (INC-15), one is the settings surface the new charts need (SET-08), one
+gives the page's two configuration surfaces room to explain themselves (INC-18), and two put a
+first-time user's guide in place and in front of them (PUB-07, PUB-08). Ordered by dependency, same as the
+list above:
 
 - [ ] [TICKET-SET-08](./tickets/TICKET-SET-08-gross-series-color-setting.md) — Gross series color setting (extends FR-SET) — first: INC-14 and INC-16 both read its resolver, and it has no dependency of its own
 - [ ] [TICKET-INC-13](./tickets/TICKET-INC-13-embedded-bonus-smoothing.md) — Smooth an embedded bonus out of the income-by-month chart (bug fix, extends FR-INC-4/10 — `SalaryMetadata.bonus` has no category id, so `smoothAnnualLumpSums` never sees it and its deposit month keeps the spike) — independent, can ship any time
@@ -103,6 +105,9 @@ Ordered by dependency, same as the list above:
 - [ ] [TICKET-INC-16](./tickets/TICKET-INC-16-gross-net-growth-charts.md) — "Net vs gross" section: a 2×2 grid of the take-home rate plus absolute, from-start and %-from-start growth charts (adds FR-INC-13) — needs INC-14 (both the net basis and the take-home chart it absorbs) + SET-08's color
 - [ ] [TICKET-INC-15](./tickets/TICKET-INC-15-growth-vs-start-of-year.md) — Compare against the start of the year, not the previous month, and unwrap the growth cards into free-standing dashboard-style stats that link to their transactions (revises FR-INC-5) — independent, small; can slot in anywhere
 - [ ] [TICKET-INC-17](./tickets/TICKET-INC-17-income-events-sidebar.md) — Income events sidebar, grouped by year (revises FR-INC-8/9 presentation, adds FR-INC-14) — independent of the chart work, but best after INC-16 since both claim page real estate
+- [ ] [TICKET-INC-18](./tickets/TICKET-INC-18-income-settings-and-salary-pages.md) — Income settings and Salary details as their own routed pages, with room to explain each control (revises FR-INC-3/4/10/12 presentation) — independent of the chart work; must land before PUB-07, which documents these flows
+- [ ] [TICKET-PUB-07](./tickets/TICKET-PUB-07-income-page-getting-started-guide.md) — Getting started with the Income page: the content, at three depths (arrival intro, settings-page explanations, full `/help` guide), plus a refresh of the existing income guide (extends TICKET-PUB-02) — **needs INC-18**, and second-to-last overall: the seven tickets above all change the page's copy, layout or behaviour, and a guide written before them would be written twice
+- [ ] [TICKET-PUB-08](./tickets/TICKET-PUB-08-income-guide-on-first-visit.md) — First visit to the Income page: intro, quick setup, hand-off to the settings page, remembered per guide slug (extends TICKET-PUB-02/07) — **last**: needs PUB-07's content and INC-18's settings page to hand off to
 
 ## Considered, not ticketed yet
 
