@@ -1,0 +1,49 @@
+<mm-paper>
+  <h2 class="card-title text-base">Take-home rate</h2>
+
+  @if (hasAnyGross()) {
+    <mm-text variant="caption" as="p">
+      What share of your gross pay actually reached your account. A month with no gross wage entered
+      leaves a gap.
+    </mm-text>
+
+    <div
+      echarts
+      [options]="chartOption()"
+      class="h-64 w-full"
+      role="img"
+      aria-label="Take-home rate per month; table with values follows"
+    ></div>
+
+    <!-- Screen-reader-only companion table for the chart above — not a visible data table, so it
+         skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
+    <table class="sr-only">
+      <caption>
+        Net income against gross wage per month, underlying the chart above
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Month</th>
+          <th scope="col">Net</th>
+          <th scope="col">Gross</th>
+          <th scope="col">Take-home rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of accessibleRows(); track row.bucketKey) {
+          <tr>
+            <th scope="row">{{ row.bucketKey }}</th>
+            <td>{{ row.net }}</td>
+            <td>{{ row.gross }}</td>
+            <td>{{ row.ratio }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  } @else {
+    <mm-text variant="caption" as="p">
+      No gross wage entered yet. Add one under “Salary details” to see what share of your gross pay
+      actually reaches your account — a bank export only ever shows the net.
+    </mm-text>
+  }
+</mm-paper>

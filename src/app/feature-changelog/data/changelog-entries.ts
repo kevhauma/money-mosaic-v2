@@ -437,4 +437,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'You can now record your gross wage per month under “Salary details” — plus how much of a month’s deposit was a bonus — since a bank export only ever shows what actually landed; clicking a point on the income chart jumps straight to that month',
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-11'],
+    title:
+      'Once you’ve entered a gross wage, the Income page charts your take-home rate month by month, so you can see it drifting even while your net income rises',
+    area: 'Income',
+  },
 ];

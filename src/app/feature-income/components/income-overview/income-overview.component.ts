@@ -20,6 +20,7 @@ import {
 import { formatCurrency } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 import { IncomeGapWarningsComponent } from '../income-gap-warnings/income-gap-warnings.component';
+import { IncomeGrossNetPanelComponent } from '../income-gross-net-panel/income-gross-net-panel.component';
 import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth-panel.component';
 import { IncomeSettingsComponent } from '../income-settings/income-settings.component';
 import { IncomeStepChangesComponent } from '../income-step-changes/income-step-changes.component';
@@ -90,6 +91,7 @@ export const buildIncomeTrendChartOption = (
     ButtonComponent,
     EmptyStateComponent,
     IncomeGapWarningsComponent,
+    IncomeGrossNetPanelComponent,
     IncomeGrowthPanelComponent,
     IncomeSettingsComponent,
     IncomeStepChangesComponent,
