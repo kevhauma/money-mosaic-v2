@@ -143,4 +143,39 @@ export const GUIDES: readonly Guide[] = [
     tryItLabel: 'Try it — go to Learning',
     tryItRoute: '/learning',
   },
+  {
+    slug: 'reading-your-income-growth',
+    title: 'Reading your income growth',
+    summary:
+      'Set up the Income page so its charts answer "is my income actually growing" — and so a bonus month, a raise, or an ended contract each read as what they are.',
+    steps: [
+      {
+        title: 'Choose what counts as your income',
+        description:
+          'Open "Income settings" in the page header. Every income category is counted by default; untick one — a noisy "Other Income" full of one-off gifts and refunds, say — to keep it out of every figure on the page at once. The same choice feeds the charts, the growth panel and the take-home rate, so "my income" means one thing throughout.',
+      },
+      {
+        title: 'Tell the page when your career started',
+        description:
+          'Also in "Income settings": a career start date trims the page back to where your working life began, rather than where your imported history happens to begin. Student-era income and a back-dated opening balance stop dragging on the trend. Leave it empty to keep the full history.',
+      },
+      {
+        title: 'Flag your annual lump sums',
+        description:
+          'If a 13th month, vacation pay or holiday bonus arrives as its own category, tick it under "Annual lump sums". Its yearly total is then spread across that year\'s months on the charts, so one deposit stops reading as a spike — and stops being mistaken for a raise. Your transactions are never changed; untick it and the spike comes straight back.',
+      },
+      {
+        title: 'Read the growth figures',
+        description:
+          'The growth panel compares your last complete month against the month before it and against the same month a year earlier — two comparisons because one good month moves the first and leaves the second alone. Above the chart, notices call out a sustained raise or pay cut, and warn when an income stream that used to arrive every month has gone quiet.',
+      },
+      {
+        title: 'Add your gross wage to see your take-home rate',
+        description:
+          "A bank export only ever shows what landed in your account. Open \"Salary details\" and type a gross wage into any month — it saves as you leave the field, no save button. If part of that month's deposit was a bonus rather than regular pay, put it in the Bonus column so it doesn't inflate that month. The take-home rate chart then shows what share of gross actually reached you, month by month, with a gap for any month you haven't filled in.",
+      },
+    ],
+    tryItLabel: 'Try it — go to Income',
+    tryItRoute: '/income',
+  },
 ];
