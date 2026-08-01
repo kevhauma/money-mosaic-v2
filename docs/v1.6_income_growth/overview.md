@@ -87,7 +87,7 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
 - [x] [TICKET-INC-05](./tickets/TICKET-INC-05-income-growth-rate-panel.md) — Income growth-rate panel, period-over-period and YoY (adds FR-INC-5) — needs INC-02 + INC-04
 - [x] [TICKET-INC-08](./tickets/TICKET-INC-08-raise-pay-cut-step-change-detection.md) — Raise/pay-cut step-change detection (adds FR-INC-8) — needs INC-04's smoothed series
 - [x] [TICKET-INC-09](./tickets/TICKET-INC-09-lost-income-stream-warning.md) — Lost income stream warning (adds FR-INC-9) — only needs INC-02's raw series, can slot in any time after it
-- [ ] [TICKET-INC-10](./tickets/TICKET-INC-10-monthly-gross-wage-entry.md) — Monthly salary metadata: gross wage + embedded bonus, opened from its own modal (adds FR-INC-10) — genuinely independent (new table, no dependency on the trend series), can be built any time
+- [x] [TICKET-INC-10](./tickets/TICKET-INC-10-monthly-gross-wage-entry.md) — Monthly salary metadata: gross wage + embedded bonus, opened from its own modal (adds FR-INC-10) — genuinely independent (new table, no dependency on the trend series), can be built any time
 - [ ] [TICKET-INC-11](./tickets/TICKET-INC-11-gross-net-ratio.md) — Gross/net ratio per month (adds FR-INC-11) — last: needs INC-10 + INC-03
 
 ## Considered, not ticketed yet

@@ -28,7 +28,11 @@ import {
   formatCurrency,
   syncFormatSettings,
 } from '@/shared/utils';
-import { buildIncomeTrendChartOption, IncomeOverviewComponent } from './income-overview.component';
+import {
+  bucketKeyForChartClick,
+  buildIncomeTrendChartOption,
+  IncomeOverviewComponent,
+} from './income-overview.component';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
 class ResizeObserverStub {
@@ -105,6 +109,25 @@ describe('buildIncomeTrendChartOption (FR-INC-2, TICKET-INC-02)', () => {
     expect(option.dataZoom.every((zoom) => zoom.startValue === 1 && zoom.endValue === 2)).toBe(
       true,
     );
+  });
+});
+
+describe('bucketKeyForChartClick (FR-INC-10, TICKET-INC-10)', () => {
+  const bucketKeys = ['2026-01', '2026-02', '2026-03'];
+
+  it('resolves a clicked point’s dataIndex to its month', () => {
+    expect(bucketKeyForChartClick({ dataIndex: 1 }, bucketKeys)).toBe('2026-02');
+  });
+
+  it('resolves the first and last points', () => {
+    expect(bucketKeyForChartClick({ dataIndex: 0 }, bucketKeys)).toBe('2026-01');
+    expect(bucketKeyForChartClick({ dataIndex: 2 }, bucketKeys)).toBe('2026-03');
+  });
+
+  it('is undefined for a click that carries no usable index — the legend, or empty canvas', () => {
+    expect(bucketKeyForChartClick({ dataIndex: 9 }, bucketKeys)).toBeUndefined();
+    expect(bucketKeyForChartClick({ dataIndex: -1 }, bucketKeys)).toBeUndefined();
+    expect(bucketKeyForChartClick({ dataIndex: 0 }, [])).toBeUndefined();
   });
 });
 
@@ -344,6 +367,56 @@ describe('IncomeOverviewComponent', () => {
 
       // The two deposits, unchanged: 2000 salary + 800 bonus.
       expect(total).toBeCloseTo(2800, 1);
+    });
+  });
+
+  describe('salary details modal (FR-INC-10, TICKET-INC-10)', () => {
+    /** The component's own handlers, which the template wires to the header button and the chart. */
+    type SalaryDetailsHost = {
+      openSalaryDetails: () => void;
+      onChartClick: (event: { dataIndex: number }) => void;
+      salaryDetailsOpen: () => boolean;
+      salaryDetailsFocusMonth: () => string | undefined;
+    };
+
+    const host = (): SalaryDetailsHost => fixture.componentInstance as unknown as SalaryDetailsHost;
+
+    it('is closed until asked for, so the page isn’t hosting a data-entry form every visit', async () => {
+      await setup([salary]);
+
+      expect(host().salaryDetailsOpen()).toBe(false);
+      expect(fixture.nativeElement.querySelector('app-salary-metadata-table')).toBeNull();
+    });
+
+    it('opens from the header button, with no month singled out', async () => {
+      await setup([salary]);
+
+      host().openSalaryDetails();
+      fixture.detectChanges();
+
+      expect(host().salaryDetailsOpen()).toBe(true);
+      expect(host().salaryDetailsFocusMonth()).toBeUndefined();
+      expect(fixture.nativeElement.querySelector('app-salary-metadata-table')).not.toBeNull();
+    });
+
+    it('opens on the clicked month when the trend chart is clicked', async () => {
+      await setup([salary]);
+
+      host().onChartClick({ dataIndex: 0 });
+      fixture.detectChanges();
+
+      expect(host().salaryDetailsOpen()).toBe(true);
+      // The seeded history starts 2026-01, which is the chart's first bucket.
+      expect(host().salaryDetailsFocusMonth()).toBe('2026-01');
+    });
+
+    it('ignores a click that resolves to no bucket', async () => {
+      await setup([salary]);
+
+      host().onChartClick({ dataIndex: 999 });
+      fixture.detectChanges();
+
+      expect(host().salaryDetailsOpen()).toBe(false);
     });
   });
 

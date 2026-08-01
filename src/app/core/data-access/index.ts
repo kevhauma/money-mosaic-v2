@@ -12,3 +12,4 @@ export * from './category-comparison-settings.repository';
 export * from './dashboard-layout-settings.repository';
 export * from './data-management.repository';
 export * from './app-settings.repository';
+export * from './salary-metadata.repository';

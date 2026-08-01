@@ -115,6 +115,41 @@ describe('DataManagementRepository', () => {
     });
   });
 
+  describe('salaryMetadata (TICKET-INC-10)', () => {
+    it('round-trips through export → clear → import, without the repository knowing about it', async () => {
+      // Export/import iterate `appDb.tables`, so a new table needs no change here — asserted rather
+      // than assumed, since a silently-dropped table looks exactly like data the user never entered.
+      await appDb.salaryMetadata.bulkPut([
+        { id: 1, yearMonth: '2026-02', grossWage: 3500, bonus: 900 },
+        { id: 2, yearMonth: '2026-03', grossWage: 3600 },
+      ]);
+
+      const exported = await repository.exportAll();
+      await appDb.salaryMetadata.clear();
+      await repository.importAll(exported, 'replace');
+
+      expect(await appDb.salaryMetadata.orderBy('yearMonth').toArray()).toEqual([
+        { id: 1, yearMonth: '2026-02', grossWage: 3500, bonus: 900 },
+        { id: 2, yearMonth: '2026-03', grossWage: 3600 },
+      ]);
+    });
+
+    it('accepts an older backup that predates the table', async () => {
+      // A v12 export has no `salaryMetadata` key at all; importing it must not throw, and in
+      // `replace` mode simply leaves the new table empty.
+      await appDb.salaryMetadata.put({ id: 1, yearMonth: '2026-02', grossWage: 3500 });
+
+      const olderBackup: AppDataExport = {
+        schemaVersion: 12,
+        exportedAt: new Date().toISOString(),
+        tables: { accounts: [account({ id: 1, name: 'Imported' })] },
+      };
+
+      await expect(repository.importAll(olderBackup, 'replace')).resolves.toBeUndefined();
+      expect(await appDb.salaryMetadata.toArray()).toEqual([]);
+    });
+  });
+
   describe('importAll merge mode', () => {
     it('upserts imported rows without clearing pre-existing non-colliding rows', async () => {
       await appDb.accounts.clear();

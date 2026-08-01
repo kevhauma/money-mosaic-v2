@@ -124,43 +124,42 @@ since there's no separate category to flag).
 
 ## Acceptance criteria
 
-- [ ] `salaryMetadata` table enforces one entry per `yearMonth` (unique index) — attempting to add a
-      second entry for the same month updates the existing one instead of creating a duplicate
-      (`upsert` semantics).
-- [ ] Schema version is **13**, and its `.stores()` block declares **only** `salaryMetadata` — the
-      v11+ minimal-declaration convention, *not* the full-table-map style of the frozen v1–v10
-      blocks. No shipped version block is edited.
-- [ ] `bonus` is optional; a month entered with only `grossWage` behaves exactly as a plain gross-wage
-      entry (no bonus subtraction happens anywhere downstream).
-- [ ] Data-management export includes the new table and a round-trip (export → clear → import)
-      restores salary-metadata rows; an older backup (schemaVersion < 13) still imports without
-      error.
-- [ ] `IncomeStore` never lets a component call `appDb.salaryMetadata` directly — all access via
-      `SalaryMetadataRepository`.
-- [ ] The "Salary details" button opens the modal from anywhere on the Income page; the table has one
-      row per month across the page's full range, grouped into one collapsible section per year.
-- [ ] Editing a cell and blurring persists it (`setSalaryMetadata`) without a save button; blurring a
-      cell that wasn't changed does not write anything (no empty `SalaryMetadata` rows created by
-      tabbing through); unit test on the row's blur handler covers both cases.
-- [ ] Clearing a cell back to empty and blurring removes that field from the row's `SalaryMetadata`
-      entry (or the whole entry, if both `grossWage` and `bonus` are now empty) rather than persisting
-      a zero.
-- [ ] The table header (`Month | Gross wage | Bonus`) stays visible (`position: sticky`) while the
-      body scrolls beneath it inside the modal.
-- [ ] The current year's section is expanded by default; every other year starts collapsed.
-      Expanding a year with no existing entries still renders its 12 month rows, editable.
-- [ ] The "Bonus" column header shows an info icon whose `title` explains what the field does and
-      that it's subtracted from net income before the gross/net ratio compares it to gross wage.
-- [ ] FR-INC-2's chart gains a `(chartClick)` handler; clicking a data point opens the same modal
-      with that point's year expanded (collapsing the default current-year section if different) and
-      that row's "Gross wage" cell scrolled into view and focused; unit test resolves `dataIndex` to
-      the correct `bucketKey`/row.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified live in the browser: open "Salary details," type a gross wage and a bonus into the
-      current month's row, tab away, close and reopen the modal, confirm both values are still
-      there; reload the page, confirm they persisted (IndexedDB-backed). Separately, click a point on
-      the income chart and confirm the modal opens with the right year expanded and that month's
-      gross-wage field focused.
+**Implementation notes, 2026-08-01 — four deviations from the to-be above, recorded as built:**
+
+1. **`grossWage` is optional too**, not `grossWage: number`. The to-be types it as required, but the
+   criterion below requires clearing a cell to *remove that field* — and a user may equally want to
+   note a bonus in a month whose gross they haven't filled in yet. A row where both are absent is
+   deleted rather than kept as a pair of zeros, because `0` is a real, different claim from an empty
+   cell.
+2. **`mm-table` needed no change; the sticky rules live on this component's own `<thead>`.** The
+   as-is section budgeted for changing the primitive, but `<thead>` is caller-authored markup
+   projected into `mm-table`, so `sticky top-0 z-10 bg-base-100` on it is all that's required —
+   scoped to this component exactly as the to-be wanted, without touching the shared primitive.
+3. **Two additions to `mm-input`**, both genuine gaps rather than this ticket's own needs:
+   a `blurred` output (the native `blur` event doesn't bubble, so `(blur)` on `<mm-input>` would
+   silently never fire, and `(focusout)` is a subtlety every call site would have to know), and
+   `ariaLabel` (a table cell has no visible `<label>`, and a column header alone doesn't say which
+   row a cell belongs to).
+4. **A year section renders the months the page's range actually covers, not always twelve.** The
+   to-be says "its 12 month rows"; for the current year and the first year of a history the range
+   holds fewer, and rendering months the rest of the page can't show would invite entries that no
+   chart will ever reflect. The point the criterion is making — that a year with *no stored entries*
+   still gets editable rows — holds exactly as written.
+
+- [x] `salaryMetadata` table enforces one entry per `yearMonth` (unique index) — attempting to add a second entry for the same month updates the existing one instead of creating a duplicate (`upsert` semantics). (Specs `updates the existing row rather than adding a second one for the same month` and `rejects a raw duplicate insert — the uniqueness lives in the schema, not only in upsert` in [salary-metadata.repository.spec.ts](../../../src/app/core/data-access/salary-metadata.repository.spec.ts); the second asserts the `&yearMonth` index itself throws on a bare `add`.)
+- [x] Schema version is **13**, and its `.stores()` block declares **only** `salaryMetadata` — the v11+ minimal-declaration convention, *not* the full-table-map style of the frozen v1–v10 blocks. No shipped version block is edited. (`this.version(13).stores({ salaryMetadata: '++id, &yearMonth' })` in [app-db.ts](../../../src/app/core/data-access/app-db.ts); `git diff` on that file adds only the new type, the table field and the new block.)
+- [x] `bonus` is optional; a month entered with only `grossWage` behaves exactly as a plain gross-wage entry (no bonus subtraction happens anywhere downstream). (`bonus?: number` on `SalaryMetadata`; spec `creates a row for a month that had none` writes `bonus: undefined`, and nothing in this ticket's code reads `bonus` at all — FR-INC-11 is its only consumer.)
+- [x] Data-management export includes the new table and a round-trip (export → clear → import) restores salary-metadata rows; an older backup (schemaVersion < 13) still imports without error. (Specs `round-trips through export → clear → import, without the repository knowing about it` and `accepts an older backup that predates the table` in [data-management.repository.spec.ts](../../../src/app/core/data-access/data-management.repository.spec.ts).)
+- [x] `IncomeStore` never lets a component call `appDb.salaryMetadata` directly — all access via `SalaryMetadataRepository`. (The store injects the repository; `grep appDb src/app/feature-income` returns nothing. The table component's spec provides a mock repository and asserts on its calls, which is only possible because nothing reaches past it.)
+- [x] The "Salary details" button opens the modal from anywhere on the Income page; the table has one row per month across the page's full range, grouped into one collapsible section per year. (The button sits in the page header beside the settings popup. Overview spec `opens from the header button, with no month singled out`; table spec `renders one collapsible section per year, newest first` and `renders one row per month in range, each labelled with its month and year`.)
+- [x] Editing a cell and blurring persists it (`setSalaryMetadata`) without a save button; blurring a cell that wasn't changed does not write anything (no empty `SalaryMetadata` rows created by tabbing through); unit test on the row's blur handler covers both cases. ([salary-metadata-edit.spec.ts](../../../src/app/feature-income/salary-metadata-edit.spec.ts) covers `resolveSalaryMetadataWrite` directly — `writes nothing when an empty month is blurred untouched`, `writes nothing when both cells still match the stored row`, `creates a row for a month that had none`; the table spec repeats all three through the real DOM.)
+- [x] Clearing a cell back to empty and blurring removes that field from the row's `SalaryMetadata` entry (or the whole entry, if both `grossWage` and `bonus` are now empty) rather than persisting a zero. (Specs `drops a single cleared field rather than persisting a zero`, `removes the whole row once both cells are empty`, and — the distinction that makes it worth having — `stores a real zero, which is a different claim from an empty cell`.)
+- [x] The table header (`Month | Gross wage | Bonus`) stays visible (`position: sticky`) while the body scrolls beneath it inside the modal. (Spec `pins the header row so it stays visible while the body scrolls` asserts both `sticky` and the opaque `bg-base-100` a sticky header needs; the body scrolls because `mm-table` is given `scroll="auto"` + `max-h-80`. See implementation note 2.)
+- [x] The current year's section is expanded by default; every other year starts collapsed. Expanding a year with no existing entries still renders its 12 month rows, editable. (Specs `expands the current year and leaves every other year collapsed` and `renders editable rows for a year with no stored entries at all`. Row count follows the range — see implementation note 4.)
+- [x] The "Bonus" column header shows an info icon whose `title` explains what the field does and that it's subtracted from net income before the gross/net ratio compares it to gross wage. (Spec `explains the bonus column, including that it is subtracted before the ratio`, asserting on `BONUS_COLUMN_HINT` as the icon's `title`.)
+- [x] FR-INC-2's chart gains a `(chartClick)` handler; clicking a data point opens the same modal with that point's year expanded (collapsing the default current-year section if different) and that row's "Gross wage" cell scrolled into view and focused; unit test resolves `dataIndex` to the correct `bucketKey`/row. (`bucketKeyForChartClick` has its own describe block resolving `dataIndex` — including the out-of-range case; overview spec `opens on the clicked month when the trend chart is clicked`; table spec `expands the clicked month’s year instead of the current one` and `focuses that month’s gross-wage cell`.)
+- [x] `angular.json` bundle budgets not raised. (`git diff` touches no `angular.json`.)
+- [ ] Verified live in the browser: open "Salary details," type a gross wage and a bonus into the current month's row, tab away, close and reopen the modal, confirm both values are still there; reload the page, confirm they persisted (IndexedDB-backed). Separately, click a point on the income chart and confirm the modal opens with the right year expanded and that month's gross-wage field focused. — **not done:** the user waived live browser checks for this v1.6 batch. Covered instead by the table spec's `persisting on blur` block (typing into a cell calls the repository's `upsert` with the right row) and `arriving from a chart click` block; the repository spec covers the IndexedDB round-trip against real `fake-indexeddb`.
 
 ## Notes
 

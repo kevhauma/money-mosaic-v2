@@ -4,6 +4,7 @@ import {
   computed,
   forwardRef,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -37,7 +38,17 @@ export class InputComponent implements ControlValueAccessor {
   readonly max = input<string>();
   readonly maxlength = input<number>();
   readonly ariaInvalid = input(false);
+  /** Accessible name for an input with no visible `<label>` of its own — e.g. a cell in an editable table, whose column header alone doesn't say which row it belongs to. */
+  readonly ariaLabel = input<string>();
   readonly class = input('', { alias: 'class' });
+
+  /**
+   * Re-emits the inner `<input>`'s blur, for a caller that saves on leaving a field rather than on
+   * submit (TICKET-INC-10's always-editable salary table). Needed as an explicit output because
+   * `blur` doesn't bubble, so `(blur)` on the `<mm-input>` element itself would never fire — and
+   * `(focusout)`, which does bubble, would be a subtlety every call site had to know about.
+   */
+  readonly blurred = output<void>();
 
   protected readonly displayValue = signal('');
   protected readonly isDisabled = signal(false);
@@ -80,5 +91,6 @@ export class InputComponent implements ControlValueAccessor {
 
   protected handleBlur(): void {
     this.onTouched();
+    this.blurred.emit();
   }
 }

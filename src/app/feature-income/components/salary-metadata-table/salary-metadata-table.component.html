@@ -1,0 +1,61 @@
+@for (section of sections(); track section.year) {
+  <mm-collapse
+    class="mt-2"
+    [open]="section.open"
+    (openChange)="setSectionOpen(section.year, $event)"
+  >
+    <span mm-collapse-title>{{ section.year }}</span>
+
+    <mm-table scroll="auto" class="max-h-80">
+      <!-- Sticky lives on this `<thead>` rather than on `mm-table`: the header markup is
+           caller-authored (see that component's doc), and no other table in the app needs a pinned
+           header yet. `bg-base-100` is not decoration — a transparent sticky header shows the rows
+           scrolling under it. -->
+      <thead class="sticky top-0 z-10 bg-base-100">
+        <tr>
+          <th scope="col">Month</th>
+          <th scope="col">Gross wage</th>
+          <th scope="col">
+            Bonus
+            <ng-icon
+              name="tablerInfoCircle"
+              size="14"
+              class="align-text-bottom"
+              [attr.title]="bonusHint"
+              [attr.aria-label]="bonusHint"
+            />
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of section.rows; track row.yearMonth) {
+          <tr [attr.data-month]="row.yearMonth">
+            <th scope="row" class="font-normal whitespace-nowrap">{{ row.label }}</th>
+            <td>
+              <mm-input
+                type="number"
+                size="sm"
+                step="0.01"
+                class="w-32"
+                [ariaLabel]="'Gross wage, ' + row.label"
+                [formControl]="row.grossWageControl"
+                (blurred)="persist(row)"
+              />
+            </td>
+            <td>
+              <mm-input
+                type="number"
+                size="sm"
+                step="0.01"
+                class="w-32"
+                [ariaLabel]="'Bonus, ' + row.label"
+                [formControl]="row.bonusControl"
+                (blurred)="persist(row)"
+              />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </mm-table>
+  </mm-collapse>
+}

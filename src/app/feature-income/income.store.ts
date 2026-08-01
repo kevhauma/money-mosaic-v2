@@ -1,5 +1,13 @@
 import { computed, inject } from '@angular/core';
-import { signalStore, withComputed, withMethods } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
+import { SalaryMetadataRepository, type SalaryMetadata } from '@/core/data-access';
 import {
   computeFullHistoryRange,
   computeIncomeCategorySeries,
@@ -25,12 +33,18 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
  * of those are an annual lump sum to smooth out (FR-INC-4, TICKET-INC-04), and where the user's
  * career started (FR-INC-12, TICKET-INC-12) — is persisted on the `appSettings` singleton rather
  * than held here, so it survives a reload; this store only projects it into the id sets and the
- * clamped span the page's aggregates take. The gross-wage entries (INC-10, through their own
- * repository) are still to come.
+ * clamped span the page's aggregates take.
+ *
+ * Its one piece of genuine *entity* state is the salary metadata (FR-INC-10, TICKET-INC-10) — gross
+ * wage and embedded bonus per month, the only figures on this page a bank CSV can never supply.
+ * Those live in their own table behind `SalaryMetadataRepository`, hydrated on first injection.
  */
 export const IncomeStore = signalStore(
   { providedIn: 'root' },
-  withComputed(() => {
+  // The page's one piece of *entity* state (FR-INC-10) — every other figure here is derived. Hydrated
+  // from `SalaryMetadataRepository` on first injection, below.
+  withState<{ salaryMetadata: SalaryMetadata[] }>({ salaryMetadata: [] }),
+  withComputed((store) => {
     const accountsStore = inject(AccountsStore);
     const categoriesStore = inject(CategoriesStore);
     const transactionsStore = inject(TransactionsStore);
@@ -151,6 +165,11 @@ export const IncomeStore = signalStore(
       /** The user's career start date (FR-INC-12), or `undefined` while unset. */
       careerStartDate: computed(() => appSettingsStore.careerStartDate()),
 
+      /** The salary metadata keyed by `YYYY-MM` (FR-INC-10) — how every consumer actually reads it: one month at a time. */
+      salaryMetadataByMonth: computed(
+        () => new Map(store.salaryMetadata().map((entry) => [entry.yearMonth, entry])),
+      ),
+
       /**
        * `rawIncomeTrend` with annual lump sums spread across their year (FR-INC-4) — what the trend
        * chart draws, and what the growth-rate panel (FR-INC-5) and step-change detector (FR-INC-8)
@@ -210,5 +229,49 @@ export const IncomeStore = signalStore(
       setCareerStartDate: (careerStartDate: string | undefined): Promise<void> =>
         appSettingsStore.setCareerStartDate(careerStartDate),
     };
+  }),
+  withMethods((store) => {
+    const salaryMetadataRepository = inject(SalaryMetadataRepository);
+    let hydration: Promise<void> | null = null;
+
+    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
+    const hydrate = (): Promise<void> => {
+      hydration ??= salaryMetadataRepository.getAll().then((salaryMetadata) => {
+        patchState(store, { salaryMetadata });
+      });
+      return hydration;
+    };
+
+    const reload = async (): Promise<void> => {
+      patchState(store, { salaryMetadata: await salaryMetadataRepository.getAll() });
+    };
+
+    return {
+      hydrate,
+
+      /**
+       * Writes one month's gross wage / embedded bonus (FR-INC-10), replacing whatever that month
+       * held. Re-reads the table afterwards rather than patching in place: `upsert` resolves the
+       * row's `id` inside the repository, and a round-trip is cheap for a table with one row per
+       * month.
+       */
+      setSalaryMetadata: async (entry: SalaryMetadata): Promise<void> => {
+        await salaryMetadataRepository.upsert(entry);
+        await reload();
+      },
+
+      /** Deletes a month's row outright — what clearing both amounts means (see `resolveSalaryMetadataWrite`). */
+      removeSalaryMetadata: async (id: number): Promise<void> => {
+        await salaryMetadataRepository.remove(id);
+        await reload();
+      },
+    };
+  }),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget on first injection rather than at app bootstrap (TICKET-PERF-07) — nothing
+      // outside `/income` reads salary metadata.
+      void store.hydrate();
+    },
   }),
 );

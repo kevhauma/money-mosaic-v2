@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerTrendingUp } from '@ng-icons/tabler-icons';
-import type { EChartsCoreOption } from 'echarts/core';
+import { tablerReceipt2, tablerTrendingUp } from '@ng-icons/tabler-icons';
+import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { CategorySeriesEntry, ChartZoomWindow } from '@/core/stats';
 import {
@@ -10,7 +10,13 @@ import {
   resolveChartAnimation,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
-import { EmptyStateComponent, PageHeaderComponent, PaperComponent } from '@/shared/ui';
+import {
+  ButtonComponent,
+  EmptyStateComponent,
+  MmModalComponent,
+  PageHeaderComponent,
+  PaperComponent,
+} from '@/shared/ui';
 import { formatCurrency } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 import { IncomeGapWarningsComponent } from '../income-gap-warnings/income-gap-warnings.component';
@@ -18,8 +24,19 @@ import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth
 import { IncomeSettingsComponent } from '../income-settings/income-settings.component';
 import { IncomeStepChangesComponent } from '../income-step-changes/income-step-changes.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
+import { SalaryMetadataTableComponent } from '../salary-metadata-table/salary-metadata-table.component';
 
 export type IncomeTrendAccessibleRow = { bucketKey: string; total: string };
+
+/**
+ * The `YYYY-MM` bucket an echarts click landed on, or `undefined` when the event carries no usable
+ * index (a click on the legend or on empty canvas). Pure, so the `dataIndex` → bucket resolution
+ * TICKET-INC-10 relies on is testable without a chart instance.
+ */
+export const bucketKeyForChartClick = (
+  event: Pick<ECElementEvent, 'dataIndex'>,
+  bucketKeys: string[],
+): string | undefined => bucketKeys[event.dataIndex];
 
 /**
  * Pure echarts-option builder for the income-by-category trend, kept separate from the component
@@ -70,20 +87,23 @@ export const buildIncomeTrendChartOption = (
 @Component({
   selector: 'app-income-overview',
   imports: [
+    ButtonComponent,
     EmptyStateComponent,
     IncomeGapWarningsComponent,
     IncomeGrowthPanelComponent,
     IncomeSettingsComponent,
     IncomeStepChangesComponent,
     IncomeYearlyPanelComponent,
+    MmModalComponent,
     NgIcon,
     NgxEchartsDirective,
     PageHeaderComponent,
     PaperComponent,
+    SalaryMetadataTableComponent,
   ],
   templateUrl: './income-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerTrendingUp })],
+  viewProviders: [provideIcons({ tablerReceipt2, tablerTrendingUp })],
 })
 export class IncomeOverviewComponent {
   private readonly incomeStore = inject(IncomeStore);
@@ -130,4 +150,26 @@ export class IncomeOverviewComponent {
     () =>
       `Income by category, monthly, ${this.range().from}–${this.range().to}; table with values follows`,
   );
+
+  /** Whether the salary-details modal (FR-INC-10) is showing. */
+  protected readonly salaryDetailsOpen = signal(false);
+
+  /** The month the modal should expand and focus — set only when it was opened by clicking the chart. */
+  protected readonly salaryDetailsFocusMonth = signal<string | undefined>(undefined);
+
+  protected openSalaryDetails(): void {
+    this.salaryDetailsFocusMonth.set(undefined);
+    this.salaryDetailsOpen.set(true);
+  }
+
+  /**
+   * Clicking a point on the trend chart opens the salary table straight at that month (FR-INC-10):
+   * a spike the user wants to explain is usually a spike they want to annotate.
+   */
+  protected onChartClick(event: ECElementEvent): void {
+    const bucketKey = bucketKeyForChartClick(event, this.trend().bucketKeys);
+    if (bucketKey === undefined) return;
+    this.salaryDetailsFocusMonth.set(bucketKey);
+    this.salaryDetailsOpen.set(true);
+  }
 }

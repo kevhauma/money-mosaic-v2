@@ -5,4 +5,5 @@ export * from './income-gap-warnings/income-gap-warnings.component';
 export * from './income-growth-panel/income-growth-panel.component';
 export * from './income-step-changes/income-step-changes.component';
 export * from './income-yearly-panel/income-yearly-panel.component';
+export * from './salary-metadata-table/salary-metadata-table.component';
 export * from './income-career-start/income-career-start.component';

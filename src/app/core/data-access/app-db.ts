@@ -562,6 +562,30 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   smoothedBonusCategoryIds: undefined,
 };
 
+/**
+ * One month's manually-entered salary facts (TICKET-INC-10, FR-INC-10) — the one thing on the
+ * Income page that isn't derived from imported transactions, because a bank CSV only ever records
+ * what *landed* in the account.
+ *
+ * Household-level and deliberately unlinked to an `Account` or a `Category`: it's a fact about the
+ * month, not about whichever account the net salary happened to arrive in.
+ *
+ * Both amounts are optional (see TICKET-INC-10's implementation notes): a user may know their gross
+ * wage but not split out a bonus, or note a bonus in a month whose gross they haven't filled in
+ * yet, and clearing a field must be able to remove it rather than persist a zero. A row where both
+ * are absent is deleted rather than kept empty.
+ */
+export type SalaryMetadata = {
+  id?: number;
+  /** Calendar month, `YYYY-MM` — `bucketKeyForDate`'s `'month'` format. Uniquely indexed: one row per month. */
+  yearMonth: string;
+  /** Gross monthly pay before tax and social contributions. A plain number; the currency symbol is a display setting (TICKET-SET-03). */
+  grossWage?: number;
+  /** The part of *this month's actual deposit* that was a 13th month / vacation / holiday bonus rather than regular pay. Read by FR-INC-11's ratio, which subtracts it from net before comparing to `grossWage`. Distinct from FR-INC-4's per-category smoothing — see both tickets' Notes. */
+  bonus?: number;
+  note?: string;
+};
+
 class AppDb extends Dexie {
   accounts!: Table<Account, number>;
   transactions!: Table<Transaction, number>;
@@ -576,6 +600,7 @@ class AppDb extends Dexie {
   dashboardLayoutSettings!: Table<DashboardLayoutSettings, number>;
   categoryModelSettings!: Table<CategoryModelSettings, number>;
   appSettings!: Table<AppSettings, number>;
+  salaryMetadata!: Table<SalaryMetadata, number>;
 
   constructor() {
     super('money-mosaic');
@@ -814,6 +839,15 @@ class AppDb extends Dexie {
     // written yet, same as `categoryModel`/`categoryComparisonSettings`.
     this.version(12).stores({
       appSettings: 'id',
+    });
+
+    // Adds the `salaryMetadata` table — one manually-entered row per month for gross wage and an
+    // embedded bonus (TICKET-INC-10). `&yearMonth` is a **unique** index: a second row for the same
+    // month is never meaningful, so the constraint lives in the schema rather than in the
+    // repository's `upsert`. Purely additive — a brand-new, empty table — so no `.upgrade()` is
+    // needed, same as `appSettings` at v12.
+    this.version(13).stores({
+      salaryMetadata: '++id, &yearMonth',
     });
 
     this.on('populate', () => {

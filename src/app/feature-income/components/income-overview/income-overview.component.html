@@ -3,7 +3,24 @@
   subtitle="How your income moves over time — by source, year over year, and against the noise."
 >
   <app-income-settings actions />
+  <mm-button actions variant="ghost" size="sm" (click)="openSalaryDetails()">
+    <ng-icon name="tablerReceipt2" size="16" aria-hidden="true" />
+    Salary details
+  </mm-button>
 </mm-page-header>
+
+<mm-modal [(open)]="salaryDetailsOpen" class="max-w-3xl">
+  <span mm-modal-title>Salary details</span>
+  <p class="mt-1 text-sm opacity-70">
+    Gross pay never appears in a bank export — record it here to see what share of it actually
+    reaches your account.
+  </p>
+  <!-- Mounted only while the modal is open, so the table builds its controls from fresh stored
+       values each time instead of syncing them against the store mid-edit (TICKET-INC-10). -->
+  @if (salaryDetailsOpen()) {
+    <app-salary-metadata-table [focusMonth]="salaryDetailsFocusMonth()" />
+  }
+</mm-modal>
 
 @if (hasSelectedCategories()) {
   <app-income-step-changes class="block" />
@@ -18,6 +35,7 @@
       class="h-80 w-full"
       role="img"
       [attr.aria-label]="chartAriaLabel()"
+      (chartClick)="onChartClick($event)"
     ></div>
 
     <!-- Screen-reader-only companion table for the chart above — not a visible data table, so it

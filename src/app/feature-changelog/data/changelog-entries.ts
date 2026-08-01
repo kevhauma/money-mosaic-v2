@@ -429,4 +429,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The Income page now warns you when an income stream that used to arrive every month has gone quiet, so an ended contract or lapsed side income doesn’t just silently disappear from your trend',
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-10'],
+    title:
+      'You can now record your gross wage per month under “Salary details” — plus how much of a month’s deposit was a bonus — since a bank export only ever shows what actually landed; clicking a point on the income chart jumps straight to that month',
+    area: 'Income',
+  },
 ];
