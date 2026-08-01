@@ -1,12 +1,18 @@
 import { computed, inject } from '@angular/core';
 import { signalStore, withComputed, withMethods } from '@ngrx/signals';
-import { computeFullHistoryRange } from '@/core/stats';
+import {
+  computeFullHistoryRange,
+  computeIncomeCategorySeries,
+  smoothAnnualLumpSums,
+} from '@/core/stats';
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import { savingsAccountIbans } from '@/core/transfers';
 import {
   clampRangeToCareerStart,
   validateCareerStartDate,
   type CareerStartDateRejection,
 } from './career-start-date';
+import { INCOME_GRANULARITY } from './income-granularity';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -74,47 +80,76 @@ export const IncomeStore = signalStore(
       );
     });
 
+    /**
+     * The span every panel on `/income` actually covers (FR-INC-12): the data's full history,
+     * clamped to start where the user says their working life did. Unset — the default — leaves
+     * it identical to `fullHistoryRange`, so nothing changes for anyone who never sets a date.
+     */
+    const incomeRange = computed(() =>
+      clampRangeToCareerStart(fullHistoryRange(), appSettingsStore.careerStartDate()),
+    );
+
+    /**
+     * The income categories that count toward growth (FR-INC-3) — every active income category
+     * minus the user's persisted exclusions. Derived subtractively (rather than reading a stored
+     * selection) so a newly created income category is selected by default and an archived one
+     * drops out, both without any sync effect.
+     */
+    const selectedIncomeCategoryIds = computed(() => {
+      const excluded = new Set(appSettingsStore.excludedIncomeCategoryIds() ?? []);
+      return new Set(
+        incomeCategories()
+          .map((category) => category.id!)
+          .filter((id) => !excluded.has(id)),
+      );
+    });
+
+    /**
+     * The income categories the user has marked as an annual lump sum (FR-INC-4) — an *inclusion*
+     * list, unlike the exclusion list above: smoothing is opt-in per category, so an unset field
+     * means nothing is smoothed. `toggleIncomeCategory` prunes this list when a category leaves the
+     * growth selection, so an id in here is always one the settings popup still shows.
+     */
+    const smoothedBonusCategoryIds = computed(
+      () => new Set(appSettingsStore.smoothedBonusCategoryIds() ?? []),
+    );
+
     return {
       incomeCategories,
       fullHistoryRange,
       latestTransactionDate,
+      incomeRange,
+      selectedIncomeCategoryIds,
+      smoothedBonusCategoryIds,
 
       /** The user's career start date (FR-INC-12), or `undefined` while unset. */
       careerStartDate: computed(() => appSettingsStore.careerStartDate()),
 
       /**
-       * The span every panel on `/income` actually covers (FR-INC-12): the data's full history,
-       * clamped to start where the user says their working life did. Unset — the default — leaves
-       * it identical to `fullHistoryRange`, so nothing changes for anyone who never sets a date.
+       * The page's one monthly income series: per-category totals over `incomeRange` (FR-INC-2),
+       * scoped to the growth selection (FR-INC-3) and smoothed for annual lump sums (FR-INC-4).
+       *
+       * Lives on the store rather than on `IncomeOverviewComponent` because three panels now read
+       * it — the trend chart, the growth-rate panel (FR-INC-5) and, later, step-change detection
+       * (FR-INC-8). A `computed()` here is derived once per change and shared; one copy per panel
+       * would re-bucket every transaction in the user's history that many times over, and let the
+       * panels disagree the moment one of them passed a slightly different argument.
        */
-      incomeRange: computed(() =>
-        clampRangeToCareerStart(fullHistoryRange(), appSettingsStore.careerStartDate()),
-      ),
-
-      /**
-       * The income categories that count toward growth (FR-INC-3) — every active income category
-       * minus the user's persisted exclusions. Derived subtractively (rather than reading a stored
-       * selection) so a newly created income category is selected by default and an archived one
-       * drops out, both without any sync effect.
-       */
-      selectedIncomeCategoryIds: computed(() => {
-        const excluded = new Set(appSettingsStore.excludedIncomeCategoryIds() ?? []);
-        return new Set(
-          incomeCategories()
-            .map((category) => category.id!)
-            .filter((id) => !excluded.has(id)),
-        );
-      }),
-
-      /**
-       * The income categories the user has marked as an annual lump sum (FR-INC-4) — an
-       * *inclusion* list, unlike the exclusion list above: smoothing is opt-in per category, so an
-       * unset field means nothing is smoothed. `toggleIncomeCategory` prunes this list when a
-       * category leaves the growth selection, so an id in here is always one the settings popup
-       * still shows.
-       */
-      smoothedBonusCategoryIds: computed(
-        () => new Set(appSettingsStore.smoothedBonusCategoryIds() ?? []),
+      incomeTrend: computed(() =>
+        smoothAnnualLumpSums(
+          computeIncomeCategorySeries(
+            transactionsStore.transactions(),
+            categoriesStore.categoriesById(),
+            selectedIncomeCategoryIds(),
+            incomeRange().from,
+            incomeRange().to,
+            INCOME_GRANULARITY,
+            savingsAccountIbans(accountsStore.accounts()),
+            accountsStore.accountsById(),
+          ),
+          smoothedBonusCategoryIds(),
+          INCOME_GRANULARITY,
+        ),
       ),
     };
   }),

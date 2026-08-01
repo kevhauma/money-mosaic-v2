@@ -1,0 +1,23 @@
+<mm-paper>
+  <h2 class="card-title text-base">Income growth</h2>
+
+  @if (hasComparableMonth()) {
+    <mm-text variant="caption" as="p">{{ caption() }}</mm-text>
+
+    <div class="mt-2 grid gap-3 sm:grid-cols-2">
+      @for (card of cards(); track card.label) {
+        <mm-stat-card
+          [label]="card.label"
+          [value]="card.value"
+          [subLabel]="card.subLabel"
+          [tooltip]="card.tooltip"
+          [color]="card.color"
+        />
+      }
+    </div>
+  } @else {
+    <mm-text variant="caption" as="p">
+      No complete calendar month in your history yet — growth needs a whole month to compare.
+    </mm-text>
+  }
+</mm-paper>

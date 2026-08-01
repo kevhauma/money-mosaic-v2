@@ -3,14 +3,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerTrendingUp } from '@ng-icons/tabler-icons';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
-import {
-  computeIncomeCategorySeries,
-  smoothAnnualLumpSums,
-  type CategorySeriesEntry,
-  type ChartZoomWindow,
-} from '@/core/stats';
-import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
-import { savingsAccountIbans } from '@/core/transfers';
+import type { CategorySeriesEntry, ChartZoomWindow } from '@/core/stats';
 import {
   bucketedZoomAxisOption,
   formatAxisTooltip,
@@ -18,21 +11,11 @@ import {
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
 import { EmptyStateComponent, PageHeaderComponent, PaperComponent } from '@/shared/ui';
-import { formatCurrency, type Granularity } from '@/shared/utils';
+import { formatCurrency } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
+import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth-panel.component';
 import { IncomeSettingsComponent } from '../income-settings/income-settings.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
-
-/**
- * The whole Income page buckets by calendar month — deliberately fixed rather than a per-chart
- * `mm-granularity-picker` (TICKET-INC-02 divergence, see that ticket's amended criterion). Income
- * is a monthly-cadence concept everywhere else in v1.6: FR-INC-05's growth rate is
- * period-over-period and year-over-year, FR-INC-04 smooths an annual lump sum *across months*, and
- * FR-INC-10's gross wage entries are literally keyed `yearMonth: 'YYYY-MM'`. A day- or week-bucketed
- * income series shows one spike per payday and nothing else, so the control offered four settings
- * that made the page harder to read and one that didn't.
- */
-const INCOME_GRANULARITY: Granularity = 'month';
 
 export type IncomeTrendAccessibleRow = { bucketKey: string; total: string };
 
@@ -86,6 +69,7 @@ export const buildIncomeTrendChartOption = (
   selector: 'app-income-overview',
   imports: [
     EmptyStateComponent,
+    IncomeGrowthPanelComponent,
     IncomeSettingsComponent,
     IncomeYearlyPanelComponent,
     NgIcon,
@@ -98,9 +82,6 @@ export const buildIncomeTrendChartOption = (
   viewProviders: [provideIcons({ tablerTrendingUp })],
 })
 export class IncomeOverviewComponent {
-  private readonly accountsStore = inject(AccountsStore);
-  private readonly categoriesStore = inject(CategoriesStore);
-  private readonly transactionsStore = inject(TransactionsStore);
   private readonly incomeStore = inject(IncomeStore);
 
   protected readonly hasSelectedCategories = computed(
@@ -111,26 +92,11 @@ export class IncomeOverviewComponent {
   private readonly range = this.incomeStore.incomeRange;
 
   /**
-   * The raw per-category series, then FR-INC-4's annual-lump-sum smoothing over it — a query-time
-   * wrapper, not a replacement, so the flag stays freely toggleable and no stored amount changes.
-   * Nothing is smoothed until the user marks a category in the settings popup.
+   * The page's shared monthly series — selection-scoped (FR-INC-3) and lump-sum-smoothed
+   * (FR-INC-4). Read off `IncomeStore` rather than recomputed here (TICKET-INC-05), so the growth
+   * panel below the chart is reading the very same numbers the chart draws.
    */
-  private readonly trend = computed(() =>
-    smoothAnnualLumpSums(
-      computeIncomeCategorySeries(
-        this.transactionsStore.transactions(),
-        this.categoriesStore.categoriesById(),
-        this.incomeStore.selectedIncomeCategoryIds(),
-        this.range().from,
-        this.range().to,
-        INCOME_GRANULARITY,
-        savingsAccountIbans(this.accountsStore.accounts()),
-        this.accountsStore.accountsById(),
-      ),
-      this.incomeStore.smoothedBonusCategoryIds(),
-      INCOME_GRANULARITY,
-    ),
-  );
+  private readonly trend = this.incomeStore.incomeTrend;
 
   /** Every bucket, always — see the class doc. The slider still lets the user narrow it by hand. */
   private readonly zoomWindow = computed<ChartZoomWindow>(() => ({

@@ -405,4 +405,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Every Income page setting now sits behind one “Income settings” button, and you can mark a category as an annual lump sum — a 13th month or holiday bonus spreads across its year instead of drawing one spike on the chart',
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-05'],
+    title:
+      'The Income page now shows how your last complete month compares to the month before it and to the same month a year ago, so you can tell real growth from one good month',
+    area: 'Income',
+  },
 ];
