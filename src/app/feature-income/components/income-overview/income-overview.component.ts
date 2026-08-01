@@ -1,6 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerAdjustments, tablerReceipt2, tablerTrendingUp } from '@ng-icons/tabler-icons';
+import {
+  tablerAdjustments,
+  tablerHelpCircle,
+  tablerReceipt2,
+  tablerTrendingUp,
+} from '@ng-icons/tabler-icons';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { CategorySeriesEntry, ChartZoomWindow } from '@/core/stats';
@@ -18,8 +23,11 @@ import {
   PaperComponent,
 } from '@/shared/ui';
 import { formatCurrency } from '@/shared/utils';
+import { AppSettingsStore } from '@/core/state';
+import { GUIDES } from '@/feature-help';
 import { IncomeStore } from '../../income.store';
 import { IncomeEventsSidebarComponent } from '../income-events-sidebar/income-events-sidebar.component';
+import { IncomeIntroComponent, INCOME_GUIDE_SLUG } from '../income-intro/income-intro.component';
 import { IncomeGrossNetSectionComponent } from '../income-gross-net-section/income-gross-net-section.component';
 import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth-panel.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
@@ -91,6 +99,7 @@ export const buildIncomeTrendChartOption = (
     EmptyStateComponent,
     IncomeEventsSidebarComponent,
     IncomeGrossNetSectionComponent,
+    IncomeIntroComponent,
     IncomeGrowthPanelComponent,
     IncomeYearlyPanelComponent,
     MmModalComponent,
@@ -102,10 +111,29 @@ export const buildIncomeTrendChartOption = (
   ],
   templateUrl: './income-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerAdjustments, tablerReceipt2, tablerTrendingUp })],
+  viewProviders: [
+    provideIcons({ tablerAdjustments, tablerHelpCircle, tablerReceipt2, tablerTrendingUp }),
+  ],
 })
 export class IncomeOverviewComponent {
   private readonly incomeStore = inject(IncomeStore);
+  private readonly appSettingsStore = inject(AppSettingsStore);
+
+  /**
+   * The first-visit intro replaces the whole page until it's been seen (TICKET-PUB-08) — including
+   * the empty state, since an empty Income page is precisely the situation the intro explains and
+   * "No income is being counted yet" is a worse first sentence than "here's what this page is".
+   *
+   * A slug missing from `GUIDES` degrades to the normal page rather than an empty intro: the
+   * content is the reason the intro exists, and a blank one would be worse than none.
+   */
+  protected readonly showIntro = computed(
+    () =>
+      !(this.appSettingsStore.seenGuideSlugs() ?? []).includes(INCOME_GUIDE_SLUG) &&
+      GUIDES.some((guide) => guide.slug === INCOME_GUIDE_SLUG),
+  );
+
+  protected readonly fullGuideLink = `/help/${INCOME_GUIDE_SLUG}`;
 
   protected readonly hasSelectedCategories = computed(
     () => this.incomeStore.selectedIncomeCategoryIds().size > 0,

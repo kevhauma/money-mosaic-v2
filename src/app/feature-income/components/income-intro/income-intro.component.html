@@ -1,0 +1,20 @@
+@if (guide(); as guide) {
+  <!-- A labelled region, focusable and first in the DOM: it is the first thing on the page, so it
+       has to be the first thing reached by keyboard too. -->
+  <mm-paper elevation="raised">
+    <section tabindex="-1" aria-labelledby="income-intro-heading" #introRegion>
+      <mm-text id="income-intro-heading" variant="heading" as="h1">{{ guide.title }}</mm-text>
+      <mm-text as="p" variant="caption" class="mt-1 block">{{ guide.summary }}</mm-text>
+
+      <div class="mt-6">
+        <app-guide-steps [steps]="quickSetupSteps()" />
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center gap-3">
+        <mm-button color="primary" (click)="setUp()">Set up the Income page</mm-button>
+        <mm-button variant="ghost" (click)="skip()">Skip for now</mm-button>
+        <mm-button variant="link" size="sm" [link]="fullGuideLink">Read the full guide</mm-button>
+      </div>
+    </section>
+  </mm-paper>
+}

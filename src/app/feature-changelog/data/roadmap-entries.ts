@@ -53,13 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-PUB-08',
-    title:
-      'Your first visit to the Income page: what it does, a quick setup, and a walk to the settings',
-    area: 'Help',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'TICKET-ACC-07',
     title: 'Accounts page shows actual account balances instead of net worth',
     area: 'Accounts',

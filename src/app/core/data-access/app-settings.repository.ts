@@ -54,4 +54,16 @@ export class AppSettingsRepository {
     const current = await this.get();
     return appDb.appSettings.put({ ...current, id: 1, grossColor });
   };
+
+  /**
+   * Records that a guide's first-visit intro has been shown (TICKET-PUB-08). Idempotent — marking
+   * the same slug twice leaves one entry, because both of the intro's exits call this and a user
+   * who reaches the page by two paths shouldn't accumulate duplicates.
+   */
+  markGuideSeen = async (slug: string): Promise<number> => {
+    const current = await this.get();
+    const seenGuideSlugs = current.seenGuideSlugs ?? [];
+    if (seenGuideSlugs.includes(slug)) return 1;
+    return appDb.appSettings.put({ ...current, id: 1, seenGuideSlugs: [...seenGuideSlugs, slug] });
+  };
 }

@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import {
+  AlertComponent,
   ButtonComponent,
   PageHeaderComponent,
   PaperComponent,
@@ -31,6 +32,7 @@ import { IncomeGrossColorComponent } from '../income-gross-color/income-gross-co
 @Component({
   selector: 'app-income-settings-page',
   imports: [
+    AlertComponent,
     ButtonComponent,
     IncomeCareerStartComponent,
     IncomeCategoryChecklistComponent,
@@ -44,6 +46,16 @@ import { IncomeGrossColorComponent } from '../income-gross-color/income-gross-co
 })
 export class IncomeSettingsPageComponent {
   private readonly incomeStore = inject(IncomeStore);
+
+  /**
+   * Set by the first-visit intro's hand-off (TICKET-PUB-08). A query param rather than a persisted
+   * "onboarding in progress" flag: the state lives for exactly one navigation, so a param is honest
+   * about its lifetime and needs no cleanup — a user who bookmarks the URL sees one extra banner,
+   * which is harmless. Resolved here at the routing layer and read nowhere else.
+   */
+  readonly from = input<string>();
+
+  protected readonly arrivedFromSetup = computed(() => this.from() === 'setup');
 
   /** Every active income category, ticked when it counts toward growth (FR-INC-3). */
   protected readonly countedCategories = computed<SelectableIncomeCategoryVm[]>(() =>

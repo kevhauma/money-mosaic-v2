@@ -5,17 +5,17 @@ import {
   EmptyStateComponent,
   PageHeaderComponent,
   PaperComponent,
-  TypographyComponent,
 } from '@/shared/ui';
+import { GuideStepsComponent } from '../guide-steps/guide-steps.component';
 
 @Component({
   selector: 'app-guide-detail',
   imports: [
     ButtonComponent,
     EmptyStateComponent,
+    GuideStepsComponent,
     PageHeaderComponent,
     PaperComponent,
-    TypographyComponent,
   ],
   templateUrl: './guide-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

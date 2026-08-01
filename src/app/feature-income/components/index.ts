@@ -4,6 +4,7 @@ export * from './income-category-checklist/income-category-checklist.component';
 export * from './income-gross-net-section/income-gross-net-section.component';
 export * from './income-chart-cell/income-chart-cell.component';
 export * from './income-events-sidebar/income-events-sidebar.component';
+export * from './income-intro/income-intro.component';
 export * from './income-growth-panel/income-growth-panel.component';
 export * from './income-yearly-panel/income-yearly-panel.component';
 export * from './salary-details-page/salary-details-page.component';

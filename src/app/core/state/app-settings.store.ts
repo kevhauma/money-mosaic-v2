@@ -70,6 +70,14 @@ export const AppSettingsStore = signalStore(
         await appSettingsRepository.setGrossColor(grossColor);
         patchState(store, { grossColor });
       },
+
+      /** Records that a guide's first-visit intro has been shown (TICKET-PUB-08); idempotent. */
+      markGuideSeen: async (slug: string): Promise<void> => {
+        const seen = store.seenGuideSlugs() ?? [];
+        if (seen.includes(slug)) return;
+        await appSettingsRepository.markGuideSeen(slug);
+        patchState(store, { seenGuideSlugs: [...seen, slug] });
+      },
     };
   }),
   withHooks({

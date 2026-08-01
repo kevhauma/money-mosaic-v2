@@ -142,6 +142,20 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
       expect(text).toContain('it changes no figure anywhere');
     });
 
+    it('shows the onboarding hand-off banner only when arrived from the intro (TICKET-PUB-08)', async () => {
+      await setup([category(1, 'Salary', 'income')]);
+
+      expect(fixture.nativeElement.querySelector('mm-alert')).toBeNull();
+
+      fixture.componentRef.setInput('from', 'setup');
+      fixture.detectChanges();
+
+      const banner = fixture.nativeElement.querySelector('mm-alert') as HTMLElement;
+      expect(banner).not.toBeNull();
+      expect(banner.textContent).toContain('Work down the page');
+      expect(banner.querySelector('a[href="/income"]')?.textContent).toContain('Back to Income');
+    });
+
     it('keeps a one-line hint on each control alongside the section copy', async () => {
       await setup([category(1, 'Salary', 'income')]);
 

@@ -556,6 +556,20 @@ export type AppSettings = {
    * fields above. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    */
   grossColor: AccentColorId | undefined;
+  /**
+   * Additive field (TICKET-PUB-08) — the how-to guides whose first-visit intro the user has already
+   * been shown, so it never interrupts twice. Keyed by **slug** rather than a boolean per feature,
+   * so the next feature to want an intro reuses this field instead of adding one of its own.
+   *
+   * Deliberately *not* a general "dismissed notices" store: every other dismiss in the app is
+   * per-visit component state and stays that way (the income events rail is explicitly
+   * undismissable, TICKET-INC-17). This records one thing — "we have introduced this page" — which
+   * genuinely should survive a reload, where a cleared notice should not.
+   *
+   * Same "additive optional field, no version bump" reasoning as the fields above.
+   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   */
+  seenGuideSlugs: string[] | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -572,6 +586,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   careerStartDate: undefined,
   smoothedBonusCategoryIds: undefined,
   grossColor: undefined,
+  seenGuideSlugs: undefined,
 };
 
 /**

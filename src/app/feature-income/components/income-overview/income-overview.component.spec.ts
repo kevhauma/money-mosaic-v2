@@ -178,7 +178,16 @@ describe('IncomeOverviewComponent', () => {
     categories: Category[],
     excludedIncomeCategoryIds?: number[],
     careerStartDate?: string,
-    extra: { smoothedBonusCategoryIds?: number[]; transactions?: Transaction[] } = {},
+    extra: {
+      smoothedBonusCategoryIds?: number[];
+      transactions?: Transaction[];
+      /**
+       * Defaults to "already seen" (TICKET-PUB-08): the first-visit intro replaces the whole page,
+       * so every test about the page itself needs it out of the way. The intro's own block passes
+       * `[]` to get the first-visit state back.
+       */
+      seenGuideSlugs?: string[];
+    } = {},
   ): Promise<void> => {
     accountsRepository.getAll.mockResolvedValue([account]);
     categoriesRepository.getAll.mockResolvedValue(categories);
@@ -188,6 +197,7 @@ describe('IncomeOverviewComponent', () => {
       excludedIncomeCategoryIds,
       careerStartDate,
       smoothedBonusCategoryIds: extra.smoothedBonusCategoryIds,
+      seenGuideSlugs: extra.seenGuideSlugs ?? ['getting-started-with-the-income-page'],
     } as AppSettings);
 
     await TestBed.configureTestingModule({
@@ -271,6 +281,42 @@ describe('IncomeOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('app-income-gross-net-panel')).toBeNull();
   });
 
+  describe('first-visit intro (TICKET-PUB-08)', () => {
+    const INCOME_GUIDE = 'getting-started-with-the-income-page';
+
+    it('replaces the whole page with the intro until the guide has been seen', async () => {
+      await setup([salary], undefined, undefined, { seenGuideSlugs: [] });
+
+      expect(fixture.nativeElement.querySelector('app-income-intro')).not.toBeNull();
+      // Not rendered behind it: the charts would otherwise be reachable by tab order and
+      // announced to a screen reader while the intro owns the screen.
+      expect(fixture.nativeElement.querySelector('[echarts]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('mm-page-header')).toBeNull();
+    });
+
+    it('takes precedence over the empty state — the empty page is what it explains', async () => {
+      await setup([], undefined, undefined, { seenGuideSlugs: [] });
+
+      expect(fixture.nativeElement.querySelector('app-income-intro')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('mm-empty-state')).toBeNull();
+    });
+
+    it('renders the normal page once the guide has been seen', async () => {
+      await setup([salary], undefined, undefined, { seenGuideSlugs: [INCOME_GUIDE] });
+
+      expect(fixture.nativeElement.querySelector('app-income-intro')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[echarts]')).not.toBeNull();
+    });
+
+    it('keeps a Guide link in the header afterwards, so it is never unreachable', async () => {
+      await setup([salary], undefined, undefined, { seenGuideSlugs: [INCOME_GUIDE] });
+
+      expect(
+        fixture.nativeElement.querySelector(`mm-page-header a[href="/help/${INCOME_GUIDE}"]`),
+      ).not.toBeNull();
+    });
+  });
+
   it('links to both configuration pages from the header (TICKET-INC-04, TICKET-INC-18)', async () => {
     await setup([salary]);
 
@@ -280,7 +326,11 @@ describe('IncomeOverviewComponent', () => {
       (anchor as HTMLAnchorElement).getAttribute('href'),
     );
 
-    expect(links).toEqual(['/income/settings', '/income/salary']);
+    expect(links).toEqual([
+      '/help/getting-started-with-the-income-page',
+      '/income/settings',
+      '/income/salary',
+    ]);
     expect(fixture.nativeElement.querySelector('app-income-settings-page')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-salary-metadata-table')).toBeNull();
     expect(fixture.nativeElement.querySelector('mm-dropdown')).toBeNull();

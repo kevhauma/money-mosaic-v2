@@ -1,0 +1,8 @@
+<ol class="flex flex-col gap-5">
+  @for (step of steps(); track step.title; let i = $index) {
+    <li>
+      <mm-text as="h2" weight="semibold" class="block">{{ i + 1 }}. {{ step.title }}</mm-text>
+      <mm-text as="p" variant="caption" class="mt-1 block">{{ step.description }}</mm-text>
+    </li>
+  }
+</ol>

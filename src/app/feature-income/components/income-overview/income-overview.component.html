@@ -1,92 +1,107 @@
-<mm-page-header
-  title="Income"
-  subtitle="How your income moves over time — by source, year over year, and against the noise."
->
-  <mm-button actions variant="ghost" size="sm" link="/income/settings">
-    <ng-icon name="tablerAdjustments" size="16" aria-hidden="true" />
-    Income settings
-  </mm-button>
-  <mm-button actions variant="ghost" size="sm" link="/income/salary">
-    <ng-icon name="tablerReceipt2" size="16" aria-hidden="true" />
-    Salary details
-  </mm-button>
-</mm-page-header>
+<!-- fallow-ignore-file complexity -->
+<!-- Reason: CRAP only, from an assumed-zero coverage estimate. This template's own numbers are fine
+     (cyclomatic 5 of 20, cognitive 10 of 15); the score comes from `estimated_component_inherited`
+     coverage on a page that `income-overview.component.spec.ts` exercises with ~35 cases. Every
+     branch here is a page-state choice — first-visit intro, empty state, charts, one-month modal —
+     and there is no decision point to remove without hiding one of them behind a component that
+     exists only to lower a number. -->
+@if (showIntro()) {
+  <app-income-intro />
+} @else {
+  <mm-page-header
+    title="Income"
+    subtitle="How your income moves over time — by source, year over year, and against the noise."
+  >
+    <mm-button actions variant="ghost" size="sm" [link]="fullGuideLink">
+      <ng-icon name="tablerHelpCircle" size="16" aria-hidden="true" />
+      Guide
+    </mm-button>
+    <mm-button actions variant="ghost" size="sm" link="/income/settings">
+      <ng-icon name="tablerAdjustments" size="16" aria-hidden="true" />
+      Income settings
+    </mm-button>
+    <mm-button actions variant="ghost" size="sm" link="/income/salary">
+      <ng-icon name="tablerReceipt2" size="16" aria-hidden="true" />
+      Salary details
+    </mm-button>
+  </mm-page-header>
 
-<!-- The *one-month* salary surface (TICKET-INC-18): a click on a chart point is the question "what
+  <!-- The *one-month* salary surface (TICKET-INC-18): a click on a chart point is the question "what
      was June?", and answering it shouldn't mean leaving the chart for a multi-year table. The full
      table is `/income/salary`'s job, and this links there. -->
-<mm-modal [(open)]="salaryMonthOpen" class="max-w-lg">
-  <span mm-modal-title>{{ salaryMonthTitle() }}</span>
-  <!-- Mounted only while the modal is open, so it builds its controls from fresh stored values each
+  <mm-modal [(open)]="salaryMonthOpen" class="max-w-lg">
+    <span mm-modal-title>{{ salaryMonthTitle() }}</span>
+    <!-- Mounted only while the modal is open, so it builds its controls from fresh stored values each
        time instead of syncing them against the store mid-edit (TICKET-INC-10). -->
-  @if (openSalaryMonth(); as month) {
-    <app-salary-month-modal [yearMonth]="month" />
-  }
-</mm-modal>
+    @if (openSalaryMonth(); as month) {
+      <app-salary-month-modal [yearMonth]="month" />
+    }
+  </mm-modal>
 
-@if (hasSelectedCategories()) {
-  <!-- Two columns from `lg:` (TICKET-INC-17): charts in the main column, the events rail beside
+  @if (hasSelectedCategories()) {
+    <!-- Two columns from `lg:` (TICKET-INC-17): charts in the main column, the events rail beside
        them, so events never push the charts down on a wide screen. Below `lg:` the rail stacks
        under the charts, which is why it comes second in the DOM. `min-w-0` on the charts column
        stops a wide chart from forcing the grid past the viewport. -->
-  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-    <div class="min-w-0">
-      <mm-paper>
-        <h2 class="card-title text-base">Income by month</h2>
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div class="min-w-0">
+        <mm-paper>
+          <h2 class="card-title text-base">Income by month</h2>
 
-        <div
-          echarts
-          [options]="chartOption()"
-          class="h-80 w-full"
-          role="img"
-          [attr.aria-label]="chartAriaLabel()"
-          (chartClick)="onChartClick($event)"
-        ></div>
+          <div
+            echarts
+            [options]="chartOption()"
+            class="h-80 w-full"
+            role="img"
+            [attr.aria-label]="chartAriaLabel()"
+            (chartClick)="onChartClick($event)"
+          ></div>
 
-        <!-- Screen-reader-only companion table for the chart above — not a visible data table, so
+          <!-- Screen-reader-only companion table for the chart above — not a visible data table, so
              it skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
-        <table class="sr-only">
-          <caption>
-            Total income per period, underlying the chart above
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Period</th>
-              <th scope="col">Income</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of accessibleRows(); track row.bucketKey) {
+          <table class="sr-only">
+            <caption>
+              Total income per period, underlying the chart above
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">{{ row.bucketKey }}</th>
-                <td>{{ row.total }}</td>
+                <th scope="col">Period</th>
+                <th scope="col">Income</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </mm-paper>
+            </thead>
+            <tbody>
+              @for (row of accessibleRows(); track row.bucketKey) {
+                <tr>
+                  <th scope="row">{{ row.bucketKey }}</th>
+                  <td>{{ row.total }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </mm-paper>
 
-      <app-income-growth-panel class="mt-6 block" />
+        <app-income-growth-panel class="mt-6 block" />
 
-      <app-income-gross-net-section class="mt-6 block" />
+        <app-income-gross-net-section class="mt-6 block" />
 
-      <app-income-yearly-panel class="mt-6 block" />
+        <app-income-yearly-panel class="mt-6 block" />
+      </div>
+
+      <app-income-events-sidebar class="block" />
     </div>
-
-    <app-income-events-sidebar class="block" />
-  </div>
-} @else {
-  <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
+  } @else {
+    <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
        ticked" and "nothing is categorised as income yet" look identical from here, and a first-time
        user almost always has the second. -->
-  <mm-empty-state
-    class="mt-6"
-    title="No income is being counted yet"
-    message="Two things cause this. If you have income categories, tick at least one under Income settings. If that list is empty, no category has kind “income” yet — set that under Categories, and make sure your imported transactions are assigned to it."
-  >
-    <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
-    <mm-button action color="primary" class="mt-2" link="/income/settings">
-      Open income settings
-    </mm-button>
-  </mm-empty-state>
+    <mm-empty-state
+      class="mt-6"
+      title="No income is being counted yet"
+      message="Two things cause this. If you have income categories, tick at least one under Income settings. If that list is empty, no category has kind “income” yet — set that under Categories, and make sure your imported transactions are assigned to it."
+    >
+      <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
+      <mm-button action color="primary" class="mt-2" link="/income/settings">
+        Open income settings
+      </mm-button>
+    </mm-empty-state>
+  }
 }
