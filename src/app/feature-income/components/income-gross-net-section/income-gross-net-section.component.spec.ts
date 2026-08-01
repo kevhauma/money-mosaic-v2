@@ -242,23 +242,25 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
     });
 
     it('subtracts an embedded bonus before the ratio, so a bonus month isn’t a false raise', async () => {
-      // February's deposit was 4160, of which 2000 was holiday pay.
+      // February's deposit was 4160, of which 2000 was holiday pay. (January has no income at all,
+      // so it is skipped entirely — February is the first row.)
       await setup(
         [payslip(1, '2026-02-25', 4160)],
         [{ id: 1, yearMonth: '2026-02', grossWage: 3000, bonus: 2000 }],
       );
 
-      expect(rowsOf(TAKE_HOME)[1]).toEqual(['2026-02', '€2,160.00', '€3,000.00', '72%']);
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-02', '€2,160.00', '€3,000.00', '72%']);
     });
 
     it('drops a deselected category from net (FR-INC-3)', async () => {
       await setup(
-        [payslip(1, '2026-01-25', 2160)],
+        [payslip(1, '2026-01-25', 2160), payslip(2, '2026-01-26', 500, 2)],
         [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
-        { excludedIncomeCategoryIds: [1] },
+        { excludedIncomeCategoryIds: [2] },
       );
 
-      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€0.00', '€3,000.00', '0%']);
+      // The 500 side income is out of the selection, so it never reaches `net`.
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€2,160.00', '€3,000.00', '72%']);
     });
 
     it('keeps a lump sum in its real month rather than the smoothed average (FR-INC-4)', async () => {
@@ -280,7 +282,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       );
 
       // Without the exclusion February's 14,160 against a 3,000 gross would read as 472%.
-      expect(rowsOf(TAKE_HOME)[1]).toEqual(['2026-02', '€2,160.00', '€3,000.00', '72%']);
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-02', '€2,160.00', '€3,000.00', '72%']);
     });
 
     it('prints the true, unclipped rate in the companion table even when the band clips', async () => {
@@ -357,6 +359,57 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       // February's 12,000 13th month is excluded, so the percentage line stays flat across it.
       expect(rowsOf(PCT_FROM_START)[0]).toEqual(['2026-01', '0%', '0%']);
       expect(rowsOf(PCT_FROM_START)[1]).toEqual(['2026-02', '0%', '0%']);
+    });
+  });
+
+  describe('months with nothing to compare', () => {
+    it('skips a month where no counted income landed, rather than dragging net to the floor', async () => {
+      // February has no payslip at all; without the filter its net would plot as a zero.
+      await setup(
+        [payslip(1, '2026-01-25', 2160), payslip(2, '2026-03-25', 2300)],
+        [
+          { id: 1, yearMonth: '2026-01', grossWage: 3000 },
+          { id: 2, yearMonth: '2026-03', grossWage: 3300 },
+        ],
+      );
+
+      expect(rowsOf(ABSOLUTE).map((row) => row[0])).toEqual(['2026-01', '2026-03']);
+    });
+
+    it('skips a month whose entered gross was zero', async () => {
+      await setup(
+        [payslip(1, '2026-01-25', 2160), payslip(2, '2026-02-25', 2300)],
+        [
+          { id: 1, yearMonth: '2026-01', grossWage: 3000 },
+          { id: 2, yearMonth: '2026-02', grossWage: 0 },
+        ],
+      );
+
+      expect(rowsOf(ABSOLUTE).map((row) => row[0])).toEqual(['2026-01']);
+    });
+
+    it('keeps a month with income but no gross entered — “not entered” is not “zero”', async () => {
+      await setup(
+        [payslip(1, '2026-01-25', 2160), payslip(2, '2026-02-25', 2300)],
+        [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
+      );
+
+      expect(rowsOf(ABSOLUTE).map((row) => row[0])).toEqual(['2026-01', '2026-02']);
+      expect(rowsOf(ABSOLUTE)[1]).toEqual(['2026-02', '€2,300.00', '—']);
+    });
+
+    it('measures growth from the first *shown* month, so a skipped one cannot be the baseline', async () => {
+      await setup(
+        [payslip(1, '2026-02-25', 2000), payslip(2, '2026-03-25', 2200)],
+        [
+          { id: 1, yearMonth: '2026-02', grossWage: 3000 },
+          { id: 2, yearMonth: '2026-03', grossWage: 3300 },
+        ],
+      );
+
+      // January has no income and is skipped; February is the baseline, so it reads 0%.
+      expect(rowsOf(PCT_FROM_START)[0]).toEqual(['2026-02', '0%', '0%']);
+      expect(rowsOf(PCT_FROM_START)[1]).toEqual(['2026-03', '10%', '10%']);
     });
   });
 

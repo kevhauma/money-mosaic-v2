@@ -4,7 +4,8 @@
   @if (hasAnyGross()) {
     <mm-text variant="caption" as="p">
       Your gross pay against what actually reached your account. Annual lump sums are left out, so
-      this is plain salary. A month with no gross wage entered breaks the gross line.
+      this is plain salary. Months with no income at all are skipped; a month with income but no
+      gross wage entered breaks the gross line.
     </mm-text>
 
     <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">

@@ -64,6 +64,13 @@ raises pass through intact, gross outrunning net means the deduction rate is cli
 - Months with no `SalaryMetadata` row leave the gross series `null` (`connectNulls: false`, the existing
   gap convention) while the net series continues — the net line is never interrupted by a month the user
   hasn't annotated.
+- **Added 2026-08-01, at the user's request after the section shipped.** A month whose gross or net comes
+  out as **zero** is dropped from all four cells rather than plotted: no counted income landed (or the
+  entered gross was zero), so the comparison has nothing to say about it, and drawing it drags the net
+  line to the floor and squashes the scale every other month is read on. Deliberately *not* the same as a
+  **missing** gross (`null`), which keeps its documented gap while the net line carries on — "not entered"
+  is a different fact from "zero", and the section still has something to say about that month. The filter
+  runs before `computeGrossNetGrowth`, so the from-start baseline is the first *shown* month.
 - The gross series' color comes from TICKET-SET-08's resolver; the net series takes the theme's categorical
   slot. Both through `@/shared/echarts`, never hardcoded.
 - Each chart carries the standard screen-reader companion table (`sr-only`, TICKET-UI-07 shape) built from
@@ -106,6 +113,12 @@ raises pass through intact, gross outrunning net means the deduction rate is cli
       populated; unit test, plus a chart-option test asserting `connectNulls: false`. (Spec "nulls every
       gross field while the net fields carry on"; `gross-net-chart-options.spec.ts` → "breaks only the
       gross line over a month with no wage entered", asserting `connectNulls === false` on both series.)
+- [x] **Added 2026-08-01** — a month whose gross or net is zero is dropped from all four cells, while a
+      *missing* gross keeps its gap; the from-start baseline is the first shown month. (Section spec →
+      "months with nothing to compare" → "skips a month where no counted income landed, rather than
+      dragging net to the floor", "skips a month whose entered gross was zero", "keeps a month with income
+      but no gross entered — 'not entered' is not 'zero'", "measures growth from the first *shown* month,
+      so a skipped one cannot be the baseline".)
 - [x] Net uses the same basis as the take-home panel — annually-smoothed categories excluded and the
       recorded `bonus` subtracted (TICKET-INC-14) — so a bonus can't read as a raise on the growth-from-start
       charts; unit test with a flagged bonus category asserting a flat percentage line across its deposit month.

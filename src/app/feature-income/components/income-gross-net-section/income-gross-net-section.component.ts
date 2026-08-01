@@ -63,12 +63,20 @@ const percentOrDash = (value: number | null): string =>
 export class IncomeGrossNetSectionComponent {
   private readonly incomeStore = inject(IncomeStore);
 
+  /**
+   * Months where gross or net came out as **zero** are dropped from all four cells, not drawn as a
+   * gap: a zero is a month this comparison has nothing to say about — no counted income landed, or
+   * the entered gross was zero — and plotting it drags the net line to the floor and squashes the
+   * scale every other month is read on. Distinct from a *missing* gross (`null`), which stays as a
+   * genuine gap in the gross line while the net line carries on: "not entered" is a different fact
+   * from "zero", and the rest of the section still has something to say about that month.
+   */
   private readonly points = computed<GrossNetRatioPoint[]>(() =>
     computeGrossNetRatio(
       this.incomeStore.rawIncomeTrend(),
       this.incomeStore.salaryMetadataByMonth(),
       this.incomeStore.smoothedBonusCategoryIds(),
-    ),
+    ).filter((point) => point.net !== 0 && point.gross !== 0),
   );
 
   private readonly growth = computed<GrossNetGrowthPoint[]>(() =>

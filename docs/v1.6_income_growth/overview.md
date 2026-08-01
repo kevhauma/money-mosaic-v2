@@ -109,6 +109,10 @@ list above:
 - [ ] [TICKET-PUB-07](./tickets/TICKET-PUB-07-income-page-getting-started-guide.md) — Getting started with the Income page: the content, at three depths (arrival intro, settings-page explanations, full `/help` guide), plus a refresh of the existing income guide (extends TICKET-PUB-02) — **needs INC-18**, and second-to-last overall: the seven tickets above all change the page's copy, layout or behaviour, and a guide written before them would be written twice
 - [ ] [TICKET-PUB-08](./tickets/TICKET-PUB-08-income-guide-on-first-visit.md) — First visit to the Income page: intro, quick setup, hand-off to the settings page, remembered per guide slug (extends TICKET-PUB-02/07) — **last**: needs PUB-07's content and INC-18's settings page to hand off to
 
+## Accounts track (unrelated to Income; filed here as the currently active version)
+
+- [ ] [TICKET-ACC-07](./tickets/TICKET-ACC-07-accounts-page-actual-balances.md) — Accounts page shows actual balances, not net worth (revises FR-STAT-4 for the Accounts feature) — independent of every FR-INC ticket above; touches only `feature-accounts`/`core/stats`, can ship any time
+
 ## Considered, not ticketed yet
 
 - **Household/joint income view** — deliberately out of scope here; it's the existing account-detail
