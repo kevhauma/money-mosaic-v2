@@ -158,6 +158,79 @@ describe('computeGrossNetRatio: the embedded bonus (FR-INC-10)', () => {
   });
 });
 
+describe('computeGrossNetRatio: annual lump-sum categories (TICKET-INC-14)', () => {
+  /** Flat 2,160 salary plus a 12,000 bonus category paid once, in June; gross 3,000 every month. */
+  const withBonusCategory = (): IncomeCategorySeries =>
+    trendOf(
+      series(1, flat(2160)),
+      series(
+        2,
+        BUCKET_KEYS.map((_, index) => (index === 5 ? 12000 : 0)),
+      ),
+    );
+  const everyMonthGross = (): Map<string, SalaryMetadata> =>
+    metadata(...BUCKET_KEYS.map((yearMonth) => ({ yearMonth, grossWage: 3000 })));
+
+  it('drops a flagged category out of net, bringing June back to the regular rate', () => {
+    const points = computeGrossNetRatio(withBonusCategory(), everyMonthGross(), new Set([2]));
+
+    expect(points[5].net).toBe(2160);
+    expect(points[5].ratio).toBe(0.72);
+  });
+
+  it('would otherwise report a rate well past 100% for that month', () => {
+    // The negative control: unflagged, June's 14,160 against a 3,000 gross reads as 472%.
+    const points = computeGrossNetRatio(withBonusCategory(), everyMonthGross());
+
+    expect(points[5].ratio).toBeGreaterThan(1);
+  });
+
+  it('leaves every other month untouched', () => {
+    const points = computeGrossNetRatio(withBonusCategory(), everyMonthGross(), new Set([2]));
+
+    expect(points.filter((_, index) => index !== 5).every((point) => point.net === 2160)).toBe(
+      true,
+    );
+  });
+
+  it('reproduces the previous figures exactly for an empty exclusion set', () => {
+    const withArgument = computeGrossNetRatio(withBonusCategory(), everyMonthGross(), new Set());
+    const withoutArgument = computeGrossNetRatio(withBonusCategory(), everyMonthGross());
+
+    expect(withArgument).toEqual(withoutArgument);
+  });
+
+  it('never excludes the uncategorised series, which has no id to flag', () => {
+    const uncategorised: IncomeCategorySeries = {
+      bucketKeys: BUCKET_KEYS,
+      series: [{ ...series(2, flat(2160)), categoryId: null }],
+    };
+
+    const points = computeGrossNetRatio(
+      uncategorised,
+      metadata({ yearMonth: '2026-01', grossWage: 3000 }),
+      new Set([2]),
+    );
+
+    expect(points[0].net).toBe(2160);
+  });
+
+  it('applies the category exclusion and the embedded bonus exactly once each, never twice', () => {
+    // June: 2,160 salary + a 1,000 flagged-category deposit, of which the user also recorded 500 as
+    // an embedded bonus against the *salary*. Correct net is 2,160 − 500 = 1,660.
+    const values = flat(0);
+    values[5] = 1000;
+
+    const points = computeGrossNetRatio(
+      trendOf(series(1, flat(2160)), series(2, values)),
+      metadata({ yearMonth: '2026-06', grossWage: 3000, bonus: 500 }),
+      new Set([2]),
+    );
+
+    expect(points[5].net).toBe(1660);
+  });
+});
+
 describe('computeGrossNetRatio: raw series, never the smoothed one', () => {
   it('keeps a lump sum in the month it was actually deposited', () => {
     // A 12,000 bonus category paid once, in June, alongside a flat salary.

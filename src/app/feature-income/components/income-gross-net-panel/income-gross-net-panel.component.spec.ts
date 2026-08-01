@@ -15,7 +15,7 @@ import {
 } from '@/core/data-access';
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import type { GrossNetRatioPoint } from '@/core/stats';
-import { echarts } from '@/shared/echarts';
+import { echarts, resolveGrossSeriesColor } from '@/shared/echarts';
 import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
@@ -44,27 +44,72 @@ const point = (overrides: Partial<GrossNetRatioPoint> = {}): GrossNetRatioPoint 
   ...overrides,
 });
 
-describe('buildGrossNetChartOption (FR-INC-11, TICKET-INC-11)', () => {
+describe('buildGrossNetChartOption (FR-INC-11, TICKET-INC-11/TICKET-INC-14)', () => {
   /** ECharts' option type indexes to `unknown`, so assertions narrow through a local shape. */
   type RatioOption = {
-    series: { type: string; data: (number | null)[]; connectNulls: boolean }[];
+    series: {
+      name: string;
+      type: string;
+      stack: string;
+      areaStyle: object;
+      itemStyle?: { color: string };
+      data: (number | null)[];
+      connectNulls: boolean;
+    }[];
     tooltip: { formatter: (params: { dataIndex: number }[]) => string };
     xAxis: { data: string[] };
-    yAxis: { axisLabel: { formatter: (value: number) => string } };
+    yAxis: { min: number; max: number; axisLabel: { formatter: (value: number) => string } };
   };
 
-  const build = (points: GrossNetRatioPoint[]) =>
-    buildGrossNetChartOption(points) as unknown as RatioOption;
+  const GROSS = '#8451c9';
 
-  it('plots one point per month, as a ratio', () => {
+  const build = (points: GrossNetRatioPoint[], grossColor = GROSS) =>
+    buildGrossNetChartOption(points, grossColor) as unknown as RatioOption;
+
+  it('plots one point per month, as a kept/withheld pair', () => {
     const option = build([point({ bucketKey: '2026-01' }), point({ bucketKey: '2026-02' })]);
 
     expect(option.xAxis.data).toEqual(['2026-01', '2026-02']);
     expect(option.series[0].data).toEqual([0.72, 0.72]);
+    expect(option.series[1].data).toEqual([0.28, 0.28]);
     expect(option.series[0].type).toBe('line');
   });
 
-  it('breaks the line at a month with no gross wage rather than dipping to zero', () => {
+  it('pins the axis to a full 0–100% rather than letting echarts fit the data', () => {
+    // Data that would otherwise auto-fit to a ~6-point axis and render as dramatic hills.
+    const option = build([
+      point({ bucketKey: '2026-01', ratio: 0.82 }),
+      point({ bucketKey: '2026-02', ratio: 0.85 }),
+      point({ bucketKey: '2026-03', ratio: 0.88 }),
+    ]);
+
+    expect(option.yAxis.min).toBe(0);
+    expect(option.yAxis.max).toBe(1);
+  });
+
+  it('stacks two named area series that always fill the plot', () => {
+    const option = build([point({ ratio: 0.6 }), point({ ratio: 0.9 }), point({ ratio: 0.72 })]);
+
+    expect(option.series.map((entry) => entry.name)).toEqual(['Take-home', 'Withheld']);
+    expect(option.series[0].stack).toBe(option.series[1].stack);
+    expect(option.series.every((entry) => entry.areaStyle !== undefined)).toBe(true);
+    option.series[0].data.forEach((kept, index) => {
+      expect((kept as number) + (option.series[1].data[index] as number)).toBeCloseTo(1);
+    });
+  });
+
+  it('clips a month over 100% to a full band and names the real figure in its tooltip', () => {
+    const option = build([point({ net: 3120, gross: 3000, ratio: 1.04 })]);
+
+    expect(option.series[0].data).toEqual([1]);
+    expect(option.series[1].data).toEqual([0]);
+    expect(option.tooltip.formatter([{ dataIndex: 0 }])).toContain('104%');
+    expect(option.tooltip.formatter([{ dataIndex: 0 }])).toContain(
+      'More reached the account than the gross entered',
+    );
+  });
+
+  it('breaks both bands at a month with no gross wage rather than dipping to zero', () => {
     const option = build([
       point({ bucketKey: '2026-01' }),
       point({ bucketKey: '2026-02', gross: null, ratio: null }),
@@ -72,7 +117,17 @@ describe('buildGrossNetChartOption (FR-INC-11, TICKET-INC-11)', () => {
     ]);
 
     expect(option.series[0].data).toEqual([0.72, null, 0.72]);
-    expect(option.series[0].connectNulls).toBe(false);
+    expect(option.series[1].data).toEqual([0.28, null, 0.28]);
+    expect(option.series.every((entry) => entry.connectNulls === false)).toBe(true);
+  });
+
+  it('takes the withheld band’s color from the gross-series resolver, not a literal', () => {
+    expect(build([point()], '#8451c9').series[1].itemStyle?.color).toBe('#8451c9');
+    expect(build([point()], '#e1af37').series[1].itemStyle?.color).toBe('#e1af37');
+  });
+
+  it('leaves the take-home band on the theme’s own categorical slot', () => {
+    expect(build([point()]).series[0].itemStyle).toBeUndefined();
   });
 
   it('labels the axis as a percentage', () => {
@@ -126,7 +181,15 @@ describe('IncomeGrossNetPanelComponent', () => {
     sortOrder: 1,
   };
 
-  const payslip = (id: number, bookingDate: string, amount: number): Transaction => ({
+  /** A second income category, for the annual-lump-sum exclusion (TICKET-INC-14). */
+  const thirteenthMonth: Category = { ...salary, id: 2, name: '13th month', isSystem: false };
+
+  const payslip = (
+    id: number,
+    bookingDate: string,
+    amount: number,
+    categoryId = 1,
+  ): Transaction => ({
     id,
     accountId: 1,
     bookingDate,
@@ -134,7 +197,7 @@ describe('IncomeGrossNetPanelComponent', () => {
     currency: 'EUR',
     rawDescription: 'Payslip',
     fingerprint: `fp-${id}`,
-    categoryId: 1,
+    categoryId,
     createdAt: `${bookingDate}T00:00:00.000Z`,
   });
 
@@ -144,7 +207,7 @@ describe('IncomeGrossNetPanelComponent', () => {
     settings: Partial<AppSettings> = {},
   ): Promise<void> => {
     accountsRepository.getAll.mockResolvedValue([account]);
-    categoriesRepository.getAll.mockResolvedValue([salary]);
+    categoriesRepository.getAll.mockResolvedValue([salary, thirteenthMonth]);
     transactionsRepository.getAll.mockResolvedValue(transactions);
     appSettingsRepository.get.mockResolvedValue({ id: 1, ...settings } as AppSettings);
     salaryMetadataRepository.getAll.mockResolvedValue(salaryMetadata);
@@ -233,15 +296,49 @@ describe('IncomeGrossNetPanelComponent', () => {
     expect(rows()[0]).toEqual(['2026-01', '€0.00', '€3,000.00', '0%']);
   });
 
-  it('keeps a lump sum in its real month even when that category is smoothed elsewhere (FR-INC-4)', async () => {
+  it('keeps a lump sum in its real month rather than the smoothed average (FR-INC-4)', async () => {
     await setup(
       [payslip(1, '2026-01-25', 2160), payslip(2, '2026-02-25', 12000)],
       [{ id: 1, yearMonth: '2026-02', grossWage: 3000 }],
-      { smoothedBonusCategoryIds: [1] },
     );
 
     // Smoothed, February would be the year's average; raw, it is the 12,000 that actually landed.
     expect(rows()[1][1]).toBe('€12,000.00');
+  });
+
+  it('leaves an annual lump-sum category out of the take-home basis entirely (TICKET-INC-14)', async () => {
+    // February pays the regular 2,160 salary plus a separately-categorised 12,000 13th month.
+    await setup(
+      [payslip(1, '2026-02-25', 2160), payslip(2, '2026-02-26', 12000, 2)],
+      [{ id: 1, yearMonth: '2026-02', grossWage: 3000 }],
+      { smoothedBonusCategoryIds: [2] },
+    );
+
+    // Without the exclusion February's 14,160 against a 3,000 gross would read as 472%.
+    expect(rows()[1]).toEqual(['2026-02', '€2,160.00', '€3,000.00', '72%']);
+  });
+
+  it('prints the true, unclipped rate in the companion table even when the band clips', async () => {
+    await setup(
+      [payslip(1, '2026-01-25', 3120)],
+      [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
+    );
+
+    expect(rows()[0]).toEqual(['2026-01', '€3,120.00', '€3,000.00', '104%']);
+  });
+
+  it('colors the withheld band with the picked gross color (TICKET-SET-08)', async () => {
+    await setup(
+      [payslip(1, '2026-01-25', 2160)],
+      [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
+      { grossColor: 'violet' },
+    );
+
+    const option = fixture.componentInstance['chartOption']() as unknown as {
+      series: { itemStyle?: { color: string } }[];
+    };
+
+    expect(option.series[1].itemStyle?.color).toBe(resolveGrossSeriesColor('violet'));
   });
 
   it('says what to do instead of drawing an empty chart when no gross wage exists yet', async () => {

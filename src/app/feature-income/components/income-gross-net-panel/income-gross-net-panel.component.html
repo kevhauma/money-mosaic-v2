@@ -3,8 +3,9 @@
 
   @if (hasAnyGross()) {
     <mm-text variant="caption" as="p">
-      What share of your gross pay actually reached your account. A month with no gross wage entered
-      leaves a gap.
+      What share of your gross pay actually reached your account, out of the full 100%. Annual lump
+      sums are left out, so this is plain salary against its gross. A month with no gross wage
+      entered leaves a gap.
     </mm-text>
 
     <div
@@ -12,7 +13,7 @@
       [options]="chartOption()"
       class="h-64 w-full"
       role="img"
-      aria-label="Take-home rate per month; table with values follows"
+      aria-label="Take-home rate per month as a share of gross pay; table with values follows"
     ></div>
 
     <!-- Screen-reader-only companion table for the chart above — not a visible data table, so it

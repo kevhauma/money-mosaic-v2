@@ -131,10 +131,11 @@ unset means "use the theme's own palette", so nothing changes for anyone who ign
       with no style condition anywhere in the component or template; spec "shows each swatch in the
       canvas hex the charts will draw, not the accent picker's OKLCH" asserts `rgb(132, 81, 201)` —
       `#8451c9`, the resolver's light-mode violet — rather than `ACCENT_COLORS`' `oklch(60% 0.17 300)`.)
-- [ ] Picking a color changes what TICKET-INC-14's / TICKET-INC-16's option builders emit for their gross
-      series; covered by those tickets' specs against this resolver. — **deferred to INC-14/INC-16 by
-      design**: neither consumer exists yet, so there is nothing to assert here. The resolver and the
-      setting are in place and exported from `@/shared/echarts`/`@/core/state` for them to read.
+- [x] Picking a color changes what TICKET-INC-14's / TICKET-INC-16's option builders emit for their gross
+      series; covered by those tickets' specs against this resolver. (Ticked when INC-14 landed:
+      `income-gross-net-panel.component.spec.ts` → "takes the withheld band's color from the gross-series
+      resolver, not a literal" and "colors the withheld band with the picked gross color (TICKET-SET-08)".
+      INC-16's three gross lines add their own coverage on the same resolver.)
 - [x] `angular.json` bundle budgets not raised. (`git diff` touches no `angular.json`;
       `ng build --configuration development` completes with no budget warning.)
 - [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD` →
