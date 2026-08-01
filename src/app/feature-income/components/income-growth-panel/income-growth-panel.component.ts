@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { computeIncomeGrowth, lastCompleteBucketKey, type IncomeGrowthWindow } from '@/core/stats';
-import { PaperComponent, StatCardComponent, TypographyComponent } from '@/shared/ui';
-import { bucketDateBoundaries, formatCurrency, formatDate, formatPercent } from '@/shared/utils';
+import { StatCardComponent, TypographyComponent } from '@/shared/ui';
+import {
+  bucketDateBoundaries,
+  buildTransactionDrilldownParams,
+  formatCurrency,
+  formatDate,
+  formatPercent,
+} from '@/shared/utils';
 import { INCOME_GRANULARITY } from '../../income-granularity';
 import { IncomeStore } from '../../income.store';
 
@@ -14,6 +20,14 @@ export type IncomeGrowthCardVm = {
   subLabel: string;
   tooltip: string;
   color: 'success' | 'error' | undefined;
+  /**
+   * `/transactions` filtered to this card's **baseline** window (TICKET-INC-15), or `undefined` in
+   * the `—` state, where there is nothing to drill into. Deliberately the baseline rather than the
+   * shared current month: that one is already named in the caption above, and the baseline is the
+   * half of the comparison the user can't otherwise see.
+   */
+  link: string | undefined;
+  queryParams: Record<string, string> | undefined;
 };
 
 /** Green for growth, red for a decline, default ink for flat or unknowable — the sign is the whole point of this figure. */
@@ -40,6 +54,8 @@ export const buildIncomeGrowthCard = (
       subLabel: missingReason,
       tooltip: '',
       color: undefined,
+      link: undefined,
+      queryParams: undefined,
     };
 
   return {
@@ -48,25 +64,33 @@ export const buildIncomeGrowthCard = (
     subLabel: `${formatCurrency(window.total)} → ${formatCurrency(current)}`,
     tooltip: `${formatDate(window.from)} – ${formatDate(window.to)}: ${formatCurrency(window.total)}`,
     color: growthColor(window.pct),
+    link: '/transactions',
+    // Date range only, no category: `buildTransactionDrilldownParams` takes a single `categoryId`
+    // while this figure sums the whole FR-INC-3 selection, so narrowing to one would misrepresent
+    // the number on the card. The month is the honest filter; the page's own filters do the rest.
+    queryParams: buildTransactionDrilldownParams({ from: window.from, to: window.to }),
   };
 };
 
 /**
- * Income growth-rate panel (FR-INC-5, TICKET-INC-05): is the income actually rising, or was that
- * just one good month? Answers it twice over — against the month before, and against the same month
- * a year earlier — for the categories the user counts (FR-INC-3), on the lump-sum-smoothed series
- * (FR-INC-4) so a 13th month can't masquerade as a raise.
+ * Income growth-rate panel (FR-INC-5, TICKET-INC-05/INC-15): is the income actually rising, or was
+ * that just one good month? Answers it twice over — against the first month of the same calendar
+ * year, and against the same month a year earlier — for the categories the user counts (FR-INC-3),
+ * on the lump-sum-smoothed series (FR-INC-4 and TICKET-INC-13's embedded-bonus pass) so a 13th month
+ * can't masquerade as a raise or as a year-to-date jump.
  *
  * **Compares the last *complete* calendar month.** `IncomeStore.incomeRange` runs to today, so the
  * newest bucket is a part-month almost always, and a part-month against a whole one reads as a
  * collapse — the same refusal the yearly panel applies to a partial year.
  *
- * A month is a short window to judge growth on, which is exactly why both comparisons are shown: a
- * one-off good month moves the month-over-month figure and leaves the year-over-year one alone.
+ * **No `mm-paper` of its own** (TICKET-INC-15): the cards render free-standing in the dashboard's
+ * own stat-row shape, since both surfaces render the same component and used not to look like it.
+ * The heading and the caption move above the row as page-level text rather than disappearing with
+ * the wrapper — the caption is what makes both figures legible.
  */
 @Component({
   selector: 'app-income-growth-panel',
-  imports: [PaperComponent, StatCardComponent, TypographyComponent],
+  imports: [StatCardComponent, TypographyComponent],
   templateUrl: './income-growth-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -104,10 +128,10 @@ export class IncomeGrowthPanelComponent {
     if (growth === null) return [];
     return [
       buildIncomeGrowthCard(
-        'vs. previous month',
+        'vs. start of year',
         growth.current,
-        growth.priorPeriod,
-        'no earlier month to compare against',
+        growth.yearStart,
+        'no earlier month this year to compare against',
       ),
       buildIncomeGrowthCard(
         'vs. same month last year',

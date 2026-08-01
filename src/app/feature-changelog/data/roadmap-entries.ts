@@ -53,13 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-INC-15',
-    title:
-      'Compare your last complete month against the start of the year, on cards that link to their transactions',
-    area: 'Income',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'TICKET-INC-17',
     title: 'An Events sidebar listing raises, bonuses and stopped income streams by year',
     area: 'Income',

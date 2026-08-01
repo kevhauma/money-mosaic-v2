@@ -79,42 +79,76 @@ transactions behind its own comparison.
 
 ## Acceptance criteria
 
-- [ ] `computeIncomeGrowth` returns `yearStart` in place of `priorPeriod`; unit test over a multi-year
+- [x] `computeIncomeGrowth` returns `yearStart` in place of `priorPeriod`; unit test over a multi-year
       monthly series asserting the window's `from`/`to` land on the compared month's own calendar year's
-      first bucket, and its `total` matches that bucket's summed series values.
-- [ ] `pct` follows the existing `percentDelta` rule — `null` (rendered `—`) when the baseline month
-      totalled zero, never `±∞`; unit test.
-- [ ] `yearStart` is `null` when the compared month is the year's first bucket; unit test, and the panel
-      then shows `—` with the missing-reason text rather than `+0%`.
-- [ ] `yearStart` is `null` when the series starts after that year's January — e.g. a career start of
+      first bucket, and its `total` matches that bucket's summed series values. (`income-growth.ts`'s
+      `yearStart()`; `income-growth.spec.ts` → "vs. start of year (FR-INC-5, TICKET-INC-15)" → "measures
+      from January of the compared month's own year, not the month before", "names the window it compared
+      against", "stays inside the compared month's year rather than walking back into the previous one".)
+- [x] `pct` follows the existing `percentDelta` rule — `null` (rendered `—`) when the baseline month
+      totalled zero, never `±∞`; unit test. (`percentDelta` is unchanged and shared by both windows; specs
+      "is null (not ±∞%) for a category that did not exist in the prior period" and "never yields NaN or
+      Infinity when both windows are zero".)
+- [x] `yearStart` is `null` when the compared month is the year's first bucket; unit test, and the panel
+      then shows `—` with the missing-reason text rather than `+0%`. (Specs "is null when the compared
+      month is itself the year's opening bucket" and "has no prior period at the very first bucket of the
+      series"; panel spec "shows no percentage rather than ±∞% when the compared month earned nothing".)
+- [x] ~~`yearStart` is `null` when the series starts after that year's January~~ — e.g. a career start of
       2024-04 compared in 2024-09 — **unless** the year's first *available* bucket is what the user's
       history genuinely opens with; unit test both readings so the chosen rule is pinned (see Notes).
-- [ ] `priorYear` is byte-for-byte unaffected — every existing `income-growth.spec.ts` year-over-year case
-      still passes unchanged.
-- [ ] The panel's first card reads `vs. start of year`; component spec asserts the label, the
-      `<total> → <total>` sub-label and the tooltip's baseline month.
-- [ ] Reads the smoothed series (`IncomeStore.incomeTrend()`) exactly as today — including
+      **The two readings collapse into one**, and the "unless" wins: `bucketKeys` comes from
+      `bucketKeysInRange` and is always contiguous, so the only way a year's January is absent *is* a
+      history that opens mid-year — the genuine-start case. There is no reachable input for the struck
+      clause, so implementing it would have been dead code. Pinned by spec "uses the year's first
+      *available* bucket for a history that opens mid-year" (career start 2024-04, compared in 2024-09,
+      baselines on April).
+- [x] `priorYear` is byte-for-byte unaffected — every existing `income-growth.spec.ts` year-over-year case
+      still passes unchanged. (`priorYear()` is untouched in the diff; the whole "year-over-year (FR-INC-5)"
+      describe block is unedited and passes.)
+- [x] The panel's first card reads `vs. start of year`; component spec asserts the label, the
+      `<total> → <total>` sub-label and the tooltip's baseline month. (Panel specs "compares the last
+      complete month against the start of its year and the same month a year back" and "names the baseline
+      month and its figure in the card's sub-label and tooltip".)
+- [x] Reads the smoothed series (`IncomeStore.incomeTrend()`) exactly as today — including
       TICKET-INC-13's embedded-bonus pass once that lands, so a bonus can't create a fake year-to-date jump.
-- [ ] The two cards render free-standing in the dashboard's own container shape (no `mm-paper` around them,
+      (`growth` still reads `incomeStore.incomeTrend()`, which TICKET-INC-13 already composed both passes
+      into; panel specs "spreads a smoothed bonus over its year instead of reading it as a raise" and
+      "reads the bonus as a spike when it is not marked for smoothing", both re-aimed at a January
+      baseline.)
+- [x] The two cards render free-standing in the dashboard's own container shape (no `mm-paper` around them,
       `flex flex-wrap gap-6 py-2`, alternating `tilt="a"`/`tilt="b"`); component spec asserts no `mm-paper`
-      wraps the cards and that both tilts are applied.
-- [ ] The "Income growth" heading and the compared-month caption survive the wrapper's removal and still
-      render above the cards; component spec asserts both texts.
-- [ ] Each card carries `link="/transactions"` and `queryParams` built by
+      wraps the cards and that both tilts are applied. (Specs "renders the cards outside any mm-paper, in
+      the dashboard's own stat-row container" and "alternates the tilt hooks, like the dashboard's row",
+      asserting `mm-tilt-l`/`mm-tilt-r`.)
+- [x] The "Income growth" heading and the compared-month caption survive the wrapper's removal and still
+      render above the cards; component spec asserts both texts. (Spec "keeps the heading and the
+      compared-month caption above the row".)
+- [x] Each card carries `link="/transactions"` and `queryParams` built by
       `buildTransactionDrilldownParams` from **its own** comparison window's `from`/`to` — so the two cards
       link to different months; unit test on `buildIncomeGrowthCard` asserting the exact params, plus a
-      component spec asserting the two rendered `routerLink`s differ.
-- [ ] A card with no comparable window (the `—` state) sets no `link`/`queryParams` and renders as plain
-      text, not a dead link; unit test.
-- [ ] `mm-stat-card` itself is unchanged — no new input, no styling fork; the panel uses the existing
-      `link`/`queryParams`/`tilt` inputs.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
+      component spec asserting the two rendered `routerLink`s differ. (Builder specs "links to its own
+      baseline window, not the shared current month (TICKET-INC-15)" — asserting
+      `{ from: '2026-01-01', to: '2026-01-31' }` exactly — and "links two different cards to two different
+      months"; component spec "links each card to its own baseline month, so the two differ", asserting
+      `2026-01-01` on the first `href` and `2025-07-01` on the second.)
+- [x] A card with no comparable window (the `—` state) sets no `link`/`queryParams` and renders as plain
+      text, not a dead link; unit test. (Builder spec "sets no link at all in the — state, so a dead card
+      is not a dead link"; component spec "renders a card with no comparable window as plain text, not a
+      dead link", asserting no `<a>` in that card.)
+- [x] `mm-stat-card` itself is unchanged — no new input, no styling fork; the panel uses the existing
+      `link`/`queryParams`/`tilt` inputs. (`git diff` touches nothing under `shared/ui/stat-card/`.)
+- [x] No persistence changes, no Dexie version bump. (`git diff` touches no `app-db.ts` and no repository.)
+- [x] `angular.json` bundle budgets not raised. (`git diff` touches no `angular.json`;
+      `ng build --configuration development` completes with no budget warning.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD` →
+      `verdict: pass`, `complexity_introduced: 0`. Conventions: the card view-model stays the one place
+      display facts are derived, drilldown params go through `shared/utils`'s
+      `buildTransactionDrilldownParams` rather than hand-built query strings, and the row copies the
+      dashboard's own markup rather than forking it.)
 - [ ] Verified live in the browser: the growth panel's left card reads "vs. start of year" with a plausible
       figure; in January (or with a mid-year career start) it shows `—` and its reason, not a broken value;
       the two cards sit free-standing like the dashboard's and each opens `/transactions` filtered to its own
-      baseline month.
+      baseline month. — **skipped at the user's request** ("skip the browser check"), not verified.
 
 ## Notes
 

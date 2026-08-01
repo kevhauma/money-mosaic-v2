@@ -1,23 +1,26 @@
-<mm-paper>
-  <h2 class="card-title text-base">Income growth</h2>
+<h2 class="card-title text-base">Income growth</h2>
 
-  @if (hasComparableMonth()) {
-    <mm-text variant="caption" as="p">{{ caption() }}</mm-text>
+@if (hasComparableMonth()) {
+  <mm-text variant="caption" as="p">{{ caption() }}</mm-text>
 
-    <div class="mt-2 grid gap-3 sm:grid-cols-2">
-      @for (card of cards(); track card.label) {
-        <mm-stat-card
-          [label]="card.label"
-          [value]="card.value"
-          [subLabel]="card.subLabel"
-          [tooltip]="card.tooltip"
-          [color]="card.color"
-        />
-      }
-    </div>
-  } @else {
-    <mm-text variant="caption" as="p">
-      No complete calendar month in your history yet — growth needs a whole month to compare.
-    </mm-text>
-  }
-</mm-paper>
+  <!-- Each stat is its own free-standing card (not a joined .stats strip), matching the dashboard's
+       stat row exactly; the alternating tilt hooks only render in themes that opt in (Memphis). -->
+  <div class="flex flex-wrap gap-6 py-2">
+    @for (card of cards(); track card.label) {
+      <mm-stat-card
+        [label]="card.label"
+        [value]="card.value"
+        [subLabel]="card.subLabel"
+        [tooltip]="card.tooltip"
+        [color]="card.color"
+        [link]="card.link"
+        [queryParams]="card.queryParams"
+        [tilt]="$first ? 'a' : 'b'"
+      />
+    }
+  </div>
+} @else {
+  <mm-text variant="caption" as="p">
+    No complete calendar month in your history yet — growth needs a whole month to compare.
+  </mm-text>
+}

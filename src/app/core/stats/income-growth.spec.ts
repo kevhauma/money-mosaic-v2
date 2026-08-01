@@ -32,7 +32,7 @@ const monthWindow = (yearMonth: string): [string, string] => {
 const growthFor = (trend: IncomeCategorySeries, yearMonth: string) =>
   computeIncomeGrowth(trend, 'month', ...monthWindow(yearMonth));
 
-describe('computeIncomeGrowth: period-over-period (FR-INC-5)', () => {
+describe('computeIncomeGrowth: vs. start of year (FR-INC-5, TICKET-INC-15)', () => {
   it('is 0% for a category that pays exactly the same every month', () => {
     const flat = trendOf(
       series(
@@ -42,11 +42,11 @@ describe('computeIncomeGrowth: period-over-period (FR-INC-5)', () => {
     );
 
     expect(growthFor(flat, '2026-06').current).toBe(2000);
-    expect(growthFor(flat, '2026-06').priorPeriod?.total).toBe(2000);
-    expect(growthFor(flat, '2026-06').priorPeriod?.pct).toBe(0);
+    expect(growthFor(flat, '2026-06').yearStart?.total).toBe(2000);
+    expect(growthFor(flat, '2026-06').yearStart?.pct).toBe(0);
   });
 
-  it('is positive for a category that rises every month', () => {
+  it('measures from January of the compared month’s own year, not the month before', () => {
     const rising = trendOf(
       series(
         1,
@@ -54,19 +54,28 @@ describe('computeIncomeGrowth: period-over-period (FR-INC-5)', () => {
       ),
     );
 
-    // June 2026 is index 17 (1000 + 1700), May index 16 (1000 + 1600).
+    // June 2026 is index 17 (2700); January 2026 is index 12 (2200) — not May's 2600.
     const result = growthFor(rising, '2026-06');
     expect(result.current).toBe(2700);
-    expect(result.priorPeriod?.total).toBe(2600);
-    expect(result.priorPeriod?.pct).toBeCloseTo(100 / 2600);
+    expect(result.yearStart?.total).toBe(2200);
+    expect(result.yearStart?.pct).toBeCloseTo(500 / 2200);
   });
 
-  it('is negative for a drop against the month before', () => {
+  it('is negative for a drop against the year’s opening month', () => {
     const values = BUCKET_KEYS.map(() => 2000);
     values[17] = 1500;
     const result = growthFor(trendOf(series(1, values)), '2026-06');
 
-    expect(result.priorPeriod?.pct).toBeCloseTo(-0.25);
+    expect(result.yearStart?.pct).toBeCloseTo(-0.25);
+  });
+
+  it('stays inside the compared month’s year rather than walking back into the previous one', () => {
+    const values = BUCKET_KEYS.map(() => 2000);
+    values.fill(9000, 0, 12); // All of 2025 pays far more — and must not be the baseline.
+    const result = growthFor(trendOf(series(1, values)), '2026-06');
+
+    expect(result.yearStart?.total).toBe(2000);
+    expect(result.yearStart).toMatchObject({ from: '2026-01-01', to: '2026-01-31' });
   });
 
   it('names the window it compared against, so the figures can be checked', () => {
@@ -78,8 +87,44 @@ describe('computeIncomeGrowth: period-over-period (FR-INC-5)', () => {
     );
     const result = growthFor(flat, '2026-06');
 
-    expect(result.priorPeriod).toMatchObject({ from: '2026-05-01', to: '2026-05-31' });
+    expect(result.yearStart).toMatchObject({ from: '2026-01-01', to: '2026-01-31' });
     expect(result.priorYear).toMatchObject({ from: '2025-06-01', to: '2025-06-30' });
+  });
+
+  it('uses the year’s first *available* bucket for a history that opens mid-year', () => {
+    // A career start (FR-INC-12) of 2024-04: April *is* that year's opening month, and comparing
+    // September against it is the intended reading — not a refusal because January is absent.
+    const fromApril = monthsOf('2024').slice(3);
+    const lateStart: IncomeCategorySeries = {
+      bucketKeys: fromApril,
+      series: [
+        series(
+          1,
+          fromApril.map((_, index) => 2000 + index * 100),
+        ),
+      ],
+    };
+
+    const result = computeIncomeGrowth(lateStart, 'month', ...monthWindow('2024-09'));
+
+    expect(result.yearStart).toMatchObject({ from: '2024-04-01', to: '2024-04-30', total: 2000 });
+    expect(result.current).toBe(2500);
+    expect(result.yearStart?.pct).toBeCloseTo(500 / 2000);
+  });
+
+  it('is null when the compared month is itself the year’s opening bucket', () => {
+    const fromApril = monthsOf('2024').slice(3);
+    const lateStart: IncomeCategorySeries = {
+      bucketKeys: fromApril,
+      series: [
+        series(
+          1,
+          fromApril.map(() => 2000),
+        ),
+      ],
+    };
+
+    expect(computeIncomeGrowth(lateStart, 'month', ...monthWindow('2024-04')).yearStart).toBeNull();
   });
 
   it('sums every selected category into one figure', () => {
@@ -120,7 +165,7 @@ describe('computeIncomeGrowth: period-over-period (FR-INC-5)', () => {
     expect(salaryOnly.series).toHaveLength(1);
     expect(growthFor(salaryOnly, '2026-06').current).toBe(2000);
     expect(growthFor(withOther, '2026-06').current).toBeGreaterThan(2000);
-    expect(growthFor(withOther, '2026-06').priorPeriod?.total).toBeGreaterThan(2000);
+    expect(growthFor(withOther, '2026-06').yearStart?.total).toBeGreaterThan(2000);
   });
 });
 
@@ -177,8 +222,8 @@ describe('computeIncomeGrowth: no percentage to report', () => {
     const result = growthFor(trendOf(series(1, values)), '2026-06');
 
     expect(result.current).toBe(2000);
-    expect(result.priorPeriod?.total).toBe(0);
-    expect(result.priorPeriod?.pct).toBeNull();
+    expect(result.yearStart?.total).toBe(0);
+    expect(result.yearStart?.pct).toBeNull();
     expect(result.priorYear?.pct).toBeNull();
   });
 
@@ -191,7 +236,7 @@ describe('computeIncomeGrowth: no percentage to report', () => {
     );
     const result = growthFor(nothing, '2026-06');
 
-    expect(result.priorPeriod?.pct).toBeNull();
+    expect(result.yearStart?.pct).toBeNull();
     expect(result.priorYear?.pct).toBeNull();
   });
 
@@ -203,7 +248,7 @@ describe('computeIncomeGrowth: no percentage to report', () => {
       ),
     );
 
-    expect(growthFor(flat, '2025-01').priorPeriod).toBeNull();
+    expect(growthFor(flat, '2025-01').yearStart).toBeNull();
   });
 
   it('reports zero and no comparisons for a window outside the series entirely', () => {
@@ -216,14 +261,16 @@ describe('computeIncomeGrowth: no percentage to report', () => {
     const result = computeIncomeGrowth(flat, 'month', '2030-01-01', '2030-01-31');
 
     expect(result.current).toBe(0);
-    expect(result.priorPeriod).toBeNull();
+    expect(result.yearStart).toBeNull();
     expect(result.priorYear).toBeNull();
   });
 });
 
 describe('computeIncomeGrowth: multi-month windows', () => {
-  it('compares a quarter to the three months immediately before it', () => {
-    // 2026 Q2 (indices 15–17) pays double.
+  it('compares a quarter to its year’s opening *month*, not to a same-length window', () => {
+    // 2026 Q2 (indices 15–17) pays double. The baseline stays one bucket wide either way — the
+    // panel only ever asks for a single month, and a quarter-vs-quarter reading would be a
+    // different feature (TICKET-INC-15 replaced the same-length prior period outright).
     const values = BUCKET_KEYS.map((_, index) => (index >= 15 && index <= 17 ? 2000 : 1000));
     const result = computeIncomeGrowth(
       trendOf(series(1, values)),
@@ -233,7 +280,7 @@ describe('computeIncomeGrowth: multi-month windows', () => {
     );
 
     expect(result.current).toBe(6000);
-    expect(result.priorPeriod).toMatchObject({ from: '2026-01-01', to: '2026-03-31', total: 3000 });
-    expect(result.priorPeriod?.pct).toBeCloseTo(1);
+    expect(result.yearStart).toMatchObject({ from: '2026-01-01', to: '2026-01-31', total: 1000 });
+    expect(result.yearStart?.pct).toBeCloseTo(5);
   });
 });

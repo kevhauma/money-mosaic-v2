@@ -15,8 +15,13 @@ export type IncomeGrowth = {
   from: string;
   to: string;
   current: number;
-  /** The same-length window immediately before the current one; `null` when the series doesn't cover it in full. */
-  priorPeriod: IncomeGrowthWindow | null;
+  /**
+   * The **first bucket of the compared window's own calendar year** (TICKET-INC-15) — "am I ahead of
+   * where I started this year", which a salary that changes once or twice a year can actually
+   * answer. `null` when the compared window *is* that first bucket (comparing January to itself is
+   * 0% by construction) or when the series doesn't reach it.
+   */
+  yearStart: IncomeGrowthWindow | null;
   /** The same window one calendar year back; `null` when the series doesn't cover it in full — "hide, don't lie", as in `computeYearOverYearComparison`. */
   priorYear: IncomeGrowthWindow | null;
 };
@@ -77,9 +82,14 @@ const totalOverSpan = (
 };
 
 /**
- * Period-over-period and year-over-year income growth for one window (FR-INC-5, TICKET-INC-05) —
+ * Year-to-date and year-over-year income growth for one window (FR-INC-5, TICKET-INC-05/INC-15) —
  * "am I actually getting ahead", as opposed to the dashboard's whole-portfolio income/expense/net
- * delta badge.
+ * delta badge. The two baselines answer genuinely different questions: how far this year, and how
+ * far since last year.
+ *
+ * The year-to-date baseline replaced a month-over-month one (TICKET-INC-15): on a salary that
+ * changes once or twice a year a one-month delta is almost always 0%, and when it isn't it is a
+ * shifted pay date rather than growth.
  *
  * Takes the page's **already-smoothed, already-selection-scoped** series
  * (`smoothAnnualLumpSums(computeIncomeCategorySeries(...))`) rather than raw transactions, so the
@@ -113,10 +123,17 @@ export const computeIncomeGrowth = (
     };
   };
 
-  const priorPeriod = (): IncomeGrowthWindow | null => {
+  /**
+   * The year's **first bucket present in the series**, not January by definition: for a user whose
+   * career start (FR-INC-12) or import begins in April, April *is* that year's opening month, and
+   * comparing December against it is exactly the intended reading. `null` only when the compared
+   * window is that opening bucket itself.
+   */
+  const yearStart = (): IncomeGrowthWindow | null => {
     if (span === null) return null;
-    const startIndex = span[0] - spanLength(span);
-    return startIndex < 0 ? null : windowOf([startIndex, span[0] - 1]);
+    const year = bucketKeys[span[0]].slice(0, 4);
+    const startIndex = bucketKeys.findIndex((key) => key.startsWith(year));
+    return startIndex === -1 || startIndex >= span[0] ? null : windowOf([startIndex, startIndex]);
   };
 
   const priorYear = (): IncomeGrowthWindow | null => {
@@ -130,5 +147,5 @@ export const computeIncomeGrowth = (
       : windowOf(shiftedSpan);
   };
 
-  return { from, to, current, priorPeriod: priorPeriod(), priorYear: priorYear() };
+  return { from, to, current, yearStart: yearStart(), priorYear: priorYear() };
 };
