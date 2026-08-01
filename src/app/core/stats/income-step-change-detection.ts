@@ -39,7 +39,7 @@ const averageOf = (values: number[], startIndex: number, length: number): number
 /**
  * True when *every* month of the after-window sits past the threshold in the same direction — not
  * merely the window's average. One unusually good month lifts a 3-month average by a third of its
- * excess, which is enough to clear ±15% on its own; requiring all three rejects it.
+ * excess, which is enough to clear the threshold on its own; requiring all three rejects it.
  */
 const heldForWholeWindow = (
   values: number[],

@@ -73,7 +73,7 @@ describe('detectIncomeStepChanges: a genuine sustained shift (FR-INC-8)', () => 
 
 describe('detectIncomeStepChanges: rejecting noise', () => {
   it('ignores a single unusually high month', () => {
-    // The 3-month average clears +15%, but only one of the three months moved.
+    // The 3-month average clears the threshold, but only one of the three months moved.
     expect(detect([...flat(2000, 6), 6000, 2000, 2000, 2000])).toEqual([]);
   });
 
