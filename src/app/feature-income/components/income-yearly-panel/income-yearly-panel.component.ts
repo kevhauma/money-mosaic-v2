@@ -1,7 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
-import { computeYearlyIncomeSummary, type YearlyIncomeEntry } from '@/core/stats';
+import {
+  computeMultiYearIncomeComparison,
+  computeYearlyIncomeSummary,
+  MULTI_YEAR_INCOME_SPANS,
+  type MultiYearIncomeComparison,
+  type MultiYearIncomeSpan,
+  type YearlyIncomeEntry,
+} from '@/core/stats';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { savingsAccountIbans } from '@/core/transfers';
 import {
@@ -9,7 +16,7 @@ import {
   resolveChartAnimation,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
-import { PaperComponent } from '@/shared/ui';
+import { FlexComponent, PaperComponent, StatCardComponent, type StatCardColor } from '@/shared/ui';
 import { formatCurrency, formatPercent } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 
@@ -33,6 +40,76 @@ export const describeYearOverYearChange = (entry: YearlyIncomeEntry): string =>
 
 /** Only the fields this chart's tooltip/label callbacks read off echarts' callback params. */
 type YearlyTooltipParam = { dataIndex: number; value: number };
+
+/** The span picker's button text. Terse because the three sit side by side in a `join` group. */
+const SPAN_BUTTON_LABELS: Record<MultiYearIncomeSpan, string> = {
+  3: '3y',
+  5: '5y',
+  'all-time': 'All-time',
+};
+
+/** How the headline names the span it covers — the requested span, which a short history may truncate; the sub-label states the years actually compared. */
+const SPAN_HEADLINE_LABELS: Record<MultiYearIncomeSpan, string> = {
+  3: 'Change over the last 3 years',
+  5: 'Change over the last 5 years',
+  'all-time': 'Change over all time',
+};
+
+/** Shown when the history holds no complete calendar year, so there is no span to describe at all. */
+const NO_COMPARABLE_YEARS = 'No complete calendar year yet';
+
+/** Why a span holding a single comparable year carries no percentage — there is no earlier year to measure it against. */
+const SINGLE_YEAR_REASON = 'only comparable year — nothing to compare against';
+
+export type SpanOption = { value: MultiYearIncomeSpan; label: string; selected: boolean };
+
+export type MultiYearIncomeHeadline = {
+  label: string;
+  value: string;
+  subLabel: string;
+  tooltip: string;
+  color: StatCardColor | undefined;
+};
+
+/** Green for growth, red for a decline, and the default ink when there's no direction to state — the sign is the whole point of this figure. */
+const headlineColor = (pctChange: number | null): StatCardColor | undefined => {
+  if (pctChange === null || pctChange === 0) return undefined;
+  return pctChange > 0 ? 'success' : 'error';
+};
+
+/**
+ * The FR-INC-7 headline as plain display facts, kept pure so it's testable without TestBed.
+ *
+ * The sub-label always names the two years actually compared rather than the span requested: a
+ * five-year span over three years of history is truncated, not padded, and "2023 → 2025" is the
+ * only honest way to say so on one line.
+ */
+export const buildMultiYearIncomeHeadline = (
+  comparison: MultiYearIncomeComparison | null,
+  span: MultiYearIncomeSpan,
+): MultiYearIncomeHeadline => {
+  const label = SPAN_HEADLINE_LABELS[span];
+  if (comparison === null)
+    return {
+      label,
+      value: NO_CHANGE_SHOWN,
+      subLabel: NO_COMPARABLE_YEARS,
+      tooltip: '',
+      color: undefined,
+    };
+
+  const { firstYear, firstYearTotal, lastYear, lastYearTotal, pctChange } = comparison;
+  const singleYear = firstYear === lastYear;
+  return {
+    label,
+    value: pctChange === null ? NO_CHANGE_SHOWN : formatPercent(pctChange, 'signed'),
+    subLabel: singleYear ? `${firstYear} — ${SINGLE_YEAR_REASON}` : `${firstYear} → ${lastYear}`,
+    tooltip: singleYear
+      ? `${firstYear}: ${formatCurrency(firstYearTotal)}`
+      : `${firstYear}: ${formatCurrency(firstYearTotal)}\n${lastYear}: ${formatCurrency(lastYearTotal)}`,
+    color: headlineColor(pctChange),
+  };
+};
 
 /**
  * Pure echarts-option builder for the yearly income bars, kept separate from the component so it's
@@ -93,10 +170,13 @@ export const buildYearlyIncomeChartOption = (entries: YearlyIncomeEntry[]): ECha
  * `IncomeStore.fullHistoryRange` rather than the topbar, so the yearly trend always shows every
  * year the user has data for. Totals are unsmoothed on purpose: FR-INC-4 redistributes a lump sum
  * *within* a year, which changes nothing once the bucket is the whole year.
+ *
+ * Also hosts FR-INC-7's multi-year headline (TICKET-INC-07) — "+18% over the last 3 years" — beside
+ * the bars, since it reads the same `computeYearlyIncomeSummary()` output the chart renders.
  */
 @Component({
   selector: 'app-income-yearly-panel',
-  imports: [NgxEchartsDirective, PaperComponent],
+  imports: [FlexComponent, NgxEchartsDirective, PaperComponent, StatCardComponent],
   templateUrl: './income-yearly-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -144,4 +224,30 @@ export class IncomeYearlyPanelComponent {
     () =>
       `Income per calendar year with change vs. the prior year, ${this.range().from}–${this.range().to}; table with values follows`,
   );
+
+  /**
+   * Which multi-year span the headline covers (FR-INC-7). Chart-local state in the same spirit as
+   * the granularity picker (TICKET-STAT-15): a display choice about one panel, not something the
+   * rest of the page or a reload needs to know about.
+   */
+  private readonly span = signal<MultiYearIncomeSpan>(3);
+
+  protected readonly spanOptions = computed<SpanOption[]>(() =>
+    MULTI_YEAR_INCOME_SPANS.map((value) => ({
+      value,
+      label: SPAN_BUTTON_LABELS[value],
+      selected: value === this.span(),
+    })),
+  );
+
+  protected readonly multiYearHeadline = computed<MultiYearIncomeHeadline>(() =>
+    buildMultiYearIncomeHeadline(
+      computeMultiYearIncomeComparison(this.yearlyIncome(), this.span()),
+      this.span(),
+    ),
+  );
+
+  protected selectSpan(span: MultiYearIncomeSpan): void {
+    this.span.set(span);
+  }
 }

@@ -389,4 +389,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'You can now tell the Income page when your career started, so its charts begin where your working life did',
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-07'],
+    title:
+      'The yearly income panel can now answer “how has my income changed over the last 3 or 5 years, or ever” with a single headline figure, instead of only comparing each year to the one before it',
+    area: 'Income',
+  },
 ];

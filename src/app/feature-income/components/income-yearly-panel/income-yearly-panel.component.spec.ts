@@ -27,6 +27,7 @@ import {
   syncFormatSettings,
 } from '@/shared/utils';
 import {
+  buildMultiYearIncomeHeadline,
   buildYearlyIncomeChartOption,
   describeYearOverYearChange,
   formatYearOverYearChange,
@@ -152,6 +153,68 @@ describe('buildYearlyIncomeChartOption (FR-INC-6, TICKET-INC-06)', () => {
 
   it('has no dataZoom — a full history is a handful of bars, all of which fit on the axis', () => {
     expect(build(threeYears).dataZoom).toBeUndefined();
+  });
+});
+
+describe('buildMultiYearIncomeHeadline (FR-INC-7, TICKET-INC-07)', () => {
+  const comparison = {
+    firstYear: '2023',
+    firstYearTotal: 20000,
+    lastYear: '2025',
+    lastYearTotal: 23600,
+    pctChange: 0.18,
+  };
+
+  it('names the span the user picked', () => {
+    expect(buildMultiYearIncomeHeadline(comparison, 3).label).toBe('Change over the last 3 years');
+    expect(buildMultiYearIncomeHeadline(comparison, 'all-time').label).toBe('Change over all time');
+  });
+
+  it('renders the aggregate change with an explicit sign', () => {
+    expect(buildMultiYearIncomeHeadline(comparison, 3).value).toBe('+18%');
+  });
+
+  it('states the two years actually compared, not the span requested', () => {
+    // A 5-year span truncated to three years of history still says which three.
+    expect(buildMultiYearIncomeHeadline(comparison, 5).subLabel).toBe('2023 → 2025');
+  });
+
+  it('colours a rise as growth and a decline as a loss', () => {
+    expect(buildMultiYearIncomeHeadline(comparison, 3).color).toBe('success');
+    expect(buildMultiYearIncomeHeadline({ ...comparison, pctChange: -0.1 }, 3).color).toBe('error');
+  });
+
+  it('carries both years’ totals in the tooltip, so the % can be checked against real figures', () => {
+    const { tooltip } = buildMultiYearIncomeHeadline(comparison, 3);
+
+    expect(tooltip.split('\n')).toHaveLength(2);
+    expect(tooltip).toContain('2023');
+    expect(tooltip).toContain('2025');
+  });
+
+  it('falls back to a dash and says why when a single year is all there is to compare', () => {
+    const single = buildMultiYearIncomeHeadline(
+      {
+        firstYear: '2025',
+        firstYearTotal: 20000,
+        lastYear: '2025',
+        lastYearTotal: 20000,
+        pctChange: null,
+      },
+      3,
+    );
+
+    expect(single.value).toBe('—');
+    expect(single.subLabel).toContain('nothing to compare against');
+    expect(single.color).toBeUndefined();
+  });
+
+  it('says no complete year exists yet rather than showing an empty card', () => {
+    const empty = buildMultiYearIncomeHeadline(null, 'all-time');
+
+    expect(empty.value).toBe('—');
+    expect(empty.subLabel).toBe('No complete calendar year yet');
+    expect(empty.tooltip).toBe('');
   });
 });
 
@@ -328,5 +391,90 @@ describe('IncomeYearlyPanelComponent', () => {
 
     expect(host).not.toBeNull();
     expect(host.getAttribute('aria-label')).toContain('Income per calendar year');
+  });
+
+  describe('multi-year comparison headline (FR-INC-7)', () => {
+    /** The `<button>`s of the span picker, in render order: 3y / 5y / All-time. */
+    const spanButtons = (): HTMLButtonElement[] => [
+      ...fixture.nativeElement.querySelectorAll('[role="group"] button'),
+    ];
+
+    const clickSpan = (label: string): void => {
+      spanButtons()
+        .find((button) => button.textContent?.trim() === label)!
+        .click();
+      fixture.detectChanges();
+    };
+
+    const headline = (): { label: string; value: string; subLabel: string } => {
+      const card = fixture.nativeElement.querySelector('mm-stat-card');
+      const text = (selector: string): string =>
+        card.querySelector(selector)?.textContent?.trim() ?? '';
+      return {
+        label: text('.stat-title'),
+        value: text('.stat-value'),
+        subLabel: text('.stat-desc'),
+      };
+    };
+
+    /**
+     * Four complete calendar years (2022–2025) plus the in-progress current one. The first payslip
+     * is dated 1 January so `computeFullHistoryRange`'s `from` covers all of 2022 — a history
+     * starting mid-year would make 2022 partial, and therefore not comparable.
+     */
+    const fourYears = [
+      payslip(1, '2022-01-01', 10000),
+      payslip(2, '2023-06-01', 12000),
+      payslip(3, '2024-06-01', 14000),
+      payslip(4, '2025-06-01', 15000),
+    ];
+
+    it('defaults to the 3-year span, comparing the last three complete years', async () => {
+      await setup(fourYears);
+
+      expect(headline().label).toBe('Change over the last 3 years');
+      // 2023 → 2025: 12000 → 15000.
+      expect(headline().subLabel).toBe('2023 → 2025');
+      expect(headline().value).toBe('+25%');
+    });
+
+    it('updates the headline when the span changes, without re-rendering the page', async () => {
+      await setup(fourYears);
+      clickSpan('All-time');
+
+      // 2022 → 2025: 10000 → 15000.
+      expect(headline().label).toBe('Change over all time');
+      expect(headline().subLabel).toBe('2022 → 2025');
+      expect(headline().value).toBe('+50%');
+    });
+
+    it('marks the selected span as pressed', async () => {
+      await setup(fourYears);
+      clickSpan('5y');
+
+      const pressed = spanButtons().filter(
+        (button) => button.getAttribute('aria-pressed') === 'true',
+      );
+
+      expect(pressed).toHaveLength(1);
+      expect(pressed[0].textContent?.trim()).toBe('5y');
+    });
+
+    it('compares whatever history exists when the span asks for more years than there are', async () => {
+      await setup([payslip(1, '2024-06-01', 20000), payslip(2, '2025-06-01', 24000)]);
+      clickSpan('5y');
+
+      expect(headline().subLabel).toBe('2024 → 2025');
+      expect(headline().value).toBe('+20%');
+    });
+
+    it('leaves the in-progress current year out of the comparison', async () => {
+      await setup(fourYears);
+      clickSpan('All-time');
+
+      // `computeFullHistoryRange` runs to today, so the newest year is always partial and would
+      // read as a collapse if it anchored the span.
+      expect(headline().subLabel).not.toContain(String(new Date().getFullYear()));
+    });
   });
 });

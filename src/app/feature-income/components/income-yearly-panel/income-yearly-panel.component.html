@@ -1,5 +1,32 @@
 <mm-paper>
-  <h2 class="card-title text-base">Income by year</h2>
+  <mm-flex align="center" justify="between" gap="2">
+    <h2 class="card-title text-base">Income by year</h2>
+
+    <!-- Inline rather than a shared/ui primitive: the only segmented span picker in the app so far
+         (TICKET-INC-07). A second use is what should promote it, not a first. -->
+    <div class="join" role="group" aria-label="Comparison span">
+      @for (option of spanOptions(); track option.value) {
+        <button
+          type="button"
+          class="btn btn-sm join-item"
+          [class.btn-active]="option.selected"
+          [attr.aria-pressed]="option.selected"
+          (click)="selectSpan(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </mm-flex>
+
+  <mm-stat-card
+    class="mt-2 block"
+    [label]="multiYearHeadline().label"
+    [value]="multiYearHeadline().value"
+    [subLabel]="multiYearHeadline().subLabel"
+    [tooltip]="multiYearHeadline().tooltip"
+    [color]="multiYearHeadline().color"
+  />
 
   <div
     echarts

@@ -10,6 +10,7 @@ export * from './category-breakdown';
 export * from './category-composition-trend';
 export * from './income-category-series';
 export * from './yearly-income-summary';
+export * from './multi-year-income-comparison';
 export * from './net-worth-trend';
 export * from './account-balance-trend';
 export * from './full-history-range';
