@@ -53,11 +53,40 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'topic-income-growth',
-    title:
-      'A dedicated Income page: trends by source, growth rate, and gross-vs-net tracking over time',
+    ticketId: 'TICKET-SET-08',
+    title: 'Pick the color used for gross pay on the Income page’s charts',
+    area: 'Settings',
+  },
+  {
+    versionFolder: 'v1.6_income_growth',
+    ticketId: 'TICKET-INC-13',
+    title: 'Spread a bonus recorded on your salary details across its year on the income chart',
     area: 'Income',
-    isTopic: true,
+  },
+  {
+    versionFolder: 'v1.6_income_growth',
+    ticketId: 'TICKET-INC-14',
+    title: 'Take-home rate as a full 0–100% band comparing plain salary against its gross',
+    area: 'Income',
+  },
+  {
+    versionFolder: 'v1.6_income_growth',
+    ticketId: 'TICKET-INC-16',
+    title: 'A “Net vs gross” section: take-home rate plus growth charts, four to a grid',
+    area: 'Income',
+  },
+  {
+    versionFolder: 'v1.6_income_growth',
+    ticketId: 'TICKET-INC-15',
+    title:
+      'Compare your last complete month against the start of the year, on cards that link to their transactions',
+    area: 'Income',
+  },
+  {
+    versionFolder: 'v1.6_income_growth',
+    ticketId: 'TICKET-INC-17',
+    title: 'An Events sidebar listing raises, bonuses and stopped income streams by year',
+    area: 'Income',
   },
   {
     versionFolder: 'v1.7_loan_tracker',

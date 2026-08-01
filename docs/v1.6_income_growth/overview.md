@@ -90,6 +90,20 @@ This set introduces a new requirement family, **FR-INC**, and is the first versi
 - [x] [TICKET-INC-10](./tickets/TICKET-INC-10-monthly-gross-wage-entry.md) — Monthly salary metadata: gross wage + embedded bonus, opened from its own modal (adds FR-INC-10) — genuinely independent (new table, no dependency on the trend series), can be built any time
 - [x] [TICKET-INC-11](./tickets/TICKET-INC-11-gross-net-ratio.md) — Gross/net ratio per month (adds FR-INC-11) — last: needs INC-10 + INC-03
 
+### Follow-up batch (added 2026-08-01, from using the shipped page)
+
+The twelve tickets above all shipped; these six come from the first real read of the page against real
+data. Two are corrections to what shipped (INC-13, INC-14), two are new views on data already collected
+(INC-16, INC-17), one is a re-aim (INC-15), and one is the settings surface the new charts need (SET-08).
+Ordered by dependency, same as the list above:
+
+- [ ] [TICKET-SET-08](./tickets/TICKET-SET-08-gross-series-color-setting.md) — Gross series color setting (extends FR-SET) — first: INC-14 and INC-16 both read its resolver, and it has no dependency of its own
+- [ ] [TICKET-INC-13](./tickets/TICKET-INC-13-embedded-bonus-smoothing.md) — Smooth an embedded bonus out of the income-by-month chart (bug fix, extends FR-INC-4/10 — `SalaryMetadata.bonus` has no category id, so `smoothAnnualLumpSums` never sees it and its deposit month keeps the spike) — independent, can ship any time
+- [ ] [TICKET-INC-14](./tickets/TICKET-INC-14-take-home-rate-full-band-chart.md) — Take-home rate as a full 0–100% band on plain salary (revises FR-INC-11) — needs SET-08 for the band color; defines the gross/net basis INC-16 reuses
+- [ ] [TICKET-INC-16](./tickets/TICKET-INC-16-gross-net-growth-charts.md) — "Net vs gross" section: a 2×2 grid of the take-home rate plus absolute, from-start and %-from-start growth charts (adds FR-INC-13) — needs INC-14 (both the net basis and the take-home chart it absorbs) + SET-08's color
+- [ ] [TICKET-INC-15](./tickets/TICKET-INC-15-growth-vs-start-of-year.md) — Compare against the start of the year, not the previous month, and unwrap the growth cards into free-standing dashboard-style stats that link to their transactions (revises FR-INC-5) — independent, small; can slot in anywhere
+- [ ] [TICKET-INC-17](./tickets/TICKET-INC-17-income-events-sidebar.md) — Income events sidebar, grouped by year (revises FR-INC-8/9 presentation, adds FR-INC-14) — independent of the chart work, but best after INC-16 since both claim page real estate
+
 ## Considered, not ticketed yet
 
 - **Household/joint income view** — deliberately out of scope here; it's the existing account-detail
