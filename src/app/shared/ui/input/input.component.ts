@@ -34,7 +34,9 @@ export class InputComponent implements ControlValueAccessor {
   readonly placeholder = input('');
   readonly step = input<string>();
   readonly min = input<string>();
+  readonly max = input<string>();
   readonly maxlength = input<number>();
+  readonly ariaInvalid = input(false);
   readonly class = input('', { alias: 'class' });
 
   protected readonly displayValue = signal('');

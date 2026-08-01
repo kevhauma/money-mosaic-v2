@@ -201,6 +201,7 @@ describe('IncomeYearlyPanelComponent', () => {
   const setup = async (
     transactions: Transaction[],
     excludedIncomeCategoryIds?: number[],
+    careerStartDate?: string,
   ): Promise<void> => {
     accountsRepository.getAll.mockResolvedValue([account]);
     categoriesRepository.getAll.mockResolvedValue([salary]);
@@ -208,6 +209,7 @@ describe('IncomeYearlyPanelComponent', () => {
     appSettingsRepository.get.mockResolvedValue({
       id: 1,
       excludedIncomeCategoryIds,
+      careerStartDate,
     } as AppSettings);
 
     await TestBed.configureTestingModule({
@@ -263,6 +265,18 @@ describe('IncomeYearlyPanelComponent', () => {
     expect(rows[0][2]).toBe('—');
     expect(rows[1][0]).toBe('2025');
     expect(rows[1][2]).toBe('+20%');
+  });
+
+  it('starts at the career start date instead of the first transaction, dropping pre-career zero bars (FR-INC-12)', async () => {
+    await setup(
+      [payslip(1, '2024-06-01', 20000), payslip(2, '2026-06-01', 24000)],
+      undefined,
+      '2026-01-01',
+    );
+
+    const years = accessibleRows().map((row) => row[0]);
+
+    expect(years).toEqual(['2026']);
   });
 
   it('spans the full history regardless of a narrower topbar range (FR-INC-6)', async () => {

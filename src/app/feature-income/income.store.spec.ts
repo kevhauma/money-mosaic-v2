@@ -1,12 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import {
+  AccountsRepository,
   AppSettingsRepository,
   CategoriesRepository,
+  TransactionsRepository,
+  type Account,
   type AppSettings,
   type Category,
+  type Transaction,
 } from '@/core/data-access';
-import { AppSettingsStore, CategoriesStore } from '@/core/state';
+import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
@@ -42,30 +46,76 @@ const category = (
   ...overrides,
 });
 
+const account = (id: number, openingBalanceDate: string): Account => ({
+  id,
+  name: `Account ${id}`,
+  type: 'checking',
+  currency: 'EUR',
+  openingBalance: 0,
+  openingBalanceDate,
+  color: '#000000',
+  icon: 'wallet',
+  archived: false,
+});
+
+const transaction = (id: number, accountId: number, bookingDate: string): Transaction => ({
+  id,
+  accountId,
+  bookingDate,
+  amount: 100,
+  currency: 'EUR',
+  rawDescription: 'Payslip',
+  fingerprint: `fp-${id}`,
+  categoryId: 1,
+  createdAt: `${bookingDate}T00:00:00.000Z`,
+});
+
 const categoriesRepository = { getAll: vi.fn(), add: vi.fn() };
+const accountsRepository = { getAll: vi.fn() };
+const transactionsRepository = { getAll: vi.fn() };
 const appSettingsRepository = {
   get: vi.fn(),
   setExcludedIncomeCategoryIds: vi.fn(),
+  setCareerStartDate: vi.fn(),
 };
 
-/** Seeds both collaborator repositories, then awaits the (idempotent) hydrations so the derived
+type SetupOptions = {
+  excludedIncomeCategoryIds?: number[];
+  careerStartDate?: string;
+  accounts?: Account[];
+  transactions?: Transaction[];
+};
+
+/** Seeds every collaborator repository, then awaits the (idempotent) hydrations so the derived
  * lists are readable synchronously in the assertions. */
 const setup = async (
   categories: Category[],
-  excludedIncomeCategoryIds?: number[],
+  options: SetupOptions = {},
 ): Promise<InstanceType<typeof IncomeStore>> => {
+  const { excludedIncomeCategoryIds, careerStartDate, accounts = [], transactions = [] } = options;
   categoriesRepository.getAll.mockResolvedValue(categories);
-  appSettingsRepository.get.mockResolvedValue({ id: 1, excludedIncomeCategoryIds } as AppSettings);
+  accountsRepository.getAll.mockResolvedValue(accounts);
+  transactionsRepository.getAll.mockResolvedValue(transactions);
+  appSettingsRepository.get.mockResolvedValue({
+    id: 1,
+    excludedIncomeCategoryIds,
+    careerStartDate,
+  } as AppSettings);
   appSettingsRepository.setExcludedIncomeCategoryIds.mockResolvedValue(1);
+  appSettingsRepository.setCareerStartDate.mockResolvedValue(1);
   TestBed.configureTestingModule({
     providers: [
       { provide: CategoriesRepository, useValue: categoriesRepository },
+      { provide: AccountsRepository, useValue: accountsRepository },
+      { provide: TransactionsRepository, useValue: transactionsRepository },
       { provide: AppSettingsRepository, useValue: appSettingsRepository },
     ],
   });
 
   const store = TestBed.inject(IncomeStore);
   await TestBed.inject(CategoriesStore).hydrate();
+  await TestBed.inject(AccountsStore).hydrate();
+  await TestBed.inject(TransactionsStore).hydrate();
   await TestBed.inject(AppSettingsStore).hydrate();
   return store;
 };
@@ -124,7 +174,7 @@ describe('IncomeStore: selectedIncomeCategoryIds (FR-INC-3, TICKET-INC-03)', () 
   it('drops the ids the user has excluded', async () => {
     const store = await setup(
       [category(1, 'Salary', 'income'), category(2, 'Other Income', 'income')],
-      [2],
+      { excludedIncomeCategoryIds: [2] },
     );
 
     expect([...store.selectedIncomeCategoryIds()]).toEqual([1]);
@@ -133,7 +183,7 @@ describe('IncomeStore: selectedIncomeCategoryIds (FR-INC-3, TICKET-INC-03)', () 
   it('defaults a newly added income category to selected without any extra action', async () => {
     const store = await setup(
       [category(1, 'Salary', 'income'), category(2, 'Other Income', 'income')],
-      [2],
+      { excludedIncomeCategoryIds: [2] },
     );
     categoriesRepository.add.mockResolvedValue(9);
 
@@ -166,7 +216,7 @@ describe('IncomeStore: selectedIncomeCategoryIds (FR-INC-3, TICKET-INC-03)', () 
   it('toggleIncomeCategory reselects an excluded category', async () => {
     const store = await setup(
       [category(1, 'Salary', 'income'), category(2, 'Other Income', 'income')],
-      [2],
+      { excludedIncomeCategoryIds: [2] },
     );
 
     await store.toggleIncomeCategory(2);
@@ -182,7 +232,7 @@ describe('IncomeStore: selectedIncomeCategoryIds (FR-INC-3, TICKET-INC-03)', () 
         category(2, 'Old side gig', 'income', { archived: true }),
         category(3, 'Other Income', 'income'),
       ],
-      [2],
+      { excludedIncomeCategoryIds: [2] },
     );
 
     await store.toggleIncomeCategory(3);
@@ -190,5 +240,145 @@ describe('IncomeStore: selectedIncomeCategoryIds (FR-INC-3, TICKET-INC-03)', () 
     expect(appSettingsRepository.setExcludedIncomeCategoryIds).toHaveBeenCalledExactlyOnceWith([
       2, 3,
     ]);
+  });
+});
+
+describe('IncomeStore: incomeRange (FR-INC-12, TICKET-INC-12)', () => {
+  const INCOME_CATEGORIES = [category(1, 'Salary', 'income')];
+  const ACCOUNTS = [account(1, '2019-03-14')];
+  const TRANSACTIONS = [transaction(1, 1, '2019-04-01'), transaction(2, 1, '2026-07-20')];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(restoreFormatSettings);
+
+  it('is the full history range untouched while no career start date is set', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+    });
+
+    expect(store.incomeRange()).toEqual(store.fullHistoryRange());
+    expect(store.incomeRange().from).toBe('2019-03-14');
+  });
+
+  it('starts at the career start date when it falls after the first transaction', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+      careerStartDate: '2022-06-01',
+    });
+
+    expect(store.incomeRange().from).toBe('2022-06-01');
+    expect(store.incomeRange().to).toBe(store.fullHistoryRange().to);
+  });
+
+  it('leaves the range alone when the career start date is before the first transaction — it narrows, never invents history', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+      careerStartDate: '2015-01-01',
+    });
+
+    expect(store.incomeRange()).toEqual(store.fullHistoryRange());
+  });
+
+  it('re-clamps as soon as the date is set, without a reload', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+    });
+
+    await store.setCareerStartDate('2023-01-01');
+
+    expect(appSettingsRepository.setCareerStartDate).toHaveBeenCalledExactlyOnceWith('2023-01-01');
+    expect(store.incomeRange().from).toBe('2023-01-01');
+  });
+
+  it('restores the full span when the date is cleared', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+      careerStartDate: '2023-01-01',
+    });
+
+    await store.setCareerStartDate(undefined);
+
+    expect(appSettingsRepository.setCareerStartDate).toHaveBeenCalledExactlyOnceWith(undefined);
+    expect(store.incomeRange()).toEqual(store.fullHistoryRange());
+  });
+});
+
+describe('IncomeStore: rejectCareerStartDate (FR-INC-12, TICKET-INC-12)', () => {
+  const INCOME_CATEGORIES = [category(1, 'Salary', 'income')];
+  const ACCOUNTS = [account(1, '2019-03-14')];
+
+  /** One day past whatever "today" is when the suite runs — the store reads the real clock. */
+  const dayAfter = (isoDate: string): string => {
+    const date = new Date(`${isoDate}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + 1);
+    return date.toISOString().slice(0, 10);
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(restoreFormatSettings);
+
+  it('rejects a date in the future', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: [transaction(1, 1, '2019-04-01')],
+    });
+
+    const tomorrow = dayAfter(store.fullHistoryRange().to);
+
+    expect(store.rejectCareerStartDate(tomorrow)).not.toBeNull();
+  });
+
+  it('rejects a past date that sits after the most recent transaction', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: [transaction(1, 1, '2019-04-01'), transaction(2, 1, '2020-05-05')],
+    });
+
+    expect(store.rejectCareerStartDate('2021-01-01')).toMatch(/most recent transaction/);
+  });
+
+  it('accepts a date inside the history', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: [transaction(1, 1, '2019-04-01'), transaction(2, 1, '2020-05-05')],
+    });
+
+    expect(store.rejectCareerStartDate('2020-01-01')).toBeNull();
+  });
+});
+
+describe('IncomeStore: latestTransactionDate (FR-INC-12, TICKET-INC-12)', () => {
+  const INCOME_CATEGORIES = [category(1, 'Salary', 'income')];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(restoreFormatSettings);
+
+  it('reads the last transaction from active accounts only', async () => {
+    const store = await setup(INCOME_CATEGORIES, {
+      accounts: [account(1, '2019-03-14'), { ...account(2, '2019-03-14'), archived: true }],
+      transactions: [transaction(1, 1, '2020-05-05'), transaction(2, 2, '2024-09-09')],
+    });
+
+    expect(store.latestTransactionDate()).toBe('2020-05-05');
+  });
+
+  it('is undefined for a user with no transactions yet', async () => {
+    const store = await setup(INCOME_CATEGORIES, { accounts: [account(1, '2019-03-14')] });
+
+    expect(store.latestTransactionDate()).toBeUndefined();
   });
 });

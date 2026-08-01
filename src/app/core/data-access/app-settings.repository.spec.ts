@@ -116,4 +116,38 @@ describe('AppSettingsRepository', () => {
     });
     expect(await appDb.appSettings.count()).toBe(1);
   });
+
+  it('setCareerStartDate writes the singleton row without one existing yet (TICKET-INC-12)', async () => {
+    await repository.setCareerStartDate('2019-09-01');
+
+    expect(await repository.get()).toEqual({ id: 1, careerStartDate: '2019-09-01' });
+  });
+
+  it('setCareerStartDate preserves unrelated settings and stays a single row', async () => {
+    await repository.setLocale('en-GB');
+    await repository.setExcludedIncomeCategoryIds([2]);
+    await repository.setCareerStartDate('2019-09-01');
+    await repository.setCareerStartDate('2020-01-06');
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      locale: 'en-GB',
+      excludedIncomeCategoryIds: [2],
+      careerStartDate: '2020-01-06',
+    });
+    expect(await appDb.appSettings.count()).toBe(1);
+  });
+
+  it('setCareerStartDate(undefined) clears the date without touching the rest of the row', async () => {
+    await repository.setLocale('en-GB');
+    await repository.setCareerStartDate('2019-09-01');
+
+    await repository.setCareerStartDate(undefined);
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      locale: 'en-GB',
+      careerStartDate: undefined,
+    });
+  });
 });

@@ -53,13 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-INC-12',
-    title:
-      'Set your career start date so the Income page starts where your working life did, not where your data does',
-    area: 'Income',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'topic-income-growth',
     title:
       'A dedicated Income page: trends by source, growth rate, and gross-vs-net tracking over time',

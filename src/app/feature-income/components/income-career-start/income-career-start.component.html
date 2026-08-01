@@ -1,0 +1,24 @@
+<mm-fieldset legend="Career started">
+  <mm-flex align="center" gap="2">
+    <mm-input
+      type="date"
+      size="sm"
+      class="w-40"
+      [max]="maxDate()"
+      [color]="fieldColor()"
+      [ariaInvalid]="isRejected()"
+      [formControl]="control"
+    />
+    @if (careerStartDate()) {
+      <mm-button variant="ghost" size="sm" (click)="clear()">Clear</mm-button>
+    }
+  </mm-flex>
+
+  @if (rejection(); as message) {
+    <mm-label variant="error" role="alert">{{ message }}</mm-label>
+  } @else if (careerStartDate(); as date) {
+    <mm-label variant="fieldset">Income shown from {{ date | localeDate }}</mm-label>
+  } @else {
+    <mm-label variant="fieldset">When your working life started, not when your data does.</mm-label>
+  }
+</mm-fieldset>

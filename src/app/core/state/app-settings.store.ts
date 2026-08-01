@@ -55,6 +55,11 @@ export const AppSettingsStore = signalStore(
         await appSettingsRepository.setExcludedIncomeCategoryIds(excludedIncomeCategoryIds);
         patchState(store, { excludedIncomeCategoryIds });
       },
+
+      setCareerStartDate: async (careerStartDate: string | undefined): Promise<void> => {
+        await appSettingsRepository.setCareerStartDate(careerStartDate);
+        patchState(store, { careerStartDate });
+      },
     };
   }),
   withHooks({

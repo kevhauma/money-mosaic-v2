@@ -153,6 +153,7 @@ describe('IncomeOverviewComponent', () => {
   const setup = async (
     categories: Category[],
     excludedIncomeCategoryIds?: number[],
+    careerStartDate?: string,
   ): Promise<void> => {
     accountsRepository.getAll.mockResolvedValue([account]);
     categoriesRepository.getAll.mockResolvedValue(categories);
@@ -160,6 +161,7 @@ describe('IncomeOverviewComponent', () => {
     appSettingsRepository.get.mockResolvedValue({
       id: 1,
       excludedIncomeCategoryIds,
+      careerStartDate,
     } as AppSettings);
 
     await TestBed.configureTestingModule({
@@ -227,6 +229,23 @@ describe('IncomeOverviewComponent', () => {
     await setup([salary]);
 
     expect(fixture.nativeElement.querySelector('app-income-yearly-panel')).not.toBeNull();
+  });
+
+  it('renders the career-start control in the page header (FR-INC-12, TICKET-INC-12)', async () => {
+    await setup([salary]);
+
+    expect(
+      fixture.nativeElement.querySelector('mm-page-header app-income-career-start'),
+    ).not.toBeNull();
+  });
+
+  it('starts the monthly chart at the career start date rather than the first transaction (FR-INC-12)', async () => {
+    await setup([salary], undefined, '2026-04-01');
+
+    const rows = monthlyBucketRows('tbody th').map((cell) => cell.textContent?.trim() ?? '');
+
+    expect(rows[0]).toBe('2026-04');
+    expect(rows).not.toContain('2026-01');
   });
 
   it('offers no granularity control — the page is fixed to calendar months (TICKET-INC-02 divergence)', async () => {

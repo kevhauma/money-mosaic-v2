@@ -524,6 +524,17 @@ export type AppSettings = {
    * `primaryColor`/`currencySymbol`/`locale` above.
    */
   excludedIncomeCategoryIds: number[] | undefined;
+  /**
+   * Additive field (TICKET-INC-12) — the date the user's working life started (ISO `YYYY-MM-DD`),
+   * which is not the same thing as where their imported history happens to begin (FR-INC-12). Only
+   * the `/income` page reads it, where it clamps the span every panel covers so student-era income
+   * or a back-imported opening balance stops distorting the growth story; `undefined` = today's
+   * behaviour, the full data history. Same "additive optional field, no version bump" reasoning as
+   * `excludedIncomeCategoryIds` above — `.stores()` declares indexes, not fields.
+   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as the fields
+   * above.
+   */
+  careerStartDate: string | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -537,6 +548,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   currencySymbolPosition: undefined,
   locale: undefined,
   excludedIncomeCategoryIds: undefined,
+  careerStartDate: undefined,
 };
 
 class AppDb extends Dexie {

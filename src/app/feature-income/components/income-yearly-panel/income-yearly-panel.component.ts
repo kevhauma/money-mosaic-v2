@@ -106,7 +106,8 @@ export class IncomeYearlyPanelComponent {
   private readonly transactionsStore = inject(TransactionsStore);
   private readonly incomeStore = inject(IncomeStore);
 
-  private readonly range = this.incomeStore.fullHistoryRange;
+  /** The career-start-clamped span (FR-INC-12), which is the full data history until the user sets a date. */
+  private readonly range = this.incomeStore.incomeRange;
 
   private readonly yearlyIncome = computed(() =>
     computeYearlyIncomeSummary(

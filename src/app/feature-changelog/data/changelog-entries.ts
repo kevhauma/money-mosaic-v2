@@ -381,4 +381,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The Income page now charts your income over time with one line per source, so you can see whether growth is coming from your salary or elsewhere — and you can pick which income categories count, to keep one-off gifts or refunds out of the trend',
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-12'],
+    title:
+      'You can now tell the Income page when your career started, so its charts begin where your working life did',
+    area: 'Income',
+  },
 ];

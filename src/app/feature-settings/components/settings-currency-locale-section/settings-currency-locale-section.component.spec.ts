@@ -108,6 +108,7 @@ describe('SettingsCurrencyLocaleSectionComponent', () => {
       currencySymbolPosition: undefined,
       locale: 'en-BE',
       excludedIncomeCategoryIds: undefined,
+      careerStartDate: undefined,
     });
     const fixture = TestBed.createComponent(SettingsCurrencyLocaleSectionComponent);
     fixture.detectChanges();

@@ -1,5 +1,8 @@
 import type { Account, Transaction } from '@/core/data-access';
 
+/** An inclusive `[from, to]` span of ISO (`YYYY-MM-DD`) dates — what every range-taking aggregate here is bounded by. */
+export type DateRange = { from: string; to: string };
+
 /**
  * Earliest-to-today [from, to] span across the given accounts (TICKET-STAT-02): `from` is the
  * earliest of each account's opening-balance date or its first transaction's booking date, so an
@@ -11,7 +14,7 @@ export const computeFullHistoryRange = (
   accounts: Account[],
   transactions: Transaction[],
   todayIso: string,
-): { from: string; to: string } => {
+): DateRange => {
   if (accounts.length === 0) {
     return { from: todayIso, to: todayIso };
   }

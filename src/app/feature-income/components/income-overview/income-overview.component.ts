@@ -24,6 +24,7 @@ import {
 } from '@/shared/ui';
 import { formatCurrency, type Granularity } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
+import { IncomeCareerStartComponent } from '../income-career-start/income-career-start.component';
 import { IncomeCategoryFilterComponent } from '../income-category-filter/income-category-filter.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
 
@@ -91,6 +92,7 @@ export const buildIncomeTrendChartOption = (
   imports: [
     EmptyStateComponent,
     FlexComponent,
+    IncomeCareerStartComponent,
     IncomeCategoryFilterComponent,
     IncomeYearlyPanelComponent,
     NgIcon,
@@ -112,7 +114,8 @@ export class IncomeOverviewComponent {
     () => this.incomeStore.selectedIncomeCategoryIds().size > 0,
   );
 
-  private readonly range = this.incomeStore.fullHistoryRange;
+  /** The career-start-clamped span (FR-INC-12), which is the full data history until the user sets a date. */
+  private readonly range = this.incomeStore.incomeRange;
 
   private readonly trend = computed(() =>
     computeIncomeCategorySeries(

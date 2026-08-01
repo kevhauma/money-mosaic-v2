@@ -35,4 +35,11 @@ export class AppSettingsRepository {
     const current = await this.get();
     return appDb.appSettings.put({ ...current, id: 1, excludedIncomeCategoryIds });
   };
+
+  // `undefined` clears the setting (TICKET-INC-12) — the Income page falls back to the full data
+  // history, which is exactly what an unset field already means.
+  setCareerStartDate = async (careerStartDate: string | undefined): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, careerStartDate });
+  };
 }
