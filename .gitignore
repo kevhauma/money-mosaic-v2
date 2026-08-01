@@ -39,6 +39,8 @@ testem.log
 /typings
 __screenshots__/
 
+.claude/skills/impeccable/*
+
 # System files
 .DS_Store
 Thumbs.db
