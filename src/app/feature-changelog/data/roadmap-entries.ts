@@ -52,12 +52,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Dashboard',
   },
   {
-    versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-ACC-07',
-    title: 'Accounts page shows actual account balances instead of net worth',
-    area: 'Accounts',
-  },
-  {
     versionFolder: 'v1.7_loan_tracker',
     ticketId: 'topic-loan-tracker',
     title:

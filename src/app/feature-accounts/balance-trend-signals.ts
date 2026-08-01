@@ -7,15 +7,8 @@ import {
   pickGranularityForSpan,
   type AccountBalanceSeries,
   type ChartZoomWindow,
-  type JointLegContext,
 } from '@/core/stats';
-import {
-  AccountsStore,
-  CategoriesStore,
-  RangeStore,
-  TransactionsStore,
-  TransfersStore,
-} from '@/core/state';
+import { RangeStore, TransactionsStore } from '@/core/state';
 import type { Granularity } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -29,17 +22,14 @@ export type BalanceTrendSignals = {
 
 /**
  * The reactive scaffolding shared by `AccountBalanceChartComponent` and
- * `NetWorthHistoryChartComponent` (CR3-2.3): both wire the same range/granularity/jointLegContext/
- * zoomWindow chain around `computeAccountBalanceTrends`, differing only in which accounts they
- * scope to (one account vs. every active account) and their final ECharts option builder. Must be
- * called from an injection context (a component field initializer), since it injects its own
- * store dependencies rather than taking them as parameters.
+ * `AccountBalanceHistoryChartComponent` (CR3-2.3): both wire the same range/granularity/zoomWindow
+ * chain around `computeAccountBalanceTrends`, differing only in which accounts they scope to (one
+ * account vs. every active account) and their final ECharts option builder. Must be called from an
+ * injection context (a component field initializer), since it injects its own store dependencies
+ * rather than taking them as parameters.
  */
 export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSignals => {
-  const accountsStore = inject(AccountsStore);
   const transactionsStore = inject(TransactionsStore);
-  const transfersStore = inject(TransfersStore);
-  const categoriesStore = inject(CategoriesStore);
   const rangeStore = inject(RangeStore);
 
   const range = computed(() =>
@@ -50,16 +40,8 @@ export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSi
     pickGranularityForSpan(rangeStore.from(), rangeStore.to()),
   );
 
-  // Cross-account lookups a joint account's stake needs (TICKET-STAT-03) — `accountsById` spans
-  // every account so a linked transfer's other leg always resolves, even outside the scoped
-  // `accounts()` list (e.g. to an archived account, or one outside a single-account detail chart).
-  const jointLegContext = computed((): JointLegContext => ({
-    transactionsById: new Map(transactionsStore.transactions().map((t) => [t.id!, t])),
-    accountsById: accountsStore.accountsById(),
-    transfersById: transfersStore.transferByTransactionId(),
-    categoriesById: categoriesStore.categoriesById(),
-  }));
-
+  // No joint-leg context here by design (TICKET-ACC-07): these series are raw account balances, so
+  // the cross-account transfer/category lookups the contribution model needs are irrelevant.
   const series = computed(() =>
     computeAccountBalanceTrends(
       transactionsStore.transactions(),
@@ -67,7 +49,6 @@ export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSi
       range().from,
       range().to,
       granularity(),
-      jointLegContext(),
     ),
   );
 

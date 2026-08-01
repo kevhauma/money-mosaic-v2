@@ -7,15 +7,15 @@ import { AccountsStore, TransactionsStore } from '@/core/state';
 import type { AccountCardVm } from '../../account-card-vm';
 
 import { AccountsOverviewComponent } from './accounts-overview.component';
-import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-worth-history-chart.component';
+import { AccountBalanceHistoryChartComponent } from '../account-balance-history-chart/account-balance-history-chart.component';
 
 // A light stand-in for the real chart (which pulls in echarts/zrender — jsdom has no real canvas,
 // and the VM-focused describe block below drives multiple real `detectChanges()` passes after
 // live AccountsStore/TransactionsStore writes, which is exactly the kind of repeated real paint
 // cycle that trips up a mounted echarts instance in jsdom). The overview's own control flow is
 // what's under test here, not the chart.
-@Component({ selector: 'app-net-worth-history-chart', template: '' })
-class NetWorthHistoryChartStubComponent {}
+@Component({ selector: 'app-account-balance-history-chart', template: '' })
+class AccountBalanceHistoryChartStubComponent {}
 
 describe('AccountsOverviewComponent', () => {
   let fixture: ComponentFixture<AccountsOverviewComponent>;
@@ -26,8 +26,8 @@ describe('AccountsOverviewComponent', () => {
       providers: [provideRouter([]), ...providers],
     })
       .overrideComponent(AccountsOverviewComponent, {
-        remove: { imports: [NetWorthHistoryChartComponent] },
-        add: { imports: [NetWorthHistoryChartStubComponent] },
+        remove: { imports: [AccountBalanceHistoryChartComponent] },
+        add: { imports: [AccountBalanceHistoryChartStubComponent] },
       })
       .compileComponents();
 

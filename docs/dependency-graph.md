@@ -12,7 +12,7 @@ below `src/app` — which is enough to reach individual files in most feature/co
 subtrees.
 
 <!-- GENERATED:STATS:START -->
-- 318 leaf nodes, 906 edges.
+- 319 leaf nodes, 908 edges.
 <!-- GENERATED:STATS:END -->
 
 - `*.spec.ts` and `node_modules` are excluded.
@@ -116,554 +116,555 @@ subgraph 1O["state"]
 1W["transfers.store.ts"]
 end
 subgraph 1X["stats"]
-1Y["account-balance-trend.ts"]
-1Z["annual-lump-sum-smoothing.ts"]
-20["category-breakdown.ts"]
-21["category-composition-trend.ts"]
-22["category-kind-contribution.ts"]
-23["category-period-comparison.ts"]
-24["chart-zoom-window.ts"]
-25["classify-for-stats.ts"]
-26["classify-joint-leg.ts"]
-27["embedded-bonus-smoothing.ts"]
-28["full-history-range.ts"]
-29["granularity-for-span.ts"]
-2A["gross-net-growth.ts"]
-2B["gross-net-ratio.ts"]
-2C["income-category-series.ts"]
-2D["income-events.ts"]
-2E["income-gap-detection.ts"]
-2F["income-growth.ts"]
-2G["income-step-change-detection.ts"]
-2H["index.ts"]
-2I["joint-account-stake.ts"]
-2J["joint-contributor-breakdown.ts"]
-2K["multi-year-income-comparison.ts"]
-2L["net-margin.ts"]
-2M["net-worth-trend.ts"]
-2N["period-stats.ts"]
-2O["period-window.ts"]
-2P["periodized-rate.ts"]
-2Q["top-transactions.ts"]
-2R["wage-change-detection.ts"]
-2S["weekday-weekend-split.ts"]
-2T["year-over-year.ts"]
-2U["yearly-income-summary.ts"]
+1Y["account-balance-history.ts"]
+1Z["account-balance-trend.ts"]
+20["annual-lump-sum-smoothing.ts"]
+21["category-breakdown.ts"]
+22["category-composition-trend.ts"]
+23["category-kind-contribution.ts"]
+24["category-period-comparison.ts"]
+25["chart-zoom-window.ts"]
+26["classify-for-stats.ts"]
+27["classify-joint-leg.ts"]
+28["embedded-bonus-smoothing.ts"]
+29["full-history-range.ts"]
+2A["granularity-for-span.ts"]
+2B["gross-net-growth.ts"]
+2C["gross-net-ratio.ts"]
+2D["income-category-series.ts"]
+2E["income-events.ts"]
+2F["income-gap-detection.ts"]
+2G["income-growth.ts"]
+2H["income-step-change-detection.ts"]
+2I["index.ts"]
+2J["joint-account-stake.ts"]
+2K["joint-contributor-breakdown.ts"]
+2L["multi-year-income-comparison.ts"]
+2M["net-margin.ts"]
+2N["net-worth-trend.ts"]
+2O["period-stats.ts"]
+2P["period-window.ts"]
+2Q["periodized-rate.ts"]
+2R["top-transactions.ts"]
+2S["wage-change-detection.ts"]
+2T["weekday-weekend-split.ts"]
+2U["year-over-year.ts"]
+2V["yearly-income-summary.ts"]
 end
-subgraph 2V["storage"]
-2W["index.ts"]
-2X["storage-status.service.ts"]
+subgraph 2W["storage"]
+2X["index.ts"]
+2Y["storage-status.service.ts"]
 end
-subgraph 2Y["theme"]
-2Z["accent-colors.ts"]
-30["index.ts"]
-31["theme-styles.ts"]
-32["theme.service.ts"]
+subgraph 2Z["theme"]
+30["accent-colors.ts"]
+31["index.ts"]
+32["theme-styles.ts"]
+33["theme.service.ts"]
 end
-subgraph 33["transactions"]
-34["attribution-override.ts"]
-35["index.ts"]
-36["nullify-transaction.ts"]
-37["transaction-deletion.service.ts"]
+subgraph 34["transactions"]
+35["attribution-override.ts"]
+36["index.ts"]
+37["nullify-transaction.ts"]
+38["transaction-deletion.service.ts"]
 end
-subgraph 38["transfers"]
-39["index.ts"]
-3A["transfer-cleanup.service.ts"]
-3B["transfer-linking.service.ts"]
-3C["transfer-matching.service.ts"]
-3D["transfer-matching.ts"]
+subgraph 39["transfers"]
+3A["index.ts"]
+3B["transfer-cleanup.service.ts"]
+3C["transfer-linking.service.ts"]
+3D["transfer-matching.service.ts"]
+3E["transfer-matching.ts"]
 end
 end
-subgraph 3E["feature-accounts"]
-3F["account-card-vm.ts"]
-3G["account-icons.ts"]
-3H["account-types.ts"]
-3I["accounts.routes.ts"]
-3J["balance-trend-signals.ts"]
-subgraph 3K["components"]
-subgraph 3L["account-balance-block"]
-3M["account-balance-block.component.ts"]
+subgraph 3F["feature-accounts"]
+3G["account-card-vm.ts"]
+3H["account-icons.ts"]
+3I["account-types.ts"]
+3J["accounts.routes.ts"]
+3K["balance-trend-signals.ts"]
+subgraph 3L["components"]
+subgraph 3M["account-balance-block"]
+3N["account-balance-block.component.ts"]
 end
-subgraph 3N["account-balance-chart"]
-3O["account-balance-chart.component.ts"]
+subgraph 3O["account-balance-chart"]
+3P["account-balance-chart.component.ts"]
 end
-subgraph 3P["account-card"]
-3Q["account-card.component.ts"]
+subgraph 3Q["account-balance-history-chart"]
+3R["account-balance-history-chart.component.ts"]
 end
-subgraph 3R["account-form"]
-3S["account-form.component.ts"]
+subgraph 3S["account-card"]
+3T["account-card.component.ts"]
 end
-subgraph 3T["accounts-detail"]
-3U["accounts-detail.component.ts"]
+subgraph 3U["account-form"]
+3V["account-form.component.ts"]
 end
-subgraph 3V["accounts-overview"]
-3W["accounts-overview.component.ts"]
+subgraph 3W["accounts-detail"]
+3X["accounts-detail.component.ts"]
 end
-3X["index.ts"]
-subgraph 3Y["net-worth-history-chart"]
-3Z["net-worth-history-chart.component.ts"]
-end
+subgraph 3Y["accounts-overview"]
+3Z["accounts-overview.component.ts"]
 end
 40["index.ts"]
 end
-subgraph 41["feature-categories"]
-42["categories.routes.ts"]
-43["category-icons.ts"]
-44["category-model.service.ts"]
-45["category-model.store.ts"]
-subgraph 46["components"]
-subgraph 47["categories-overview"]
-48["categories-overview.component.ts"]
+41["index.ts"]
 end
-subgraph 49["category-form"]
-4A["category-form.component.ts"]
+subgraph 42["feature-categories"]
+43["categories.routes.ts"]
+44["category-icons.ts"]
+45["category-model.service.ts"]
+46["category-model.store.ts"]
+subgraph 47["components"]
+subgraph 48["categories-overview"]
+49["categories-overview.component.ts"]
 end
-4B["index.ts"]
-subgraph 4C["rule-condition-row"]
-4D["rule-condition-row.component.ts"]
+subgraph 4A["category-form"]
+4B["category-form.component.ts"]
 end
-subgraph 4E["rule-filters"]
-4F["rule-filters.component.ts"]
+4C["index.ts"]
+subgraph 4D["rule-condition-row"]
+4E["rule-condition-row.component.ts"]
 end
-subgraph 4G["rule-form"]
-4H["rule-form.component.ts"]
+subgraph 4F["rule-filters"]
+4G["rule-filters.component.ts"]
 end
-subgraph 4I["rule-share-bar"]
-4J["rule-share-bar.component.ts"]
+subgraph 4H["rule-form"]
+4I["rule-form.component.ts"]
 end
-subgraph 4K["rules-overview"]
-4L["rules-overview.component.ts"]
+subgraph 4J["rule-share-bar"]
+4K["rule-share-bar.component.ts"]
 end
-end
-4M["index.ts"]
-4N["rule-condition-editor.ts"]
-4O["rule-filters.ts"]
-4P["rule-labels.ts"]
-4Q["rule-share.ts"]
-4R["rule-summary.ts"]
-4S["rules.store.ts"]
-end
-subgraph 4T["feature-changelog"]
-4U["changelog.routes.ts"]
-subgraph 4V["components"]
-subgraph 4W["changelog-entry-row"]
-4X["changelog-entry-row.component.ts"]
-end
-subgraph 4Y["changelog-page"]
-4Z["changelog-page.component.ts"]
-end
-50["index.ts"]
-end
-subgraph 51["data"]
-52["changelog-entries.ts"]
-53["roadmap-entries.ts"]
-end
-54["group-changelog-entries.ts"]
-55["group-roadmap-entries.ts"]
-56["index.ts"]
-end
-subgraph 57["feature-dashboard"]
-58["category-comparison-settings.store.ts"]
-59["category-comparison-vm.ts"]
-subgraph 5A["components"]
-subgraph 5B["account-balance-strip"]
-5C["account-balance-strip.component.ts"]
-end
-subgraph 5D["action-queue-panel"]
-5E["action-queue-panel.component.ts"]
-end
-subgraph 5F["category-breakdown-panel"]
-5G["category-breakdown-panel.component.ts"]
-end
-subgraph 5H["category-comparison-panel"]
-5I["category-comparison-panel.component.ts"]
-end
-subgraph 5J["comparison-category-card"]
-5K["comparison-category-card.component.ts"]
-end
-subgraph 5L["dashboard-customize-panel"]
-5M["dashboard-customize-panel.component.ts"]
-end
-subgraph 5N["dashboard-overview"]
-5O["dashboard-overview.component.ts"]
-end
-5P["index.ts"]
-subgraph 5Q["net-worth-header"]
-5R["net-worth-header.component.ts"]
-end
-subgraph 5S["top-transactions-panel"]
-5T["top-transactions-panel.component.ts"]
-end
-subgraph 5U["trend-chart-panel"]
-5V["trend-chart-panel.component.ts"]
-end
-subgraph 5W["weekday-weekend-split-panel"]
-5X["weekday-weekend-split-panel.component.ts"]
+subgraph 4L["rules-overview"]
+4M["rules-overview.component.ts"]
 end
 end
-5Y["dashboard-layout-settings.store.ts"]
-5Z["dashboard-row-order.ts"]
-60["dashboard.routes.ts"]
-61["index.ts"]
-62["stats.store.ts"]
+4N["index.ts"]
+4O["rule-condition-editor.ts"]
+4P["rule-filters.ts"]
+4Q["rule-labels.ts"]
+4R["rule-share.ts"]
+4S["rule-summary.ts"]
+4T["rules.store.ts"]
 end
-subgraph 63["feature-data-management"]
-subgraph 64["components"]
-subgraph 65["data-management-overview"]
-66["data-management-overview.component.ts"]
+subgraph 4U["feature-changelog"]
+4V["changelog.routes.ts"]
+subgraph 4W["components"]
+subgraph 4X["changelog-entry-row"]
+4Y["changelog-entry-row.component.ts"]
 end
-67["index.ts"]
+subgraph 4Z["changelog-page"]
+50["changelog-page.component.ts"]
+end
+51["index.ts"]
+end
+subgraph 52["data"]
+53["changelog-entries.ts"]
+54["roadmap-entries.ts"]
+end
+55["group-changelog-entries.ts"]
+56["group-roadmap-entries.ts"]
+57["index.ts"]
+end
+subgraph 58["feature-dashboard"]
+59["category-comparison-settings.store.ts"]
+5A["category-comparison-vm.ts"]
+subgraph 5B["components"]
+subgraph 5C["account-balance-strip"]
+5D["account-balance-strip.component.ts"]
+end
+subgraph 5E["action-queue-panel"]
+5F["action-queue-panel.component.ts"]
+end
+subgraph 5G["category-breakdown-panel"]
+5H["category-breakdown-panel.component.ts"]
+end
+subgraph 5I["category-comparison-panel"]
+5J["category-comparison-panel.component.ts"]
+end
+subgraph 5K["comparison-category-card"]
+5L["comparison-category-card.component.ts"]
+end
+subgraph 5M["dashboard-customize-panel"]
+5N["dashboard-customize-panel.component.ts"]
+end
+subgraph 5O["dashboard-overview"]
+5P["dashboard-overview.component.ts"]
+end
+5Q["index.ts"]
+subgraph 5R["net-worth-header"]
+5S["net-worth-header.component.ts"]
+end
+subgraph 5T["top-transactions-panel"]
+5U["top-transactions-panel.component.ts"]
+end
+subgraph 5V["trend-chart-panel"]
+5W["trend-chart-panel.component.ts"]
+end
+subgraph 5X["weekday-weekend-split-panel"]
+5Y["weekday-weekend-split-panel.component.ts"]
+end
+end
+5Z["dashboard-layout-settings.store.ts"]
+60["dashboard-row-order.ts"]
+61["dashboard.routes.ts"]
+62["index.ts"]
+63["stats.store.ts"]
+end
+subgraph 64["feature-data-management"]
+subgraph 65["components"]
+subgraph 66["data-management-overview"]
+67["data-management-overview.component.ts"]
 end
 68["index.ts"]
 end
-subgraph 69["feature-help"]
-subgraph 6A["components"]
-subgraph 6B["faq-page"]
-6C["faq-page.component.ts"]
+69["index.ts"]
 end
-subgraph 6D["guide-detail"]
-6E["guide-detail.component.ts"]
+subgraph 6A["feature-help"]
+subgraph 6B["components"]
+subgraph 6C["faq-page"]
+6D["faq-page.component.ts"]
 end
-subgraph 6F["guide-steps"]
-6G["guide-steps.component.ts"]
+subgraph 6E["guide-detail"]
+6F["guide-detail.component.ts"]
 end
-subgraph 6H["guides-index"]
-6I["guides-index.component.ts"]
+subgraph 6G["guide-steps"]
+6H["guide-steps.component.ts"]
 end
-6J["index.ts"]
+subgraph 6I["guides-index"]
+6J["guides-index.component.ts"]
 end
-subgraph 6K["data"]
-6L["faq.ts"]
-6M["guides.ts"]
+6K["index.ts"]
 end
-6N["help.routes.ts"]
-6O["index.ts"]
+subgraph 6L["data"]
+6M["faq.ts"]
+6N["guides.ts"]
 end
-subgraph 6P["feature-home"]
-subgraph 6Q["components"]
-subgraph 6R["home-landing"]
-6S["home-landing.component.ts"]
+6O["help.routes.ts"]
+6P["index.ts"]
 end
-6T["index.ts"]
+subgraph 6Q["feature-home"]
+subgraph 6R["components"]
+subgraph 6S["home-landing"]
+6T["home-landing.component.ts"]
 end
-6U["home.routes.ts"]
-6V["index.ts"]
+6U["index.ts"]
 end
-subgraph 6W["feature-import"]
-6X["column-mapping.ts"]
-subgraph 6Y["components"]
-subgraph 6Z["account-draft-editor"]
-70["account-draft-editor.component.ts"]
+6V["home.routes.ts"]
+6W["index.ts"]
 end
-subgraph 71["batch-wait-card"]
-72["batch-wait-card.component.ts"]
+subgraph 6X["feature-import"]
+6Y["column-mapping.ts"]
+subgraph 6Z["components"]
+subgraph 70["account-draft-editor"]
+71["account-draft-editor.component.ts"]
 end
-subgraph 73["column-map-amount-field"]
-74["column-map-amount-field.component.ts"]
+subgraph 72["batch-wait-card"]
+73["batch-wait-card.component.ts"]
 end
-subgraph 75["column-map-counterparty-field"]
-76["column-map-counterparty-field.component.ts"]
+subgraph 74["column-map-amount-field"]
+75["column-map-amount-field.component.ts"]
 end
-subgraph 77["column-map-sample-caption"]
-78["column-map-sample-caption.component.ts"]
+subgraph 76["column-map-counterparty-field"]
+77["column-map-counterparty-field.component.ts"]
 end
-subgraph 79["column-map-simple-field"]
-7A["column-map-simple-field.component.ts"]
+subgraph 78["column-map-sample-caption"]
+79["column-map-sample-caption.component.ts"]
 end
-subgraph 7B["column-map-stepper"]
-7C["column-map-stepper.component.ts"]
+subgraph 7A["column-map-simple-field"]
+7B["column-map-simple-field.component.ts"]
 end
-subgraph 7D["column-map-summary-step"]
-7E["column-map-summary-step.component.ts"]
+subgraph 7C["column-map-stepper"]
+7D["column-map-stepper.component.ts"]
 end
-subgraph 7F["import-map-step"]
-7G["import-map-step.component.ts"]
+subgraph 7E["column-map-summary-step"]
+7F["column-map-summary-step.component.ts"]
 end
-subgraph 7H["import-preview-step"]
-7I["import-preview-step.component.ts"]
+subgraph 7G["import-map-step"]
+7H["import-map-step.component.ts"]
 end
-subgraph 7J["import-select-step"]
-7K["import-select-step.component.ts"]
+subgraph 7I["import-preview-step"]
+7J["import-preview-step.component.ts"]
 end
-subgraph 7L["import-summary-step"]
-7M["import-summary-step.component.ts"]
+subgraph 7K["import-select-step"]
+7L["import-select-step.component.ts"]
 end
-subgraph 7N["import-wizard"]
-7O["import-wizard.component.ts"]
+subgraph 7M["import-summary-step"]
+7N["import-summary-step.component.ts"]
 end
-7P["index.ts"]
-subgraph 7Q["queued-file-row"]
-7R["queued-file-row.component.ts"]
+subgraph 7O["import-wizard"]
+7P["import-wizard.component.ts"]
 end
+7Q["index.ts"]
+subgraph 7R["queued-file-row"]
+7S["queued-file-row.component.ts"]
 end
-7S["import-batches.store.ts"]
-7T["import-queue.ts"]
-7U["import-wizard-session.ts"]
-7V["import.routes.ts"]
-7W["index.ts"]
-7X["mapper-steps.ts"]
-7Y["mapping-profiles.store.ts"]
 end
-subgraph 7Z["feature-income"]
-80["career-start-date.ts"]
-subgraph 81["components"]
-subgraph 82["income-career-start"]
-83["income-career-start.component.ts"]
+7T["import-batches.store.ts"]
+7U["import-queue.ts"]
+7V["import-wizard-session.ts"]
+7W["import.routes.ts"]
+7X["index.ts"]
+7Y["mapper-steps.ts"]
+7Z["mapping-profiles.store.ts"]
 end
-subgraph 84["income-category-checklist"]
-85["income-category-checklist.component.ts"]
+subgraph 80["feature-income"]
+81["career-start-date.ts"]
+subgraph 82["components"]
+subgraph 83["income-career-start"]
+84["income-career-start.component.ts"]
 end
-subgraph 86["income-chart-cell"]
-87["income-chart-cell.component.ts"]
+subgraph 85["income-category-checklist"]
+86["income-category-checklist.component.ts"]
 end
-subgraph 88["income-events-sidebar"]
-89["income-events-sidebar.component.ts"]
+subgraph 87["income-chart-cell"]
+88["income-chart-cell.component.ts"]
 end
-subgraph 8A["income-gross-color"]
-8B["income-gross-color.component.ts"]
+subgraph 89["income-events-sidebar"]
+8A["income-events-sidebar.component.ts"]
 end
-subgraph 8C["income-gross-net-section"]
-8D["income-gross-net-section.component.ts"]
+subgraph 8B["income-gross-color"]
+8C["income-gross-color.component.ts"]
 end
-subgraph 8E["income-growth-panel"]
-8F["income-growth-panel.component.ts"]
+subgraph 8D["income-gross-net-section"]
+8E["income-gross-net-section.component.ts"]
 end
-subgraph 8G["income-intro"]
-8H["income-intro.component.ts"]
+subgraph 8F["income-growth-panel"]
+8G["income-growth-panel.component.ts"]
 end
-subgraph 8I["income-overview"]
-8J["income-overview.component.ts"]
+subgraph 8H["income-intro"]
+8I["income-intro.component.ts"]
 end
-subgraph 8K["income-settings-page"]
-8L["income-settings-page.component.ts"]
+subgraph 8J["income-overview"]
+8K["income-overview.component.ts"]
 end
-subgraph 8M["income-yearly-panel"]
-8N["income-yearly-panel.component.ts"]
+subgraph 8L["income-settings-page"]
+8M["income-settings-page.component.ts"]
 end
-8O["index.ts"]
-subgraph 8P["salary-details-page"]
-8Q["salary-details-page.component.ts"]
+subgraph 8N["income-yearly-panel"]
+8O["income-yearly-panel.component.ts"]
 end
-subgraph 8R["salary-metadata-table"]
-8S["salary-metadata-table.component.ts"]
+8P["index.ts"]
+subgraph 8Q["salary-details-page"]
+8R["salary-details-page.component.ts"]
 end
-subgraph 8T["salary-month-modal"]
-8U["salary-month-modal.component.ts"]
+subgraph 8S["salary-metadata-table"]
+8T["salary-metadata-table.component.ts"]
 end
+subgraph 8U["salary-month-modal"]
+8V["salary-month-modal.component.ts"]
 end
-8V["gross-net-chart-options.ts"]
-8W["income-category-vm.ts"]
-8X["income-event-vm.ts"]
-8Y["income-granularity.ts"]
-8Z["income.routes.ts"]
-90["income.store.ts"]
-91["index.ts"]
-92["salary-metadata-edit.ts"]
-93["salary-metadata-rows.ts"]
 end
-subgraph 94["feature-learning"]
-subgraph 95["components"]
-96["index.ts"]
-subgraph 97["learning-overview"]
-98["learning-overview.component.ts"]
+8W["gross-net-chart-options.ts"]
+8X["income-category-vm.ts"]
+8Y["income-event-vm.ts"]
+8Z["income-granularity.ts"]
+90["income.routes.ts"]
+91["income.store.ts"]
+92["index.ts"]
+93["salary-metadata-edit.ts"]
+94["salary-metadata-rows.ts"]
 end
-subgraph 99["model-status"]
-9A["model-status.component.ts"]
+subgraph 95["feature-learning"]
+subgraph 96["components"]
+97["index.ts"]
+subgraph 98["learning-overview"]
+99["learning-overview.component.ts"]
 end
-subgraph 9B["rule-proposals"]
-9C["rule-proposals.component.ts"]
+subgraph 9A["model-status"]
+9B["model-status.component.ts"]
 end
-subgraph 9D["suggestions-table"]
-9E["suggestions-table.component.ts"]
+subgraph 9C["rule-proposals"]
+9D["rule-proposals.component.ts"]
 end
+subgraph 9E["suggestions-table"]
+9F["suggestions-table.component.ts"]
 end
-9F["index.ts"]
-9G["learning.routes.ts"]
 end
-subgraph 9H["feature-settings"]
-subgraph 9I["components"]
-9J["index.ts"]
-subgraph 9K["settings-about-section"]
-9L["settings-about-section.component.ts"]
+9G["index.ts"]
+9H["learning.routes.ts"]
 end
-subgraph 9M["settings-currency-locale-section"]
-9N["settings-currency-locale-section.component.ts"]
+subgraph 9I["feature-settings"]
+subgraph 9J["components"]
+9K["index.ts"]
+subgraph 9L["settings-about-section"]
+9M["settings-about-section.component.ts"]
 end
-subgraph 9O["settings-data-section"]
-9P["settings-data-section.component.ts"]
+subgraph 9N["settings-currency-locale-section"]
+9O["settings-currency-locale-section.component.ts"]
 end
-subgraph 9Q["settings-overview"]
-9R["settings-overview.component.ts"]
+subgraph 9P["settings-data-section"]
+9Q["settings-data-section.component.ts"]
 end
-subgraph 9S["settings-theme-section"]
-9T["settings-theme-section.component.ts"]
+subgraph 9R["settings-overview"]
+9S["settings-overview.component.ts"]
 end
+subgraph 9T["settings-theme-section"]
+9U["settings-theme-section.component.ts"]
 end
-9U["index.ts"]
-9V["settings.routes.ts"]
 end
-subgraph 9W["feature-transactions"]
-subgraph 9X["components"]
-subgraph 9Y["attribution-override-fieldset"]
-9Z["attribution-override-fieldset.component.ts"]
+9V["index.ts"]
+9W["settings.routes.ts"]
 end
-subgraph A0["category-select-cell"]
-A1["category-select-cell.component.ts"]
+subgraph 9X["feature-transactions"]
+subgraph 9Y["components"]
+subgraph 9Z["attribution-override-fieldset"]
+A0["attribution-override-fieldset.component.ts"]
 end
-A2["index.ts"]
-subgraph A3["transaction-bulk-bar"]
-A4["transaction-bulk-bar.component.ts"]
+subgraph A1["category-select-cell"]
+A2["category-select-cell.component.ts"]
 end
-subgraph A5["transaction-edit-form"]
-A6["transaction-edit-form.component.ts"]
+A3["index.ts"]
+subgraph A4["transaction-bulk-bar"]
+A5["transaction-bulk-bar.component.ts"]
 end
-subgraph A7["transaction-filters"]
-A8["transaction-filters.component.ts"]
+subgraph A6["transaction-edit-form"]
+A7["transaction-edit-form.component.ts"]
 end
-subgraph A9["transaction-row"]
-AA["transaction-row.component.ts"]
+subgraph A8["transaction-filters"]
+A9["transaction-filters.component.ts"]
 end
-subgraph AB["transactions-overview"]
-AC["transactions-overview.component.ts"]
+subgraph AA["transaction-row"]
+AB["transaction-row.component.ts"]
 end
-subgraph AD["transfer-review"]
-AE["transfer-review.component.ts"]
+subgraph AC["transactions-overview"]
+AD["transactions-overview.component.ts"]
 end
+subgraph AE["transfer-review"]
+AF["transfer-review.component.ts"]
 end
-AF["index.ts"]
-AG["transaction-filters.ts"]
-AH["transaction-row-vm.ts"]
-AI["transactions.routes.ts"]
 end
-subgraph AJ["shared"]
-subgraph AK["echarts"]
-AL["bucketed-axis-option.ts"]
-AM["chart-theme.ts"]
-AN["echarts-setup.ts"]
-AO["index.ts"]
-AP["tooltip-formatter.ts"]
+AG["index.ts"]
+AH["transaction-filters.ts"]
+AI["transaction-row-vm.ts"]
+AJ["transactions.routes.ts"]
 end
-subgraph AQ["ui"]
-subgraph AR["alert"]
-AS["alert.component.ts"]
+subgraph AK["shared"]
+subgraph AL["echarts"]
+AM["bucketed-axis-option.ts"]
+AN["chart-theme.ts"]
+AO["echarts-setup.ts"]
+AP["index.ts"]
+AQ["tooltip-formatter.ts"]
 end
-subgraph AT["badge"]
-AU["badge.component.ts"]
+subgraph AR["ui"]
+subgraph AS["alert"]
+AT["alert.component.ts"]
 end
-subgraph AV["button"]
-AW["button.component.ts"]
+subgraph AU["badge"]
+AV["badge.component.ts"]
 end
-subgraph AX["collapse"]
-AY["collapse.component.ts"]
+subgraph AW["button"]
+AX["button.component.ts"]
 end
-subgraph AZ["confirm-dialog"]
-B0["confirm-dialog.component.ts"]
+subgraph AY["collapse"]
+AZ["collapse.component.ts"]
 end
-subgraph B1["date-range-input"]
-B2["date-range-input.component.ts"]
+subgraph B0["confirm-dialog"]
+B1["confirm-dialog.component.ts"]
 end
-subgraph B3["divider"]
-B4["divider.component.ts"]
+subgraph B2["date-range-input"]
+B3["date-range-input.component.ts"]
 end
-subgraph B5["dropdown"]
-B6["dropdown.component.ts"]
+subgraph B4["divider"]
+B5["divider.component.ts"]
 end
-subgraph B7["empty-state"]
-B8["empty-state.component.ts"]
+subgraph B6["dropdown"]
+B7["dropdown.component.ts"]
 end
-subgraph B9["fieldset"]
-BA["fieldset.component.ts"]
+subgraph B8["empty-state"]
+B9["empty-state.component.ts"]
 end
-subgraph BB["flex"]
-BC["flex.component.ts"]
+subgraph BA["fieldset"]
+BB["fieldset.component.ts"]
 end
-subgraph BD["granularity-picker"]
-BE["granularity-picker.component.ts"]
+subgraph BC["flex"]
+BD["flex.component.ts"]
 end
-BF["index.ts"]
-subgraph BG["input"]
-BH["input.component.ts"]
+subgraph BE["granularity-picker"]
+BF["granularity-picker.component.ts"]
 end
-subgraph BI["label"]
-BJ["label.component.ts"]
+BG["index.ts"]
+subgraph BH["input"]
+BI["input.component.ts"]
 end
-subgraph BK["loading-skeleton"]
-BL["loading-skeleton.component.ts"]
+subgraph BJ["label"]
+BK["label.component.ts"]
 end
-subgraph BM["modal"]
-BN["mm-modal.component.ts"]
+subgraph BL["loading-skeleton"]
+BM["loading-skeleton.component.ts"]
 end
-subgraph BO["page-header"]
-BP["page-header.component.ts"]
+subgraph BN["modal"]
+BO["mm-modal.component.ts"]
 end
-subgraph BQ["paginator"]
-BR["paginator.component.ts"]
+subgraph BP["page-header"]
+BQ["page-header.component.ts"]
 end
-subgraph BS["paper"]
-BT["paper.component.ts"]
+subgraph BR["paginator"]
+BS["paginator.component.ts"]
 end
-subgraph BU["range-grouping-switcher"]
-BV["range-grouping-switcher.component.ts"]
+subgraph BT["paper"]
+BU["paper.component.ts"]
 end
-subgraph BW["select"]
-BX["select.component.ts"]
+subgraph BV["range-grouping-switcher"]
+BW["range-grouping-switcher.component.ts"]
 end
-subgraph BY["stat-card"]
-BZ["stat-card.component.ts"]
+subgraph BX["select"]
+BY["select.component.ts"]
 end
-subgraph C0["table"]
-C1["table.component.ts"]
+subgraph BZ["stat-card"]
+C0["stat-card.component.ts"]
 end
-subgraph C2["tabs"]
-C3["tabs.component.ts"]
+subgraph C1["table"]
+C2["table.component.ts"]
 end
-subgraph C4["typography"]
-C5["typography.component.ts"]
+subgraph C3["tabs"]
+C4["tabs.component.ts"]
 end
+subgraph C5["typography"]
+C6["typography.component.ts"]
 end
-subgraph C6["utils"]
-C7["confidence-color.ts"]
-C8["confirm-state.ts"]
-C9["currency-format.ts"]
-CA["currency-symbol-presets.ts"]
-CB["daisy-classes.ts"]
-CC["date-buckets.ts"]
-CD["date-format.pipe.ts"]
-CE["date-format.ts"]
-CF["debounced-text.ts"]
-CG["download-json.ts"]
-CH["fingerprint.ts"]
-CI["format-settings.testing.ts"]
-CJ["format-settings.ts"]
-CK["iban.ts"]
-CL["index.ts"]
-CM["link-control-to-setting.ts"]
-CN["locale-presets.ts"]
-CO["number-format.ts"]
-CP["pagination.ts"]
-CQ["percentage.ts"]
-CR["search-params.ts"]
-CS["selection-model.ts"]
-CT["signed-amount.pipe.ts"]
-CU["sortable.ts"]
-CV["structural-filters.ts"]
-CW["theme-hooks.ts"]
-subgraph CX["validators"]
-CY["iban.validator.ts"]
-CZ["percentage.validator.ts"]
 end
-D0["with-archivable.ts"]
-D1["with-persisted-crud.ts"]
+subgraph C7["utils"]
+C8["confidence-color.ts"]
+C9["confirm-state.ts"]
+CA["currency-format.ts"]
+CB["currency-symbol-presets.ts"]
+CC["daisy-classes.ts"]
+CD["date-buckets.ts"]
+CE["date-format.pipe.ts"]
+CF["date-format.ts"]
+CG["debounced-text.ts"]
+CH["download-json.ts"]
+CI["fingerprint.ts"]
+CJ["format-settings.testing.ts"]
+CK["format-settings.ts"]
+CL["iban.ts"]
+CM["index.ts"]
+CN["link-control-to-setting.ts"]
+CO["locale-presets.ts"]
+CP["number-format.ts"]
+CQ["pagination.ts"]
+CR["percentage.ts"]
+CS["search-params.ts"]
+CT["selection-model.ts"]
+CU["signed-amount.pipe.ts"]
+CV["sortable.ts"]
+CW["structural-filters.ts"]
+CX["theme-hooks.ts"]
+subgraph CY["validators"]
+CZ["iban.validator.ts"]
+D0["percentage.validator.ts"]
+end
+D1["with-archivable.ts"]
+D2["with-persisted-crud.ts"]
 end
 end
 end
 end
 4-->N
-4-->39
+4-->3A
 5-->4
 5-->6
 6-->N
-6-->CL
+6-->CM
 8-->9
 8-->N
 9-->5
@@ -677,12 +678,12 @@ C-->B
 C-->N
 E-->F
 F-->1G
-F-->2Z
-F-->CH
-F-->CJ
+F-->30
+F-->CI
+F-->CK
 G-->F
-G-->30
-G-->CL
+G-->31
+G-->CM
 H-->F
 I-->F
 J-->F
@@ -711,7 +712,7 @@ R-->F
 S-->F
 T-->F
 V-->N
-V-->CL
+V-->CM
 W-->10
 W-->N
 X-->Z
@@ -723,8 +724,8 @@ Z-->N
 10-->N
 12-->Z
 12-->N
-12-->39
-12-->CL
+12-->3A
+12-->CM
 13-->V
 13-->W
 13-->X
@@ -733,11 +734,11 @@ Z-->N
 13-->11
 13-->12
 16-->1S
-16-->2H
-16-->AW
-16-->BV
-16-->C5
-16-->CL
+16-->2I
+16-->AX
+16-->BW
+16-->C6
+16-->CM
 17-->16
 1A-->19
 1C-->1D
@@ -762,15 +763,15 @@ Z-->N
 1P-->1W
 1P-->5
 1P-->N
-1P-->2H
-1P-->39
-1P-->CL
+1P-->2I
+1P-->3A
+1P-->CM
 1Q-->N
-1Q-->30
-1Q-->CL
+1Q-->31
+1Q-->CM
 1R-->1U
 1R-->N
-1R-->CL
+1R-->CM
 1S-->1P
 1S-->1Q
 1S-->1R
@@ -778,790 +779,792 @@ Z-->N
 1S-->1U
 1S-->1V
 1S-->1W
-1T-->CL
+1T-->CM
 1U-->N
-1U-->35
-1U-->39
+1U-->36
+1U-->3A
 1V-->N
 1W-->1U
 1W-->1V
 1W-->N
-1W-->39
-1Y-->26
-1Y-->2M
+1W-->3A
 1Y-->N
-1Y-->CL
-1Z-->21
-1Z-->2C
-1Z-->CL
-20-->25
-20-->N
-21-->20
+1Y-->CM
+1Z-->1Y
+1Z-->N
+1Z-->CM
+20-->22
+20-->2D
+20-->CM
+21-->26
 21-->N
-21-->CL
+22-->21
 22-->N
-23-->20
-23-->2O
+22-->CM
 23-->N
-24-->CL
-25-->22
-25-->26
-25-->N
-25-->39
-26-->5
+24-->21
+24-->2P
+24-->N
+25-->CM
+26-->23
+26-->27
 26-->N
-27-->2C
+26-->3A
+27-->5
 27-->N
-27-->CL
+28-->2D
 28-->N
-29-->CL
-2A-->2B
+28-->CM
+29-->N
+2A-->CM
 2B-->2C
-2B-->N
-2C-->21
+2C-->2D
 2C-->N
-2C-->CL
-2D-->2E
-2D-->2G
-2D-->2R
+2D-->22
 2D-->N
-2E-->21
-2E-->2C
-2E-->CL
-2F-->2C
-2F-->2T
-2F-->CL
-2G-->21
-2G-->2C
-2G-->CL
-2H-->1Y
-2H-->1Z
-2H-->20
-2H-->21
+2D-->CM
+2E-->2F
+2E-->2H
+2E-->2S
+2E-->N
+2F-->22
+2F-->2D
+2F-->CM
+2G-->2D
+2G-->2U
+2G-->CM
 2H-->22
-2H-->23
-2H-->24
-2H-->25
-2H-->26
-2H-->27
-2H-->28
-2H-->29
-2H-->2A
-2H-->2B
-2H-->2C
 2H-->2D
-2H-->2E
-2H-->2F
-2H-->2G
-2H-->2I
-2H-->2J
-2H-->2K
-2H-->2L
-2H-->2M
-2H-->2N
-2H-->2O
-2H-->2P
-2H-->2Q
-2H-->2R
-2H-->2S
-2H-->2T
-2H-->2U
+2H-->CM
+2I-->1Y
+2I-->1Z
+2I-->20
+2I-->21
+2I-->22
+2I-->23
+2I-->24
+2I-->25
 2I-->26
-2I-->N
-2J-->26
-2J-->5
+2I-->27
+2I-->28
+2I-->29
+2I-->2A
+2I-->2B
+2I-->2C
+2I-->2D
+2I-->2E
+2I-->2F
+2I-->2G
+2I-->2H
+2I-->2J
+2I-->2K
+2I-->2L
+2I-->2M
+2I-->2N
+2I-->2O
+2I-->2P
+2I-->2Q
+2I-->2R
+2I-->2S
+2I-->2T
+2I-->2U
+2I-->2V
+2J-->27
 2J-->N
-2K-->2U
-2M-->26
-2M-->N
-2M-->CL
-2N-->25
+2K-->27
+2K-->5
+2K-->N
+2L-->2V
+2N-->27
 2N-->N
-2O-->CL
-2P-->CL
-2Q-->N
-2Q-->39
-2R-->2B
-2S-->25
-2S-->N
-2S-->CL
-2T-->2N
+2N-->CM
+2O-->26
+2O-->N
+2P-->CM
+2Q-->CM
+2R-->N
+2R-->3A
+2S-->2C
+2T-->26
 2T-->N
-2U-->21
+2T-->CM
+2U-->2O
 2U-->N
-2U-->CL
-2W-->2X
-2Z-->31
-30-->2Z
-30-->31
+2V-->22
+2V-->N
+2V-->CM
+2X-->2Y
 30-->32
-32-->31
-34-->N
-35-->34
-35-->36
-35-->37
-36-->N
+31-->30
+31-->32
+31-->33
+33-->32
+35-->N
+36-->35
+36-->37
+36-->38
 37-->N
-37-->39
-39-->3A
-39-->3B
-39-->3D
-39-->3C
-3A-->N
-3B-->3D
+38-->N
+38-->3A
+3A-->3B
+3A-->3C
+3A-->3E
+3A-->3D
 3B-->N
-3C-->3B
-3C-->3D
+3C-->3E
 3C-->N
-3D-->6
+3D-->3C
+3D-->3E
 3D-->N
-3D-->CL
-3F-->N
+3E-->6
+3E-->N
+3E-->CM
 3G-->N
 3H-->N
-3I-->3U
-3I-->3W
-3I-->AO
-3J-->N
-3J-->1S
-3J-->2H
-3J-->CL
-3M-->BF
-3M-->CL
-3O-->3J
-3O-->N
-3O-->2H
-3O-->AO
-3O-->BF
-3O-->CL
-3Q-->3F
-3Q-->3G
-3Q-->3M
-3Q-->BF
-3S-->3G
-3S-->3H
-3S-->N
-3S-->BF
-3S-->CL
-3S-->CY
-3S-->CZ
-3U-->3M
-3U-->3O
-3U-->3S
-3U-->1S
-3U-->BF
-3U-->CL
-3W-->3F
-3W-->3G
-3W-->3Q
-3W-->3S
-3W-->3Z
-3W-->N
-3W-->1S
-3W-->BF
-3W-->CL
-3X-->3M
-3X-->3O
-3X-->3Q
-3X-->3S
-3X-->3U
-3X-->3W
-3X-->3Z
-3Z-->3J
+3I-->N
+3J-->3X
+3J-->3Z
+3J-->AP
+3K-->N
+3K-->1S
+3K-->2I
+3K-->CM
+3N-->BG
+3N-->CM
+3P-->3K
+3P-->N
+3P-->2I
+3P-->AP
+3P-->BG
+3P-->CM
+3R-->3K
+3R-->N
+3R-->1S
+3R-->2I
+3R-->AP
+3R-->BG
+3T-->3G
+3T-->3H
+3T-->3N
+3T-->BG
+3V-->3H
+3V-->3I
+3V-->N
+3V-->BG
+3V-->CM
+3V-->CZ
+3V-->D0
+3X-->3N
+3X-->3P
+3X-->3V
+3X-->1S
+3X-->BG
+3X-->CM
+3Z-->3G
+3Z-->3H
+3Z-->3R
+3Z-->3T
+3Z-->3V
 3Z-->N
 3Z-->1S
-3Z-->2H
-3Z-->AO
-3Z-->BF
-40-->3G
-40-->3H
-40-->3I
+3Z-->BG
+3Z-->CM
+40-->3N
+40-->3P
+40-->3R
+40-->3T
+40-->3V
 40-->3X
-42-->48
-42-->4L
-44-->1F
-45-->44
-45-->4S
-45-->N
+40-->3Z
+41-->3H
+41-->3I
+41-->3J
+41-->40
+43-->49
+43-->4M
 45-->1F
-45-->1S
-48-->43
-48-->4A
-48-->N
-48-->1S
-48-->BF
-48-->CL
-4A-->43
-4A-->N
-4A-->BF
-4B-->48
-4B-->4A
-4B-->4F
-4B-->4H
-4B-->4J
-4B-->4L
-4D-->4N
-4D-->4P
-4D-->A
-4D-->N
-4D-->1S
-4D-->BF
-4F-->4O
-4F-->1S
-4F-->BF
-4F-->CL
-4H-->4N
-4H-->4D
-4H-->N
-4H-->1S
-4H-->BF
-4J-->4Q
-4J-->4S
-4J-->BF
-4J-->CL
-4L-->4O
-4L-->4R
-4L-->4S
-4L-->4F
-4L-->4H
-4L-->4J
-4L-->N
-4L-->1S
-4L-->BF
-4L-->CL
-4M-->42
-4M-->43
-4M-->44
-4M-->45
-4M-->4B
-4M-->4O
-4M-->4R
+46-->45
+46-->4T
+46-->N
+46-->1F
+46-->1S
+49-->44
+49-->4B
+49-->N
+49-->1S
+49-->BG
+49-->CM
+4B-->44
+4B-->N
+4B-->BG
+4C-->49
+4C-->4B
+4C-->4G
+4C-->4I
+4C-->4K
+4C-->4M
+4E-->4O
+4E-->4Q
+4E-->A
+4E-->N
+4E-->1S
+4E-->BG
+4G-->4P
+4G-->1S
+4G-->BG
+4G-->CM
+4I-->4O
+4I-->4E
+4I-->N
+4I-->1S
+4I-->BG
+4K-->4R
+4K-->4T
+4K-->BG
+4K-->CM
+4M-->4P
 4M-->4S
+4M-->4T
+4M-->4G
+4M-->4I
+4M-->4K
+4M-->N
+4M-->1S
+4M-->BG
+4M-->CM
+4N-->43
+4N-->44
+4N-->45
+4N-->46
+4N-->4C
 4N-->4P
-4N-->N
-4O-->4R
+4N-->4S
+4N-->4T
+4O-->4Q
 4O-->N
+4P-->4S
 4P-->N
 4Q-->N
-4R-->4P
 4R-->N
 4S-->4Q
-4S-->A
 4S-->N
-4S-->1S
-4S-->CL
-4U-->4Z
-4X-->BF
-4Z-->52
-4Z-->53
-4Z-->54
-4Z-->55
-4Z-->4X
-4Z-->BF
-50-->4Z
-54-->52
+4T-->4R
+4T-->A
+4T-->N
+4T-->1S
+4T-->CM
+4V-->50
+4Y-->BG
+50-->53
+50-->54
+50-->55
+50-->56
+50-->4Y
+50-->BG
+51-->50
 55-->53
-56-->4U
-56-->50
-58-->N
-5C-->1S
-5C-->BF
-5C-->CL
-5E-->1S
-5E-->39
-5E-->BF
-5E-->CL
-5G-->62
-5G-->1S
-5G-->2H
-5G-->AO
-5G-->BF
-5G-->CL
-5I-->58
-5I-->59
-5I-->62
-5I-->5K
-5I-->1S
-5I-->BF
-5I-->CL
-5K-->59
-5K-->BF
-5M-->5Y
-5M-->5Z
-5M-->N
-5M-->BF
-5O-->5Y
-5O-->5Z
-5O-->62
-5O-->5C
-5O-->5E
-5O-->5G
-5O-->5I
-5O-->5M
-5O-->5R
-5O-->5T
-5O-->5V
-5O-->5X
-5O-->1S
-5O-->2H
-5O-->BF
-5O-->CL
-5P-->5C
-5P-->5E
-5P-->5G
-5P-->5I
-5P-->5M
-5P-->5O
-5P-->5R
-5P-->5T
-5P-->5V
-5P-->5X
-5R-->1S
-5R-->BF
-5R-->CL
-5T-->62
-5T-->1S
-5T-->BF
-5T-->CL
-5V-->1S
-5V-->2H
-5V-->39
-5V-->AO
-5V-->BF
-5V-->CL
-5X-->62
-5X-->1S
-5X-->BF
-5X-->CL
-5Y-->5Z
-5Y-->N
+56-->54
+57-->4V
+57-->51
+59-->N
+5D-->1S
+5D-->BG
+5D-->CM
+5F-->1S
+5F-->3A
+5F-->BG
+5F-->CM
+5H-->63
+5H-->1S
+5H-->2I
+5H-->AP
+5H-->BG
+5H-->CM
+5J-->59
+5J-->5A
+5J-->63
+5J-->5L
+5J-->1S
+5J-->BG
+5J-->CM
+5L-->5A
+5L-->BG
+5N-->5Z
+5N-->60
+5N-->N
+5N-->BG
+5P-->5Z
+5P-->60
+5P-->63
+5P-->5D
+5P-->5F
+5P-->5H
+5P-->5J
+5P-->5N
+5P-->5S
+5P-->5U
+5P-->5W
+5P-->5Y
+5P-->1S
+5P-->2I
+5P-->BG
+5P-->CM
+5Q-->5D
+5Q-->5F
+5Q-->5H
+5Q-->5J
+5Q-->5N
+5Q-->5P
+5Q-->5S
+5Q-->5U
+5Q-->5W
+5Q-->5Y
+5S-->1S
+5S-->BG
+5S-->CM
+5U-->63
+5U-->1S
+5U-->BG
+5U-->CM
+5W-->1S
+5W-->2I
+5W-->3A
+5W-->AP
+5W-->BG
+5W-->CM
+5Y-->63
+5Y-->1S
+5Y-->BG
+5Y-->CM
+5Z-->60
 5Z-->N
-60-->5O
-60-->AO
+60-->N
 61-->5P
-61-->60
-62-->58
-62-->1S
-62-->2H
-62-->39
-66-->N
-66-->2W
-66-->BF
-66-->CL
-67-->66
+61-->AP
+62-->5Q
+62-->61
+63-->59
+63-->1S
+63-->2I
+63-->3A
+67-->N
+67-->2X
+67-->BG
+67-->CM
 68-->67
-6C-->6L
-6C-->BF
-6E-->6M
-6E-->6G
-6E-->BF
-6G-->6M
-6G-->BF
-6I-->6M
-6I-->BF
-6J-->6C
-6J-->6E
-6J-->6G
-6J-->6I
-6N-->6C
-6N-->6E
-6N-->6I
+69-->68
+6D-->6M
+6D-->BG
+6F-->6N
+6F-->6H
+6F-->BG
+6H-->6N
+6H-->BG
+6J-->6N
+6J-->BG
+6K-->6D
+6K-->6F
+6K-->6H
+6K-->6J
+6O-->6D
+6O-->6F
 6O-->6J
-6O-->6M
-6O-->6N
-6S-->1A
-6S-->BF
-6T-->6S
-6U-->6S
+6P-->6K
+6P-->6N
+6P-->6O
+6T-->1A
+6T-->BG
+6U-->6T
 6V-->6T
-6V-->6U
-6X-->N
-70-->7T
-70-->40
-70-->BF
-72-->BF
-74-->78
-74-->BF
-76-->78
-76-->BF
-78-->BF
-7A-->6X
-7A-->78
-7A-->BF
-7C-->7X
-7C-->BF
-7E-->6X
-7E-->BF
-7G-->6X
-7G-->7X
-7G-->7Y
-7G-->74
-7G-->76
-7G-->7A
-7G-->7C
-7G-->7E
-7G-->7I
-7G-->N
-7G-->13
-7G-->BF
-7I-->13
-7I-->BF
-7I-->CL
-7K-->7T
-7K-->7Y
-7K-->7R
-7K-->N
-7K-->13
-7K-->BF
-7M-->N
-7M-->BF
-7O-->7U
-7O-->72
-7O-->7G
-7O-->7K
-7O-->7M
-7O-->1S
-7O-->BF
-7P-->7G
-7P-->7I
-7P-->7K
-7P-->7M
-7P-->7O
-7R-->7T
-7R-->70
-7R-->N
-7R-->BF
-7S-->A
+6W-->6U
+6W-->6V
+6Y-->N
+71-->7U
+71-->41
+71-->BG
+73-->BG
+75-->79
+75-->BG
+77-->79
+77-->BG
+79-->BG
+7B-->6Y
+7B-->79
+7B-->BG
+7D-->7Y
+7D-->BG
+7F-->6Y
+7F-->BG
+7H-->6Y
+7H-->7Y
+7H-->7Z
+7H-->75
+7H-->77
+7H-->7B
+7H-->7D
+7H-->7F
+7H-->7J
+7H-->N
+7H-->13
+7H-->BG
+7J-->13
+7J-->BG
+7J-->CM
+7L-->7U
+7L-->7Z
+7L-->7S
+7L-->N
+7L-->13
+7L-->BG
+7N-->N
+7N-->BG
+7P-->7V
+7P-->73
+7P-->7H
+7P-->7L
+7P-->7N
+7P-->1S
+7P-->BG
+7Q-->7H
+7Q-->7J
+7Q-->7L
+7Q-->7N
+7Q-->7P
+7S-->7U
+7S-->71
 7S-->N
-7S-->13
-7S-->1S
+7S-->BG
+7T-->A
 7T-->N
-7U-->6X
-7U-->7S
-7U-->7T
-7U-->7Y
+7T-->13
+7T-->1S
 7U-->N
-7U-->13
-7U-->1S
-7U-->40
-7V-->7O
-7W-->6X
+7V-->6Y
+7V-->7T
+7V-->7U
+7V-->7Z
+7V-->N
+7V-->13
+7V-->1S
+7V-->41
 7W-->7P
-7W-->7S
-7W-->7T
-7W-->7V
-7W-->7X
-7W-->7Y
-7X-->6X
-7Y-->N
-80-->2H
-83-->80
-83-->90
-83-->BF
-83-->CL
-85-->8W
-85-->BF
-87-->BF
-89-->8X
-89-->8Y
-89-->90
-89-->1S
-89-->2H
-89-->BF
-8B-->90
-8B-->30
-8B-->AO
-8B-->BF
-8D-->8V
-8D-->90
-8D-->87
-8D-->2H
-8D-->AO
-8D-->BF
-8D-->CL
-8F-->8Y
-8F-->90
-8F-->2H
-8F-->BF
-8F-->CL
-8H-->1S
-8H-->6O
-8H-->BF
-8J-->90
-8J-->93
-8J-->89
-8J-->8D
-8J-->8F
-8J-->8H
-8J-->8N
-8J-->8U
-8J-->1S
-8J-->2H
-8J-->6O
-8J-->AO
-8J-->BF
-8J-->CL
-8L-->8W
-8L-->90
-8L-->83
-8L-->85
-8L-->8B
-8L-->BF
-8N-->90
-8N-->1S
-8N-->2H
-8N-->39
-8N-->AO
-8N-->BF
-8N-->CL
-8O-->83
-8O-->85
-8O-->87
-8O-->89
-8O-->8D
-8O-->8F
-8O-->8H
-8O-->8J
-8O-->8L
-8O-->8N
-8O-->8Q
-8O-->8S
-8O-->8U
-8Q-->8S
-8Q-->BF
-8S-->8Y
-8S-->90
-8S-->92
-8S-->93
-8S-->BF
-8S-->CL
-8U-->90
-8U-->92
-8U-->93
-8U-->8S
-8U-->N
-8U-->BF
-8V-->2H
-8V-->AO
-8V-->CL
-8W-->N
-8X-->8Y
+7X-->6Y
+7X-->7Q
+7X-->7T
+7X-->7U
+7X-->7W
+7X-->7Y
+7X-->7Z
+7Y-->6Y
+7Z-->N
+81-->2I
+84-->81
+84-->91
+84-->BG
+84-->CM
+86-->8X
+86-->BG
+88-->BG
+8A-->8Y
+8A-->8Z
+8A-->91
+8A-->1S
+8A-->2I
+8A-->BG
+8C-->91
+8C-->31
+8C-->AP
+8C-->BG
+8E-->8W
+8E-->91
+8E-->88
+8E-->2I
+8E-->AP
+8E-->BG
+8E-->CM
+8G-->8Z
+8G-->91
+8G-->2I
+8G-->BG
+8G-->CM
+8I-->1S
+8I-->6P
+8I-->BG
+8K-->91
+8K-->94
+8K-->8A
+8K-->8E
+8K-->8G
+8K-->8I
+8K-->8O
+8K-->8V
+8K-->1S
+8K-->2I
+8K-->6P
+8K-->AP
+8K-->BG
+8K-->CM
+8M-->8X
+8M-->91
+8M-->84
+8M-->86
+8M-->8C
+8M-->BG
+8O-->91
+8O-->1S
+8O-->2I
+8O-->3A
+8O-->AP
+8O-->BG
+8O-->CM
+8P-->84
+8P-->86
+8P-->88
+8P-->8A
+8P-->8E
+8P-->8G
+8P-->8I
+8P-->8K
+8P-->8M
+8P-->8O
+8P-->8R
+8P-->8T
+8P-->8V
+8R-->8T
+8R-->BG
+8T-->8Z
+8T-->91
+8T-->93
+8T-->94
+8T-->BG
+8T-->CM
+8V-->91
+8V-->93
+8V-->94
+8V-->8T
+8V-->N
+8V-->BG
+8W-->2I
+8W-->AP
+8W-->CM
 8X-->N
-8X-->2H
-8X-->BF
-8X-->CL
-8Y-->CL
-8Z-->8J
-8Z-->8L
-8Z-->8Q
-8Z-->AO
-90-->80
-90-->8Y
-90-->N
-90-->1S
-90-->2H
-90-->30
-90-->39
-91-->8O
-91-->8W
-91-->8Y
+8Y-->8Z
+8Y-->N
+8Y-->2I
+8Y-->BG
+8Y-->CM
+8Z-->CM
+90-->8K
+90-->8M
+90-->8R
+90-->AP
+91-->81
 91-->8Z
-91-->90
-91-->92
-91-->93
-92-->N
+91-->N
+91-->1S
+91-->2I
+91-->31
+91-->3A
+92-->8P
+92-->8X
+92-->8Z
+92-->90
+92-->91
+92-->93
+92-->94
 93-->N
-96-->98
-96-->9A
-96-->9C
-96-->9E
-98-->9A
-98-->9C
-98-->9E
-98-->BF
-9A-->1F
-9A-->1S
-9A-->4M
-9A-->BF
-9C-->N
-9C-->1F
-9C-->1S
-9C-->4M
-9C-->BF
-9C-->CL
-9E-->N
-9E-->1S
-9E-->4M
-9E-->BF
-9E-->CL
-9F-->96
-9F-->9G
-9G-->98
-9J-->9R
-9L-->1A
-9L-->BF
-9N-->1S
-9N-->BF
-9N-->CL
-9P-->68
-9P-->BF
-9R-->9L
-9R-->9N
-9R-->9P
-9R-->9T
-9R-->BF
-9T-->1S
-9T-->30
-9T-->BF
-9U-->9J
-9U-->9V
-9V-->9R
-9Z-->N
-9Z-->1S
-9Z-->35
-9Z-->BF
-9Z-->CL
-A2-->A4
-A2-->A6
-A2-->A8
-A2-->AC
-A2-->AE
-A4-->1S
-A4-->BF
-A6-->9Z
-A6-->N
-A6-->1S
-A6-->35
-A6-->4M
-A6-->BF
-A8-->AG
-A8-->1S
-A8-->BF
-A8-->CL
-AA-->AH
-AA-->A1
-AA-->BF
-AA-->CL
-AC-->AG
-AC-->AH
-AC-->A1
-AC-->A4
-AC-->A6
-AC-->A8
-AC-->AA
-AC-->AE
-AC-->N
-AC-->1S
-AC-->39
-AC-->4M
-AC-->BF
-AC-->CL
-AE-->1S
-AE-->39
-AE-->BF
-AE-->CL
-AF-->AI
-AG-->N
-AG-->39
+94-->N
+97-->99
+97-->9B
+97-->9D
+97-->9F
+99-->9B
+99-->9D
+99-->9F
+99-->BG
+9B-->1F
+9B-->1S
+9B-->4N
+9B-->BG
+9D-->N
+9D-->1F
+9D-->1S
+9D-->4N
+9D-->BG
+9D-->CM
+9F-->N
+9F-->1S
+9F-->4N
+9F-->BG
+9F-->CM
+9G-->97
+9G-->9H
+9H-->99
+9K-->9S
+9M-->1A
+9M-->BG
+9O-->1S
+9O-->BG
+9O-->CM
+9Q-->69
+9Q-->BG
+9S-->9M
+9S-->9O
+9S-->9Q
+9S-->9U
+9S-->BG
+9U-->1S
+9U-->31
+9U-->BG
+9V-->9K
+9V-->9W
+9W-->9S
+A0-->N
+A0-->1S
+A0-->36
+A0-->BG
+A0-->CM
+A3-->A5
+A3-->A7
+A3-->A9
+A3-->AD
+A3-->AF
+A5-->1S
+A5-->BG
+A7-->A0
+A7-->N
+A7-->1S
+A7-->36
+A7-->4N
+A7-->BG
+A9-->AH
+A9-->1S
+A9-->BG
+A9-->CM
+AB-->AI
+AB-->A2
+AB-->BG
+AB-->CM
+AD-->AH
+AD-->AI
+AD-->A2
+AD-->A5
+AD-->A7
+AD-->A9
+AD-->AB
+AD-->AF
+AD-->N
+AD-->1S
+AD-->3A
+AD-->4N
+AD-->BG
+AD-->CM
+AF-->1S
+AF-->3A
+AF-->BG
+AF-->CM
+AG-->AJ
 AH-->N
-AI-->AC
-AO-->AL
-AO-->AM
-AO-->AN
-AO-->AP
-AP-->CL
-AS-->CL
-AU-->CL
-AW-->CL
-AY-->CL
-B0-->AW
-B0-->BJ
-B0-->BN
-B0-->C5
-B2-->B6
-B2-->CL
-B4-->CL
-B6-->CL
-B8-->BC
-B8-->C5
-BA-->CL
-BC-->CL
-BF-->AS
-BF-->AU
-BF-->AW
-BF-->AY
-BF-->B0
-BF-->B2
-BF-->B4
-BF-->B6
-BF-->B8
-BF-->BA
-BF-->BC
-BF-->BE
-BF-->BH
-BF-->BJ
-BF-->BL
-BF-->BN
-BF-->BP
-BF-->BR
-BF-->BT
-BF-->BV
-BF-->BX
-BF-->BZ
-BF-->C1
-BF-->C3
-BF-->C5
-BH-->CL
-BJ-->CL
-BL-->BC
-BN-->CL
-BP-->BC
-BP-->C5
-BR-->AW
-BR-->BC
-BR-->C5
-BR-->CL
-BT-->CL
-BV-->AW
-BV-->B2
-BV-->BC
-BX-->CL
-BZ-->C5
-BZ-->CL
-C1-->CL
-C3-->CL
-C5-->CL
-C9-->CJ
-CC-->CJ
-CD-->CE
-CE-->CJ
-CI-->CJ
-CL-->C7
-CL-->C8
-CL-->C9
-CL-->CA
-CL-->CB
-CL-->CC
-CL-->CE
-CL-->CD
-CL-->CF
-CL-->CG
-CL-->CH
-CL-->CJ
-CL-->CK
-CL-->CM
-CL-->CN
-CL-->CO
-CL-->CP
-CL-->CQ
-CL-->CR
-CL-->CS
-CL-->CT
-CL-->CU
-CL-->CV
-CL-->CW
-CL-->D0
-CL-->D1
-CO-->CJ
-CT-->C9
+AH-->3A
+AI-->N
+AJ-->AD
+AP-->AM
+AP-->AN
+AP-->AO
+AP-->AQ
+AQ-->CM
+AT-->CM
+AV-->CM
+AX-->CM
+AZ-->CM
+B1-->AX
+B1-->BK
+B1-->BO
+B1-->C6
+B3-->B7
+B3-->CM
+B5-->CM
+B7-->CM
+B9-->BD
+B9-->C6
+BB-->CM
+BD-->CM
+BG-->AT
+BG-->AV
+BG-->AX
+BG-->AZ
+BG-->B1
+BG-->B3
+BG-->B5
+BG-->B7
+BG-->B9
+BG-->BB
+BG-->BD
+BG-->BF
+BG-->BI
+BG-->BK
+BG-->BM
+BG-->BO
+BG-->BQ
+BG-->BS
+BG-->BU
+BG-->BW
+BG-->BY
+BG-->C0
+BG-->C2
+BG-->C4
+BG-->C6
+BI-->CM
+BK-->CM
+BM-->BD
+BO-->CM
+BQ-->BD
+BQ-->C6
+BS-->AX
+BS-->BD
+BS-->C6
+BS-->CM
+BU-->CM
+BW-->AX
+BW-->B3
+BW-->BD
+BY-->CM
+C0-->C6
+C0-->CM
+C2-->CM
+C4-->CM
+C6-->CM
+CA-->CK
+CD-->CK
+CE-->CF
+CF-->CK
+CJ-->CK
+CM-->C8
+CM-->C9
+CM-->CA
+CM-->CB
+CM-->CC
+CM-->CD
+CM-->CF
+CM-->CE
+CM-->CG
+CM-->CH
+CM-->CI
+CM-->CK
+CM-->CL
+CM-->CN
+CM-->CO
+CM-->CP
+CM-->CQ
+CM-->CR
+CM-->CS
+CM-->CT
+CM-->CU
+CM-->CV
+CM-->CW
+CM-->CX
+CM-->D1
+CM-->D2
+CP-->CK
+CU-->CA
 ```

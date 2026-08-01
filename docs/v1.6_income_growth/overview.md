@@ -111,7 +111,7 @@ list above:
 
 ## Accounts track (unrelated to Income; filed here as the currently active version)
 
-- [ ] [TICKET-ACC-07](./tickets/TICKET-ACC-07-accounts-page-actual-balances.md) — Accounts page shows actual balances, not net worth (revises FR-STAT-4 for the Accounts feature) — independent of every FR-INC ticket above; touches only `feature-accounts`/`core/stats`, can ship any time
+- [x] [TICKET-ACC-07](./tickets/TICKET-ACC-07-accounts-page-actual-balances.md) — Accounts page shows actual balances, not net worth (revises FR-STAT-4 for the Accounts feature) — independent of every FR-INC ticket above; touches only `feature-accounts`/`core/stats`, can ship any time *(shipped 2026-08-01; the live-browser criterion was waived by the user and is left open on the ticket)*
 
 ## Considered, not ticketed yet
 

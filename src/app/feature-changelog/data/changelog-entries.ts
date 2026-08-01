@@ -434,4 +434,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Income',
   },
+  {
+    date: '2026-08-01',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-ACC-07'],
+    title:
+      'The charts on the Accounts page now show what is actually in each account, instead of your share of it',
+    area: 'Accounts',
+  },
 ];

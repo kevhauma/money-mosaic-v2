@@ -1,9 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
-import type { Account } from '@/core/data-access';
+import { vi } from 'vitest';
+import {
+  AccountsRepository,
+  CategoriesRepository,
+  TransactionsRepository,
+  type Account,
+  type Category,
+  type Transaction,
+} from '@/core/data-access';
 import { pickGranularityForSpan } from '@/core/stats';
-import { RangeStore } from '@/core/state';
+import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import {
   AccountBalanceChartComponent,
@@ -71,13 +79,101 @@ describe('AccountBalanceChartComponent', () => {
   });
 });
 
+describe('AccountBalanceChartComponent: a joint account plots its real balance (TICKET-ACC-07)', () => {
+  const jointAccount: Account = {
+    id: 1,
+    name: 'Joint',
+    type: 'joint',
+    currency: 'EUR',
+    openingBalance: 1000,
+    openingBalanceDate: '2026-01-01',
+    color: '#3366ff',
+    icon: 'users',
+    archived: false,
+    ownershipShare: 0.5,
+  };
+  const partnerContribution: Category = {
+    id: 9,
+    name: 'Partner contribution',
+    kind: 'neutral',
+    color: '#888888',
+    icon: 'users',
+    archived: false,
+    isSystem: true,
+  };
+  const transactions: Transaction[] = [
+    {
+      id: 1,
+      accountId: 1,
+      bookingDate: '2026-01-05',
+      amount: 400,
+      currency: 'EUR',
+      rawDescription: 'Partner deposit',
+      fingerprint: 'fp-1',
+      createdAt: '2026-01-05T00:00:00.000Z',
+      categoryId: 9,
+    },
+    {
+      id: 2,
+      accountId: 1,
+      bookingDate: '2026-01-10',
+      amount: -200,
+      currency: 'EUR',
+      rawDescription: 'Groceries',
+      fingerprint: 'fp-2',
+      createdAt: '2026-01-10T00:00:00.000Z',
+    },
+  ];
+
+  it("ends on the same figure as the detail page's balance header (AccountsStore.balancesById)", async () => {
+    await TestBed.configureTestingModule({
+      imports: [AccountBalanceChartComponent],
+      providers: [
+        provideRouter([]),
+        provideEchartsCore({ echarts }),
+        {
+          provide: AccountsRepository,
+          useValue: {
+            getAll: vi.fn().mockResolvedValue([jointAccount]),
+            update: vi.fn().mockResolvedValue(1),
+          },
+        },
+        {
+          provide: TransactionsRepository,
+          useValue: { getAll: vi.fn().mockResolvedValue(transactions) },
+        },
+        {
+          provide: CategoriesRepository,
+          useValue: { getAll: vi.fn().mockResolvedValue([partnerContribution]) },
+        },
+      ],
+    }).compileComponents();
+
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+    await TestBed.inject(TransactionsStore).hydrate();
+    await TestBed.inject(CategoriesStore).hydrate();
+
+    const jointFixture = TestBed.createComponent(AccountBalanceChartComponent);
+    jointFixture.componentRef.setInput('account', jointAccount);
+    await jointFixture.whenStable();
+
+    const plotted = jointFixture.componentInstance['points']().at(-1)?.balance;
+
+    expect(plotted).toBe(1200);
+    expect(plotted).toBe(accountsStore.balancesById().get(1));
+    // Not the stake — that's the divergence this ticket fixes.
+    expect(accountsStore.jointAccountStakeById().get(1)).toBe(400);
+  });
+});
+
 describe('buildAccountBalanceChartOption', () => {
   it("colours its single line series with the account's own colour and an x-axis dataZoom", () => {
     const option = buildAccountBalanceChartOption(
       account,
       [
-        { bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1000 },
-        { bucketKey: '2026-02', bucketEnd: '2026-02-28', netWorth: 1200 },
+        { bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1000 },
+        { bucketKey: '2026-02', bucketEnd: '2026-02-28', balance: 1200 },
       ],
       { startValue: 0, endValue: 1 },
     );
@@ -92,9 +188,9 @@ describe('buildAccountBalanceChartOption', () => {
     const option = buildAccountBalanceChartOption(
       account,
       [
-        { bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1000 },
-        { bucketKey: '2026-02', bucketEnd: '2026-02-28', netWorth: 1200 },
-        { bucketKey: '2026-03', bucketEnd: '2026-03-31', netWorth: 1300 },
+        { bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1000 },
+        { bucketKey: '2026-02', bucketEnd: '2026-02-28', balance: 1200 },
+        { bucketKey: '2026-03', bucketEnd: '2026-03-31', balance: 1300 },
       ],
       { startValue: 1, endValue: 2 },
     );
@@ -106,7 +202,7 @@ describe('buildAccountBalanceChartOption', () => {
   it('renders the hovered point as 2-decimal EUR through the shared tooltip formatter (TICKET-STAT-12)', () => {
     const option = buildAccountBalanceChartOption(
       account,
-      [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1234.5600000000002 }],
+      [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1234.5600000000002 }],
       { startValue: 0, endValue: 1 },
     );
 

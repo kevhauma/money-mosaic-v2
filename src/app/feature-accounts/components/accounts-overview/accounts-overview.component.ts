@@ -21,11 +21,12 @@ import {
   type AccountFormValue,
 } from '../account-form/account-form.component';
 import { AccountCardComponent } from '../account-card/account-card.component';
-import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-worth-history-chart.component';
+import { AccountBalanceHistoryChartComponent } from '../account-balance-history-chart/account-balance-history-chart.component';
 
 @Component({
   selector: 'app-accounts-overview',
   imports: [
+    AccountBalanceHistoryChartComponent,
     AccountCardComponent,
     AccountFormComponent,
     ButtonComponent,
@@ -34,7 +35,6 @@ import { NetWorthHistoryChartComponent } from '../net-worth-history-chart/net-wo
     FlexComponent,
     LabelComponent,
     LoadingSkeletonComponent,
-    NetWorthHistoryChartComponent,
     NgIcon,
     PageHeaderComponent,
     TypographyComponent,

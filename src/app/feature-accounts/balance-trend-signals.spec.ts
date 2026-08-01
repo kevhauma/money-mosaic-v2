@@ -90,7 +90,7 @@ describe('balanceTrendSignals', () => {
     });
   });
 
-  it('wires jointLegContext so a joint account’s series only counts its own stake (TICKET-STAT-03)', async () => {
+  it('gives a joint account’s series its full real balance, not its ownership-weighted stake (TICKET-ACC-07)', async () => {
     const jointAccount = account({
       id: 1,
       type: 'joint',
@@ -111,8 +111,8 @@ describe('balanceTrendSignals', () => {
     TestBed.runInInjectionContext(() => {
       const trend = balanceTrendSignals(signal([jointAccount]));
 
-      // jointSpend leg (negative, no transfer) counts at the 0.5 ownership share only.
-      expect(trend.series()[0]?.points.at(-1)?.netWorth).toBe(-100);
+      // The whole €200 left the account; the 0.5 ownership share belongs to net worth, not here.
+      expect(trend.series()[0]?.points.at(-1)?.balance).toBe(-200);
     });
   });
 

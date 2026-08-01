@@ -50,11 +50,11 @@ describe('computeAccountBalanceTrends', () => {
     expect(series).toEqual([
       {
         accountId: 1,
-        points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 1200 }],
+        points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1200 }],
       },
       {
         accountId: 2,
-        points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', netWorth: 450 }],
+        points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 450 }],
       },
     ]);
   });
@@ -74,8 +74,8 @@ describe('computeAccountBalanceTrends', () => {
       'month',
     );
 
-    expect(series[0].points[0].netWorth).toBe(-300);
-    expect(series[1].points[0].netWorth).toBe(300);
+    expect(series[0].points[0].balance).toBe(-300);
+    expect(series[1].points[0].balance).toBe(300);
   });
 
   it('returns an empty array for an empty accounts list', () => {
@@ -83,8 +83,8 @@ describe('computeAccountBalanceTrends', () => {
   });
 });
 
-describe('computeAccountBalanceTrends: per-account joint stake sums to the combined line (TICKET-STAT-03)', () => {
-  it('sums each account’s own series to the same figure as the combined computeNetWorthTrend', () => {
+describe('computeAccountBalanceTrends: real balances, not the net-worth stake (TICKET-ACC-07)', () => {
+  it('gives a joint account its full real balance, and no longer sums to the combined computeNetWorthTrend', () => {
     const jointAccount: Account = {
       id: 1,
       name: 'Joint',
@@ -153,7 +153,6 @@ describe('computeAccountBalanceTrends: per-account joint stake sums to the combi
       '2026-01-01',
       '2026-01-31',
       'month',
-      context,
     );
     const combined = computeNetWorthTrend(
       transactions,
@@ -164,10 +163,17 @@ describe('computeAccountBalanceTrends: per-account joint stake sums to the combi
       context,
     );
 
+    // Joint: 0 opening + 500 transfer in - 200 groceries, at 100% (its stake is 500 - 100 = 400).
+    expect(perAccountSeries[0].points[0].balance).toBe(300);
+    expect(perAccountSeries[1].points[0].balance).toBe(500);
+
+    // TICKET-STAT-03's "the bands sum to net worth" invariant is deliberately dropped here: the
+    // joint account's un-weighted €100 of partner-borne spending is the whole difference.
     const summedPerAccount = perAccountSeries.reduce(
-      (sum, series) => sum + series.points[0].netWorth,
+      (sum, series) => sum + series.points[0].balance,
       0,
     );
-    expect(summedPerAccount).toBe(combined[0].netWorth);
+    expect(summedPerAccount).toBe(800);
+    expect(combined[0].netWorth).toBe(900);
   });
 });

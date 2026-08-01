@@ -21,6 +21,7 @@ export * from './gross-net-growth';
 export * from './yearly-income-summary';
 export * from './multi-year-income-comparison';
 export * from './net-worth-trend';
+export * from './account-balance-history';
 export * from './account-balance-trend';
 export * from './full-history-range';
 export * from './granularity-for-span';

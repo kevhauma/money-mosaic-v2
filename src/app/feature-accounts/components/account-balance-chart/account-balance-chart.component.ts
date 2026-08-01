@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
-import type { ChartZoomWindow, NetWorthPoint } from '@/core/stats';
+import type { AccountBalancePoint, ChartZoomWindow } from '@/core/stats';
 import {
   resolveChartAnimation,
   formatAxisTooltip,
@@ -16,7 +16,7 @@ import { balanceTrendSignals } from '../../balance-trend-signals';
 /** Pure echarts-option builder, kept separate from the component so it's testable without TestBed. */
 export const buildAccountBalanceChartOption = (
   account: Account,
-  points: NetWorthPoint[],
+  points: AccountBalancePoint[],
   zoomWindow: ChartZoomWindow,
 ): EChartsCoreOption => ({
   ...resolveChartAnimation(),
@@ -32,15 +32,17 @@ export const buildAccountBalanceChartOption = (
   series: [
     {
       type: 'line',
-      data: points.map((point) => point.netWorth),
+      data: points.map((point) => point.balance),
       color: account.color,
     },
   ],
 });
 
 /**
- * Full-history balance line for one account (TICKET-STAT-02) â€” spans opening-balance date/first
- * transaction through today, so the series itself is always the account's entire history. This
+ * Full-history balance line for one account (TICKET-STAT-02) — spans opening-balance date/first
+ * transaction through today, so the series itself is always the account's entire history. Plots the
+ * account's *real* balance, matching the figure in the detail page's own balance header — for a
+ * joint account that's the whole pot, not my stake in it (TICKET-ACC-07). This
  * chart owns its own local granularity control (TICKET-STAT-15), independent of every other
  * chart's, and the topbar's date range scrubs the initial zoom window (via `dataZoom`) rather than
  * shrinking the series data (TICKET-STAT-03), so zooming out is always available without a manual

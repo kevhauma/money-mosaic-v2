@@ -1,21 +1,22 @@
 import type { Account, Transaction } from '@/core/data-access';
-import type { JointLegContext } from './classify-joint-leg';
-import { computeNetWorthTrend, type NetWorthPoint } from './net-worth-trend';
+import { computeAccountBalanceHistory, type AccountBalancePoint } from './account-balance-history';
 import type { Granularity } from '@/shared/utils';
 
 export type AccountBalanceSeries = {
   accountId: number;
-  points: NetWorthPoint[];
+  points: AccountBalancePoint[];
 };
 
 /**
- * Per-account balance-over-time series (TICKET-STAT-02), reusing `computeNetWorthTrend` per
- * account (itself as the sole tracked "account") rather than a parallel implementation — a single
- * account passed here is the detail-chart series, the full active-account list is the overview's
- * stacked series. `transactions` must be the full universe (not pre-filtered per account): a
- * joint account's stake needs visibility into a linked transfer's other leg, which may live on an
- * account outside this call's own `accounts` list (TICKET-STAT-03); `context` carries the
- * cross-account lookups (`accountsById`/`transfersById`/`categoriesById`) that classification needs.
+ * Per-account real-balance-over-time series (TICKET-STAT-02) — a single account passed here is the
+ * detail-chart series, the full active-account list is the overview's stacked series.
+ *
+ * Backed by `computeAccountBalanceHistory` per account, i.e. the plain `openingBalance + Σ amount`
+ * ledger, *not* `computeNetWorthTrend`'s contribution-weighted stake (TICKET-ACC-07): the Accounts
+ * page shows what each account actually holds, matching its card's headline balance, so joint
+ * ownership shares and per-transaction attribution never reach these series. Net worth as a concept
+ * stays on the Dashboard. `transactions` may be the full universe; each series filters to its own
+ * account, so no cross-account lookup context is needed any more.
  */
 export const computeAccountBalanceTrends = (
   transactions: Transaction[],
@@ -23,9 +24,8 @@ export const computeAccountBalanceTrends = (
   from: string,
   to: string,
   granularity: Granularity,
-  context?: JointLegContext,
 ): AccountBalanceSeries[] =>
   accounts.map((account) => ({
     accountId: account.id!,
-    points: computeNetWorthTrend(transactions, [account], from, to, granularity, context),
+    points: computeAccountBalanceHistory(transactions, account, from, to, granularity),
   }));
