@@ -4,10 +4,12 @@ import {
   AccountsRepository,
   AppSettingsRepository,
   CategoriesRepository,
+  SalaryMetadataRepository,
   TransactionsRepository,
   type Account,
   type AppSettings,
   type Category,
+  type SalaryMetadata,
   type Transaction,
 } from '@/core/data-access';
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
@@ -58,7 +60,12 @@ const account = (id: number, openingBalanceDate: string): Account => ({
   archived: false,
 });
 
-const transaction = (id: number, accountId: number, bookingDate: string): Transaction => ({
+const transaction = (
+  id: number,
+  accountId: number,
+  bookingDate: string,
+  overrides: Partial<Transaction> = {},
+): Transaction => ({
   id,
   accountId,
   bookingDate,
@@ -68,6 +75,7 @@ const transaction = (id: number, accountId: number, bookingDate: string): Transa
   fingerprint: `fp-${id}`,
   categoryId: 1,
   createdAt: `${bookingDate}T00:00:00.000Z`,
+  ...overrides,
 });
 
 const categoriesRepository = { getAll: vi.fn(), add: vi.fn() };
@@ -79,6 +87,7 @@ const appSettingsRepository = {
   setCareerStartDate: vi.fn(),
   setSmoothedBonusCategoryIds: vi.fn(),
 };
+const salaryMetadataRepository = { getAll: vi.fn(), upsert: vi.fn(), remove: vi.fn() };
 
 type SetupOptions = {
   excludedIncomeCategoryIds?: number[];
@@ -86,6 +95,7 @@ type SetupOptions = {
   careerStartDate?: string;
   accounts?: Account[];
   transactions?: Transaction[];
+  salaryMetadata?: SalaryMetadata[];
 };
 
 /** Seeds every collaborator repository, then awaits the (idempotent) hydrations so the derived
@@ -100,10 +110,12 @@ const setup = async (
     careerStartDate,
     accounts = [],
     transactions = [],
+    salaryMetadata = [],
   } = options;
   categoriesRepository.getAll.mockResolvedValue(categories);
   accountsRepository.getAll.mockResolvedValue(accounts);
   transactionsRepository.getAll.mockResolvedValue(transactions);
+  salaryMetadataRepository.getAll.mockResolvedValue(salaryMetadata);
   appSettingsRepository.get.mockResolvedValue({
     id: 1,
     excludedIncomeCategoryIds,
@@ -119,10 +131,12 @@ const setup = async (
       { provide: AccountsRepository, useValue: accountsRepository },
       { provide: TransactionsRepository, useValue: transactionsRepository },
       { provide: AppSettingsRepository, useValue: appSettingsRepository },
+      { provide: SalaryMetadataRepository, useValue: salaryMetadataRepository },
     ],
   });
 
   const store = TestBed.inject(IncomeStore);
+  await store.hydrate();
   await TestBed.inject(CategoriesStore).hydrate();
   await TestBed.inject(AccountsStore).hydrate();
   await TestBed.inject(TransactionsStore).hydrate();
@@ -320,6 +334,92 @@ describe('IncomeStore: smoothedBonusCategoryIds (FR-INC-4, TICKET-INC-04)', () =
 
     expect(appSettingsRepository.setSmoothedBonusCategoryIds).not.toHaveBeenCalled();
     expect([...store.smoothedBonusCategoryIds()]).toEqual([]);
+  });
+});
+
+describe('IncomeStore: incomeTrend composes both smoothing passes (TICKET-INC-13)', () => {
+  const CATEGORIES = [category(1, 'Salary', 'income'), category(2, 'Holiday bonus', 'income')];
+  const ACCOUNTS = [account(1, '2025-01-01')];
+
+  /** 1,000/month of salary through 2025, plus a separate 1,200 bonus deposit in March. */
+  const TRANSACTIONS: Transaction[] = [
+    ...Array.from({ length: 12 }, (_, index) =>
+      transaction(index + 1, 1, `2025-${String(index + 1).padStart(2, '0')}-25`, { amount: 1000 }),
+    ),
+    transaction(20, 1, '2025-03-20', { amount: 1200, categoryId: 2 }),
+  ];
+
+  const sumOf = (store: InstanceType<typeof IncomeStore>, seriesIndex: number): number =>
+    store.incomeTrend().series[seriesIndex].values.reduce((total, value) => total + value, 0);
+
+  const monthIndex = (store: InstanceType<typeof IncomeStore>, bucketKey: string): number =>
+    store.incomeTrend().bucketKeys.indexOf(bucketKey);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(restoreFormatSettings);
+
+  it('spreads a recorded embedded bonus across its year on incomeTrend', async () => {
+    const store = await setup(CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+      salaryMetadata: [{ yearMonth: '2025-07', grossWage: 1800, bonus: 600 }],
+    });
+
+    const july = monthIndex(store, '2025-07');
+    const august = monthIndex(store, '2025-08');
+    const salary = store.incomeTrend().series[0];
+
+    // July's 1,000 loses the 600 it declared, then every month of 2025 gets 600/12 back.
+    expect(salary.values[july]).toBeCloseTo(400 + 50);
+    expect(salary.values[august]).toBeCloseTo(1000 + 50);
+  });
+
+  it("preserves the year's total when a flagged category and an embedded bonus both apply", async () => {
+    const store = await setup(CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+      smoothedBonusCategoryIds: [2],
+      salaryMetadata: [{ yearMonth: '2025-07', grossWage: 1800, bonus: 600 }],
+    });
+
+    // 12 × 1,000 salary + one 1,200 bonus deposit — both passes only reshape, never add or remove,
+    // and each series keeps its own annual total too.
+    expect(sumOf(store, 0) + sumOf(store, 1)).toBeCloseTo(13_200);
+    expect(sumOf(store, 0)).toBeCloseTo(12_000);
+    expect(sumOf(store, 1)).toBeCloseTo(1200);
+
+    // Both passes genuinely fired: March's 1,200 spike is gone (FR-INC-4), and July's declared 600
+    // is off the salary line (TICKET-INC-13) — the second pass reads what the first one left, so it
+    // takes its pro-rata share from the already-flattened bonus category too.
+    const march = monthIndex(store, '2025-03');
+    const july = monthIndex(store, '2025-07');
+    expect(store.incomeTrend().series[1].values[march]).toBeLessThan(200);
+    expect(store.incomeTrend().series[0].values[july]).toBeLessThan(1000);
+  });
+
+  it('leaves rawIncomeTrend showing the real deposit in its real month', async () => {
+    const store = await setup(CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+      salaryMetadata: [{ yearMonth: '2025-07', grossWage: 1800, bonus: 600 }],
+    });
+
+    const raw = store.rawIncomeTrend();
+    const july = raw.bucketKeys.indexOf('2025-07');
+
+    expect(raw.series[0].values[july]).toBe(1000);
+  });
+
+  it('leaves incomeTrend untouched when no bonus is recorded at all', async () => {
+    const store = await setup(CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+    });
+
+    expect(store.incomeTrend()).toBe(store.rawIncomeTrend());
   });
 });
 

@@ -53,12 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-INC-13',
-    title: 'Spread a bonus recorded on your salary details across its year on the income chart',
-    area: 'Income',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'TICKET-INC-14',
     title: 'Take-home rate as a full 0–100% band comparing plain salary against its gross',
     area: 'Income',

@@ -10,6 +10,7 @@ export * from './category-breakdown';
 export * from './category-composition-trend';
 export * from './income-category-series';
 export * from './annual-lump-sum-smoothing';
+export * from './embedded-bonus-smoothing';
 export * from './income-growth';
 export * from './income-step-change-detection';
 export * from './income-gap-detection';

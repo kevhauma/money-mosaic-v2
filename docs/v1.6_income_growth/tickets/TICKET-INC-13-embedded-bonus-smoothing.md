@@ -48,8 +48,16 @@ embeds the bonus rather than paying it separately.
     without needing to guess which category the deposit landed in. Never drives a series negative — the
     removal is capped at that bucket's total (see Notes).
   - **Redistribution**, per calendar year: add the year's removed total back across that year's buckets
-    evenly, split between series by each series' share of that year's (bonus-free) total. Each series' *annual*
-    total is therefore preserved exactly — only its month-to-month shape changes.
+    evenly, ~~split between series by each series' share of that year's (bonus-free) total~~ **handing each
+    series back its own removed total**. Each series' *annual* total is therefore preserved exactly — only
+    its month-to-month shape changes.
+
+    > **Amended 2026-08-01, during implementation.** The struck wording and the sentence after it
+    > contradict each other: removal is pro rata *per bucket*, so re-splitting the pooled total by each
+    > series' share of the *year* only returns to a series what it lost when those two shares happen to
+    > coincide. Preserving each series' annual total — which both the sentence above and acceptance
+    > criterion 1 require — means giving each series back exactly what came off it. In the
+    > overwhelmingly common single-income-category case the two readings are identical.
   - `granularity !== 'month'` is a documented pass-through no-op (the same rule
     `smoothAnnualLumpSums` follows — `salaryMetadata` is keyed `YYYY-MM`, so any other bucket size has
     nothing to join on). Returns the input object by reference when no month in range carries a `bonus`.
@@ -62,30 +70,53 @@ embeds the bonus rather than paying it separately.
 
 ## Acceptance criteria
 
-- [ ] `smoothEmbeddedBonuses()` preserves each year's total exactly (sum of smoothed buckets in a year ≈ sum
+- [x] `smoothEmbeddedBonuses()` preserves each year's total exactly (sum of smoothed buckets in a year ≈ sum
       of raw buckets in that year, within rounding) and preserves each series' own annual total — unit test
-      over a flat 2,000/month salary plus a June deposit of 4,160 with `bonus: 2000`.
-- [ ] That fixture's June bucket drops to the flat monthly figure and every other month of that year rises
-      by `2000 / 12` — unit test asserting the actual per-bucket values, not just the total.
-- [ ] A year with no `bonus` recorded anywhere passes through unchanged, and the whole helper returns the
+      over a flat 2,000/month salary plus a June deposit of ~~4,160~~ **4,000** with `bonus: 2000`.
+      (`embedded-bonus-smoothing.spec.ts` → "preserves the year's total exactly" and "preserves each
+      series' own annual total, not just the year's". **Fixture amount corrected**: at 4,160 the next
+      criterion is unsatisfiable, since 4,160 − 2,000 = 2,160 ≠ the flat 2,000 it asks June to drop to.)
+- [x] That fixture's June bucket drops to the flat monthly figure and every other month of that year rises
+      by `2000 / 12` — unit test asserting the actual per-bucket values, not just the total. (Spec "drops
+      June to the flat monthly figure and lifts every month of the year by the bonus's twelfth", which
+      asserts `2000 + 2000/12` on June, January and December and that all twelve values are identical.)
+- [x] A year with no `bonus` recorded anywhere passes through unchanged, and the whole helper returns the
       input object **by reference** when no month in range carries a bonus — unit test asserting `toBe`.
-- [ ] `granularity !== 'month'` returns the input series unchanged for every category — `it.each` over
-      day/week/quarter/year asserting `toBe` on the input object.
-- [ ] A `bonus` larger than that month's total selected-category income is capped at the total rather than
+      (Specs "returns the input object by reference when no month in range carries a bonus", "…for a month
+      with salary details but no bonus", "ignores a bonus recorded for a month outside the series".)
+- [x] `granularity !== 'month'` returns the input series unchanged for every category — `it.each` over
+      day/week/quarter/year asserting `toBe` on the input object. (Spec block "smoothEmbeddedBonuses:
+      monthly granularity only".)
+- [x] A `bonus` larger than that month's total selected-category income is capped at the total rather than
       driving a series negative; unit test (see Notes for why this is reachable).
-- [ ] A month with a `SalaryMetadata` row but no `bonus`, and a bonus-only row with no `grossWage`, both
+      (`removableBonuses()`'s `Math.min`; specs "caps the removal at that month's counted income rather
+      than driving a series negative" and "leaves a month with no counted income at zero, not NaN".)
+- [x] A month with a `SalaryMetadata` row but no `bonus`, and a bonus-only row with no `grossWage`, both
       behave correctly (the latter still smooths — the bonus is a fact independent of the gross entry).
-- [ ] Both smoothing passes compose: a category flagged under FR-INC-4 *and* a month carrying an embedded
+      (Specs "returns the input object by reference for a month with salary details but no bonus" and
+      "still smooths a bonus-only row with no grossWage — the bonus is a fact of its own".)
+- [x] Both smoothing passes compose: a category flagged under FR-INC-4 *and* a month carrying an embedded
       bonus produce the same annual total as the raw series — unit test at `IncomeStore` level.
-- [ ] `IncomeStore.rawIncomeTrend()` is unchanged, and `computeGrossNetRatio` still receives it — regression
+      (`income.store.spec.ts` → "IncomeStore: incomeTrend composes both smoothing passes (TICKET-INC-13)"
+      → "preserves the year's total when a flagged category and an embedded bonus both apply", asserting
+      13,200 overall plus 12,000/1,200 per series, and that both passes visibly fired.)
+- [x] `IncomeStore.rawIncomeTrend()` is unchanged, and `computeGrossNetRatio` still receives it — regression
       test that the take-home panel keeps the bonus in its real month (TICKET-INC-11's criterion 1 must
-      still hold).
-- [ ] Persistence untouched: no new `AppSettings` field, no Dexie version bump, no direct `appDb` access.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
+      still hold). (`income.store.ts` composes the new pass into `incomeTrend` only, leaving
+      `rawIncomeTrend` untouched; spec "leaves rawIncomeTrend showing the real deposit in its real month";
+      `income-gross-net-panel.component.spec.ts`'s existing suite still passes unchanged.)
+- [x] Persistence untouched: no new `AppSettings` field, no Dexie version bump, no direct `appDb` access.
+      (`git diff` touches no `app-db.ts`, no repository, and no `appSettings` field — the whole change is
+      one new pure module plus its wiring.)
+- [x] `angular.json` bundle budgets not raised. (`git diff` touches no `angular.json`;
+      `ng build --configuration development` completes with no budget warning.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD` →
+      `verdict: pass`, `complexity_introduced: 0` after splitting `reshapeSeries`/`bucketsPerYearOf` out
+      of the main function; the new module follows `annual-lump-sum-smoothing.ts`'s shape exactly —
+      pure, exported through `core/stats/index.ts`, granularity guard and by-reference pass-through.)
 - [ ] Verified live in the browser: record a bonus on a month with a visible salary spike, confirm the
       "Income by month" chart flattens it across that year while the take-home panel keeps showing it in its
-      real month.
+      real month. — **skipped at the user's request** ("skip the browser check"), not verified.
 
 ## Notes
 

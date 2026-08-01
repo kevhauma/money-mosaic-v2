@@ -12,6 +12,7 @@ import {
   computeFullHistoryRange,
   computeIncomeCategorySeries,
   smoothAnnualLumpSums,
+  smoothEmbeddedBonuses,
 } from '@/core/stats';
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import type { AccentColorId } from '@/core/theme';
@@ -154,6 +155,11 @@ export const IncomeStore = signalStore(
       ),
     );
 
+    /** The salary metadata keyed by `YYYY-MM` (FR-INC-10) — how every consumer actually reads it: one month at a time. */
+    const salaryMetadataByMonth = computed(
+      () => new Map(store.salaryMetadata().map((entry) => [entry.yearMonth, entry])),
+    );
+
     return {
       incomeCategories,
       fullHistoryRange,
@@ -162,6 +168,7 @@ export const IncomeStore = signalStore(
       selectedIncomeCategoryIds,
       smoothedBonusCategoryIds,
       rawIncomeTrend,
+      salaryMetadataByMonth,
 
       /** The user's career start date (FR-INC-12), or `undefined` while unset. */
       careerStartDate: computed(() => appSettingsStore.careerStartDate()),
@@ -173,18 +180,24 @@ export const IncomeStore = signalStore(
        */
       grossColor: computed(() => appSettingsStore.grossColor()),
 
-      /** The salary metadata keyed by `YYYY-MM` (FR-INC-10) — how every consumer actually reads it: one month at a time. */
-      salaryMetadataByMonth: computed(
-        () => new Map(store.salaryMetadata().map((entry) => [entry.yearMonth, entry])),
-      ),
-
       /**
-       * `rawIncomeTrend` with annual lump sums spread across their year (FR-INC-4) — what the trend
-       * chart draws, and what the growth-rate panel (FR-INC-5) and step-change detector (FR-INC-8)
-       * measure, so a 13th month never reads as a raise.
+       * `rawIncomeTrend` with both lump-sum smoothing passes applied — what the trend chart draws,
+       * and what the growth-rate panel (FR-INC-5) and step-change detector (FR-INC-8) measure, so a
+       * 13th month never reads as a raise however it was paid:
+       * - `smoothAnnualLumpSums` (FR-INC-4) for a bonus with its *own* category, flagged in settings;
+       * - `smoothEmbeddedBonuses` (TICKET-INC-13) for one baked into the regular salary deposit,
+       *   where the only record is the `bonus` figure on that month's salary details (FR-INC-10).
+       *
+       * Order matters only in that the second pass reads bucket totals: it removes each month's
+       * declared bonus from whatever the first pass left, so the two can't double-count a category
+       * that is both flagged and carrying a recorded bonus.
        */
       incomeTrend: computed(() =>
-        smoothAnnualLumpSums(rawIncomeTrend(), smoothedBonusCategoryIds(), INCOME_GRANULARITY),
+        smoothEmbeddedBonuses(
+          smoothAnnualLumpSums(rawIncomeTrend(), smoothedBonusCategoryIds(), INCOME_GRANULARITY),
+          salaryMetadataByMonth(),
+          INCOME_GRANULARITY,
+        ),
       ),
     };
   }),
