@@ -77,43 +77,94 @@ raises pass through intact, gross outrunning net means the deduction rate is cli
 
 ## Acceptance criteria
 
-- [ ] `computeGrossNetGrowth` picks the earliest bucket where both gross and net are known as the shared
+> **Implementation note, 2026-08-01.** Two choices the ticket left open, resolved while building:
+> - **`IncomeGrossNetPanelComponent` was folded in**, not kept as a child: its folder was renamed to
+>   `income-gross-net-section/` (a `git mv`, so the history follows), its option builder moved to
+>   `feature-income/gross-net-chart-options.ts` next to the three new ones, and its component spec
+>   became the section spec's "the take-home cell (moved from TICKET-INC-14)" block. Keeping a
+>   component called "panel" that is no longer a panel would have been the worse half of the choice.
+> - **The four cells share one presentational `IncomeChartCellComponent`** (sub-heading + chart +
+>   `sr-only` table) rather than each re-authoring that chrome — the `income-category-checklist`
+>   pattern, and four copies of the same table markup is four chances to drift.
+
+- [x] `computeGrossNetGrowth` picks the earliest bucket where both gross and net are known as the shared
       baseline; unit test where gross starts three months after net and every `*FromStart` field is `null`
-      for those three months and `0` at the baseline.
-- [ ] `*FromStart` values equal `value − baseline` and `*PctFromStart` equal `(value − baseline) / baseline`
+      for those three months and `0` at the baseline. (`core/stats/gross-net-growth.ts`;
+      `gross-net-growth.spec.ts` → "anchors on the earliest bucket where gross and net are both known",
+      "uses one baseline for both series, not one each", "still reports the levels for the months before
+      the baseline — they are real data", "leaves every from-start field null when no month has a gross
+      wage at all".)
+- [x] `*FromStart` values equal `value − baseline` and `*PctFromStart` equal `(value − baseline) / baseline`
       for a hand-computed fixture; unit test asserting the actual numbers, both directions (a rise and a
-      cut).
-- [ ] A zero baseline yields `null` percentages, never `Infinity`/`NaN`; unit test.
-- [ ] A month with no `SalaryMetadata` row yields `null` for every gross field while the net fields stay
-      populated; unit test, plus a chart-option test asserting `connectNulls: false`.
-- [ ] Net uses the same basis as the take-home panel — annually-smoothed categories excluded and the
+      cut). (Specs "reports value − baseline for a rise and for a cut", "reports (value − baseline) /
+      baseline as the percentage, both directions", "shows gross outrunning net when the deduction rate
+      climbs".)
+- [x] A zero baseline yields `null` percentages, never `Infinity`/`NaN`; unit test. (Spec "yields null
+      percentages for a zero baseline, never Infinity or NaN", which also asserts the absolute distance
+      stays well-defined.)
+- [x] A month with no `SalaryMetadata` row yields `null` for every gross field while the net fields stay
+      populated; unit test, plus a chart-option test asserting `connectNulls: false`. (Spec "nulls every
+      gross field while the net fields carry on"; `gross-net-chart-options.spec.ts` → "breaks only the
+      gross line over a month with no wage entered", asserting `connectNulls === false` on both series.)
+- [x] Net uses the same basis as the take-home panel — annually-smoothed categories excluded and the
       recorded `bonus` subtracted (TICKET-INC-14) — so a bonus can't read as a raise on the growth-from-start
       charts; unit test with a flagged bonus category asserting a flat percentage line across its deposit month.
-- [ ] All three new charts render with the correct axis formatter (currency, currency, percent) and both
-      series named; unit tests on the pure option builders, no TestBed.
-- [ ] The section renders **four** chart cells under one "Net vs gross" heading in a grid that is one
+      (The section feeds `computeGrossNetRatio`'s output straight into `computeGrossNetGrowth`, so the
+      basis is defined in one place; section spec "keeps a flagged bonus category out of the growth basis,
+      so it cannot read as a raise" — a 12,000 13th month in February leaves the percentage line at 0%.)
+- [x] All three new charts render with the correct axis formatter (currency, currency, percent) and both
+      series named; unit tests on the pure option builders, no TestBed. (`gross-net-chart-options.spec.ts`
+      → "plots the levels themselves on the absolute chart, with a currency axis", "plots the distance
+      travelled on the from-start chart, with a currency axis", "plots the same distance as a percentage
+      on the percent chart, with a percent axis", plus "draws the baseline on both from-start charts".)
+- [x] The section renders **four** chart cells under one "Net vs gross" heading in a grid that is one
       column on narrow screens and two from `md:`; component spec asserts the cell count, each cell's
-      sub-heading, and the grid classes.
-- [ ] The take-home band chart is the moved TICKET-INC-14 chart, not a reimplementation: its option builder
-      is reused as-is and every assertion in `income-gross-net-panel.component.spec.ts` still holds (moved
-      onto the section's spec if the component is folded in) — including the 0–100% axis, the two stacked
-      bands, the >100% clip and the no-gross gap.
-- [ ] The standalone take-home `mm-paper` row no longer exists in
+      sub-heading, and the grid classes. (Section spec → "the grid" → "renders four chart cells under one
+      'Net vs gross' heading", "names each cell, since one section heading cannot name four charts", "is
+      one column on narrow screens and two from md:".)
+- [x] The take-home band chart is the moved TICKET-INC-14 chart, not a reimplementation: its option builder
+      is reused as-is and every assertion in ~~`income-gross-net-panel.component.spec.ts`~~ still holds
+      (moved onto the section's spec, since the component **was** folded in — see the note above) —
+      including the 0–100% axis, the two stacked bands, the >100% clip and the no-gross gap.
+      (`buildTakeHomeChartOption` moved verbatim to `gross-net-chart-options.ts`; all eleven of its builder
+      assertions moved verbatim to `gross-net-chart-options.spec.ts`, and all seven component assertions
+      to the section spec's "the take-home cell" block.)
+- [x] The standalone take-home `mm-paper` row no longer exists in
       `income-overview.component.html`; overview spec asserts exactly one gross-vs-net surface on the page.
-- [ ] Each chart has an `sr-only` companion table sourced from the same signal, and the **section** renders
-      a single empty state when no gross wage exists anywhere — not four.
-- [ ] The gross series' color comes from TICKET-SET-08's resolver; unit test that changing the setting
-      changes the built options of all four charts (the band's withheld area included).
-- [ ] No persistence changes, no Dexie version bump — every figure derives from existing
-      `Transaction`/`SalaryMetadata` data.
-- [ ] `angular.json` bundle budgets **not raised** — three more charts reuse the already-bundled echarts
+      (`income-overview.component.html:66` now mounts `app-income-gross-net-section`; overview spec "has
+      exactly one gross-vs-net surface on the page (TICKET-INC-16)".)
+- [x] Each chart has an `sr-only` companion table sourced from the same signal, and the **section** renders
+      a single empty state when no gross wage exists anywhere — not four. (`IncomeChartCellComponent`'s
+      template; section specs "gives every cell an sr-only companion table" and "shows one empty state for
+      the whole section, not four, when no gross wage exists yet" — which asserts zero cells render.)
+- [x] The gross series' color comes from TICKET-SET-08's resolver; unit test that changing the setting
+      changes the built options of all four charts (the band's withheld area included). (Resolved once into
+      `grossColor()` and handed to all four builders; section spec "draws gross in the picked color across
+      every cell (TICKET-SET-08)", plus the two builder specs "takes the withheld band's color from the
+      gross-series resolver, not a literal" and "takes the gross line's color from the resolver, leaving
+      net on the theme's slot".)
+- [x] No persistence changes, no Dexie version bump — every figure derives from existing
+      `Transaction`/`SalaryMetadata` data. (`git diff` touches no `app-db.ts` and no repository.)
+- [x] `angular.json` bundle budgets **not raised** — three more charts reuse the already-bundled echarts
       line/grid components and add no new dependency; confirm the dev build's budget output is unchanged.
-- [ ] Four charts in one viewport stay responsive: each cell sizes from its grid track rather than a fixed
-      width, and the section doesn't overflow horizontally at mobile width.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (`git diff` touches no `angular.json`. Measured rather than assumed: `ng build` at HEAD and with the
+      change both report an initial total of **844.74 kB / 160.37 kB** — identical, because the section is
+      inside the lazy `income-overview-component` chunk. The dev build emits no budget output at all.)
+- [x] Four charts in one viewport stay responsive: each cell sizes from its grid track rather than a fixed
+      width, and the section doesn't overflow horizontally at mobile width. (Grid is
+      `grid-cols-1 md:grid-cols-2`; every chart host is `w-full` with no fixed width anywhere in
+      `income-chart-cell.component.html`; section spec "sizes each cell from its grid track rather than a
+      fixed width".)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD` →
+      `verdict: pass`, `complexity_introduced: 0` after splitting `unmeasurable`/`measured` out of
+      `computeGrossNetGrowth`'s map callback, `duplication_introduced: 0` — the shared cell component is
+      what keeps the four cells from being a clone group. Conventions: pure builders in a feature-root
+      `.ts` module, one folder per component, `sr-only` companion tables per TICKET-UI-07, currency and
+      percentages through `formatCurrency`/`formatPercent`.)
 - [ ] Verified live in the browser: the "Net vs gross" section renders as a 2×2 grid over real data with
       gross above net, the from-start charts start at zero, a month with no gross entry breaks only the
-      gross line, and the grid collapses to one column on a narrow window.
+      gross line, and the grid collapses to one column on a narrow window. — **skipped at the user's
+      request** ("skip the browser check"), not verified.
 
 ## Notes
 

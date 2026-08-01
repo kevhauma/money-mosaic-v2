@@ -53,12 +53,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.6_income_growth',
-    ticketId: 'TICKET-INC-16',
-    title: 'A “Net vs gross” section: take-home rate plus growth charts, four to a grid',
-    area: 'Income',
-  },
-  {
-    versionFolder: 'v1.6_income_growth',
     ticketId: 'TICKET-INC-15',
     title:
       'Compare your last complete month against the start of the year, on cards that link to their transactions',

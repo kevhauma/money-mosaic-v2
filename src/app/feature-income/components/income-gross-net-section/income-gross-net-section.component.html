@@ -1,0 +1,54 @@
+<mm-paper>
+  <h2 class="card-title text-base">Net vs gross</h2>
+
+  @if (hasAnyGross()) {
+    <mm-text variant="caption" as="p">
+      Your gross pay against what actually reached your account. Annual lump sums are left out, so
+      this is plain salary. A month with no gross wage entered breaks the gross line.
+    </mm-text>
+
+    <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+      <app-income-chart-cell
+        heading="Gross and net per month"
+        ariaLabel="Gross wage and net income per month; table with values follows"
+        caption="Gross wage and net income per month, underlying the chart above"
+        [option]="absoluteOption()"
+        [columnHeaders]="['Month', 'Net', 'Gross']"
+        [rows]="absoluteRows()"
+      />
+
+      <app-income-chart-cell
+        heading="Take-home rate"
+        ariaLabel="Take-home rate per month as a share of gross pay; table with values follows"
+        caption="Net income against gross wage per month, underlying the chart above"
+        [option]="takeHomeOption()"
+        [columnHeaders]="['Month', 'Net', 'Gross', 'Take-home rate']"
+        [rows]="takeHomeRows()"
+      />
+
+      <app-income-chart-cell
+        heading="Change since your first recorded month, in %"
+        ariaLabel="Percentage change in gross and net since the first month both were known; table with values follows"
+        caption="Percentage change in gross wage and net income since the first month both were known"
+        [option]="pctFromStartOption()"
+        [columnHeaders]="['Month', 'Net', 'Gross']"
+        [rows]="pctFromStartRows()"
+      />
+
+      <app-income-chart-cell
+        heading="Change since your first recorded month"
+        ariaLabel="Change in gross and net since the first month both were known; table with values follows"
+        caption="Change in gross wage and net income since the first month both were known"
+        [option]="fromStartOption()"
+        [columnHeaders]="['Month', 'Net', 'Gross']"
+        [rows]="fromStartRows()"
+      />
+    </div>
+  } @else {
+    <mm-text variant="caption" as="p">
+      No gross wage entered yet. Add one under “Salary details” to see what share of your gross pay
+      actually reaches your account, and whether your raises are passing through — a bank export
+      only ever shows the net.
+    </mm-text>
+  }
+</mm-paper>

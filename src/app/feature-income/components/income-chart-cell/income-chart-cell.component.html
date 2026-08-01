@@ -1,0 +1,36 @@
+<mm-text as="h3" weight="semibold" class="text-sm">{{ heading() }}</mm-text>
+
+<div
+  echarts
+  [options]="option()"
+  class="mt-1 h-64 w-full"
+  role="img"
+  [attr.aria-label]="ariaLabel()"
+></div>
+
+<!-- Screen-reader-only companion table for the chart above — not a visible data table, so it
+     skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
+<table class="sr-only">
+  <caption>
+    {{
+      caption()
+    }}
+  </caption>
+  <thead>
+    <tr>
+      @for (header of columnHeaders(); track header) {
+        <th scope="col">{{ header }}</th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.key) {
+      <tr>
+        <th scope="row">{{ row.key }}</th>
+        @for (cell of row.cells; track $index) {
+          <td>{{ cell }}</td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>

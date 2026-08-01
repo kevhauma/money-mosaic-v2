@@ -256,6 +256,14 @@ describe('IncomeOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('app-income-yearly-panel')).not.toBeNull();
   });
 
+  it('has exactly one gross-vs-net surface on the page (TICKET-INC-16)', async () => {
+    await setup([salary]);
+
+    // The standalone take-home `mm-paper` row is gone: its chart is now one cell of the section.
+    expect(fixture.nativeElement.querySelectorAll('app-income-gross-net-section')).toHaveLength(1);
+    expect(fixture.nativeElement.querySelector('app-income-gross-net-panel')).toBeNull();
+  });
+
   it('mounts every page setting behind the header’s settings popup (TICKET-INC-04)', async () => {
     await setup([salary]);
 
