@@ -350,15 +350,55 @@ describe('IncomeOverviewComponent', () => {
       (anchor as HTMLAnchorElement).getAttribute('href'),
     );
 
+    // Order is settings · salary · guide (TICKET-INC-21): the two that change what this page
+    // computes come first, the guide is the reference escape hatch last.
     expect(links).toEqual([
-      '/help/getting-started-with-the-income-page',
       '/income/settings',
       '/income/salary',
+      '/help/getting-started-with-the-income-page',
     ]);
     expect(fixture.nativeElement.querySelector('app-income-settings-page')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-salary-metadata-table')).toBeNull();
     expect(fixture.nativeElement.querySelector('mm-dropdown')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-income-career-start')).toBeNull();
+  });
+
+  it('gives the guide a different visual weight from the two settings destinations (TICKET-INC-21)', async () => {
+    await setup([salary]);
+
+    const linkFor = (href: string): HTMLAnchorElement =>
+      fixture.nativeElement.querySelector(`mm-page-header a[href="${href}"]`);
+    const guide = linkFor('/help/getting-started-with-the-income-page');
+    const settings = linkFor('/income/settings');
+    const salaryLink = linkFor('/income/salary');
+
+    // The guide keeps `variant="ghost"`; the two destinations carry the default button weight other
+    // pages give a page-level control, so the set isn't three identical ghosts.
+    expect(guide.classList.contains('btn-ghost')).toBe(true);
+    expect(settings.classList.contains('btn-ghost')).toBe(false);
+    expect(salaryLink.classList.contains('btn-ghost')).toBe(false);
+  });
+
+  it('renders no date-range control anywhere — /income scopes itself to the career start (TICKET-UI-23)', async () => {
+    await setup([salary]);
+
+    expect(fixture.nativeElement.querySelector('mm-range-grouping-switcher')).toBeNull();
+  });
+
+  it('keeps the header action row wrapping at 375px (TICKET-INC-21)', async () => {
+    await setup([salary]);
+
+    const actions = fixture.nativeElement.querySelector('div.mm-page-actions') as HTMLElement;
+    expect(actions.classList.contains('flex-wrap')).toBe(true);
+  });
+
+  it('renders no subtitle on /income (TICKET-UI-22)', async () => {
+    await setup([salary]);
+
+    expect(fixture.nativeElement.querySelector('mm-page-header h1')?.textContent?.trim()).toBe(
+      'Income',
+    );
+    expect(fixture.nativeElement.querySelector('mm-page-header .mm-page-title p')).toBeNull();
   });
 
   it('leaves the one-month salary modal as its only overlay (TICKET-INC-18)', async () => {

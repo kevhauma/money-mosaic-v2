@@ -53,25 +53,43 @@ three routes.
 
 ## Acceptance criteria
 
-- [ ] The Income header renders the three actions in the order settings · salary · guide; component spec
-      asserts DOM order.
-- [ ] The guide button is visually distinct from the two settings destinations; component spec asserts
-      the differing variant.
-- [ ] No subtitle renders on `/income`, `/income/settings` or `/income/salary`; component specs assert
-      absence on all three.
-- [ ] Each header link still navigates to its route (`/income/settings`, `/income/salary`, the guide);
-      existing routing specs pass unchanged.
-- [ ] Both sub-pages offer a visible route back to `/income`; component specs assert the link.
-- [ ] No date-range control renders anywhere on the Income routes; component spec asserts absence.
-- [ ] The first-visit intro still replaces the page when `showIntro()` is true, and the header returns
-      once it's dismissed; existing TICKET-PUB-08 specs pass unchanged.
-- [ ] The action row wraps rather than overflowing at 375px; component spec asserts the wrap binding.
-- [ ] No persistence changes, no Dexie version bump — `seenGuideSlugs` and every income setting are
-      untouched.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: the header reads title · settings · salary · guide with no subtitle,
-      and all three still navigate.
+- [x] The Income header renders the three actions in the order settings · salary · guide; component spec
+      asserts DOM order. (`income-overview.component.spec.ts` "links to both configuration pages from
+      the header" now expects `['/income/settings', '/income/salary', '/help/getting-started-with-the-income-page']`
+      — the guide used to lead.)
+- [x] The guide button is visually distinct from the two settings destinations; component spec asserts
+      the differing variant. ("gives the guide a different visual weight from the two settings
+      destinations" — the guide keeps `btn-ghost`, the two destinations carry the default button weight
+      other pages give a page-level control, e.g. Rules' "Re-run rules".)
+- [x] No subtitle renders on `/income`, `/income/settings` or `/income/salary`; component specs assert
+      absence on all three. ("renders no subtitle on /income"; income-settings-page's "opens with a bare
+      header, a way back, and no range control"; salary-details-page's "renders no subtitle and no range
+      control".)
+- [x] Each header link still navigates to its route (`/income/settings`, `/income/salary`, the guide);
+      existing routing specs pass unchanged. (Same DOM-order spec reads the real `href`s; the
+      TICKET-PUB-08 "keeps a Guide link in the header afterwards" case still passes untouched.)
+- [x] Both sub-pages offer a visible route back to `/income`; component specs assert the link. (Already
+      true before this ticket — salary-details-page's "is a real page with a header and a way back" is
+      pre-existing, and the new income-settings-page case asserts the same for its route. Nothing had
+      to be added to either template.)
+- [x] No date-range control renders anywhere on the Income routes; component spec asserts absence.
+      ("renders no date-range control anywhere — /income scopes itself to the career start" on the
+      overview, plus the two sub-page cases above.)
+- [x] The first-visit intro still replaces the page when `showIntro()` is true, and the header returns
+      once it's dismissed; existing TICKET-PUB-08 specs pass unchanged. (The `@if (showIntro())` branch
+      is untouched; that describe block is green.)
+- [x] The action row wraps rather than overflowing at 375px; component spec asserts the wrap binding.
+      ("keeps the header action row wrapping at 375px" asserts `flex-wrap` on `div.mm-page-actions`.)
+- [x] No persistence changes, no Dexie version bump — `seenGuideSlugs` and every income setting are
+      untouched. (Diff is one template block, one comment, and specs.)
+- [x] `angular.json` bundle budgets not raised. (Untouched; dev build clean.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (Both pre-commit gate commands
+      exit 0.)
+- [x] Verified live in the browser: the header reads title · settings · salary · guide with no subtitle,
+      and all three still navigate. (Dev server on :4210 — `/income` reports actions
+      `["Income settings", "Salary details", "Guide (ghost)"]` with no subtitle and no range control;
+      `/income/settings` and `/income/salary` each report their own title, a ghost "Back to income",
+      no subtitle and no range control.)
 
 ## Notes
 

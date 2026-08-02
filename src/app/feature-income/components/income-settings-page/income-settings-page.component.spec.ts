@@ -108,6 +108,21 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
     });
   });
 
+  it('opens with a bare header, a way back, and no range control (TICKET-UI-22, TICKET-INC-21)', async () => {
+    await setup([category(1, 'Salary', 'income')]);
+
+    expect(fixture.nativeElement.querySelector('mm-page-header h1')?.textContent?.trim()).toBe(
+      'Income settings',
+    );
+    // Each section on this page explains its own control (TICKET-INC-18), so a header caption was
+    // doubly redundant.
+    expect(fixture.nativeElement.querySelector('mm-page-header .mm-page-title p')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('mm-page-header a[href="/income"]')?.textContent,
+    ).toContain('Back to income');
+    expect(fixture.nativeElement.querySelector('mm-range-grouping-switcher')).toBeNull();
+  });
+
   it('hosts every settings section on one page', async () => {
     await setup([category(1, 'Salary', 'income')]);
 
