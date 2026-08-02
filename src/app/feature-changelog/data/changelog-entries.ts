@@ -456,4 +456,28 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Income',
   },
+  {
+    date: '2026-08-02',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: [
+      'TICKET-UI-22',
+      'TICKET-UI-23',
+      'TICKET-STAT-25',
+      'TICKET-ACC-08',
+      'TICKET-INC-21',
+      'TICKET-CAT-09',
+      'TICKET-ML-18',
+    ],
+    title: "Every page now opens with one header: its title and that page's own controls",
+    details: [
+      "A page's options all live in the top bar now, instead of being spread between the bar above the app, the page heading, and buttons further down the page — so there is one place to look on every page",
+      "The subtitle under each page title is gone. It restated the title or the app's marketing copy on eleven of fourteen pages; a page that genuinely needs an explanation keeps it in the page itself",
+      'The date range moved out of the app-wide bar and into the headers of the two pages that use one — the Dashboard and Accounts — and each page now remembers its own. Narrowing the Dashboard to last month no longer silently re-scopes the Accounts chart you set up five minutes ago',
+      'The Dashboard\'s bare pencil icon is now a button that says "Dashboard settings", so you can tell what it does without clicking it',
+      'Categories and Rules: the switch between the two views moved up into the header beside their buttons, so the page opens with one row of controls instead of two or three stacked strips',
+      'Learning: whether the auto-categoriser is trained, stale or still training now reads from the header, so you can tell at a glance whether the suggestions below are worth reading',
+      'Income: its three links are ordered settings, salary details, then the guide, with the guide styled as the reference link it is rather than looking identical to the other two',
+    ],
+    area: 'Interface',
+  },
 ];
