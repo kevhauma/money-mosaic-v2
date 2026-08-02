@@ -1,8 +1,9 @@
 # Money Mosaic — v1.6.2 UI polish (Overview)
 
-Fourteen tickets from one pass over the shipped app with real data. Nothing here is a new capability —
-every item is something the app already does, done in a way that gets in the user's way. They fall into
-four groups:
+Nineteen tickets: fourteen from one pass over the shipped app with real data, plus five more from a
+second pass over the seven header tickets once they shipped. Nothing here is a new capability — every
+item is something the app already does, done in a way that gets in the user's way. They fall into five
+groups:
 
 **Charts get their own space and remember what you told them.** Three charts draw their legend inside
 the plot rectangle, so the series names sit on top of the data and on top of the only control that hides
@@ -16,6 +17,14 @@ are spread across the shell topbar, the header, and the page body, differently p
 gains a contract — title plus that page's own controls, no subtitles anywhere — and the date range moves
 out of the topbar into the pages that actually use one, **per page**, so narrowing the Dashboard stops
 re-scoping the Accounts chart.
+
+**Then the header earns its keep.** The first seven tickets gave every page one header; using them
+showed the rest. The one action slot splits in two, so a control that changes *what you're looking at*
+(date range, view switch, back-to-parent) sits by the title and one that *acts on it* stays right. The
+bar sticks to the top, so a long page's controls stay reachable. `/changelog` and the two leaf help
+pages join the contract. And net worth moves out of the Dashboard's header into the stat row it
+belongs with — reversing a call TICKET-STAT-25 made deliberately, which is why that ticket's note
+points here.
 
 **Accounts stops offering bucket sizes a balance can't have.** A balance is a level, not a period sum, so
 week/month/quarter/year buckets on the two balance charts do nothing but throw away days. Fixed to daily,
@@ -43,6 +52,11 @@ are independent of each other after it; the rest are independent unless noted.
 - [x] [TICKET-INC-21](./tickets/TICKET-INC-21-income-page-header.md) — Income header: guide, settings and salary details, without the subtitle (revises FR-INC-1 presentation / TICKET-INC-18) — needs UI-22 only; `/income` deliberately has no date range
 - [x] [TICKET-CAT-09](./tickets/TICKET-CAT-09-categories-rules-page-header.md) — Categories/Rules header: the switch, the create button, and each tab's own control (extends FR-CAT-1/FR-CAT-4) — needs UI-22 only
 - [x] [TICKET-ML-18](./tickets/TICKET-ML-18-learning-page-header.md) — Learning header: the model's status, in the header (revises TICKET-ML-10/ML-12 presentation) — needs UI-22 only; smallest of the five
+- [ ] [TICKET-UI-24](./tickets/TICKET-UI-24-header-start-and-end-action-sections.md) — The header gets a start and an end action section, and the date range and Categories/Rules switch move into the start one (extends TICKET-UI-22, revises `ui-layout-spec.md` §3) — **first of the second header pass**: the contract CHG-02 and PUB-09 below both build against
+- [ ] [TICKET-UI-25](./tickets/TICKET-UI-25-sticky-page-header.md) — The page header sticks to the top, so a long page's controls stay reachable (extends TICKET-UI-22) — independent of UI-24, but the same bar, so back to back avoids verifying every header twice
+- [ ] [TICKET-CHG-02](./tickets/TICKET-CHG-02-changelog-roadmap-switch-in-header.md) — The Changelog/Roadmap switch moves into the header, like Categories/Rules (extends TICKET-CHG-01/TICKET-PUB-05) — needs UI-24; read TICKET-CAT-09 first, the shape is the same but this switch is selection-driven, not route-driven
+- [ ] [TICKET-PUB-09](./tickets/TICKET-PUB-09-help-back-link-in-header.md) — A guide and the FAQ carry the way back to the how-to list in their header (extends TICKET-PUB-02/PUB-03) — needs UI-24; the last leaf pages without the back link the Income sub-pages and account detail already have
+- [ ] [TICKET-STAT-28](./tickets/TICKET-STAT-28-net-worth-stat-card.md) — Net worth becomes a stat card on the Dashboard instead of a figure in its header (revises TICKET-STAT-25 / FR-STAT-1) — independent of UI-24, either order; the risk is the scoping mismatch, not the markup — four range-scoped cards and one point-in-time one
 - [ ] [TICKET-STAT-26](./tickets/TICKET-STAT-26-chart-legends-outside-plot.md) — Chart legends get their own strip instead of floating over the plot (bug fix, extends TICKET-UI-13 — three builders pass `legend: { data }` with no placement and no matching `grid` offset) — independent, can ship any time; highest visible payoff per line changed
 - [ ] [TICKET-STAT-27](./tickets/TICKET-STAT-27-session-persistent-chart-options.md) — A chart's options survive the session: changing the bucket no longer clears your series filter (bug fix, extends TICKET-STAT-15 — `setOption(option, true)` discards echarts' legend-selection state on every rebuild) — independent of STAT-26, but they share every option builder, so back to back is cheaper
 - [ ] [TICKET-ACC-10](./tickets/TICKET-ACC-10-day-only-balance-buckets.md) — Balance history is a daily series: drop the bucket picker from Accounts and account detail (revises TICKET-STAT-15 for Accounts) — independent, but **must precede ACC-11**

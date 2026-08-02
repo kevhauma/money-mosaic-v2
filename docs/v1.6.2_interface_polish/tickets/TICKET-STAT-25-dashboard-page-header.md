@@ -95,6 +95,10 @@ the net-worth figure stays where it is.
   so this stays a label change rather than a rename sweep.
 - The button label is the only affordance change; the customize panel's contents (drag-to-reorder,
   hide/show rows) are untouched.
-- Keeping net worth in the header is a **deliberate exception** to "the header holds controls": it is one
+- ~~Keeping net worth in the header is a **deliberate exception** to "the header holds controls": it is one
   read-only figure the page is named for, and moving it into the body would push the first stat row below
-  the fold on a laptop.
+  the fold on a laptop.~~ **Superseded (2026-08-02) by
+  [TICKET-STAT-28](./TICKET-STAT-28-net-worth-stat-card.md)**, on the user's instruction: net worth
+  becomes a card *inside* the stats row rather than a block above it, which is what makes the reversal
+  safe — the row doesn't move down, it gains a fifth card. This ticket's header-order criterion becomes
+  title · date range · Dashboard settings once STAT-28 lands.

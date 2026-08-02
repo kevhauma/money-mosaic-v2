@@ -23,6 +23,37 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-UI-24',
+    title:
+      'Page headers split into two groups: what you’re looking at sits by the title, what acts on it stays on the right',
+    area: 'Shared UI',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-UI-25',
+    title: 'The page header stays put while you scroll, so a page’s controls are always reachable',
+    area: 'Shared UI',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-CHG-02',
+    title: 'The Changelog/Roadmap switch moves up into the page header',
+    area: 'Changelog',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-PUB-09',
+    title: 'A how-to guide and the FAQ get a link back to the guide list in their header',
+    area: 'Help',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-STAT-28',
+    title: 'Net worth moves out of the Dashboard header and in with the other headline figures',
+    area: 'Dashboard',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-STAT-26',
     title: 'Chart legends get their own strip instead of floating over the lines and bars',
     area: 'Charts',
