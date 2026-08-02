@@ -1,5 +1,8 @@
+<!-- Header order (TICKET-CAT-09): the view switch first, then this tab's own control, then the
+     create action — the same shape as /categories. -->
 <mm-page-header title="Rules">
   <mm-flex actions align="center" gap="3">
+    <mm-tabs [tabs]="categoriesTabs" variant="box" class="w-fit" />
     <mm-button
       size="sm"
       [class]="running() ? 'loading' : ''"
@@ -16,15 +19,17 @@
   </mm-flex>
 </mm-page-header>
 
-<app-rule-share-bar [selectedIds]="selectedIdsList()" />
-
-<mm-tabs [tabs]="categoriesTabs" variant="box" class="mb-4 w-fit" />
-
 @if (rulesStore.lastRunCount(); as count) {
   <mm-alert status="success" class="mb-4 py-2 text-sm">
     Re-ran rules: {{ count }} transaction{{ count === 1 ? '' : 's' }} recategorised.
   </mm-alert>
 }
+
+<!-- Moved down from between the header and the tabs (TICKET-CAT-09). With the tabs gone into the
+     header, leaving it up there would only have made it the new second strip; the page now reads
+     header → run result → share bar → filters → table, with nothing above the content but page
+     state. -->
+<app-rule-share-bar [selectedIds]="selectedIdsList()" />
 
 @if (!rulesStore.hydrated()) {
   <mm-loading-skeleton [rows]="3" />

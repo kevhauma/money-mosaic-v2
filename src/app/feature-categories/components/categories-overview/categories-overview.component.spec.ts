@@ -23,6 +23,56 @@ describe('CategoriesOverviewComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  describe('page header (TICKET-CAT-09)', () => {
+    const headerControls = (): string[] =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll(
+          'mm-page-header mm-tabs, mm-page-header input[type="checkbox"], mm-page-header button',
+        ) as NodeListOf<HTMLElement>,
+      ).map((el) =>
+        el.tagName === 'BUTTON' ? `button[${el.textContent?.trim()}]` : el.tagName.toLowerCase(),
+      );
+
+    it('renders the view switch inside the header and nowhere in the body', async () => {
+      await setup();
+      fixture.detectChanges();
+      const page: HTMLElement = fixture.nativeElement;
+      const header = page.querySelector('mm-page-header');
+
+      const allTabs = Array.from(page.querySelectorAll('mm-tabs') as NodeListOf<HTMLElement>);
+      expect(allTabs).toHaveLength(1);
+      expect(header?.contains(allTabs[0])).toBe(true);
+    });
+
+    it('orders the header switch · show-archived · create', async () => {
+      await setup();
+      fixture.detectChanges();
+
+      expect(headerControls()).toEqual(['mm-tabs', 'input', 'button[Add category]']);
+    });
+
+    it('keeps the switch routing between /categories and /rules', async () => {
+      await setup();
+      fixture.detectChanges();
+
+      const hrefs = Array.from(
+        fixture.nativeElement.querySelectorAll(
+          'mm-page-header mm-tabs a',
+        ) as NodeListOf<HTMLAnchorElement>,
+      ).map((a) => a.getAttribute('href'));
+
+      expect(hrefs).toEqual(['/categories', '/categories/rules']);
+    });
+
+    it('keeps the action row wrapping at 375px', async () => {
+      await setup();
+      fixture.detectChanges();
+
+      const actions = fixture.nativeElement.querySelector('div.mm-page-actions') as HTMLElement;
+      expect(actions.classList.contains('flex-wrap')).toBe(true);
+    });
+  });
+
   it('renders no subtitle and no range control — the page has no date-scoped content (TICKET-UI-22/UI-23)', async () => {
     await setup();
     fixture.detectChanges();
