@@ -1,51 +1,16 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { CategoryModelStore, type CategoryModelStatus } from '@/feature-categories';
+import { CategoryModelStore } from '@/feature-categories';
 import { CategoriesStore, TransactionsStore } from '@/core/state';
 import { isWithinTrainingWindow, MIN_CATEGORIES, MIN_TRAINING_LABELS } from '@/core/ml';
 import {
   AlertComponent,
-  BadgeComponent,
   ButtonComponent,
   FlexComponent,
   PaperComponent,
   TypographyComponent,
-  type AlertStatus,
-  type BadgeColor,
 } from '@/shared/ui';
-
-/** Short chip label per status (FR-ML-10) — distinct copy so `'error'` never reads like `'not-enough-data'`. */
-const STATUS_LABEL: Record<CategoryModelStatus, string> = {
-  untrained: 'Not trained',
-  'not-enough-data': 'Needs more data',
-  training: 'Training',
-  ready: 'Ready',
-  stale: 'Stale',
-  error: 'Error',
-};
-
-const STATUS_COPY: Record<CategoryModelStatus, string> = {
-  untrained: 'Not trained yet.',
-  'not-enough-data':
-    'Categorise a few more transactions across at least two categories before training.',
-  training: 'Training…',
-  ready: 'Trained',
-  stale: 'Categories changed since training — retrain to refresh suggestions.',
-  error: 'Something went wrong while training. Try again.',
-};
-
-const ALERT_STATUS: Partial<Record<CategoryModelStatus, AlertStatus>> = {
-  'not-enough-data': 'info',
-  ready: 'success',
-  stale: 'warning',
-  error: 'error',
-};
-
-const BADGE_COLOR: Partial<Record<CategoryModelStatus, BadgeColor>> = {
-  ready: 'success',
-  stale: 'warning',
-  error: 'error',
-};
+import { alertStatusFor, statusCopyFor } from '../../model-status-display';
 
 /** Training-window presets (FR-ML-17) — `null` = "All time", the pre-ML-17 unrestricted default. */
 const TRAINING_WINDOW_OPTIONS: { years: number | null; label: string }[] = [
@@ -63,7 +28,6 @@ const TRAINING_WINDOW_OPTIONS: { years: number | null; label: string }[] = [
     DatePipe,
     DecimalPipe,
     AlertComponent,
-    BadgeComponent,
     ButtonComponent,
     FlexComponent,
     PaperComponent,
@@ -80,17 +44,13 @@ export class ModelStatusComponent {
   protected readonly minTrainingLabels = MIN_TRAINING_LABELS;
   protected readonly minCategories = MIN_CATEGORIES;
 
-  protected readonly alertStatus = computed<AlertStatus | undefined>(
-    () => ALERT_STATUS[this.categoryModelStore.status()],
-  );
+  // Both read `model-status-display`, the derivation the header's badge shares (TICKET-ML-18) —
+  // deliberately not a second copy of the mapping. The label and badge colour are no longer read
+  // here at all: the badge they fed moved to the header, so `model-status-display.spec.ts` covers
+  // them rather than a computed nothing renders.
+  protected readonly alertStatus = computed(() => alertStatusFor(this.categoryModelStore.status()));
 
-  protected readonly badgeColor = computed<BadgeColor | undefined>(
-    () => BADGE_COLOR[this.categoryModelStore.status()],
-  );
-
-  protected readonly statusLabel = computed(() => STATUS_LABEL[this.categoryModelStore.status()]);
-
-  protected readonly statusCopy = computed(() => STATUS_COPY[this.categoryModelStore.status()]);
+  protected readonly statusCopy = computed(() => statusCopyFor(this.categoryModelStore.status()));
 
   protected readonly accuracyPercent = computed(() => {
     const metrics = this.categoryModelStore.metrics();

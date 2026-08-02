@@ -1,0 +1,16 @@
+<mm-flex align="center" gap="2">
+  @if (isTraining()) {
+    <span class="loading loading-spinner loading-xs"></span>
+  }
+  <mm-badge [color]="badgeColor()" size="sm">{{ statusLabel() }}</mm-badge>
+  <!-- Only `training` earns more than the label: the epoch counter already exists, and a bare
+       "Training" chip gives no sense of whether it is nearly done (TICKET-ML-18). -->
+  @if (isTraining() && categoryModelStore.trainingProgress(); as progress) {
+    <span class="text-xs text-base-content/60">
+      epoch {{ progress.epoch }}/{{ progress.totalEpochs }}
+      @if (progress.accuracy !== null) {
+        · {{ progress.accuracy * 100 | number: '1.0-0' }}%
+      }
+    </span>
+  }
+</mm-flex>

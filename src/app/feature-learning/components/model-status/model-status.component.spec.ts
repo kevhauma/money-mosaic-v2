@@ -13,8 +13,6 @@ import { ModelStatusComponent } from './model-status.component';
 /** Protected surface we reach into for status-mapping assertions. */
 type Internals = {
   alertStatus: () => string | undefined;
-  badgeColor: () => string | undefined;
-  statusLabel: () => string;
   statusCopy: () => string;
   accuracyPercent: () => number;
   trainedSampleCount: () => number | null;
@@ -98,7 +96,6 @@ describe('ModelStatusComponent', () => {
     const component = internals();
 
     expect(component.alertStatus()).toBeUndefined();
-    expect(component.statusLabel()).toBe('Not trained');
     expect(component.statusCopy()).toBe('Not trained yet.');
     expect(component.buttonLabel()).toBe('Train');
     expect(component.trainDisabled()).toBe(false);
@@ -116,7 +113,6 @@ describe('ModelStatusComponent', () => {
     const component = internals();
 
     expect(component.alertStatus()).toBe('info');
-    expect(component.statusLabel()).toBe('Needs more data');
     expect(component.statusCopy()).toBe(
       'Categorise a few more transactions across at least two categories before training.',
     );
@@ -197,8 +193,6 @@ describe('ModelStatusComponent', () => {
     const component = internals();
 
     expect(component.alertStatus()).toBe('success');
-    expect(component.badgeColor()).toBe('success');
-    expect(component.statusLabel()).toBe('Ready');
     expect(component.accuracyPercent()).toBe(92);
     expect(component.trainedSampleCount()).toBe(40);
     expect(component.modelCategoryCount()).toBe(3);
@@ -214,8 +208,6 @@ describe('ModelStatusComponent', () => {
     const component = internals();
 
     expect(component.alertStatus()).toBe('warning');
-    expect(component.badgeColor()).toBe('warning');
-    expect(component.statusLabel()).toBe('Stale');
     expect(component.statusCopy()).toBe(
       'Categories changed since training — retrain to refresh suggestions.',
     );
@@ -231,8 +223,6 @@ describe('ModelStatusComponent', () => {
     const component = internals();
 
     expect(component.alertStatus()).toBe('error');
-    expect(component.badgeColor()).toBe('error');
-    expect(component.statusLabel()).toBe('Error');
     expect(component.statusCopy()).toBe('Something went wrong while training. Try again.');
     expect(component.buttonLabel()).toBe('Train');
     expect(component.trainDisabled()).toBe(false);

@@ -1,4 +1,8 @@
-<mm-page-header title="Learning" />
+<!-- The model's state is what this page exists to report, so it reads from the header rather than
+     third row down; the explanation stays with `app-model-status` in the body (TICKET-ML-18). -->
+<mm-page-header title="Learning">
+  <app-model-status-badge actions />
+</mm-page-header>
 
 <app-model-status />
 

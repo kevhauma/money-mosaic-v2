@@ -35,4 +35,24 @@ describe('LearningOverviewComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('renders the model-status badge in the header and the detail in the body (TICKET-ML-18)', () => {
+    fixture.detectChanges();
+    const page: HTMLElement = fixture.nativeElement;
+
+    // Per-state text and colour are covered on the badge itself
+    // (`model-status-badge.component.spec.ts`), where every status is reachable without a trained
+    // model; what this asserts is the placement the ticket is about.
+    expect(page.querySelector('mm-page-header app-model-status-badge')).not.toBeNull();
+    expect(page.querySelector('app-model-status')).not.toBeNull();
+    expect(page.querySelector('mm-page-header app-model-status')).toBeNull();
+  });
+
+  it('renders no subtitle on /learning (TICKET-UI-22)', () => {
+    fixture.detectChanges();
+    const page: HTMLElement = fixture.nativeElement;
+
+    expect(page.querySelector('mm-page-header h1')?.textContent?.trim()).toBe('Learning');
+    expect(page.querySelector('mm-page-header .mm-page-title p')).toBeNull();
+  });
 });

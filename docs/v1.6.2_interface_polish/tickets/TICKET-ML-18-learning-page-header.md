@@ -51,23 +51,67 @@ the header and leaves the detail where it is.
 
 ## Acceptance criteria
 
-- [ ] The Learning header renders the model-status badge in `[actions]`; component spec asserts the badge
+**Implementation notes (2026-08-02):**
+
+1. **The shared derivation is a feature-root module, and the badge is its own component.** The
+   mapping moved out of `ModelStatusComponent` into
+   [model-status-display.ts](../../../src/app/feature-learning/model-status-display.ts)
+   (`statusLabelFor` / `statusCopyFor` / `alertStatusFor` / `badgeColorFor`), per the conventions'
+   rule that vocabulary shared by more than one component lives in a plain module in the feature
+   root. The header renders
+   [`app-model-status-badge`](../../../src/app/feature-learning/components/model-status-badge/model-status-badge.component.ts),
+   which reads that module and the same `CategoryModelStore` signals — not a second copy of the
+   mapping, which is what this ticket's own Notes warn against.
+2. **The alert did drop its badge**, the option the to-be section left open, and keeps its status
+   colour and per-state sentence. That made `statusLabel`/`badgeColor` computeds nothing rendered,
+   so they are gone from `ModelStatusComponent` too — see the divergence on the criterion below.
+3. **Per-state assertions live on the badge, not the page.** The real `CategoryModelStore` is
+   worker-backed and needs an actually-trained model to reach `ready`/`stale`; faking it at page
+   level would also mean faking it for `app-rule-proposals` and `app-suggestions-table`. On the
+   badge, every state is one `status.set(...)` away.
+
+- [x] The Learning header renders the model-status badge in `[actions]`; component spec asserts the badge
       text and colour for each of `ready` / `stale` / `training` / `not-enough-data` / default.
-- [ ] In the `training` state the header badge shows the live epoch counter and spinner; component spec
-      asserts it updates as `trainingProgress()` changes.
-- [ ] The status label and colour come from a single derivation shared with `model-status`; unit test on
+      (`model-status-badge.component.spec.ts` covers all six statuses across two `it.each` tables —
+      the three that carry a verdict colour and the three that must carry none;
+      `learning-overview.component.spec.ts` "renders the model-status badge in the header and the
+      detail in the body" asserts the placement. Split per note 3.)
+- [x] In the `training` state the header badge shows the live epoch counter and spinner; component spec
+      asserts it updates as `trainingProgress()` changes. ("shows a spinner and a live epoch counter
+      while training, updating as progress changes" moves 3/10 → 7/10 and asserts the old value is
+      gone; two further cases cover before-the-first-epoch and after-training-ends.)
+- [x] The status label and colour come from a single derivation shared with `model-status`; unit test on
       the shared helper covering every state, with no duplicated mapping in the page component.
-- [ ] The body still renders the full status sentence for every state; existing `model-status` specs pass
-      unchanged.
-- [ ] The training control and training-window picker still render in the body and still work; existing
-      TICKET-ML-10/ML-17 specs pass unchanged.
-- [ ] No subtitle renders on `/learning`; component spec asserts absence.
-- [ ] No persistence changes, no Dexie version bump — the model, its training window and its stored
-      artefacts are untouched.
-- [ ] `angular.json` bundle budgets not raised — no ML code moves into an eagerly-loaded path.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: the header badge reads the real state, and starting a training run
-      updates it live.
+      (`model-status-display.spec.ts`, four cases over an explicit `ALL_STATUSES` list — a status added
+      to `CategoryModelStatus` and forgotten in a map fails there. `grep` finds one definition of each
+      map, in `model-status-display.ts`.)
+- [x] The body still renders the full status sentence for every state; ~~existing `model-status` specs
+      pass unchanged~~ **three assertions moved rather than passing unchanged.** Every sentence,
+      count and tone case is untouched and green, but `expect(component.statusLabel())` /
+      `expect(component.badgeColor())` were dropped from three cases: the badge those computeds fed
+      is in the header now, so keeping them would have meant keeping component computeds nothing
+      renders — the dead surface TICKET-UI-22 argued against. They are covered on the shared helper
+      instead, over all six statuses rather than three.
+- [x] The training control and training-window picker still render in the body and still work; existing
+      TICKET-ML-10/ML-17 specs pass unchanged. (Untouched in both template and class; the whole
+      `feature-learning` suite is green at 48 cases.)
+- [x] No subtitle renders on `/learning`; component spec asserts absence.
+      (`learning-overview.component.spec.ts` "renders no subtitle on /learning".)
+- [x] No persistence changes, no Dexie version bump — the model, its training window and its stored
+      artefacts are untouched. (Diff adds two files under `feature-learning/`, and edits two templates
+      and one component class.)
+- [x] `angular.json` bundle budgets not raised — no ML code moves into an eagerly-loaded path. (The new
+      badge sits inside the already-lazy `feature-learning` route and injects the same store the page
+      already had; dev build reports no budget warnings.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (Both pre-commit gate commands
+      exit 0. `ng lint` initially caught a `type CategoryModelStatus` import left behind by note 2's
+      deletion — fixed.)
+- [x] Verified live in the browser: the header badge reads the real state, and starting a training run
+      updates it live. (Dev server on :4210 — `/learning` reads title "Learning", no subtitle, header
+      badge "Not trained" with no verdict colour, and the body still carries "Not trained yet." plus
+      the Train control, with the duplicate badge gone. **The training state was not observed live**:
+      the seeded dataset is below `MIN_TRAINING_LABELS`, so a run can't be started. The epoch counter
+      and spinner are covered by the badge's own specs, which drive `trainingProgress()` directly.)
 
 ## Notes
 
