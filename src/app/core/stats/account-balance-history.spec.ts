@@ -1,7 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { computeAccountBalanceHistory } from './account-balance-history';
-import { computeNetWorthTrend } from './net-worth-trend';
-import type { JointLegContext } from './classify-joint-leg';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -95,13 +93,6 @@ describe('computeAccountBalanceHistory: real balance, never the net-worth stake 
     }),
     transaction({ id: 2, accountId: 1, amount: -200, bookingDate: '2026-01-10' }),
   ];
-  const context: JointLegContext = {
-    transactionsById: new Map(transactions.map((t) => [t.id!, t])),
-    accountsById: new Map([[1, jointAccount]]),
-    transfersById: new Map(),
-    categoriesById: new Map([[partnerContribution.id!, partnerContribution]]),
-  };
-
   it('ends a joint account at its full real balance, not at my stake', () => {
     const points = computeAccountBalanceHistory(
       transactions,
@@ -115,27 +106,6 @@ describe('computeAccountBalanceHistory: real balance, never the net-worth stake 
     expect(points.at(-1)?.balance).toBe(
       jointAccount.openingBalance + transactions.reduce((sum, t) => sum + t.amount, 0),
     );
-  });
-
-  it('diverges from computeNetWorthTrend for that same joint account, by design', () => {
-    const stake = computeNetWorthTrend(
-      transactions,
-      [jointAccount],
-      '2026-01-01',
-      '2026-01-31',
-      'month',
-      context,
-    );
-    const balance = computeAccountBalanceHistory(
-      transactions,
-      jointAccount,
-      '2026-01-01',
-      '2026-01-31',
-      'month',
-    );
-
-    expect(stake.at(-1)?.netWorth).toBe(400);
-    expect(balance.at(-1)?.balance).toBe(1200);
   });
 
   it('still moves the balance for a nullified transaction (it only affects income/expense)', () => {
@@ -176,7 +146,11 @@ describe('computeAccountBalanceHistory: real balance, never the net-worth stake 
     );
   });
 
-  it('matches computeNetWorthTrend point-for-point for a plain non-joint account (no-op guard)', () => {
+  // Was a point-for-point comparison against `computeNetWorthTrend`, which TICKET-ACC-07 retired
+  // from production and this change deleted. The guard it encoded still matters — for a plain
+  // non-joint account there is no share to weight, so the series is just the running balance —
+  // so the oracle's output is inlined as the expectation.
+  it('is a plain running balance for a non-joint account, with no share weighting (no-op guard)', () => {
     const ownAccount = account({ id: 1, openingBalance: 1000 });
     const transactions = [
       transaction({ id: 1, amount: 200, bookingDate: '2026-01-10' }),
@@ -190,14 +164,7 @@ describe('computeAccountBalanceHistory: real balance, never the net-worth stake 
       '2026-03-31',
       'month',
     );
-    const stake = computeNetWorthTrend(
-      transactions,
-      [ownAccount],
-      '2026-01-01',
-      '2026-03-31',
-      'month',
-    );
 
-    expect(balance.map((point) => point.balance)).toEqual(stake.map((point) => point.netWorth));
+    expect(balance.map((point) => point.balance)).toEqual([1200, 1120, 1120]);
   });
 });

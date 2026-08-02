@@ -18,7 +18,7 @@ export type JointLegContext = {
  * at 100%. `jointSpend` — a negative non-transfer amount (shared spending) — counts at my share
  * only. `coOwnerIn` — a positive non-transfer amount tagged `neutral` or from a registered
  * co-owner IBAN — counts at 0%. The single source of truth reused by `AccountsStore.netWorth`,
- * `computeNetWorthTrend`, `computePeriodStats`, and `computeCategoryBreakdown` so they can't disagree.
+ * `computePeriodStats`, and `computeCategoryBreakdown` so they can't disagree.
  */
 export const classifyJointLeg = (
   transaction: Transaction,
@@ -91,8 +91,7 @@ const EMPTY_SUPPRESSED: ReadonlySet<number> = new Set();
 
 /**
  * The single override-aware weighting decision (TICKET-TXN-03), reused by `AccountsStore.netWorth`,
- * `computeNetWorthTrend`, `computePeriodStats`, and `computeCategoryBreakdown` so they can't
- * disagree. Resolution order:
+ * `computePeriodStats`, and `computeCategoryBreakdown` so they can't disagree. Resolution order:
  * 1. A transaction referenced by another transaction's `attributionOverride.reimbursementTransferId`
  *    (see `reimbursedTransferLegIds`) contributes zero and is excluded everywhere.
  * 2. `transaction.attributionOverride`, when present: `personal` ⇒ full amount; `notMine` ⇒ zero,

@@ -1,7 +1,5 @@
-import type { Account, Category, Transaction, Transfer } from '@/core/data-access';
-import type { JointLegContext } from './classify-joint-leg';
+import type { Account, Transaction } from '@/core/data-access';
 import { computeAccountBalanceTrends } from './account-balance-trend';
-import { computeNetWorthTrend } from './net-worth-trend';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -84,7 +82,7 @@ describe('computeAccountBalanceTrends', () => {
 });
 
 describe('computeAccountBalanceTrends: real balances, not the net-worth stake (TICKET-ACC-07)', () => {
-  it('gives a joint account its full real balance, and no longer sums to the combined computeNetWorthTrend', () => {
+  it('gives a joint account its full real balance, and no longer sums to combined net worth', () => {
     const jointAccount: Account = {
       id: 1,
       name: 'Joint',
@@ -126,27 +124,6 @@ describe('computeAccountBalanceTrends: real balances, not the net-worth stake (T
     });
     const groceries = transaction({ id: 3, accountId: 1, amount: -200, bookingDate: '2026-01-10' });
     const transactions = [transferIn, transferOut, groceries];
-    const transfer: Transfer = {
-      id: 10,
-      fromTransactionId: 2,
-      toTransactionId: 1,
-      method: 'manual',
-      confidence: 'manual',
-      linkedAt: '2026-01-05T00:00:00.000Z',
-    };
-    const context: JointLegContext = {
-      transactionsById: new Map(transactions.map((t) => [t.id!, t])),
-      accountsById: new Map([
-        [1, jointAccount],
-        [2, ownAccount],
-      ]),
-      transfersById: new Map([
-        [1, transfer],
-        [2, transfer],
-      ]),
-      categoriesById: new Map<number, Category>(),
-    };
-
     const perAccountSeries = computeAccountBalanceTrends(
       transactions,
       accounts,
@@ -154,26 +131,18 @@ describe('computeAccountBalanceTrends: real balances, not the net-worth stake (T
       '2026-01-31',
       'month',
     );
-    const combined = computeNetWorthTrend(
-      transactions,
-      accounts,
-      '2026-01-01',
-      '2026-01-31',
-      'month',
-      context,
-    );
-
     // Joint: 0 opening + 500 transfer in - 200 groceries, at 100% (its stake is 500 - 100 = 400).
     expect(perAccountSeries[0].points[0].balance).toBe(300);
     expect(perAccountSeries[1].points[0].balance).toBe(500);
 
     // TICKET-STAT-03's "the bands sum to net worth" invariant is deliberately dropped here: the
-    // joint account's un-weighted €100 of partner-borne spending is the whole difference.
+    // joint account's un-weighted €100 of partner-borne spending is the whole difference. The
+    // combined figure it used to be compared against was `computeNetWorthTrend`'s €900, which
+    // TICKET-ACC-07 retired from production and this change deleted.
     const summedPerAccount = perAccountSeries.reduce(
       (sum, series) => sum + series.points[0].balance,
       0,
     );
     expect(summedPerAccount).toBe(800);
-    expect(combined[0].netWorth).toBe(900);
   });
 });

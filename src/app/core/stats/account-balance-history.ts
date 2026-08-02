@@ -14,9 +14,9 @@ export type AccountBalancePoint = {
  * Deliberately *not* net worth (TICKET-ACC-07): it takes no `JointLegContext` and never calls
  * `resolveContribution`, so a joint account's `ownershipShare`, a `neutral`-category partner
  * inflow, a `nullified` flag and a manual `attributionOverride` are all irrelevant here. Those
- * reweight what an account contributes to *net worth* — the Dashboard's concept, still served by
- * `computeNetWorthTrend` — never what the bank actually holds. `transactions` may be the full
- * universe; legs on other accounts are ignored.
+ * reweight what an account contributes to *net worth* — the Dashboard's point-in-time concept,
+ * served by `AccountsStore.netWorth` — never what the bank actually holds. `transactions` may be
+ * the full universe; legs on other accounts are ignored.
  *
  * Single O(n log n) pass: sort this account's transactions once (balance is cumulative from account
  * inception, so pre-filtering to [from, to] would drop history), then walk a running total forward,

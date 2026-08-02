@@ -10,11 +10,7 @@ import {
   type Category,
   type Transaction,
 } from '@/core/data-access';
-import {
-  computeAccountBalanceTrends,
-  computeNetWorthTrend,
-  pickGranularityForSpan,
-} from '@/core/stats';
+import { computeAccountBalanceTrends, pickGranularityForSpan } from '@/core/stats';
 import { echarts } from '@/shared/echarts';
 import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import {
@@ -252,14 +248,6 @@ describe('buildAccountBalanceHistoryChartOption', () => {
       '2026-01-31',
       'month',
     );
-    const combinedNetWorth = computeNetWorthTrend(
-      transactions,
-      jointAccounts,
-      '2026-01-01',
-      '2026-01-31',
-      'month',
-    );
-
     const option = buildAccountBalanceHistoryChartOption(jointAccounts, series, {
       startValue: 0,
       endValue: 0,
@@ -270,8 +258,9 @@ describe('buildAccountBalanceHistoryChartOption', () => {
     // Each band is that account's real balance: joint 1000 - 200 = 800, credit line -200 - 50 = -250.
     expect(bandData.map((data) => data[0])).toEqual([800, -250]);
     expect(stackedTotal).toBe(550);
-    // Net worth halves the joint spend and the joint opening balance, so it differs by design.
-    expect(combinedNetWorth[0].netWorth).toBe(150);
+    // Combined net worth halved the joint spend and the joint opening balance, so it differed by
+    // design (it came to €150). `computeNetWorthTrend`, which produced that figure, was retired
+    // from production by TICKET-ACC-07 and deleted; the bands' own sum is what this chart draws.
   });
 
   it('applies the given zoom window to both dataZoom entries', () => {
