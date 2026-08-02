@@ -64,6 +64,16 @@ export class DashboardOverviewComponent {
   protected readonly customizeMode = signal(false);
 
   /**
+   * Label + icon for the header's settings toggle (TICKET-STAT-25). "Dashboard settings" is the
+   * user's own wording, not "Customize" — the panel it opens keeps its internal customize naming.
+   */
+  protected readonly customizeToggle = computed(() =>
+    this.customizeMode()
+      ? { label: 'Done', icon: 'tablerCheck' }
+      : { label: 'Dashboard settings', icon: 'tablerPencil' },
+  );
+
+  /**
    * Deliberately read off `TransactionsStore` rather than `StatsStore`'s period-filtered stats
    * (TICKET-STAT-22): the empty state means "no data at all", not "no data in the selected range" —
    * a range with zero hits must still show the normal zeroed dashboard. Gated on `hydrated()` so the

@@ -50,25 +50,43 @@ the net-worth figure stays where it is.
 
 ## Acceptance criteria
 
-- [ ] The header renders a button reading **"Dashboard settings"** with the pencil icon; component spec
-      asserts the visible text, not just an aria label.
-- [ ] In customize mode the same button reads **"Done"** with the check icon, and clicking it exits;
-      component spec asserts both states and the round trip.
-- [ ] The button is absent while `hasNoTransactions()` is true; existing TICKET-STAT-22 spec still passes.
-- [ ] `mm-range-grouping-switcher` renders inside the Dashboard's `[actions]`, and changing its preset
+- [x] The header renders a button reading **"Dashboard settings"** with the pencil icon; component spec
+      asserts the visible text, not just an aria label. (`dashboard-overview.component.spec.ts` →
+      "page header (TICKET-STAT-25)" → "names the settings button in visible text, not just an aria
+      label", which also asserts the `ariaLabel` is gone so the two can no longer drift.)
+- [x] In customize mode the same button reads **"Done"** with the check icon, and clicking it exits;
+      component spec asserts both states and the round trip. ("reads 'Done' with a different icon in
+      customize mode, and clicking it exits" — clicks in, asserts label + a changed glyph, clicks out,
+      asserts the original label and glyph are back. The icon is asserted through the inline svg
+      `ng-icon` draws, since this build emits no `ng-reflect-*` attributes.)
+- [x] The button is absent while `hasNoTransactions()` is true; existing TICKET-STAT-22 spec still passes.
+      (Renamed to "hides the dashboard-settings toggle while the empty state is showing" — it matched on
+      the now-deleted `[aria-label="Customize dashboard"]`, so it would have passed vacuously.)
+- [x] `mm-range-grouping-switcher` renders inside the Dashboard's `[actions]`, and changing its preset
       re-scopes the page's stats; component spec asserts a preset change reaches the dashboard's range
-      state and the stat figures recompute.
-- [ ] Changing the Dashboard's range leaves the Accounts page's range untouched — covered by
-      TICKET-UI-23's isolation test; assert it here from the Dashboard's side too.
-- [ ] `<app-net-worth-header />` is still rendered in the header; component spec asserts it survives.
-- [ ] Header children render in the order title · net worth · range · settings; component spec asserts
-      the DOM order.
-- [ ] No persistence changes, no Dexie version bump — customize-mode state and row order are untouched
-      (`dashboardLayoutSettings` is not part of this ticket).
-- [ ] `angular.json` bundle budgets not raised — the customize panel stays behind its `@defer`.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: the header reads "Dashboard settings" with a working range picker
-      beside it; on a narrow screen the action row wraps instead of overflowing.
+      state and the stat figures recompute. ("renders the range switcher in the header, and a preset
+      change re-scopes the page" drives the real `select`; the existing periodized-sub-label cases
+      cover the figures recomputing off `RangeStore`.)
+- [x] Changing the Dashboard's range leaves the Accounts page's range untouched — covered by
+      TICKET-UI-23's isolation test; assert it here from the Dashboard's side too. (Same spec asserts
+      `rangeStore.preset('accounts')` is still `this-month` after the Dashboard moves to `last-year`.)
+- [x] `<app-net-worth-header />` is still rendered in the header; component spec asserts it survives.
+      ("keeps the net-worth figure in the header".)
+- [x] Header children render in the order title · net worth · range · settings; component spec asserts
+      the DOM order. ("orders the header title · net worth · range · settings", filtering out the
+      switcher's own internal buttons.)
+- [x] No persistence changes, no Dexie version bump — customize-mode state and row order are untouched
+      (`dashboardLayoutSettings` is not part of this ticket). (Diff is the header template, one
+      `computed()` on the component, and its spec.)
+- [x] `angular.json` bundle budgets not raised — the customize panel stays behind its `@defer`.
+      (`@defer (when customizeMode())` unchanged; dev build reports no budget warnings.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (Both pre-commit gate
+      commands exit 0; label/icon resolved on a `computed()` view-model rather than a template
+      ternary, per the "templates branch on state, never derive it" convention.)
+- [x] Verified live in the browser: the header reads "Dashboard settings" with a working range picker
+      beside it; on a narrow screen the action row wraps instead of overflowing. (Dev server on :4210 —
+      header reads `h1` · `app-net-worth-header` · `mm-range-grouping-switcher` ·
+      `button[Dashboard settings]`; at 375px the bar wraps to three rows with no horizontal overflow.)
 
 ## Notes
 

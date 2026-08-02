@@ -81,6 +81,21 @@ describe('DashboardOverviewComponent', () => {
     TestBed.inject(TransactionsStore).addMany([transaction()]);
   };
 
+  /** Visible text of every button in the page header — TICKET-STAT-25 made the label the name. */
+  const headerButtonLabels = (): string[] =>
+    Array.from(
+      fixture.nativeElement.querySelectorAll(
+        'mm-page-header button',
+      ) as NodeListOf<HTMLButtonElement>,
+    ).map((button) => button.textContent?.trim() ?? '');
+
+  const settingsButton = (): HTMLButtonElement | undefined =>
+    Array.from(
+      fixture.nativeElement.querySelectorAll(
+        'mm-page-header button',
+      ) as NodeListOf<HTMLButtonElement>,
+    ).find((button) => /Dashboard settings|Done/.test(button.textContent ?? ''));
+
   beforeEach(async () => {
     await configureTestBed();
 
@@ -219,6 +234,87 @@ describe('DashboardOverviewComponent', () => {
     });
   });
 
+  describe('page header (TICKET-STAT-25)', () => {
+    it('names the settings button in visible text, not just an aria label', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      const button = settingsButton();
+      expect(button?.textContent?.trim()).toBe('Dashboard settings');
+      expect(button?.querySelector('ng-icon')).not.toBeNull();
+      // The label carries the accessible name now, so there is no aria-label left to drift from it.
+      expect(button?.getAttribute('aria-label')).toBeNull();
+    });
+
+    it('reads "Done" with a different icon in customize mode, and clicking it exits', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+      // `ng-icon` renders the glyph as inline svg and this build emits no `ng-reflect-*`, so the
+      // icon swap is asserted through the markup it actually draws.
+      const pencilGlyph = settingsButton()?.querySelector('ng-icon')?.innerHTML;
+
+      settingsButton()?.click();
+      fixture.detectChanges();
+
+      expect(settingsButton()?.textContent?.trim()).toBe('Done');
+      const checkGlyph = settingsButton()?.querySelector('ng-icon')?.innerHTML;
+      expect(checkGlyph).toBeTruthy();
+      expect(checkGlyph).not.toBe(pencilGlyph);
+
+      settingsButton()?.click();
+      fixture.detectChanges();
+
+      expect(settingsButton()?.textContent?.trim()).toBe('Dashboard settings');
+      expect(settingsButton()?.querySelector('ng-icon')?.innerHTML).toBe(pencilGlyph);
+    });
+
+    it('keeps the net-worth figure in the header', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('mm-page-header app-net-worth-header'),
+      ).not.toBeNull();
+    });
+
+    it('renders the range switcher in the header, and a preset change re-scopes the page', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      const switcher = fixture.nativeElement.querySelector(
+        'mm-page-header mm-range-grouping-switcher',
+      );
+      expect(switcher).not.toBeNull();
+
+      const select = switcher.querySelector('select') as HTMLSelectElement;
+      select.value = 'last-year';
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      const rangeStore = TestBed.inject(RangeStore);
+      expect(rangeStore.preset('dashboard')).toBe('last-year');
+      // …and only this page's range moved (TICKET-UI-23, asserted here from the Dashboard's side).
+      expect(rangeStore.preset('accounts')).toBe('this-month');
+    });
+
+    it('orders the header title · net worth · range · settings', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+      const order = Array.from(
+        header.querySelectorAll(
+          'h1, app-net-worth-header, mm-range-grouping-switcher, button',
+        ) as NodeListOf<HTMLElement>,
+      )
+        // The switcher has its own buttons; only the header's direct action buttons count.
+        .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-grouping-switcher'))
+        .map((el) => el.tagName.toLowerCase());
+
+      expect(order).toEqual(['h1', 'app-net-worth-header', 'mm-range-grouping-switcher', 'button']);
+    });
+  });
+
   describe('empty state (TICKET-STAT-22)', () => {
     it('replaces the dashboard rows with mm-empty-state when hydration finds zero transactions', () => {
       fixture.detectChanges();
@@ -238,10 +334,10 @@ describe('DashboardOverviewComponent', () => {
       expect(cta.textContent.trim()).toBe('Import transactions');
     });
 
-    it('hides the customize-dashboard toggle while the empty state is showing', () => {
+    it('hides the dashboard-settings toggle while the empty state is showing', () => {
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelector('[aria-label="Customize dashboard"]')).toBeNull();
+      expect(headerButtonLabels()).not.toContain('Dashboard settings');
     });
 
     it('swaps back to the row-based dashboard as soon as a transaction exists, without a reload', () => {
@@ -253,9 +349,7 @@ describe('DashboardOverviewComponent', () => {
 
       expect(fixture.nativeElement.querySelector('mm-empty-state')).toBeNull();
       expect(fixture.nativeElement.querySelector('.stat')).not.toBeNull();
-      expect(
-        fixture.nativeElement.querySelector('[aria-label="Customize dashboard"]'),
-      ).not.toBeNull();
+      expect(headerButtonLabels()).toContain('Dashboard settings');
     });
 
     it('stays hidden for a date range with no hits, since the dataset itself is not empty', () => {

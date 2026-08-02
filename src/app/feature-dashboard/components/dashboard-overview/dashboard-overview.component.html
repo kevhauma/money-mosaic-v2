@@ -1,21 +1,6 @@
+<!-- Header order (TICKET-STAT-25): title · net worth · date range · Dashboard settings. The figure
+     the page is named for reads first, then the controls, then the settings toggle last. -->
 <mm-page-header title="Dashboard">
-  <!-- Nothing to reorder or hide while the empty state is showing, so customize mode is unreachable there (TICKET-STAT-22). -->
-  @if (!hasNoTransactions()) {
-    <mm-button
-      title-adornment
-      variant="ghost"
-      size="sm"
-      shape="circle"
-      [ariaLabel]="customizeMode() ? 'Done customizing dashboard' : 'Customize dashboard'"
-      (click)="toggleCustomizeMode()"
-    >
-      <ng-icon
-        [name]="customizeMode() ? 'tablerCheck' : 'tablerPencil'"
-        size="16"
-        aria-hidden="true"
-      />
-    </mm-button>
-  }
   <div actions>
     <app-net-worth-header />
   </div>
@@ -26,6 +11,15 @@
     (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
+  <!-- Nothing to reorder or hide while the empty state is showing, so customize mode is unreachable there (TICKET-STAT-22). -->
+  @if (!hasNoTransactions()) {
+    <!-- The visible label *is* the accessible name (TICKET-STAT-25) — a bare pencil left a sighted
+         user guessing, and the ariaLabel it used to carry only helped a screen reader. -->
+    <mm-button actions variant="ghost" size="sm" (click)="toggleCustomizeMode()">
+      <ng-icon [name]="customizeToggle().icon" size="16" aria-hidden="true" />
+      {{ customizeToggle().label }}
+    </mm-button>
+  }
 </mm-page-header>
 
 @if (hasNoTransactions()) {
