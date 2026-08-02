@@ -58,6 +58,100 @@ describe('AccountsOverviewComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('No accounts yet');
   });
 
+  describe('page header (TICKET-ACC-08)', () => {
+    const headerControls = (): string[] =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll(
+          'mm-page-header input[type="checkbox"], mm-page-header mm-range-grouping-switcher, mm-page-header button',
+        ) as NodeListOf<HTMLElement>,
+      )
+        // The switcher brings its own prev/next buttons; only the header's own controls count.
+        .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-grouping-switcher'))
+        .map((el) =>
+          el.tagName === 'BUTTON' ? `button[${el.textContent?.trim()}]` : el.tagName.toLowerCase(),
+        );
+
+    it('renders exactly three controls, in the order show-archived · range · add account', async () => {
+      await setup();
+      fixture.detectChanges();
+
+      expect(headerControls()).toEqual([
+        'input',
+        'mm-range-grouping-switcher',
+        'button[Add account]',
+      ]);
+    });
+
+    it('leaves no page-level control in the body', async () => {
+      await setup();
+      fixture.detectChanges();
+      const page: HTMLElement = fixture.nativeElement;
+      const header = page.querySelector('mm-page-header');
+
+      const strays = Array.from(
+        page.querySelectorAll('mm-range-grouping-switcher') as NodeListOf<HTMLElement>,
+      ).filter((el) => !header?.contains(el));
+
+      expect(strays).toEqual([]);
+      expect(page.querySelector('mm-page-header .mm-page-title p')).toBeNull();
+    });
+
+    it('"Show archived" reveals archived accounts in the list while the chart keeps plotting only active ones', async () => {
+      await setup();
+      const store = TestBed.inject(AccountsStore);
+      const active = await store.addAccount({
+        name: 'Active',
+        type: 'checking',
+        currency: 'EUR',
+        openingBalance: 0,
+        openingBalanceDate: '2026-01-01',
+        color: '#7F77DD',
+        icon: 'wallet',
+        archived: false,
+      });
+      const archived = await store.addAccount({
+        name: 'Archived',
+        type: 'checking',
+        currency: 'EUR',
+        openingBalance: 0,
+        openingBalanceDate: '2026-01-01',
+        color: '#7F77DD',
+        icon: 'wallet',
+        archived: false,
+      });
+      await store.archiveAccount(archived.id!);
+      fixture.detectChanges();
+
+      const visibleNames = (): string[] =>
+        (
+          fixture.componentInstance as unknown as { visibleAccounts: () => { name: string }[] }
+        ).visibleAccounts
+          .call(fixture.componentInstance)
+          ?.map((a) => a.name) ?? [];
+
+      expect(visibleNames()).toEqual(['Active']);
+
+      const toggle = fixture.nativeElement.querySelector(
+        'mm-page-header input[type="checkbox"]',
+      ) as HTMLInputElement;
+      toggle.click();
+      fixture.detectChanges();
+
+      expect(visibleNames()).toEqual(['Active', 'Archived']);
+      // The chart's own scope is unchanged — it plots activeAccounts() by design (TICKET-ACC-07).
+      expect(store.activeAccounts().map((a) => a.name)).toEqual(['Active']);
+      expect(active.id).toBeDefined();
+    });
+
+    it('keeps the action row wrapping so three controls degrade rather than overflow at 375px', async () => {
+      await setup();
+      fixture.detectChanges();
+
+      const actions = fixture.nativeElement.querySelector('div.mm-page-actions') as HTMLElement;
+      expect(actions.classList.contains('flex-wrap')).toBe(true);
+    });
+  });
+
   describe('accountCards VM (TICKET-ACC-05)', () => {
     const readCards = (): AccountCardVm[] =>
       (

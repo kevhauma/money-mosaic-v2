@@ -50,23 +50,49 @@ above them, and the date range that used to live in the shell topbar joins them.
 
 ## Acceptance criteria
 
-- [ ] The Accounts header renders exactly three controls in the stated order; component spec asserts DOM
-      order and that no control was left in the page body.
-- [ ] No subtitle renders on `/accounts` or `/accounts/:id`; component specs assert absence.
-- [ ] "Show archived" still toggles archived accounts into `visibleAccounts()`, and the chart still shows
-      only active accounts with the toggle on; component spec asserts both halves.
-- [ ] Changing the range from the Accounts header updates the balance-history chart's zoom window;
+**Implementation note (2026-08-02):** the range control itself landed with
+[TICKET-UI-23](./TICKET-UI-23-per-page-date-range.md) — that ticket's own browser criterion
+("set Dashboard to Last year, switch to Accounts…") is unverifiable unless both pages render one,
+and an in-between commit would have left the range unreachable. What this ticket added on top: the
+ordering, the archived-vs-chart scope comment, and every spec below.
+
+- [x] The Accounts header renders exactly three controls in the stated order; component spec asserts DOM
+      order and that no control was left in the page body. (`accounts-overview.component.spec.ts` →
+      "page header (TICKET-ACC-08)" → "renders exactly three controls, in the order show-archived ·
+      range · add account" and "leaves no page-level control in the body".)
+- [x] No subtitle renders on `/accounts` or `/accounts/:id`; component specs assert absence.
+      ("leaves no page-level control in the body" also asserts no `.mm-page-title p` on `/accounts`;
+      `accounts-detail.component.spec.ts` "renders no subtitle and no range control" covers the detail
+      route, asserting the title is the account name and the `account.type | titlecase` caption is gone.)
+- [x] "Show archived" still toggles archived accounts into `visibleAccounts()`, and the chart still shows
+      only active accounts with the toggle on; component spec asserts both halves. ("'Show archived'
+      reveals archived accounts in the list while the chart keeps plotting only active ones" — clicks the
+      real checkbox and asserts `visibleAccounts()` grows while `activeAccounts()` does not.)
+- [x] Changing the range from the Accounts header updates the balance-history chart's zoom window;
       component spec asserts the recomputed window reaches `chartOption()`.
-- [ ] Changing the range from the Accounts header leaves the Dashboard's range untouched (TICKET-UI-23's
-      isolation, asserted here from the Accounts side).
-- [ ] "Add account" still opens the account form with no account bound (create mode); existing spec
-      passes.
-- [ ] The action row wraps rather than overflowing at 375px; component spec asserts the wrap binding.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: all three controls sit in the header, the range picker moves the
-      chart, and the archived toggle still reveals archived cards.
+      (`account-balance-history-chart.component.spec.ts` "the Accounts page's range re-scrubs the
+      chart's zoom window, and the Dashboard's does not" — the overview spec stubs the chart out, so
+      the assertion belongs on the chart's own spec where a real `chartOption()` exists.)
+- [x] Changing the range from the Accounts header leaves the Dashboard's range untouched (TICKET-UI-23's
+      isolation, asserted here from the Accounts side). (Same spec: a `setCustomRange('dashboard', …)`
+      between two Accounts moves leaves the chart's zoom window byte-identical.)
+- [x] "Add account" still opens the account form with no account bound (create mode); existing spec
+      passes. (`openAddForm()` and its `editingAccount.set(null)` are untouched; the header-order spec
+      asserts the button is still there and still last.)
+- [x] The action row wraps rather than overflowing at 375px; component spec asserts the wrap binding.
+      ("keeps the action row wrapping so three controls degrade rather than overflow at 375px" asserts
+      `flex-wrap` on the header's own `div.mm-page-actions`, the inner group TICKET-UI-22 added the
+      binding to.)
+- [x] No persistence changes, no Dexie version bump. (Diff is templates, one comment, and specs.)
+- [x] `angular.json` bundle budgets not raised. (Untouched; dev build clean.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (Both pre-commit gate commands
+      exit 0.)
+- [x] Verified live in the browser: all three controls sit in the header, the range picker moves the
+      chart, and the archived toggle still reveals archived cards. (Dev server on :4210 — the header
+      reports `input` · `mm-range-grouping-switcher` · `button[Add account]` with no subtitle, and
+      switching to "This year" re-mirrors `?from=2026-01-01&to=2026-12-31` with the chart still drawn.
+      **The archived-reveal half was verified by unit test, not live**: the seeded dataset has no
+      archived account, so clicking the toggle in the browser had nothing to reveal.)
 
 ## Notes
 

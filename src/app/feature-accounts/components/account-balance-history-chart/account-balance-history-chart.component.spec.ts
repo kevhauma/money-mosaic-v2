@@ -87,6 +87,25 @@ describe('AccountBalanceHistoryChartComponent', () => {
 
     expect(pointsAsQuarter).toBeLessThan(pointsAsDay);
   });
+
+  it("the Accounts page's range re-scrubs the chart's zoom window, and the Dashboard's does not (TICKET-ACC-08)", () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    fixture.componentInstance['granularity'].set('month');
+    const zoomOf = (): { startValue: number; endValue: number } =>
+      (fixture.componentInstance['chartOption']() as Record<string, unknown>)[
+        'dataZoom'
+      ] as unknown as { startValue: number; endValue: number };
+
+    rangeStore.setCustomRange('accounts', '2026-01-01', '2026-03-31');
+    const early = JSON.stringify(zoomOf());
+
+    // A move on the *other* page must not touch this chart at all.
+    rangeStore.setCustomRange('dashboard', '2020-01-01', '2020-01-31');
+    expect(JSON.stringify(zoomOf())).toBe(early);
+
+    rangeStore.setCustomRange('accounts', '2026-06-01', '2026-08-31');
+    expect(JSON.stringify(zoomOf())).not.toBe(early);
+  });
 });
 
 describe('AccountBalanceHistoryChartComponent: a joint account bands at its real balance (TICKET-ACC-07)', () => {
