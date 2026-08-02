@@ -123,6 +123,15 @@ describe('TransactionsOverviewComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('opens with a bare "Transactions" header and no subtitle caption (TICKET-UI-22)', async () => {
+    await setup({});
+    fixture.detectChanges();
+    const header: HTMLElement | null = fixture.nativeElement.querySelector('mm-page-header');
+
+    expect(header?.querySelector('h1')?.textContent?.trim()).toBe('Transactions');
+    expect(header?.querySelector('.mm-text-caption')).toBeNull();
+  });
+
   it('applies the filters emitted by the filter bar to filteredTransactions', async () => {
     await setup();
     TestBed.inject(TransactionsStore).addMany([

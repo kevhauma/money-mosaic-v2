@@ -1,5 +1,5 @@
 @if (account(); as account) {
-  <mm-page-header [title]="account.name" [subtitle]="account.type | titlecase">
+  <mm-page-header [title]="account.name">
     <mm-flex actions align="center" gap="2">
       <mm-button variant="ghost" size="sm" link="/accounts">Back to accounts</mm-button>
       <mm-button size="sm" (click)="formOpen.set(true)">

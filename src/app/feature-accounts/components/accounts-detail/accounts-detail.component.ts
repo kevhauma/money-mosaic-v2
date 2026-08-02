@@ -1,4 +1,4 @@
-import { KeyValuePipe, TitleCasePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -31,7 +31,6 @@ import {
   selector: 'app-accounts-detail',
   imports: [
     NgIcon,
-    TitleCasePipe,
     KeyValuePipe,
     SignedAmountPipe,
     AccountFormComponent,

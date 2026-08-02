@@ -52,6 +52,94 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Dashboard',
   },
   {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-UI-22',
+    title: 'Every page opens with its title and its own controls, and no subtitle',
+    area: 'Shared UI',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-UI-23',
+    title:
+      'The date range moves into each page header, and each page remembers its own instead of sharing one',
+    area: 'Shared UI',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-STAT-25',
+    title: 'Dashboard header: a labelled “Dashboard settings” button and the page’s own date range',
+    area: 'Dashboard',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-ACC-08',
+    title: 'Accounts header: show archived, add account, and the page’s own date range',
+    area: 'Accounts',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-INC-21',
+    title: 'Income header: guide, settings and salary details as one consistent set of controls',
+    area: 'Income',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-CAT-09',
+    title: 'Categories/Rules header: the view switch, the create button and each tab’s own control',
+    area: 'Categories',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-ML-18',
+    title: 'Learning header: see whether the auto-categoriser is trained without scrolling',
+    area: 'Learning',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-STAT-26',
+    title: 'Chart legends get their own strip instead of floating over the lines and bars',
+    area: 'Charts',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-STAT-27',
+    title:
+      'Charts remember the series you hid and the bucket you picked, for as long as the app is open',
+    area: 'Charts',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-ACC-10',
+    title: 'Balance charts always plot a daily balance, with no bucket size to pick',
+    area: 'Accounts',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-ACC-11',
+    title:
+      'Hovering a day on a balance chart shows what moved that day, on both the Accounts page and an account’s own page',
+    area: 'Accounts',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-ACC-09',
+    title: 'Account cards stack in one column, in the same order as the chart’s bands',
+    area: 'Accounts',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-TXN-10',
+    title: 'Picking Income or Expenses filters the list straight away, and “All” turns it back off',
+    area: 'Transactions',
+  },
+  {
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketId: 'TICKET-INC-22',
+    title:
+      'The Income page fits its charts side by side instead of scrolling for pages, and the events list stays put while you scroll',
+    area: 'Income',
+  },
+  {
     versionFolder: 'v1.7_loan_tracker',
     ticketId: 'topic-loan-tracker',
     title:

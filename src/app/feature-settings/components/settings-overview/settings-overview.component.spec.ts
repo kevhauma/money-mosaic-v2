@@ -57,6 +57,13 @@ describe('SettingsOverviewComponent', () => {
     ]);
   });
 
+  it('opens with a bare "Settings" header and no subtitle caption (TICKET-UI-22)', () => {
+    const header = render().querySelector('mm-page-header');
+
+    expect(header?.querySelector('h1')?.textContent?.trim()).toBe('Settings');
+    expect(header?.querySelector('.mm-text-caption')).toBeNull();
+  });
+
   it('links back to the public welcome page', () => {
     const link = render().querySelector('a[href="/home"]');
 

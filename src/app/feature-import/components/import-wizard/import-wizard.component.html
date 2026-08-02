@@ -5,7 +5,7 @@
   [class.max-w-3xl]="session.step() !== 2"
   [class.max-w-6xl]="session.step() === 2"
 >
-  <mm-text as="h1" weight="semibold" class="mb-6 text-xl">Import CSV</mm-text>
+  <mm-page-header title="Import CSV" />
 
   <ul class="steps mb-8 w-full">
     <li class="step" [class.step-primary]="session.step() >= 1">Select</li>

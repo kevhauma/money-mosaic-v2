@@ -5,6 +5,7 @@ import {
   EmptyStateComponent,
   PageHeaderComponent,
   PaperComponent,
+  TypographyComponent,
 } from '@/shared/ui';
 import { GuideStepsComponent } from '../guide-steps/guide-steps.component';
 
@@ -16,6 +17,7 @@ import { GuideStepsComponent } from '../guide-steps/guide-steps.component';
     GuideStepsComponent,
     PageHeaderComponent,
     PaperComponent,
+    TypographyComponent,
   ],
   templateUrl: './guide-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

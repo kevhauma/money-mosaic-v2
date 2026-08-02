@@ -4,6 +4,7 @@ import {
   AlertComponent,
   ButtonComponent,
   FlexComponent,
+  PageHeaderComponent,
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
@@ -28,6 +29,7 @@ import { ImportSummaryStepComponent } from '../import-summary-step/import-summar
     ButtonComponent,
     AlertComponent,
     FlexComponent,
+    PageHeaderComponent,
     PaperComponent,
     TypographyComponent,
   ],

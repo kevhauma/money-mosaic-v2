@@ -8,10 +8,7 @@
 @if (showIntro()) {
   <app-income-intro />
 } @else {
-  <mm-page-header
-    title="Income"
-    subtitle="How your income moves over time — by source, year over year, and against the noise."
-  >
+  <mm-page-header title="Income">
     <mm-button actions variant="ghost" size="sm" [link]="fullGuideLink">
       <ng-icon name="tablerHelpCircle" size="16" aria-hidden="true" />
       Guide

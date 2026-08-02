@@ -1,7 +1,11 @@
 @if (guide(); as guide) {
-  <mm-page-header [title]="guide.title" [subtitle]="guide.summary" />
+  <mm-page-header [title]="guide.title" />
 
   <mm-paper elevation="raised">
+    <!-- The summary was the header's subtitle until TICKET-UI-22 dropped subtitles app-wide. It is
+         the guide's own opening line rather than chrome, and `app-guide-steps` renders only the
+         numbered steps — so it moves into the body here instead of being lost. -->
+    <mm-text variant="caption" as="p" class="mb-4 block">{{ guide.summary }}</mm-text>
     <app-guide-steps [steps]="guide.steps" />
 
     <div class="mt-6">

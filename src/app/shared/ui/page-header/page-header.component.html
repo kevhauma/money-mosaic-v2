@@ -5,11 +5,10 @@
       <mm-text variant="heading" as="h1">{{ title() }}</mm-text>
       <ng-content select="[title-adornment]" />
     </mm-flex>
-    @if (subtitle()) {
-      <mm-text variant="caption" as="p">{{ subtitle() }}</mm-text>
-    }
   </div>
-  <mm-flex align="center" gap="2">
+  <!-- Wraps in its own right: the outer row only drops the whole group onto a second line, which
+       still overflows once a page projects three or four controls (TICKET-UI-22). -->
+  <mm-flex class="mm-page-actions" align="center" gap="2" [wrap]="true">
     <ng-content select="[actions]" />
   </mm-flex>
 </mm-flex>
