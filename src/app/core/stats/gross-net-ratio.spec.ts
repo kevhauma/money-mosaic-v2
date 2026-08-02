@@ -1,5 +1,6 @@
 import type { SalaryMetadata } from '@/core/data-access';
 import type { CategorySeriesEntry } from './category-composition-trend';
+import { smoothEmbeddedBonuses, SMOOTHED_BONUS_CATEGORY_ID } from './embedded-bonus-smoothing';
 import { computeGrossNetRatio } from './gross-net-ratio';
 import type { IncomeCategorySeries } from './income-category-series';
 import { smoothAnnualLumpSums } from './annual-lump-sum-smoothing';
@@ -254,5 +255,49 @@ describe('computeGrossNetRatio: raw series, never the smoothed one', () => {
 
     expect(computeGrossNetRatio(smoothed, gross)[5].net).toBe(3000);
     expect(computeGrossNetRatio(raw, gross)[5].net).toBe(14000);
+  });
+
+  it("leaves the counted-series filter's null branch untouched (TICKET-INC-20)", () => {
+    // The embedded-bonus band carries `SMOOTHED_BONUS_CATEGORY_ID`, never `null` — which already
+    // means "Uncategorised" to the filter below, and would therefore have made the band immune to
+    // the FR-INC-4 exclusion every other series is subject to.
+    const raw = trendOf(series(1, flat(2000)), series(2, flat(500)));
+    const withBonus = metadata(
+      ...BUCKET_KEYS.map((yearMonth) => ({
+        yearMonth,
+        grossWage: 3000,
+        ...(yearMonth === '2026-06' ? { bonus: 1200 } : {}),
+      })),
+    );
+
+    const smoothed = smoothEmbeddedBonuses(raw, withBonus, 'month');
+
+    expect(smoothed.series.some((entry) => entry.categoryId === null)).toBe(false);
+    expect(smoothed.series.at(-1)!.categoryId).toBe(SMOOTHED_BONUS_CATEGORY_ID);
+    // Excluding a category still drops exactly that category, band present or not.
+    expect(computeGrossNetRatio(smoothed, withBonus, new Set([2]))[0].net).toBe(
+      computeGrossNetRatio(smoothed, withBonus)[0].net - 500,
+    );
+  });
+
+  it('reads the raw series, so the bonus band never reaches the take-home figures', () => {
+    const raw = trendOf(series(1, flat(2000)));
+    const withBonus = metadata(
+      ...BUCKET_KEYS.map((yearMonth) => ({
+        yearMonth,
+        grossWage: 3000,
+        ...(yearMonth === '2026-06' ? { bonus: 1200 } : {}),
+      })),
+    );
+
+    // The figures FR-INC-11 actually shows: June's real deposit in June, minus its recorded bonus.
+    const points = computeGrossNetRatio(raw, withBonus);
+    expect(points[5].net).toBe(800);
+    expect(points[4].net).toBe(2000);
+    // And the contrast that pins why: smoothing moves 1200 out of June, so passing the smoothed
+    // trend here would compare a redistributed figure against a gross wage entered for one month.
+    expect(
+      computeGrossNetRatio(smoothEmbeddedBonuses(raw, withBonus, 'month'), withBonus)[5].net,
+    ).not.toBe(800);
   });
 });

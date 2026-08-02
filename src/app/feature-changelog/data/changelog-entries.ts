@@ -442,4 +442,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The charts on the Accounts page now show what is actually in each account, instead of your share of it',
     area: 'Accounts',
   },
+  {
+    date: '2026-08-02',
+    versionFolder: 'v1.6_income_growth',
+    ticketIds: ['TICKET-INC-19', 'TICKET-INC-20'],
+    title:
+      'A bonus you record on a salary deposit now comes off the right category, and shows up as its own band on the income chart',
+    details: [
+      'New “Main income category” setting: pick the category your salary lands in, and a bonus you typed into Salary details is taken off that one — previously it was shaved off every income category that paid you that month, so a freelance invoice or a rent payment lost a slice of a bonus it never paid',
+      'That bonus now draws as its own “Bonus (spread over the year)” band on the income chart, with its own legend entry and colour, instead of being folded back into your salary line where the only trace of it was the figure you typed',
+      'Your salary line drops to what it really was, so you can see how much of the year was bonus rather than a salary quietly inflated by a twelfth',
+      'Totals are untouched, and a bonus that grows from one year to the next no longer risks reading as a raise in the Events list',
+    ],
+    area: 'Income',
+  },
 ];

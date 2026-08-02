@@ -219,4 +219,38 @@ describe('AppSettingsRepository', () => {
       grossColor: undefined,
     });
   });
+
+  it('setMainIncomeCategoryId writes the singleton row without one existing yet (TICKET-INC-19)', async () => {
+    await repository.setMainIncomeCategoryId(4);
+
+    expect(await repository.get()).toEqual({ id: 1, mainIncomeCategoryId: 4 });
+  });
+
+  it('setMainIncomeCategoryId preserves unrelated settings and stays a single row', async () => {
+    await repository.setLocale('en-GB');
+    await repository.setSmoothedBonusCategoryIds([2]);
+    await repository.setMainIncomeCategoryId(4);
+    await repository.setMainIncomeCategoryId(1);
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      locale: 'en-GB',
+      smoothedBonusCategoryIds: [2],
+      mainIncomeCategoryId: 1,
+    });
+    expect(await appDb.appSettings.count()).toBe(1);
+  });
+
+  it('setMainIncomeCategoryId(undefined) clears it without touching the rest of the row', async () => {
+    await repository.setPrimaryColor('rose');
+    await repository.setMainIncomeCategoryId(4);
+
+    await repository.setMainIncomeCategoryId(undefined);
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      primaryColor: 'rose',
+      mainIncomeCategoryId: undefined,
+    });
+  });
 });

@@ -1,4 +1,5 @@
 import type { CategorySeriesEntry } from './category-composition-trend';
+import { SMOOTHED_BONUS_CATEGORY_ID } from './embedded-bonus-smoothing';
 import type { IncomeCategorySeries } from './income-category-series';
 import { detectIncomeStepChanges } from './income-step-change-detection';
 
@@ -149,6 +150,22 @@ describe('detectIncomeStepChanges: eligibility', () => {
     });
 
     expect(detectIncomeStepChanges(uncategorised, 'month')).toEqual([]);
+  });
+
+  it('ignores the redistributed-bonus band, while still flagging a real raise beside it', () => {
+    // TICKET-INC-20's synthetic series is flat within a year, so a bonus that doubles from one
+    // year to the next steps at every January — exactly the phantom raise FR-INC-8 avoids.
+    const withBonusBand = trendOf(entry([...flat(2000, 12), ...flat(2000, 6), ...flat(2600, 6)]), {
+      ...entry([...flat(2000 / 12, 12), ...flat(4000 / 12, 12)]),
+      categoryId: SMOOTHED_BONUS_CATEGORY_ID,
+      name: 'Bonus (spread over the year)',
+    });
+
+    const changes = detectIncomeStepChanges(withBonusBand, 'month');
+
+    expect(changes.some((change) => change.categoryId === SMOOTHED_BONUS_CATEGORY_ID)).toBe(false);
+    expect(changes).toHaveLength(1);
+    expect(changes[0]).toMatchObject({ categoryId: 1, changedAtBucketKey: '2026-07' });
   });
 });
 

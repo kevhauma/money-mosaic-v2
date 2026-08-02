@@ -98,6 +98,31 @@
 </mm-paper>
 
 <mm-paper class="mt-6">
+  <h2 class="card-title text-base">Main income category</h2>
+  <mm-text variant="caption" as="p">
+    Which category your salary deposit lands in. This only matters for the second route above — a
+    bonus you typed into Salary details, rather than one with its own category. That figure says
+    "part of this month's deposit was a 13th month", and this setting says which deposit.
+  </mm-text>
+  <mm-text variant="caption" as="p" class="mt-2">
+    Without it, the bonus is taken off every income category that paid you that month, in proportion
+    to what each paid — so a freelance invoice or a rent payment in the same month loses a slice of
+    a bonus it never paid, and gets that slice spread across its year instead. Naming your salary
+    category takes the whole bonus off that one. If the bonus is larger than what that category paid
+    that month, the difference still comes off the others, since the deposit must have straddled
+    both.
+  </mm-text>
+  <mm-text variant="caption" as="p" class="mt-2">
+    Only categories you count above are offered. If you have one income category, this changes
+    nothing — it is already the only place a bonus can come from.
+  </mm-text>
+
+  <div class="mt-3">
+    <app-income-main-category />
+  </div>
+</mm-paper>
+
+<mm-paper class="mt-6">
   <h2 class="card-title text-base">Chart colours</h2>
   <mm-text variant="caption" as="p">
     Gross pay and net income are always drawn together in the "Net vs gross" section, so telling

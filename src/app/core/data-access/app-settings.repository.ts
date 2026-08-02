@@ -55,6 +55,13 @@ export class AppSettingsRepository {
     return appDb.appSettings.put({ ...current, id: 1, grossColor });
   };
 
+  // `undefined` clears the setting (TICKET-INC-19) — an embedded bonus falls back to coming off
+  // every non-zero income series pro rata, which is what an unset field already means.
+  setMainIncomeCategoryId = async (mainIncomeCategoryId: number | undefined): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, mainIncomeCategoryId });
+  };
+
   /**
    * Records that a guide's first-visit intro has been shown (TICKET-PUB-08). Idempotent — marking
    * the same slug twice leaves one entry, because both of the intro's exits call this and a user

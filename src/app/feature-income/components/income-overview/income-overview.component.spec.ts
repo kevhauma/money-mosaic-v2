@@ -19,7 +19,11 @@ import {
   RangeStore,
   TransactionsStore,
 } from '@/core/state';
-import type { CategorySeriesEntry, ChartZoomWindow } from '@/core/stats';
+import {
+  SMOOTHED_BONUS_CATEGORY_ID,
+  type CategorySeriesEntry,
+  type ChartZoomWindow,
+} from '@/core/stats';
 import { echarts } from '@/shared/echarts';
 import {
   DEFAULT_CURRENCY_SYMBOL,
@@ -84,6 +88,26 @@ describe('buildIncomeTrendChartOption (FR-INC-2, TICKET-INC-02)', () => {
     ]);
 
     expect(option.legend.data).toEqual(['Salary', 'Other Income']);
+  });
+
+  it('draws the redistributed-bonus band like any other series (TICKET-INC-20)', () => {
+    // What `smoothEmbeddedBonuses` appends: its own id, name and colour, no special-casing here.
+    const bonusBand = seriesEntry({
+      categoryId: SMOOTHED_BONUS_CATEGORY_ID,
+      name: 'Bonus (spread over the year)',
+      color: '#c9a227',
+      values: [166.67, 166.67],
+    });
+
+    const option = build([seriesEntry({ categoryId: 1, name: 'Salary' }), bonusBand]);
+
+    // Its own legend entry, so a legend click toggles it exactly like a category.
+    expect(option.legend.data).toEqual(['Salary', 'Bonus (spread over the year)']);
+    expect(option.series[1].color).toBe('#c9a227');
+    expect(option.series[1].color).not.toBe(option.series[0].color);
+    // Stacked with the categories, so the band reads as part of the month's income.
+    expect(option.series[1].stack).toBe(option.series[0].stack);
+    expect(option.series[1].data).toEqual([166.67, 166.67]);
   });
 
   it('applies no top-N cap of its own: 7 series in, 7 series out', () => {

@@ -103,6 +103,7 @@ describe('DataManagementRepository', () => {
         careerStartDate: '2019-09-01',
         smoothedBonusCategoryIds: [3, 5],
         grossColor: 'violet',
+        mainIncomeCategoryId: 7,
         seenGuideSlugs: ['getting-started-with-the-income-page'],
       });
 
@@ -115,6 +116,7 @@ describe('DataManagementRepository', () => {
       expect(restored?.excludedIncomeCategoryIds).toEqual([7]);
       expect(restored?.careerStartDate).toBe('2019-09-01');
       expect(restored?.grossColor).toBe('violet');
+      expect(restored?.mainIncomeCategoryId).toBe(7);
       expect(restored?.seenGuideSlugs).toEqual(['getting-started-with-the-income-page']);
     });
   });

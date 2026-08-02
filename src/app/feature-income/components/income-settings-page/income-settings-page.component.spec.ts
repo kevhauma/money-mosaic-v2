@@ -44,6 +44,7 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
     setExcludedIncomeCategoryIds: vi.fn(),
     setSmoothedBonusCategoryIds: vi.fn(),
     setCareerStartDate: vi.fn(),
+    setMainIncomeCategoryId: vi.fn(),
   };
 
   let fixture: ComponentFixture<IncomeSettingsPageComponent>;
@@ -59,6 +60,7 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
     appSettingsRepository.setExcludedIncomeCategoryIds.mockResolvedValue(1);
     appSettingsRepository.setSmoothedBonusCategoryIds.mockResolvedValue(1);
     appSettingsRepository.setCareerStartDate.mockResolvedValue(1);
+    appSettingsRepository.setMainIncomeCategoryId.mockResolvedValue(1);
 
     await TestBed.configureTestingModule({
       imports: [IncomeSettingsPageComponent],
@@ -113,6 +115,9 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
     expect(checklists()).toHaveLength(2);
     expect(fixture.nativeElement.textContent).toContain('Income categories');
     expect(fixture.nativeElement.textContent).toContain('Annual lump sums');
+    // TICKET-INC-19 — which category a bonus recorded on a salary deposit comes off.
+    expect(fixture.nativeElement.querySelector('app-income-main-category')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Main income category');
     // TICKET-SET-08 — the gross-series color lives here too, beside the other page-level choices.
     expect(fixture.nativeElement.querySelector('app-income-gross-color')).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Chart colours');
@@ -139,6 +144,7 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
       expect(text).toContain('Every panel on the Income page reads from here');
       expect(text).toContain('removes it from every figure on the page at once');
       expect(text).toContain('spreads each year’s total evenly across that year’s months');
+      expect(text).toContain('taken off every income category that paid you that month');
       expect(text).toContain('it changes no figure anywhere');
     });
 
@@ -258,6 +264,39 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
     });
 
     expect(checkboxesIn(1).map((input) => input.checked)).toEqual([false, true]);
+  });
+
+  describe('main income category (TICKET-INC-19)', () => {
+    /** The section's radios: [0] "no main category", then one per counted category. */
+    const mainCategoryRadios = (): HTMLInputElement[] => [
+      ...(fixture.nativeElement as HTMLElement)
+        .querySelector('app-income-main-category')!
+        .querySelectorAll<HTMLInputElement>('input[type="radio"]'),
+    ];
+
+    it('offers every counted category plus the "no main category" default', async () => {
+      await setup([category(1, 'Salary', 'income'), category(2, 'Freelance', 'income')]);
+
+      expect(mainCategoryRadios()).toHaveLength(3);
+      expect(mainCategoryRadios()[0].checked).toBe(true);
+    });
+
+    it('marks the stored category as selected', async () => {
+      await setup([category(1, 'Salary', 'income'), category(2, 'Freelance', 'income')], {
+        mainIncomeCategoryId: 2,
+      });
+
+      expect(mainCategoryRadios().map((radio) => radio.checked)).toEqual([false, false, true]);
+    });
+
+    it('persists a pick through the store', async () => {
+      await setup([category(1, 'Salary', 'income'), category(2, 'Freelance', 'income')]);
+
+      mainCategoryRadios()[2].dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+
+      expect(appSettingsRepository.setMainIncomeCategoryId).toHaveBeenCalledExactlyOnceWith(2);
+    });
   });
 
   it('explains an empty checklist rather than showing a blank section', async () => {

@@ -13,6 +13,7 @@ import {
   type Transaction,
 } from '@/core/data-access';
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import { SMOOTHED_BONUS_CATEGORY_ID } from '@/core/stats';
 import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
@@ -86,12 +87,14 @@ const appSettingsRepository = {
   setExcludedIncomeCategoryIds: vi.fn(),
   setCareerStartDate: vi.fn(),
   setSmoothedBonusCategoryIds: vi.fn(),
+  setMainIncomeCategoryId: vi.fn(),
 };
 const salaryMetadataRepository = { getAll: vi.fn(), upsert: vi.fn(), remove: vi.fn() };
 
 type SetupOptions = {
   excludedIncomeCategoryIds?: number[];
   smoothedBonusCategoryIds?: number[];
+  mainIncomeCategoryId?: number;
   careerStartDate?: string;
   accounts?: Account[];
   transactions?: Transaction[];
@@ -107,6 +110,7 @@ const setup = async (
   const {
     excludedIncomeCategoryIds,
     smoothedBonusCategoryIds,
+    mainIncomeCategoryId,
     careerStartDate,
     accounts = [],
     transactions = [],
@@ -120,11 +124,13 @@ const setup = async (
     id: 1,
     excludedIncomeCategoryIds,
     smoothedBonusCategoryIds,
+    mainIncomeCategoryId,
     careerStartDate,
   } as AppSettings);
   appSettingsRepository.setExcludedIncomeCategoryIds.mockResolvedValue(1);
   appSettingsRepository.setCareerStartDate.mockResolvedValue(1);
   appSettingsRepository.setSmoothedBonusCategoryIds.mockResolvedValue(1);
+  appSettingsRepository.setMainIncomeCategoryId.mockResolvedValue(1);
   TestBed.configureTestingModule({
     providers: [
       { provide: CategoriesRepository, useValue: categoriesRepository },
@@ -371,10 +377,15 @@ describe('IncomeStore: incomeTrend composes both smoothing passes (TICKET-INC-13
     const july = monthIndex(store, '2025-07');
     const august = monthIndex(store, '2025-08');
     const salary = store.incomeTrend().series[0];
+    const bonusBand = store.incomeTrend().series.at(-1)!;
 
-    // July's 1,000 loses the 600 it declared, then every month of 2025 gets 600/12 back.
-    expect(salary.values[july]).toBeCloseTo(400 + 50);
-    expect(salary.values[august]).toBeCloseTo(1000 + 50);
+    // July's 1,000 loses the 600 it declared, and the 600 lands on its own band across 2025
+    // (TICKET-INC-20) instead of being handed back to the salary line.
+    expect(salary.values[july]).toBeCloseTo(400);
+    expect(salary.values[august]).toBeCloseTo(1000);
+    expect(bonusBand.categoryId).toBe(SMOOTHED_BONUS_CATEGORY_ID);
+    expect(bonusBand.values[july]).toBeCloseTo(50);
+    expect(bonusBand.values[august]).toBeCloseTo(50);
   });
 
   it("preserves the year's total when a flagged category and an embedded bonus both apply", async () => {
@@ -385,11 +396,11 @@ describe('IncomeStore: incomeTrend composes both smoothing passes (TICKET-INC-13
       salaryMetadata: [{ yearMonth: '2025-07', grossWage: 1800, bonus: 600 }],
     });
 
-    // 12 × 1,000 salary + one 1,200 bonus deposit — both passes only reshape, never add or remove,
-    // and each series keeps its own annual total too.
-    expect(sumOf(store, 0) + sumOf(store, 1)).toBeCloseTo(13_200);
-    expect(sumOf(store, 0)).toBeCloseTo(12_000);
-    expect(sumOf(store, 1)).toBeCloseTo(1200);
+    // 12 × 1,000 salary + one 1,200 bonus deposit — both passes only reshape, never add or remove.
+    // Summed across every series *including* the bonus band, since TICKET-INC-20 moves the removed
+    // amount between series rather than handing each one its own back.
+    expect(sumOf(store, 0) + sumOf(store, 1) + sumOf(store, 2)).toBeCloseTo(13_200);
+    expect(sumOf(store, 2)).toBeCloseTo(600);
 
     // Both passes genuinely fired: March's 1,200 spike is gone (FR-INC-4), and July's declared 600
     // is off the salary line (TICKET-INC-13) — the second pass reads what the first one left, so it
@@ -420,6 +431,113 @@ describe('IncomeStore: incomeTrend composes both smoothing passes (TICKET-INC-13
     });
 
     expect(store.incomeTrend()).toBe(store.rawIncomeTrend());
+  });
+
+  it('takes the bonus off the main income category alone when one is set (TICKET-INC-19)', async () => {
+    const store = await setup(CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+      // March is the one month both categories paid — 1,000 salary and the 1,200 deposit.
+      salaryMetadata: [{ yearMonth: '2025-03', grossWage: 1800, bonus: 600 }],
+      mainIncomeCategoryId: 1,
+    });
+
+    const march = monthIndex(store, '2025-03');
+
+    expect(store.mainIncomeCategoryId()).toBe(1);
+    expect(store.incomeTrend().series[0].values[march]).toBeCloseTo(400);
+    // The stream that never paid a bonus keeps its full March deposit.
+    expect(store.incomeTrend().series[1].values[march]).toBeCloseTo(1200);
+  });
+
+  it('splits the bonus pro rata while no main income category is set', async () => {
+    const store = await setup(CATEGORIES, {
+      accounts: ACCOUNTS,
+      transactions: TRANSACTIONS,
+      salaryMetadata: [{ yearMonth: '2025-03', grossWage: 1800, bonus: 600 }],
+    });
+
+    const march = monthIndex(store, '2025-03');
+
+    expect(store.mainIncomeCategoryId()).toBeUndefined();
+    // March totals 2,200, so the 600 comes off 10/22 : 12/22 — including 327.27 of a category
+    // that never paid a bonus, which is the behaviour TICKET-INC-19 lets the user opt out of.
+    expect(store.incomeTrend().series[1].values[march]).toBeCloseTo(1200 - (600 * 1200) / 2200);
+  });
+});
+
+describe('IncomeStore: mainIncomeCategoryId (TICKET-INC-19)', () => {
+  const TWO_INCOME_CATEGORIES = [
+    category(1, 'Salary', 'income'),
+    category(2, 'Freelance', 'income'),
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(restoreFormatSettings);
+
+  it('is undefined for a fresh appSettings row — the pro-rata split is the default', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES);
+
+    expect(store.mainIncomeCategoryId()).toBeUndefined();
+  });
+
+  it('reads the persisted id', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { mainIncomeCategoryId: 2 });
+
+    expect(store.mainIncomeCategoryId()).toBe(2);
+  });
+
+  it('setMainIncomeCategoryId persists through the repository', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES);
+
+    await store.setMainIncomeCategoryId(1);
+
+    expect(appSettingsRepository.setMainIncomeCategoryId).toHaveBeenCalledExactlyOnceWith(1);
+    expect(store.mainIncomeCategoryId()).toBe(1);
+  });
+
+  it('setMainIncomeCategoryId(undefined) clears it back to the pro-rata split', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { mainIncomeCategoryId: 1 });
+
+    await store.setMainIncomeCategoryId(undefined);
+
+    expect(appSettingsRepository.setMainIncomeCategoryId).toHaveBeenCalledExactlyOnceWith(
+      undefined,
+    );
+    expect(store.mainIncomeCategoryId()).toBeUndefined();
+  });
+
+  it('deselecting the main category from the growth selection clears the setting', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { mainIncomeCategoryId: 2 });
+
+    await store.toggleIncomeCategory(2);
+
+    expect(appSettingsRepository.setMainIncomeCategoryId).toHaveBeenCalledExactlyOnceWith(
+      undefined,
+    );
+    expect(store.mainIncomeCategoryId()).toBeUndefined();
+    expect([...store.selectedIncomeCategoryIds()]).toEqual([1]);
+  });
+
+  it('leaves the setting alone when a different category is deselected', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { mainIncomeCategoryId: 1 });
+
+    await store.toggleIncomeCategory(2);
+
+    expect(appSettingsRepository.setMainIncomeCategoryId).not.toHaveBeenCalled();
+    expect(store.mainIncomeCategoryId()).toBe(1);
+  });
+
+  it('re-selecting a category does not make it the main one', async () => {
+    const store = await setup(TWO_INCOME_CATEGORIES, { excludedIncomeCategoryIds: [2] });
+
+    await store.toggleIncomeCategory(2);
+
+    expect(appSettingsRepository.setMainIncomeCategoryId).not.toHaveBeenCalled();
+    expect(store.mainIncomeCategoryId()).toBeUndefined();
   });
 });
 

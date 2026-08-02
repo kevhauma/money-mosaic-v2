@@ -71,6 +71,11 @@ export const AppSettingsStore = signalStore(
         patchState(store, { grossColor });
       },
 
+      setMainIncomeCategoryId: async (mainIncomeCategoryId: number | undefined): Promise<void> => {
+        await appSettingsRepository.setMainIncomeCategoryId(mainIncomeCategoryId);
+        patchState(store, { mainIncomeCategoryId });
+      },
+
       /** Records that a guide's first-visit intro has been shown (TICKET-PUB-08); idempotent. */
       markGuideSeen: async (slug: string): Promise<void> => {
         const seen = store.seenGuideSlugs() ?? [];

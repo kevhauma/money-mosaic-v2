@@ -1,0 +1,32 @@
+<mm-fieldset legend="Main income category">
+  <mm-label variant="fieldset">Pick the category your salary deposit lands in.</mm-label>
+
+  <mm-label as="label" class="justify-start gap-2">
+    <input
+      type="radio"
+      name="main-income-category"
+      class="radio radio-sm"
+      [checked]="isSplitProportionally()"
+      (change)="select(undefined)"
+    />
+    <mm-text variant="caption" color="base-content"
+      >No main category — split proportionally</mm-text
+    >
+  </mm-label>
+
+  @for (category of categories(); track category.id) {
+    <mm-label as="label" class="justify-start gap-2">
+      <input
+        type="radio"
+        name="main-income-category"
+        class="radio radio-sm"
+        [checked]="category.checked"
+        (change)="select(category.id)"
+      />
+      <mm-badge size="xs" class="w-3 px-0" [style]="category.swatchStyle" aria-hidden="true" />
+      <mm-text variant="caption" color="base-content">{{ category.name }}</mm-text>
+    </mm-label>
+  } @empty {
+    <mm-text variant="caption"> Nothing to pick: no income category is counted right now. </mm-text>
+  }
+</mm-fieldset>

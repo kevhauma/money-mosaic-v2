@@ -109,6 +109,16 @@ list above:
 - [x] [TICKET-PUB-07](./tickets/TICKET-PUB-07-income-page-getting-started-guide.md) — Getting started with the Income page: the content, at three depths (arrival intro, settings-page explanations, full `/help` guide), plus a refresh of the existing income guide (extends TICKET-PUB-02) — **needs INC-18**, and second-to-last overall: the seven tickets above all change the page's copy, layout or behaviour, and a guide written before them would be written twice
 - [x] [TICKET-PUB-08](./tickets/TICKET-PUB-08-income-guide-on-first-visit.md) — First visit to the Income page: intro, quick setup, hand-off to the settings page, remembered per guide slug (extends TICKET-PUB-02/07) — **last**: needs PUB-07's content and INC-18's settings page to hand off to
 
+### Embedded-bonus corrections (added 2026-08-01, from reading the shipped chart)
+
+Both come from the same place: TICKET-INC-13 smooths a bonus recorded on a month's salary details, but it
+takes the bonus off *every* income category pro rata and hands it back to the same ones, so it's subtracted
+from streams that never paid it and is invisible on the chart afterwards. INC-19 fixes where it's taken
+*from*, INC-20 where it's given *back to*.
+
+- [x] [TICKET-INC-19](./tickets/TICKET-INC-19-main-income-category-for-embedded-bonus.md) — Subtract an embedded bonus from your main income category, not from all of them (bug fix, revises TICKET-INC-13 / extends FR-INC-3, FR-INC-10 — `smoothEmbeddedBonuses` has no record of which category the deposit landed in, so `reshapeSeries` removes it pro rata from every non-zero series) — first: adds the `mainIncomeCategoryId` setting, which gives INC-20 a single well-defined removal source
+- [x] [TICKET-INC-20](./tickets/TICKET-INC-20-embedded-bonus-own-series.md) — A smoothed embedded bonus gets its own series on the income trend chart (extends FR-INC-2/FR-INC-10 — `reshapeSeries` redistributes each year's removed total back to the series it came off, folding the bonus into the salary band) — independent of INC-19, but best after it
+
 ## Accounts track (unrelated to Income; filed here as the currently active version)
 
 - [x] [TICKET-ACC-07](./tickets/TICKET-ACC-07-accounts-page-actual-balances.md) — Accounts page shows actual balances, not net worth (revises FR-STAT-4 for the Accounts feature) — independent of every FR-INC ticket above; touches only `feature-accounts`/`core/stats`, can ship any time *(shipped 2026-08-01; the live-browser criterion was waived by the user and is left open on the ticket)*

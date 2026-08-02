@@ -1,6 +1,11 @@
 import type { Category } from '@/core/data-access';
 
-/** One row in an income-category checklist — both the "counts toward growth" list (FR-INC-3) and the "annual lump sum" list (FR-INC-4). */
+/**
+ * One selectable income-category row on the Income settings page. Three consumers, and `checked`
+ * means whatever that list selects: ticked in the "counts toward growth" list (FR-INC-3) and the
+ * "annual lump sum" list (FR-INC-4), and — for the single-select main-category radios
+ * (TICKET-INC-19) — "this is the one".
+ */
 export type SelectableIncomeCategoryVm = {
   id: number;
   name: string;

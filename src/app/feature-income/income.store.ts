@@ -121,6 +121,17 @@ export const IncomeStore = signalStore(
     });
 
     /**
+     * The income categories that count toward growth, as `Category` rows rather than ids — what
+     * every settings control that offers a *choice among counted categories* lists (FR-INC-4's
+     * smoothing checklist, TICKET-INC-19's main-category picker). Derived here rather than per
+     * component so the two can't disagree about what "counted" means.
+     */
+    const countedIncomeCategories = computed(() => {
+      const selected = selectedIncomeCategoryIds();
+      return incomeCategories().filter((category) => selected.has(category.id!));
+    });
+
+    /**
      * The income categories the user has marked as an annual lump sum (FR-INC-4) — an *inclusion*
      * list, unlike the exclusion list above: smoothing is opt-in per category, so an unset field
      * means nothing is smoothed. `toggleIncomeCategory` prunes this list when a category leaves the
@@ -160,13 +171,24 @@ export const IncomeStore = signalStore(
       () => new Map(store.salaryMetadata().map((entry) => [entry.yearMonth, entry])),
     );
 
+    /**
+     * The income category the user says their salary lands in (TICKET-INC-19), or `undefined` while
+     * unset. Decides which series a recorded embedded bonus comes off; unset means the pro-rata
+     * split across every non-zero series, which is what the page did before the setting existed.
+     * Not filtered against the growth selection here — `smoothEmbeddedBonuses` already falls back to
+     * pro rata for an id with no series, which covers an excluded, archived or deleted category.
+     */
+    const mainIncomeCategoryId = computed(() => appSettingsStore.mainIncomeCategoryId());
+
     return {
       incomeCategories,
       fullHistoryRange,
       latestTransactionDate,
       incomeRange,
       selectedIncomeCategoryIds,
+      countedIncomeCategories,
       smoothedBonusCategoryIds,
+      mainIncomeCategoryId,
       rawIncomeTrend,
       salaryMetadataByMonth,
 
@@ -186,7 +208,9 @@ export const IncomeStore = signalStore(
        * 13th month never reads as a raise however it was paid:
        * - `smoothAnnualLumpSums` (FR-INC-4) for a bonus with its *own* category, flagged in settings;
        * - `smoothEmbeddedBonuses` (TICKET-INC-13) for one baked into the regular salary deposit,
-       *   where the only record is the `bonus` figure on that month's salary details (FR-INC-10).
+       *   where the only record is the `bonus` figure on that month's salary details (FR-INC-10),
+       *   taken off the user's main income category (TICKET-INC-19) and handed to a series of its
+       *   own (TICKET-INC-20) rather than folded back into the category it came from.
        *
        * Order matters only in that the second pass reads bucket totals: it removes each month's
        * declared bonus from whatever the first pass left, so the two can't double-count a category
@@ -197,6 +221,7 @@ export const IncomeStore = signalStore(
           smoothAnnualLumpSums(rawIncomeTrend(), smoothedBonusCategoryIds(), INCOME_GRANULARITY),
           salaryMetadataByMonth(),
           INCOME_GRANULARITY,
+          mainIncomeCategoryId(),
         ),
       ),
     };
@@ -211,9 +236,10 @@ export const IncomeStore = signalStore(
        * aren't currently active — archiving and un-archiving a deselected category shouldn't
        * silently re-select it.
        *
-       * Deselecting also drops the category from the smoothing list (FR-INC-4): the settings popup
-       * only offers smoothing for categories that count toward income, so a lingering id would be a
-       * setting the user can no longer see, let alone turn off.
+       * Deselecting also drops the category from the smoothing list (FR-INC-4) and clears it as the
+       * main income category (TICKET-INC-19) if it was one: the settings page only offers both for
+       * categories that count toward income, so a lingering id would be a setting the user can no
+       * longer see, let alone turn off.
        */
       toggleIncomeCategory: async (categoryId: number): Promise<void> => {
         const excluded = new Set(appSettingsStore.excludedIncomeCategoryIds() ?? []);
@@ -225,6 +251,9 @@ export const IncomeStore = signalStore(
           const smoothed = new Set(store.smoothedBonusCategoryIds());
           smoothed.delete(categoryId);
           await appSettingsStore.setSmoothedBonusCategoryIds([...smoothed]);
+        }
+        if (deselecting && store.mainIncomeCategoryId() === categoryId) {
+          await appSettingsStore.setMainIncomeCategoryId(undefined);
         }
         await appSettingsStore.setExcludedIncomeCategoryIds([...excluded]);
       },
@@ -253,6 +282,10 @@ export const IncomeStore = signalStore(
       /** Persists the gross-series colour (TICKET-SET-08), or clears it back to the theme's palette. */
       setGrossColor: (grossColor: AccentColorId | undefined): Promise<void> =>
         appSettingsStore.setGrossColor(grossColor),
+
+      /** Persists the main income category (TICKET-INC-19), or clears it back to the pro-rata split. */
+      setMainIncomeCategoryId: (mainIncomeCategoryId: number | undefined): Promise<void> =>
+        appSettingsStore.setMainIncomeCategoryId(mainIncomeCategoryId),
     };
   }),
   withMethods((store) => {

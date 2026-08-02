@@ -557,6 +557,21 @@ export type AppSettings = {
    */
   grossColor: AccentColorId | undefined;
   /**
+   * Additive field (TICKET-INC-19) — the income category the user's salary actually lands in, so a
+   * bonus recorded against a month's salary details (`SalaryMetadata.bonus`, FR-INC-10) is taken off
+   * *that* category alone instead of pro rata across every income stream that was non-zero that
+   * month. `undefined` — the default — keeps the pro-rata split, which is exactly right for the one
+   * income stream case and the only well-defined answer when the user hasn't said.
+   *
+   * A single global id rather than a per-month choice: re-asking which category a bonus landed in
+   * every bonus month is a worse setting than one the user states once (see the ticket's Notes).
+   * `IncomeStore.toggleIncomeCategory` clears it when the category leaves the growth selection, the
+   * same pruning `smoothedBonusCategoryIds` gets. Same "additive optional field, no version bump"
+   * reasoning as the fields above. Required-but-possibly-`undefined`, same `withState`
+   * accessor-optionality pitfall.
+   */
+  mainIncomeCategoryId: number | undefined;
+  /**
    * Additive field (TICKET-PUB-08) — the how-to guides whose first-visit intro the user has already
    * been shown, so it never interrupts twice. Keyed by **slug** rather than a boolean per feature,
    * so the next feature to want an intro reuses this field instead of adding one of its own.
@@ -586,6 +601,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   careerStartDate: undefined,
   smoothedBonusCategoryIds: undefined,
   grossColor: undefined,
+  mainIncomeCategoryId: undefined,
   seenGuideSlugs: undefined,
 };
 

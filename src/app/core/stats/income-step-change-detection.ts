@@ -1,5 +1,6 @@
 import type { Granularity } from '@/shared/utils';
 import type { CategorySeriesEntry } from './category-composition-trend';
+import { SMOOTHED_BONUS_CATEGORY_ID } from './embedded-bonus-smoothing';
 import type { IncomeCategorySeries } from './income-category-series';
 
 export type IncomeStepChange = {
@@ -82,6 +83,11 @@ const detectForCategory = (
   bucketKeys: string[],
 ): IncomeStepChange[] => {
   if (categoryId === null) return [];
+  // The redistributed-bonus band (TICKET-INC-20) is flat within a year by construction, so a bonus
+  // that grows from one year to the next steps at every January — a sustained, whole-window move
+  // that would clear every rule below. That is exactly the phantom raise FR-INC-8 exists to avoid,
+  // and it isn't a category the user could act on anyway.
+  if (categoryId === SMOOTHED_BONUS_CATEGORY_ID) return [];
 
   const start = firstActiveIndex(values);
   if (start === -1 || values.length - start < MIN_HISTORY_MONTHS) return [];
@@ -132,7 +138,8 @@ const detectForCategory = (
  *
  * Expects `smoothAnnualLumpSums(computeIncomeCategorySeries(...))`'s output, so a category the user
  * has marked as an annual lump sum (FR-INC-4) arrives already spread across its year and its bonus
- * month cannot register as a raise followed by a pay cut.
+ * month cannot register as a raise followed by a pay cut. `smoothEmbeddedBonuses`' synthetic
+ * bonus band (TICKET-INC-20) is skipped outright for the same reason — see `detectForCategory`.
  *
  * **Monthly granularity only.** The 3-month window has no meaning at day/week/quarter buckets, so
  * every other granularity returns an empty result rather than silently misapplying it.

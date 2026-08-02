@@ -11,3 +11,4 @@ export * from './salary-details-page/salary-details-page.component';
 export * from './salary-metadata-table/salary-metadata-table.component';
 export * from './salary-month-modal/salary-month-modal.component';
 export * from './income-career-start/income-career-start.component';
+export * from './income-main-category/income-main-category.component';

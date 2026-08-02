@@ -14,6 +14,7 @@ import { IncomeStore } from '../../income.store';
 import { IncomeCareerStartComponent } from '../income-career-start/income-career-start.component';
 import { IncomeCategoryChecklistComponent } from '../income-category-checklist/income-category-checklist.component';
 import { IncomeGrossColorComponent } from '../income-gross-color/income-gross-color.component';
+import { IncomeMainCategoryComponent } from '../income-main-category/income-main-category.component';
 
 /**
  * The Income page's settings, as their own route (`/income/settings`, TICKET-INC-18) rather than the
@@ -37,6 +38,7 @@ import { IncomeGrossColorComponent } from '../income-gross-color/income-gross-co
     IncomeCareerStartComponent,
     IncomeCategoryChecklistComponent,
     IncomeGrossColorComponent,
+    IncomeMainCategoryComponent,
     PageHeaderComponent,
     PaperComponent,
     TypographyComponent,
@@ -70,13 +72,12 @@ export class IncomeSettingsPageComponent {
    * category is *drawn*, so offering it for one the user has already excluded would be a setting
    * with nothing to act on.
    */
-  protected readonly smoothableCategories = computed<SelectableIncomeCategoryVm[]>(() => {
-    const selected = this.incomeStore.selectedIncomeCategoryIds();
-    return toSelectableIncomeCategories(
-      this.incomeStore.incomeCategories().filter((category) => selected.has(category.id!)),
+  protected readonly smoothableCategories = computed<SelectableIncomeCategoryVm[]>(() =>
+    toSelectableIncomeCategories(
+      this.incomeStore.countedIncomeCategories(),
       this.incomeStore.smoothedBonusCategoryIds(),
-    );
-  });
+    ),
+  );
 
   /** `counted/total`, so the page says at a glance whether anything is filtered out. */
   protected readonly summary = computed(() => {
