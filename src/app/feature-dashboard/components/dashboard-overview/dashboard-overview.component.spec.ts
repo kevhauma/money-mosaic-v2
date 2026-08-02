@@ -147,7 +147,7 @@ describe('DashboardOverviewComponent', () => {
     };
 
     it('renders €X/month · €X/week · €X/day on the Income and Expense cards for a two-month range', () => {
-      TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-08-31');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-08-31');
       TestBed.inject(TransactionsStore).addMany([
         transaction({ id: 1, bookingDate: '2026-07-01', amount: 930 }),
         transaction({ id: 2, bookingDate: '2026-07-15', amount: -620 }),
@@ -159,7 +159,7 @@ describe('DashboardOverviewComponent', () => {
     });
 
     it('drops the week/month parts for a single-day range, keeping only €X/day', () => {
-      TestBed.inject(RangeStore).setCustomRange('2026-07-13', '2026-07-13');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-13', '2026-07-13');
       TestBed.inject(TransactionsStore).addMany([
         transaction({ id: 1, bookingDate: '2026-07-13', amount: 60 }),
       ]);
@@ -169,7 +169,7 @@ describe('DashboardOverviewComponent', () => {
     });
 
     it('renders a "kept" net margin sub-label when net is non-negative', () => {
-      TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
       TestBed.inject(TransactionsStore).addMany([
         transaction({ id: 1, amount: 1000 }),
         transaction({ id: 2, amount: -700 }),
@@ -180,7 +180,7 @@ describe('DashboardOverviewComponent', () => {
     });
 
     it('renders an "overspent" net margin sub-label when net is negative', () => {
-      TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
       TestBed.inject(TransactionsStore).addMany([
         transaction({ id: 1, amount: 1000 }),
         transaction({ id: 2, amount: -1200 }),
@@ -191,7 +191,7 @@ describe('DashboardOverviewComponent', () => {
     });
 
     it('leaves the net margin sub-label absent when income is zero', () => {
-      TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
       TestBed.inject(TransactionsStore).addMany([transaction({ id: 1, amount: -100 })]);
       fixture.detectChanges();
 
@@ -199,7 +199,7 @@ describe('DashboardOverviewComponent', () => {
     });
 
     it('reads as "kept" (not "overspent") at the net === 0 sign-flip boundary', () => {
-      TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
       TestBed.inject(TransactionsStore).addMany([
         transaction({ id: 1, amount: 1000 }),
         transaction({ id: 2, amount: -1000 }),
@@ -262,7 +262,7 @@ describe('DashboardOverviewComponent', () => {
       TestBed.inject(TransactionsStore).addMany([
         transaction({ id: 1, bookingDate: '2020-01-01', amount: 100 }),
       ]);
-      TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('mm-empty-state')).toBeNull();

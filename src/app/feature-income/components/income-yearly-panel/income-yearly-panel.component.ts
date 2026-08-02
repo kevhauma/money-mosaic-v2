@@ -167,7 +167,7 @@ export const buildYearlyIncomeChartOption = (entries: YearlyIncomeEntry[]): ECha
  *
  * Its own aggregate over raw transactions (`computeYearlyIncomeSummary`), not a re-bucketing of the
  * monthly series next to it — and deliberately range-independent, reading the page-level
- * `IncomeStore.fullHistoryRange` rather than the topbar, so the yearly trend always shows every
+ * `IncomeStore.fullHistoryRange` rather than a page range, so the yearly trend always shows every
  * year the user has data for. Totals are unsmoothed on purpose: FR-INC-4 redistributes a lump sum
  * *within* a year, which changes nothing once the bucket is the whole year.
  *

@@ -84,12 +84,12 @@ export const buildIncomeTrendChartOption = (
  * months (`INCOME_GRANULARITY`) rather than a user-selectable granularity — see that constant's
  * note. Legend clicks toggle individual categories (native echarts behaviour, no extra code).
  *
- * Unlike the account charts, this page **does not** let the topbar's date range scrub the zoom
+ * Unlike the account charts, this page **does not** let any page's date range scrub the zoom
  * window (`computeZoomWindow`, TICKET-STAT-03): it always opens on its full monthly history, and
  * the `dataZoom` slider is there for the user to narrow it by hand. Deliberate divergence, decided
  * during TICKET-INC-02 review — once buckets are monthly, the default `this-month` preset resolves
- * to a *single* bucket, so honouring the topbar would open the page's headline trend chart on one
- * dot. A growth trend is only meaningful across many periods, which is exactly the range the topbar
+ * to a *single* bucket, so honouring such a range would open the page's headline trend chart on one
+ * dot. A growth trend is only meaningful across many periods, which is exactly the range a picker
  * is most often narrower than.
  */
 @Component({

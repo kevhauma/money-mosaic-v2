@@ -35,8 +35,8 @@ const percentVsPrior = (year: YearTotal, prior: YearTotal | undefined): number |
  * per-year output TICKET-INC-07's multi-year comparison builds on.
  *
  * Deliberately **range-independent** in intent: callers pass `computeFullHistoryRange`'s span, not
- * the topbar range, so the yearly trend always covers the user's whole history (the same
- * "full history, ignore the topbar" shape as `balance-trend-signals.ts`). That's the caller's
+ * any page range, so the yearly trend always covers the user's whole history (the same
+ * "full history, ignore the page range" shape as `balance-trend-signals.ts`). That's the caller's
  * range, not a rule enforced here.
  *
  * Years come back ascending and gap-filled via `bucketKeysInRange(from, to, 'year')`, so a year

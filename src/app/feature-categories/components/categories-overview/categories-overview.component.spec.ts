@@ -23,6 +23,16 @@ describe('CategoriesOverviewComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('renders no subtitle and no range control — the page has no date-scoped content (TICKET-UI-22/UI-23)', async () => {
+    await setup();
+    fixture.detectChanges();
+    const page: HTMLElement = fixture.nativeElement;
+
+    expect(page.querySelector('mm-page-header h1')?.textContent?.trim()).toBe('Categories');
+    expect(page.querySelector('mm-page-header .mm-page-title p')).toBeNull();
+    expect(page.querySelector('mm-range-grouping-switcher')).toBeNull();
+  });
+
   it('shows a loading skeleton, not the "no categories yet" empty state, before CategoriesStore hydrates (TICKET-PERF-07)', async () => {
     const categoriesRepository = { getAll: vi.fn().mockReturnValue(new Promise(() => {})) };
     await setup([{ provide: CategoriesRepository, useValue: categoriesRepository }]);

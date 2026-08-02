@@ -26,7 +26,7 @@ export type IncomeCategorySeries = {
  *   category the user has excluded contributes nothing anywhere on the page.
  *
  * The caller is also expected to pass a full-history `[from, to]` (`computeFullHistoryRange`) and
- * let the topbar range drive the chart's zoom window instead, so scrolling out never hits missing
+ * let the page's range drive the chart's zoom window instead, so scrolling out never hits missing
  * data — but that's the caller's range, not a rule enforced here.
  *
  * Series come back in `selectedCategoryIds` order; an id with no matching `Category` still gets a

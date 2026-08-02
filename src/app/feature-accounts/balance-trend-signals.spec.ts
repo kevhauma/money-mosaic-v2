@@ -71,7 +71,9 @@ describe('balanceTrendSignals', () => {
       const rangeStore = TestBed.inject(RangeStore);
       const trend = balanceTrendSignals(signal([account()]));
 
-      expect(trend.granularity()).toBe(pickGranularityForSpan(rangeStore.from(), rangeStore.to()));
+      expect(trend.granularity()).toBe(
+        pickGranularityForSpan(rangeStore.from('accounts'), rangeStore.to('accounts')),
+      );
     });
   });
 
@@ -82,8 +84,8 @@ describe('balanceTrendSignals', () => {
 
       const expected = computeZoomWindow(
         trend.series()[0]?.points.map((point) => point.bucketKey) ?? [],
-        rangeStore.from(),
-        rangeStore.to(),
+        rangeStore.from('accounts'),
+        rangeStore.to('accounts'),
         trend.granularity(),
       );
       expect(trend.zoomWindow()).toEqual(expected);

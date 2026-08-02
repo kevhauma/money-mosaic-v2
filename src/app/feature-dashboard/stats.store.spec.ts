@@ -22,7 +22,7 @@ describe('StatsStore', () => {
 
   it('recomputes periodStats when transactions change, with no manual invalidation (FR-STAT-5)', () => {
     const rangeStore = TestBed.inject(RangeStore);
-    rangeStore.setCustomRange('2026-01-01', '2026-12-31');
+    rangeStore.setCustomRange('dashboard', '2026-01-01', '2026-12-31');
 
     const transactionsStore = TestBed.inject(TransactionsStore);
     const statsStore = TestBed.inject(StatsStore);
@@ -51,17 +51,17 @@ describe('StatsStore', () => {
     const statsStore = TestBed.inject(StatsStore);
 
     transactionsStore.addMany([transaction({ bookingDate: '2026-06-15' })]);
-    rangeStore.setCustomRange('2026-01-01', '2026-01-31');
+    rangeStore.setCustomRange('dashboard', '2026-01-01', '2026-01-31');
     expect(statsStore.periodStats().income).toBe(0);
 
-    rangeStore.setCustomRange('2026-06-01', '2026-06-30');
+    rangeStore.setCustomRange('dashboard', '2026-06-01', '2026-06-30');
     expect(statsStore.periodStats().income).toBe(500);
   });
 
   it('recomputes weekdayWeekendSplit when transactions change', () => {
     const rangeStore = TestBed.inject(RangeStore);
     // 2026-07-10..18: Fri, Sat, Sun, Mon, Tue, Wed, Thu, Fri, Sat -> 6 weekdays, 3 weekend days.
-    rangeStore.setCustomRange('2026-07-10', '2026-07-18');
+    rangeStore.setCustomRange('dashboard', '2026-07-10', '2026-07-18');
 
     const transactionsStore = TestBed.inject(TransactionsStore);
     const statsStore = TestBed.inject(StatsStore);

@@ -9,6 +9,12 @@
         (change)="showArchived.set(!showArchived())"
       />
     </mm-label>
+    <mm-range-grouping-switcher
+      [value]="range.value()"
+      (presetChange)="range.onPresetChange($event)"
+      (customRangeChange)="range.onCustomRangeChange($event)"
+      (rangeShift)="range.onRangeShift($event)"
+    />
     <mm-button color="primary" size="sm" (click)="openAddForm()">
       <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
       Add account

@@ -10,11 +10,12 @@ import {
   LabelComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
+  RangeGroupingSwitcherComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { createConfirmState } from '@/shared/utils';
 import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
-import { AccountsStore } from '@/core/state';
+import { AccountsStore, pageRangeControl } from '@/core/state';
 import type { AccountCardVm } from '../../account-card-vm';
 import {
   AccountFormComponent,
@@ -37,6 +38,7 @@ import { AccountBalanceHistoryChartComponent } from '../account-balance-history-
     LoadingSkeletonComponent,
     NgIcon,
     PageHeaderComponent,
+    RangeGroupingSwitcherComponent,
     TypographyComponent,
   ],
   templateUrl: './accounts-overview.component.html',
@@ -46,6 +48,12 @@ import { AccountBalanceHistoryChartComponent } from '../account-balance-history-
 export class AccountsOverviewComponent {
   protected readonly accountsStore = inject(AccountsStore);
 
+  /** This page's own date range and its switcher wiring (TICKET-UI-23) — no longer the shell's. */
+  protected readonly range = pageRangeControl('accounts');
+
+  // Filters the card list only, never the chart: `app-account-balance-history-chart` plots
+  // `activeAccounts()` by design (TICKET-ACC-07), so an archived account has no band even with
+  // this on. Worth stating now that the toggle sits next to the range that *does* drive the chart.
   protected readonly showArchived = signal(false);
   protected readonly visibleAccounts = computed(() =>
     this.showArchived() ? this.accountsStore.accounts() : this.accountsStore.activeAccounts(),

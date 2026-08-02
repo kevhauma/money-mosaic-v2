@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerCheck, tablerFileImport, tablerPencil } from '@ng-icons/tabler-icons';
 import { computeNetMargin, computePeriodizedRate } from '@/core/stats';
-import { AccountsStore, RangeStore, TransactionsStore } from '@/core/state';
+import { AccountsStore, pageRangeControl, RangeStore, TransactionsStore } from '@/core/state';
 import { buildTransactionDrilldownParams, formatCurrency, formatPercent } from '@/shared/utils';
 import {
   ButtonComponent,
@@ -10,6 +10,7 @@ import {
   LoadingSkeletonComponent,
   PageHeaderComponent,
   PaperComponent,
+  RangeGroupingSwitcherComponent,
   StatCardComponent,
 } from '@/shared/ui';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
@@ -34,6 +35,7 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
     LoadingSkeletonComponent,
     PageHeaderComponent,
     PaperComponent,
+    RangeGroupingSwitcherComponent,
     StatCardComponent,
     NetWorthHeaderComponent,
     CategoryBreakdownPanelComponent,
@@ -55,6 +57,9 @@ export class DashboardOverviewComponent {
   protected readonly rangeStore = inject(RangeStore);
   protected readonly transactionsStore = inject(TransactionsStore);
   protected readonly dashboardLayoutSettingsStore = inject(DashboardLayoutSettingsStore);
+
+  /** This page's own date range and its switcher wiring (TICKET-UI-23) — no longer the shell's. */
+  protected readonly range = pageRangeControl('dashboard');
 
   protected readonly customizeMode = signal(false);
 
@@ -80,7 +85,10 @@ export class DashboardOverviewComponent {
   }
 
   protected readonly drilldownParams = computed(() =>
-    buildTransactionDrilldownParams({ from: this.rangeStore.from(), to: this.rangeStore.to() }),
+    buildTransactionDrilldownParams({
+      from: this.rangeStore.from('dashboard'),
+      to: this.rangeStore.to('dashboard'),
+    }),
   );
 
   protected readonly incomeValue = computed(() =>
@@ -129,8 +137,8 @@ export class DashboardOverviewComponent {
   private periodizedSubLabel(figure: number): string {
     const { avgPerDay, avgPerWeek, avgPerMonth } = computePeriodizedRate(
       figure,
-      this.rangeStore.from(),
-      this.rangeStore.to(),
+      this.rangeStore.from('dashboard'),
+      this.rangeStore.to('dashboard'),
     );
     const parts = [
       avgPerMonth != null ? `${formatCurrency(avgPerMonth)}/month` : null,

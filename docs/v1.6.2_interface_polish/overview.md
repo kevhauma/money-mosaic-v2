@@ -37,7 +37,7 @@ Ordered by dependency, not by area. The five per-page header tickets all wait on
 are independent of each other after it; the rest are independent unless noted.
 
 - [x] [TICKET-UI-22](./tickets/TICKET-UI-22-page-header-contract.md) — One header per page: title plus its own controls, no subtitles (revises `ui-layout-spec.md` page header) — **first**: the contract every per-page header ticket below builds against, and it carries every page that needs only a title
-- [ ] [TICKET-UI-23](./tickets/TICKET-UI-23-per-page-date-range.md) — The date range moves into the page header, and stops following you between pages (revises FR-STAT-7) — needs UI-22; the Dashboard and Accounts headers below both place the control it frees up
+- [x] [TICKET-UI-23](./tickets/TICKET-UI-23-per-page-date-range.md) — The date range moves into the page header, and stops following you between pages (revises FR-STAT-7) — needs UI-22; the Dashboard and Accounts headers below both place the control it frees up
 - [ ] [TICKET-STAT-25](./tickets/TICKET-STAT-25-dashboard-page-header.md) — Dashboard header: a named "Dashboard settings" button, its own date range, net worth stays (extends FR-STAT-7 / TICKET-STAT-21) — needs UI-22 + UI-23
 - [ ] [TICKET-ACC-08](./tickets/TICKET-ACC-08-accounts-page-header.md) — Accounts header: show archived, add account, and the page's own date range (extends FR-ACC-1) — needs UI-22 + UI-23
 - [ ] [TICKET-INC-21](./tickets/TICKET-INC-21-income-page-header.md) — Income header: guide, settings and salary details, without the subtitle (revises FR-INC-1 presentation / TICKET-INC-18) — needs UI-22 only; `/income` deliberately has no date range

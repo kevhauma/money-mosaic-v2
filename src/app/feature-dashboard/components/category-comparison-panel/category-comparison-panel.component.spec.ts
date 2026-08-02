@@ -38,7 +38,7 @@ describe('CategoryComparisonPanelComponent', () => {
       ],
     }).compileComponents();
 
-    TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+    TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
 
     fixture = TestBed.createComponent(CategoryComparisonPanelComponent);
     await fixture.whenStable();
@@ -184,7 +184,7 @@ describe('CategoryComparisonPanelComponent', () => {
 
   describe('bar tooltip period label', () => {
     it('shows "<Month> <year>" for a month-aligned window period', async () => {
-      TestBed.inject(RangeStore).setPreset('this-month');
+      TestBed.inject(RangeStore).setPreset('dashboard', 'this-month');
       await TestBed.inject(CategoriesStore).addCategory(groceries);
       TestBed.inject(TransactionsStore).addMany([
         {
@@ -218,7 +218,7 @@ describe('CategoryComparisonPanelComponent', () => {
     });
 
     it('shows "W<n> <year>" for a week-aligned window period', async () => {
-      TestBed.inject(RangeStore).setPreset('this-week');
+      TestBed.inject(RangeStore).setPreset('dashboard', 'this-week');
       await TestBed.inject(CategoriesStore).addCategory(groceries);
       TestBed.inject(TransactionsStore).addMany([
         {
@@ -252,7 +252,7 @@ describe('CategoryComparisonPanelComponent', () => {
     });
 
     it('falls back to the formatted date range for a non-calendar-aligned (custom rolling) window period', async () => {
-      TestBed.inject(RangeStore).setCustomRange('2026-06-15', '2026-06-24');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-06-15', '2026-06-24');
       await TestBed.inject(CategoriesStore).addCategory(groceries);
       TestBed.inject(TransactionsStore).addMany([
         {
@@ -289,7 +289,10 @@ describe('CategoryComparisonPanelComponent', () => {
   });
 
   it('hides the panel entirely for the all-time preset', () => {
-    TestBed.inject(RangeStore).setPreset('all-time', { from: '2020-01-01', to: '2026-07-12' });
+    TestBed.inject(RangeStore).setPreset('dashboard', 'all-time', {
+      from: '2020-01-01',
+      to: '2026-07-12',
+    });
 
     fixture.detectChanges();
 

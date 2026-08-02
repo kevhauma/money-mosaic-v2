@@ -74,7 +74,7 @@ describe('TrendChartPanelComponent', () => {
       ],
     }).compileComponents();
 
-    TestBed.inject(RangeStore).setCustomRange('2026-01-01', '2026-02-28');
+    TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-01-01', '2026-02-28');
 
     fixture = TestBed.createComponent(TrendChartPanelComponent);
     await fixture.whenStable();
@@ -86,7 +86,10 @@ describe('TrendChartPanelComponent', () => {
 
   it('defaults its local granularity control from pickGranularityForSpan for the current shared date range (TICKET-STAT-15)', () => {
     const rangeStore = TestBed.inject(RangeStore);
-    const expected = pickGranularityForSpan(rangeStore.from(), rangeStore.to());
+    const expected = pickGranularityForSpan(
+      rangeStore.from('dashboard'),
+      rangeStore.to('dashboard'),
+    );
 
     expect(fixture.componentInstance['granularity']()).toBe(expected);
   });

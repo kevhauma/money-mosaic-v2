@@ -44,7 +44,7 @@ export const buildAccountBalanceChartOption = (
  * account's *real* balance, matching the figure in the detail page's own balance header — for a
  * joint account that's the whole pot, not my stake in it (TICKET-ACC-07). This
  * chart owns its own local granularity control (TICKET-STAT-15), independent of every other
- * chart's, and the topbar's date range scrubs the initial zoom window (via `dataZoom`) rather than
+ * chart's, and the Accounts page's date range scrubs the initial zoom window (via `dataZoom`) rather than
  * shrinking the series data (TICKET-STAT-03), so zooming out is always available without a manual
  * preset change.
  */

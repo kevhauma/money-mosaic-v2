@@ -65,7 +65,7 @@ export const IncomeStore = signalStore(
     /**
      * The span the user's data covers: earliest account/transaction date through today, across all
      * active accounts. Page-level rather than per-panel because the Income page is deliberately
-     * topbar-range-independent (see `IncomeOverviewComponent`'s class doc and FR-INC-6) — one
+     * page-range-independent (see `IncomeOverviewComponent`'s class doc and FR-INC-6) — one
      * growth story, one span, so the monthly and yearly views can't disagree about where history
      * starts. Panels read `incomeRange` below, not this: this is the *data's* span, that one is
      * the span the user says their career covers.

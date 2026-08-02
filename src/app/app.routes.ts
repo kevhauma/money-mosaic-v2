@@ -17,7 +17,7 @@ export const routes: Routes = [
     loadChildren: () => import('@/feature-home').then((m) => m.HOME_ROUTES),
   },
   {
-    // The authenticated-app shell (drawer/sidebar/topbar) wraps every feature route below as a
+    // The authenticated-app shell (drawer/sidebar) wraps every feature route below as a
     // lazy layout route — the landing page above is a sibling route rendered outside it.
     path: '',
     loadComponent: () => import('@/core/layout').then((m) => m.AppShellComponent),

@@ -65,6 +65,9 @@ export class WeekdayWeekendSplitPanelComponent {
   });
 
   protected readonly drilldownParams = computed(() =>
-    buildTransactionDrilldownParams({ from: this.rangeStore.from(), to: this.rangeStore.to() }),
+    buildTransactionDrilldownParams({
+      from: this.rangeStore.from('dashboard'),
+      to: this.rangeStore.to('dashboard'),
+    }),
   );
 }

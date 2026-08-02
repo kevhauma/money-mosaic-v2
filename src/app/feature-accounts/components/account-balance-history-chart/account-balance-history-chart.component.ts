@@ -50,7 +50,7 @@ export const buildAccountBalanceHistoryChartOption = (
  * matching its card's headline figure — not the net-worth stake this chart plotted until
  * TICKET-ACC-07, so for a joint account the stack no longer sums to the Dashboard's net worth. This
  * chart owns its own local granularity control (TICKET-STAT-15), independent of every other
- * chart's, and the topbar's date range scrubs the initial zoom window (via `dataZoom`) rather than
+ * chart's, and the Accounts page's date range scrubs the initial zoom window (via `dataZoom`) rather than
  * shrinking the series data (TICKET-STAT-03), so zooming out is always available without a manual
  * preset change. Legend clicks toggle individual bands (native echarts behaviour).
  */

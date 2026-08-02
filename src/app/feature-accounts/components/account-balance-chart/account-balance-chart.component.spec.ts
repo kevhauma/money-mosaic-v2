@@ -63,7 +63,7 @@ describe('AccountBalanceChartComponent', () => {
 
   it('defaults its local granularity control from pickGranularityForSpan for the current shared date range (TICKET-STAT-15)', () => {
     const rangeStore = TestBed.inject(RangeStore);
-    const expected = pickGranularityForSpan(rangeStore.from(), rangeStore.to());
+    const expected = pickGranularityForSpan(rangeStore.from('accounts'), rangeStore.to('accounts'));
 
     expect(fixture.componentInstance['granularity']()).toBe(expected);
   });

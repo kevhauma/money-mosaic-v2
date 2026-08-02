@@ -342,13 +342,13 @@ describe('IncomeYearlyPanelComponent', () => {
     expect(years).toEqual(['2026']);
   });
 
-  it('spans the full history regardless of a narrower topbar range (FR-INC-6)', async () => {
+  it("spans the full history regardless of another page's narrower range (FR-INC-6)", async () => {
     await setup([payslip(1, '2024-06-01', 20000), payslip(2, '2026-06-01', 24000)]);
-    TestBed.inject(RangeStore).setCustomRange('2026-01-01', '2026-01-31');
+    TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-01-01', '2026-01-31');
     fixture.detectChanges();
 
     // Not an exact year list — `computeFullHistoryRange` runs to the real today, so the tail grows
-    // with the calendar. What matters is that the range the topbar asked for isn't what came back.
+    // with the calendar. What matters is that the other page's range isn't what came back.
     const years = accessibleRows().map((row) => row[0]);
 
     expect(years[0]).toBe('2024');

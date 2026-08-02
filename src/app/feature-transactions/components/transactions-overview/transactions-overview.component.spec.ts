@@ -132,6 +132,14 @@ describe('TransactionsOverviewComponent', () => {
     expect(header?.querySelector('.mm-text-caption')).toBeNull();
   });
 
+  it('renders no range switcher anywhere — its filter bar already owns dates (TICKET-UI-23)', async () => {
+    await setup({});
+    fixture.detectChanges();
+    const page: HTMLElement = fixture.nativeElement;
+
+    expect(page.querySelector('mm-range-grouping-switcher')).toBeNull();
+  });
+
   it('applies the filters emitted by the filter bar to filteredTransactions', async () => {
     await setup();
     TestBed.inject(TransactionsStore).addMany([

@@ -94,7 +94,7 @@ export class TrendChartPanelComponent {
 
   /** Defaults from the current shared date range on first render (TICKET-STAT-15); independent of every other chart's control thereafter. */
   protected readonly granularity = signal<Granularity>(
-    pickGranularityForSpan(this.rangeStore.from(), this.rangeStore.to()),
+    pickGranularityForSpan(this.rangeStore.from('dashboard'), this.rangeStore.to('dashboard')),
   );
 
   private readonly ownSavingsIbans = computed(() =>
@@ -105,8 +105,8 @@ export class TrendChartPanelComponent {
     computeCategoryCompositionTrend(
       this.transactionsStore.transactions(),
       this.categoriesStore.categoriesById(),
-      this.rangeStore.from(),
-      this.rangeStore.to(),
+      this.rangeStore.from('dashboard'),
+      this.rangeStore.to('dashboard'),
       this.granularity(),
       this.ownSavingsIbans(),
       this.accountsStore.accountsById(),
@@ -146,7 +146,8 @@ export class TrendChartPanelComponent {
   });
 
   private readonly rangeLabel = computed(
-    () => `${this.granularity()}, ${this.rangeStore.from()}â€“${this.rangeStore.to()}`,
+    () =>
+      `${this.granularity()}, ${this.rangeStore.from('dashboard')}â€“${this.rangeStore.to('dashboard')}`,
   );
 
   protected readonly incomeChartAriaLabel = computed(

@@ -44,8 +44,8 @@ export const StatsStore = signalStore(
     const periodStats = computed(() =>
       computePeriodStats(
         transactionsStore.transactions(),
-        rangeStore.from(),
-        rangeStore.to(),
+        rangeStore.from('dashboard'),
+        rangeStore.to('dashboard'),
         ownSavingsIbans(),
         categoriesStore.categoriesById(),
         accountsStore.accountsById(),
@@ -56,8 +56,8 @@ export const StatsStore = signalStore(
       computeCategoryBreakdown(
         transactionsStore.transactions(),
         categoriesStore.categoriesById(),
-        rangeStore.from(),
-        rangeStore.to(),
+        rangeStore.from('dashboard'),
+        rangeStore.to('dashboard'),
         ownSavingsIbans(),
         accountsStore.accountsById(),
       ),
@@ -66,8 +66,8 @@ export const StatsStore = signalStore(
     const weekdayWeekendSplit = computed(() =>
       computeWeekdayWeekendSplit(
         transactionsStore.transactions(),
-        rangeStore.from(),
-        rangeStore.to(),
+        rangeStore.from('dashboard'),
+        rangeStore.to('dashboard'),
         ownSavingsIbans(),
         categoriesStore.categoriesById(),
         accountsStore.accountsById(),
@@ -77,8 +77,8 @@ export const StatsStore = signalStore(
     const topTransactions = computed(() =>
       computeTopTransactions(
         transactionsStore.transactions(),
-        rangeStore.from(),
-        rangeStore.to(),
+        rangeStore.from('dashboard'),
+        rangeStore.to('dashboard'),
         ownSavingsIbans(),
       ),
     );
@@ -86,8 +86,8 @@ export const StatsStore = signalStore(
     const yearOverYear = computed(() =>
       computeYearOverYearComparison(
         transactionsStore.transactions(),
-        rangeStore.from(),
-        rangeStore.to(),
+        rangeStore.from('dashboard'),
+        rangeStore.to('dashboard'),
         ownSavingsIbans(),
         categoriesStore.categoriesById(),
         accountsStore.accountsById(),
@@ -96,7 +96,11 @@ export const StatsStore = signalStore(
 
     const comparisonWindow = computed(() =>
       computeComparisonWindow(
-        { preset: rangeStore.preset(), from: rangeStore.from(), to: rangeStore.to() },
+        {
+          preset: rangeStore.preset('dashboard'),
+          from: rangeStore.from('dashboard'),
+          to: rangeStore.to('dashboard'),
+        },
         todayIso(),
       ),
     );

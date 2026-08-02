@@ -66,26 +66,83 @@ defines. Each page keeps its own range for the session, so the pages stop overwr
 
 ## Acceptance criteria
 
-- [ ] `app-shell.component.html` contains no `mm-range-grouping-switcher`, and `AppShellComponent` no
+**Implementation notes (2026-08-02):**
+
+1. **Chose the keyed root store**, the second of the two options above, and recorded the reasoning in
+   `RangeStore`'s doc comment: `StatsStore` is `providedIn: 'root'` and injects `RangeStore`, and a
+   root-provided store cannot see a route-level provider — so one instance per lazy route would have
+   forced `StatsStore` (and every root consumer after it) to become route-scoped too. State is
+   `{ byPage: Record<RangePageKey, RangeState> }` and every accessor/mutator takes the page it acts on.
+2. **The page-side wiring is shared, not duplicated per page.** `all-time` resolution needs the
+   account/transaction stores and the URL round trip needs a skip-if-already-mirrored guard, so both
+   live in one `pageRangeControl(page)` helper ([page-range-control.ts](../../../src/app/core/state/page-range-control.ts))
+   that a page calls from a field initializer, in the same shape as `balanceTrendSignals`.
+3. **The switcher is placed on both pages here, not deferred.** This ticket's own browser criterion
+   ("set Dashboard to Last year, switch to Accounts…") is unverifiable if no page renders the
+   control, and shipping the commit in between would leave the range unreachable.
+   [TICKET-STAT-25](./TICKET-STAT-25-dashboard-page-header.md) and
+   [TICKET-ACC-08](./TICKET-ACC-08-accounts-page-header.md) still own their headers' ordering and
+   their other controls.
+4. **Found and fixed a bug the shell's version had latent**: reading `?from=&to=` on entry
+   unconditionally demoted a named preset to "Custom", because the page mirrors its own range into
+   those same params — so every refresh, back-navigation or bookmark returned showing "Custom". The
+   entry read now adopts the URL only when it differs from what the page already holds. The shell
+   never hit this because it only ever constructed once, at app start.
+5. **The shell's navbar is now `lg:hidden`.** With the switcher gone it holds only the mobile
+   hamburger and brand, both already `lg:hidden`, so on desktop it would have been an empty bordered
+   strip above every page. `mm-page-header` is the top bar there now.
+
+- [x] `app-shell.component.html` contains no `mm-range-grouping-switcher`, and `AppShellComponent` no
       longer injects `RangeStore` or declares `onPresetChange`/`onCustomRangeChange`/`onRangeShift`;
-      component spec asserts the switcher is absent from the shell.
-- [ ] Setting a range on `/dashboard` leaves `/accounts`' range untouched and vice versa; unit test over
+      component spec asserts the switcher is absent from the shell. (Shell is down to nav + drawer +
+      `AppSettingsStore`; `app-shell.component.spec.ts` "renders no range switcher — the range lives
+      in each page's own header".)
+- [x] Setting a range on `/dashboard` leaves `/accounts`' range untouched and vice versa; unit test over
       the two store instances (or the two page keys) asserting isolation in both directions.
-- [ ] Each range-owning page still defaults to `this-month` on first render; unit test.
-- [ ] `all-time` still resolves through `computeFullHistoryRange` on each page that offers it — the
+      (`range-state.store.spec.ts` → "RangeStore: one range per page" — "setting the Dashboard range
+      leaves the Accounts range untouched", "setting the Accounts range leaves the Dashboard range
+      untouched", "shifting one page never shifts the other"; plus `page-range-control.spec.ts`
+      "scopes every write to its own page, in both directions".)
+- [x] Each range-owning page still defaults to `this-month` on first render; unit test.
+      (`range-state.store.spec.ts` "every range-owning page starts on this-month" and
+      `page-range-control.spec.ts` "covers every declared range-owning page key", which iterates
+      `RangePageKey` so a page added without a default entry fails loudly.)
+- [x] `all-time` still resolves through `computeFullHistoryRange` on each page that offers it — the
       preset needs account/transaction data the store can't reach, exactly as today; unit test.
-- [ ] `shiftRange` (previous/next) still shifts by calendar unit or day count per
+      (`page-range-control.spec.ts` "resolves 'all-time' via the earliest active account/transaction
+      date, not a hardcoded date"; `range-state.store.spec.ts` "all-time resolves per page from the
+      caller-supplied full-history range".)
+- [x] `shiftRange` (previous/next) still shifts by calendar unit or day count per
       `CALENDAR_UNIT_BY_PRESET`/`alignedCalendarUnit`, unchanged; existing `range-state.store.spec.ts`
-      cases pass against the new shape.
-- [ ] A drill-down link carrying `?from=&to=` still lands on the target page with that range applied;
+      cases pass against the new shape. (All ten original cases kept verbatim apart from the page
+      argument, including both boundary-drift regressions.)
+- [x] A drill-down link carrying `?from=&to=` still lands on the target page with that range applied;
       component spec on the dashboard asserting the query params are read on entry.
-- [ ] `/transactions`, `/settings`, `/import`, `/categories`, `/learning`, `/help`, `/changelog` render
+      (`page-range-control.spec.ts` "reads ?from=&to= on entry so a drill-down link lands on that
+      range", which also asserts the *other* page is untouched by the link; plus the new regression
+      case in note 4, "keeps the named preset when re-entered with its own mirrored params".)
+- [x] `/transactions`, `/settings`, `/import`, `/categories`, `/learning`, `/help`, `/changelog` render
       no range control anywhere; specs assert absence on Transactions and Categories.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: set Dashboard to "Last year", switch to Accounts — Accounts is still
-      on its own range; go back to Dashboard — still "Last year".
+      (`transactions-overview.component.spec.ts` "renders no range switcher anywhere — its filter bar
+      already owns dates"; `categories-overview.component.spec.ts` "renders no subtitle and no range
+      control". Only `dashboard-overview` and `accounts-overview` import
+      `RangeGroupingSwitcherComponent`.)
+- [x] No persistence changes, no Dexie version bump. (`RangeStore` is still `withState` only, nothing
+      under `core/data-access/` touched.)
+- [x] `angular.json` bundle budgets not raised. (Untouched; dev build clean. The shell actually got
+      lighter — `RangeGroupingSwitcherComponent` and `computeFullHistoryRange` left the eager path.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (Both pre-commit gate
+      commands exit 0. `fallow audit --base HEAD` reports 0 introduced dead code; its two other
+      "introduced" rows are attribution artifacts of touching the files — `dup:f6d16225` is the
+      pre-existing `deleteConfirm`/`deleteMessage` pair shared by accounts- and categories-overview,
+      and `pageRangeControl`'s CRAP 30.0 comes from fallow's assumed-zero coverage on a helper that
+      `page-range-control.spec.ts` covers with 9 cases — the exact case the gate's `--max-crap 1000`
+      calibration exists for.)
+- [x] Verified live in the browser: set Dashboard to "Last year", switch to Accounts — Accounts is still
+      on its own range; go back to Dashboard — still "Last year". (Dev server on :4210. Dashboard set
+      to "Last quarter" → `/dashboard?from=2026-04-01&to=2026-06-30`; `/accounts` still reads
+      "This month" with its own `?from=2026-08-01&to=2026-08-31`; back on `/dashboard` still reads
+      "Last quarter", not "Custom".)
 
 ## Notes
 

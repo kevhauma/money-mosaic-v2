@@ -8,8 +8,11 @@
   />
 
   <div class="drawer-content flex min-h-screen flex-col bg-base-200">
-    <div class="navbar flex-wrap gap-2 border-b border-base-300 bg-base-100 px-4">
-      <div class="flex items-center lg:hidden">
+    <!-- Mobile chrome only, since TICKET-UI-23 moved the range switcher into the pages that own a
+         range. On `lg:` the sidebar is permanent and the brand sits at its top, so the whole bar
+         would otherwise be an empty bordered strip above every page's header. -->
+    <div class="navbar gap-2 border-b border-base-300 bg-base-100 px-4 lg:hidden">
+      <div class="flex items-center">
         <mm-button
           shape="square"
           variant="ghost"
@@ -22,14 +25,6 @@
           <span class="mm-brand-icon" aria-hidden="true"></span>
           <span>Money<span class="mm-brand-sep" aria-hidden="true"></span>Mosaic</span>
         </span>
-      </div>
-      <div class="ml-2 flex items-center">
-        <mm-range-grouping-switcher
-          [value]="switcherValue()"
-          (presetChange)="onPresetChange($event)"
-          (customRangeChange)="onCustomRangeChange($event)"
-          (rangeShift)="onRangeShift($event)"
-        />
       </div>
     </div>
 

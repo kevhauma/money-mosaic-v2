@@ -64,7 +64,7 @@ describe('CategoryBreakdownPanelComponent', () => {
       ],
     }).compileComponents();
 
-    TestBed.inject(RangeStore).setCustomRange('2026-07-01', '2026-07-31');
+    TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
     // Hydrated up front (against the empty fake-indexeddb-backed repo) so `dataReady()` is true
     // before each test's `addMany` seeds local state — otherwise the panel would show its loading
     // skeleton instead of the real content (TICKET-PERF-05).
@@ -246,7 +246,7 @@ describe('CategoryBreakdownPanelComponent', () => {
 
       // `expandedColumns` is a `linkedSignal` sourced from the range — its reset recomputes
       // lazily on next read, synchronously, no change-detection flush needed.
-      TestBed.inject(RangeStore).setCustomRange('2026-08-01', '2026-08-31');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-08-01', '2026-08-31');
 
       expect(fixture.componentInstance['columns']()[1].expanded).toBe(false);
       expect(fixture.componentInstance['columns']()[1].visibleEntries.length).toBeLessThanOrEqual(

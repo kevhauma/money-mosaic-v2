@@ -1,3 +1,7 @@
+<!-- Outside the centred wrapper below: `mm-page-header` is the page's full-bleed top bar, so it
+     spans the content area rather than being centred and capped with the wizard's body. -->
+<mm-page-header title="Import CSV" />
+
 <!-- Step 2 (map + live preview) gets a wider shell — the mapper's own global options, side-by-side
      previews, and guided stepper (TICKET-IMP-09) need more room than a single-column form. -->
 <div
@@ -5,8 +9,6 @@
   [class.max-w-3xl]="session.step() !== 2"
   [class.max-w-6xl]="session.step() === 2"
 >
-  <mm-page-header title="Import CSV" />
-
   <ul class="steps mb-8 w-full">
     <li class="step" [class.step-primary]="session.step() >= 1">Select</li>
     <li class="step" [class.step-primary]="session.step() >= 2">Map &#38; preview</li>

@@ -94,7 +94,9 @@ export class CategoryBreakdownPanelComponent {
   protected readonly dataReady = this.statsStore.dataReady;
 
   /** Combined range key so `expandedColumns` below resets whenever either bound changes. */
-  private readonly rangeKey = computed(() => `${this.rangeStore.from()}|${this.rangeStore.to()}`);
+  private readonly rangeKey = computed(
+    () => `${this.rangeStore.from('dashboard')}|${this.rangeStore.to('dashboard')}`,
+  );
 
   /**
    * Per-column "show more" state (TICKET-STAT-13) â€” expanding one column never affects the
@@ -139,14 +141,14 @@ export class CategoryBreakdownPanelComponent {
   });
 
   protected readonly viewAllQueryParams = computed(() => ({
-    from: this.rangeStore.from(),
-    to: this.rangeStore.to(),
+    from: this.rangeStore.from('dashboard'),
+    to: this.rangeStore.to('dashboard'),
   }));
 
   protected drilldownParams(categoryId: number | null): Record<string, string> {
     return buildTransactionDrilldownParams({
-      from: this.rangeStore.from(),
-      to: this.rangeStore.to(),
+      from: this.rangeStore.from('dashboard'),
+      to: this.rangeStore.to('dashboard'),
       categoryId: categoryId ?? UNCATEGORISED_SENTINEL,
     });
   }

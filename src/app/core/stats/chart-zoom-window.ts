@@ -5,10 +5,10 @@ export type ChartZoomWindow = { startValue: number; endValue: number };
 /**
  * Maps a [from, to] date range onto index positions within an already-computed, gap-filled
  * `bucketKeys` list (TICKET-STAT-03 header wiring for full-history charts): the charts always
- * compute their series over the account's/accounts' entire history, independent of the topbar
- * range, so the topbar range can only scrub the chart's zoom window rather than shrinking the
+ * compute their series over the account's/accounts' entire history, independent of the page's
+ * range, so that range can only scrub the chart's zoom window rather than shrinking the
  * underlying series data. Falls back to the nearest edge when `from`/`to` fall outside the
- * series' own span (e.g. the topbar range starts before the account existed).
+ * series' own span (e.g. the page's range starts before the account existed).
  */
 export const computeZoomWindow = (
   bucketKeys: string[],

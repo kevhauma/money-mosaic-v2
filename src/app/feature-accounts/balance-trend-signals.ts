@@ -14,7 +14,7 @@ import type { Granularity } from '@/shared/utils';
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 export type BalanceTrendSignals = {
-  /** Defaults from the current shared date range on first render (TICKET-STAT-15); independent of every other chart's control thereafter. */
+  /** Defaults from the Accounts page's date range on first render (TICKET-STAT-15); independent of every other chart's control thereafter. */
   granularity: WritableSignal<Granularity>;
   series: Signal<AccountBalanceSeries[]>;
   zoomWindow: Signal<ChartZoomWindow>;
@@ -30,6 +30,9 @@ export type BalanceTrendSignals = {
  */
 export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSignals => {
   const transactionsStore = inject(TransactionsStore);
+  // Always the `accounts` range (TICKET-UI-23): both callers are Accounts routes — the overview's
+  // stacked chart and the account-detail chart — and the detail route deliberately has no range
+  // control of its own, so it scrubs from whatever the overview's header was left on.
   const rangeStore = inject(RangeStore);
 
   const range = computed(() =>
@@ -37,7 +40,7 @@ export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSi
   );
 
   const granularity = signal<Granularity>(
-    pickGranularityForSpan(rangeStore.from(), rangeStore.to()),
+    pickGranularityForSpan(rangeStore.from('accounts'), rangeStore.to('accounts')),
   );
 
   // No joint-leg context here by design (TICKET-ACC-07): these series are raw account balances, so
@@ -55,8 +58,8 @@ export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSi
   const zoomWindow = computed(() =>
     computeZoomWindow(
       series()[0]?.points.map((point) => point.bucketKey) ?? [],
-      rangeStore.from(),
-      rangeStore.to(),
+      rangeStore.from('accounts'),
+      rangeStore.to('accounts'),
       granularity(),
     ),
   );

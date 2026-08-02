@@ -420,11 +420,11 @@ describe('IncomeOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('mm-granularity-picker')).toBeNull();
   });
 
-  it('always opens on its full monthly history, ignoring a narrow topbar range (TICKET-INC-02 divergence)', async () => {
+  it("always opens on its full monthly history, ignoring another page's narrow range (TICKET-INC-02 divergence)", async () => {
     await setup([salary]);
     // Narrower than the seeded history on purpose: once buckets are monthly, honouring this would
     // collapse the zoom window to a single bucket and open the trend chart on one dot.
-    TestBed.inject(RangeStore).setCustomRange('2026-01-01', '2026-01-31');
+    TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-01-01', '2026-01-31');
     fixture.detectChanges();
 
     const option = (
@@ -437,7 +437,7 @@ describe('IncomeOverviewComponent', () => {
     expect(option.dataZoom.every((zoom) => zoom.endValue === bucketCount - 1)).toBe(true);
   });
 
-  it('buckets by calendar month regardless of the topbar range, so bucket keys are YYYY-MM', async () => {
+  it('buckets by calendar month regardless of any page range, so bucket keys are YYYY-MM', async () => {
     await setup([salary]);
 
     const rows = monthlyBucketRows('tbody th').map((cell) => cell.textContent?.trim() ?? '');

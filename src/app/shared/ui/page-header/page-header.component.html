@@ -1,14 +1,22 @@
-<mm-flex align="center" justify="between" gap="3" [wrap]="true" class="mb-6">
-  <!-- `mm-page-title` is a theme-style hook — inert by default, themes may add an accent (e.g. Memphis's heavy left rule). -->
-  <div class="mm-page-title">
-    <mm-flex align="center" gap="2">
-      <mm-text variant="heading" as="h1">{{ title() }}</mm-text>
-      <ng-content select="[title-adornment]" />
+<!-- The app's top bar, now owned per page (TICKET-UI-22/UI-23). Same daisyUI `navbar` treatment the
+     shell topbar had before the range switcher moved out of it, and the negative margins cancel the
+     shell main's `p-4 lg:p-6` so it still sits flush against the content area's top and sides
+     rather than floating inside the page's own padding. -->
+<div
+  class="navbar -mx-4 -mt-4 mb-6 w-auto flex-wrap gap-2 border-b border-base-300 bg-base-100 px-4 lg:-mx-6 lg:-mt-6"
+>
+  <mm-flex align="center" justify="between" gap="3" [wrap]="true" class="w-full">
+    <!-- `mm-page-title` is a theme-style hook — inert by default, themes may add an accent (e.g. Memphis's heavy left rule). -->
+    <div class="mm-page-title">
+      <mm-flex align="center" gap="2">
+        <mm-text variant="heading" as="h1">{{ title() }}</mm-text>
+        <ng-content select="[title-adornment]" />
+      </mm-flex>
+    </div>
+    <!-- Wraps in its own right: the outer row only drops the whole group onto a second line, which
+         still overflows once a page projects three or four controls (TICKET-UI-22). -->
+    <mm-flex class="mm-page-actions" align="center" gap="2" [wrap]="true">
+      <ng-content select="[actions]" />
     </mm-flex>
-  </div>
-  <!-- Wraps in its own right: the outer row only drops the whole group onto a second line, which
-       still overflows once a page projects three or four controls (TICKET-UI-22). -->
-  <mm-flex class="mm-page-actions" align="center" gap="2" [wrap]="true">
-    <ng-content select="[actions]" />
   </mm-flex>
-</mm-flex>
+</div>

@@ -20,7 +20,7 @@ describe('WeekdayWeekendSplitPanelComponent', () => {
   });
 
   it('renders nothing for a range shorter than 2 calendar days', () => {
-    TestBed.inject(RangeStore).setCustomRange('2026-07-10', '2026-07-10');
+    TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-10', '2026-07-10');
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent.trim()).toBe('');
@@ -28,7 +28,7 @@ describe('WeekdayWeekendSplitPanelComponent', () => {
 
   it('renders weekday/weekend rates and the ratio for a range spanning a full week', () => {
     // 2026-07-10..18: Fri, Sat, Sun, Mon, Tue, Wed, Thu, Fri, Sat -> 6 weekdays, 3 weekend days.
-    TestBed.inject(RangeStore).setCustomRange('2026-07-10', '2026-07-18');
+    TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-10', '2026-07-18');
     TestBed.inject(TransactionsStore).addMany([
       {
         id: 1,
