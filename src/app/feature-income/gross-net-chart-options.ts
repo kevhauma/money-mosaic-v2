@@ -1,6 +1,10 @@
 import type { EChartsCoreOption } from 'echarts/core';
 import type { GrossNetGrowthPoint, GrossNetRatioPoint } from '@/core/stats';
-import { resolveChartAnimation, resolveChartCategoricalColors } from '@/shared/echarts';
+import {
+  legendOption,
+  resolveChartAnimation,
+  resolveChartCategoricalColors,
+} from '@/shared/echarts';
 import { formatCurrency, formatPercent } from '@/shared/utils';
 
 /**
@@ -58,6 +62,9 @@ export const buildTakeHomeChartOption = (
   points: GrossNetRatioPoint[],
   grossColor: string,
 ): EChartsCoreOption => {
+  // Already correct before TICKET-STAT-26 — routed through the helper so the reserved-space rule
+  // has one owner, at the same anchor and offset it used to spell out inline.
+  const takeHomeLegend = legendOption(undefined, 'bottom');
   const bands = toTakeHomeBands(points);
   const tooltips = points.map((point) => {
     if (point.ratio === null) return `Net ${formatCurrency(point.net)} — no gross wage entered`;
@@ -72,8 +79,8 @@ export const buildTakeHomeChartOption = (
     ...resolveChartAnimation(),
     color: resolveChartCategoricalColors(),
     tooltip: { trigger: 'axis', formatter: tooltipFormatter(tooltips) },
-    legend: { bottom: 0 },
-    grid: { left: 56, right: 24, top: 24, bottom: 48 },
+    legend: takeHomeLegend.legend,
+    grid: { left: 56, right: 24, top: 24, bottom: takeHomeLegend.gridOffset },
     xAxis: { type: 'category', data: points.map((point) => point.bucketKey) },
     yAxis: {
       type: 'value',
@@ -150,6 +157,7 @@ export const buildGrossNetGrowthChartOption = (
   kind: GrossNetGrowthChartKind,
   grossColor: string,
 ): EChartsCoreOption => {
+  const growthLegend = legendOption(undefined, 'bottom');
   const spec = GROWTH_CHART_SPECS[kind];
   const gross = valuesOf(points, spec.gross);
   const net = valuesOf(points, spec.net);
@@ -164,8 +172,8 @@ export const buildGrossNetGrowthChartOption = (
     ...resolveChartAnimation(),
     color: resolveChartCategoricalColors(),
     tooltip: { trigger: 'axis', formatter: tooltipFormatter(tooltips) },
-    legend: { bottom: 0 },
-    grid: { left: 64, right: 24, top: 24, bottom: 48 },
+    legend: growthLegend.legend,
+    grid: { left: 64, right: 24, top: 24, bottom: growthLegend.gridOffset },
     xAxis: { type: 'category', data: points.map((point) => point.bucketKey) },
     yAxis: {
       type: 'value',

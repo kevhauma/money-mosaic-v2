@@ -154,6 +154,36 @@ describe('TrendChartPanelComponent', () => {
     expect(option.series[0].itemStyle.color).toBe('#ff0000');
   });
 
+  it("draws each column's legend in a top strip with the grid grown to clear it (TICKET-STAT-26)", async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-01-10',
+        amount: -50,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-1',
+        createdAt: '2026-01-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+    ]);
+
+    for (const key of ['expenseChartOption', 'incomeChartOption'] as const) {
+      const option = fixture.componentInstance[key]() as {
+        legend: { type: string; top: number };
+        grid: { top: number };
+      };
+
+      // Was `legend: { data }` against `grid: { top: 32 }` — five stacked categories wrapped the
+      // legend onto a second line and the bars ran under it.
+      expect(option.legend.type).toBe('scroll');
+      expect(option.grid.top).toBeGreaterThan(32);
+      expect(option.grid.top).toBeGreaterThan(option.legend.top);
+    }
+  });
+
   it('renders both charts on the same shared y-axis max', async () => {
     await TestBed.inject(CategoriesStore).addCategory(groceries);
     await TestBed.inject(CategoriesStore).addCategory(salary);

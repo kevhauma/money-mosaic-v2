@@ -12,6 +12,7 @@ import type { CategorySeriesEntry, ChartZoomWindow } from '@/core/stats';
 import {
   bucketedZoomAxisOption,
   formatAxisTooltip,
+  legendOption,
   resolveChartAnimation,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
@@ -57,21 +58,38 @@ export const buildIncomeTrendChartOption = (
   bucketKeys: string[],
   series: CategorySeriesEntry[],
   zoomWindow: ChartZoomWindow,
-): EChartsCoreOption => ({
-  ...resolveChartAnimation(),
-  color: resolveChartCategoricalColors(),
-  tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
-  legend: { data: series.map((entry) => entry.name) },
-  ...bucketedZoomAxisOption(bucketKeys, zoomWindow),
-  series: series.map((entry) => ({
-    name: entry.name,
-    type: 'line',
-    stack: 'income',
-    areaStyle: {},
-    color: entry.color,
-    data: entry.values,
-  })),
-});
+): EChartsCoreOption => {
+  // Top strip with the grid grown to clear it (TICKET-STAT-26); the bottom edge here belongs to
+  // the `dataZoom` slider.
+  //
+  // fallow-ignore-next-line code-duplication
+  // Reason: the 13 lines this shares with `buildColumnChartOption` are the categorical-chart
+  // prologue every builder has had since TICKET-UI-13 — animation, palette, axis tooltip — plus the
+  // one `legendOption` call this ticket introduced. Collapsing them would mean one shared builder
+  // owning both the Dashboard's stacked bars and this page's stacked areas, which couples two
+  // features' charts to remove six lines. The geometry that actually caused bugs (legend placement,
+  // grid offset, zoom shell) already lives in `shared/echarts`.
+  const { legend, gridOffset } = legendOption(
+    series.map((entry) => entry.name),
+    'top',
+  );
+
+  return {
+    ...resolveChartAnimation(),
+    color: resolveChartCategoricalColors(),
+    tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
+    legend,
+    ...bucketedZoomAxisOption(bucketKeys, zoomWindow, gridOffset),
+    series: series.map((entry) => ({
+      name: entry.name,
+      type: 'line',
+      stack: 'income',
+      areaStyle: {},
+      color: entry.color,
+      data: entry.values,
+    })),
+  };
+};
 
 /**
  * The `/income` page container (FR-INC-1, TICKET-INC-01), now hosting the income-by-category trend

@@ -9,6 +9,7 @@ import {
   bucketedZoomAxisOption,
   resolveChartAnimation,
   formatAxisTooltip,
+  legendOption,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
 import { FlexComponent, GranularityPickerComponent, PaperComponent } from '@/shared/ui';
@@ -22,13 +23,19 @@ export const buildAccountBalanceHistoryChartOption = (
 ): EChartsCoreOption => {
   const accountsById = new Map(accounts.map((account) => [account.id, account]));
   const bucketKeys = series[0]?.points.map((point) => point.bucketKey) ?? [];
+  // Worst case of the three this fixed (TICKET-STAT-26): stacked areas peak at the top of the plot,
+  // so the top band always met the legend — the very control you click to hide an account.
+  const { legend, gridOffset } = legendOption(
+    accounts.map((account) => account.name),
+    'top',
+  );
 
   return {
     ...resolveChartAnimation(),
     color: resolveChartCategoricalColors(),
     tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
-    legend: { data: accounts.map((account) => account.name) },
-    ...bucketedZoomAxisOption(bucketKeys, zoomWindow),
+    legend,
+    ...bucketedZoomAxisOption(bucketKeys, zoomWindow, gridOffset),
     series: series.map(({ accountId, points }) => {
       const account = accountsById.get(accountId);
       return {

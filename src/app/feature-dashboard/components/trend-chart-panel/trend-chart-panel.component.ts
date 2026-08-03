@@ -12,6 +12,7 @@ import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@
 import {
   resolveChartAnimation,
   formatAxisTooltip,
+  legendOption,
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
 import {
@@ -50,22 +51,31 @@ const buildColumnChartOption = (
   series: CategorySeriesEntry[],
   stackName: 'income' | 'expense',
   sharedMax: number,
-): EChartsCoreOption => ({
-  ...resolveChartAnimation(),
-  color: resolveChartCategoricalColors(),
-  tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
-  legend: { data: series.map((entry) => entry.name) },
-  grid: { left: 48, right: 24, top: 32, bottom: 24 },
-  xAxis: { type: 'category', data: bucketKeys },
-  yAxis: { type: 'value', max: sharedMax > 0 ? sharedMax : undefined },
-  series: series.map((entry) => ({
-    name: entry.name,
-    type: 'bar',
-    stack: stackName,
-    itemStyle: { color: entry.color },
-    data: entry.values,
-  })),
-});
+): EChartsCoreOption => {
+  // Top strip, matching the other bucketed charts (TICKET-STAT-26) — the legend used to draw
+  // inside the plot, and five stacked categories wrapped it onto a second line over the bars.
+  const { legend, gridOffset } = legendOption(
+    series.map((entry) => entry.name),
+    'top',
+  );
+
+  return {
+    ...resolveChartAnimation(),
+    color: resolveChartCategoricalColors(),
+    tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
+    legend,
+    grid: { left: 48, right: 24, top: gridOffset, bottom: 24 },
+    xAxis: { type: 'category', data: bucketKeys },
+    yAxis: { type: 'value', max: sharedMax > 0 ? sharedMax : undefined },
+    series: series.map((entry) => ({
+      name: entry.name,
+      type: 'bar',
+      stack: stackName,
+      itemStyle: { color: entry.color },
+      data: entry.values,
+    })),
+  };
+};
 
 /**
  * Income/expense trend split into two same-scale, category-stacked bar charts (TICKET-STAT-17,

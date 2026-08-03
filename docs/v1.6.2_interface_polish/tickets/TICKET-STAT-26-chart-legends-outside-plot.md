@@ -74,28 +74,65 @@ re-types its own `legend` literal, which is exactly why three of five are wrong 
 
 ## Acceptance criteria
 
-- [ ] `shared/echarts` exports one legend helper returning both the legend config and its required grid
+- [x] `shared/echarts` exports one legend helper returning both the legend config and its required grid
       offset; unit-tested for `type: 'scroll'`, the placement it was asked for, and an offset large enough
       to clear the legend.
-- [ ] `bucketedZoomAxisOption` takes `grid.top` from its caller with today's `48` as the default; its
+      ([legend-option.ts](../../../src/app/shared/echarts/legend-option.ts) — `legendOption(names,
+      placement)` returns `{ legend, gridOffset }`. [legend-option.spec.ts](../../../src/app/shared/echarts/legend-option.spec.ts)
+      covers scroll-typing, one-edge anchoring, and `gridOffset > the strip's own inset`.)
+- [x] `bucketedZoomAxisOption` takes `grid.top` from its caller with today's `48` as the default; its
       existing spec passes unchanged, plus a new case for a passed offset.
-- [ ] `buildColumnChartOption`, `buildAccountBalanceHistoryChartOption` and the income by-month builder
+      (Third parameter `gridTop = 48`. It had **no** existing spec — `grep` for it across `*.spec.ts`
+      matched nothing before this ticket — so both cases are new: "defaults to today's 48 when the
+      caller passes nothing" and "takes the caller's offset…", in `legend-option.spec.ts`.)
+- [x] `buildColumnChartOption`, `buildAccountBalanceHistoryChartOption` and the income by-month builder
       route their legend through the helper; unit test on each asserting the legend is scroll-typed and
       that `grid.top` exceeds the legend strip rather than the old literal.
-- [ ] `buildTakeHomeChartOption` and `buildGrossNetGrowthChartOption` route their existing bottom legend
+      (Three cases, one per builder, all named "draws the legend in a top strip with the grid grown to
+      clear it (TICKET-STAT-26)" — in `trend-chart-panel.component.spec.ts` (asserts `grid.top > 32`,
+      the old literal, on both columns), `account-balance-history-chart.component.spec.ts` and
+      `income-overview.component.spec.ts` (both assert `grid.top > 48`).)
+- [x] `buildTakeHomeChartOption` and `buildGrossNetGrowthChartOption` route their existing bottom legend
       through the helper with **no change to rendered geometry**; their existing specs pass unchanged.
-- [ ] No chart builder in `src/app` contains a bare `legend: {` literal any more; `grep` is clean.
-- [ ] Legend clicks still toggle a series on the accounts balance-history chart; component spec asserts
+      (`legendOption(undefined, 'bottom')` returns `{ bottom: 0 }` and `gridOffset: 48` — exactly the
+      literals those two builders spelled out; `legend-option.spec.ts`'s "keeps the Net vs gross
+      geometry byte-for-byte" pins it. The one added key is `type: 'scroll'`, which is behaviour, not
+      geometry, and renders identically for a two-entry legend. `gross-net-chart-options.spec.ts`
+      untouched and green.)
+- [x] No chart builder in `src/app` contains a bare `legend: {` literal any more; `grep` is clean.
+      (`grep -rn "legend: {" --include=*.ts src/app` matches only `legend-option.ts` itself.)
+- [x] Legend clicks still toggle a series on the accounts balance-history chart; component spec asserts
       the entries render and `selectedMode` was not disabled.
-- [ ] With ten active accounts the legend pages rather than growing; unit test over ten names asserting
+      (Spec case "leaves the legend clickable — hiding an account is native echarts legend behaviour";
+      confirmed live too, where the resolved option reports `selectedMode: true`.)
+- [x] With ten active accounts the legend pages rather than growing; unit test over ten names asserting
       `type: 'scroll'` and an unchanged reserved offset.
-- [ ] Chart container heights (`h-80`/`h-72`/`h-64`) are unchanged; `git diff` touches no height class.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised, and no new echarts module registered — confirm
+      (Spec case "reserves the same space for ten names as for two — the legend pages rather than
+      growing".)
+- [x] Chart container heights (`h-80`/`h-72`/`h-64`) are unchanged; `git diff` touches no height class.
+      (No template changed; `git diff -U0 | grep -E '^[+-].*h-(64|72|80)'` is empty.)
+- [x] No persistence changes, no Dexie version bump.
+      (Diff is three chart builders, two shared helpers and their specs.)
+- [x] `angular.json` bundle budgets not raised, and no new echarts module registered — confirm
       `echarts-setup.ts` already includes the legend component before assuming so.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser, on all three broken surfaces: with a full stack the top band no longer
+      (`echarts-setup.ts` already registers `LegendComponent`; both it and `angular.json` are
+      untouched, and the dev build reports no budget warnings.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (`fallow audit --base HEAD` → `pass`. It first reported one **introduced** duplicate: the two
+      top-strip builders now share a 13-line prologue. That prologue is the categorical-chart preamble
+      every builder has had since TICKET-UI-13 plus the new `legendOption` call, and collapsing it
+      would mean one shared builder owning both the Dashboard's stacked bars and Income's stacked
+      areas — so it carries a `fallow-ignore-next-line code-duplication` with that reason written out
+      at the call site. `ng lint` + `ng test` (2200 tests) + dev build all green.)
+- [x] Verified live in the browser, on all three broken surfaces: with a full stack the top band no longer
       runs under the legend, and every legend entry is clickable where it is drawn.
+      (:4210, reading each chart's resolved option off its echarts instance. `/accounts` balance
+      history: `type: 'scroll'`, `top: 8`, `grid.top: 56` against a strip whose bottom edge is 32, and
+      `selectedMode: true`. `/dashboard`: both trend columns identical — one of them with five stacked
+      categories, the case the ticket named. `/income` by-month: same, `grid.top: 56` where it used to
+      be 48. The two charts without a legend (`h-56` comparison panels) are untouched. **Not** checked
+      live: the two Net vs gross charts — this browser profile has no gross wages entered, so that
+      section renders its empty state; their geometry rests on the byte-for-byte unit assertion above.)
 
 ## Notes
 

@@ -525,4 +525,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Dashboard',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-STAT-26'],
+    title:
+      'Chart legends moved out of the plot and into their own strip, so series names no longer sit on top of the data',
+    area: 'Charts',
+  },
 ];

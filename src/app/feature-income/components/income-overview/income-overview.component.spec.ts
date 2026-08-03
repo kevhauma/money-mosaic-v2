@@ -61,7 +61,8 @@ describe('buildIncomeTrendChartOption (FR-INC-2, TICKET-INC-02)', () => {
    * assertions below narrow through a local shape rather than sprinkling casts. */
   type IncomeTrendOption = {
     series: { name: string; type: string; stack: string; color: string; data: number[] }[];
-    legend: { data: string[] };
+    legend: { type: string; top: number; data: string[] };
+    grid: { top: number };
     dataZoom: { type: string; startValue: number; endValue: number }[];
     xAxis: { data: string[] };
   };
@@ -88,6 +89,16 @@ describe('buildIncomeTrendChartOption (FR-INC-2, TICKET-INC-02)', () => {
     ]);
 
     expect(option.legend.data).toEqual(['Salary', 'Other Income']);
+  });
+
+  it('draws the legend in a top strip with the grid grown to clear it (TICKET-STAT-26)', () => {
+    const option = build([seriesEntry({ categoryId: 1, name: 'Salary' })]);
+
+    // Was `legend: { data }` against `bucketedZoomAxisOption`'s hard-coded `grid.top: 48`, so the
+    // strip drew inside the plot. The bottom edge here belongs to the dataZoom slider.
+    expect(option.legend.type).toBe('scroll');
+    expect(option.grid.top).toBeGreaterThan(48);
+    expect(option.grid.top).toBeGreaterThan(option.legend.top);
   });
 
   it('draws the redistributed-bonus band like any other series (TICKET-INC-20)', () => {

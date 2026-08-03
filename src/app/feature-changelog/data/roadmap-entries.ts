@@ -23,12 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-STAT-26',
-    title: 'Chart legends get their own strip instead of floating over the lines and bars',
-    area: 'Charts',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-STAT-27',
     title:
       'Charts remember the series you hid and the bucket you picked, for as long as the app is open',

@@ -12,12 +12,17 @@ type ZoomWindow = { startValue: number; endValue: number };
  * controls have to stay identical across them — which is exactly what a caller can't guarantee by
  * re-typing the literal. Spread into the caller's own option object, which still owns its
  * `series`, `tooltip`, `legend`, and colours.
+ *
+ * `gridTop` is the one edge a caller owns: a chart with a legend passes `legendOption`'s
+ * `gridOffset` so the strip has room (TICKET-STAT-26); one without keeps the default. Everything
+ * else stays fixed, which is the whole reason this helper exists.
  */
 export const bucketedZoomAxisOption = (
   bucketKeys: string[],
   zoomWindow: ZoomWindow,
+  gridTop = 48,
 ): EChartsCoreOption => ({
-  grid: { left: 56, right: 24, top: 48, bottom: 64 },
+  grid: { left: 56, right: 24, top: gridTop, bottom: 64 },
   xAxis: { type: 'category', data: bucketKeys },
   yAxis: { type: 'value' },
   dataZoom: [

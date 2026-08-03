@@ -247,7 +247,48 @@ describe('buildAccountBalanceHistoryChartOption', () => {
         data: [-200],
       },
     ]);
-    expect(option['legend']).toEqual({ data: ['Checking', 'Credit line'] });
+    expect(option['legend']).toEqual({
+      type: 'scroll',
+      top: 8,
+      data: ['Checking', 'Credit line'],
+    });
+  });
+
+  it('draws the legend in a top strip with the grid grown to clear it (TICKET-STAT-26)', () => {
+    const series = [
+      { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1100 }] },
+    ];
+
+    const option = buildAccountBalanceHistoryChartOption([accounts[0]], series, {
+      startValue: 0,
+      endValue: 0,
+    });
+    const legend = option['legend'] as { type: string; top: number };
+    const grid = option['grid'] as { top: number };
+
+    // Was `legend: { data }` with no placement against `bucketedZoomAxisOption`'s hard-coded
+    // `grid.top: 48` — echarts then drew the strip inside the plot, over the stacked bands and
+    // over the only control that hides an account.
+    expect(legend.type).toBe('scroll');
+    expect(grid.top).toBeGreaterThan(48);
+    expect(grid.top).toBeGreaterThan(legend.top);
+  });
+
+  it('leaves the legend clickable — hiding an account is native echarts legend behaviour', () => {
+    const series = [
+      { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1100 }] },
+      { accountId: 2, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: -200 }] },
+    ];
+
+    const option = buildAccountBalanceHistoryChartOption(accounts, series, {
+      startValue: 0,
+      endValue: 0,
+    });
+    const legend = option['legend'] as { data: string[]; selectedMode?: unknown };
+
+    // Every band has an entry to click, and nothing turned the toggle off.
+    expect(legend.data).toEqual(['Checking', 'Credit line']);
+    expect(legend.selectedMode).toBeUndefined();
   });
 
   it("the stacked bands' per-bucket sum is total real balance — no longer combined net worth (TICKET-ACC-07)", () => {
