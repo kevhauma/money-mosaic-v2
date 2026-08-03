@@ -3,17 +3,17 @@ import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
-import type { AccountBalanceSeries } from '@/core/stats';
+import type { AccountBalanceSeries, DayTransactionIndex } from '@/core/stats';
 import { AccountsStore, chartSeriesFilter, chartZoomControl } from '@/core/state';
 import {
   bucketedZoomAxisOption,
   resolveChartAnimation,
-  formatAxisTooltip,
   legendOption,
   resolveChartCategoricalColors,
   type ChartZoomBounds,
 } from '@/shared/echarts';
 import { FlexComponent, PaperComponent } from '@/shared/ui';
+import { buildBalanceDayTooltip } from '../../balance-day-tooltip';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
 /** Pure echarts-option builder, kept separate from the component so it's testable without TestBed. */
@@ -22,6 +22,7 @@ export const buildAccountBalanceHistoryChartOption = (
   series: AccountBalanceSeries[],
   zoomWindow: ChartZoomBounds,
   hiddenSeries: readonly string[] = [],
+  dayIndex: DayTransactionIndex = new Map(),
 ): EChartsCoreOption => {
   const accountsById = new Map(accounts.map((account) => [account.id, account]));
   const bucketKeys = series[0]?.points.map((point) => point.bucketKey) ?? [];
@@ -38,7 +39,12 @@ export const buildAccountBalanceHistoryChartOption = (
   return {
     ...resolveChartAnimation(),
     color: resolveChartCategoricalColors(),
-    tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
+    // Not the shared `formatAxisTooltip` (TICKET-ACC-11): on a balance chart, restating each band's
+    // value repeats what the stack already draws. What the hover is actually asking is what moved.
+    tooltip: {
+      trigger: 'axis',
+      formatter: buildBalanceDayTooltip(dayIndex, { showAccountNames: true }),
+    },
     legend,
     ...bucketedZoomAxisOption(bucketKeys, zoomWindow, gridOffset),
     series: series.map(({ accountId, points }) => {
@@ -103,6 +109,7 @@ export class AccountBalanceHistoryChartComponent {
       this.series(),
       this.zoom(),
       this.seriesFilter.hidden(),
+      this.trend.dayIndex(),
     ),
   );
 

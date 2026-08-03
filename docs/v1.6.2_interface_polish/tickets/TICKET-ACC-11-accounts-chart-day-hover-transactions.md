@@ -71,38 +71,84 @@ overview, and for the one account in view on account detail.
 
 ## Acceptance criteria
 
-- [ ] A pure day-lookup helper exists in `core/stats/` with a TestBed-free spec covering: a day with
+- [x] A pure day-lookup helper exists in `core/stats/` with a TestBed-free spec covering: a day with
       movement on two accounts; a day with movement on one of three; a day with none; a single-account
-      input; and correct per-account day totals.
-- [ ] The lookup excludes archived accounts on the overview, matching its `activeAccounts()` series, and
+      input; and correct per-account day totals. (`core/stats/day-transactions.ts` —
+      `buildDayTransactionIndex` + `dayMovementsFor`; `day-transactions.spec.ts` has one test per listed
+      case, all TestBed-free, plus counterparty→description fallback and chart-order assertions)
+- [x] The lookup excludes archived accounts on the overview, matching its `activeAccounts()` series, and
       returns an archived account's own transactions when that account is the one passed in (the detail
-      page renders for archived accounts too); unit test both.
-- [ ] Both balance charts use the shared tooltip formatter rather than `formatAxisTooltip`; component
-      specs assert it on each.
-- [ ] The tooltip renders the day through `localeDate` and every amount through `formatCurrency`; unit
-      test on the formatter output.
-- [ ] On account detail the tooltip omits the account-name row and still shows the date, the day's
+      page renders for archived accounts too); unit test both. (Falls out of the design rather than a
+      branch: the `accounts` argument decides what is visible. `day-transactions.spec.ts` — "excludes an
+      account that isn't in the list" and "returns an archived account's own transactions when that
+      account is the one passed in")
+- [x] Both balance charts use the shared tooltip formatter rather than `formatAxisTooltip`; component
+      specs assert it on each. (`buildBalanceDayTooltip` wired in both option builders;
+      `account-balance-history-chart.component.spec.ts` "hovering a day lists that day's transactions per
+      account" and `account-balance-chart.component.spec.ts` "hovering a day lists that day's transactions
+      with no account-name row" both drive the built option's `tooltip.formatter`)
+- [x] The tooltip renders the day through `localeDate` and every amount through `formatCurrency`; unit
+      test on the formatter output. (`balance-day-tooltip.spec.ts` — "renders the day through localeDate
+      and every amount through formatCurrency": asserts `formatDate('2026-03-10')` is present and the raw
+      bucket key is not)
+- [x] On account detail the tooltip omits the account-name row and still shows the date, the day's
       transaction lines and the day's net change; unit test on the single-account rendering.
-- [ ] Accounts with no transactions that day are absent from the overview tooltip; unit test.
-- [ ] A day with no transactions renders the date plus a "No transactions" line on **both** charts, never
-      an empty tooltip; unit test.
-- [ ] More than the per-account cap of transactions renders the cap plus a `+N more` line; unit test at
+      (`showAccountNames: false`; `balance-day-tooltip.spec.ts` — "drops the account-name row on account
+      detail, keeping the lines and the net". Confirmed live: no account name appears on any of
+      `/accounts/1`'s 125 days.)
+- [x] Accounts with no transactions that day are absent from the overview tooltip; unit test.
+      (`balance-day-tooltip.spec.ts` — "omits accounts with no movement that day")
+- [x] A day with no transactions renders the date plus a "No transactions" line on **both** charts, never
+      an empty tooltip; unit test. (`balance-day-tooltip.spec.ts` — "falls back to a 'No transactions'
+      line on a quiet day", looped over both `showAccountNames` values)
+- [x] More than the per-account cap of transactions renders the cap plus a `+N more` line; unit test at
       the boundary (exactly the cap → no "more" line; cap + 1 → one), covering the detail chart too.
-- [ ] On the overview, each account's line carries its own colour marker matching its band; unit test
-      asserting the marker is emitted per account.
-- [ ] `formatAxisTooltip` and every non-balance chart's tooltip are unchanged; `git diff` touches no other
-      chart's `tooltip` config.
-- [ ] Clicking a band on the overview still navigates to that account's detail page, and clicking a point
+      (`balance-day-tooltip.spec.ts` — "shows exactly the per-account cap with no '+N more' line at the
+      boundary" (5), "collapses the overflow into one '+N more' line at cap + 1" (6), and "truncates on
+      account detail too" (30 → `+25 more`). **Scope addition, flagged rather than assumed:** live
+      verification showed the two caps this criterion names are not enough on their own — each account
+      also costs a name row, a net row and a `+N more`, so ten moving accounts would still be ~40 rows.
+      A third cap, `MAX_ACCOUNTS = 4` with a trailing `+N more accounts`, was added and tested — "caps the
+      accounts too, so a day that moved everything cannot outgrow the viewport".)
+- [x] On the overview, each account's line carries its own colour marker matching its band; unit test
+      asserting the marker is emitted per account. (Markers are taken from the hover params themselves —
+      the very swatch echarts drew — keyed by series name; `balance-day-tooltip.spec.ts` — "names each
+      account with its own band marker")
+- [x] `formatAxisTooltip` and every non-balance chart's tooltip are unchanged; `git diff` touches no other
+      chart's `tooltip` config. (`git diff` over `shared/echarts/tooltip-formatter.ts` is empty, and the
+      only `tooltip:` blocks in the diff are the two balance charts')
+- [x] Clicking a band on the overview still navigates to that account's detail page, and clicking a point
       on the detail chart still opens `/transactions` filtered to that day and account; existing specs
-      pass unchanged (the detail chart's single-day drill-down comes from TICKET-ACC-10).
-- [ ] Hover stays responsive on a full dataset — the lookup indexes transactions by day once rather than
+      pass unchanged (the detail chart's single-day drill-down comes from TICKET-ACC-10). (Neither
+      `onChartClick` was touched; the TICKET-ACC-10 drill-down spec still passes)
+- [x] Hover stays responsive on a full dataset — the lookup indexes transactions by day once rather than
       scanning the whole array per hover; unit test asserting the index is built from the input, plus a
-      note in the helper's doc comment.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser on **both** charts: hovering a day with a salary deposit names the
+      note in the helper's doc comment. (`balanceTrendSignals.dayIndex` is a `computed()` beside `series`,
+      so it is rebuilt with the data and not per hover; the note is on `DayTransactionIndex`;
+      `day-transactions.spec.ts` — "indexes the whole input once, so a hover is a Map lookup rather than
+      an array scan" asserts 500 transactions produce 28 day entries up front)
+- [x] No persistence changes, no Dexie version bump. (nothing under `core/data-access/` in the diff)
+- [x] `angular.json` bundle budgets not raised. (`angular.json` untouched; dev build initial total
+      2.15 MB)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD`:
+      verdict **pass**, zero introduced findings, after decomposing `buildDayTransactionIndex` (an
+      `upsert` helper and an extracted comparator) and the tooltip's returned closure (`hoveredDay`,
+      `headerFor`, `shownLineCount`, `renderMovements`), all of which had tripped the CRAP threshold;
+      `ng lint` clean, 2251/2251 specs green, dev build compiles)
+- [x] Verified live in the browser on **both** charts: hovering a day with a salary deposit names the
       deposit; hovering a quiet day says so; a payday with many rows truncates instead of overflowing.
+      (Done on the dev server at :4210. The Browser pane had been closed — the user chose to continue
+      without it — so this pass drives the live charts' own `tooltip.formatter` through Angular's
+      dev-mode `ng.getDirectives` for all 125 days rather than hovering by hand.
+      **`/accounts`:** 2026-05-01 → `<b>05/01/2026</b> ●Everyday Checking · ACME Corp: €2,800.00 · Net
+      €2,800.00`; 2026-05-20 (an inter-account transfer) names both accounts with their own markers and
+      opposite nets; 2026-04-01 → `No transactions`. **`/accounts/1`:** same days, same content, and no
+      account-name row on any of the 125.
+      **Truncation** could not be reproduced from the seeded data — no day there has more than two
+      transactions on one account — so it is covered by the boundary unit tests above, and the
+      *overflow* half was measured directly instead: the worst case the caps allow (4 accounts of 7,
+      the 10-line budget spent, long counterparty names) rendered into the page at echarts' tooltip
+      styling comes to 24 rows / **490 px** against an 800 px viewport. No console errors.)
 
 ## Notes
 

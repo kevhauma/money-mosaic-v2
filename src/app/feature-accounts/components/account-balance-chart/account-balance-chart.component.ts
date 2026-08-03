@@ -3,15 +3,15 @@ import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
-import type { AccountBalancePoint } from '@/core/stats';
+import type { AccountBalancePoint, DayTransactionIndex } from '@/core/stats';
 import {
   resolveChartAnimation,
-  formatAxisTooltip,
   resolveChartCategoricalColors,
   type ChartZoomBounds,
 } from '@/shared/echarts';
 import { FlexComponent, PaperComponent } from '@/shared/ui';
 import { bucketDateBoundaries, buildTransactionDrilldownParams } from '@/shared/utils';
+import { buildBalanceDayTooltip } from '../../balance-day-tooltip';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
 /** Pure echarts-option builder, kept separate from the component so it's testable without TestBed. */
@@ -19,10 +19,16 @@ export const buildAccountBalanceChartOption = (
   account: Account,
   points: AccountBalancePoint[],
   zoomWindow: ChartZoomBounds,
+  dayIndex: DayTransactionIndex = new Map(),
 ): EChartsCoreOption => ({
   ...resolveChartAnimation(),
   color: resolveChartCategoricalColors(),
-  tooltip: { trigger: 'axis', formatter: formatAxisTooltip },
+  // The day's own transactions (TICKET-ACC-11), with no account-name row — this page *is* that
+  // account, so naming it above its own transactions would label nothing.
+  tooltip: {
+    trigger: 'axis',
+    formatter: buildBalanceDayTooltip(dayIndex, { showAccountNames: false }),
+  },
   grid: { left: 56, right: 24, top: 24, bottom: 64 },
   xAxis: { type: 'category', data: points.map((point) => point.bucketKey) },
   yAxis: { type: 'value' },
@@ -63,7 +69,12 @@ export class AccountBalanceChartComponent {
   protected readonly points = computed(() => this.trend.series()[0]?.points ?? []);
 
   protected readonly chartOption = computed<EChartsCoreOption>(() =>
-    buildAccountBalanceChartOption(this.account(), this.points(), this.trend.zoomWindow()),
+    buildAccountBalanceChartOption(
+      this.account(),
+      this.points(),
+      this.trend.zoomWindow(),
+      this.trend.dayIndex(),
+    ),
   );
 
   protected onChartClick(event: ECElementEvent): void {

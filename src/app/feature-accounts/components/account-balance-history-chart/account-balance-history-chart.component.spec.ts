@@ -10,7 +10,11 @@ import {
   type Category,
   type Transaction,
 } from '@/core/data-access';
-import { computeAccountBalanceTrends, pickGranularityForSpan } from '@/core/stats';
+import {
+  buildDayTransactionIndex,
+  computeAccountBalanceTrends,
+  pickGranularityForSpan,
+} from '@/core/stats';
 import { echarts } from '@/shared/echarts';
 import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
@@ -399,23 +403,43 @@ describe('buildAccountBalanceHistoryChartOption', () => {
     expect(dataZoom.every((zoom) => zoom.startValue === 1 && zoom.endValue === 1)).toBe(true);
   });
 
-  it('renders every hovered band as 2-decimal EUR through the shared tooltip formatter (TICKET-STAT-12)', () => {
+  it("hovering a day lists that day's transactions per account, not the balances already drawn (TICKET-ACC-11)", () => {
     const series = [
-      { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1100 }] },
-      { accountId: 2, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: -200 }] },
+      {
+        accountId: 1,
+        points: [{ bucketKey: '2026-01-15', bucketEnd: '2026-01-15', balance: 1100 }],
+      },
+      {
+        accountId: 2,
+        points: [{ bucketKey: '2026-01-15', bucketEnd: '2026-01-15', balance: -200 }],
+      },
     ];
+    const dayIndex = buildDayTransactionIndex(
+      [
+        transaction({ id: 1, accountId: 1, amount: 2800, counterpartyName: 'Acme Payroll' }),
+        transaction({ id: 2, accountId: 2, amount: -50, counterpartyName: 'Annual fee' }),
+      ],
+      accounts,
+    );
 
-    const option = buildAccountBalanceHistoryChartOption(accounts, series, {
-      startValue: 0,
-      endValue: 0,
-    });
+    const option = buildAccountBalanceHistoryChartOption(
+      accounts,
+      series,
+      { startValue: 0, endValue: 0 },
+      [],
+      dayIndex,
+    );
 
     const tooltip = option['tooltip'] as { formatter: (params: unknown) => string };
     const result = tooltip.formatter([
-      { axisValueLabel: '2026-01', marker: '●', seriesName: 'Checking', value: 1234.5600000000002 },
-      { axisValueLabel: '2026-01', marker: '●', seriesName: 'Credit line', value: -200 },
+      { axisValue: '2026-01-15', marker: '●', seriesName: 'Checking' },
+      { axisValue: '2026-01-15', marker: '◆', seriesName: 'Credit line' },
     ]);
 
-    expect(result).toBe('2026-01<br/>●Checking: €1,234.56<br/>●Credit line: -€200.00');
+    // Was `formatAxisTooltip`, which restated each band's own value — the number the stack draws.
+    expect(result).toContain('●Checking');
+    expect(result).toContain('Acme Payroll: €2,800.00');
+    expect(result).toContain('◆Credit line');
+    expect(result).toContain('Annual fee: -€50.00');
   });
 });

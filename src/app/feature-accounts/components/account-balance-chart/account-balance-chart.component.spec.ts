@@ -10,7 +10,7 @@ import {
   type Category,
   type Transaction,
 } from '@/core/data-access';
-import { pickGranularityForSpan } from '@/core/stats';
+import { buildDayTransactionIndex, pickGranularityForSpan } from '@/core/stats';
 import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import {
@@ -217,18 +217,37 @@ describe('buildAccountBalanceChartOption', () => {
     expect(dataZoom.every((zoom) => zoom.startValue === 1 && zoom.endValue === 2)).toBe(true);
   });
 
-  it('renders the hovered point as 2-decimal EUR through the shared tooltip formatter (TICKET-STAT-12)', () => {
+  it("hovering a day lists that day's transactions with no account-name row (TICKET-ACC-11)", () => {
+    const dayIndex = buildDayTransactionIndex(
+      [
+        {
+          id: 1,
+          accountId: 1,
+          bookingDate: '2026-01-15',
+          amount: 1234.5600000000002,
+          currency: 'EUR',
+          rawDescription: 'REFUND',
+          counterpartyName: 'Acme Refunds',
+          fingerprint: 'fp-1',
+          createdAt: '2026-01-15T00:00:00.000Z',
+        },
+      ],
+      [account],
+    );
+
     const option = buildAccountBalanceChartOption(
       account,
-      [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1234.5600000000002 }],
+      [{ bucketKey: '2026-01-15', bucketEnd: '2026-01-15', balance: 1234.5600000000002 }],
       { startValue: 0, endValue: 1 },
+      dayIndex,
     );
 
     const tooltip = option['tooltip'] as { formatter: (params: unknown) => string };
-    const result = tooltip.formatter([
-      { axisValueLabel: '2026-01', marker: '●', seriesName: 'Checking', value: 1234.5600000000002 },
-    ]);
+    const result = tooltip.formatter([{ axisValue: '2026-01-15', marker: '●' }]);
 
-    expect(result).toBe('2026-01<br/>●Checking: €1,234.56');
+    // Was `formatAxisTooltip`: one unlabelled balance figure, i.e. the number the line already draws.
+    expect(result).toContain('Acme Refunds: €1,234.56');
+    expect(result).toContain('Net €1,234.56');
+    expect(result).not.toContain('Checking');
   });
 });

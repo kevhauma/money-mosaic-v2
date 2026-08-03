@@ -1,11 +1,13 @@
 import { computed, inject, type Signal } from '@angular/core';
 import type { Account } from '@/core/data-access';
 import {
+  buildDayTransactionIndex,
   computeAccountBalanceTrends,
   computeFullHistoryRange,
   computeZoomWindow,
   type AccountBalanceSeries,
   type ChartZoomWindow,
+  type DayTransactionIndex,
 } from '@/core/stats';
 import { RangeStore, TransactionsStore } from '@/core/state';
 import type { Granularity } from '@/shared/utils';
@@ -35,6 +37,8 @@ export type BalanceTrendSignals = {
   granularity: Granularity;
   series: Signal<AccountBalanceSeries[]>;
   zoomWindow: Signal<ChartZoomWindow>;
+  /** What moved on each day, for the hover tooltip (TICKET-ACC-11) — rebuilt with the series, not per hover. */
+  dayIndex: Signal<DayTransactionIndex>;
 };
 
 /**
@@ -77,5 +81,11 @@ export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSi
     ),
   );
 
-  return { granularity: BALANCE_GRANULARITY, series, zoomWindow };
+  // Scoped to the same accounts the chart draws, so an archived account is as absent from the
+  // tooltip as it is from the stack — and so account detail's one-account list is the same call.
+  const dayIndex = computed(() =>
+    buildDayTransactionIndex(transactionsStore.transactions(), accounts()),
+  );
+
+  return { granularity: BALANCE_GRANULARITY, series, zoomWindow, dayIndex };
 };

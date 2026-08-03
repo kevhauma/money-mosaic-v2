@@ -560,4 +560,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Accounts',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-ACC-11'],
+    title:
+      "Hovering a day on a balance chart now tells you what actually happened that day, instead of repeating the balance you're already looking at",
+    details: [
+      'The tooltip lists that day’s transactions — who they were with and what they moved — plus the net change',
+      'On the Accounts chart they’re grouped per account, with each account’s own colour; accounts that didn’t move that day are left out',
+      'On an account’s own chart the account name is dropped, since the page is already about it',
+      'A quiet day simply says “No transactions”, and a very busy one folds the rest into a “+N more” line so the tooltip stays readable',
+    ],
+    area: 'Accounts',
+  },
 ];

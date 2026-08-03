@@ -22,6 +22,7 @@ export * from './yearly-income-summary';
 export * from './multi-year-income-comparison';
 export * from './account-balance-history';
 export * from './account-balance-trend';
+export * from './day-transactions';
 export * from './full-history-range';
 export * from './granularity-for-span';
 export * from './chart-zoom-window';
