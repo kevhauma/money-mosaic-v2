@@ -15,6 +15,7 @@ import {
 } from '@/shared/ui';
 import { createConfirmState } from '@/shared/utils';
 import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
+import { accountDisplayOrder, storeDirectionFor } from '../../account-list-order';
 import { AccountsStore, pageRangeControl } from '@/core/state';
 import type { AccountCardVm } from '../../account-card-vm';
 import {
@@ -55,21 +56,27 @@ export class AccountsOverviewComponent {
   // `activeAccounts()` by design (TICKET-ACC-07), so an archived account has no band even with
   // this on. Worth stating now that the toggle sits next to the range that *does* drive the chart.
   protected readonly showArchived = signal(false);
+
+  /**
+   * One stacked column in the chart's own band order, top to bottom (TICKET-ACC-09) — reading from
+   * a band straight down to its card, rather than hunting a three-column grid for the name.
+   */
   protected readonly visibleAccounts = computed(() =>
-    this.showArchived() ? this.accountsStore.accounts() : this.accountsStore.activeAccounts(),
+    accountDisplayOrder(
+      this.accountsStore.activeAccounts(),
+      this.accountsStore.archivedAccounts(),
+      this.showArchived(),
+    ),
   );
 
   /** One row per visible account, joining balance/share/position/icon so the `@for` below never
    * calls a component method per row (TICKET-ACC-05). */
   protected readonly accountCards = computed<AccountCardVm[]>(() => {
     const accounts = this.visibleAccounts();
-    const ordered = this.accountsStore.accounts();
     const balancesById = this.accountsStore.balancesById();
     const jointStakeById = this.accountsStore.jointAccountStakeById();
-    const firstId = ordered[0]?.id;
-    const lastId = ordered[ordered.length - 1]?.id;
 
-    return accounts.map((account) => ({
+    return accounts.map((account, index) => ({
       account,
       balance:
         account.id != null
@@ -78,8 +85,10 @@ export class AccountsOverviewComponent {
       hasShare: account.type === 'joint' && account.id != null,
       shareDisplay:
         account.type === 'joint' && account.id != null ? (jointStakeById.get(account.id) ?? 0) : 0,
-      isFirst: account.id === firstId,
-      isLast: account.id === lastId,
+      // Against the *rendered* position (TICKET-ACC-09), so the disabled arrow is always the one at
+      // the visual end of the list — the store order is no longer what the user is looking at.
+      isFirst: index === 0,
+      isLast: index === accounts.length - 1,
       iconName: accountIconName(account.icon),
       ibanTail: account.iban ? account.iban.slice(-4) : null,
     }));
@@ -119,11 +128,12 @@ export class AccountsOverviewComponent {
     }
   }
 
+  /** `direction` is what the *user* sees — "up" moves the card up the screen; the rendered list is the reverse of the store order, so it flips on the way through (TICKET-ACC-09). */
   protected moveAccount(account: Account, direction: 'up' | 'down'): void {
     if (account.id == null) {
       return;
     }
-    void this.accountsStore.moveAccount(account.id, direction);
+    void this.accountsStore.moveAccount(account.id, storeDirectionFor(direction));
   }
 
   protected toggleArchive(account: Account): void {

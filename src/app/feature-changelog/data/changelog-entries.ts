@@ -574,4 +574,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Accounts',
   },
+  {
+    date: '2026-08-04',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-ACC-09'],
+    title:
+      'Account cards now sit in one column in the same order as the chart’s bands, so you can look from a band straight down to its account',
+    details: [
+      'The three-column grid became a single column, top to bottom, matching the stack above it',
+      'The up and down arrows still mean what you see — “up” moves a card up the screen — and now move its band the same way',
+      'Archived accounts, when shown, sit together at the bottom, since they have no band to line up with',
+    ],
+    area: 'Accounts',
+  },
 ];

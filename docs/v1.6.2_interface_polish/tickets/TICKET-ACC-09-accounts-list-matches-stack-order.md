@@ -55,26 +55,56 @@ top to bottom.
 
 ## Acceptance criteria
 
-- [ ] The card container renders one column at every breakpoint; component spec asserts no
-      `sm:grid-cols-2` / `lg:grid-cols-3` on the container.
-- [ ] With three active accounts, the first card in the DOM is the account whose band is topmost in the
+- [x] The card container renders one column at every breakpoint; component spec asserts no
+      `sm:grid-cols-2` / `lg:grid-cols-3` on the container. (`accounts-overview.component.html` is now
+      `grid grid-cols-1 gap-4`; `accounts-overview.component.spec.ts` — "renders one column at every
+      breakpoint" asserts `grid-cols-1` present and both responsive classes absent)
+- [x] With three active accounts, the first card in the DOM is the account whose band is topmost in the
       chart; unit test on the ordering `computed()` asserting it is the reverse of the series order the
-      chart builder receives.
-- [ ] The ordering derives from the same account list the chart uses (not a second query), so a change to
+      chart builder receives. (`account-list-order.ts`'s `accountDisplayOrder`, called from the
+      overview's `visibleAccounts` computed; TestBed-free `account-list-order.spec.ts` — "reverses the
+      chart's series order, so the first card is the topmost band" — plus the component-level
+      "puts the topmost band's account in the first card", which reads the real
+      `store.activeAccounts()` the chart builder is handed and asserts the cards are its reverse)
+- [x] The ordering derives from the same account list the chart uses (not a second query), so a change to
       one changes both; unit test driving a reorder and asserting both outputs move together.
-- [ ] Moving a card "up" moves it up the rendered list **and** up the chart's stack; unit test on the
+      (`accounts-overview.component.spec.ts` — "moves with the chart: a reorder shifts the series order
+      and the card order together": one `moveAccount` call, both `activeAccounts()` and the rendered
+      cards asserted afterwards)
+- [x] Moving a card "up" moves it up the rendered list **and** up the chart's stack; unit test on the
       direction mapping asserting a visual "up" reaches `AccountsStore.moveAccount` with the direction
-      that raises the band.
-- [ ] The disabled up arrow is on the first rendered card and the disabled down arrow on the last;
-      component spec asserts both.
-- [ ] With "Show archived" on, archived accounts render after every active account; component spec
-      asserts the split.
-- [ ] Persistence still goes through `AccountsStore.moveAccount` — no direct Dexie writes, no schema
-      change.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: the chart's topmost band matches the first card, and reordering a
-      card visibly moves its band the same way.
+      that raises the band. (`storeDirectionFor` in `account-list-order.ts`;
+      `account-list-order.spec.ts` — "flips a visual direction into the store direction that moves the
+      band the same way", and `accounts-overview.component.spec.ts` — "a card's 'up' arrow raises its
+      band as well as its card" spies on the store and asserts
+      `moveAccount(savings.id, 'down')`, then drives that same store call and asserts both orders)
+- [x] The disabled up arrow is on the first rendered card and the disabled down arrow on the last;
+      component spec asserts both. (`isFirst`/`isLast` now come from the rendered index;
+      `accounts-overview.component.spec.ts` — "flags only the first and last account, and reflects a
+      reorder" (rewritten for the new order) and the archived-split test's `isFirst`/`isLast`
+      assertions. Confirmed live: first card's up disabled, last card's down disabled, and neither of
+      the other two.)
+- [x] With "Show archived" on, archived accounts render after every active account; component spec
+      asserts the split. (`accounts-overview.component.spec.ts` — "renders archived accounts after every
+      active one when the toggle is on"; `account-list-order.spec.ts` — "appends archived accounts after
+      every active one when the toggle is on")
+- [x] Persistence still goes through `AccountsStore.moveAccount` — no direct Dexie writes, no schema
+      change. (The component still calls `this.accountsStore.moveAccount(...)`; only the `direction`
+      argument is translated. Nothing under `core/data-access/` in the diff.)
+- [x] `angular.json` bundle budgets not raised. (`angular.json` untouched; dev build initial total
+      2.15 MB)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD`:
+      verdict **pass**, zero introduced findings; `ng lint` clean, 2262/2262 specs green, dev build
+      compiles)
+- [x] Verified live in the browser: the chart's topmost band matches the first card, and reordering a
+      card visibly moves its band the same way. (Done on the dev server at :4210. The Browser pane had
+      been closed — the user chose to continue without it — so this pass reads the live chart's series
+      and the real card DOM through Angular's dev-mode `ng.getDirectives` rather than screenshots.
+      The container computes to **1** grid column and the cards' bounding rects stack strictly
+      downwards; bands read top-to-bottom are `[Rainy Day Savings, Everyday Checking]` and the card
+      names are identical. Clicking the **second** card's own up arrow moved it to first *and* moved
+      its band to the top of the stack in the same frame; the order was then clicked back to where it
+      started, since that write persists. No console errors.)
 
 ## Notes
 

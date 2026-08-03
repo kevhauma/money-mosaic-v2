@@ -288,18 +288,151 @@ describe('AccountsOverviewComponent', () => {
       });
       fixture.detectChanges();
 
+      // Flags follow the *rendered* order, which is the chart's band order — the reverse of the
+      // store order (TICKET-ACC-09). C was added last, so its band is on top and its card first.
       let cards = readCards();
-      expect(cards.find((card) => card.account.id === a.id)?.isFirst).toBe(true);
-      expect(cards.find((card) => card.account.id === c.id)?.isLast).toBe(true);
+      expect(cards.find((card) => card.account.id === c.id)?.isFirst).toBe(true);
+      expect(cards.find((card) => card.account.id === a.id)?.isLast).toBe(true);
       expect(cards.find((card) => card.account.id === b.id)?.isFirst).toBe(false);
       expect(cards.find((card) => card.account.id === b.id)?.isLast).toBe(false);
 
-      await store.moveAccount(a.id!, 'down');
+      await store.moveAccount(c.id!, 'up');
       fixture.detectChanges();
 
       cards = readCards();
       expect(cards.find((card) => card.account.id === b.id)?.isFirst).toBe(true);
-      expect(cards.find((card) => card.account.id === a.id)?.isFirst).toBe(false);
+      expect(cards.find((card) => card.account.id === c.id)?.isFirst).toBe(false);
+    });
+  });
+
+  describe('one column in the chart’s band order (TICKET-ACC-09)', () => {
+    const readCards = (): AccountCardVm[] =>
+      (
+        fixture.componentInstance as unknown as { accountCards: () => AccountCardVm[] }
+      ).accountCards();
+
+    const addAccount = (name: string, archived = false) =>
+      TestBed.inject(AccountsStore).addAccount({
+        name,
+        type: 'checking',
+        currency: 'EUR',
+        openingBalance: 0,
+        openingBalanceDate: '2026-01-01',
+        color: '#7F77DD',
+        icon: 'wallet',
+        archived,
+      });
+
+    it('renders one column at every breakpoint', async () => {
+      await setup();
+      await addAccount('Checking');
+      fixture.detectChanges();
+
+      const container = fixture.nativeElement.querySelector('div.grid') as HTMLElement;
+
+      expect(container.className).toContain('grid-cols-1');
+      // A grid can only match a stack order by reading order, which nobody does across columns.
+      expect(container.className).not.toContain('sm:grid-cols-2');
+      expect(container.className).not.toContain('lg:grid-cols-3');
+    });
+
+    it('puts the topmost band’s account in the first card, i.e. the reverse of the chart’s series order', async () => {
+      await setup();
+      const store = TestBed.inject(AccountsStore);
+      await addAccount('Checking');
+      await addAccount('Savings');
+      await addAccount('Credit line');
+      fixture.detectChanges();
+
+      // What the chart builder is handed, in series order — series[0] is the *bottom* band.
+      const seriesOrder = store.activeAccounts().map((a) => a.name);
+      const rendered = readCards().map((card) => card.account.name);
+
+      expect(seriesOrder).toEqual(['Checking', 'Savings', 'Credit line']);
+      expect(rendered).toEqual([...seriesOrder].reverse());
+    });
+
+    it('moves with the chart: a reorder shifts the series order and the card order together', async () => {
+      await setup();
+      const store = TestBed.inject(AccountsStore);
+      await addAccount('Checking');
+      const savings = await addAccount('Savings');
+      await addAccount('Credit line');
+      fixture.detectChanges();
+
+      // Both sides read `activeAccounts()`, so neither can be reordered without the other.
+      await store.moveAccount(savings.id!, 'down');
+      fixture.detectChanges();
+
+      expect(store.activeAccounts().map((a) => a.name)).toEqual([
+        'Checking',
+        'Credit line',
+        'Savings',
+      ]);
+      expect(readCards().map((card) => card.account.name)).toEqual([
+        'Savings',
+        'Credit line',
+        'Checking',
+      ]);
+    });
+
+    it('a card’s "up" arrow raises its band as well as its card', async () => {
+      await setup();
+      const store = TestBed.inject(AccountsStore);
+      await addAccount('Checking');
+      const savings = await addAccount('Savings');
+      await addAccount('Credit line');
+      fixture.detectChanges();
+      const component = fixture.componentInstance as unknown as {
+        moveAccount: (account: { id?: number }, direction: 'up' | 'down') => void;
+      };
+
+      // Savings renders in the middle. A visual "up" must reach the store as "down": the rendered
+      // list is the reverse of the store order, so passing 'up' through unchanged would move the
+      // card up and its band down — the exact mismatch this ticket removes.
+      const moveAccount = vi.spyOn(store, 'moveAccount').mockResolvedValue(undefined);
+      component.moveAccount(savings, 'up');
+      expect(moveAccount).toHaveBeenCalledExactlyOnceWith(savings.id, 'down');
+      moveAccount.mockRestore();
+
+      // And that is indeed the direction that raises both the card and the band.
+      await store.moveAccount(savings.id!, 'down');
+      fixture.detectChanges();
+
+      expect(readCards().map((card) => card.account.name)).toEqual([
+        'Savings',
+        'Credit line',
+        'Checking',
+      ]);
+      expect(store.activeAccounts().map((a) => a.name)).toEqual([
+        'Checking',
+        'Credit line',
+        'Savings',
+      ]);
+    });
+
+    it('renders archived accounts after every active one when the toggle is on', async () => {
+      await setup();
+      await addAccount('Checking');
+      await addAccount('Savings');
+      await addAccount('Old joint', true);
+      const component = fixture.componentInstance as unknown as {
+        showArchived: { set: (value: boolean) => void };
+      };
+      component.showArchived.set(true);
+      fixture.detectChanges();
+
+      const rendered = readCards();
+
+      expect(rendered.map((card) => card.account.name)).toEqual([
+        'Savings',
+        'Checking',
+        'Old joint',
+      ]);
+      // No band to align with, so the archived block breaks cleanly at the bottom.
+      expect(rendered.at(-1)?.account.archived).toBe(true);
+      expect(rendered.at(-1)?.isLast).toBe(true);
+      expect(rendered[0].isFirst).toBe(true);
     });
   });
 });

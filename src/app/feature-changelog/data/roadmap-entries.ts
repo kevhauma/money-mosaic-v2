@@ -23,12 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-ACC-09',
-    title: 'Account cards stack in one column, in the same order as the chart’s bands',
-    area: 'Accounts',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-TXN-10',
     title: 'Picking Income or Expenses filters the list straight away, and “All” turns it back off',
     area: 'Transactions',

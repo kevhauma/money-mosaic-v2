@@ -40,7 +40,10 @@
     <mm-button action color="primary" class="mt-2" (click)="openAddForm()"> Add account </mm-button>
   </mm-empty-state>
 } @else {
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <!-- One column at every breakpoint (TICKET-ACC-09): the cards read in the chart's own band order,
+       and a grid can only match a stack order by reading order, which nobody does across three
+       columns. -->
+  <div class="grid grid-cols-1 gap-4">
     @for (card of accountCards(); track card.account.id) {
       <app-account-card
         [vm]="card"
