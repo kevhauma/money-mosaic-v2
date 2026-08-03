@@ -1,5 +1,13 @@
 @if (guide(); as guide) {
-  <mm-page-header [title]="guide.title" />
+  <!-- Back-to-parent is a scope control by the TICKET-UI-24 rule, so it sits in `[actions-start]`
+       (TICKET-PUB-09). A `routerLink`, not `history.back()`: a guide opened from a deep link or
+       from a feature page's "Guide" button must still land on the list. -->
+  <mm-page-header [title]="guide.title">
+    <mm-button actions-start variant="ghost" size="sm" link="/help">
+      <ng-icon name="tablerChevronLeft" size="16" aria-hidden="true" />
+      Back to how-to's
+    </mm-button>
+  </mm-page-header>
 
   <mm-paper elevation="raised">
     <!-- The summary was the header's subtitle until TICKET-UI-22 dropped subtitles app-wide. It is
@@ -13,5 +21,8 @@
     </div>
   </mm-paper>
 } @else {
-  <mm-empty-state title="Guide not found" message="This how-to guide doesn't exist." />
+  <!-- A bad slug is not a dead end: the empty state carries the same route back the header does. -->
+  <mm-empty-state title="Guide not found" message="This how-to guide doesn't exist.">
+    <mm-button action color="primary" class="mt-2" link="/help">Back to how-to's</mm-button>
+  </mm-empty-state>
 }

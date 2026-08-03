@@ -27,4 +27,13 @@ describe('GuidesIndexComponent', () => {
       expect(hrefs).toContain(`/help/${guide.slug}`);
     }
   });
+
+  it('carries no back link — the index is a sidebar destination, not a child page (TICKET-PUB-09)', () => {
+    const fixture = TestBed.createComponent(GuidesIndexComponent);
+    fixture.detectChanges();
+    const page: HTMLElement = fixture.nativeElement;
+
+    expect(page.querySelector('mm-page-header a[href="/help"]')).toBeNull();
+    expect(page.textContent).not.toContain("Back to how-to's");
+  });
 });

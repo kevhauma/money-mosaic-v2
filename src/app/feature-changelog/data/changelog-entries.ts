@@ -504,4 +504,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The Changelog/Roadmap switch moved up beside the page title, the same way Categories and Rules switch',
     area: 'Changelog',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-PUB-09'],
+    title:
+      "A how-to guide and the FAQ now carry a “Back to how-to's” link, so you can work through several without the browser's back button",
+    area: 'Help',
+  },
 ];

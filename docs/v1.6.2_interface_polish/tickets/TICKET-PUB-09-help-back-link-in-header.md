@@ -51,22 +51,47 @@ Gives `/help/:slug` and `/help/faq` a "Back to how-to's" link in `[actions-start
 
 ## Acceptance criteria
 
-- [ ] `/help/:slug` renders a "Back to how-to's" link in `mm-page-header`'s `[actions-start]` slot,
+- [x] `/help/:slug` renders a "Back to how-to's" link in `mm-page-header`'s `[actions-start]` slot,
       pointing at `/help`; component spec asserts the `href` and that it is in the start group.
-- [ ] `/help/faq` renders the same link; component spec asserts it.
-- [ ] `/help` (the index) renders no back link; component spec asserts absence.
-- [ ] The link is a `routerLink`, not a `history.back()` call; spec asserts a real `href="/help"` so a
+      (`guide-detail.component.html`; spec case 'carries a "Back to how-to\'s" routerLink to /help in
+      the start group' asserts the text, `a[href="/help"]` inside `mm-page-header`, and that
+      `.mm-page-actions-start` contains it while `.mm-page-actions` does not.)
+- [x] `/help/faq` renders the same link; component spec asserts it.
+      (`faq-page.component.html`; the same-named spec case in `faq-page.component.spec.ts`. Its
+      TestBed gained `provideRouter([])`, which the page didn't need before this link.)
+- [x] `/help` (the index) renders no back link; component spec asserts absence.
+      (`guides-index.component.spec.ts` — "carries no back link — the index is a sidebar destination,
+      not a child page (TICKET-PUB-09)".)
+- [x] The link is a `routerLink`, not a `history.back()` call; spec asserts a real `href="/help"` so a
       deep-linked visitor lands on the list rather than wherever they came from.
-- [ ] The guide-not-found empty state offers a route back to `/help`; component spec asserts it for an
+      (Both specs assert `a[href="/help"]`; there is no click handler on either link.)
+- [x] The guide-not-found empty state offers a route back to `/help`; component spec asserts it for an
       unknown slug.
-- [ ] Both headers still render their own title and no subtitle (TICKET-UI-22); component specs assert
+      (`guide-detail.component.html`'s `@else` branch now projects an `[action]` button; spec case
+      "offers a route back to /help from the guide-not-found empty state, so a bad slug is no dead
+      end".)
+- [x] Both headers still render their own title and no subtitle (TICKET-UI-22); component specs assert
       the `h1` text and the absence of a caption.
-- [ ] The header wraps rather than overflowing at 375px; component spec asserts the wrap binding.
-- [ ] No persistence changes, no Dexie version bump — `seenGuideSlugs` is untouched.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: open a guide from `/help`, click back, land on the list; open the
+      (Spec cases "keeps its own title and no subtitle, and wraps at 375px" on both pages — `h1` is
+      `FAQ` / the guide's own title, and `.mm-page-title p` is null.)
+- [x] The header wraps rather than overflowing at 375px; component spec asserts the wrap binding.
+      (Same two cases assert `flex-wrap` on `div.mm-page-actions-start` and `div.mm-page-actions`.)
+- [x] No persistence changes, no Dexie version bump — `seenGuideSlugs` is untouched.
+      (Diff is two templates, two component classes and three specs; nothing under
+      `core/data-access/`.)
+- [x] `angular.json` bundle budgets not raised.
+      (Untouched; dev build reported no budget warnings.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (`fallow audit --base HEAD` → verdict `pass`, 0 introduced findings across 7 changed files;
+      `ng lint` + `ng test` (2184 tests) + dev build all green.)
+- [x] Verified live in the browser: open a guide from `/help`, click back, land on the list; open the
       same guide from a feature page's "Guide" button and confirm back still lands on `/help`.
+      (:4210 — `/help/importing-a-bank-statement`: the link sits at x=573 beside the `h1` at x=272,
+      inside `.mm-page-actions-start`, with the chevron rendered; clicking it lands on `/help` with
+      the 7-guide list. From `/income`'s "Guide" button → `/help/getting-started-with-the-income-page`
+      → back → `/help`, so an entry that never touched the list still ends up there. `/help/faq`
+      shows the same link at x=326. `/help` itself has none. `/help/does-not-exist` renders no header
+      and the empty state's own "Back to how-to's" instead. No console errors.)
 
 ## Notes
 
