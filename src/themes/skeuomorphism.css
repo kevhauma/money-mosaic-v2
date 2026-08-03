@@ -221,9 +221,10 @@ html[data-theme='skeuomorphism'] body {
     inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-/* The dashboard hero as a riveted brass gauge plaque: warm brass-tinted gradient face, raised
- * bevel, four corner rivets (each a tiny lit sphere), engraved readout. */
-[data-theme='skeuomorphism'] .mm-net-worth {
+/* The net-worth figure as a riveted brass gauge plaque: warm brass-tinted gradient face, raised
+ * bevel, four corner rivets (each a tiny lit sphere), engraved readout. Since TICKET-STAT-28 the
+ * hook sits on the first card of the dashboard's stats row rather than a header hero. */
+[data-theme='skeuomorphism'] .mm-net-worth.stat {
   border-width: 2px;
   border-color: color-mix(in oklab, var(--color-primary) 40%, transparent);
   background-color: transparent;

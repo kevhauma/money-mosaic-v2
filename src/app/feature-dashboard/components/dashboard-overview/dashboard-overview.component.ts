@@ -21,7 +21,6 @@ import { ActionQueuePanelComponent } from '../action-queue-panel/action-queue-pa
 import { CategoryBreakdownPanelComponent } from '../category-breakdown-panel/category-breakdown-panel.component';
 import { CategoryComparisonPanelComponent } from '../category-comparison-panel/category-comparison-panel.component';
 import { DashboardCustomizePanelComponent } from '../dashboard-customize-panel/dashboard-customize-panel.component';
-import { NetWorthHeaderComponent } from '../net-worth-header/net-worth-header.component';
 import { TopTransactionsPanelComponent } from '../top-transactions-panel/top-transactions-panel.component';
 import { TrendChartPanelComponent } from '../trend-chart-panel/trend-chart-panel.component';
 import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-panel/weekday-weekend-split-panel.component';
@@ -37,7 +36,6 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
     PaperComponent,
     RangeGroupingSwitcherComponent,
     StatCardComponent,
-    NetWorthHeaderComponent,
     CategoryBreakdownPanelComponent,
     CategoryComparisonPanelComponent,
     TrendChartPanelComponent,
@@ -99,6 +97,15 @@ export class DashboardOverviewComponent {
       from: this.rangeStore.from('dashboard'),
       to: this.rangeStore.to('dashboard'),
     }),
+  );
+
+  /**
+   * Point-in-time combined net worth (FR-STAT-1) — the one figure in the stats row that is
+   * deliberately not range-scoped. Same `formatCurrency(…, { signed: true })` output the
+   * `signedAmount` pipe produced while this lived in the header (TICKET-STAT-25 → TICKET-STAT-28).
+   */
+  protected readonly netWorthValue = computed(() =>
+    formatCurrency(this.accountsStore.netWorth(), { signed: true }),
   );
 
   protected readonly incomeValue = computed(() =>

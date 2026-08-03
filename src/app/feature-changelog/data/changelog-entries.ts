@@ -512,4 +512,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "A how-to guide and the FAQ now carry a “Back to how-to's” link, so you can work through several without the browser's back button",
     area: 'Help',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-STAT-28'],
+    title:
+      'Net worth moved out of the Dashboard header and into the stats row, so every headline figure is read in one place',
+    details: [
+      'It leads the row, before Income — the figure the other four explain — and keeps the distinct look it had in the header',
+      'It says “Today, all accounts” under it, because unlike its four neighbours it is a balance rather than a total for the date range you picked: narrowing to last month leaves it alone on purpose',
+      'Clicking it goes to Accounts, where that balance breaks down per account, rather than to a filtered transaction list',
+    ],
+    area: 'Dashboard',
+  },
 ];

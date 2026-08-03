@@ -6,9 +6,11 @@ import {
 } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
-import { appDb, type Transaction } from '@/core/data-access';
-import { RangeStore, TransactionsStore } from '@/core/state';
+import { vi } from 'vitest';
+import { appDb, TransfersRepository, type Transaction } from '@/core/data-access';
+import { AccountsStore, RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
+import { formatCurrency } from '@/shared/utils';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
 import { DashboardOverviewComponent } from './dashboard-overview.component';
 
@@ -143,6 +145,125 @@ describe('DashboardOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('app-action-queue-panel')).not.toBeNull();
   });
 
+  describe('net worth as a stat card (TICKET-STAT-28)', () => {
+    const statCards = (): HTMLElement[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('mm-stat-card') as NodeListOf<HTMLElement>);
+
+    const cardLabels = (): string[] =>
+      statCards().map((card) => card.querySelector('.stat-title')?.textContent?.trim() ?? '');
+
+    const netWorthCard = (): HTMLElement | undefined =>
+      statCards().find(
+        (card) => card.querySelector('.stat-title')?.textContent?.trim() === 'Net worth',
+      );
+
+    const seedAccount = async (openingBalance: number): Promise<void> => {
+      await TestBed.inject(AccountsStore).addAccount({
+        name: 'Checking',
+        type: 'checking',
+        currency: 'EUR',
+        openingBalance,
+        openingBalanceDate: '2026-01-01',
+        color: '#7F77DD',
+        icon: 'wallet',
+        archived: false,
+      });
+    };
+
+    it('leads the stats row: net worth · Income · Expense · Net cash flow · Savings rate', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      expect(cardLabels()).toEqual([
+        'Net worth',
+        'Income',
+        'Expense',
+        'Net cash flow',
+        'Savings rate',
+      ]);
+    });
+
+    it("shows AccountsStore.netWorth(), formatted the way the header's signedAmount pipe did", async () => {
+      await seedAccount(1000);
+      TestBed.inject(TransactionsStore).addMany([
+        transaction({ id: 1, accountId: 1, bookingDate: '2026-07-01', amount: -250 }),
+      ]);
+      fixture.detectChanges();
+
+      const accountsStore = TestBed.inject(AccountsStore);
+      expect(netWorthCard()?.querySelector('.stat-value')?.textContent?.trim()).toBe(
+        formatCurrency(accountsStore.netWorth(), { signed: true }),
+      );
+    });
+
+    it('says it is not range-scoped, and stays put when the range moves the other four', async () => {
+      await seedAccount(1000);
+      TestBed.inject(TransactionsStore).addMany([
+        transaction({ id: 1, accountId: 1, bookingDate: '2026-07-01', amount: 400 }),
+      ]);
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
+      fixture.detectChanges();
+
+      const card = netWorthCard() as HTMLElement;
+      expect(card.querySelector('.stat-desc')?.textContent?.trim()).toBe('Today, all accounts');
+      expect(card.querySelector('.tooltip-content')?.textContent).toContain('not a period total');
+
+      const netWorthBefore = card.querySelector('.stat-value')?.textContent?.trim();
+      const incomeBefore = statCards()[1].querySelector('.stat-value')?.textContent?.trim();
+
+      // A range with none of the seeded transactions in it: Income must fall to zero…
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2020-01-01', '2020-01-31');
+      fixture.detectChanges();
+
+      expect(statCards()[1].querySelector('.stat-value')?.textContent?.trim()).not.toBe(
+        incomeBefore,
+      );
+      // …while net worth, a balance rather than a period sum, does not move.
+      expect(netWorthCard()?.querySelector('.stat-value')?.textContent?.trim()).toBe(
+        netWorthBefore,
+      );
+    });
+
+    it('drills into /accounts, where the balance breaks down — not into a transaction list', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      expect(netWorthCard()?.querySelector('a')?.getAttribute('href')).toBe('/accounts');
+    });
+
+    it('shows its own skeleton, not a zero, while accounts are still loading', async () => {
+      // The two gates are separate on purpose: the row rides `StatsStore.dataReady()` (transactions
+      // only), the card rides `AccountsStore.dataReady()` (transactions AND transfers). Hanging the
+      // transfers read alone leaves the four range-scoped cards rendered and the net-worth slot on
+      // its placeholder — which is the whole point, since a zero there would read as real.
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [DashboardOverviewComponent],
+        providers: [
+          provideRouter([]),
+          provideEchartsCore({ echarts }),
+          {
+            provide: TransfersRepository,
+            useValue: { getAll: vi.fn(() => new Promise(() => {})) },
+          },
+        ],
+        deferBlockBehavior: DeferBlockBehavior.Manual,
+      }).compileComponents();
+
+      const fresh = TestBed.createComponent(DashboardOverviewComponent);
+      await TestBed.inject(TransactionsStore).hydrate();
+      TestBed.inject(TransactionsStore).addMany([transaction()]);
+      fresh.detectChanges();
+
+      expect(TestBed.inject(AccountsStore).dataReady()).toBe(false);
+      const labels = Array.from(
+        fresh.nativeElement.querySelectorAll('mm-stat-card') as NodeListOf<HTMLElement>,
+      ).map((card) => card.querySelector('.stat-title')?.textContent?.trim());
+      expect(labels).toEqual(['Income', 'Expense', 'Net cash flow', 'Savings rate']);
+      expect(fresh.nativeElement.querySelector('mm-loading-skeleton')).not.toBeNull();
+    });
+  });
+
   describe('periodized sub-labels (TICKET-STAT-21)', () => {
     // The 'stats' row gates on `statsStore.dataReady()` (TICKET-PERF-05), which the outer
     // `beforeEach`'s hydrate against the empty fake-indexeddb-backed repo already satisfies before
@@ -268,13 +389,14 @@ describe('DashboardOverviewComponent', () => {
       expect(settingsButton()?.querySelector('ng-icon')?.innerHTML).toBe(pencilGlyph);
     });
 
-    it('keeps the net-worth figure in the header', () => {
+    it('holds no figures at all — net worth moved into the stats row (TICKET-STAT-28)', () => {
       seedOneTransaction();
       fixture.detectChanges();
 
-      expect(
-        fixture.nativeElement.querySelector('mm-page-header app-net-worth-header'),
-      ).not.toBeNull();
+      const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+      expect(header.querySelector('app-net-worth-header')).toBeNull();
+      expect(header.querySelector('mm-stat-card')).toBeNull();
+      expect(header.textContent).not.toContain('Net worth');
     });
 
     it('renders the range switcher in the header, and a preset change re-scopes the page', () => {
@@ -297,24 +419,26 @@ describe('DashboardOverviewComponent', () => {
       expect(rangeStore.preset('accounts')).toBe('this-month');
     });
 
-    it('orders the header title · range · net worth · settings (TICKET-UI-24)', () => {
+    // Was title · range · net worth · settings under TICKET-UI-24; TICKET-STAT-28 took net worth
+    // out of the header entirely, so the order updates rather than the case being deleted.
+    it('orders the header title · range · settings (TICKET-UI-24, TICKET-STAT-28)', () => {
       seedOneTransaction();
       fixture.detectChanges();
 
       const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
       const order = Array.from(
         header.querySelectorAll(
-          'h1, app-net-worth-header, mm-range-grouping-switcher, button',
+          'h1, mm-range-grouping-switcher, button',
         ) as NodeListOf<HTMLElement>,
       )
         // The switcher has its own buttons; only the header's direct action buttons count.
         .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-grouping-switcher'))
         .map((el) => el.tagName.toLowerCase());
 
-      expect(order).toEqual(['h1', 'mm-range-grouping-switcher', 'app-net-worth-header', 'button']);
+      expect(order).toEqual(['h1', 'mm-range-grouping-switcher', 'button']);
     });
 
-    it('puts the range in the start group and net worth plus settings in the end group (TICKET-UI-24)', () => {
+    it('puts the range in the start group and settings in the end group (TICKET-UI-24)', () => {
       seedOneTransaction();
       fixture.detectChanges();
 
@@ -322,11 +446,9 @@ describe('DashboardOverviewComponent', () => {
       const startGroup = header.querySelector('.mm-page-actions-start');
       const endGroup = header.querySelector('.mm-page-actions');
       const range = header.querySelector('mm-range-grouping-switcher');
-      const netWorth = header.querySelector('app-net-worth-header');
 
       expect(startGroup?.contains(range as Node)).toBe(true);
       expect(endGroup?.contains(range as Node)).toBe(false);
-      expect(endGroup?.contains(netWorth as Node)).toBe(true);
       expect(endGroup?.contains(settingsButton() as Node)).toBe(true);
     });
   });

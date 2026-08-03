@@ -70,11 +70,14 @@ the net-worth figure stays where it is.
 - [x] Changing the Dashboard's range leaves the Accounts page's range untouched — covered by
       TICKET-UI-23's isolation test; assert it here from the Dashboard's side too. (Same spec asserts
       `rangeStore.preset('accounts')` is still `this-month` after the Dashboard moves to `last-year`.)
-- [x] `<app-net-worth-header />` is still rendered in the header; component spec asserts it survives.
-      ("keeps the net-worth figure in the header".)
-- [x] Header children render in the order title · net worth · range · settings; component spec asserts
-      the DOM order. ("orders the header title · net worth · range · settings", filtering out the
-      switcher's own internal buttons.)
+- [x] ~~`<app-net-worth-header />` is still rendered in the header; component spec asserts it
+      survives.~~ **Superseded 2026-08-03 by
+      [TICKET-STAT-28](./TICKET-STAT-28-net-worth-stat-card.md)** — net worth is now the first card of
+      the stats row and the component is deleted. Was true when ticked; the spec case that proved it
+      is now "holds no figures at all — net worth moved into the stats row".
+- [x] ~~Header children render in the order title · net worth · range · settings~~ → now **title ·
+      range · settings** (TICKET-UI-24 sectioned it, TICKET-STAT-28 removed the figure). The DOM-order
+      spec case was updated rather than deleted: "orders the header title · range · settings".
 - [x] No persistence changes, no Dexie version bump — customize-mode state and row order are untouched
       (`dashboardLayoutSettings` is not part of this ticket). (Diff is the header template, one
       `computed()` on the component, and its spec.)

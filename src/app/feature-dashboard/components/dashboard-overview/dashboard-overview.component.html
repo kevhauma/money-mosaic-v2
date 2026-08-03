@@ -1,6 +1,6 @@
-<!-- Header order (TICKET-STAT-25, sectioned by TICKET-UI-24): title · date range ‖ net worth ·
-     Dashboard settings. The range scopes what the page shows, so it moved beside the title; the
-     figure and the settings toggle sit in the end group. -->
+<!-- Header order (TICKET-STAT-25, sectioned by TICKET-UI-24, thinned by TICKET-STAT-28): title ·
+     date range ‖ Dashboard settings. The range scopes what the page shows, so it sits beside the
+     title; net worth left the header entirely and is now the first card of the stats row. -->
 <mm-page-header title="Dashboard">
   <mm-range-grouping-switcher
     actions-start
@@ -9,9 +9,6 @@
     (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
-  <div actions-end>
-    <app-net-worth-header />
-  </div>
   <!-- Nothing to reorder or hide while the empty state is showing, so customize mode is unreachable there (TICKET-STAT-22). -->
   @if (!hasNoTransactions()) {
     <!-- The visible label *is* the accessible name (TICKET-STAT-25) — a bare pencil left a sighted
@@ -43,6 +40,34 @@
           } @else {
             <!-- Each stat is its own free-standing card (not a joined .stats strip); the alternating tilt hooks only render in themes that opt in (Memphis). -->
             <div class="flex flex-wrap gap-6 py-2">
+              <!-- Net worth leads the row (TICKET-STAT-28): the headline figure the other four
+                   explain. It is the one card here that is NOT range-scoped (FR-STAT-1) — it is a
+                   balance across accounts as of today — so its sub-label and tooltip say so, and it
+                   drills into /accounts where that balance breaks down rather than into a
+                   transaction list. Its own `accountsStore.dataReady()` gate is separate from the
+                   row's `statsStore` one, so it never flashes a zero while accounts load.
+                   It keeps the `mm-net-worth` theme-style hook it carried as a header hero, so the
+                   themes that give this figure their own treatment (anti-polish's hazard plate,
+                   Memphis's poster plate, skeuomorphism's brass gauge) still do. Angular puts this
+                   `class` on both the host element and the card box, so those three themes qualify
+                   the hook with `.stat` — otherwise the plate paints twice, one ring and one
+                   rotation outside the other. `tilt="none"` because Memphis's hook already
+                   rotates it. -->
+              @if (accountsStore.dataReady()) {
+                <mm-stat-card
+                  class="mm-net-worth"
+                  label="Net worth"
+                  [value]="netWorthValue()"
+                  subLabel="Today, all accounts"
+                  tooltip="A balance, not a period total.&#10;The date range does not apply to it."
+                  link="/accounts"
+                  tilt="none"
+                />
+              } @else {
+                <mm-paper elevation="raised" class="min-w-44">
+                  <mm-loading-skeleton [rows]="2" />
+                </mm-paper>
+              }
               <mm-stat-card
                 label="Income"
                 [value]="incomeValue()"

@@ -23,12 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-STAT-28',
-    title: 'Net worth moves out of the Dashboard header and in with the other headline figures',
-    area: 'Dashboard',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-STAT-26',
     title: 'Chart legends get their own strip instead of floating over the lines and bars',
     area: 'Charts',

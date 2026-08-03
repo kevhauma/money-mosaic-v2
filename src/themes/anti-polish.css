@@ -210,15 +210,19 @@ html[data-theme='anti-polish'] body {
   color: var(--color-primary-content);
 }
 
-/* The hero surface goes hazard-plate: flat primary fill behind ink text. */
-[data-theme='anti-polish'] .mm-net-worth {
+/* The net-worth figure goes hazard-plate: flat primary fill behind ink text. Since TICKET-STAT-28
+ * the hook sits on the first card of the dashboard's stats row rather than a header hero, so the
+ * text rule covers the stat card's own title/description elements too. */
+[data-theme='anti-polish'] .mm-net-worth.stat {
   border-radius: 0;
   border: 3px solid var(--color-base-content);
   background-color: var(--color-primary);
   box-shadow: 4px 4px 0 0 var(--shadow-raw);
 }
 
-[data-theme='anti-polish'] .mm-net-worth :is(.mm-text-label, .mm-text-display) {
+[data-theme='anti-polish']
+  .mm-net-worth.stat
+  :is(.mm-text-label, .mm-text-display, .stat-title, .stat-desc) {
   color: var(--color-primary-content);
 }
 

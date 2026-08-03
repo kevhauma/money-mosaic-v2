@@ -56,37 +56,94 @@ Moves the net-worth figure out of the Dashboard header and into the stats row as
 - **The row stays one customizable unit.** Net worth joins the existing `'stats'` row rather than
   becoming a sixth hideable row — `dashboardLayoutSettings` and the row order are untouched.
 
+## Implementation notes (2026-08-03)
+
+**Divergence — the hero styling survives after all.** The to-be says "its hero styling does not survive
+the move, since the row's whole point is that its cards look alike". On the user's instruction mid-build
+("keep the net worth styling mm-net-worth"), the `mm-net-worth` theme-style hook moves onto the card
+instead of being retired with the component, so anti-polish's hazard plate, Memphis's poster plate and
+skeuomorphism's brass gauge still mark this figure out from its four neighbours. Angular puts a `class`
+on both the host element and the card box, so the three theme rules are qualified with `.stat`;
+without that the plate painted twice, one border ring and one rotation outside the other.
+
+**The `mm-blob` wash is dropped.** `mm-stat-card` has no slot for a decorative child, and adding one to
+a shared primitive for a single caller is worse than losing the wash. The hook is not orphaned: it is
+still rendered by `mm-empty-state`, so no theme references something nothing renders.
+
+**The empty state loses its net-worth figure, deliberately.** With zero transactions the figure is just
+the sum of the opening balances the user typed in on `/accounts`, which is where the card now links and
+where the per-account breakdown lives. The empty Dashboard's one job is getting them to import.
+
 ## Acceptance criteria
 
-- [ ] The stats row renders five `mm-stat-card`s in the order net worth · Income · Expense · Net cash
+- [x] The stats row renders five `mm-stat-card`s in the order net worth · Income · Expense · Net cash
       flow · Savings rate; component spec asserts the labels in DOM order.
-- [ ] The net-worth card shows the same figure `AccountsStore.netWorth()` produced in the header,
+      (Spec case "leads the stats row: net worth · Income · Expense · Net cash flow · Savings rate"
+      asserts `.stat-title` text in DOM order.)
+- [x] The net-worth card shows the same figure `AccountsStore.netWorth()` produced in the header,
       formatted through `formatCurrency`/`signedAmount` as before; component spec asserts the rendered
       text for a seeded set of accounts.
-- [ ] The card states that it is not range-scoped; component spec asserts the sub-label or tooltip
+      (`netWorthValue()` on the component is `formatCurrency(accountsStore.netWorth(), { signed: true })`
+      — what the impure `signedAmount` pipe called. Spec case "shows AccountsStore.netWorth(),
+      formatted the way the header's signedAmount pipe did" seeds an account with a €1000 opening
+      balance and a −€250 transaction.)
+- [x] The card states that it is not range-scoped; component spec asserts the sub-label or tooltip
       text, and a second case asserts that changing the Dashboard's date range moves the other four
       cards but **not** this one.
-- [ ] The card links to `/accounts`; component spec asserts the `href`.
-- [ ] `<app-net-worth-header />` no longer renders anywhere, and `NetWorthHeaderComponent` plus its
+      (`subLabel="Today, all accounts"` plus a tooltip reading "A balance, not a period total. / The
+      date range does not apply to it."; spec case "says it is not range-scoped, and stays put when
+      the range moves the other four" asserts both strings and then re-ranges to a window containing
+      none of the seeded transactions.)
+- [x] The card links to `/accounts`; component spec asserts the `href`.
+      (Spec case "drills into /accounts, where the balance breaks down — not into a transaction list".)
+- [x] `<app-net-worth-header />` no longer renders anywhere, and `NetWorthHeaderComponent` plus its
       spec are deleted; `grep` for `app-net-worth-header` is clean and `fallow` reports no unused file
       left behind.
-- [ ] The header's remaining order is title · date range · Dashboard settings; the TICKET-STAT-25
+      (`git rm` on `components/net-worth-header/`, barrel export removed; `grep -rn "net-worth-header"
+      src` is clean and `fallow dead-code --unused-files` reports none.)
+- [x] The header's remaining order is title · date range · Dashboard settings; the TICKET-STAT-25
       order spec is updated to match rather than deleted.
-- [ ] The `mm-blob` decision is implemented and recorded — either the wash moves onto the net-worth
+      (Spec case renamed to "orders the header title · range · settings (TICKET-UI-24,
+      TICKET-STAT-28)"; a new case "holds no figures at all" asserts the header carries no stat card
+      and no "Net worth" text. TICKET-STAT-25's two now-superseded criteria are struck through and
+      pointed here rather than left claiming a spec that no longer exists.)
+- [x] The `mm-blob` decision is implemented and recorded — either the wash moves onto the net-worth
       card or it is dropped, with the reason in a comment; no theme is left referencing a hook nothing
       renders.
-- [ ] The empty-state decision is implemented and recorded on this ticket, either way.
-- [ ] The stats row still shows its loading skeleton until `statsStore.dataReady()`, and the net-worth
+      (Dropped — see the implementation note above. `mm-empty-state` still renders `.mm-blob`, so the
+      themes that set `--mm-blob-bg` keep a live target.)
+- [x] The empty-state decision is implemented and recorded on this ticket, either way.
+      (Losing it is intended — see the implementation note above.)
+- [x] The stats row still shows its loading skeleton until `statsStore.dataReady()`, and the net-worth
       card its own until `accountsStore.dataReady()` — the two are separate gates and the card must not
       show a zero while accounts are still loading; component spec covers both.
-- [ ] Hiding the `'stats'` row in customize mode still hides all five cards; existing TICKET-STAT-14
+      (Template gates the card on `accountsStore.dataReady()` with an `mm-paper`+`mm-loading-skeleton`
+      placeholder in its slot. Spec case "shows its own skeleton, not a zero, while accounts are still
+      loading" hangs `TransfersRepository.getAll` so `AccountsStore.dataReady()` stays false while
+      `StatsStore.dataReady()` is true, and asserts the four range-scoped cards render with the
+      net-worth slot on its placeholder.)
+- [x] Hiding the `'stats'` row in customize mode still hides all five cards; existing TICKET-STAT-14
       spec passes.
-- [ ] No persistence changes, no Dexie version bump — `dashboardLayoutSettings` and the row order are
+      (Row-hiding specs untouched and green — net worth joined the existing `'stats'` row rather than
+      becoming a sixth hideable one.)
+- [x] No persistence changes, no Dexie version bump — `dashboardLayoutSettings` and the row order are
       untouched.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: net worth reads the same figure it did in the header, sits first in
+      (Diff is the dashboard template/component/spec, three theme stylesheets, the deleted component
+      and the barrel; nothing under `core/data-access/`.)
+- [x] `angular.json` bundle budgets not raised.
+      (Untouched; dev build reported no budget warnings.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (`fallow audit --base HEAD` → verdict `pass`, 0 introduced findings across 11 changed files;
+      `ng lint` + `ng test` (2188 tests) + dev build all green.)
+- [x] Verified live in the browser: net worth reads the same figure it did in the header, sits first in
       the stats row, and does not change when the date range does.
+      (:4210 — the header no longer contains "Net worth"; the row reads Net worth · Income · Expense ·
+      Net cash flow · Savings rate with `+€16,898.26`, sub-label "Today, all accounts", `href="/accounts"`.
+      Switching the range preset to "last year" moves Income/Expense/Net to €0.00 and Savings rate to
+      "—" while net worth stays at `+€16,898.26`. Theme sweep with transitions disabled: anti-polish
+      paints the card `oklch(0.87 0.19 100)` and skeuomorphism paints its rivet/gradient
+      `background-image`, both distinct from the Income card beside them, while the host element paints
+      nothing in every theme — so the plate renders exactly once.)
 
 ## Notes
 
