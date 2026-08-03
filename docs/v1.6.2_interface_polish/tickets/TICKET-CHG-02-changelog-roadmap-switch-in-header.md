@@ -49,20 +49,42 @@ did for Categories/Rules.
 
 ## Acceptance criteria
 
-- [ ] `changelog-page.component.html` renders exactly one `mm-tabs`, inside `mm-page-header`'s
+- [x] `changelog-page.component.html` renders exactly one `mm-tabs`, inside `mm-page-header`'s
       `[actions-start]` slot and nowhere in the body; component spec asserts both halves.
-- [ ] The page title reads `"Changelog"`; component spec asserts the `h1` text.
-- [ ] Switching tabs still swaps the rendered list between shipped entries and roadmap entries, and
+      (Spec case "renders exactly one mm-tabs, in the header's start group and nowhere in the body"
+      asserts the count, that `.mm-page-actions-start` contains it, and that `.mm-page-actions` does
+      not.)
+- [x] The page title reads `"Changelog"`; component spec asserts the `h1` text.
+      (Spec case 'titles the page "Changelog" — the switch beside it names both views now'. The
+      ticket's Notes asked for a call on this: kept as `"Changelog"`. The switch sits beside the
+      title with "Roadmap" as a visible tab, so the view is never hidden — the same reading
+      `/categories` has had since TICKET-CAT-09.)
+- [x] Switching tabs still swaps the rendered list between shipped entries and roadmap entries, and
       the active tab still reflects `selectedTab()`; existing changelog-page specs pass unchanged.
-- [ ] The empty message still renders in the body for a view with no entries; existing spec passes.
-- [ ] `mm-tabs` is unchanged; `git diff` touches no file under `shared/ui/tabs/`.
-- [ ] The header wraps rather than overflowing at 375px; component spec asserts the wrap binding.
-- [ ] No persistence changes, no Dexie version bump — `CHANGELOG_ENTRIES` and `ROADMAP_ENTRIES` are
+      (The four pre-existing cases are untouched and green; live on :4210, clicking "Roadmap" moves
+      `tab-active` to it and swaps the first group heading from `2026-08-03` to `Interface Polish`.)
+- [x] The empty message still renders in the body for a view with no entries; existing spec passes.
+      (Both `shows an empty-state message when there are no …` cases untouched and passing.)
+- [x] `mm-tabs` is unchanged; `git diff` touches no file under `shared/ui/tabs/`.
+      (`git diff --name-only src/app/shared/ui/tabs/` → 0 files.)
+- [x] The header wraps rather than overflowing at 375px; component spec asserts the wrap binding.
+      (Spec case "keeps the header wrapping at 375px" asserts `flex-wrap` on both groups; live at
+      375px the bar's `scrollWidth - clientWidth` is 0.)
+- [x] No persistence changes, no Dexie version bump — `CHANGELOG_ENTRIES` and `ROADMAP_ENTRIES` are
       hand-maintained data files and are not touched.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: the page opens with one header row, and switching to Roadmap keeps
+      (The refactor itself touches neither; the separate `work-ticket` Step 6.5 bookkeeping does —
+      one new `CHANGELOG_ENTRIES` row for this ticket and the removal of its own `ROADMAP_ENTRIES`
+      row, which is the shipping ritual rather than a change this refactor needed.)
+- [x] `angular.json` bundle budgets not raised.
+      (Untouched; dev build reported no budget warnings.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (`fallow audit --base HEAD` → verdict `pass`, 0 introduced findings; `ng lint` + `ng test`
+      (2178 tests) + dev build all green.)
+- [x] Verified live in the browser: the page opens with one header row, and switching to Roadmap keeps
       the switch in place and swaps the list.
+      (:4210 at 1280px — `h1` "Changelog" at x=272/y=17 and the switch at x=396/y=12, one row, one
+      `mm-tabs` on the page. After clicking "Roadmap" the switch is at the same x/y and still inside
+      `.mm-page-actions-start`, and the list becomes the roadmap groups. No console errors.)
 
 ## Notes
 

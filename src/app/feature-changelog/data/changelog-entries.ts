@@ -496,4 +496,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       "The page header stays put while you scroll, so a long page's controls are always within reach",
     area: 'Interface',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-CHG-02'],
+    title:
+      'The Changelog/Roadmap switch moved up beside the page title, the same way Categories and Rules switch',
+    area: 'Changelog',
+  },
 ];

@@ -23,12 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-CHG-02',
-    title: 'The Changelog/Roadmap switch moves up into the page header',
-    area: 'Changelog',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-PUB-09',
     title: 'A how-to guide and the FAQ get a link back to the guide list in their header',
     area: 'Help',

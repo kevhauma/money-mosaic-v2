@@ -12,6 +12,41 @@ describe('ChangelogPageComponent', () => {
     }).compileComponents();
   });
 
+  describe('page header (TICKET-CHG-02)', () => {
+    it("renders exactly one mm-tabs, in the header's start group and nowhere in the body", () => {
+      const fixture = TestBed.createComponent(ChangelogPageComponent);
+      fixture.detectChanges();
+      const page: HTMLElement = fixture.nativeElement;
+
+      const allTabs = [...page.querySelectorAll('mm-tabs')];
+      expect(allTabs).toHaveLength(1);
+      expect(page.querySelector('.mm-page-actions-start')?.contains(allTabs[0])).toBe(true);
+      expect(page.querySelector('.mm-page-actions')?.contains(allTabs[0])).toBe(false);
+    });
+
+    it('titles the page "Changelog" — the switch beside it names both views now', () => {
+      const fixture = TestBed.createComponent(ChangelogPageComponent);
+      fixture.detectChanges();
+
+      expect(
+        (fixture.nativeElement as HTMLElement)
+          .querySelector('mm-page-header h1')
+          ?.textContent?.trim(),
+      ).toBe('Changelog');
+    });
+
+    it('keeps the header wrapping at 375px', () => {
+      const fixture = TestBed.createComponent(ChangelogPageComponent);
+      fixture.detectChanges();
+      const page: HTMLElement = fixture.nativeElement;
+
+      expect(page.querySelector('div.mm-page-actions-start')?.classList.contains('flex-wrap')).toBe(
+        true,
+      );
+      expect(page.querySelector('div.mm-page-actions')?.classList.contains('flex-wrap')).toBe(true);
+    });
+  });
+
   it('renders every changelog entry title and area, grouped under its date heading newest-first, by default', () => {
     const fixture = TestBed.createComponent(ChangelogPageComponent);
     fixture.detectChanges();

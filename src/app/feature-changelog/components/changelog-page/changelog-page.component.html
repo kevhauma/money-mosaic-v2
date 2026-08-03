@@ -1,11 +1,16 @@
-<mm-page-header title="Changelog & Roadmap" />
-
-<mm-tabs
-  [tabs]="tabs"
-  [selected]="selectedTab()"
-  (selectedChange)="onTabChange($event)"
-  class="mb-4"
-/>
+<!-- Header shape (TICKET-CHG-02): the switch decides which of the two views you are looking at, so
+     it sits in `[actions-start]` beside the title — the same shape /categories and /rules have. The
+     binding is the one difference: this is one route, so the switch is selection-driven
+     (`[selected]` in, `(selectedChange)` out) rather than a pair of routerLinks. -->
+<mm-page-header title="Changelog">
+  <mm-tabs
+    actions-start
+    [tabs]="tabs"
+    [selected]="selectedTab()"
+    (selectedChange)="onTabChange($event)"
+    class="w-fit"
+  />
+</mm-page-header>
 
 @if (activeGroups().length === 0) {
   <mm-text as="p" variant="caption">{{ emptyMessage() }}</mm-text>
