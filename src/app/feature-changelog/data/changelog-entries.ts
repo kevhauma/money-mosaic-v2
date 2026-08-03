@@ -488,4 +488,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'A page header now reads as two groups: what you are looking at sits by the title, what acts on it stays right',
     area: 'Interface',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-UI-25'],
+    title:
+      "The page header stays put while you scroll, so a long page's controls are always within reach",
+    area: 'Interface',
+  },
 ];

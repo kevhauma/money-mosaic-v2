@@ -123,6 +123,18 @@ describe('PageHeaderComponent: the header contract', () => {
     }
   });
 
+  it('keeps the bar sticky at the top, under the drawer and the overlays (TICKET-UI-25)', async () => {
+    const fixture = await render(WithBothSectionsHostComponent);
+    const bar = (fixture.nativeElement as HTMLElement).querySelector('.mm-page-header-bar');
+
+    // Asserted class by class so a later utility reshuffle can't silently drop one: `z-10` is the
+    // deliberate rung — below the drawer's `z-20`, far below daisyUI's `z-999` overlays.
+    expect(bar).not.toBeNull();
+    for (const cls of ['navbar', 'sticky', 'top-0', 'z-10']) {
+      expect(bar?.classList.contains(cls)).toBe(true);
+    }
+  });
+
   it('wraps the outer row and both action groups, so four controls degrade rather than overflow at 375px', async () => {
     const fixture = await render(WithBothSectionsHostComponent);
     const header: HTMLElement = fixture.nativeElement;

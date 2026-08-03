@@ -23,12 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-UI-25',
-    title: 'The page header stays put while you scroll, so a page’s controls are always reachable',
-    area: 'Shared UI',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-CHG-02',
     title: 'The Changelog/Roadmap switch moves up into the page header',
     area: 'Changelog',

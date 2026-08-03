@@ -48,23 +48,55 @@ scrolling out of reach on the pages that are long enough for it to matter.
 
 ## Acceptance criteria
 
-- [ ] `mm-page-header`'s bar carries `sticky top-0` and an explicit `z-index`; component spec asserts
+- [x] `mm-page-header`'s bar carries `sticky top-0` and an explicit `z-index`; component spec asserts
       the classes survive, so a later utility reshuffle can't silently drop them.
-- [ ] The header stays visible after scrolling to the bottom of a long page; verified live on
+      (`page-header.component.html` — `mm-page-header-bar navbar sticky top-0 z-10 …`; spec case
+      "keeps the bar sticky at the top, under the drawer and the overlays (TICKET-UI-25)" asserts
+      `navbar`, `sticky`, `top-0` and `z-10` class by class.)
+- [x] The header stays visible after scrolling to the bottom of a long page; verified live on
       `/transactions`, `/income` and `/dashboard`.
-- [ ] An open `mm-modal`, the transaction quick-edit slide-over, and an `mm-dropdown` menu all render
+      (Dev server :4210, measured `getBoundingClientRect()` after scrolling to `scrollHeight`:
+      `/transactions` at scrollY 2541 → bar top 0; `/income` at scrollY 624 → bar top 0;
+      `/dashboard` at scrollY 1720 → bar top 0. On all three, `elementFromPoint` at the bar's own
+      mid-height lands inside the bar, so content is passing under it rather than over it.)
+- [x] An open `mm-modal`, the transaction quick-edit slide-over, and an `mm-dropdown` menu all render
       **above** the sticky header, not behind it; verified live on `/transactions` (row slide-over)
       and `/accounts` (Add account modal).
-- [ ] Page content scrolling under the bar is not visible through it in any shipped theme; checked
+      (There is no slide-over: the transaction quick-edit is `transaction-edit-form`, an `mm-modal`
+      — same overlay family as Add account, so the two named cases are one. `/accounts` with the Add
+      account modal open: `elementFromPoint` at the header's coordinates lands inside the `<dialog>`,
+      not the header. Dropdowns: every `.dropdown-content` in the app carries `z-10`, the same rung
+      as the bar, and sits after it in DOM order, so it paints on top — confirmed by forcing one of
+      `/categories`' row menus visible over the pinned bar and hit-testing it (`hitInDropdown: true`,
+      `hitInHeader: false`). The menu had to be forced rather than clicked open: the Browser pane
+      isn't displayed this session, so the document never takes focus and daisyUI's `:focus-within`
+      dropdowns don't open on a real click.)
+- [x] Page content scrolling under the bar is not visible through it in any shipped theme; checked
       against every theme in the picker, and any theme that sets a translucent header surface is fixed
       or explicitly excluded with a note.
-- [ ] Engaging the sticky state causes no layout shift — the page does not jump when the header
+      (All ten `data-theme` values swept live while scrolled: every one reports `position: sticky`,
+      `z-index: 10`, an opaque computed `background-color`, and the bar hit-testing over the content
+      beneath it. Two needed fixing rather than excluding — **cyberpunk**'s `.navbar` fill was
+      `base-100` at 85%, and **liquid-glass**'s `base-100` carries 50% alpha by design; both now give
+      `.mm-page-header-bar` an opaque fill and keep their `backdrop-filter` for the optical effect.)
+- [x] Engaging the sticky state causes no layout shift — the page does not jump when the header
       detaches; verified live.
-- [ ] On a 375px viewport the header sticks without covering the shell's mobile bar or the first row
+      (`body.scrollHeight` and the bar's own height are identical before and after pinning on all
+      three long pages — 64px on `/transactions` and `/income`, 91px on `/dashboard`.)
+- [x] On a 375px viewport the header sticks without covering the shell's mobile bar or the first row
       of content; verified live.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (375×812: at rest on `/categories` the shell bar occupies 0–64 and the header 64–173, no
+      overlap; on `/transactions` at scrollY 1200 the shell bar has scrolled to −1200 and the header
+      is pinned at 0–64 with the document height unchanged.)
+- [x] No persistence changes, no Dexie version bump.
+      (Diff is one template, its spec and doc comment, three theme stylesheets and two docs — nothing
+      under `core/data-access/`.)
+- [x] `angular.json` bundle budgets not raised.
+      (`angular.json` untouched; dev build reported no budget warnings.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (`fallow audit --base HEAD` → verdict `pass`, 0 introduced findings across 8 changed files;
+      `ng lint` + `ng test` (2175 tests) + dev build all green. The `coding-conventions` page-header
+      bullet was updated in the same change with the sticky rule and the `.mm-page-header-bar` hook.)
 
 ## Notes
 

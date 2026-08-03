@@ -198,7 +198,10 @@ html[data-theme='retro-futurism'] body {
 
 /* Racing stripes: the tri-color program stripe (orange / gold / teal) under the navbar and down
  * the sidebar's outer edge. */
-[data-theme='retro-futurism'] .navbar {
+/* The page header is `sticky` (TICKET-UI-25) and this un-layered rule would otherwise reset it to
+ * `relative`; every other navbar still needs a positioned box for the stripe below. Both are
+ * positioned, so the `::after` anchors the same either way. */
+[data-theme='retro-futurism'] .navbar:not(.mm-page-header-bar) {
   position: relative;
 }
 

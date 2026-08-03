@@ -248,12 +248,12 @@ html[data-theme='liquid-glass'] body::after {
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* App shell — the navbar becomes a detached sticky glass bar; the sidebar a floating glass
- * column (approximating the branch's wrapper markup purely in scoped CSS). */
+/* App shell — the navbar becomes a detached glass bar; the sidebar a floating glass column
+ * (approximating the branch's wrapper markup purely in scoped CSS). Stickiness is the page
+ * header's own job since TICKET-UI-25 — it carries `sticky top-0 z-10` as a utility, and the rule
+ * below only restores the inset this theme's detached bar wants when it pins. Keeping it on every
+ * `.navbar` would pin the shell's mobile bar too, and the two would overlap on a phone. */
 [data-theme='liquid-glass'] .navbar {
-  position: sticky;
-  top: 0.75rem;
-  z-index: 10;
   margin: 0.75rem 0.75rem 0;
   width: auto;
   border-bottom: 0;
@@ -264,6 +264,15 @@ html[data-theme='liquid-glass'] body::after {
     inset 0 1px 0 0 var(--mm-specular),
     inset 0 0 24px 0 var(--mm-inner-tint),
     0 16px 48px -16px var(--mm-shadow);
+}
+
+/* The detached bar keeps a hair of glass above it when it pins, rather than butting the viewport
+ * edge. Its fill also goes opaque here: the theme's `base-100` is 50% alpha by design, which reads
+ * as glass over the aurora but would let the page's own content scroll visibly through a pinned
+ * header (TICKET-UI-25). The blur above still does the optical work. */
+[data-theme='liquid-glass'] .mm-page-header-bar {
+  top: 0.75rem;
+  background-color: color-mix(in oklab, var(--mm-page-solid) 88%, var(--color-primary) 12%);
 }
 
 [data-theme='liquid-glass'] .drawer-side {

@@ -1,9 +1,14 @@
 <!-- The app's top bar, now owned per page (TICKET-UI-22/UI-23). Same daisyUI `navbar` treatment the
      shell topbar had before the range switcher moved out of it, and the negative margins cancel the
      shell main's `p-4 lg:p-6` so it still sits flush against the content area's top and sides
-     rather than floating inside the page's own padding. -->
+     rather than floating inside the page's own padding.
+
+     `sticky top-0` (TICKET-UI-25) keeps this row reachable on a long page. `z-10` is deliberately
+     below the drawer (`z-20`) and far below daisyUI's overlays (`.modal` / `.dropdown-content`,
+     both `z-999`), so nothing that opens over the page ends up behind it. `mm-page-header-bar` is
+     the theme hook the themes that restyle `.navbar` use to tell this bar from the shell's. -->
 <div
-  class="navbar -mx-4 -mt-4 mb-6 w-auto flex-wrap gap-2 border-b border-base-300 bg-base-100 px-4 lg:-mx-6 lg:-mt-6"
+  class="mm-page-header-bar navbar sticky top-0 z-10 -mx-4 -mt-4 mb-6 w-auto flex-wrap gap-2 border-b border-base-300 bg-base-100 px-4 lg:-mx-6 lg:-mt-6"
 >
   <mm-flex align="center" justify="between" gap="3" [wrap]="true" class="w-full">
     <!-- Start group (TICKET-UI-24): the title, then the controls that change *what the page is

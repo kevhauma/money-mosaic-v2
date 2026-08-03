@@ -321,11 +321,23 @@ html[data-theme='cyberpunk'] body::after {
 
 /* App shell: neon hairline along the top of the navbar, circuitry borders, slight blur. */
 [data-theme='cyberpunk'] .navbar {
-  position: relative;
   border-bottom-color: color-mix(in oklab, var(--color-primary) 25%, transparent);
   background-color: color-mix(in oklab, var(--color-base-100) 85%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+/* The pinned header's fill goes opaque: 85% + blur reads as smoked glass over the page background,
+ * but would let content scroll visibly through a sticky bar (TICKET-UI-25). */
+[data-theme='cyberpunk'] .mm-page-header-bar {
+  background-color: var(--color-base-100);
+}
+
+/* The page header is `sticky` (TICKET-UI-25) and this un-layered rule would otherwise reset it to
+ * `relative`; every other navbar still needs a positioned box for the hairline below. Both are
+ * positioned, so the `::after` anchors the same either way. */
+[data-theme='cyberpunk'] .navbar:not(.mm-page-header-bar) {
+  position: relative;
 }
 
 [data-theme='cyberpunk'] .navbar::after {
