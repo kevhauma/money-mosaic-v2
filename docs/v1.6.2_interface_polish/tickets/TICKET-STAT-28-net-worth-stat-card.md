@@ -66,9 +66,18 @@ skeuomorphism's brass gauge still mark this figure out from its four neighbours.
 on both the host element and the card box, so the three theme rules are qualified with `.stat`;
 without that the plate painted twice, one border ring and one rotation outside the other.
 
-**The `mm-blob` wash is dropped.** `mm-stat-card` has no slot for a decorative child, and adding one to
-a shared primitive for a single caller is worse than losing the wash. The hook is not orphaned: it is
-still rendered by `mm-empty-state`, so no theme references something nothing renders.
+**The `mm-blob` wash is kept, and so is the rest of the hero's look.** Also on the user's
+instruction ("it should look like before, it just needed to move"): `mm-stat-card` has no slot for a
+decorative child, so `styles.css` draws the wash as a `.mm-net-worth.stat::before` pseudo-element at
+the hero's own geometry (`-top-6 -right-6`, `6rem` square) rather than adding a decorative slot to a
+primitive every other card also uses. The hero's baseline plate — `border-primary/30`,
+`bg-primary/10` and primary type — moved to the same rule, since as Tailwind utilities on the card
+they would have fought `mm-stat-card`'s own surface utilities. Alignment is the one thing not carried
+over: the hero was right-aligned because it sat at the right end of the header.
+
+**The hover tooltip is dropped**, on the user's instruction. The sub-label carries the
+not-range-scoped point on its own, and a card you have to hover to understand isn't explaining
+itself.
 
 **The empty state loses its net-worth figure, deliberately.** With zero transactions the figure is just
 the sum of the opening balances the user typed in on `/accounts`, which is where the card now links and
@@ -90,10 +99,10 @@ where the per-account breakdown lives. The empty Dashboard's one job is getting 
 - [x] The card states that it is not range-scoped; component spec asserts the sub-label or tooltip
       text, and a second case asserts that changing the Dashboard's date range moves the other four
       cards but **not** this one.
-      (`subLabel="Today, all accounts"` plus a tooltip reading "A balance, not a period total. / The
-      date range does not apply to it."; spec case "says it is not range-scoped, and stays put when
-      the range moves the other four" asserts both strings and then re-ranges to a window containing
-      none of the seeded transactions.)
+      (`subLabel="Everything combined, as of today"` — the criterion's "sub-label **or** tooltip"; the tooltip this
+      first shipped with was removed on the user's instruction. Spec case "says it is not
+      range-scoped, and stays put when the range moves the other four" asserts the sub-label, asserts
+      no tooltip renders, and then re-ranges to a window containing none of the seeded transactions.)
 - [x] The card links to `/accounts`; component spec asserts the `href`.
       (Spec case "drills into /accounts, where the balance breaks down — not into a transaction list".)
 - [x] `<app-net-worth-header />` no longer renders anywhere, and `NetWorthHeaderComponent` plus its
@@ -110,8 +119,10 @@ where the per-account breakdown lives. The empty Dashboard's one job is getting 
 - [x] The `mm-blob` decision is implemented and recorded — either the wash moves onto the net-worth
       card or it is dropped, with the reason in a comment; no theme is left referencing a hook nothing
       renders.
-      (Dropped — see the implementation note above. `mm-empty-state` still renders `.mm-blob`, so the
-      themes that set `--mm-blob-bg` keep a live target.)
+      (Moved onto the card — see the implementation note above. `styles.css` extends the existing
+      `.mm-blob` rule with `.mm-net-worth.stat::before` rather than restating it, so there is still
+      one definition of the wash. Verified live in all nine themes: the pseudo-element resolves
+      `--mm-blob-bg` in every one, and the three themed plates still override the baseline.)
 - [x] The empty-state decision is implemented and recorded on this ticket, either way.
       (Losing it is intended — see the implementation note above.)
 - [x] The stats row still shows its loading skeleton until `statsStore.dataReady()`, and the net-worth
@@ -138,7 +149,8 @@ where the per-account breakdown lives. The empty Dashboard's one job is getting 
 - [x] Verified live in the browser: net worth reads the same figure it did in the header, sits first in
       the stats row, and does not change when the date range does.
       (:4210 — the header no longer contains "Net worth"; the row reads Net worth · Income · Expense ·
-      Net cash flow · Savings rate with `+€16,898.26`, sub-label "Today, all accounts", `href="/accounts"`.
+      Net cash flow · Savings rate with `+€16,898.26` in primary type on a primary-tinted plate with
+      the `mm-blob` wash, sub-label "Everything combined, as of today", no tooltip, `href="/accounts"`.
       Switching the range preset to "last year" moves Income/Expense/Net to €0.00 and Savings rate to
       "—" while net worth stays at `+€16,898.26`. Theme sweep with transitions disabled: anti-polish
       paints the card `oklch(0.87 0.19 100)` and skeuomorphism paints its rivet/gradient

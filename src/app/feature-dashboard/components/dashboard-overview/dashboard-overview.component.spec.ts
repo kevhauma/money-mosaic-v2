@@ -205,8 +205,12 @@ describe('DashboardOverviewComponent', () => {
       fixture.detectChanges();
 
       const card = netWorthCard() as HTMLElement;
-      expect(card.querySelector('.stat-desc')?.textContent?.trim()).toBe('Today, all accounts');
-      expect(card.querySelector('.tooltip-content')?.textContent).toContain('not a period total');
+      // The sub-label carries this on its own — the hover tooltip it first shipped with was
+      // dropped, since a card you have to hover to understand isn't explaining itself.
+      expect(card.querySelector('.stat-desc')?.textContent?.trim()).toBe(
+        'Everything combined, as of today',
+      );
+      expect(card.querySelector('.tooltip-content')).toBeNull();
 
       const netWorthBefore = card.querySelector('.stat-value')?.textContent?.trim();
       const incomeBefore = statCards()[1].querySelector('.stat-value')?.textContent?.trim();

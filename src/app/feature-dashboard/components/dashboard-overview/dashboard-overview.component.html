@@ -42,24 +42,25 @@
             <div class="flex flex-wrap gap-6 py-2">
               <!-- Net worth leads the row (TICKET-STAT-28): the headline figure the other four
                    explain. It is the one card here that is NOT range-scoped (FR-STAT-1) — it is a
-                   balance across accounts as of today — so its sub-label and tooltip say so, and it
-                   drills into /accounts where that balance breaks down rather than into a
-                   transaction list. Its own `accountsStore.dataReady()` gate is separate from the
-                   row's `statsStore` one, so it never flashes a zero while accounts load.
-                   It keeps the `mm-net-worth` theme-style hook it carried as a header hero, so the
-                   themes that give this figure their own treatment (anti-polish's hazard plate,
-                   Memphis's poster plate, skeuomorphism's brass gauge) still do. Angular puts this
-                   `class` on both the host element and the card box, so those three themes qualify
-                   the hook with `.stat` — otherwise the plate paints twice, one ring and one
-                   rotation outside the other. `tilt="none"` because Memphis's hook already
-                   rotates it. -->
+                   balance across accounts as of today — so its sub-label says so, and it drills
+                   into /accounts where that balance breaks down rather than into a transaction
+                   list. Its own `accountsStore.dataReady()` gate is separate from the row's
+                   `statsStore` one, so it never flashes a zero while accounts load.
+                   It keeps the whole look it had as a header hero — the `mm-net-worth` theme-style
+                   hook (anti-polish's hazard plate, Memphis's poster plate, skeuomorphism's brass
+                   gauge) and the decorative `mm-blob` wash, which styles.css draws as a
+                   pseudo-element on that hook since `mm-stat-card` has no slot for a decorative
+                   child. Angular puts this `class` on both the host element and the card box, so
+                   the hook's rules are all qualified with `.stat` — otherwise the plate paints
+                   twice, one ring and one rotation outside the other. `tilt="none"` because
+                   Memphis's hook already rotates it. -->
               @if (accountsStore.dataReady()) {
                 <mm-stat-card
                   class="mm-net-worth"
                   label="Net worth"
                   [value]="netWorthValue()"
-                  subLabel="Today, all accounts"
-                  tooltip="A balance, not a period total.&#10;The date range does not apply to it."
+                  subLabel="Everything combined, as of today"
+                  color="primary"
                   link="/accounts"
                   tilt="none"
                 />

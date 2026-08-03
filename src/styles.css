@@ -121,13 +121,51 @@
   rotate: var(--mm-tilt-r, none);
 }
 /**
- * Decorative backdrop wash (net-worth-header). Invisible unless the active theme opts in with
- * `--mm-blob-bg` — never on an interactive element or anything with legible content on its edge.
+ * Decorative backdrop wash (the net-worth card, empty states). Invisible unless the active theme
+ * opts in with `--mm-blob-bg` — never on an interactive element or anything with legible content
+ * on its edge.
+ *
+ * The net-worth card gets it as a pseudo-element rather than a projected `<div class="mm-blob">`:
+ * it moved from a bespoke header hero into an `mm-stat-card` (TICKET-STAT-28), and that shared
+ * primitive has no slot for a decorative child. Same wash, same geometry as the hero carried
+ * (`-top-6 -right-6 h-24 w-24`), no new surface on a primitive every other card also uses.
  */
-.mm-blob {
+.mm-blob,
+.mm-net-worth.stat::before {
   background-color: var(--mm-blob-bg, transparent);
   border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
   animation: var(--mm-blob-animation, none);
+}
+
+/**
+ * The net-worth card's baseline look, carried over verbatim from the header hero it replaced
+ * (TICKET-STAT-28): a primary-tinted plate with primary type. This lived in Tailwind utilities on
+ * that component's own markup (`border border-primary/30 bg-primary/10`, `color="primary"`), which
+ * `mm-stat-card` can't take without them fighting its own surface utilities — so it lives here,
+ * un-layered, alongside the wash. Themes that restyle `.mm-net-worth` still win: their selectors
+ * carry a `[data-theme]` prefix and so outrank this. Alignment is deliberately NOT carried over —
+ * the hero was right-aligned because it sat at the right end of the header; in a row of stat cards
+ * it reads with its four neighbours.
+ */
+.mm-net-worth.stat {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
+  background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
+}
+
+.mm-net-worth.stat :is(.stat-title, .stat-desc) {
+  color: var(--color-primary);
+}
+
+.mm-net-worth.stat::before {
+  content: '';
+  position: absolute;
+  top: -1.5rem;
+  right: -1.5rem;
+  width: 6rem;
+  height: 6rem;
+  pointer-events: none;
 }
 
 /**
