@@ -23,8 +23,8 @@ describe('PageHeaderComponent', () => {
   });
 });
 
-// The `[actions]` slot carries every page's own page-level controls (TICKET-UI-22), so it has
-// to stay optional: a page with none must render exactly as a bare title row.
+// The two action slots carry every page's own page-level controls (TICKET-UI-22/UI-24), so both
+// have to stay optional: a page with none must render exactly as a bare title row.
 @Component({
   imports: [PageHeaderComponent],
   template: `<mm-page-header title="Income" />`,
@@ -34,19 +34,21 @@ class TitleOnlyHostComponent {}
 @Component({
   imports: [PageHeaderComponent],
   template: `<mm-page-header title="Income">
-    <button actions type="button">Career started</button>
+    <button actions-end type="button">Career started</button>
   </mm-page-header>`,
 })
 class WithActionsHostComponent {}
 
+// Both sections at once: a scope control beside the title, an action over on the right
+// (TICKET-UI-24) — the shape /accounts and /dashboard now render.
 @Component({
   imports: [PageHeaderComponent],
   template: `<mm-page-header title="Income">
-    <span title-adornment>beta</span>
-    <button actions type="button">Career started</button>
+    <span actions-start>this month</span>
+    <button actions-end type="button">Career started</button>
   </mm-page-header>`,
 })
-class WithAdornmentHostComponent {}
+class WithBothSectionsHostComponent {}
 
 describe('PageHeaderComponent: the header contract', () => {
   const render = async <T>(host: Type<T>): Promise<ComponentFixture<T>> => {
@@ -72,34 +74,45 @@ describe('PageHeaderComponent: the header contract', () => {
     expect(header.querySelector('button')?.textContent?.trim()).toBe('Career started');
   });
 
-  it('projects [title-adornment] beside the heading, not into the action group', async () => {
-    const fixture = await render(WithAdornmentHostComponent);
+  it('projects [actions-start] beside the heading, not into the end group (TICKET-UI-24)', async () => {
+    const fixture = await render(WithBothSectionsHostComponent);
     const header: HTMLElement = fixture.nativeElement;
 
-    const adornment = header.querySelector('[title-adornment]');
-    const titleBlock = header.querySelector('.mm-page-title');
-    expect(adornment).not.toBeNull();
-    // The adornment shares the title block's row with the heading, not the action group.
-    expect(titleBlock?.contains(adornment as Node)).toBe(true);
-    expect(titleBlock?.querySelector('h1')?.textContent?.trim()).toBe('Income');
+    const scopeControl = header.querySelector('[actions-start]');
+    const startGroup = header.querySelector('.mm-page-actions-start');
+    expect(scopeControl).not.toBeNull();
+    // The scope control shares the start group's row with the heading, and never leaks right.
+    expect(startGroup?.contains(scopeControl as Node)).toBe(true);
+    expect(startGroup?.querySelector('h1')?.textContent?.trim()).toBe('Income');
+    expect(header.querySelector('.mm-page-actions')?.contains(scopeControl as Node)).toBe(false);
   });
 
-  it('projects [actions] into the right-hand group, not the title block', async () => {
-    const fixture = await render(WithAdornmentHostComponent);
+  it('projects [actions-end] into the right-hand group, not the start group (TICKET-UI-24)', async () => {
+    const fixture = await render(WithBothSectionsHostComponent);
     const header: HTMLElement = fixture.nativeElement;
 
-    const action = header.querySelector('button[actions]');
-    const titleBlock = header.querySelector('.mm-page-title');
+    const action = header.querySelector('button[actions-end]');
     expect(action).not.toBeNull();
-    expect(titleBlock?.contains(action as Node)).toBe(false);
+    expect(header.querySelector('.mm-page-actions-start')?.contains(action as Node)).toBe(false);
     expect(header.querySelector('.mm-page-actions')?.contains(action as Node)).toBe(true);
+  });
+
+  it('orders the header title · [actions-start] ‖ [actions-end] (TICKET-UI-24)', async () => {
+    const fixture = await render(WithBothSectionsHostComponent);
+    const header: HTMLElement = fixture.nativeElement;
+
+    const order = Array.from(
+      header.querySelectorAll('h1, [actions-start], [actions-end]') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim());
+
+    expect(order).toEqual(['Income', 'this month', 'Career started']);
   });
 
   it('renders no caption paragraph for any input combination (TICKET-UI-22: no subtitles)', async () => {
     for (const host of [
       TitleOnlyHostComponent,
       WithActionsHostComponent,
-      WithAdornmentHostComponent,
+      WithBothSectionsHostComponent,
     ]) {
       TestBed.resetTestingModule();
       const fixture = await render(host);
@@ -110,15 +123,18 @@ describe('PageHeaderComponent: the header contract', () => {
     }
   });
 
-  it('wraps both the outer row and the action group, so four controls degrade rather than overflow at 375px', async () => {
-    const fixture = await render(WithActionsHostComponent);
+  it('wraps the outer row and both action groups, so four controls degrade rather than overflow at 375px', async () => {
+    const fixture = await render(WithBothSectionsHostComponent);
     const header: HTMLElement = fixture.nativeElement;
 
     // Asserted through the class `mm-flex [wrap]="true"` emits — on the primitive's inner div, not
-    // its host, hence the `div` qualifiers. Both matter: the outer row drops the action group onto
-    // its own line, and the group itself wraps its controls once there are more than a narrow
-    // screen fits — without the second one, a four-control header overflows.
+    // its host, hence the `div` qualifiers. All three matter: the outer row drops the end group
+    // onto its own line, and each group wraps its own controls once there are more than a narrow
+    // screen fits — without those, a four-control header overflows (TICKET-UI-24).
     expect(header.querySelector('mm-flex > div')?.classList.contains('flex-wrap')).toBe(true);
+    expect(header.querySelector('div.mm-page-actions-start')?.classList.contains('flex-wrap')).toBe(
+      true,
+    );
     expect(header.querySelector('div.mm-page-actions')?.classList.contains('flex-wrap')).toBe(true);
   });
 });

@@ -1,8 +1,8 @@
-<!-- Header order (TICKET-CAT-09): the view switch first, then this tab's own control, then the
-     create action — the same shape as /categories. -->
+<!-- Header order (TICKET-CAT-09, sectioned by TICKET-UI-24): the view switch beside the title, then
+     this tab's own control and the create action on the right — the same shape as /categories. -->
 <mm-page-header title="Rules">
-  <mm-flex actions align="center" gap="3">
-    <mm-tabs [tabs]="categoriesTabs" variant="box" class="w-fit" />
+  <mm-tabs actions-start [tabs]="categoriesTabs" variant="box" class="w-fit" />
+  <mm-flex actions-end align="center" gap="3">
     <mm-button
       size="sm"
       [class]="running() ? 'loading' : ''"

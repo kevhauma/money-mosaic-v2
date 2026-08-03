@@ -51,6 +51,24 @@ describe('RulesOverviewComponent', () => {
       expect(controls).toEqual(['mm-tabs', 'button[Re-run rules]', 'button[Add rule]']);
     });
 
+    it("puts the switch in the start group and this tab's own controls in the end group (TICKET-UI-24)", async () => {
+      await setup();
+      fixture.detectChanges();
+      const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+      const startGroup = header.querySelector('.mm-page-actions-start');
+      const endGroup = header.querySelector('.mm-page-actions');
+
+      const tabs = header.querySelector('mm-tabs');
+      const buttons = Array.from(header.querySelectorAll('button'));
+      const rerun = buttons.find((b) => b.textContent?.trim() === 'Re-run rules');
+      const addButton = buttons.find((b) => b.textContent?.trim() === 'Add rule');
+
+      expect(startGroup?.contains(tabs as Node)).toBe(true);
+      expect(endGroup?.contains(tabs as Node)).toBe(false);
+      expect(endGroup?.contains(rerun as Node)).toBe(true);
+      expect(endGroup?.contains(addButton as Node)).toBe(true);
+    });
+
     it('renders no subtitle and no range control', async () => {
       await setup();
       fixture.detectChanges();

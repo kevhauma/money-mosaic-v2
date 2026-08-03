@@ -63,30 +63,73 @@ the date range and the Categories/Rules view switch — into the start section. 
 - **Net worth stays in `[actions-end]`** for now; [TICKET-STAT-28](./TICKET-STAT-28-net-worth-stat-card.md)
   moves it out of the header entirely and can land before or after this.
 
+## Implementation note (2026-08-03)
+
+Beyond the to-be's explicit list, the three existing **back-to-parent** links — "Back to accounts" on
+account detail, "Back to income" on `/income/settings` and `/income/salary` — also moved to
+`[actions-start]`. The section rule this ticket documents names back-to-parent as a start control, so
+leaving them right-aligned would have shipped the rule and its first counter-example in one commit,
+and TICKET-PUB-09 places the help pages' back link by the same rule.
+
 ## Acceptance criteria
 
-- [ ] `PageHeaderComponent` renders `[actions-start]` inside the title group (after the `h1`) and
+- [x] `PageHeaderComponent` renders `[actions-start]` inside the title group (after the `h1`) and
       `[actions-end]` in the right-hand group; `page-header.component.spec.ts` asserts each projects
       into its own group and neither leaks into the other.
-- [ ] `title-adornment` no longer exists in the primitive or anywhere in `src/app` — `grep` is clean,
+      (`page-header.component.html` — `.mm-page-actions-start` wraps the `h1` + `[actions-start]`,
+      `.mm-page-actions` holds `[actions-end]`; spec cases "projects [actions-start] beside the
+      heading, not into the end group" and "projects [actions-end] into the right-hand group, not the
+      start group" assert containment both ways, plus "orders the header title · [actions-start] ‖
+      [actions-end]".)
+- [x] `title-adornment` no longer exists in the primitive or anywhere in `src/app` — `grep` is clean,
       and its spec case is replaced by the `[actions-start]` one rather than deleted outright.
-- [ ] No `.html` in `src/app` still passes the bare `actions` attribute — `grep` for `actions=` /
+      (`grep -rn "title-adornment" src/app` returns nothing; `WithAdornmentHostComponent` became
+      `WithBothSectionsHostComponent` and its two cases became the two `[actions-start]`/`[actions-end]`
+      containment cases.)
+- [x] No `.html` in `src/app` still passes the bare `actions` attribute — `grep` for `actions=` /
       ` actions ` returns only `actions-start`/`actions-end`.
-- [ ] `mm-range-grouping-switcher` renders in `[actions-start]` on `/dashboard` and `/accounts`;
+      (`grep -rnE "(<[a-z-]+ |\s)actions(\s|>|/)" --include=*.html src/app` returns nothing outside
+      daisyUI's own `card-actions` class; all 10 call sites now read `actions-start`/`actions-end`.)
+- [x] `mm-range-grouping-switcher` renders in `[actions-start]` on `/dashboard` and `/accounts`;
       component specs assert the DOM order is title · range · (that page's end controls).
-- [ ] `mm-tabs` renders in `[actions-start]` on `/categories` and `/categories/rules`; component specs
+      (`accounts-overview.component.spec.ts` "renders exactly three controls, in the order range ·
+      show-archived · add account (TICKET-UI-24)" + "puts the range in the start group…";
+      `dashboard-overview.component.spec.ts` "orders the header title · range · net worth · settings
+      (TICKET-UI-24)" + "puts the range in the start group and net worth plus settings in the end
+      group".)
+- [x] `mm-tabs` renders in `[actions-start]` on `/categories` and `/categories/rules`; component specs
       assert the switch is in the start group and each tab's own control is in the end group.
-- [ ] Both groups carry the `wrap` binding; spec asserts `flex-wrap` on each, so a four-control header
+      (Both `categories-overview.component.spec.ts` and `rules-overview.component.spec.ts` gained
+      "puts the switch in the start group and this tab's own controls in the end group (TICKET-UI-24)".)
+- [x] Both groups carry the `wrap` binding; spec asserts `flex-wrap` on each, so a four-control header
       degrades at 375px rather than overflowing.
-- [ ] The section rule is documented in `PageHeaderComponent`'s doc comment, §3 of
+      (`page-header.component.spec.ts` "wraps the outer row and both action groups…" asserts
+      `flex-wrap` on `mm-flex > div`, `div.mm-page-actions-start` and `div.mm-page-actions`.)
+- [x] The section rule is documented in `PageHeaderComponent`'s doc comment, §3 of
       [ui-layout-spec.md](../../../docs/v1.0_foundation/ui-layout-spec.md), and the
       `coding-conventions` skill's page-header bullet — all three already carry the TICKET-UI-22
       contract and must not disagree.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: on `/accounts` the range sits beside the title and the toggle plus
+      (All three now carry the same sentence: *what the page is showing* → `[actions-start]`,
+      *acts on what is shown* → `[actions-end]`.)
+- [x] No persistence changes, no Dexie version bump.
+      (Diff touches only templates, specs and docs — `git diff --stat` lists no file under
+      `core/data-access/`.)
+- [x] `angular.json` bundle budgets not raised.
+      (`angular.json` is untouched; `ng build --configuration development` reported no budget warnings.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill.
+      (`fallow audit --base HEAD` → verdict `pass`, 0 introduced dead-code/complexity/duplication
+      findings across 20 changed files; `ng lint` + `ng test` (2174 tests) + dev build all green.)
+- [x] Verified live in the browser: on `/accounts` the range sits beside the title and the toggle plus
       "Add account" stay right; at 375px the two groups stack instead of overflowing.
+      (Measured on the dev server at :4210 — screenshots were unavailable this session, so the check
+      is DOM geometry. `/accounts` at 1522px: `h1` x=272, `mm-range-grouping-switcher` x=381 on the
+      same row and inside `.mm-page-actions-start`; `.mm-page-actions` x=1253 holding the toggle and
+      "Add account". At 375px: start group y=72, end group y=158 — stacked — and the header's own
+      `scrollWidth - clientWidth` is 0. The page's remaining 10px overflow is `mm-granularity-picker`
+      in the chart panel below, which TICKET-ACC-10 removes. `/categories` at 1280px: `mm-tabs` x=397
+      beside the `h1` at x=272, toggle + "Add category" in the end group at x=1006. `/dashboard`:
+      range x=399 in the start group, net worth + "Dashboard settings" in the end group. No console
+      errors on any of the three.)
 
 ## Notes
 

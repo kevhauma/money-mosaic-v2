@@ -1,5 +1,14 @@
+<!-- Header sections (TICKET-UI-24): the range scopes what the page shows, so it sits beside the
+     title; the toggle and "Add account" act on what is shown, so they stay right. -->
 <mm-page-header title="Accounts">
-  <mm-flex actions align="center" gap="3">
+  <mm-range-grouping-switcher
+    actions-start
+    [value]="range.value()"
+    (presetChange)="range.onPresetChange($event)"
+    (customRangeChange)="range.onCustomRangeChange($event)"
+    (rangeShift)="range.onRangeShift($event)"
+  />
+  <mm-flex actions-end align="center" gap="3">
     <mm-label as="label" class="gap-2">
       <mm-text variant="caption" color="base-content">Show archived</mm-text>
       <input
@@ -9,12 +18,6 @@
         (change)="showArchived.set(!showArchived())"
       />
     </mm-label>
-    <mm-range-grouping-switcher
-      [value]="range.value()"
-      (presetChange)="range.onPresetChange($event)"
-      (customRangeChange)="range.onCustomRangeChange($event)"
-      (rangeShift)="range.onRangeShift($event)"
-    />
     <mm-button color="primary" size="sm" (click)="openAddForm()">
       <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
       Add account

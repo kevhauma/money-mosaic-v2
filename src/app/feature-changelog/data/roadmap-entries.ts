@@ -23,13 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-UI-24',
-    title:
-      'Page headers split into two groups: what you’re looking at sits by the title, what acts on it stays on the right',
-    area: 'Shared UI',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-UI-25',
     title: 'The page header stays put while you scroll, so a page’s controls are always reachable',
     area: 'Shared UI',

@@ -4,7 +4,7 @@ import { TypographyComponent } from '../typography/typography.component';
 
 /**
  * The one header every page opens with (TICKET-UI-22): the page title on the left, that page's
- * own page-level controls in `[actions]` on the right, and nothing else.
+ * own page-level controls in two named slots, and nothing else.
  *
  * Renders as the app's top bar — daisyUI's `navbar`, the same treatment the shell topbar carried
  * before TICKET-UI-23 moved the range switcher out of it — full-bleed across the content area
@@ -16,6 +16,12 @@ import { TypographyComponent } from '../typography/typography.component';
  * (a chart's bucket picker, say) stays on that panel. There is deliberately no `subtitle`: a page
  * that genuinely needs an explanatory sentence puts it in the body, where it belongs to the
  * content rather than to the chrome.
+ *
+ * **Which of the two slots (TICKET-UI-24).** A control that changes **what the page is showing** —
+ * date range, view switch, back-to-parent — goes in `[actions-start]`, beside the title it
+ * qualifies. A control that **acts on what is shown** — create, re-run, show-archived, page
+ * settings, a link to somewhere else — goes in `[actions-end]`, right-aligned. Both groups wrap
+ * independently, so a four-control header degrades to two rows on a phone rather than overflowing.
  */
 @Component({
   selector: 'mm-page-header',

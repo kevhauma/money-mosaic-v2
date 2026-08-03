@@ -1,7 +1,9 @@
 @if (account(); as account) {
+  <!-- Back-to-parent is a scope control by the TICKET-UI-24 rule — it changes what you are looking
+       at — so it sits beside the title; everything that acts on this account stays right. -->
   <mm-page-header [title]="account.name">
-    <mm-flex actions align="center" gap="2">
-      <mm-button variant="ghost" size="sm" link="/accounts">Back to accounts</mm-button>
+    <mm-button actions-start variant="ghost" size="sm" link="/accounts">Back to accounts</mm-button>
+    <mm-flex actions-end align="center" gap="2">
       <mm-button size="sm" (click)="formOpen.set(true)">
         <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
         Edit

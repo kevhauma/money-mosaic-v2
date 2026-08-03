@@ -297,7 +297,7 @@ describe('DashboardOverviewComponent', () => {
       expect(rangeStore.preset('accounts')).toBe('this-month');
     });
 
-    it('orders the header title · net worth · range · settings', () => {
+    it('orders the header title · range · net worth · settings (TICKET-UI-24)', () => {
       seedOneTransaction();
       fixture.detectChanges();
 
@@ -311,7 +311,23 @@ describe('DashboardOverviewComponent', () => {
         .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-grouping-switcher'))
         .map((el) => el.tagName.toLowerCase());
 
-      expect(order).toEqual(['h1', 'app-net-worth-header', 'mm-range-grouping-switcher', 'button']);
+      expect(order).toEqual(['h1', 'mm-range-grouping-switcher', 'app-net-worth-header', 'button']);
+    });
+
+    it('puts the range in the start group and net worth plus settings in the end group (TICKET-UI-24)', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+      const startGroup = header.querySelector('.mm-page-actions-start');
+      const endGroup = header.querySelector('.mm-page-actions');
+      const range = header.querySelector('mm-range-grouping-switcher');
+      const netWorth = header.querySelector('app-net-worth-header');
+
+      expect(startGroup?.contains(range as Node)).toBe(true);
+      expect(endGroup?.contains(range as Node)).toBe(false);
+      expect(endGroup?.contains(netWorth as Node)).toBe(true);
+      expect(endGroup?.contains(settingsButton() as Node)).toBe(true);
     });
   });
 

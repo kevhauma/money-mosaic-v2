@@ -480,4 +480,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Interface',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-UI-24'],
+    title:
+      'A page header now reads as two groups: what you are looking at sits by the title, what acts on it stays right',
+    area: 'Interface',
+  },
 ];

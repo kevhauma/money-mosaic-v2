@@ -6,7 +6,7 @@ export type DropdownAlign = 'start' | 'end';
 
 /**
  * Wraps daisyUI's `dropdown`/`dropdown-content` shell. The trigger is projected via
- * `<div trigger>` (mirroring `mm-page-header`'s `[actions]` slot convention); the popover body is
+ * `<div trigger>` (mirroring `mm-page-header`'s `[actions-end]` slot convention); the popover body is
  * the default content. `menu` (default `true`) picks the content wrapper tag/class: a `<ul
  * class="dropdown-content menu">` for an actual item list (`<li><a>`/`<button>` per item, authored
  * by the caller — same "own the chrome, not the content" split as `mm-table`), or `menu="false"`

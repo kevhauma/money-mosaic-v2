@@ -51,6 +51,25 @@ describe('CategoriesOverviewComponent', () => {
       expect(headerControls()).toEqual(['mm-tabs', 'input', 'button[Add category]']);
     });
 
+    it("puts the switch in the start group and this tab's own controls in the end group (TICKET-UI-24)", async () => {
+      await setup();
+      fixture.detectChanges();
+      const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+      const startGroup = header.querySelector('.mm-page-actions-start');
+      const endGroup = header.querySelector('.mm-page-actions');
+
+      const tabs = header.querySelector('mm-tabs');
+      const toggle = header.querySelector('input[type="checkbox"]');
+      const addButton = Array.from(header.querySelectorAll('button')).find(
+        (b) => b.textContent?.trim() === 'Add category',
+      );
+
+      expect(startGroup?.contains(tabs as Node)).toBe(true);
+      expect(endGroup?.contains(tabs as Node)).toBe(false);
+      expect(endGroup?.contains(toggle as Node)).toBe(true);
+      expect(endGroup?.contains(addButton as Node)).toBe(true);
+    });
+
     it('keeps the switch routing between /categories and /rules', async () => {
       await setup();
       fixture.detectChanges();

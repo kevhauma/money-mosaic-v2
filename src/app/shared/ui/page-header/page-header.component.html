@@ -6,17 +6,20 @@
   class="navbar -mx-4 -mt-4 mb-6 w-auto flex-wrap gap-2 border-b border-base-300 bg-base-100 px-4 lg:-mx-6 lg:-mt-6"
 >
   <mm-flex align="center" justify="between" gap="3" [wrap]="true" class="w-full">
-    <!-- `mm-page-title` is a theme-style hook — inert by default, themes may add an accent (e.g. Memphis's heavy left rule). -->
-    <div class="mm-page-title">
-      <mm-flex align="center" gap="2">
+    <!-- Start group (TICKET-UI-24): the title, then the controls that change *what the page is
+         showing*. Wraps in its own right for the same reason the end group does. -->
+    <mm-flex class="mm-page-actions-start" align="center" gap="3" [wrap]="true">
+      <!-- `mm-page-title` is a theme-style hook — inert by default, themes may add an accent (e.g. Memphis's heavy left rule). -->
+      <div class="mm-page-title">
         <mm-text variant="heading" as="h1">{{ title() }}</mm-text>
-        <ng-content select="[title-adornment]" />
-      </mm-flex>
-    </div>
-    <!-- Wraps in its own right: the outer row only drops the whole group onto a second line, which
-         still overflows once a page projects three or four controls (TICKET-UI-22). -->
+      </div>
+      <ng-content select="[actions-start]" />
+    </mm-flex>
+    <!-- End group: the controls that *act on* what is shown. Wraps in its own right: the outer row
+         only drops the whole group onto a second line, which still overflows once a page projects
+         three or four controls (TICKET-UI-22). -->
     <mm-flex class="mm-page-actions" align="center" gap="2" [wrap]="true">
-      <ng-content select="[actions]" />
+      <ng-content select="[actions-end]" />
     </mm-flex>
   </mm-flex>
 </div>

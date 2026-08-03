@@ -1,9 +1,10 @@
-<!-- Header order (TICKET-CAT-09): the view switch first, then this tab's own control, then the
-     create action. The switch is page-level by the TICKET-UI-22 rule — it reconfigures the whole
-     page — so it belongs here rather than as a second strip of chrome below the header. -->
+<!-- Header order (TICKET-CAT-09, sectioned by TICKET-UI-24): the view switch decides *which view*
+     you are looking at, so it sits beside the title; this tab's own control and the create action
+     act on what is shown and stay right. The switch is page-level by the TICKET-UI-22 rule — it
+     reconfigures the whole page — so it belongs here rather than as a second strip of chrome. -->
 <mm-page-header title="Categories">
-  <mm-flex actions align="center" gap="3">
-    <mm-tabs [tabs]="categoriesTabs" variant="box" class="w-fit" />
+  <mm-tabs actions-start [tabs]="categoriesTabs" variant="box" class="w-fit" />
+  <mm-flex actions-end align="center" gap="3">
     <mm-label as="label" class="gap-2">
       <mm-text variant="caption" color="base-content">Show archived</mm-text>
       <input

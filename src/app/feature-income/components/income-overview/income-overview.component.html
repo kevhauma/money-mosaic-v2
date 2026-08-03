@@ -15,15 +15,15 @@
        No date range here on purpose: `/income` scopes itself to `IncomeStore.incomeRange()`
        (TICKET-INC-12), and TICKET-UI-23 deliberately does not give this page one. -->
   <mm-page-header title="Income">
-    <mm-button actions size="sm" link="/income/settings">
+    <mm-button actions-end size="sm" link="/income/settings">
       <ng-icon name="tablerAdjustments" size="16" aria-hidden="true" />
       Income settings
     </mm-button>
-    <mm-button actions size="sm" link="/income/salary">
+    <mm-button actions-end size="sm" link="/income/salary">
       <ng-icon name="tablerReceipt2" size="16" aria-hidden="true" />
       Salary details
     </mm-button>
-    <mm-button actions variant="ghost" size="sm" [link]="fullGuideLink">
+    <mm-button actions-end variant="ghost" size="sm" [link]="fullGuideLink">
       <ng-icon name="tablerHelpCircle" size="16" aria-hidden="true" />
       Guide
     </mm-button>

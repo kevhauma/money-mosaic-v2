@@ -15,9 +15,9 @@ import { IncomeStore } from '../../income.store';
 /**
  * Sets the date the user's working life started (FR-INC-12, TICKET-INC-12) — the anchor every
  * panel on `/income` reads through `IncomeStore.incomeRange`, so a stretch of student-era income or
- * a back-imported opening balance stops being read as part of the growth story. Lives in the page
- * header's `[actions]` slot rather than above the first panel: it re-anchors the whole page, not
- * one chart.
+ * a back-imported opening balance stops being read as part of the growth story. Lives on
+ * `/income/settings` (TICKET-INC-18) rather than above the first panel: it re-anchors the whole
+ * page, not one chart.
  *
  * A rejected date (in the future, or past the last transaction) is left *in* the field with the
  * reason under it rather than being snapped back — the store is only written on a date the page

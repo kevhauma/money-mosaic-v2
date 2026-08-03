@@ -1,21 +1,22 @@
-<!-- Header order (TICKET-STAT-25): title · net worth · date range · Dashboard settings. The figure
-     the page is named for reads first, then the controls, then the settings toggle last. -->
+<!-- Header order (TICKET-STAT-25, sectioned by TICKET-UI-24): title · date range ‖ net worth ·
+     Dashboard settings. The range scopes what the page shows, so it moved beside the title; the
+     figure and the settings toggle sit in the end group. -->
 <mm-page-header title="Dashboard">
-  <div actions>
-    <app-net-worth-header />
-  </div>
   <mm-range-grouping-switcher
-    actions
+    actions-start
     [value]="range.value()"
     (presetChange)="range.onPresetChange($event)"
     (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
+  <div actions-end>
+    <app-net-worth-header />
+  </div>
   <!-- Nothing to reorder or hide while the empty state is showing, so customize mode is unreachable there (TICKET-STAT-22). -->
   @if (!hasNoTransactions()) {
     <!-- The visible label *is* the accessible name (TICKET-STAT-25) — a bare pencil left a sighted
          user guessing, and the ariaLabel it used to carry only helped a screen reader. -->
-    <mm-button actions variant="ghost" size="sm" (click)="toggleCustomizeMode()">
+    <mm-button actions-end variant="ghost" size="sm" (click)="toggleCustomizeMode()">
       <ng-icon [name]="customizeToggle().icon" size="16" aria-hidden="true" />
       {{ customizeToggle().label }}
     </mm-button>

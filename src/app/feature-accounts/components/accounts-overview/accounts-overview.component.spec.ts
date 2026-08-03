@@ -71,15 +71,35 @@ describe('AccountsOverviewComponent', () => {
           el.tagName === 'BUTTON' ? `button[${el.textContent?.trim()}]` : el.tagName.toLowerCase(),
         );
 
-    it('renders exactly three controls, in the order show-archived · range · add account', async () => {
+    it('renders exactly three controls, in the order range · show-archived · add account (TICKET-UI-24)', async () => {
       await setup();
       fixture.detectChanges();
 
       expect(headerControls()).toEqual([
-        'input',
         'mm-range-grouping-switcher',
+        'input',
         'button[Add account]',
       ]);
+    });
+
+    it('puts the range in the start group beside the title and the two actions in the end group (TICKET-UI-24)', async () => {
+      await setup();
+      fixture.detectChanges();
+      const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+      const startGroup = header.querySelector('.mm-page-actions-start');
+      const endGroup = header.querySelector('.mm-page-actions');
+
+      const range = header.querySelector('mm-range-grouping-switcher');
+      const toggle = header.querySelector('input[type="checkbox"]');
+      const addButton = Array.from(header.querySelectorAll('button')).find(
+        (b) => b.textContent?.trim() === 'Add account',
+      );
+
+      expect(startGroup?.contains(range as Node)).toBe(true);
+      expect(startGroup?.querySelector('h1')?.textContent?.trim()).toBe('Accounts');
+      expect(endGroup?.contains(range as Node)).toBe(false);
+      expect(endGroup?.contains(toggle as Node)).toBe(true);
+      expect(endGroup?.contains(addButton as Node)).toBe(true);
     });
 
     it('leaves no page-level control in the body', async () => {
