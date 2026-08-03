@@ -64,8 +64,9 @@ const defaultStoreState = (): RangeStoreState => ({
  * and makes the isolation testable in one place.
  *
  * Ephemeral UI state only — not Dexie-backed, resets to the current-month default on reload. Bucket
- * granularity is chart-local state, not part of this store (TICKET-STAT-15) — each trend chart owns
- * its own default via `pickGranularityForSpan`.
+ * granularity is not part of this store: it is per-chart, seeded from a page's range on first mount
+ * via `pickGranularityForSpan` (TICKET-STAT-15) and then held for the session by `ChartOptionsStore`
+ * (TICKET-STAT-27), alongside each chart's hidden series and dragged zoom window.
  */
 export const RangeStore = signalStore(
   { providedIn: 'root' },

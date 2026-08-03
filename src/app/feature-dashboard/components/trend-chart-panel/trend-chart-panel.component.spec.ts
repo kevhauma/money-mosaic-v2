@@ -5,33 +5,11 @@ import { CategoriesRepository, type Category } from '@/core/data-access';
 import { pickGranularityForSpan } from '@/core/stats';
 import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
+import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { TrendChartPanelComponent } from './trend-chart-panel.component';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 
-// jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
-class ResizeObserverStub {
-  observe = (): void => {};
-  unobserve = (): void => {};
-  disconnect = (): void => {};
-}
-globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
-
-// jsdom has no real canvas 2D context. The sr-only table spec below (TICKET-STAT-20) is the first
-// test in this file to call `fixture.detectChanges()`, which drives the echarts directive into
-// zrender's real paint path — that needs one (same stub as dashboard-overview.component.spec.ts).
-const noopCanvasContext = new Proxy(
-  {},
-  {
-    get: (target: Record<string, unknown>, prop: string) =>
-      prop in target ? target[prop] : (): void => {},
-    set: (target: Record<string, unknown>, prop: string, value: unknown) => {
-      target[prop] = value;
-      return true;
-    },
-  },
-);
-HTMLCanvasElement.prototype.getContext = (() =>
-  noopCanvasContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+stubEchartsBrowserApis();
 
 const groceries: Category = {
   id: 1,
@@ -110,12 +88,12 @@ describe('TrendChartPanelComponent', () => {
       },
     ]);
 
-    fixture.componentInstance['granularity'].set('day');
+    fixture.componentInstance['setGranularity']('day');
     const dayBucketCount = (
       fixture.componentInstance['expenseChartOption']()['xAxis'] as { data: string[] }
     ).data.length;
 
-    fixture.componentInstance['granularity'].set('month');
+    fixture.componentInstance['setGranularity']('month');
     const monthBucketCount = (
       fixture.componentInstance['expenseChartOption']()['xAxis'] as { data: string[] }
     ).data.length;
@@ -184,6 +162,47 @@ describe('TrendChartPanelComponent', () => {
     }
   });
 
+  it("states each column's legend selection, and the two columns' filters stay apart (TICKET-STAT-27)", async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    await TestBed.inject(CategoriesStore).addCategory(salary);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-01-10',
+        amount: -50,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-1',
+        createdAt: '2026-01-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+      {
+        id: 2,
+        accountId: 1,
+        bookingDate: '2026-01-25',
+        amount: 3000,
+        currency: 'EUR',
+        rawDescription: 'Payslip',
+        fingerprint: 'fp-2',
+        createdAt: '2026-01-25T00:00:00.000Z',
+        categoryId: 2,
+      },
+    ]);
+    const selectedOf = (key: 'expenseChartOption' | 'incomeChartOption'): Record<string, boolean> =>
+      (fixture.componentInstance[key]() as { legend: { selected: Record<string, boolean> } }).legend
+        .selected;
+
+    fixture.componentInstance['onExpenseLegendSelectChanged']({ selected: { Groceries: false } });
+    // The bucket change is what used to put it back: the option is rebuilt and applied notMerge.
+    fixture.componentInstance['setGranularity']('day');
+    TestBed.tick();
+
+    expect(selectedOf('expenseChartOption')).toEqual({ Groceries: false });
+    // The income column lists its own one series — whatever it's named, nothing there was toggled.
+    expect(Object.values(selectedOf('incomeChartOption'))).toEqual([true]);
+  });
+
   it('renders both charts on the same shared y-axis max', async () => {
     await TestBed.inject(CategoriesStore).addCategory(groceries);
     await TestBed.inject(CategoriesStore).addCategory(salary);
@@ -237,7 +256,7 @@ describe('TrendChartPanelComponent', () => {
         categoryId: 1,
       },
     ]);
-    fixture.componentInstance['granularity'].set('month');
+    fixture.componentInstance['setGranularity']('month');
 
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -277,7 +296,7 @@ describe('TrendChartPanelComponent', () => {
           categoryId: 2,
         },
       ]);
-      fixture.componentInstance['granularity'].set('month');
+      fixture.componentInstance['setGranularity']('month');
     });
 
     it('exposes one accessible row per bucket, matching the same series signal the charts render from', () => {
@@ -295,7 +314,7 @@ describe('TrendChartPanelComponent', () => {
     it('updates the accessible rows when granularity changes, just like the charts', () => {
       const monthRowCount = fixture.componentInstance['accessibleRows']().length;
 
-      fixture.componentInstance['granularity'].set('day');
+      fixture.componentInstance['setGranularity']('day');
       const dayRowCount = fixture.componentInstance['accessibleRows']().length;
 
       expect(dayRowCount).not.toBe(monthRowCount);

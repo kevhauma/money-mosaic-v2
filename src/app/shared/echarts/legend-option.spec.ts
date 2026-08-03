@@ -1,9 +1,18 @@
 import { bucketedZoomAxisOption } from './bucketed-axis-option';
 import { legendOption } from './legend-option';
 
-type Legend = { type?: string; top?: number; bottom?: number; data?: string[] };
-const legendOf = (placement: 'top' | 'bottom', names?: readonly string[]): Legend =>
-  legendOption(names, placement).legend as Legend;
+type Legend = {
+  type?: string;
+  top?: number;
+  bottom?: number;
+  data?: string[];
+  selected?: Record<string, boolean>;
+};
+const legendOf = (
+  placement: 'top' | 'bottom',
+  names?: readonly string[],
+  hidden?: readonly string[],
+): Legend => legendOption(names, placement, hidden).legend as Legend;
 
 describe('legendOption (TICKET-STAT-26)', () => {
   it('scroll-types every legend, so a long series list pages instead of eating the chart', () => {
@@ -47,6 +56,27 @@ describe('legendOption (TICKET-STAT-26)', () => {
     expect((many.legend as Legend).type).toBe('scroll');
     expect((many.legend as Legend).data).toHaveLength(10);
     expect(many.gridOffset).toBe(few.gridOffset);
+  });
+
+  it('states the selection so a notMerge rebuild restores it instead of clearing it (TICKET-STAT-27)', () => {
+    // `NgxEchartsDirective` applies `[options]` with `setOption(option, true)`, which discards
+    // echarts' own legend state — an option silent about `selected` puts every hidden series back.
+    expect(legendOf('top', ['Checking', 'Savings'], ['Savings']).selected).toEqual({
+      Checking: true,
+      Savings: false,
+    });
+  });
+
+  it('marks everything shown when nothing is hidden, and ignores a hidden name it does not draw', () => {
+    expect(legendOf('top', ['Checking', 'Savings']).selected).toEqual({
+      Checking: true,
+      Savings: true,
+    });
+    expect(legendOf('top', ['Checking'], ['Gone']).selected).toEqual({ Checking: true });
+  });
+
+  it('states no selection for a legend echarts derives itself — there are no names to state it over', () => {
+    expect(legendOf('bottom', undefined, ['Savings']).selected).toBeUndefined();
   });
 
   it('keeps the Net vs gross geometry byte-for-byte — bottom: 0 against a grid.bottom of 48', () => {

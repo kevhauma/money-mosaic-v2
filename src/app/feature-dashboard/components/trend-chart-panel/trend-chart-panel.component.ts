@@ -1,4 +1,4 @@
-﻿import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -8,7 +8,14 @@ import {
   type CategorySeriesEntry,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
+import {
+  AccountsStore,
+  CategoriesStore,
+  chartGranularity,
+  chartSeriesFilter,
+  RangeStore,
+  TransactionsStore,
+} from '@/core/state';
 import {
   resolveChartAnimation,
   formatAxisTooltip,
@@ -25,7 +32,6 @@ import {
   bucketDateBoundaries,
   buildTransactionDrilldownParams,
   formatCurrency,
-  type Granularity,
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
 
@@ -51,12 +57,15 @@ const buildColumnChartOption = (
   series: CategorySeriesEntry[],
   stackName: 'income' | 'expense',
   sharedMax: number,
+  hiddenSeries: readonly string[] = [],
 ): EChartsCoreOption => {
   // Top strip, matching the other bucketed charts (TICKET-STAT-26) — the legend used to draw
-  // inside the plot, and five stacked categories wrapped it onto a second line over the bars.
+  // inside the plot, and five stacked categories wrapped it onto a second line over the bars. The
+  // hidden names come back out as `legend.selected` (TICKET-STAT-27) so a bucket change keeps them off.
   const { legend, gridOffset } = legendOption(
     series.map((entry) => entry.name),
     'top',
+    hiddenSeries,
   );
 
   return {
@@ -102,10 +111,17 @@ export class TrendChartPanelComponent {
   private readonly rangeStore = inject(RangeStore);
   private readonly router = inject(Router);
 
-  /** Defaults from the current shared date range on first render (TICKET-STAT-15); independent of every other chart's control thereafter. */
-  protected readonly granularity = signal<Granularity>(
+  /**
+   * Defaults from the Dashboard's date range the first time this panel is mounted (TICKET-STAT-15);
+   * independent of every other chart's control thereafter, and kept for the session so navigating
+   * away and back doesn't re-derive it from the range (TICKET-STAT-27). One id for both columns —
+   * this is a single picker driving both.
+   */
+  private readonly granularityControl = chartGranularity('dashboard-trend', () =>
     pickGranularityForSpan(this.rangeStore.from('dashboard'), this.rangeStore.to('dashboard')),
   );
+  protected readonly granularity = this.granularityControl.value;
+  protected readonly setGranularity = this.granularityControl.set;
 
   private readonly ownSavingsIbans = computed(() =>
     savingsAccountIbans(this.accountsStore.accounts()),
@@ -131,14 +147,39 @@ export class TrendChartPanelComponent {
     );
   });
 
+  /** One filter per column (TICKET-STAT-27): the two legends list different categories, and hiding one on the left says nothing about the right. */
+  private readonly incomeFilter = chartSeriesFilter(
+    'dashboard-trend-income',
+    computed(() => this.composition().incomeSeries.map((entry) => entry.name)),
+  );
+  private readonly expenseFilter = chartSeriesFilter(
+    'dashboard-trend-expense',
+    computed(() => this.composition().expenseSeries.map((entry) => entry.name)),
+  );
+
+  protected readonly onIncomeLegendSelectChanged = this.incomeFilter.onLegendSelectChanged;
+  protected readonly onExpenseLegendSelectChanged = this.expenseFilter.onLegendSelectChanged;
+
   protected readonly incomeChartOption = computed<EChartsCoreOption>(() => {
     const { bucketKeys, incomeSeries } = this.composition();
-    return buildColumnChartOption(bucketKeys, incomeSeries, 'income', this.sharedYAxisMax());
+    return buildColumnChartOption(
+      bucketKeys,
+      incomeSeries,
+      'income',
+      this.sharedYAxisMax(),
+      this.incomeFilter.hidden(),
+    );
   });
 
   protected readonly expenseChartOption = computed<EChartsCoreOption>(() => {
     const { bucketKeys, expenseSeries } = this.composition();
-    return buildColumnChartOption(bucketKeys, expenseSeries, 'expense', this.sharedYAxisMax());
+    return buildColumnChartOption(
+      bucketKeys,
+      expenseSeries,
+      'expense',
+      this.sharedYAxisMax(),
+      this.expenseFilter.hidden(),
+    );
   });
 
   /**

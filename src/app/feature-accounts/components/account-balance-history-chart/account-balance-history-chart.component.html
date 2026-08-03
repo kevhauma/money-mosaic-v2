@@ -2,12 +2,14 @@
   <mm-paper elevation="flat">
     <mm-flex align="center" justify="between" gap="2">
       <p class="card-title text-base">Balance history</p>
-      <mm-granularity-picker [value]="granularity()" (valueChange)="granularity.set($event)" />
+      <mm-granularity-picker [value]="granularity()" (valueChange)="setGranularity($event)" />
     </mm-flex>
     <div
       echarts
       [options]="chartOption()"
       (chartClick)="onChartClick($event)"
+      (chartLegendSelectChanged)="onLegendSelectChanged($event)"
+      (chartDataZoom)="onDataZoom($event)"
       class="h-80 w-full"
     ></div>
   </mm-paper>

@@ -61,7 +61,7 @@ describe('buildIncomeTrendChartOption (FR-INC-2, TICKET-INC-02)', () => {
    * assertions below narrow through a local shape rather than sprinkling casts. */
   type IncomeTrendOption = {
     series: { name: string; type: string; stack: string; color: string; data: number[] }[];
-    legend: { type: string; top: number; data: string[] };
+    legend: { type: string; top: number; data: string[]; selected: Record<string, boolean> };
     grid: { top: number };
     dataZoom: { type: string; startValue: number; endValue: number }[];
     xAxis: { data: string[] };
@@ -119,6 +119,32 @@ describe('buildIncomeTrendChartOption (FR-INC-2, TICKET-INC-02)', () => {
     // Stacked with the categories, so the band reads as part of the month's income.
     expect(option.series[1].stack).toBe(option.series[0].stack);
     expect(option.series[1].data).toEqual([166.67, 166.67]);
+  });
+
+  it('states which categories are toggled off, so the notMerge rebuild restores them (TICKET-STAT-27)', () => {
+    const option = buildIncomeTrendChartOption(
+      ['2026-01', '2026-02'],
+      [
+        seriesEntry({ categoryId: 1, name: 'Salary' }),
+        seriesEntry({ categoryId: 2, name: 'Bonus' }),
+      ],
+      zoomWindow,
+      ['Bonus'],
+    ) as unknown as IncomeTrendOption;
+
+    expect(option.legend.selected).toEqual({ Salary: true, Bonus: false });
+    // Hiding is a legend concern — the data stays put, so unhiding needs no rebuild.
+    expect(option.series).toHaveLength(2);
+  });
+
+  it('takes a hand-dragged percentage window as readily as a bucket-index one (TICKET-STAT-27)', () => {
+    const option = buildIncomeTrendChartOption(
+      ['2026-01', '2026-02', '2026-03'],
+      [seriesEntry({ values: [1, 2, 3] })],
+      { start: 25, end: 75 },
+    ) as unknown as { dataZoom: { start: number; end: number }[] };
+
+    expect(option.dataZoom.every((zoom) => zoom.start === 25 && zoom.end === 75)).toBe(true);
   });
 
   it('applies no top-N cap of its own: 7 series in, 7 series out', () => {

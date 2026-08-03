@@ -23,13 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-STAT-27',
-    title:
-      'Charts remember the series you hid and the bucket you picked, for as long as the app is open',
-    area: 'Charts',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-ACC-10',
     title: 'Balance charts always plot a daily balance, with no bucket size to pick',
     area: 'Accounts',

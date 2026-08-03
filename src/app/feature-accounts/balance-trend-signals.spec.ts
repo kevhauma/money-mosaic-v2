@@ -69,7 +69,7 @@ describe('balanceTrendSignals', () => {
   it('defaults granularity from the shared range (TICKET-STAT-15)', () => {
     TestBed.runInInjectionContext(() => {
       const rangeStore = TestBed.inject(RangeStore);
-      const trend = balanceTrendSignals(signal([account()]));
+      const trend = balanceTrendSignals(signal([account()]), 'accounts-balance-history');
 
       expect(trend.granularity()).toBe(
         pickGranularityForSpan(rangeStore.from('accounts'), rangeStore.to('accounts')),
@@ -80,7 +80,7 @@ describe('balanceTrendSignals', () => {
   it("maps the shared range onto the series' own bucket keys for the zoom window", () => {
     TestBed.runInInjectionContext(() => {
       const rangeStore = TestBed.inject(RangeStore);
-      const trend = balanceTrendSignals(signal([account()]));
+      const trend = balanceTrendSignals(signal([account()]), 'accounts-balance-history');
 
       const expected = computeZoomWindow(
         trend.series()[0]?.points.map((point) => point.bucketKey) ?? [],
@@ -111,7 +111,7 @@ describe('balanceTrendSignals', () => {
     await TestBed.inject(CategoriesStore).hydrate();
 
     TestBed.runInInjectionContext(() => {
-      const trend = balanceTrendSignals(signal([jointAccount]));
+      const trend = balanceTrendSignals(signal([jointAccount]), 'accounts-balance-history');
 
       // The whole €200 left the account; the 0.5 ownership share belongs to net worth, not here.
       expect(trend.series()[0]?.points.at(-1)?.balance).toBe(-200);
@@ -125,8 +125,8 @@ describe('balanceTrendSignals', () => {
     transactionsRepository.getAll.mockResolvedValue([]);
 
     TestBed.runInInjectionContext(() => {
-      const trendA = balanceTrendSignals(signal([accountA]));
-      const trendB = balanceTrendSignals(signal([accountA, accountB]));
+      const trendA = balanceTrendSignals(signal([accountA]), 'accounts-balance-history');
+      const trendB = balanceTrendSignals(signal([accountA, accountB]), 'account-detail-balance');
 
       expect(trendA.series()).toHaveLength(1);
       expect(trendB.series()).toHaveLength(2);

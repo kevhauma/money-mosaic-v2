@@ -1,0 +1,112 @@
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import type { ChartZoomByPercent } from '@/shared/echarts';
+import type { Granularity } from '@/shared/utils';
+
+/**
+ * Every chart that remembers its own options for the session (TICKET-STAT-27). Adding one here is
+ * the whole cost of giving a new chart a memory; a chart that isn't listed keeps its per-mount
+ * defaults.
+ *
+ * `dashboard-trend` is the trend panel's *shared* bucket size — one picker drives both columns —
+ * while `dashboard-trend-income`/`dashboard-trend-expense` are the two columns' own legends, which
+ * the user toggles independently.
+ *
+ * `account-detail-balance` is one key for *every* account's detail chart, deliberately: it holds
+ * only that chart's bucket size, which reads as a property of the view rather than of the account,
+ * and a per-account key would need the route's id before the component's `account` input exists. It
+ * holds no zoom — the detail chart takes no `chartZoomControl`, precisely so account A's dragged
+ * window can't open on account B.
+ */
+export type ChartOptionsKey =
+  | 'accounts-balance-history'
+  | 'account-detail-balance'
+  | 'dashboard-trend'
+  | 'dashboard-trend-income'
+  | 'dashboard-trend-expense'
+  | 'income-by-category';
+
+type ChartOptionsEntry = {
+  granularity?: Granularity;
+  /** Series the user toggled off, keyed by series **name** — indices shift when an account is archived or the top-5 composition changes. */
+  hiddenSeries: readonly string[];
+  zoom?: ChartZoomByPercent;
+};
+
+type ChartOptionsStoreState = {
+  byChart: Partial<Record<ChartOptionsKey, ChartOptionsEntry>>;
+};
+
+const EMPTY_ENTRY: ChartOptionsEntry = { hiddenSeries: [] };
+
+/**
+ * Per-chart UI choices that used to be either echarts-internal or component-local (TICKET-STAT-27):
+ * the bucket size, the series the user hid, and a hand-dragged zoom window. `NgxEchartsDirective`
+ * applies `[options]` with `setOption(option, true)` — a `notMerge` call, which discards echarts'
+ * own component state — so a chart whose option is a `computed()` lost the user's legend selection
+ * every time the range or the bucket changed. Holding the selection here and *stating* it back as
+ * `legend.selected` makes the replacement restore it instead of clearing it.
+ *
+ * Root-provided and keyed by chart id, same shape and for the same reason as `RangeStore`: several
+ * features read it, and one instance per lazy route would fragment the very state that has to
+ * outlive a navigation.
+ *
+ * **In-memory only, deliberately** (TICKET-STAT-27 note): "per session" is the requirement, so
+ * there is no repository and no Dexie table behind this — it resets on reload exactly as
+ * `RangeStore` does. A hidden-account filter surviving a browser restart is a different product
+ * decision: someone who forgot they hid an account would read the chart as simply wrong.
+ */
+export const ChartOptionsStore = signalStore(
+  { providedIn: 'root' },
+  withState<ChartOptionsStoreState>({ byChart: {} }),
+  withMethods((store) => {
+    const entryFor = (chart: ChartOptionsKey): ChartOptionsEntry =>
+      store.byChart()[chart] ?? EMPTY_ENTRY;
+
+    const patchChart = (chart: ChartOptionsKey, next: Partial<ChartOptionsEntry>): void => {
+      patchState(store, ({ byChart }) => ({
+        byChart: { ...byChart, [chart]: { ...(byChart[chart] ?? EMPTY_ENTRY), ...next } },
+      }));
+    };
+
+    return {
+      /** `undefined` until the chart has stored one — the caller then seeds from `pickGranularityForSpan`. */
+      granularity: (chart: ChartOptionsKey): Granularity | undefined => entryFor(chart).granularity,
+
+      setGranularity: (chart: ChartOptionsKey, granularity: Granularity): void => {
+        patchChart(chart, { granularity });
+      },
+
+      hiddenSeries: (chart: ChartOptionsKey): readonly string[] => entryFor(chart).hiddenSeries,
+
+      setHiddenSeries: (chart: ChartOptionsKey, hiddenSeries: readonly string[]): void => {
+        patchChart(chart, { hiddenSeries: [...hiddenSeries] });
+      },
+
+      /**
+       * Drops hidden names the chart no longer draws, so a deleted or renamed account can't
+       * silently suppress a future series that happens to share its name.
+       *
+       * An **empty** `names` is ignored rather than treated as "nothing is drawn any more": every
+       * one of these charts renders once before its store has hydrated, and pruning against that
+       * first empty frame would wipe the filter on every navigation back to the page — the exact
+       * behaviour this ticket exists to fix.
+       */
+      pruneHiddenSeries: (chart: ChartOptionsKey, names: readonly string[]): void => {
+        if (names.length === 0) return;
+
+        const hiddenSeries = entryFor(chart).hiddenSeries;
+        const kept = hiddenSeries.filter((name) => names.includes(name));
+        if (kept.length === hiddenSeries.length) return;
+
+        patchChart(chart, { hiddenSeries: kept });
+      },
+
+      /** `undefined` while the user hasn't dragged the slider — the chart then keeps its range-scrubbed default (TICKET-STAT-03). */
+      zoom: (chart: ChartOptionsKey): ChartZoomByPercent | undefined => entryFor(chart).zoom,
+
+      setZoom: (chart: ChartOptionsKey, zoom: ChartZoomByPercent): void => {
+        patchChart(chart, { zoom });
+      },
+    };
+  }),
+);

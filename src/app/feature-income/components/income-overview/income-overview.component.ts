@@ -8,13 +8,14 @@ import {
 } from '@ng-icons/tabler-icons';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
-import type { CategorySeriesEntry, ChartZoomWindow } from '@/core/stats';
+import type { CategorySeriesEntry } from '@/core/stats';
 import {
   bucketedZoomAxisOption,
   formatAxisTooltip,
   legendOption,
   resolveChartAnimation,
   resolveChartCategoricalColors,
+  type ChartZoomBounds,
 } from '@/shared/echarts';
 import {
   ButtonComponent,
@@ -24,7 +25,7 @@ import {
   PaperComponent,
 } from '@/shared/ui';
 import { formatCurrency } from '@/shared/utils';
-import { AppSettingsStore } from '@/core/state';
+import { AppSettingsStore, chartSeriesFilter, chartZoomControl } from '@/core/state';
 import { GUIDES } from '@/feature-help';
 import { IncomeStore } from '../../income.store';
 import { IncomeEventsSidebarComponent } from '../income-events-sidebar/income-events-sidebar.component';
@@ -57,7 +58,8 @@ export const bucketKeyForChartClick = (
 export const buildIncomeTrendChartOption = (
   bucketKeys: string[],
   series: CategorySeriesEntry[],
-  zoomWindow: ChartZoomWindow,
+  zoomWindow: ChartZoomBounds,
+  hiddenSeries: readonly string[] = [],
 ): EChartsCoreOption => {
   // Top strip with the grid grown to clear it (TICKET-STAT-26); the bottom edge here belongs to
   // the `dataZoom` slider.
@@ -72,6 +74,7 @@ export const buildIncomeTrendChartOption = (
   const { legend, gridOffset } = legendOption(
     series.map((entry) => entry.name),
     'top',
+    hiddenSeries,
   );
 
   return {
@@ -100,7 +103,8 @@ export const buildIncomeTrendChartOption = (
  *
  * Series span every account's entire history (`computeFullHistoryRange`), bucketed into calendar
  * months (`INCOME_GRANULARITY`) rather than a user-selectable granularity — see that constant's
- * note. Legend clicks toggle individual categories (native echarts behaviour, no extra code).
+ * note. Legend clicks toggle individual categories, and which are off is app state held for the
+ * session (TICKET-STAT-27) rather than echarts-internal, so a data change no longer puts them back.
  *
  * Unlike the account charts, this page **does not** let any page's date range scrub the zoom
  * window (`computeZoomWindow`, TICKET-STAT-03): it always opens on its full monthly history, and
@@ -167,15 +171,36 @@ export class IncomeOverviewComponent {
    */
   private readonly trend = this.incomeStore.incomeTrend;
 
-  /** Every bucket, always — see the class doc. The slider still lets the user narrow it by hand. */
-  private readonly zoomWindow = computed<ChartZoomWindow>(() => ({
-    startValue: 0,
-    endValue: Math.max(0, this.trend().bucketKeys.length - 1),
-  }));
+  private readonly seriesFilter = chartSeriesFilter(
+    'income-by-category',
+    computed(() => this.trend().series.map((entry) => entry.name)),
+  );
+  protected readonly onLegendSelectChanged = this.seriesFilter.onLegendSelectChanged;
+
+  private readonly zoomControl = chartZoomControl('income-by-category');
+  protected readonly onDataZoom = this.zoomControl.onDataZoom;
+
+  /**
+   * Every bucket, always — see the class doc — unless the user has narrowed it by hand on the
+   * slider, which is kept for the session (TICKET-STAT-27) instead of snapping back on the next
+   * rebuild.
+   */
+  private readonly zoomWindow = computed<ChartZoomBounds>(
+    () =>
+      this.zoomControl.manual() ?? {
+        startValue: 0,
+        endValue: Math.max(0, this.trend().bucketKeys.length - 1),
+      },
+  );
 
   protected readonly chartOption = computed<EChartsCoreOption>(() => {
     const { bucketKeys, series } = this.trend();
-    return buildIncomeTrendChartOption(bucketKeys, series, this.zoomWindow());
+    return buildIncomeTrendChartOption(
+      bucketKeys,
+      series,
+      this.zoomWindow(),
+      this.seriesFilter.hidden(),
+    );
   });
 
   /**

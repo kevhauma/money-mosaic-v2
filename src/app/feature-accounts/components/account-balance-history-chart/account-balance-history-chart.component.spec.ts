@@ -12,6 +12,7 @@ import {
 } from '@/core/data-access';
 import { computeAccountBalanceTrends, pickGranularityForSpan } from '@/core/stats';
 import { echarts } from '@/shared/echarts';
+import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import {
   buildAccountBalanceHistoryChartOption,
@@ -19,13 +20,7 @@ import {
 } from './account-balance-history-chart.component';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 
-// jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
-class ResizeObserverStub {
-  observe = (): void => {};
-  unobserve = (): void => {};
-  disconnect = (): void => {};
-}
-globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+stubEchartsBrowserApis();
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -79,10 +74,10 @@ describe('AccountBalanceHistoryChartComponent', () => {
   });
 
   it("changing its local granularity control changes only its own chart's series (TICKET-STAT-15)", () => {
-    fixture.componentInstance['granularity'].set('day');
+    fixture.componentInstance['setGranularity']('day');
     const pointsAsDay = fixture.componentInstance['series']()[0]?.points.length ?? 0;
 
-    fixture.componentInstance['granularity'].set('quarter');
+    fixture.componentInstance['setGranularity']('quarter');
     const pointsAsQuarter = fixture.componentInstance['series']()[0]?.points.length ?? 0;
 
     expect(pointsAsQuarter).toBeLessThan(pointsAsDay);
@@ -90,7 +85,7 @@ describe('AccountBalanceHistoryChartComponent', () => {
 
   it("the Accounts page's range re-scrubs the chart's zoom window, and the Dashboard's does not (TICKET-ACC-08)", () => {
     const rangeStore = TestBed.inject(RangeStore);
-    fixture.componentInstance['granularity'].set('month');
+    fixture.componentInstance['setGranularity']('month');
     const zoomOf = (): { startValue: number; endValue: number } =>
       (fixture.componentInstance['chartOption']() as Record<string, unknown>)[
         'dataZoom'
@@ -105,6 +100,47 @@ describe('AccountBalanceHistoryChartComponent', () => {
 
     rangeStore.setCustomRange('accounts', '2026-06-01', '2026-08-31');
     expect(JSON.stringify(zoomOf())).not.toBe(early);
+  });
+
+  /** What the rebuilt option says about the legend — the state `setOption(option, true)` used to discard. */
+  const selectedOf = (component: AccountBalanceHistoryChartComponent): Record<string, boolean> =>
+    (
+      (component['chartOption']() as Record<string, unknown>)['legend'] as {
+        selected: Record<string, boolean>;
+      }
+    ).selected;
+
+  it('keeps an account hidden across a bucket-size change (TICKET-STAT-27)', () => {
+    fixture.componentInstance['onLegendSelectChanged']({ selected: { Checking: false } });
+    expect(selectedOf(fixture.componentInstance)['Checking']).toBe(false);
+
+    // The rebuild is what used to lose it: `chartOption` is a `computed()`, and ngx-echarts
+    // replaces the whole option with `setOption(option, true)`.
+    fixture.componentInstance['setGranularity']('week');
+
+    expect(selectedOf(fixture.componentInstance)['Checking']).toBe(false);
+  });
+
+  it('keeps an account hidden across a date-range change (TICKET-STAT-27)', () => {
+    fixture.componentInstance['onLegendSelectChanged']({ selected: { Checking: false } });
+
+    TestBed.inject(RangeStore).setCustomRange('accounts', '2026-02-01', '2026-02-28');
+
+    expect(selectedOf(fixture.componentInstance)['Checking']).toBe(false);
+  });
+
+  it('restores the chosen bucket and the hidden accounts on a remount, instead of re-seeding from the range (TICKET-STAT-27)', async () => {
+    fixture.componentInstance['setGranularity']('quarter');
+    fixture.componentInstance['onLegendSelectChanged']({ selected: { Checking: false } });
+    TestBed.tick();
+
+    // Navigating away from /accounts and back is a fresh component against the same root stores.
+    fixture.destroy();
+    const remounted = TestBed.createComponent(AccountBalanceHistoryChartComponent);
+    await remounted.whenStable();
+
+    expect(remounted.componentInstance['granularity']()).toBe('quarter');
+    expect(selectedOf(remounted.componentInstance)['Checking']).toBe(false);
   });
 });
 
@@ -251,6 +287,8 @@ describe('buildAccountBalanceHistoryChartOption', () => {
       type: 'scroll',
       top: 8,
       data: ['Checking', 'Credit line'],
+      // Stated rather than left to echarts, so the notMerge rebuild restores it (TICKET-STAT-27).
+      selected: { Checking: true, 'Credit line': true },
     });
   });
 
@@ -289,6 +327,27 @@ describe('buildAccountBalanceHistoryChartOption', () => {
     // Every band has an entry to click, and nothing turned the toggle off.
     expect(legend.data).toEqual(['Checking', 'Credit line']);
     expect(legend.selectedMode).toBeUndefined();
+  });
+
+  it('marks a hidden account off in legend.selected, leaving its band in the series (TICKET-STAT-27)', () => {
+    const series = [
+      { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1100 }] },
+      { accountId: 2, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: -200 }] },
+    ];
+
+    const option = buildAccountBalanceHistoryChartOption(
+      accounts,
+      series,
+      { startValue: 0, endValue: 0 },
+      ['Credit line'],
+    );
+
+    expect((option['legend'] as { selected: Record<string, boolean> }).selected).toEqual({
+      Checking: true,
+      'Credit line': false,
+    });
+    // Hiding is a legend concern — the data stays, so unhiding needs no rebuild.
+    expect(option['series']).toHaveLength(2);
   });
 
   it("the stacked bands' per-bucket sum is total real balance — no longer combined net worth (TICKET-ACC-07)", () => {

@@ -69,10 +69,10 @@ describe('AccountBalanceChartComponent', () => {
   });
 
   it("changing its local granularity control changes only its own chart's points (TICKET-STAT-15)", () => {
-    fixture.componentInstance['granularity'].set('day');
+    fixture.componentInstance['setGranularity']('day');
     const pointsAsDay = fixture.componentInstance['points']().length;
 
-    fixture.componentInstance['granularity'].set('quarter');
+    fixture.componentInstance['setGranularity']('quarter');
     const pointsAsQuarter = fixture.componentInstance['points']().length;
 
     expect(pointsAsQuarter).toBeLessThan(pointsAsDay);

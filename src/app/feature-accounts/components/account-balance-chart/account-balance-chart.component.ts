@@ -3,11 +3,12 @@ import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
-import type { AccountBalancePoint, ChartZoomWindow } from '@/core/stats';
+import type { AccountBalancePoint } from '@/core/stats';
 import {
   resolveChartAnimation,
   formatAxisTooltip,
   resolveChartCategoricalColors,
+  type ChartZoomBounds,
 } from '@/shared/echarts';
 import { FlexComponent, GranularityPickerComponent, PaperComponent } from '@/shared/ui';
 import { bucketDateBoundaries, buildTransactionDrilldownParams } from '@/shared/utils';
@@ -17,7 +18,7 @@ import { balanceTrendSignals } from '../../balance-trend-signals';
 export const buildAccountBalanceChartOption = (
   account: Account,
   points: AccountBalancePoint[],
-  zoomWindow: ChartZoomWindow,
+  zoomWindow: ChartZoomBounds,
 ): EChartsCoreOption => ({
   ...resolveChartAnimation(),
   color: resolveChartCategoricalColors(),
@@ -59,13 +60,16 @@ export class AccountBalanceChartComponent {
 
   private readonly router = inject(Router);
 
-  private readonly trend = balanceTrendSignals(computed(() => [this.account()]));
+  private readonly trend = balanceTrendSignals(
+    computed(() => [this.account()]),
+    'account-detail-balance',
+  );
   protected readonly granularity = this.trend.granularity;
+  protected readonly setGranularity = this.trend.setGranularity;
   protected readonly points = computed(() => this.trend.series()[0]?.points ?? []);
-  private readonly zoomWindow = this.trend.zoomWindow;
 
   protected readonly chartOption = computed<EChartsCoreOption>(() =>
-    buildAccountBalanceChartOption(this.account(), this.points(), this.zoomWindow()),
+    buildAccountBalanceChartOption(this.account(), this.points(), this.trend.zoomWindow()),
   );
 
   protected onChartClick(event: ECElementEvent): void {

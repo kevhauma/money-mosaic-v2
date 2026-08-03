@@ -58,6 +58,8 @@
             role="img"
             [attr.aria-label]="chartAriaLabel()"
             (chartClick)="onChartClick($event)"
+            (chartLegendSelectChanged)="onLegendSelectChanged($event)"
+            (chartDataZoom)="onDataZoom($event)"
           ></div>
 
           <!-- Screen-reader-only companion table for the chart above — not a visible data table, so

@@ -533,4 +533,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Chart legends moved out of the plot and into their own strip, so series names no longer sit on top of the data',
     area: 'Charts',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-STAT-27'],
+    title:
+      'A chart now keeps the settings you gave it for the rest of your visit, so switching the bucket size no longer puts back the series you just hid',
+    details: [
+      'Hiding an account or a category by clicking its legend entry sticks — through a bucket change, a date-range change, and navigating away and back',
+      'The bucket size sticks the same way, instead of being re-guessed from the date range every time you return to the page',
+      'So does a zoom window you drag on the slider yourself',
+      'All of it is per chart and lasts for the session only: a reload starts fresh, so a filter you forgot about can never make a chart read as wrong tomorrow',
+    ],
+    area: 'Charts',
+  },
 ];

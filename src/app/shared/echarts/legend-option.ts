@@ -32,14 +32,28 @@ export type ChartLegendGeometry = {
  * `type: 'scroll'` throughout, so ten accounts or five categories page rather than wrapping into a
  * block that eats the chart. `names` is optional — pass it when the caller knows the series names
  * up front, omit it to let echarts derive them from `series` (what the Net vs gross charts do).
+ *
+ * `hidden` states which of those names are toggled off (TICKET-STAT-27). Stating the selection is
+ * what survives `NgxEchartsDirective`'s `setOption(option, true)`: a `notMerge` call discards
+ * echarts' own legend state, so an option that says nothing about `selected` silently puts back
+ * every series the user just hid. Only meaningful with `names` — a legend echarts derives from
+ * `series` has no name list to state a selection over.
  */
 export const legendOption = (
   names: readonly string[] | undefined,
   placement: ChartLegendPlacement,
+  hidden: readonly string[] = [],
 ): ChartLegendGeometry => {
   const { anchor, gridOffset } = PLACEMENT[placement];
+  const selection = names
+    ? {
+        data: [...names],
+        selected: Object.fromEntries(names.map((name) => [name, !hidden.includes(name)])),
+      }
+    : {};
+
   return {
-    legend: { type: 'scroll', ...anchor, ...(names ? { data: [...names] } : {}) },
+    legend: { type: 'scroll', ...anchor, ...selection },
     gridOffset,
   };
 };

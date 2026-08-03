@@ -1,7 +1,13 @@
 import type { EChartsCoreOption } from 'echarts/core';
 
 /** Index positions within an already-computed `bucketKeys` list — `core/stats`' `ChartZoomWindow`, restated here so `shared/echarts` doesn't depend on `core/`. */
-type ZoomWindow = { startValue: number; endValue: number };
+export type ChartZoomByIndex = { startValue: number; endValue: number };
+
+/** The percentages echarts reports on its `datazoom` event, which is how a hand-dragged window is kept (TICKET-STAT-27) — percent rather than bucket indices precisely because it has to survive a bucket-size change. */
+export type ChartZoomByPercent = { start: number; end: number };
+
+/** How far a bucketed chart is zoomed in, either way echarts accepts it. Whichever the caller passes is spread onto both `dataZoom` entries as-is. */
+export type ChartZoomBounds = ChartZoomByIndex | ChartZoomByPercent;
 
 /**
  * The grid/axis/`dataZoom` shell every full-history bucketed chart shares (TICKET-INC-02 extracted
@@ -19,7 +25,7 @@ type ZoomWindow = { startValue: number; endValue: number };
  */
 export const bucketedZoomAxisOption = (
   bucketKeys: string[],
-  zoomWindow: ZoomWindow,
+  zoomWindow: ChartZoomBounds,
   gridTop = 48,
 ): EChartsCoreOption => ({
   grid: { left: 56, right: 24, top: gridTop, bottom: 64 },
