@@ -66,26 +66,31 @@ describe('AccountBalanceHistoryChartComponent', () => {
     expect(TestBed.inject(AccountsStore).activeAccounts()).toHaveLength(1);
   });
 
-  it('defaults its local granularity control from pickGranularityForSpan for the current shared date range (TICKET-STAT-15)', () => {
-    const rangeStore = TestBed.inject(RangeStore);
-    const expected = pickGranularityForSpan(rangeStore.from('accounts'), rangeStore.to('accounts'));
+  it('renders no bucket picker — a balance is a level, not a period sum (TICKET-ACC-10)', () => {
+    fixture.detectChanges();
 
-    expect(fixture.componentInstance['granularity']()).toBe(expected);
+    expect(
+      fixture.nativeElement.querySelector('mm-granularity-picker') as HTMLElement | null,
+    ).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Balance history');
   });
 
-  it("changing its local granularity control changes only its own chart's series (TICKET-STAT-15)", () => {
-    fixture.componentInstance['setGranularity']('day');
-    const pointsAsDay = fixture.componentInstance['series']()[0]?.points.length ?? 0;
+  it('plots a daily series whatever the page range is set to (TICKET-ACC-10)', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    // A year-wide range used to seed the picker to Month via `pickGranularityForSpan`, which is why
+    // the chart opened coarse and had to be set back to Day every visit.
+    rangeStore.setCustomRange('accounts', '2026-01-01', '2026-12-31');
+    expect(pickGranularityForSpan('2026-01-01', '2026-12-31')).not.toBe('day');
 
-    fixture.componentInstance['setGranularity']('quarter');
-    const pointsAsQuarter = fixture.componentInstance['series']()[0]?.points.length ?? 0;
+    const bucketKeys =
+      fixture.componentInstance['series']()[0]?.points.map((point) => point.bucketKey) ?? [];
 
-    expect(pointsAsQuarter).toBeLessThan(pointsAsDay);
+    expect(bucketKeys.length).toBeGreaterThan(0);
+    expect(bucketKeys.every((key) => /^\d{4}-\d{2}-\d{2}$/.test(key))).toBe(true);
   });
 
   it("the Accounts page's range re-scrubs the chart's zoom window, and the Dashboard's does not (TICKET-ACC-08)", () => {
     const rangeStore = TestBed.inject(RangeStore);
-    fixture.componentInstance['setGranularity']('month');
     const zoomOf = (): { startValue: number; endValue: number } =>
       (fixture.componentInstance['chartOption']() as Record<string, unknown>)[
         'dataZoom'
@@ -110,27 +115,20 @@ describe('AccountBalanceHistoryChartComponent', () => {
       }
     ).selected;
 
-  it('keeps an account hidden across a bucket-size change (TICKET-STAT-27)', () => {
+  it('keeps an account hidden across a date-range change (TICKET-STAT-27)', () => {
     fixture.componentInstance['onLegendSelectChanged']({ selected: { Checking: false } });
     expect(selectedOf(fixture.componentInstance)['Checking']).toBe(false);
 
     // The rebuild is what used to lose it: `chartOption` is a `computed()`, and ngx-echarts
-    // replaces the whole option with `setOption(option, true)`.
-    fixture.componentInstance['setGranularity']('week');
-
-    expect(selectedOf(fixture.componentInstance)['Checking']).toBe(false);
-  });
-
-  it('keeps an account hidden across a date-range change (TICKET-STAT-27)', () => {
-    fixture.componentInstance['onLegendSelectChanged']({ selected: { Checking: false } });
-
+    // replaces the whole option with `setOption(option, true)`. TICKET-STAT-27 also asserted this
+    // against a bucket change here; TICKET-ACC-10 fixed this chart to daily, so that half of the
+    // case now lives on the dashboard trend panel, which still has a picker.
     TestBed.inject(RangeStore).setCustomRange('accounts', '2026-02-01', '2026-02-28');
 
     expect(selectedOf(fixture.componentInstance)['Checking']).toBe(false);
   });
 
-  it('restores the chosen bucket and the hidden accounts on a remount, instead of re-seeding from the range (TICKET-STAT-27)', async () => {
-    fixture.componentInstance['setGranularity']('quarter');
+  it('restores the hidden accounts on a remount (TICKET-STAT-27)', async () => {
     fixture.componentInstance['onLegendSelectChanged']({ selected: { Checking: false } });
     TestBed.tick();
 
@@ -139,7 +137,6 @@ describe('AccountBalanceHistoryChartComponent', () => {
     const remounted = TestBed.createComponent(AccountBalanceHistoryChartComponent);
     await remounted.whenStable();
 
-    expect(remounted.componentInstance['granularity']()).toBe('quarter');
     expect(selectedOf(remounted.componentInstance)['Checking']).toBe(false);
   });
 });

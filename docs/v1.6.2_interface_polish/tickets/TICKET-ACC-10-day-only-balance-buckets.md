@@ -59,26 +59,61 @@ only effect is to throw away days. This ticket fixes both charts to day buckets 
 
 ## Acceptance criteria
 
-- [ ] Neither balance chart template renders `mm-granularity-picker`; component specs assert absence on
-      both.
-- [ ] Both charts compute their series at `'day'` regardless of the active date range; unit test driving
+- [x] Neither balance chart template renders `mm-granularity-picker`; component specs assert absence on
+      both. (`account-balance-history-chart.component.html` / `account-balance-chart.component.html` keep
+      the `mm-flex` header row with the title alone; both component specs — "renders no bucket picker — a
+      balance is a level, not a period sum (TICKET-ACC-10)" — query for `mm-granularity-picker` and assert
+      `null` while the "Balance history" title is still rendered)
+- [x] Both charts compute their series at `'day'` regardless of the active date range; unit test driving
       a one-year range and asserting the granularity passed to `computeAccountBalanceTrends` is `'day'`.
-- [ ] `balanceTrendSignals` no longer exposes a writable `granularity`; its type change is reflected in
-      both consumers and its spec.
-- [ ] Clicking a point on the account-detail chart opens `/transactions` filtered to that single date
+      (`balance-trend-signals.spec.ts` — "buckets by day whatever the shared range is, and exposes no way
+      to change that": sets the `accounts` range to 2026-01-01→2026-12-31, asserts
+      `pickGranularityForSpan` for that span is *not* `'day'`, then asserts `trend.granularity` is
+      `BALANCE_GRANULARITY`/`'day'` and every emitted `bucketKey` is a `YYYY-MM-DD`. Both component specs
+      carry the same assertion against their own rendered series.)
+- [x] `balanceTrendSignals` no longer exposes a writable `granularity`; its type change is reflected in
+      both consumers and its spec. (`BalanceTrendSignals.granularity` is now a plain `Granularity`, not a
+      signal — `balance-trend-signals.ts`; both components dropped their `granularity`/`setGranularity`
+      fields, and `account-balance-chart` reads `this.trend.granularity` for its drill-down)
+- [x] Clicking a point on the account-detail chart opens `/transactions` filtered to that single date
       (`from === to`) and that account; unit test on the drill-down params.
-- [ ] Clicking a band on the Accounts overview chart still navigates to that account's detail page;
-      existing spec passes unchanged.
-- [ ] The zoom slider still opens on the window derived from the page's date range; existing
-      `computeZoomWindow` behaviour and specs unchanged.
-- [ ] `mm-granularity-picker` and the dashboard trend chart's use of it are untouched; `git diff` shows
-      no change under `shared/ui/granularity-picker/` or in `trend-chart-panel`.
-- [ ] `computeAccountBalanceTrends` and its spec are unchanged.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser: both charts open on a daily series with no picker, and a
-      several-years-wide range still renders and zooms smoothly.
+      (`account-balance-chart.component.spec.ts` — "drills down to the single clicked day, scoped to this
+      account": asserts `navigate(['/transactions'], { queryParams: { from: key, to: key, accountId: '1' }})`
+      with `from` and `to` both the clicked bucket key)
+- [x] Clicking a band on the Accounts overview chart still navigates to that account's detail page;
+      existing spec passes unchanged. (`onChartClick`/`accounts-overview` navigation untouched; the whole
+      accounts suite is green)
+- [x] The zoom slider still opens on the window derived from the page's date range; existing
+      `computeZoomWindow` behaviour and specs unchanged. (`balance-trend-signals.spec.ts` "maps the shared
+      range onto the series' own bucket keys for the zoom window" and
+      `account-balance-history-chart.component.spec.ts` "the Accounts page's range re-scrubs the chart's
+      zoom window, and the Dashboard's does not" both pass; browser: on `/accounts` with the range at
+      August 2026, `dataZoom` reported `startValue: 122, endValue: 124` of a 125-day series)
+- [x] `mm-granularity-picker` and the dashboard trend chart's use of it are untouched; `git diff` shows
+      no change under `shared/ui/granularity-picker/` or in `trend-chart-panel`. (`git diff --stat` over
+      both paths returns empty)
+- [x] `computeAccountBalanceTrends` and its spec are unchanged. (`git diff --stat` over
+      `core/stats/account-balance-trend.ts` and its spec returns empty — the fixed choice lives at the
+      call site, the aggregation stays generic)
+- [x] No persistence changes, no Dexie version bump. (nothing under `core/data-access/` in the diff; the
+      only state touched is the in-memory `ChartOptionsKey` union, which loses its now-unused
+      `account-detail-balance` member)
+- [x] `angular.json` bundle budgets not raised. (`git diff --stat angular.json` empty; dev build initial
+      total 2.15 MB)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD`:
+      verdict **pass**, zero introduced *and* zero inherited findings, 0 dead-code issues — removing the
+      picker also cleared the two components' now-unused `GranularityPickerComponent` imports; `ng lint`
+      clean, 2232/2232 specs green, dev build compiles)
+- [x] Verified live in the browser: both charts open on a daily series with no picker, and a
+      several-years-wide range still renders and zooms smoothly. (Done on the dev server at :4210. The
+      Browser pane had been closed — the user chose to continue without it — so this pass reads the live
+      echarts instances through Angular's dev-mode `ng.getDirectives` rather than screenshots.
+      `/accounts` and `/accounts/1` both report `mm-granularity-picker` count **0**, the "Balance history"
+      title still present, and 125/125 `YYYY-MM-DD` bucket keys. **Performance, per the ticket's note:**
+      the seeded dataset is only 125 days, so a synthetic 10-year × 5-account series (18,250 points,
+      the same option shape the builders emit) was pushed at the live chart — `setOption` took **78 ms**
+      and a `dataZoom` action **37 ms**, so no `sampling: 'lttb'`/`large: true` is needed. No console
+      errors.)
 
 ## Notes
 
@@ -93,3 +128,10 @@ only effect is to throw away days. This ticket fixes both charts to day buckets 
 - Interacts with [TICKET-STAT-27](./TICKET-STAT-27-session-persistent-chart-options.md), which persists
   per-chart granularity for the session — these two charts simply won't have a granularity entry to
   persist. Whichever lands second should leave the other's behaviour intact.
+  **How it actually landed:** STAT-27 shipped first, so this ticket took its granularity plumbing back
+  out of both balance charts. The accounts overview keeps its STAT-27 hidden-series filter and dragged
+  zoom under `'accounts-balance-history'`; the account-detail chart now uses none of the store, so
+  `'account-detail-balance'` was dropped from `ChartOptionsKey` rather than left as a key nothing writes.
+  STAT-27's bucket-change acceptance criterion was re-pointed at the dashboard trend panel — the chart
+  that still has a picker — and that supersession is recorded on STAT-27's own criterion, not left to be
+  inferred from here.

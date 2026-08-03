@@ -11,15 +11,13 @@ import type { Granularity } from '@/shared/utils';
  * while `dashboard-trend-income`/`dashboard-trend-expense` are the two columns' own legends, which
  * the user toggles independently.
  *
- * `account-detail-balance` is one key for *every* account's detail chart, deliberately: it holds
- * only that chart's bucket size, which reads as a property of the view rather than of the account,
- * and a per-account key would need the route's id before the component's `account` input exists. It
- * holds no zoom — the detail chart takes no `chartZoomControl`, precisely so account A's dragged
- * window can't open on account B.
+ * The account-*detail* balance chart has no key at all: it is single-series (no legend), its bucket
+ * size is fixed to daily (TICKET-ACC-10), and it deliberately takes no `chartZoomControl` — one key
+ * would be shared by every account's detail page, so account A's dragged window would open on
+ * account B.
  */
 export type ChartOptionsKey =
   | 'accounts-balance-history'
-  | 'account-detail-balance'
   | 'dashboard-trend'
   | 'dashboard-trend-income'
   | 'dashboard-trend-expense'

@@ -17,7 +17,7 @@ import {
   TransfersStore,
 } from '@/core/state';
 import { computeZoomWindow, pickGranularityForSpan } from '@/core/stats';
-import { balanceTrendSignals } from './balance-trend-signals';
+import { balanceTrendSignals, BALANCE_GRANULARITY } from './balance-trend-signals';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -66,27 +66,34 @@ describe('balanceTrendSignals', () => {
     });
   });
 
-  it('defaults granularity from the shared range (TICKET-STAT-15)', () => {
+  it('buckets by day whatever the shared range is, and exposes no way to change that (TICKET-ACC-10)', () => {
     TestBed.runInInjectionContext(() => {
       const rangeStore = TestBed.inject(RangeStore);
-      const trend = balanceTrendSignals(signal([account()]), 'accounts-balance-history');
+      // A year-wide range is exactly where the retired `pickGranularityForSpan` seeding (TICKET-STAT-15)
+      // used to open these charts on a coarser bucket, discarding every intra-bucket movement.
+      rangeStore.setCustomRange('accounts', '2026-01-01', '2026-12-31');
+      expect(pickGranularityForSpan('2026-01-01', '2026-12-31')).not.toBe('day');
 
-      expect(trend.granularity()).toBe(
-        pickGranularityForSpan(rangeStore.from('accounts'), rangeStore.to('accounts')),
-      );
+      const trend = balanceTrendSignals(signal([account()]));
+
+      expect(trend.granularity).toBe(BALANCE_GRANULARITY);
+      expect(trend.granularity).toBe('day');
+      expect(
+        trend.series()[0]?.points.every((point) => /^\d{4}-\d{2}-\d{2}$/.test(point.bucketKey)),
+      ).toBe(true);
     });
   });
 
   it("maps the shared range onto the series' own bucket keys for the zoom window", () => {
     TestBed.runInInjectionContext(() => {
       const rangeStore = TestBed.inject(RangeStore);
-      const trend = balanceTrendSignals(signal([account()]), 'accounts-balance-history');
+      const trend = balanceTrendSignals(signal([account()]));
 
       const expected = computeZoomWindow(
         trend.series()[0]?.points.map((point) => point.bucketKey) ?? [],
         rangeStore.from('accounts'),
         rangeStore.to('accounts'),
-        trend.granularity(),
+        trend.granularity,
       );
       expect(trend.zoomWindow()).toEqual(expected);
     });
@@ -111,7 +118,7 @@ describe('balanceTrendSignals', () => {
     await TestBed.inject(CategoriesStore).hydrate();
 
     TestBed.runInInjectionContext(() => {
-      const trend = balanceTrendSignals(signal([jointAccount]), 'accounts-balance-history');
+      const trend = balanceTrendSignals(signal([jointAccount]));
 
       // The whole €200 left the account; the 0.5 ownership share belongs to net worth, not here.
       expect(trend.series()[0]?.points.at(-1)?.balance).toBe(-200);
@@ -125,8 +132,8 @@ describe('balanceTrendSignals', () => {
     transactionsRepository.getAll.mockResolvedValue([]);
 
     TestBed.runInInjectionContext(() => {
-      const trendA = balanceTrendSignals(signal([accountA]), 'accounts-balance-history');
-      const trendB = balanceTrendSignals(signal([accountA, accountB]), 'account-detail-balance');
+      const trendA = balanceTrendSignals(signal([accountA]));
+      const trendB = balanceTrendSignals(signal([accountA, accountB]));
 
       expect(trendA.series()).toHaveLength(1);
       expect(trendB.series()).toHaveLength(2);

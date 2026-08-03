@@ -547,4 +547,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Charts',
   },
+  {
+    date: '2026-08-03',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-ACC-10'],
+    title:
+      'Balance charts now always plot a daily balance, so they stop opening on Month and you stop setting them back to Day',
+    details: [
+      'A balance is what you had on a given day, not a total for a period — so week, month, quarter and year buckets only ever sampled one day and hid every movement in between',
+      'The bucket picker is gone from the Accounts chart and from an account’s own chart; the zoom slider still narrows the view',
+      'Clicking a point now opens the transactions for exactly that day',
+    ],
+    area: 'Accounts',
+  },
 ];

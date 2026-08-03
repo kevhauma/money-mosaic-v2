@@ -23,12 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-ACC-10',
-    title: 'Balance charts always plot a daily balance, with no bucket size to pick',
-    area: 'Accounts',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-ACC-11',
     title:
       'Hovering a day on a balance chart shows what moved that day, on both the Accounts page and an account’s own page',

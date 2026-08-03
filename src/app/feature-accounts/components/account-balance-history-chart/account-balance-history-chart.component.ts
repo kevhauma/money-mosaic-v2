@@ -13,7 +13,7 @@ import {
   resolveChartCategoricalColors,
   type ChartZoomBounds,
 } from '@/shared/echarts';
-import { FlexComponent, GranularityPickerComponent, PaperComponent } from '@/shared/ui';
+import { FlexComponent, PaperComponent } from '@/shared/ui';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
 /** Pure echarts-option builder, kept separate from the component so it's testable without TestBed. */
@@ -60,17 +60,17 @@ export const buildAccountBalanceHistoryChartOption = (
  * accounts never appear, consistent with `activeAccounts`), stacked so the top edge is the total
  * real balance held across every active account. Each band is that account's actual balance —
  * matching its card's headline figure — not the net-worth stake this chart plotted until
- * TICKET-ACC-07, so for a joint account the stack no longer sums to the Dashboard's net worth. This
- * chart owns its own local granularity control (TICKET-STAT-15), independent of every other
- * chart's, and the Accounts page's date range scrubs the initial zoom window (via `dataZoom`) rather than
- * shrinking the series data (TICKET-STAT-03), so zooming out is always available without a manual
- * preset change. Legend clicks toggle individual bands, and which bands are off is app state held
- * for the session (TICKET-STAT-27) rather than echarts-internal, so a bucket or range change no
- * longer puts back the accounts the user just hid.
+ * TICKET-ACC-07, so for a joint account the stack no longer sums to the Dashboard's net worth.
+ * Always a daily series with no bucket picker (TICKET-ACC-10 — see `BALANCE_GRANULARITY`), and the
+ * Accounts page's date range scrubs the initial zoom window (via `dataZoom`) rather than shrinking
+ * the series data (TICKET-STAT-03), so zooming out is always available without a manual preset
+ * change. Legend clicks toggle individual bands, and which bands are off is app state held for the
+ * session (TICKET-STAT-27) rather than echarts-internal, so a range change or a remount no longer
+ * puts back the accounts the user just hid.
  */
 @Component({
   selector: 'app-account-balance-history-chart',
-  imports: [NgxEchartsDirective, FlexComponent, GranularityPickerComponent, PaperComponent],
+  imports: [NgxEchartsDirective, FlexComponent, PaperComponent],
   templateUrl: './account-balance-history-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -80,9 +80,7 @@ export class AccountBalanceHistoryChartComponent {
 
   protected readonly accounts = computed(() => this.accountsStore.activeAccounts());
 
-  private readonly trend = balanceTrendSignals(this.accounts, 'accounts-balance-history');
-  protected readonly granularity = this.trend.granularity;
-  protected readonly setGranularity = this.trend.setGranularity;
+  private readonly trend = balanceTrendSignals(this.accounts);
   protected readonly series = this.trend.series;
 
   private readonly seriesFilter = chartSeriesFilter(

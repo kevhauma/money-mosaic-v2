@@ -1,7 +1,8 @@
 <mm-paper elevation="flat">
+  <!-- Kept as a flex row with the title alone (TICKET-ACC-10 removed the bucket picker), so this
+       chart's own controls have somewhere to go when one is added. -->
   <mm-flex align="center" justify="between" gap="2">
     <p class="card-title text-base">Balance history</p>
-    <mm-granularity-picker [value]="granularity()" (valueChange)="setGranularity($event)" />
   </mm-flex>
   <div
     echarts

@@ -84,14 +84,24 @@ choices explicit, owned by the app rather than by the chart widget, and kept for
       to Day)
 - [x] Hiding a series then changing the bucket size leaves it hidden; component spec on the accounts
       balance-history chart: toggle a legend entry, change granularity, assert `legend.selected` in the
-      rebuilt option still marks it off. (`account-balance-history-chart.component.spec.ts` — "keeps an
-      account hidden across a bucket-size change (TICKET-STAT-27)")
+      rebuilt option still marks it off. (Shipped and verified on the accounts chart —
+      `account-balance-history-chart.component.spec.ts` "keeps an account hidden across a bucket-size
+      change". **Superseded the same day by [TICKET-ACC-10](./TICKET-ACC-10-day-only-balance-buckets.md)**,
+      which fixed both balance charts to daily and removed their picker, so that chart has no bucket size
+      left to change. The criterion's *behaviour* is unchanged and still covered: the bucket-change half
+      moved to the chart that still has a picker —
+      `trend-chart-panel.component.spec.ts` "states each column's legend selection, and the two columns'
+      filters stay apart", which hides Groceries and then switches the trend bucket to Day — while the
+      accounts chart keeps the range-change and remount cases below.)
 - [x] Hiding a series then changing the date range leaves it hidden; same spec shape, driving the range
       instead. (same file — "keeps an account hidden across a date-range change (TICKET-STAT-27)")
 - [x] Navigating away from `/accounts` and back restores both the chosen bucket and the hidden series;
       component spec asserting a remounted chart reads the store rather than re-seeding from the range.
-      (same file — "restores the chosen bucket and the hidden accounts on a remount"; the remounted
-      fixture reports `granularity() === 'quarter'` and `legend.selected.Checking === false`)
+      (same file — "restores the hidden accounts on a remount": the remounted fixture reports
+      `legend.selected.Checking === false`. Same TICKET-ACC-10 supersession as above for the *bucket* half
+      — `/accounts` has no bucket any more; the remount-keeps-the-bucket case is covered on the chart that
+      does, by `chart-options-control.spec.ts` "adopts the session's value instead of re-seeding, so a
+      remount keeps the user's bucket".)
 - [x] A hidden series name that is no longer in the chart's series list is pruned; unit test asserting a
       later series with that name renders visible. (`ChartOptionsStore.pruneHiddenSeries`, driven by
       `chartSeriesFilter`'s effect; `chart-options-control.spec.ts` — "prunes a hidden name once it leaves

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import {
@@ -61,21 +61,39 @@ describe('AccountBalanceChartComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('defaults its local granularity control from pickGranularityForSpan for the current shared date range (TICKET-STAT-15)', () => {
-    const rangeStore = TestBed.inject(RangeStore);
-    const expected = pickGranularityForSpan(rangeStore.from('accounts'), rangeStore.to('accounts'));
+  it('renders no bucket picker — a balance is a level, not a period sum (TICKET-ACC-10)', () => {
+    fixture.detectChanges();
 
-    expect(fixture.componentInstance['granularity']()).toBe(expected);
+    expect(
+      fixture.nativeElement.querySelector('mm-granularity-picker') as HTMLElement | null,
+    ).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Balance history');
   });
 
-  it("changing its local granularity control changes only its own chart's points (TICKET-STAT-15)", () => {
-    fixture.componentInstance['setGranularity']('day');
-    const pointsAsDay = fixture.componentInstance['points']().length;
+  it('plots a daily series whatever the page range is set to (TICKET-ACC-10)', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    // A year-wide range used to seed the picker to Month via `pickGranularityForSpan`, which is why
+    // the chart opened coarse and had to be set back to Day every visit.
+    rangeStore.setCustomRange('accounts', '2026-01-01', '2026-12-31');
+    expect(pickGranularityForSpan('2026-01-01', '2026-12-31')).not.toBe('day');
 
-    fixture.componentInstance['setGranularity']('quarter');
-    const pointsAsQuarter = fixture.componentInstance['points']().length;
+    const bucketKeys = fixture.componentInstance['points']().map((point) => point.bucketKey);
 
-    expect(pointsAsQuarter).toBeLessThan(pointsAsDay);
+    expect(bucketKeys.every((key) => /^\d{4}-\d{2}-\d{2}$/.test(key))).toBe(true);
+    expect(new Set(bucketKeys).size).toBe(bucketKeys.length);
+  });
+
+  it('drills down to the single clicked day, scoped to this account (TICKET-ACC-10)', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const clicked = fixture.componentInstance['points']()[0];
+
+    fixture.componentInstance['onChartClick']({ dataIndex: 0 } as never);
+
+    // Day buckets collapse `bucketDateBoundaries` to a single date — from === to === that day.
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(['/transactions'], {
+      queryParams: { from: clicked.bucketKey, to: clicked.bucketKey, accountId: '1' },
+    });
   });
 });
 

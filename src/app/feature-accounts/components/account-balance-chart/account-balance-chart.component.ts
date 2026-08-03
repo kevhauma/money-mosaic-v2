@@ -10,7 +10,7 @@ import {
   resolveChartCategoricalColors,
   type ChartZoomBounds,
 } from '@/shared/echarts';
-import { FlexComponent, GranularityPickerComponent, PaperComponent } from '@/shared/ui';
+import { FlexComponent, PaperComponent } from '@/shared/ui';
 import { bucketDateBoundaries, buildTransactionDrilldownParams } from '@/shared/utils';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
@@ -43,15 +43,14 @@ export const buildAccountBalanceChartOption = (
  * Full-history balance line for one account (TICKET-STAT-02) — spans opening-balance date/first
  * transaction through today, so the series itself is always the account's entire history. Plots the
  * account's *real* balance, matching the figure in the detail page's own balance header — for a
- * joint account that's the whole pot, not my stake in it (TICKET-ACC-07). This
- * chart owns its own local granularity control (TICKET-STAT-15), independent of every other
- * chart's, and the Accounts page's date range scrubs the initial zoom window (via `dataZoom`) rather than
- * shrinking the series data (TICKET-STAT-03), so zooming out is always available without a manual
- * preset change.
+ * joint account that's the whole pot, not my stake in it (TICKET-ACC-07). Always a daily series with
+ * no bucket picker (TICKET-ACC-10 — see `BALANCE_GRANULARITY`), and the Accounts page's date range
+ * scrubs the initial zoom window (via `dataZoom`) rather than shrinking the series data
+ * (TICKET-STAT-03), so zooming out is always available without a manual preset change.
  */
 @Component({
   selector: 'app-account-balance-chart',
-  imports: [NgxEchartsDirective, FlexComponent, GranularityPickerComponent, PaperComponent],
+  imports: [NgxEchartsDirective, FlexComponent, PaperComponent],
   templateUrl: './account-balance-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -60,12 +59,7 @@ export class AccountBalanceChartComponent {
 
   private readonly router = inject(Router);
 
-  private readonly trend = balanceTrendSignals(
-    computed(() => [this.account()]),
-    'account-detail-balance',
-  );
-  protected readonly granularity = this.trend.granularity;
-  protected readonly setGranularity = this.trend.setGranularity;
+  private readonly trend = balanceTrendSignals(computed(() => [this.account()]));
   protected readonly points = computed(() => this.trend.series()[0]?.points ?? []);
 
   protected readonly chartOption = computed<EChartsCoreOption>(() =>
@@ -76,7 +70,9 @@ export class AccountBalanceChartComponent {
     const point = this.points()[event.dataIndex];
     if (!point) return;
 
-    const { start, end } = bucketDateBoundaries(point.bucketKey, this.granularity());
+    // `BALANCE_GRANULARITY` is `'day'` (TICKET-ACC-10), so start and end collapse to the clicked
+    // date itself and the drill-down opens on exactly that day.
+    const { start, end } = bucketDateBoundaries(point.bucketKey, this.trend.granularity);
     void this.router.navigate(['/transactions'], {
       queryParams: buildTransactionDrilldownParams({
         from: start,

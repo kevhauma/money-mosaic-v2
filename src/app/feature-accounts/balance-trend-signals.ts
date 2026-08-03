@@ -4,45 +4,48 @@ import {
   computeAccountBalanceTrends,
   computeFullHistoryRange,
   computeZoomWindow,
-  pickGranularityForSpan,
   type AccountBalanceSeries,
   type ChartZoomWindow,
 } from '@/core/stats';
-import {
-  chartGranularity,
-  RangeStore,
-  TransactionsStore,
-  type ChartOptionsKey,
-} from '@/core/state';
+import { RangeStore, TransactionsStore } from '@/core/state';
 import type { Granularity } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
+/**
+ * Every balance chart in this feature buckets by day, always (TICKET-ACC-10) — and offers no picker
+ * to change it.
+ *
+ * A balance is a **level, not a period sum**: "March's balance" is only ever the balance on one
+ * particular day of March, so a coarser bucket samples one day and silently discards the rest — a
+ * month with a large mid-month dip reads flat. The picker these charts used to carry (TICKET-STAT-15)
+ * therefore offered four options whose only effect was to throw history away, and seeded from the
+ * page's range, so a wide range opened the chart on Month and the user set it back to Day every visit.
+ *
+ * The "too many points" case coarse buckets might have answered is already the `dataZoom` slider's
+ * job: the series is full history and the page's range scrubs the window (TICKET-STAT-03).
+ *
+ * Don't reintroduce a picker here. If a long history ever renders slowly, the fix is echarts-side
+ * (`sampling: 'lttb'`, `large: true`), not fewer days.
+ */
+export const BALANCE_GRANULARITY: Granularity = 'day';
+
 export type BalanceTrendSignals = {
-  /** Seeds from the Accounts page's date range the first time this chart is mounted (TICKET-STAT-15), then keeps the user's pick for the session (TICKET-STAT-27). */
-  granularity: Signal<Granularity>;
-  setGranularity: (granularity: Granularity) => void;
+  /** Always `BALANCE_GRANULARITY` — exposed so both charts and their drill-downs read the one value rather than re-typing `'day'`. */
+  granularity: Granularity;
   series: Signal<AccountBalanceSeries[]>;
   zoomWindow: Signal<ChartZoomWindow>;
 };
 
 /**
  * The reactive scaffolding shared by `AccountBalanceChartComponent` and
- * `AccountBalanceHistoryChartComponent` (CR3-2.3): both wire the same range/granularity/zoom
- * chain around `computeAccountBalanceTrends`, differing only in which accounts they scope to (one
- * account vs. every active account) and their final ECharts option builder. Must be called from an
- * injection context (a component field initializer), since it injects its own store dependencies
- * rather than taking them as parameters.
- *
- * `chart` is the id the session-scoped bucket size is keyed by — the two callers pass different
- * ones, so the overview's bucket size and the detail page's are still independent choices. The
- * hand-dragged zoom window (TICKET-STAT-27) is deliberately *not* wired here: it belongs to the one
- * caller that has a single instance, and is composed there (`chartZoomControl`).
+ * `AccountBalanceHistoryChartComponent` (CR3-2.3): both wire the same range/zoom chain around
+ * `computeAccountBalanceTrends`, differing only in which accounts they scope to (one account vs.
+ * every active account) and their final ECharts option builder. Must be called from an injection
+ * context (a component field initializer), since it injects its own store dependencies rather than
+ * taking them as parameters.
  */
-export const balanceTrendSignals = (
-  accounts: Signal<Account[]>,
-  chart: ChartOptionsKey,
-): BalanceTrendSignals => {
+export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSignals => {
   const transactionsStore = inject(TransactionsStore);
   // Always the `accounts` range (TICKET-UI-23): both callers are Accounts routes — the overview's
   // stacked chart and the account-detail chart — and the detail route deliberately has no range
@@ -53,10 +56,6 @@ export const balanceTrendSignals = (
     computeFullHistoryRange(accounts(), transactionsStore.transactions(), todayIso()),
   );
 
-  const { value: granularity, set: setGranularity } = chartGranularity(chart, () =>
-    pickGranularityForSpan(rangeStore.from('accounts'), rangeStore.to('accounts')),
-  );
-
   // No joint-leg context here by design (TICKET-ACC-07): these series are raw account balances, so
   // the cross-account transfer/category lookups the contribution model needs are irrelevant.
   const series = computed(() =>
@@ -65,7 +64,7 @@ export const balanceTrendSignals = (
       accounts(),
       range().from,
       range().to,
-      granularity(),
+      BALANCE_GRANULARITY,
     ),
   );
 
@@ -74,9 +73,9 @@ export const balanceTrendSignals = (
       series()[0]?.points.map((point) => point.bucketKey) ?? [],
       rangeStore.from('accounts'),
       rangeStore.to('accounts'),
-      granularity(),
+      BALANCE_GRANULARITY,
     ),
   );
 
-  return { granularity, setGranularity, series, zoomWindow };
+  return { granularity: BALANCE_GRANULARITY, series, zoomWindow };
 };
