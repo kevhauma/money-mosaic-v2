@@ -92,10 +92,10 @@ Below `lg:` the rail stacks under the charts, which is correct and not what this
 - [x] At a 1280×800 viewport the Net vs gross section renders two charts per row; component spec asserts
       the container-query class on the grid, plus a browser check at that width.
       (`income-gross-net-section.component.spec.ts` — "is one column when its column is narrow and two
-      when it is wide" now pins `@lg:grid-cols-2`. **The threshold is not the `@xl` the to-be suggested,
-      and the section no longer sits in the charts column** — see the two criteria below. Browser at
-      1280×800 with the section actually rendering: **2 tracks of 444px**, four cells in **589px**
-      against ~1,128px as one column.)
+      when it is wide" now pins `@lg:grid-cols-2`. **The threshold is not the `@xl` the to-be suggested**
+      — see the next criterion. Browser at 1280×800 with the section actually rendering in the charts
+      column: **4 cells, 2 columns, 2 rows, 272px each**, the section 776px against ~1,293px as one
+      column.)
 - [x] The lowered threshold is documented in the template comment beside it, replacing the current
       `@2xl` rationale so the next reader knows why it moved. (Rewritten in
       `income-gross-net-section.component.html`. **Divergence from the to-be's suggested `@xl`, caught by
@@ -104,13 +104,18 @@ Below `lg:` the rail stacks under the charts, which is correct and not what this
       `@xl` is 576px, so it would have missed by 9px and changed nothing at all, silently. `@lg` (512px)
       was chosen instead. The comment leads with "measure before changing this number" and carries the
       figures.)
-- [x] **Added after the fact, at the user's request:** the section spans the **full page width**, outside
-      the two-column grid, and gains a `@6xl:grid-cols-4` tier. In the 567px column the 2-up threshold
-      was marginal — any window under ~1,225px fell back to one per row and the section doubled — and the
-      charts were 272px each. Out here the container is 911px at 1280, so 2-up has 100px of headroom and
-      each chart gets **444px**; a 1920px monitor gets four across in one row instead of two. Costs 42px
-      of height as well. **The trade, taken deliberately:** the events rail sticks within the grid above,
-      so it now scrolls away when you reach this section instead of following you down it.
+- [x] **The section stays in the charts column, as a 2×2** — after a detour out to full page width and
+      back, which is worth recording because the reasoning was wrong the first time. It was moved out
+      because 2-up looked marginal at a 567px container *and* because a horizontal scrollbar appeared
+      once it sat further right. The scrollbar turned out not to be this section's doing at all: it was
+      `sr-only` failing to constrain a `<table>` (see the `sr-only` criterion below). With that fixed,
+      the column wins on the things that actually matter — the events rail is sticky for the **whole**
+      page instead of only the part above this section (verified: it pins at `top: 80px` past the bottom
+      of Net vs gross and at the page bottom), and the page reads as one column of panels beside one
+      rail. The container is 567px against a 512px threshold, so the 2×2 holds with 55px to spare;
+      verified with the section really rendering: **4 cells, 2 columns, 2 rows, 272px each**. The
+      `@6xl:grid-cols-4` tier added during the detour is kept — the charts column passes 1,152px on a
+      1920px monitor, so a wide screen still gets one row instead of two.
 - [x] From `lg:` the events rail is capped at `100vh` (less the sticky offset) and scrolls internally;
       component spec asserts the cap, and a spec with 10 years of events asserts the rail does not exceed
       it or stretch the grid row. (`lg:max-h-[calc(100vh-6rem)]` on the rail's card;
@@ -159,9 +164,9 @@ Below `lg:` the rail stacks under the charts, which is correct and not what this
       | Income by month | 402 | 370 |
       | Income growth | 178 | 178 |
       | Income by year | 520 | 488 |
-      | Net vs gross | ~1,293 | **734** |
+      | Net vs gross | ~1,293 | **776** |
       | Events rail | 1,312, stretching the grid row | capped 704, sticky |
-      | **page total** | **~2,590 (3.2 screens)** | **1,953 (2.44 screens)** |
+      | **page total** | **~2,590 (3.2 screens)** | **1,995 (2.49 screens)** |
 
       Net vs gross is the whole story: its grid went 4×1 → 2×2 (1,128px → 589px of cells). The rail cap
       stops a long history adding to the page at all. Roughly a quarter off, not the half the to-be

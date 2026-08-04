@@ -243,11 +243,13 @@ describe('buildAccountBalanceChartOption', () => {
     );
 
     const tooltip = option['tooltip'] as { formatter: (params: unknown) => string };
-    const result = tooltip.formatter([{ axisValue: '2026-01-15', marker: '●' }]);
+    const result = tooltip.formatter([
+      { axisValue: '2026-01-15', marker: '●', value: 1234.5600000000002 },
+    ]);
 
     // Was `formatAxisTooltip`: one unlabelled balance figure, i.e. the number the line already draws.
+    expect(result).toContain('Balance: €1,234.56');
     expect(result).toContain('Acme Refunds: €1,234.56');
-    expect(result).toContain('Net €1,234.56');
     expect(result).not.toContain('Checking');
   });
 });

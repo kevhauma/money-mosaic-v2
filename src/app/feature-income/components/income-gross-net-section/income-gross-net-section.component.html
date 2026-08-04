@@ -13,13 +13,12 @@
          card's own width, not the window's. Falls back to one column whenever the column is narrow,
          which is exactly the check that ticket's Notes asked for.
          `@lg` (32rem/512px), not `@2xl` (42rem/672px) (TICKET-INC-22). **Measure before changing
-         this number**: what the query sees is this `@container` div, *inside* `mm-paper`'s padding.
-         Inside the charts column that was only 567px, so `@2xl` missed by 105px and even `@xl`
-         (576px) would have missed by 9 and silently changed nothing — the section designed as a
-         compact 2×2 rendered 4×1 at ~1,128px instead of ~611px. The section now spans the full page
-         width instead, so the container is ~911px at 1280 and the threshold has real headroom rather
-         than being marginal. `@6xl` takes it to four across once the container clears 1,152px, which
-         a 1920px monitor does — one row of 282px instead of two. -->
+         this number**: what the query sees is this `@container` div, *inside* `mm-paper`'s padding —
+         567px on a 1280px window, not the 617px the charts column itself measures. So `@2xl` missed
+         by 105px and even `@xl` (576px) would have missed by 9 and silently changed nothing, and the
+         section designed as a compact 2×2 rendered 4×1 at ~1,128px instead of ~611px. `@lg` clears
+         it by 55px. `@6xl` takes it to four across once the container passes 1,152px, which the
+         charts column does on a 1920px monitor — one row instead of two. -->
     <div class="@container mt-4">
       <div class="grid grid-cols-1 gap-6 @lg:grid-cols-2 @6xl:grid-cols-4">
         <app-income-chart-cell

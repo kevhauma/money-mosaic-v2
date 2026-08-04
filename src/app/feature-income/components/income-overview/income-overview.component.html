@@ -96,6 +96,16 @@
         <app-income-growth-panel class="mt-6 block" />
 
         <app-income-yearly-panel class="mt-6 block" />
+
+        <!-- Back in the charts column after a spell at full page width (TICKET-INC-22). It was moved
+             out because its 2-up threshold looked marginal here and because a horizontal scrollbar
+             appeared once it sat further right — but that scrollbar was never this section's doing:
+             it was `sr-only` failing to constrain a `<table>`, fixed in `styles.css`. With the real
+             cause gone, the reasons to keep it in the column win: the events rail stays sticky for
+             the *whole* page rather than only the part above this section, and the page reads as one
+             column of panels beside one rail. Its `@container` is 567px here against a 512px
+             threshold, so 2×2 holds with 55px to spare. -->
+        <app-income-gross-net-section class="mt-6 block" />
       </div>
 
       <!-- `lg:self-start` is load-bearing, not decoration (TICKET-INC-22): a grid item stretches to
@@ -106,15 +116,6 @@
            content it annotates. -->
       <app-income-events-sidebar class="block lg:sticky lg:top-20 lg:self-start" />
     </div>
-
-    <!-- Full page width, outside the two-column grid (TICKET-INC-22): four charts in a 567px column
-         beside the rail gave them 272px each and made the 2-up threshold marginal — a window under
-         ~1,225px dropped back to one per row and the section doubled in height. Out here the
-         container is ~911px at 1280, so two-up has 100px+ of headroom and each chart gets 443px, and
-         a wide monitor pairs them four across instead. The trade, taken deliberately: the events
-         rail sticks within the grid above, so it scrolls away once you reach this section rather
-         than following you down it. -->
-    <app-income-gross-net-section class="mt-6 block" />
   } @else {
     <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
        ticked" and "nothing is categorised as income yet" look identical from here, and a first-time

@@ -3,17 +3,23 @@ import { formatCurrency, formatDate } from '@/shared/utils';
 
 /**
  * What one tooltip will show before the rest collapses into `+N more`: transaction lines per
- * account, transaction lines across all accounts, and accounts.
+ * account, and transaction lines across all accounts.
  *
  * A payday books thirty rows on one account, and a salary sweep moves every account at once —
  * without caps the tooltip grows taller than the viewport and hides the chart it is explaining.
- * Budgeting only the transaction lines isn't enough on its own: each account also costs a name row,
- * a net row and possibly a `+N more`, so ten moving accounts would still be ~40 rows. All three caps
- * together bound the tooltip at roughly two dozen rows whatever the day looks like.
+ * Only the *transaction* lines are budgeted: every band keeps its balance row, because that row is
+ * the answer the hover is asked for, and folding some accounts away would leave the tooltip listing
+ * fewer accounts than the stack it is sitting on.
  */
 const MAX_LINES_PER_ACCOUNT = 5;
 const MAX_LINES_TOTAL = 10;
-const MAX_ACCOUNTS = 4;
+
+/**
+ * How wide one transaction line may get. A bank's `rawDescription` is often a whole line of terminal
+ * ids, mandate references and city names, and the tooltip is a floating box with no wrapping budget —
+ * past this the description stops labelling the amount and starts pushing it out of sight.
+ */
+const MAX_LABEL_CHARS = 40;
 
 /** Shape of an axis-trigger tooltip callback param echarts actually passes — only the fields this formatter reads. */
 type AxisTooltipParam = {
@@ -21,63 +27,103 @@ type AxisTooltipParam = {
   axisValueLabel?: string;
   marker?: string;
   seriesName?: string;
+  /** That band's data point in the hovered bucket — on these charts the account's own balance that day. */
+  value?: unknown;
+};
+
+/** What echarts drew for one band, as the tooltip needs it: whose it is, its legend swatch, and the day's balance. */
+type Band = {
+  accountName: string;
+  marker: string;
+  balance: number | undefined;
 };
 
 const INDENT = '&nbsp;&nbsp;';
 
-const lineFor = (label: string, amount: number): string =>
-  `${INDENT}${label}: ${formatCurrency(amount)}`;
+const truncate = (label: string): string =>
+  label.length > MAX_LABEL_CHARS ? `${label.slice(0, MAX_LABEL_CHARS).trimEnd()}…` : label;
 
-/** Every account band's marker, keyed by the series name — so a tooltip row's dot is the very swatch echarts drew for that band. */
-const markersBySeriesName = (params: readonly AxisTooltipParam[]): Map<string, string> =>
-  new Map(
-    params
-      .filter((param): param is AxisTooltipParam & { seriesName: string } => !!param.seriesName)
-      .map((param) => [param.seriesName, param.marker ?? '']),
-  );
+const lineFor = (label: string, amount: number): string =>
+  `${INDENT}${truncate(label)}: ${formatCurrency(amount)}`;
+
+const toBand = (param: AxisTooltipParam): Band => ({
+  accountName: param.seriesName ?? '',
+  marker: param.marker ?? '',
+  balance: typeof param.value === 'number' ? param.value : undefined,
+});
+
+/**
+ * The bands echarts actually drew at the hovered day, in its own stacking order — so every row's dot
+ * is the swatch of that band and every balance is the very point it plotted, with no re-derivation
+ * here. A band echarts didn't hand over (an account hidden from the legend) is absent from the
+ * tooltip too, which is what keeps the two in agreement.
+ *
+ * Account detail has a single, unnamed series, so there is nothing to key on: its one param *is* the
+ * band.
+ */
+const bandsOf = (params: readonly AxisTooltipParam[], showAccountNames: boolean): Band[] =>
+  showAccountNames
+    ? params.filter((param) => !!param.seriesName).map(toBand)
+    : params.slice(0, 1).map(toBand);
+
+/** That band's movement — by account name on the overview, and the day's only movement on account detail. */
+const movementLookup = (
+  movements: readonly AccountDayMovement[],
+  showAccountNames: boolean,
+): ((band: Band) => AccountDayMovement | undefined) => {
+  if (!showAccountNames) return () => movements[0];
+
+  const byAccountName = new Map(movements.map((movement) => [movement.accountName, movement]));
+  return (band) => byAccountName.get(band.accountName);
+};
 
 /** How many of an account's lines this tooltip has room for: its own cap, further trimmed by what's left of the shared budget. */
-const shownLineCount = (movement: AccountDayMovement, budget: number): number =>
-  Math.min(movement.lines.length, MAX_LINES_PER_ACCOUNT, Math.max(budget, 0));
+const shownLineCount = (movement: AccountDayMovement | undefined, budget: number): number =>
+  Math.min(movement?.lines.length ?? 0, MAX_LINES_PER_ACCOUNT, Math.max(budget, 0));
 
-const movementLines = (
-  movement: AccountDayMovement,
-  marker: string,
+/**
+ * The balance every band gets at the hovered day: `●Checking: €4,120.00` on the overview, a bare
+ * `Balance: €4,120.00` on account detail, where naming the account the page already is would label
+ * nothing. Empty when echarts sent no numeric point, so a missing value never prints as a figure.
+ */
+const balanceRow = ({ accountName, marker, balance }: Band, showAccountName: boolean): string => {
+  if (balance === undefined) return showAccountName ? `${marker}${accountName}` : '';
+
+  return `${showAccountName ? `${marker}${accountName}` : 'Balance'}: ${formatCurrency(balance)}`;
+};
+
+/** One account's block: its balance for the day, then the transactions that got it there. */
+const accountBlock = (
+  band: Band,
+  movement: AccountDayMovement | undefined,
   shown: number,
   showAccountName: boolean,
 ): string[] => {
-  const hidden = movement.lines.length - shown;
+  const lines = movement?.lines ?? [];
+  const hidden = lines.length - shown;
 
   return [
-    ...(showAccountName ? [`${marker}${movement.accountName}`] : []),
-    ...movement.lines.slice(0, shown).map(({ label, amount }) => lineFor(label, amount)),
+    balanceRow(band, showAccountName),
+    ...lines.slice(0, shown).map(({ label, amount }) => lineFor(label, amount)),
     ...(hidden > 0 ? [`${INDENT}+${hidden} more`] : []),
-    `${INDENT}<b>Net ${formatCurrency(movement.net)}</b>`,
-  ];
+  ].filter(Boolean);
 };
 
-/** Walks the day's accounts in chart order, spending the shared line budget as it goes, and says so when it stopped early. */
-const renderMovements = (
+/** Walks the bands in the chart's own stacking order, spending the shared transaction-line budget as it goes. */
+const renderBands = (
+  bands: readonly Band[],
   movements: readonly AccountDayMovement[],
-  markers: ReadonlyMap<string, string>,
   showAccountNames: boolean,
 ): string[] => {
+  const movementFor = movementLookup(movements, showAccountNames);
   let budget = MAX_LINES_TOTAL;
-  const shownAccounts = movements.slice(0, MAX_ACCOUNTS);
-  const hiddenAccounts = movements.length - shownAccounts.length;
 
-  const lines = shownAccounts.flatMap((movement) => {
+  return bands.flatMap((band) => {
+    const movement = movementFor(band);
     const shown = shownLineCount(movement, budget);
     budget -= shown;
-    return movementLines(
-      movement,
-      markers.get(movement.accountName) ?? '',
-      shown,
-      showAccountNames,
-    );
+    return accountBlock(band, movement, shown, showAccountNames);
   });
-
-  return hiddenAccounts > 0 ? [...lines, `+${hiddenAccounts} more accounts`] : lines;
 };
 
 /** The hovered category — for these charts the `YYYY-MM-DD` bucket key itself. */
@@ -100,17 +146,18 @@ export type BalanceDayTooltipOptions = {
 };
 
 /**
- * The balance charts' axis tooltip (TICKET-ACC-11): the hovered **day**, then what actually moved
- * the balance that day — per account with movement, each transaction and that account's net change.
+ * The balance charts' axis tooltip (TICKET-ACC-11): the hovered **day**, then every band the chart
+ * drew — its balance at the close of that day, followed by the transactions that moved it
+ * (descriptions clipped at `MAX_LABEL_CHARS`).
  *
  * Replaces `formatAxisTooltip` on these two charts only. That shared formatter repeats each series'
- * value in the hovered bucket, which for a balance chart is the number the line already draws; every
- * other axis chart still uses it, because on a period *sum* restating the value is the useful answer.
+ * value in the hovered bucket without ever saying what caused it; every other axis chart still uses
+ * it, because on a period *sum* the value alone is the useful answer.
  *
  * Reads a prebuilt `DayTransactionIndex` rather than the raw transactions: this runs on every hover
- * frame. Accounts that didn't move are absent — a day where one account moved shows one account, not
- * a column of zeroes — and a day where nothing moved still renders its date plus "No transactions",
- * so the tooltip is never empty.
+ * frame. Accounts are driven by the bands, not by the index, so an account that stood still still
+ * shows its balance — and a day where nothing moved anywhere says "No transactions" outright rather
+ * than leaving the reader to infer it from an absence.
  */
 export const buildBalanceDayTooltip =
   (index: DayTransactionIndex, { showAccountNames }: BalanceDayTooltipOptions) =>
@@ -119,10 +166,8 @@ export const buildBalanceDayTooltip =
     const day = hoveredDay(items);
     const movements = dayMovementsFor(index, day);
 
-    const lines =
-      movements.length === 0
-        ? ['No transactions']
-        : renderMovements(movements, markersBySeriesName(items), showAccountNames);
+    const rows = renderBands(bandsOf(items, showAccountNames), movements, showAccountNames);
+    const lines = movements.length === 0 ? [...rows, 'No transactions'] : rows;
 
     return [headerFor(day), ...lines].filter(Boolean).join('<br/>');
   };
