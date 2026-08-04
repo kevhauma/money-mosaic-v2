@@ -1,6 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RangeStore } from '@/core/state';
-import { FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import { AppSettingsStore, RangeStore } from '@/core/state';
+import {
+  FlexComponent,
+  PaperComponent,
+  PrivacyBlurComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import { buildTransactionDrilldownParams, formatCurrency, formatRatio } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
 
@@ -15,13 +20,16 @@ const RATIO_EQUALITY_THRESHOLD = 1.05;
  */
 @Component({
   selector: 'app-weekday-weekend-split-panel',
-  imports: [FlexComponent, PaperComponent, TypographyComponent],
+  imports: [FlexComponent, PaperComponent, PrivacyBlurComponent, TypographyComponent],
   templateUrl: './weekday-weekend-split-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WeekdayWeekendSplitPanelComponent {
   private readonly statsStore = inject(StatsStore);
   private readonly rangeStore = inject(RangeStore);
+
+  /** Blurs the two per-day amounts while privacy mode is on (TICKET-PRIV-01); the bars stay, since a proportion isn't a figure. */
+  protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
 
   protected readonly split = computed(() => this.statsStore.weekdayWeekendSplit());
 

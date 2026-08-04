@@ -2,7 +2,12 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerTriangleFill, tablerTriangleInvertedFill } from '@ng-icons/tabler-icons/fill';
-import { FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import {
+  FlexComponent,
+  PaperComponent,
+  PrivacyBlurComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import type { CategoryComparisonVm } from '../../category-comparison-vm';
 
 /** Which side the card's decorative tilt leans — alternates per grid position (TICKET-STAT-23). */
@@ -16,7 +21,14 @@ export type CardTiltDirection = 'l' | 'r';
  */
 @Component({
   selector: 'app-comparison-category-card',
-  imports: [RouterLink, NgIcon, FlexComponent, PaperComponent, TypographyComponent],
+  imports: [
+    RouterLink,
+    NgIcon,
+    FlexComponent,
+    PaperComponent,
+    PrivacyBlurComponent,
+    TypographyComponent,
+  ],
   templateUrl: './comparison-category-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerTriangleFill, tablerTriangleInvertedFill })],
@@ -24,4 +36,6 @@ export type CardTiltDirection = 'l' | 'r';
 export class ComparisonCategoryCardComponent {
   readonly category = input.required<CategoryComparisonVm>();
   readonly tiltDirection = input.required<CardTiltDirection>();
+  /** Passed down rather than read off `AppSettingsStore` (TICKET-PRIV-01) — this card stays purely presentational, like every other display fact it takes. */
+  readonly blurred = input(false);
 }

@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { type CategoryBreakdownEntry } from '@/core/stats';
-import { CategoriesStore, RangeStore } from '@/core/state';
+import { AppSettingsStore, CategoriesStore, RangeStore } from '@/core/state';
 import {
   resolveChartAnimation,
   CHART_NO_COLOR_FALLBACK,
@@ -14,6 +14,7 @@ import {
   ButtonComponent,
   LoadingSkeletonComponent,
   PaperComponent,
+  PrivacyBlurComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import {
@@ -80,6 +81,7 @@ const formatPieTooltip = (params: PieTooltipParam): string => {
     ButtonComponent,
     LoadingSkeletonComponent,
     PaperComponent,
+    PrivacyBlurComponent,
     TypographyComponent,
   ],
   templateUrl: './category-breakdown-panel.component.html',
@@ -89,6 +91,9 @@ export class CategoryBreakdownPanelComponent {
   private readonly statsStore = inject(StatsStore);
   private readonly categoriesStore = inject(CategoriesStore);
   protected readonly rangeStore = inject(RangeStore);
+
+  /** Blurs the per-category totals/shares while privacy mode is on (TICKET-PRIV-01); the donut and the category names stay. */
+  protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
 
   /** `TransactionsStore` hydrates in the background (TICKET-PERF-05) â€” gates the columns below so a still-loading range doesn't briefly read as "no data". */
   protected readonly dataReady = this.statsStore.dataReady;

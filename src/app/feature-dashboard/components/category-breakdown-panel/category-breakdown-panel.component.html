@@ -22,7 +22,9 @@
                   >
                     <span>{{ entry.name }}</span>
                     <mm-text variant="caption">
-                      {{ entry.formattedTotal }} · {{ entry.formattedShare }}
+                      <mm-privacy-blur [blurred]="privacyMode()">
+                        {{ entry.formattedTotal }} · {{ entry.formattedShare }}
+                      </mm-privacy-blur>
                     </mm-text>
                   </a>
                 </li>
@@ -42,8 +44,13 @@
                   [queryParams]="drilldownParams(null)"
                   class="text-sm"
                 >
-                  {{ callout.formattedTotal }} uncategorised ({{ callout.formattedShare }} of
-                  expense, {{ callout.transactionCount }} transaction{{
+                  <mm-privacy-blur [blurred]="privacyMode()">{{
+                    callout.formattedTotal
+                  }}</mm-privacy-blur>
+                  uncategorised (<mm-privacy-blur [blurred]="privacyMode()">{{
+                    callout.formattedShare
+                  }}</mm-privacy-blur>
+                  of expense, {{ callout.transactionCount }} transaction{{
                     callout.transactionCount === 1 ? '' : 's'
                   }})
                 </a>

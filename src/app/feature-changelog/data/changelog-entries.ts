@@ -615,4 +615,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Income',
   },
+  {
+    date: '2026-08-04',
+    versionFolder: 'v2',
+    ticketIds: ['TICKET-PRIV-01'],
+    title: 'You can now hide the amounts on your Dashboard with one click',
+    details: [
+      '“Hide amounts” in the Dashboard header blurs every figure — net worth, the stat cards, category totals, biggest transactions and account balances — so you can screen-share or let someone glance over your shoulder',
+      'Only the numbers blur: the charts, labels, category names and menus stay perfectly readable, so the page still looks and works like your Dashboard',
+      'Everything underneath keeps working — clicking a blurred card still drills into its transactions, and rearranging your panels is unaffected',
+      'The setting sticks. It survives a reload, and there is a matching switch under Settings → Privacy that always agrees with the Dashboard one',
+      'Charts still draw their own axis numbers, which stay visible for now',
+    ],
+    area: 'Privacy',
+  },
 ];

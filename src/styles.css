@@ -98,6 +98,14 @@
   box-shadow: var(--mm-glow-shadow, none);
 }
 /**
+ * Privacy mode's blurred figures (TICKET-PRIV-01). Unlike the two hooks above this one is NOT
+ * inert — a theme that supplies no `--mm-*` still has to hide the number, so the fallback is a real
+ * blur. `--mm-privacy-blur` only lets a theme dial the radius or swap the treatment.
+ */
+.mm-privacy-blurred {
+  filter: var(--mm-privacy-blur, blur(0.3rem));
+}
+/**
  * The visually-hidden companion tables every chart carries (TICKET-UI-07 / TICKET-STAT-20) must not
  * be able to widen the page.
  *

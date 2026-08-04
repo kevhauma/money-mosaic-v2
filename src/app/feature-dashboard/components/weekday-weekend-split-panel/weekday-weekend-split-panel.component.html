@@ -6,7 +6,10 @@
       <div>
         <mm-flex align="center" justify="between" class="mb-1 text-sm">
           <span>Weekday</span>
-          <mm-text variant="caption">{{ weekdayAvgValue() }}/day</mm-text>
+          <mm-text variant="caption">
+            <mm-privacy-blur [blurred]="privacyMode()">{{ weekdayAvgValue() }}</mm-privacy-blur
+            >/day
+          </mm-text>
         </mm-flex>
         <div class="h-2 w-full rounded-full bg-base-300">
           <div class="h-2 rounded-full bg-primary" [style.width.%]="barPercents().weekday"></div>
@@ -16,7 +19,10 @@
       <div>
         <mm-flex align="center" justify="between" class="mb-1 text-sm">
           <span>Weekend</span>
-          <mm-text variant="caption">{{ weekendAvgValue() }}/day</mm-text>
+          <mm-text variant="caption">
+            <mm-privacy-blur [blurred]="privacyMode()">{{ weekendAvgValue() }}</mm-privacy-blur
+            >/day
+          </mm-text>
         </mm-flex>
         <div class="h-2 w-full rounded-full bg-base-300">
           <div class="h-2 rounded-full bg-secondary" [style.width.%]="barPercents().weekend"></div>

@@ -19,9 +19,11 @@
                 {{ entry.bookingDate }} · {{ entry.categoryName }}
               </mm-text>
             </span>
-            <mm-text weight="medium" color="error" class="shrink-0 text-sm">{{
-              entry.formattedAmount
-            }}</mm-text>
+            <mm-text weight="medium" color="error" class="shrink-0 text-sm">
+              <mm-privacy-blur [blurred]="privacyMode()">{{
+                entry.formattedAmount
+              }}</mm-privacy-blur>
+            </mm-text>
           </a>
         </li>
       }

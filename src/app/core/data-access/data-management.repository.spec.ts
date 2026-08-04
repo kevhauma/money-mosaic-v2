@@ -105,6 +105,7 @@ describe('DataManagementRepository', () => {
         grossColor: 'violet',
         mainIncomeCategoryId: 7,
         seenGuideSlugs: ['getting-started-with-the-income-page'],
+        privacyMode: true,
       });
 
       const exported = await repository.exportAll();
@@ -118,6 +119,7 @@ describe('DataManagementRepository', () => {
       expect(restored?.grossColor).toBe('violet');
       expect(restored?.mainIncomeCategoryId).toBe(7);
       expect(restored?.seenGuideSlugs).toEqual(['getting-started-with-the-income-page']);
+      expect(restored?.privacyMode).toBe(true);
     });
   });
 

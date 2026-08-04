@@ -10,3 +10,12 @@
 export const MM_SQUISH_CLASS = 'mm-squish';
 
 export const MM_GLOW_CLASS = 'mm-glow';
+
+/**
+ * Marks a figure `mm-privacy-blur` is currently hiding (TICKET-PRIV-01). Unlike the two above it
+ * carries its own working treatment (Tailwind's `blur-sm`) rather than relying on a theme to supply
+ * one — privacy has to hold under every theme, including one that sets no `--mm-*` at all. The hook
+ * exists so a theme can *restyle* the treatment (styles.css reads `--mm-privacy-blur`) and so specs
+ * have a stable thing to assert on.
+ */
+export const MM_PRIVACY_BLURRED_CLASS = 'mm-privacy-blurred';

@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CategoriesStore, RangeStore } from '@/core/state';
-import { LoadingSkeletonComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
+import { AppSettingsStore, CategoriesStore, RangeStore } from '@/core/state';
+import {
+  LoadingSkeletonComponent,
+  PaperComponent,
+  PrivacyBlurComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import {
   buildTransactionDrilldownParams,
   formatCurrency,
@@ -31,7 +36,13 @@ const UNCATEGORISED_COLOR = '#9ca3af';
  */
 @Component({
   selector: 'app-top-transactions-panel',
-  imports: [RouterLink, LoadingSkeletonComponent, PaperComponent, TypographyComponent],
+  imports: [
+    RouterLink,
+    LoadingSkeletonComponent,
+    PaperComponent,
+    PrivacyBlurComponent,
+    TypographyComponent,
+  ],
   templateUrl: './top-transactions-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -39,6 +50,9 @@ export class TopTransactionsPanelComponent {
   private readonly statsStore = inject(StatsStore);
   private readonly categoriesStore = inject(CategoriesStore);
   protected readonly rangeStore = inject(RangeStore);
+
+  /** Blurs each row's amount while privacy mode is on (TICKET-PRIV-01); the description and date stay legible. */
+  protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
 
   /** `TransactionsStore` hydrates in the background (TICKET-PERF-05) — gates the list below so a still-loading range doesn't briefly read as "no data". */
   protected readonly dataReady = this.statsStore.dataReady;

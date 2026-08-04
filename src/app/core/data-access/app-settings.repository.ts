@@ -62,6 +62,11 @@ export class AppSettingsRepository {
     return appDb.appSettings.put({ ...current, id: 1, mainIncomeCategoryId });
   };
 
+  setPrivacyMode = async (privacyMode: boolean): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, privacyMode });
+  };
+
   /**
    * Records that a guide's first-visit intro has been shown (TICKET-PUB-08). Idempotent — marking
    * the same slug twice leaves one entry, because both of the intro's exits call this and a user

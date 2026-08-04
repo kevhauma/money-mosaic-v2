@@ -73,4 +73,46 @@ describe('StatCardComponent', () => {
     expect(lines).toEqual(['Earned €1,000.00', 'between Jul 1, 2025 and Jul 31, 2025']);
     expect(tooltip?.querySelector('.stat-desc')?.textContent?.trim()).toBe('+12% vs. last year');
   });
+
+  describe('blurred input (TICKET-PRIV-01)', () => {
+    const blurWrappers = (): HTMLElement[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('mm-privacy-blur > span'));
+
+    it('leaves value and subLabel unblurred by default', () => {
+      fixture.componentRef.setInput('subLabel', '+12% vs. last year');
+      fixture.detectChanges();
+
+      expect(blurWrappers()).toHaveLength(2);
+      for (const wrapper of blurWrappers()) {
+        expect(wrapper.classList).not.toContain('mm-privacy-blurred');
+      }
+    });
+
+    it('masks both value and subLabel when blurred is true, leaving the label readable', () => {
+      fixture.componentRef.setInput('subLabel', '+12% vs. last year');
+      fixture.componentRef.setInput('blurred', true);
+      fixture.detectChanges();
+
+      expect(blurWrappers()).toHaveLength(2);
+      for (const wrapper of blurWrappers()) {
+        expect(wrapper.classList).toContain('mm-privacy-blurred');
+      }
+      expect(fixture.nativeElement.querySelector('.stat-title').textContent.trim()).toBe('Income');
+      expect(fixture.nativeElement.querySelector('.stat-title mm-privacy-blur')).toBeNull();
+    });
+
+    it('keeps the drilldown link outside the blurred figure so it stays clickable', async () => {
+      fixture.componentRef.setInput('link', '/transactions');
+      fixture.componentRef.setInput('blurred', true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const anchor = fixture.nativeElement.querySelector('a');
+      expect(anchor).toBeTruthy();
+      expect(anchor.classList).not.toContain('mm-privacy-blurred');
+      expect(anchor.querySelector('mm-privacy-blur > span').classList).toContain(
+        'mm-privacy-blurred',
+      );
+    });
+  });
 });

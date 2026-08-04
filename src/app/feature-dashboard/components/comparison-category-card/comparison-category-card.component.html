@@ -14,7 +14,7 @@
         [color]="category().deltaColor"
       >
         <ng-icon [name]="category().deltaIcon" size="10" aria-hidden="true" />
-        {{ label }}
+        <mm-privacy-blur [blurred]="blurred()">{{ label }}</mm-privacy-blur>
       </mm-text>
     }
   </mm-flex>
@@ -39,8 +39,23 @@
   </div>
 
   <mm-text as="p" class="mt-2 flex justify-between text-xs text-base-content/60">
-    <span>Avg {{ category().formattedAverage }}</span>
-    <span>High {{ category().formattedHighest }}</span>
-    <span>Low {{ category().formattedLowest }}</span>
+    <span
+      >Avg
+      <mm-privacy-blur [blurred]="blurred()">{{
+        category().formattedAverage
+      }}</mm-privacy-blur></span
+    >
+    <span
+      >High
+      <mm-privacy-blur [blurred]="blurred()">{{
+        category().formattedHighest
+      }}</mm-privacy-blur></span
+    >
+    <span
+      >Low
+      <mm-privacy-blur [blurred]="blurred()">{{
+        category().formattedLowest
+      }}</mm-privacy-blur></span
+    >
   </mm-text>
 </mm-paper>

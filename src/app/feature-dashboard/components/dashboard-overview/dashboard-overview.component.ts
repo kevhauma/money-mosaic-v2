@@ -1,8 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerCheck, tablerFileImport, tablerPencil } from '@ng-icons/tabler-icons';
+import {
+  tablerCheck,
+  tablerEye,
+  tablerEyeOff,
+  tablerFileImport,
+  tablerPencil,
+} from '@ng-icons/tabler-icons';
 import { computeNetMargin, computePeriodizedRate } from '@/core/stats';
-import { AccountsStore, pageRangeControl, RangeStore, TransactionsStore } from '@/core/state';
+import {
+  AccountsStore,
+  AppSettingsStore,
+  pageRangeControl,
+  RangeStore,
+  TransactionsStore,
+} from '@/core/state';
 import { buildTransactionDrilldownParams, formatCurrency, formatPercent } from '@/shared/utils';
 import {
   ButtonComponent,
@@ -47,7 +59,9 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
   ],
   templateUrl: './dashboard-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerCheck, tablerFileImport, tablerPencil })],
+  viewProviders: [
+    provideIcons({ tablerCheck, tablerEye, tablerEyeOff, tablerFileImport, tablerPencil }),
+  ],
 })
 export class DashboardOverviewComponent {
   protected readonly statsStore = inject(StatsStore);
@@ -55,6 +69,10 @@ export class DashboardOverviewComponent {
   protected readonly rangeStore = inject(RangeStore);
   protected readonly transactionsStore = inject(TransactionsStore);
   protected readonly dashboardLayoutSettingsStore = inject(DashboardLayoutSettingsStore);
+  private readonly appSettingsStore = inject(AppSettingsStore);
+
+  /** Drives the stat cards' `[blurred]`; the panels read the same store themselves (TICKET-PRIV-01). */
+  protected readonly privacyMode = this.appSettingsStore.privacyModeEnabled;
 
   /** This page's own date range and its switcher wiring (TICKET-UI-23) — no longer the shell's. */
   protected readonly range = pageRangeControl('dashboard');
@@ -90,6 +108,21 @@ export class DashboardOverviewComponent {
 
   protected toggleCustomizeMode(): void {
     this.customizeMode.set(!this.customizeMode());
+  }
+
+  /**
+   * Label + icon for the header's privacy toggle (TICKET-PRIV-01). Worded as the action it performs
+   * rather than the state it is in, and rendered as visible text like its neighbour — a bare eye
+   * icon is exactly what TICKET-STAT-25 removed from this header.
+   */
+  protected readonly privacyToggle = computed(() =>
+    this.privacyMode()
+      ? { label: 'Show amounts', icon: 'tablerEyeOff' }
+      : { label: 'Hide amounts', icon: 'tablerEye' },
+  );
+
+  protected togglePrivacyMode(): void {
+    void this.appSettingsStore.setPrivacyMode(!this.privacyMode());
   }
 
   protected readonly drilldownParams = computed(() =>

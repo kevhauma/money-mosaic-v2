@@ -8,7 +8,7 @@ import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import { appDb, TransfersRepository, type Transaction } from '@/core/data-access';
-import { AccountsStore, RangeStore, TransactionsStore } from '@/core/state';
+import { AccountsStore, AppSettingsStore, RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import { formatCurrency } from '@/shared/utils';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
@@ -424,8 +424,9 @@ describe('DashboardOverviewComponent', () => {
     });
 
     // Was title · range · net worth · settings under TICKET-UI-24; TICKET-STAT-28 took net worth
-    // out of the header entirely, so the order updates rather than the case being deleted.
-    it('orders the header title · range · settings (TICKET-UI-24, TICKET-STAT-28)', () => {
+    // out of the header entirely and TICKET-PRIV-01 added the privacy toggle ahead of settings, so
+    // the order updates rather than the case being deleted.
+    it('orders the header title · range · privacy · settings (TICKET-UI-24, TICKET-STAT-28, TICKET-PRIV-01)', () => {
       seedOneTransaction();
       fixture.detectChanges();
 
@@ -439,7 +440,7 @@ describe('DashboardOverviewComponent', () => {
         .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-grouping-switcher'))
         .map((el) => el.tagName.toLowerCase());
 
-      expect(order).toEqual(['h1', 'mm-range-grouping-switcher', 'button']);
+      expect(order).toEqual(['h1', 'mm-range-grouping-switcher', 'button', 'button']);
     });
 
     it('puts the range in the start group and settings in the end group (TICKET-UI-24)', () => {
@@ -454,6 +455,113 @@ describe('DashboardOverviewComponent', () => {
       expect(startGroup?.contains(range as Node)).toBe(true);
       expect(endGroup?.contains(range as Node)).toBe(false);
       expect(endGroup?.contains(settingsButton() as Node)).toBe(true);
+    });
+  });
+
+  describe('privacy mode (TICKET-PRIV-01)', () => {
+    const privacyButton = (): HTMLButtonElement =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll(
+          'mm-page-header button',
+        ) as NodeListOf<HTMLButtonElement>,
+      ).find((button) => /amounts/.test(button.textContent ?? '')) as HTMLButtonElement;
+
+    afterEach(async () => {
+      await appDb.appSettings.clear();
+    });
+
+    it('names the toggle in visible text, like the settings button beside it (TICKET-STAT-25)', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+
+      expect(privacyButton().textContent?.trim()).toBe('Hide amounts');
+      expect(privacyButton().querySelector('ng-icon')).not.toBeNull();
+      // The label carries the accessible name, so there is no aria-label left to drift from it.
+      expect(privacyButton().getAttribute('aria-label')).toBeNull();
+    });
+
+    it('clicking the header toggle writes AppSettingsStore.setPrivacyMode', () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+      const setPrivacyMode = vi
+        .spyOn(TestBed.inject(AppSettingsStore), 'setPrivacyMode')
+        .mockResolvedValue();
+
+      privacyButton().click();
+
+      expect(setPrivacyMode).toHaveBeenCalledExactlyOnceWith(true);
+    });
+
+    it('blurs every stat card figure when the store says privacy mode is on, leaving the labels readable', async () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.mm-privacy-blurred')).toBeNull();
+
+      await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
+      fixture.detectChanges();
+
+      const cards = Array.from(
+        fixture.nativeElement.querySelectorAll('mm-stat-card') as NodeListOf<HTMLElement>,
+      );
+      expect(cards.length).toBeGreaterThan(0);
+      for (const card of cards) {
+        expect(card.querySelector('.stat-value .mm-privacy-blurred')).not.toBeNull();
+        // The label is the whole point of leaving the card in place — it must stay sharp.
+        expect(card.querySelector('.stat-title .mm-privacy-blurred')).toBeNull();
+      }
+    });
+
+    it('blurs a chart panel’s figures while leaving the chart itself unblurred', async () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+      await renderAllDeferBlocks(fixture);
+      await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
+      fixture.detectChanges();
+
+      const strip = fixture.nativeElement.querySelector(
+        'app-account-balance-strip',
+      ) as HTMLElement | null;
+      // The strip only renders rows once an account exists; the panel-level assertion that always
+      // holds is that no chart canvas ever ends up inside a blur wrapper.
+      expect(strip).not.toBeNull();
+      const blurredCanvas = fixture.nativeElement.querySelector(
+        '.mm-privacy-blurred [echarts], .mm-privacy-blurred canvas',
+      );
+      expect(blurredCanvas).toBeNull();
+    });
+
+    it('flips the header toggle label and icon once privacy mode is on', async () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+      const eyeGlyph = privacyButton().querySelector('ng-icon')?.innerHTML;
+
+      await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
+      fixture.detectChanges();
+
+      expect(privacyButton().textContent?.trim()).toBe('Show amounts');
+      expect(privacyButton().querySelector('ng-icon')?.innerHTML).not.toBe(eyeGlyph);
+    });
+
+    it('leaves row visibility and customize mode untouched — blur is purely visual', async () => {
+      seedOneTransaction();
+      fixture.detectChanges();
+      const rowsBefore = component['visibleRows']();
+
+      await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
+      fixture.detectChanges();
+
+      expect(component['visibleRows']()).toEqual(rowsBefore);
+      // The settings button still opens customize mode with privacy mode on.
+      settingsButton()?.click();
+      fixture.detectChanges();
+      expect(settingsButton()?.textContent?.trim()).toBe('Done');
+    });
+
+    it('keeps the header toggle reachable in the empty state, where the settings button is not', () => {
+      fixture.detectChanges();
+
+      expect(privacyButton()).toBeTruthy();
+      expect(headerButtonLabels()).not.toContain('Dashboard settings');
     });
   });
 

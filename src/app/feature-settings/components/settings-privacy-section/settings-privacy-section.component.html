@@ -1,0 +1,14 @@
+<mm-paper>
+  <mm-text variant="heading" as="h2">Privacy</mm-text>
+  <mm-text as="p" variant="caption" class="mt-1">
+    Blurs every amount on the Dashboard so you can screen-share or let someone glance at your screen
+    without showing your real figures. Labels, charts and links keep working — only the numbers are
+    hidden, and nothing about your data changes. The Dashboard's own header has the same toggle for
+    switching it on and off without coming back here.
+  </mm-text>
+
+  <mm-label as="label" class="mt-4 justify-start gap-3">
+    <input type="checkbox" class="toggle" [formControl]="privacyModeControl" />
+    <mm-text color="base-content">Blur amounts on the Dashboard</mm-text>
+  </mm-label>
+</mm-paper>

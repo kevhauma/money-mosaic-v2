@@ -1,5 +1,12 @@
-import { effect, inject } from '@angular/core';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import { computed, effect, inject } from '@angular/core';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { AppSettingsRepository, DEFAULT_APP_SETTINGS, type AppSettings } from '@/core/data-access';
 import {
   accentColorById,
@@ -12,6 +19,15 @@ import { syncFormatSettings, type CurrencySymbolPosition } from '@/shared/utils'
 export const AppSettingsStore = signalStore(
   { providedIn: 'root' },
   withState<AppSettings>(DEFAULT_APP_SETTINGS),
+  withComputed(({ privacyMode }) => ({
+    /**
+     * `privacyMode` resolved against its off-by-default (TICKET-PRIV-01). Every consumer reads this
+     * rather than `privacyMode() ?? false` — the stored field is a tri-state-via-`undefined` like
+     * its neighbours, and PRIV-01 is deliberately only the first screen to honour it, so the `??`
+     * belongs in one place instead of at each new call site the follow-up screens add.
+     */
+    privacyModeEnabled: computed(() => privacyMode() ?? false),
+  })),
   withMethods((store) => {
     const appSettingsRepository = inject(AppSettingsRepository);
     let hydration: Promise<void> | null = null;
@@ -74,6 +90,12 @@ export const AppSettingsStore = signalStore(
       setMainIncomeCategoryId: async (mainIncomeCategoryId: number | undefined): Promise<void> => {
         await appSettingsRepository.setMainIncomeCategoryId(mainIncomeCategoryId);
         patchState(store, { mainIncomeCategoryId });
+      },
+
+      /** Blurs every figure on the Dashboard while on (TICKET-PRIV-01). */
+      setPrivacyMode: async (privacyMode: boolean): Promise<void> => {
+        await appSettingsRepository.setPrivacyMode(privacyMode);
+        patchState(store, { privacyMode });
       },
 
       /** Records that a guide's first-visit intro has been shown (TICKET-PUB-08); idempotent. */

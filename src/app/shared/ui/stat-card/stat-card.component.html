@@ -1,3 +1,13 @@
+<!-- Both the figure and the sub-label go through mm-privacy-blur (TICKET-PRIV-01); the wrapper sits
+     inside the anchor branch, so a blurred card still drills down on click. -->
+<ng-template #valueContent>
+  <div class="stat-value">
+    <mm-privacy-blur [blurred]="blurred()">
+      <mm-text variant="display" [color]="color()" [numeric]="true">{{ value() }}</mm-text>
+    </mm-privacy-blur>
+  </div>
+</ng-template>
+
 <ng-template #subLabelContent>
   @if (subLabel(); as subLabel) {
     @if (tooltip()) {
@@ -7,10 +17,14 @@
             <div>{{ line }}</div>
           }
         </div>
-        <div class="stat-desc">{{ subLabel }}</div>
+        <div class="stat-desc">
+          <mm-privacy-blur [blurred]="blurred()">{{ subLabel }}</mm-privacy-blur>
+        </div>
       </div>
     } @else {
-      <div class="stat-desc">{{ subLabel }}</div>
+      <div class="stat-desc">
+        <mm-privacy-blur [blurred]="blurred()">{{ subLabel }}</mm-privacy-blur>
+      </div>
     }
   }
 </ng-template>
@@ -18,17 +32,13 @@
 @if (link(); as href) {
   <a [routerLink]="href" [queryParams]="queryParams()" [class]="linkClasses()">
     <div class="stat-title">{{ label() }}</div>
-    <div class="stat-value">
-      <mm-text variant="display" [color]="color()" [numeric]="true">{{ value() }}</mm-text>
-    </div>
+    <ng-container [ngTemplateOutlet]="valueContent" />
     <ng-container [ngTemplateOutlet]="subLabelContent" />
   </a>
 } @else {
   <div [class]="classes()">
     <div class="stat-title">{{ label() }}</div>
-    <div class="stat-value">
-      <mm-text variant="display" [color]="color()" [numeric]="true">{{ value() }}</mm-text>
-    </div>
+    <ng-container [ngTemplateOutlet]="valueContent" />
     <ng-container [ngTemplateOutlet]="subLabelContent" />
   </div>
 }

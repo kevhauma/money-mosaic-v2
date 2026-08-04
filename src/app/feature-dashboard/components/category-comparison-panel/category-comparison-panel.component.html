@@ -38,6 +38,7 @@
           <app-comparison-category-card
             [category]="category"
             [tiltDirection]="index % 2 === 0 ? 'l' : 'r'"
+            [blurred]="privacyMode()"
           />
         }
       </div>

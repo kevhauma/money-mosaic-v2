@@ -585,6 +585,17 @@ export type AppSettings = {
    * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    */
   seenGuideSlugs: string[] | undefined;
+  /**
+   * Additive field (TICKET-PRIV-01) — whether privacy mode is on, blurring every figure on the
+   * Dashboard so the page survives a screen-share. `undefined` means off, which is what an unset
+   * field already means; `AppSettingsStore.privacyModeEnabled` resolves the `?? false` once so no
+   * consumer has to. Stored here rather than in `localStorage` alongside `ThemeService`'s appearance
+   * preference because it is a portable/exportable user preference, not a per-browser one.
+   *
+   * Same "additive optional field, no version bump" reasoning as the fields above.
+   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   */
+  privacyMode: boolean | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -603,6 +614,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   grossColor: undefined,
   mainIncomeCategoryId: undefined,
   seenGuideSlugs: undefined,
+  privacyMode: undefined,
 };
 
 /**

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { daisyClasses, MM_SQUISH_CLASS } from '@/shared/utils';
+import { PrivacyBlurComponent } from '../privacy-blur/privacy-blur.component';
 import { TypographyComponent } from '../typography/typography.component';
 
 export type StatCardColor =
@@ -26,7 +27,7 @@ const STAT_SURFACE_CLASSES =
 
 @Component({
   selector: 'mm-stat-card',
-  imports: [RouterLink, NgTemplateOutlet, TypographyComponent],
+  imports: [RouterLink, NgTemplateOutlet, PrivacyBlurComponent, TypographyComponent],
   templateUrl: './stat-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,6 +41,12 @@ export class StatCardComponent {
   readonly link = input<string>();
   readonly queryParams = input<Record<string, string>>();
   readonly tilt = input<StatCardTilt>('none');
+  /**
+   * Blurs `value` and `subLabel` (TICKET-PRIV-01) — both are real figures, a YoY delta no less than
+   * the headline number. `label` stays sharp: the point is that the card still reads as "Income"
+   * while the amount doesn't. A boolean rather than a store read, so the card stays a dumb primitive.
+   */
+  readonly blurred = input(false);
   readonly class = input('', { alias: 'class' });
 
   protected readonly tooltipLines = computed(() => this.tooltip()?.split('\n') ?? []);

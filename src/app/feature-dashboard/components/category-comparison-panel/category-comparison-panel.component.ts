@@ -15,7 +15,7 @@ import {
   formatPercent,
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
-import { CategoriesStore } from '@/core/state';
+import { AppSettingsStore, CategoriesStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { StatsStore } from '../../stats.store';
 import type { CategoryComparisonVm, ComparisonBarVm } from '../../category-comparison-vm';
@@ -55,6 +55,9 @@ export class CategoryComparisonPanelComponent {
   private readonly statsStore = inject(StatsStore);
   private readonly categoriesStore = inject(CategoriesStore);
   private readonly categoryComparisonSettingsStore = inject(CategoryComparisonSettingsStore);
+
+  /** Handed to each card's `[blurred]` (TICKET-PRIV-01) — the cards stay presentational, so the store read lives here. */
+  protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
 
   protected readonly comparison = computed(() => this.statsStore.categoryPeriodComparison());
 

@@ -10,7 +10,11 @@
         [link]="'/accounts/' + account.id"
       >
         <mm-text variant="caption">{{ account.name }}</mm-text>
-        <mm-text weight="semibold">{{ balanceFor(account.id!) | signedAmount }}</mm-text>
+        <mm-text weight="semibold">
+          <mm-privacy-blur [blurred]="privacyMode()">{{
+            balanceFor(account.id!) | signedAmount
+          }}</mm-privacy-blur>
+        </mm-text>
       </mm-paper>
     }
   </mm-flex>
