@@ -587,4 +587,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Accounts',
   },
+  {
+    date: '2026-08-04',
+    versionFolder: 'v1.6.2_interface_polish',
+    ticketIds: ['TICKET-TXN-10'],
+    title:
+      'Picking Income or Expenses now filters the transactions list straight away, instead of waiting for you to also type an amount',
+    details: [
+      'The amount type gained an “All”, which is where it starts — so it has an off position, and “Expenses” is no longer selected before you have chosen anything',
+      'It sits with the Min and Max fields it applies to, at every window width',
+      'With “All” and a Min/Max set, the amounts filter by size across both signs — €500 in and €500 out both count',
+      '“Clear” puts the type back to All along with everything else',
+    ],
+    area: 'Transactions',
+  },
 ];

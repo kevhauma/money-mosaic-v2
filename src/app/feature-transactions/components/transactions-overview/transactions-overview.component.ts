@@ -22,6 +22,7 @@ import {
 } from '@/shared/ui';
 import { createPagination, createSelectionModel, formatDate, normalizeIban } from '@/shared/utils';
 import {
+  DEFAULT_AMOUNT_DIRECTION,
   describeExcludedFilterAxes,
   excludedFilterAxisLabels,
   filtersToRuleConditions,
@@ -50,7 +51,7 @@ const EMPTY_FILTERS: TransactionFilters = {
   text: '',
   amountMin: '',
   amountMax: '',
-  amountDirection: 'expense',
+  amountDirection: DEFAULT_AMOUNT_DIRECTION,
 };
 
 @Component({

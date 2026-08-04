@@ -15,8 +15,15 @@ const noFilters: TransactionFilters = {
   text: '',
   amountMin: '',
   amountMax: '',
-  amountDirection: 'expense',
+  amountDirection: 'all',
 };
+
+/**
+ * The baseline with the direction pinned to Expenses — what `noFilters` itself was before
+ * TICKET-TXN-10 made `'all'` the default. The two describes below shadow `noFilters` with it, so
+ * every TICKET-TXN-08 assertion inside them reads exactly as it did.
+ */
+const expenseBaseline: TransactionFilters = { ...noFilters, amountDirection: 'expense' };
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -158,7 +165,9 @@ describe('matchesTransactionFilters', () => {
   });
 
   describe('amount axis (TICKET-TXN-08)', () => {
-    describe('expense direction (default)', () => {
+    describe('expense direction', () => {
+      const noFilters = expenseBaseline;
+
       it('matches a transaction with magnitude inside the range', () => {
         const filters = { ...noFilters, amountMin: '10', amountMax: '50' };
         expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
@@ -249,11 +258,56 @@ describe('matchesTransactionFilters', () => {
       });
     });
 
-    it('has no filtering effect when amountMin/amountMax are empty, regardless of amountDirection', () => {
-      const filters = { ...noFilters, amountDirection: 'income' as const };
-      expect(matchesTransactionFilters(transaction({ amount: -42 }), filters, new Set())).toBe(
-        true,
-      );
+    describe('direction filters on its own, without a bound (TICKET-TXN-10)', () => {
+      const mixed = [
+        transaction({ id: 1, amount: 2800 }),
+        transaction({ id: 2, amount: 12.5 }),
+        transaction({ id: 3, amount: -42 }),
+        transaction({ id: 4, amount: -900 }),
+      ];
+      const surviving = (filters: TransactionFilters): number[] =>
+        mixed.filter((t) => matchesTransactionFilters(t, filters, new Set())).map((t) => t.id!);
+
+      it('"Income" with both amount fields empty hides every expense', () => {
+        // The bug: this check used to live *inside* `if (amountMin !== null || amountMax !== null)`,
+        // so picking Income with no bounds left the expenses in the table.
+        expect(surviving({ ...noFilters, amountDirection: 'income' })).toEqual([1, 2]);
+      });
+
+      it('"Expenses" with both amount fields empty hides every income', () => {
+        expect(surviving({ ...noFilters, amountDirection: 'expense' })).toEqual([3, 4]);
+      });
+
+      it('"All" with both amount fields empty keeps everything', () => {
+        expect(surviving(noFilters)).toEqual([1, 2, 3, 4]);
+      });
+
+      it('"All" with a bound filters by magnitude across both signs', () => {
+        // One income and one expense of the same magnitude — a size filter, not a sign filter.
+        const sameMagnitude = [
+          transaction({ id: 1, amount: 500 }),
+          transaction({ id: 2, amount: -500 }),
+        ];
+        const filters = { ...noFilters, amountMin: '100', amountMax: '900' };
+
+        expect(
+          sameMagnitude
+            .filter((t) => matchesTransactionFilters(t, filters, new Set()))
+            .map((t) => t.id),
+        ).toEqual([1, 2]);
+        expect(surviving(filters)).toEqual([4]);
+      });
+
+      it('treats a zero-amount transaction as income, matching the ">= 0" boundary', () => {
+        const zero = transaction({ amount: 0 });
+
+        expect(
+          matchesTransactionFilters(zero, { ...noFilters, amountDirection: 'income' }, new Set()),
+        ).toBe(true);
+        expect(
+          matchesTransactionFilters(zero, { ...noFilters, amountDirection: 'expense' }, new Set()),
+        ).toBe(false);
+      });
     });
   });
 
@@ -304,7 +358,9 @@ describe('filtersToRuleConditions (TICKET-CAT-07)', () => {
     ]);
   });
 
-  describe('amount axis, expense direction (default)', () => {
+  describe('amount axis, expense direction', () => {
+    const noFilters = expenseBaseline;
+
     it('both bounds set converts to a between condition, re-signed negative', () => {
       expect(filtersToRuleConditions({ ...noFilters, amountMin: '10', amountMax: '50' })).toEqual([
         { field: 'amount', operator: 'between', value: [-50, -10] },
@@ -346,9 +402,28 @@ describe('filtersToRuleConditions (TICKET-CAT-07)', () => {
     });
   });
 
+  describe('amount axis, "all" direction (TICKET-TXN-10)', () => {
+    it('drops the amount condition rather than guessing a sign', () => {
+      // `|amount| >= 10` is `amount <= -10` OR `amount >= 10`, and RuleCondition has no `or` — so
+      // emitting either signed branch would convert the filter into something narrower than what
+      // the user was looking at.
+      expect(filtersToRuleConditions({ ...noFilters, amountMin: '10', amountMax: '50' })).toEqual(
+        [],
+      );
+      expect(filtersToRuleConditions({ ...noFilters, amountMin: '10' })).toEqual([]);
+      expect(filtersToRuleConditions({ ...noFilters, amountMax: '50' })).toEqual([]);
+    });
+
+    it('still converts the other axes alongside it', () => {
+      expect(filtersToRuleConditions({ ...noFilters, text: 'rent', amountMin: '10' })).toEqual([
+        { field: 'description', operator: 'contains', value: 'rent' },
+      ]);
+    });
+  });
+
   it('combines every convertible axis at once', () => {
     const filters: TransactionFilters = {
-      ...noFilters,
+      ...expenseBaseline,
       text: 'netflix',
       accountId: '2',
       amountMin: '10',
@@ -390,6 +465,17 @@ describe('excludedFilterAxisLabels (TICKET-CAT-07)', () => {
 
   it('flags an active category', () => {
     expect(excludedFilterAxisLabels({ ...noFilters, categoryId: '3' })).toEqual(['Category']);
+  });
+
+  it('flags an amount bound with no direction, which no rule condition can express (TICKET-TXN-10)', () => {
+    expect(excludedFilterAxisLabels({ ...noFilters, amountMin: '10' })).toEqual(['Amount']);
+    expect(excludedFilterAxisLabels({ ...noFilters, amountMax: '50' })).toEqual(['Amount']);
+    // A direction makes it convertible again, so it isn't excluded.
+    expect(
+      excludedFilterAxisLabels({ ...noFilters, amountDirection: 'income', amountMin: '10' }),
+    ).toEqual([]);
+    // …and a direction with no bound has nothing to convert either way.
+    expect(excludedFilterAxisLabels({ ...noFilters, amountDirection: 'income' })).toEqual([]);
   });
 
   it('flags both together', () => {

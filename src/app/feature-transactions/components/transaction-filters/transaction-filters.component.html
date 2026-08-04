@@ -28,50 +28,51 @@
       </mm-select>
     </mm-fieldset>
 
-    <mm-fieldset legend="Amount type">
-      <div class="join" role="group" aria-label="Amount direction">
-        <button
-          type="button"
-          class="btn btn-sm join-item"
-          [class.btn-primary]="amountDirection() === 'expense'"
-          [class.btn-outline]="amountDirection() !== 'expense'"
-          (click)="setAmountDirection('expense')"
-        >
-          Expenses
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm join-item"
-          [class.btn-primary]="amountDirection() === 'income'"
-          [class.btn-outline]="amountDirection() !== 'income'"
-          (click)="setAmountDirection('income')"
-        >
-          Income
-        </button>
-      </div>
-    </mm-fieldset>
+    <!-- One container for the three amount controls (TICKET-TXN-10), so no breakpoint's wrap can
+         put Category between the direction and the bounds it applies to. -->
+    <div
+      class="col-span-2 grid grid-cols-2 gap-3 sm:col-span-3 sm:grid-cols-3 lg:col-span-3"
+      data-testid="amount-group"
+    >
+      <mm-fieldset legend="Amount type" class="col-span-2 sm:col-span-1">
+        <div class="join w-full" role="group" aria-label="Amount direction">
+          @for (option of amountDirections; track option.value) {
+            <button
+              type="button"
+              class="btn btn-sm join-item flex-1"
+              [class.btn-primary]="amountDirection() === option.value"
+              [class.btn-outline]="amountDirection() !== option.value"
+              [attr.aria-pressed]="amountDirection() === option.value"
+              (click)="setAmountDirection(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </mm-fieldset>
 
-    <mm-fieldset legend="Min amount">
-      <mm-input
-        type="number"
-        step="0.01"
-        min="0"
-        formControlName="amountMin"
-        size="sm"
-        class="w-full"
-      />
-    </mm-fieldset>
+      <mm-fieldset legend="Min amount">
+        <mm-input
+          type="number"
+          step="0.01"
+          min="0"
+          formControlName="amountMin"
+          size="sm"
+          class="w-full"
+        />
+      </mm-fieldset>
 
-    <mm-fieldset legend="Max amount">
-      <mm-input
-        type="number"
-        step="0.01"
-        min="0"
-        formControlName="amountMax"
-        size="sm"
-        class="w-full"
-      />
-    </mm-fieldset>
+      <mm-fieldset legend="Max amount">
+        <mm-input
+          type="number"
+          step="0.01"
+          min="0"
+          formControlName="amountMax"
+          size="sm"
+          class="w-full"
+        />
+      </mm-fieldset>
+    </div>
 
     <mm-fieldset legend="Search" class="col-span-2 sm:col-span-3 lg:col-span-5">
       <mm-input
@@ -84,12 +85,7 @@
     </mm-fieldset>
 
     <mm-flex align="center" justify="center" gap="2" class="h-full">
-      <div
-        class="tooltip flex-1"
-        [attr.data-tip]="
-          canMakeRuleFromFilter() ? null : 'Set a text, account, or amount filter first'
-        "
-      >
+      <div class="tooltip flex-1" [attr.data-tip]="makeRuleHint()">
         <mm-button
           variant="ghost"
           size="sm"

@@ -23,12 +23,6 @@ export type RoadmapEntry = {
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
     versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-TXN-10',
-    title: 'Picking Income or Expenses filters the list straight away, and “All” turns it back off',
-    area: 'Transactions',
-  },
-  {
-    versionFolder: 'v1.6.2_interface_polish',
     ticketId: 'TICKET-INC-22',
     title:
       'The Income page fits its charts side by side instead of scrolling for pages, and the events list stays put while you scroll',

@@ -27,9 +27,16 @@ import {
 import {
   combinedFiltersSignal,
   debouncedTextSignal,
+  hasActiveFiltersSignal,
   structuralFiltersSignal,
 } from '@/shared/utils';
-import { filtersToRuleConditions, type TransactionFilters } from '../../transaction-filters';
+import {
+  AMOUNT_DIRECTION_OPTIONS,
+  DEFAULT_AMOUNT_DIRECTION,
+  filtersToRuleConditions,
+  type AmountDirection,
+  type TransactionFilters,
+} from '../../transaction-filters';
 
 /** The filter fields that apply immediately, i.e. everything except the debounced free-text needle (CR-2.4). */
 type StructuralFilters = Omit<TransactionFilters, 'text'>;
@@ -47,7 +54,7 @@ function structuralFiltersOf(value: Partial<TransactionFilters>): StructuralFilt
     categoryId: value.categoryId ?? '',
     amountMin: value.amountMin ?? '',
     amountMax: value.amountMax ?? '',
-    amountDirection: value.amountDirection ?? 'expense',
+    amountDirection: value.amountDirection ?? DEFAULT_AMOUNT_DIRECTION,
   };
 }
 
@@ -94,7 +101,8 @@ export class TransactionFiltersComponent {
     text: [''],
     amountMin: [''],
     amountMax: [''],
-    amountDirection: this.formBuilder.nonNullable.control<'expense' | 'income'>('expense'),
+    amountDirection:
+      this.formBuilder.nonNullable.control<AmountDirection>(DEFAULT_AMOUNT_DIRECTION),
   });
 
   constructor() {
@@ -145,31 +153,42 @@ export class TransactionFiltersComponent {
   );
 
   /**
-   * Component-local override of the shared `hasActiveFiltersSignal` scan: `amountDirection` is
-   * always populated ('expense' by default), so the generic "any field non-empty" check would
-   * otherwise treat it as a permanently active filter. It only counts as active alongside a
-   * non-empty `amountMin`/`amountMax` (TICKET-TXN-08).
+   * The shared scan, with no axis excluded (TICKET-TXN-10): `amountDirection`'s off position is
+   * `'all'` rather than `''`, so it is declared as this form's one non-empty default and otherwise
+   * counts exactly like every other axis — picking Income with nothing else set enables "Clear".
    */
-  protected readonly hasActiveFilters = computed(() => {
-    const structural = this.structuralFilters();
-    const structuralActive = Object.entries(structural).some(
-      ([key, value]) => key !== 'amountDirection' && value !== '',
-    );
-    return this.debouncedText() !== '' || structuralActive;
-  });
+  protected readonly hasActiveFilters = hasActiveFiltersSignal(
+    this.structuralFilters,
+    this.debouncedText,
+    { amountDirection: DEFAULT_AMOUNT_DIRECTION },
+  );
 
   protected readonly amountDirection = computed(() => this.structuralFilters().amountDirection);
+
+  protected readonly amountDirections = AMOUNT_DIRECTION_OPTIONS;
 
   /** Enabled only when at least one *convertible* axis is set — a date/category-only filter has nothing to turn into a rule (TICKET-CAT-07). */
   protected readonly canMakeRuleFromFilter = computed(
     () => filtersToRuleConditions(this.filterKey()).length > 0,
   );
 
+  /**
+   * The disabled button's tooltip, or `null` while it is enabled — resolved here rather than with a
+   * ternary in the binding, per the "templates branch on state, they never derive it" convention.
+   * Names Income/Expenses explicitly (TICKET-TXN-10): an amount bound under "All" is an either-sign
+   * match, which no rule condition can express, so a bound alone no longer enables the button.
+   */
+  protected readonly makeRuleHint = computed(() =>
+    this.canMakeRuleFromFilter()
+      ? null
+      : 'Set a text, account, or Income/Expenses amount filter first',
+  );
+
   protected onDateRangeChange(range: DateRangeValue): void {
     this.filterForm.patchValue({ dateFrom: range.from, dateTo: range.to });
   }
 
-  protected setAmountDirection(direction: 'expense' | 'income'): void {
+  protected setAmountDirection(direction: AmountDirection): void {
     this.filterForm.patchValue({ amountDirection: direction });
   }
 
@@ -191,7 +210,7 @@ export class TransactionFiltersComponent {
       text: '',
       amountMin: '',
       amountMax: '',
-      amountDirection: 'expense',
+      amountDirection: DEFAULT_AMOUNT_DIRECTION,
     });
   }
 }

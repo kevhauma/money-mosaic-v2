@@ -40,15 +40,23 @@ export function combinedFiltersSignal<TStructural extends Record<string, string>
 }
 
 /**
- * True when any structural field or the debounced text needle is non-empty — powers the
- * "clear filters" affordance shared by every filter form (CR-2.4, CR3-2.5).
+ * True when any structural field differs from its off position, or the debounced text needle is
+ * non-empty — powers the "clear filters" affordance shared by every filter form (CR-2.4, CR3-2.5).
+ *
+ * An axis is "off" at `''` unless `defaults` names another value for it. That's for a control whose
+ * off position is a real choice rather than an empty string — the transaction filters' three-way
+ * amount direction, which is `'all'` when it isn't filtering (TICKET-TXN-10). Before it existed,
+ * that form had to hand-roll its own scan excluding the axis entirely, which meant a chosen
+ * direction never counted as an active filter at all.
  */
 export function hasActiveFiltersSignal(
   structuralFilters: Signal<Record<string, string>>,
   debouncedText: Signal<string>,
+  defaults: Readonly<Record<string, string>> = {},
 ): Signal<boolean> {
   return computed(
     () =>
-      debouncedText() !== '' || Object.values(structuralFilters()).some((value) => value !== ''),
+      debouncedText() !== '' ||
+      Object.entries(structuralFilters()).some(([axis, value]) => value !== (defaults[axis] ?? '')),
   );
 }
