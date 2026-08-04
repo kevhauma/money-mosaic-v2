@@ -133,6 +133,22 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
   const A_RAISE = (): Transaction[] =>
     deposits(monthsOf('2025', 12), (_, index) => (index < 6 ? 2500 : 2900));
 
+  /**
+   * A raise every July for ten years — the long history the rail's uncapped scroll region used to
+   * stretch the page with (TICKET-INC-22).
+   */
+  const A_DECADE_OF_RAISES = (): Transaction[] =>
+    Array.from({ length: 10 }, (_, yearIndex) => 2016 + yearIndex).flatMap((year, yearIndex) =>
+      deposits(
+        monthsOf(String(year), 12),
+        (_, monthIndex) => 2000 + yearIndex * 200 + (monthIndex < 6 ? 0 : 150),
+      ).map((transaction, monthIndex) => ({
+        ...transaction,
+        id: yearIndex * 100 + monthIndex + 1,
+        fingerprint: `fp-decade-${yearIndex}-${monthIndex}`,
+      })),
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -399,6 +415,64 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       const list = fixture.nativeElement.querySelector('ol')?.parentElement;
 
       expect(list?.className).toContain('overflow-y-auto');
+    });
+  });
+
+  describe('viewport-capped sticky column (TICKET-INC-22)', () => {
+    const cardOf = (): HTMLElement => fixture.nativeElement.querySelector('.card');
+    const scrollRegionOf = (): HTMLElement =>
+      fixture.nativeElement.querySelector('ol')?.parentElement;
+
+    it('caps its height at the viewport less the sticky offset, so it cannot stretch the grid row', async () => {
+      await setup(A_RAISE());
+
+      // Without this the `overflow-y-auto` above is decorative: the region grows to its content and
+      // takes the row with it (a ten-year history measured 1,312px against a 720px viewport).
+      expect(cardOf().className).toContain('lg:max-h-[calc(100vh-6rem)]');
+    });
+
+    it('keeps the cap and the internal scroll to `lg:`, where the rail is a column beside the charts', async () => {
+      await setup(A_RAISE());
+
+      // Stacked under the charts on a phone it is just another section; a viewport-tall sticky rail
+      // there would cover the content it annotates.
+      const heightClasses = cardOf()
+        .className.split(/\s+/)
+        .filter((c) => c.includes('max-h'));
+      expect(heightClasses.length).toBeGreaterThan(0);
+      expect(heightClasses.every((c) => c.startsWith('lg:'))).toBe(true);
+      expect(cardOf().className).not.toContain('h-full');
+    });
+
+    it('lays the card out as a column so the scroll region can take the leftover height', async () => {
+      await setup(A_RAISE());
+
+      // `min-h-0` at every level is what lets a flex child actually shrink below its content.
+      expect(cardOf().className).toContain('lg:flex');
+      expect(cardOf().className).toContain('lg:flex-col');
+      expect(scrollRegionOf().className).toContain('flex-1');
+      expect(scrollRegionOf().className).toContain('min-h-0');
+    });
+
+    it('leaves the "Notable changes" heading outside the scroll region, so it stays pinned', async () => {
+      await setup(A_RAISE());
+      const heading = fixture.nativeElement.querySelector('#income-events-heading');
+
+      expect(heading).not.toBeNull();
+      expect(scrollRegionOf().contains(heading)).toBe(false);
+    });
+
+    it('holds a decade of events without the card itself growing — they go in the scroll region', async () => {
+      // Ten years of raises: the case the old uncapped region turned into 1,312px of page.
+      await setup(A_DECADE_OF_RAISES());
+      const years = Array.from(
+        fixture.nativeElement.querySelectorAll('ol') as NodeListOf<HTMLElement>,
+      );
+
+      expect(years.length).toBeGreaterThanOrEqual(9);
+      // Every one of them is inside the capped, scrolling region rather than beside it.
+      expect(years.every((list) => scrollRegionOf().contains(list))).toBe(true);
+      expect(cardOf().className).toContain('lg:max-h-[calc(100vh-6rem)]');
     });
   });
 });

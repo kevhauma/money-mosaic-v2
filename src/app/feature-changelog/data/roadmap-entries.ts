@@ -22,13 +22,6 @@ export type RoadmapEntry = {
  */
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   {
-    versionFolder: 'v1.6.2_interface_polish',
-    ticketId: 'TICKET-INC-22',
-    title:
-      'The Income page fits its charts side by side instead of scrolling for pages, and the events list stays put while you scroll',
-    area: 'Income',
-  },
-  {
     versionFolder: 'v1.7_loan_tracker',
     ticketId: 'topic-loan-tracker',
     title:

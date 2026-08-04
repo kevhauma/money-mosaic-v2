@@ -85,14 +85,28 @@
           </table>
         </mm-paper>
 
-        <app-income-growth-panel class="mt-6 block" />
+        <!-- The two short panels pair up (TICKET-INC-22) — three stat cards and a picker-plus-chart,
+             both well under full width on a wide screen. Same `@container` + `@xl` rule the Net vs
+             gross section uses, so the page has one responsive threshold rather than three. Pairing
+             them is what moves the yearly panel above the Net vs gross section: they are the two
+             that fit beside each other, and a pair can only sit where both of its halves do. -->
+        <div class="@container mt-6">
+          <div class="grid grid-cols-1 gap-6 @xl:grid-cols-2">
+            <app-income-growth-panel class="block" />
+            <app-income-yearly-panel class="block" />
+          </div>
+        </div>
 
         <app-income-gross-net-section class="mt-6 block" />
-
-        <app-income-yearly-panel class="mt-6 block" />
       </div>
 
-      <app-income-events-sidebar class="block" />
+      <!-- `lg:self-start` is load-bearing, not decoration (TICKET-INC-22): a grid item stretches to
+           its row by default, and a stretched item gives `sticky` nothing to move within — the rail
+           would silently scroll away with the charts. `lg:top-20` clears the sticky page header
+           (64px) with a 16px gap; below `lg:` the rail stacks under the charts and is neither
+           sticky nor capped, since a viewport-tall sticky rail on a phone would cover the very
+           content it annotates. -->
+      <app-income-events-sidebar class="block lg:sticky lg:top-20 lg:self-start" />
     </div>
   } @else {
     <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is

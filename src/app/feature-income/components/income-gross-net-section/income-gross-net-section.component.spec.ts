@@ -192,7 +192,12 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       expect(grid?.classList.contains('grid-cols-1')).toBe(true);
       // A *container* query, not a viewport one (TICKET-INC-17): from `lg:` this section shares the
       // page with the events rail, so its own width is what decides whether two cells fit.
-      expect(grid?.classList.contains('@2xl:grid-cols-2')).toBe(true);
+      // `@lg` (512px), not `@2xl` (672px), since TICKET-INC-22. The query sees the `@container`
+      // *inside* mm-paper's padding — 567px on a 1280px window — so `@2xl` missed by 105px and even
+      // `@xl` (576px) would have missed by 9 and changed nothing at all.
+      expect(grid?.classList.contains('@lg:grid-cols-2')).toBe(true);
+      expect(grid?.classList.contains('@2xl:grid-cols-2')).toBe(false);
+      expect(grid?.classList.contains('@xl:grid-cols-2')).toBe(false);
       expect(grid?.parentElement?.classList.contains('@container')).toBe(true);
     });
 

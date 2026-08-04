@@ -63,7 +63,7 @@ are independent of each other after it; the rest are independent unless noted.
 - [x] [TICKET-ACC-11](./tickets/TICKET-ACC-11-accounts-chart-day-hover-transactions.md) — Hovering a day on a balance chart shows that day's transactions — grouped by account on the Accounts overview, for the one account on account detail (extends FR-STAT-2 / TICKET-STAT-12) — **needs ACC-10**: "that day's transactions" has no referent under a month bucket
 - [x] [TICKET-ACC-09](./tickets/TICKET-ACC-09-accounts-list-matches-stack-order.md) — Account cards stack in one column, in the chart's stacking order (extends TICKET-STAT-02) — independent of the two chart tickets above; touches only what sits under the chart
 - [x] [TICKET-TXN-10](./tickets/TICKET-TXN-10-amount-type-with-min-max.md) — Amount type sits with min/max, gains an "All", and filters on its own (bug fix, revises TICKET-TXN-08 — the direction check lives inside the `amountMin`/`amountMax` branch, so a direction with no bounds filters nothing) — fully independent of everything else here
-- [ ] [TICKET-INC-22](./tickets/TICKET-INC-22-income-page-shorter-scroll.md) — The Income page stops being a mile of scroll, and its events rail becomes a sticky, viewport-capped column (revises TICKET-INC-16/INC-17 layout) — **last**: INC-21 already changes the top of this page, and re-verifying the layout twice is wasted
+- [x] [TICKET-INC-22](./tickets/TICKET-INC-22-income-page-shorter-scroll.md) — The Income page stops being a mile of scroll, and its events rail becomes a sticky, viewport-capped column (revises TICKET-INC-16/INC-17 layout) — **last**: INC-21 already changes the top of this page, and re-verifying the layout twice is wasted
 
 ## Considered, not ticketed
 

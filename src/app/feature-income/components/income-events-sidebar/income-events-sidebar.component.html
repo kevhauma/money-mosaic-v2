@@ -5,15 +5,24 @@
      that `income-events-sidebar.component.spec.ts` exercises with ~20 cases. If this trips a third
      template, the fix is to feed fallow real coverage (`--coverage`) rather than keep suppressing,
      or to split the row into its own component. -->
-<mm-paper class="h-full">
+<!-- Capped to the viewport from `lg:` (TICKET-INC-22), which is what makes the `overflow-y-auto`
+     below real: it had no max-height, so the region grew to its content and stretched the grid row —
+     a ten-year history measured 1,312px against a 720px viewport, stretching the page exactly as
+     that scroll region's own comment said it shouldn't. `100vh` rather than `100dvh` deliberately:
+     the cap only applies where the rail is sticky, which is desktop, where the two are the same.
+     The `6rem` clears the sticky page header (64px, TICKET-UI-25) plus a 16px gap at top and bottom,
+     matching the `lg:top-20` on the host. Uncapped below `lg:`, where the rail is just another
+     stacked section. -->
+<mm-paper class="lg:flex lg:max-h-[calc(100vh-6rem)] lg:flex-col" bodyClass="card-body lg:min-h-0">
   <!-- A labelled region rather than a bare column, so the rail is reachable as a landmark and its
        heading names it when jumped to. -->
-  <section aria-labelledby="income-events-heading">
-    <h2 id="income-events-heading" class="card-title text-base">Notable changes</h2>
+  <section aria-labelledby="income-events-heading" class="flex min-h-0 flex-1 flex-col">
+    <h2 id="income-events-heading" class="card-title shrink-0 text-base">Notable changes</h2>
 
     @if (hasEvents()) {
-      <!-- Its own scroll region, so a long history doesn't stretch the page next to the charts. -->
-      <div class="mt-3 overflow-y-auto pr-1">
+      <!-- Its own scroll region, so a long history doesn't stretch the page next to the charts. The
+           heading above stays outside it, so it stays pinned while the years scroll under it. -->
+      <div class="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
         @for (year of years(); track year.year) {
           <mm-text as="h3" weight="semibold" class="mt-6 text-sm first:mt-0">{{
             year.year

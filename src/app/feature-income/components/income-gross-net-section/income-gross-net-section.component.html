@@ -11,9 +11,17 @@
     <!-- A *container* query, not a viewport one (TICKET-INC-17): from `lg:` this section sits in the
          page's charts column beside the events rail, so what decides whether two cells fit is this
          card's own width, not the window's. Falls back to one column whenever the column is narrow,
-         which is exactly the check that ticket's Notes asked for. -->
+         which is exactly the check that ticket's Notes asked for.
+         `@lg` (32rem/512px), not `@2xl` (42rem/672px) (TICKET-INC-22). **Measure before changing
+         this number**: what the query sees is this `@container` div, *inside* `mm-paper`'s padding —
+         on a 1280px window the charts column is 617px and this div is **567px**, so `@2xl` missed by
+         105px and even `@xl` (576px) would have missed by 9 and silently changed nothing. The
+         section designed as a compact 2×2 therefore rendered 4×1 on exactly the screens people use,
+         ~1,096px instead of ~560px. At 567px a paired cell is 271px wide against its 256px height,
+         and 244px at the 512px threshold itself — the narrowest these four still read at. Going
+         lower trades scroll for an unreadable chart. -->
     <div class="@container mt-4">
-      <div class="grid grid-cols-1 gap-6 @2xl:grid-cols-2">
+      <div class="grid grid-cols-1 gap-6 @lg:grid-cols-2">
         <app-income-chart-cell
           heading="Gross and net per month"
           ariaLabel="Gross wage and net income per month; table with values follows"

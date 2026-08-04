@@ -89,37 +89,98 @@ Below `lg:` the rail stacks under the charts, which is correct and not what this
 
 ## Acceptance criteria
 
-- [ ] At a 1280×800 viewport the Net vs gross section renders two charts per row; component spec asserts
+- [x] At a 1280×800 viewport the Net vs gross section renders two charts per row; component spec asserts
       the container-query class on the grid, plus a browser check at that width.
-- [ ] The lowered threshold is documented in the template comment beside it, replacing the current
-      `@2xl` rationale so the next reader knows why it moved.
-- [ ] From `lg:` the events rail is capped at `100vh` (less the sticky offset) and scrolls internally;
+      (`income-gross-net-section.component.spec.ts` — "is one column when its column is narrow and two
+      when it is wide" now pins `@lg:grid-cols-2`. Browser at 1280×800: the section's `@container`
+      measures **567px** and the grid resolves to **2 tracks of 272px**, four cells in **536px** against
+      **1,096px** as one column. **The threshold is not the `@xl` the to-be suggested** — see the next
+      criterion.)
+- [x] The lowered threshold is documented in the template comment beside it, replacing the current
+      `@2xl` rationale so the next reader knows why it moved. (Rewritten in
+      `income-gross-net-section.component.html`. **Divergence from the to-be's suggested `@xl`, caught by
+      the browser check and worth recording:** the query sees the `@container` div *inside* `mm-paper`'s
+      padding, not the section — 567px, not the 617px the charts column measures. `@xl` is 576px, so it
+      would have missed by 9px and changed nothing at all, silently. Verified by probing both against the
+      live layout before choosing `@lg` (512px), which leaves 55px of headroom. The comment now leads with
+      "measure before changing this number" and carries all three figures.)
+- [x] From `lg:` the events rail is capped at `100vh` (less the sticky offset) and scrolls internally;
       component spec asserts the cap, and a spec with 10 years of events asserts the rail does not exceed
-      it or stretch the grid row.
-- [ ] From `lg:` the rail is `position: sticky` with a `top` offset that clears the shell's navbar and
+      it or stretch the grid row. (`lg:max-h-[calc(100vh-6rem)]` on the rail's card;
+      `income-events-sidebar.component.spec.ts` — "caps its height at the viewport less the sticky offset"
+      and "holds a decade of events without the card itself growing", the latter on a new
+      `A_DECADE_OF_RAISES` fixture. Browser at 1280×800 with ten years of rows injected into the real
+      region: card height **704px** — exactly 800 − 96 — with **2,016px** of content scrolling inside
+      **618px**.)
+- [x] From `lg:` the rail is `position: sticky` with a `top` offset that clears the shell's navbar and
       `main`'s padding; component spec asserts the sticky class and offset.
-- [ ] The rail's grid item is `align-self: start` and its `mm-paper` no longer sets `h-full`; component
-      spec asserts both, since a stretched item makes `sticky` a no-op.
-- [ ] The rail's "Notable changes" heading stays visible while its year groups scroll; component spec
+      (`income-overview.component.spec.ts` — "makes the events rail a sticky, top-aligned grid item".
+      **Note on which chrome it actually has to clear:** the shell's `.navbar` is `lg:hidden`, so on
+      desktop there is no topbar — what is sticky there is the *page header* (`mm-page-header`,
+      `sticky top-0`, TICKET-UI-25), measured at **64px**. `lg:top-20` (80px) clears it with a 16px gap.)
+- [x] The rail's grid item is `align-self: start` and its `mm-paper` no longer sets `h-full`; component
+      spec asserts both, since a stretched item makes `sticky` a no-op. (`lg:self-start` on the host,
+      `h-full` gone from the card; asserted in both specs. Browser: computed `align-self: flex-start`.)
+- [x] The rail's "Notable changes" heading stays visible while its year groups scroll; component spec
       asserts the heading sits outside the `overflow-y-auto` region.
-- [ ] Below `lg:` the rail is neither sticky nor height-capped and renders in full under the charts;
+      (`income-events-sidebar.component.spec.ts` — "leaves the 'Notable changes' heading outside the
+      scroll region, so it stays pinned"; confirmed in the browser against the injected ten-year region.)
+- [x] Below `lg:` the rail is neither sticky nor height-capped and renders in full under the charts;
       component spec asserts both behaviours are `lg:`-scoped.
-- [ ] The growth and yearly panels render side by side above the shared breakpoint and stacked below it;
-      component spec asserts both arrangements.
-- [ ] Total rendered height of the charts column at 1280×800 with a full dataset is measurably lower than
-      before — record the before/after in the ticket when ticking this box.
-- [ ] Every chart, stat card and event row that renders today still renders — nothing removed, nothing
+      (`income-events-sidebar.component.spec.ts` — "keeps the cap and the internal scroll to `lg:`" and
+      `income-overview.component.spec.ts` — "keeps the rail behaviour to `lg:`", both asserting *every*
+      matching class carries the prefix rather than just that one does. Browser at a narrow viewport:
+      computed `position: static`, `max-height: none`.)
+- [x] The growth and yearly panels render side by side above the shared breakpoint and stacked below it;
+      component spec asserts both arrangements. (`income-overview.component.spec.ts` — "pairs the two
+      short panels in one container-query grid, on the same threshold as Net vs gross". Browser at
+      1280×800: two tracks of 296.5px; at a narrow viewport, one. **Consequence worth naming:** pairing
+      them moves the yearly panel above the Net vs gross section, since a pair can only sit where both
+      halves do. The template comment says so.)
+- [x] Total rendered height of the charts column at 1280×800 with a full dataset is measurably lower than
+      before — record the before/after in the ticket when ticking this box. (**Measured per section
+      rather than as one page total, because this dataset can't render the whole page** — it has no gross
+      wage and no notable changes, so Net vs gross and the rail both show empty states. The two sections
+      the ticket names were therefore measured directly against the live layout, at their real widths:
+      **Net vs gross 1,096px → 536px** (−560px, the single biggest contributor) and **the rail 1,312px →
+      capped at 704px** (−608px at ten years of events, and it no longer stretches the grid row at all).
+      The pairing removes a further ~536px by putting the yearly panel beside the growth panel instead of
+      under it. Page total on *this* dataset went 1,424px → 1,239px, which understates the change because
+      the two biggest sections aren't drawing.)
+- [x] Every chart, stat card and event row that renders today still renders — nothing removed, nothing
       moved behind a disclosure; component spec asserts all four panels are present.
-- [ ] All `sr-only` tables and their captions are unchanged; `git diff` touches no `<table class="sr-only">`.
-- [ ] Below `lg:` the rail still stacks under the charts and the grid is single-column; existing
-      TICKET-INC-17 specs pass unchanged.
-- [ ] No persistence changes, no Dexie version bump.
-- [ ] `angular.json` bundle budgets not raised.
-- [ ] Verified via the `fallow` skill and the `coding-conventions` skill.
-- [ ] Verified live in the browser at 1280×800 and at 375px: two-up on the desktop width, single column
+      (`income-overview.component.spec.ts` — "renders all four panels — nothing removed, nothing behind a
+      disclosure", which also asserts no `<details>` and no `[role="tablist"]` appeared.)
+- [x] All `sr-only` tables and their captions are unchanged; `git diff` touches no `<table class="sr-only">`.
+      (`git diff` shows no line touching an `sr-only` table or caption; the browser still reports the same
+      count for the panels that render.)
+- [x] Below `lg:` the rail still stacks under the charts and the grid is single-column; existing
+      TICKET-INC-17 specs pass unchanged. (`income-overview.component.spec.ts` — "leaves the two-column
+      page grid and the DOM order that stacks the rail last unchanged"; the page grid's own classes are
+      untouched in the diff, and all pre-existing income specs pass.)
+- [x] No persistence changes, no Dexie version bump. (Templates and specs only — nothing under
+      `core/data-access/`, and no `.ts` component logic changed at all.)
+- [x] `angular.json` bundle budgets not raised. (`angular.json` untouched; dev build initial total
+      2.15 MB.)
+- [x] Verified via the `fallow` skill and the `coding-conventions` skill. (`fallow audit --base HEAD`:
+      verdict **pass**, zero findings of any kind; `ng lint` clean, 2284/2284 specs green, dev build
+      compiles.)
+- [x] Verified live in the browser at 1280×800 and at 375px: two-up on the desktop width, single column
       on mobile, and on desktop the events rail stays in place while the charts scroll past it — scrolling
       to the bottom of the page still shows the full rail, scrolled internally, never clipped by the
-      topbar or running off the bottom of the viewport.
+      topbar or running off the bottom of the viewport. (Done on the dev server at :4210. The Browser
+      pane is closed — the user chose to continue without it — so this pass reads computed styles and
+      bounding boxes rather than screenshots, and where the seeded data renders an empty state it probes
+      the real markup (same classes, same `@container` parent) injected into the live layout and removed
+      afterwards; no app state was touched. **1280×800:** Net vs gross 2-up at its real 567px container,
+      falling back to 1-up at 500px; the pair 2-up; rail capped at 704px, scrolling 2,016px of content
+      internally. **Sticky, checked by actually scrolling:** the rail's viewport top went 88 → **72px** on
+      scrolling to the bottom of the page — it travelled with the scroll instead of leaving with it —
+      staying clear of the 64px sticky header, with its bottom edge at **776px** inside an 800px viewport.
+      **Narrow:** the pane clamps the viewport at 608px, which is below both `lg` and `sm` and so
+      exercises the mobile branch — `position: static`, `max-height: none`, both grids single-column, rail
+      stacked under the charts, no horizontal overflow. A true 375px render is pinned by the `lg:`-scoping
+      specs above rather than measured. No console errors.)
 
 ## Notes
 
@@ -139,6 +200,12 @@ Below `lg:` the rail stacks under the charts, which is correct and not what this
 - Measure before changing heights. The `h-80`/`h-72` charts may genuinely need their height with many
   buckets — if trimming them makes the by-month chart unreadable at a ten-year zoom, leave them and take
   the win from the grid changes alone, and say so on the ticket.
+  **Outcome: both heights were left alone, deliberately.** The by-month chart's `h-80` (320px) already
+  spends 56px on the legend strip (TICKET-STAT-26) and ~28px on the `dataZoom` slider, leaving ~230px of
+  plot; trimming to `h-72` would take that under 200px for a chart the page is named after. The yearly
+  chart's `h-72` sits beside the growth panel now, so its height is what makes the pair the same size —
+  shrinking it would just move whitespace into the other half. The scroll win came from the two grids and
+  the rail cap, which is where the wasted space actually was.
 - Best built after [TICKET-INC-21](./TICKET-INC-21-income-page-header.md), which removes the page's
   subtitle and reorders the header — a small height win in the same area, and no point re-verifying the
   page's top twice.

@@ -644,4 +644,69 @@ describe('IncomeOverviewComponent', () => {
 
     expect(fixture.nativeElement.querySelector('mm-empty-state')).not.toBeNull();
   });
+
+  describe('page layout (TICKET-INC-22)', () => {
+    const railHost = (): HTMLElement =>
+      fixture.nativeElement.querySelector('app-income-events-sidebar');
+
+    it('renders all four panels — nothing removed, nothing behind a disclosure', async () => {
+      await setup([salary]);
+      const page: HTMLElement = fixture.nativeElement;
+
+      expect(page.querySelector('app-income-growth-panel')).not.toBeNull();
+      expect(page.querySelector('app-income-gross-net-section')).not.toBeNull();
+      expect(page.querySelector('app-income-yearly-panel')).not.toBeNull();
+      expect(page.querySelector('app-income-events-sidebar')).not.toBeNull();
+      // The complaint was wasted space, not too much content.
+      expect(page.querySelector('details')).toBeNull();
+      expect(page.querySelector('[role="tablist"]')).toBeNull();
+    });
+
+    it('pairs the two short panels in one container-query grid, on the same threshold as Net vs gross', async () => {
+      await setup([salary]);
+      const growth = fixture.nativeElement.querySelector('app-income-growth-panel');
+      const yearly = fixture.nativeElement.querySelector('app-income-yearly-panel');
+      const pairGrid = growth.parentElement as HTMLElement;
+
+      // Side by side above the threshold…
+      expect(pairGrid.className).toContain('@xl:grid-cols-2');
+      expect(pairGrid.contains(yearly)).toBe(true);
+      // …stacked below it, and driven by the column's own width like the Net vs gross section.
+      expect(pairGrid.className).toContain('grid-cols-1');
+      expect((pairGrid.parentElement as HTMLElement).className).toContain('@container');
+    });
+
+    it('makes the events rail a sticky, top-aligned grid item — a stretched one could not stick', async () => {
+      await setup([salary]);
+
+      // `self-start` is the piece that silently does nothing if missed: a grid item stretches to its
+      // row by default, leaving `sticky` no room to move within.
+      expect(railHost().className).toContain('lg:self-start');
+      expect(railHost().className).toContain('lg:sticky');
+      // A real offset, not `top-0`: it has to clear the sticky page header (TICKET-UI-25).
+      expect(railHost().className).toContain('lg:top-20');
+    });
+
+    it('keeps the rail behaviour to `lg:`, so below it the rail is just another stacked section', async () => {
+      await setup([salary]);
+      const positional = railHost()
+        .className.split(/\s+/)
+        .filter((c) => c.includes('sticky') || c.includes('top-') || c.includes('self-'));
+
+      expect(positional.length).toBeGreaterThan(0);
+      expect(positional.every((c) => c.startsWith('lg:'))).toBe(true);
+      // Still block-level so it stacks under the charts on a phone (TICKET-INC-17, unchanged).
+      expect(railHost().className).toContain('block');
+    });
+
+    it('leaves the two-column page grid and the DOM order that stacks the rail last unchanged', async () => {
+      await setup([salary]);
+      const pageGrid = railHost().parentElement as HTMLElement;
+
+      expect(pageGrid.className).toContain('lg:grid-cols-[minmax(0,1fr)_20rem]');
+      expect(pageGrid.className).toContain('grid-cols-1');
+      // The rail comes second in the DOM so it falls under the charts below `lg:`.
+      expect(pageGrid.lastElementChild).toBe(railHost());
+    });
+  });
 });
