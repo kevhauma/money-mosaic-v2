@@ -97,6 +97,27 @@
 .mm-glow {
   box-shadow: var(--mm-glow-shadow, none);
 }
+/**
+ * The visually-hidden companion tables every chart carries (TICKET-UI-07 / TICKET-STAT-20) must not
+ * be able to widen the page.
+ *
+ * `sr-only` hides an element with `position: absolute; width: 1px; overflow: hidden`, which works
+ * for every element *except* a table: `display: table` auto-sizes to its content and treats `width`
+ * (and `max-width`) as a lower bound, so the table lays out at its natural width — 548px for one of
+ * the Net vs gross cells — and, being absolutely positioned, extends the document's scrollable
+ * overflow. TICKET-INC-22 surfaced it as a horizontal scrollbar on `/income` once those cells moved
+ * far enough right for one to cross the viewport edge, but the flaw is in every such table.
+ *
+ * `position: fixed` is the fix that keeps the table a *table*: fixed elements don't contribute to
+ * scrollable overflow, and the element is already clipped to invisibility, so viewport-relative
+ * positioning has no visual effect. `display: block` would also fix the width, but it strips the
+ * table semantics these exist to provide — the relationships between the caption, the headers and
+ * the cells are the whole point.
+ */
+table.sr-only {
+  position: fixed;
+}
+
 .mm-elev-flat {
   box-shadow: var(--mm-elev-flat-shadow, none);
 }

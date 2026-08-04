@@ -54,7 +54,7 @@
           <div
             echarts
             [options]="chartOption()"
-            class="h-80 w-full"
+            class="h-72 w-full"
             role="img"
             [attr.aria-label]="chartAriaLabel()"
             (chartClick)="onChartClick($event)"
@@ -85,19 +85,17 @@
           </table>
         </mm-paper>
 
-        <!-- The two short panels pair up (TICKET-INC-22) — three stat cards and a picker-plus-chart,
-             both well under full width on a wide screen. Same `@container` + `@xl` rule the Net vs
-             gross section uses, so the page has one responsive threshold rather than three. Pairing
-             them is what moves the yearly panel above the Net vs gross section: they are the two
-             that fit beside each other, and a pair can only sit where both of its halves do. -->
-        <div class="@container mt-6">
-          <div class="grid grid-cols-1 gap-6 @xl:grid-cols-2">
-            <app-income-growth-panel class="block" />
-            <app-income-yearly-panel class="block" />
-          </div>
-        </div>
+        <!-- These two stay full width, and TICKET-INC-22's "pair the two short panels" was measured
+             and abandoned rather than shipped: the charts column is 617px on a 1280px window, so a
+             half is 297px, and the growth panel's three stat cards are 168px each — they stack one
+             per row and that panel goes 177px → 536px. Pairing cut ~185px of page but left both
+             halves cramped (the yearly heading wrapped and its chart lost a third of its width),
+             which is a worse page, not a shorter one. Three cards only sit side by side above a
+             ~600px half, i.e. a ~1,224px charts column, which this layout never has next to a 20rem
+             rail. The scroll win is in the Net vs gross grid and the rail cap instead. -->
+        <app-income-growth-panel class="mt-6 block" />
 
-        <app-income-gross-net-section class="mt-6 block" />
+        <app-income-yearly-panel class="mt-6 block" />
       </div>
 
       <!-- `lg:self-start` is load-bearing, not decoration (TICKET-INC-22): a grid item stretches to
@@ -108,6 +106,15 @@
            content it annotates. -->
       <app-income-events-sidebar class="block lg:sticky lg:top-20 lg:self-start" />
     </div>
+
+    <!-- Full page width, outside the two-column grid (TICKET-INC-22): four charts in a 567px column
+         beside the rail gave them 272px each and made the 2-up threshold marginal — a window under
+         ~1,225px dropped back to one per row and the section doubled in height. Out here the
+         container is ~911px at 1280, so two-up has 100px+ of headroom and each chart gets 443px, and
+         a wide monitor pairs them four across instead. The trade, taken deliberately: the events
+         rail sticks within the grid above, so it scrolls away once you reach this section rather
+         than following you down it. -->
+    <app-income-gross-net-section class="mt-6 block" />
   } @else {
     <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
        ticked" and "nothing is categorised as income yet" look identical from here, and a first-time

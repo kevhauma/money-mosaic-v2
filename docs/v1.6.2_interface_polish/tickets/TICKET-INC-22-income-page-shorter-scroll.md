@@ -92,18 +92,25 @@ Below `lg:` the rail stacks under the charts, which is correct and not what this
 - [x] At a 1280×800 viewport the Net vs gross section renders two charts per row; component spec asserts
       the container-query class on the grid, plus a browser check at that width.
       (`income-gross-net-section.component.spec.ts` — "is one column when its column is narrow and two
-      when it is wide" now pins `@lg:grid-cols-2`. Browser at 1280×800: the section's `@container`
-      measures **567px** and the grid resolves to **2 tracks of 272px**, four cells in **536px** against
-      **1,096px** as one column. **The threshold is not the `@xl` the to-be suggested** — see the next
-      criterion.)
+      when it is wide" now pins `@lg:grid-cols-2`. **The threshold is not the `@xl` the to-be suggested,
+      and the section no longer sits in the charts column** — see the two criteria below. Browser at
+      1280×800 with the section actually rendering: **2 tracks of 444px**, four cells in **589px**
+      against ~1,128px as one column.)
 - [x] The lowered threshold is documented in the template comment beside it, replacing the current
       `@2xl` rationale so the next reader knows why it moved. (Rewritten in
       `income-gross-net-section.component.html`. **Divergence from the to-be's suggested `@xl`, caught by
       the browser check and worth recording:** the query sees the `@container` div *inside* `mm-paper`'s
-      padding, not the section — 567px, not the 617px the charts column measures. `@xl` is 576px, so it
-      would have missed by 9px and changed nothing at all, silently. Verified by probing both against the
-      live layout before choosing `@lg` (512px), which leaves 55px of headroom. The comment now leads with
-      "measure before changing this number" and carries all three figures.)
+      padding, not the section — 567px in the charts column, not the 617px the column itself measures.
+      `@xl` is 576px, so it would have missed by 9px and changed nothing at all, silently. `@lg` (512px)
+      was chosen instead. The comment leads with "measure before changing this number" and carries the
+      figures.)
+- [x] **Added after the fact, at the user's request:** the section spans the **full page width**, outside
+      the two-column grid, and gains a `@6xl:grid-cols-4` tier. In the 567px column the 2-up threshold
+      was marginal — any window under ~1,225px fell back to one per row and the section doubled — and the
+      charts were 272px each. Out here the container is 911px at 1280, so 2-up has 100px of headroom and
+      each chart gets **444px**; a 1920px monitor gets four across in one row instead of two. Costs 42px
+      of height as well. **The trade, taken deliberately:** the events rail sticks within the grid above,
+      so it now scrolls away when you reach this section instead of following you down it.
 - [x] From `lg:` the events rail is capped at `100vh` (less the sticky offset) and scrolls internally;
       component spec asserts the cap, and a spec with 10 years of events asserts the rail does not exceed
       it or stretch the grid row. (`lg:max-h-[calc(100vh-6rem)]` on the rail's card;
@@ -131,29 +138,53 @@ Below `lg:` the rail stacks under the charts, which is correct and not what this
       `income-overview.component.spec.ts` — "keeps the rail behaviour to `lg:`", both asserting *every*
       matching class carries the prefix rather than just that one does. Browser at a narrow viewport:
       computed `position: static`, `max-height: none`.)
-- [x] The growth and yearly panels render side by side above the shared breakpoint and stacked below it;
-      component spec asserts both arrangements. (`income-overview.component.spec.ts` — "pairs the two
-      short panels in one container-query grid, on the same threshold as Net vs gross". Browser at
-      1280×800: two tracks of 296.5px; at a narrow viewport, one. **Consequence worth naming:** pairing
-      them moves the yearly panel above the Net vs gross section, since a pair can only sit where both
-      halves do. The template comment says so.)
+- [ ] The growth and yearly panels render side by side above the shared breakpoint and stacked below it;
+      component spec asserts both arrangements. **Not shipped — measured and abandoned, deliberately.**
+      It was built and briefly shipped, and looking at the real page showed the trade was bad: the charts
+      column is 617px, so a half is 297px, and the growth panel's three stat cards are 168px each — they
+      stack one per row and that panel goes **177px → 536px**, while the yearly heading wraps to two
+      lines and its chart loses a third of its width. The pair row saved ~185px of page and cost two
+      visibly cramped panels. Three stat cards only sit side by side above a ~600px half, i.e. a
+      ~1,224px charts column, which this layout never has next to a 20rem rail. Reverted; both panels
+      are full width again, and `income-overview.component.spec.ts` — "keeps the growth panel full
+      width, so its three stat cards stay on one row" — pins that rather than leaving it to drift back.
 - [x] Total rendered height of the charts column at 1280×800 with a full dataset is measurably lower than
-      before — record the before/after in the ticket when ticking this box. (**Measured per section
-      rather than as one page total, because this dataset can't render the whole page** — it has no gross
-      wage and no notable changes, so Net vs gross and the rail both show empty states. The two sections
-      the ticket names were therefore measured directly against the live layout, at their real widths:
-      **Net vs gross 1,096px → 536px** (−560px, the single biggest contributor) and **the rail 1,312px →
-      capped at 704px** (−608px at ten years of events, and it no longer stretches the grid row at all).
-      The pairing removes a further ~536px by putting the yearly panel beside the growth panel instead of
-      under it. Page total on *this* dataset went 1,424px → 1,239px, which understates the change because
-      the two biggest sections aren't drawing.)
+      before — record the before/after in the ticket when ticking this box. (**Measured on the real page
+      with all four panels drawing.** The seeded dataset has no gross wage, so Net vs gross renders an
+      empty state; four months of gross wage were added through Salary details to measure, and removed
+      again afterwards. At 1280×800 with every panel showing:
+
+      | | before | after |
+      |---|---|---|
+      | Income by month | 402 | 370 |
+      | Income growth | 178 | 178 |
+      | Income by year | 520 | 488 |
+      | Net vs gross | ~1,293 | **734** |
+      | Events rail | 1,312, stretching the grid row | capped 704, sticky |
+      | **page total** | **~2,590 (3.2 screens)** | **1,953 (2.44 screens)** |
+
+      Net vs gross is the whole story: its grid went 4×1 → 2×2 (1,128px → 589px of cells). The rail cap
+      stops a long history adding to the page at all. Roughly a quarter off, not the half the to-be
+      hoped for — the remainder is four 256px charts, three panels of real content and a header, and
+      cutting further means either shrinking those four cells (which this ticket explicitly forbids) or
+      hiding something.)
 - [x] Every chart, stat card and event row that renders today still renders — nothing removed, nothing
       moved behind a disclosure; component spec asserts all four panels are present.
       (`income-overview.component.spec.ts` — "renders all four panels — nothing removed, nothing behind a
       disclosure", which also asserts no `<details>` and no `[role="tablist"]` appeared.)
 - [x] All `sr-only` tables and their captions are unchanged; `git diff` touches no `<table class="sr-only">`.
-      (`git diff` shows no line touching an `sr-only` table or caption; the browser still reports the same
-      count for the panels that render.)
+      (`git diff` shows no line touching an `sr-only` table or caption. **It did surface a latent bug in
+      them, fixed in `styles.css` rather than in any template:** `sr-only` hides an element with
+      `position: absolute; width: 1px; overflow: hidden`, which works for everything *except* a table —
+      `display: table` auto-sizes to its content and treats `width` as a lower bound, so these tables lay
+      out at their natural width (548px for one Net vs gross cell) and, being absolutely positioned, add
+      to the document's scrollable overflow. Moving the section right was enough to push one past the
+      viewport edge and put a **horizontal scrollbar** on `/income`, and they were also adding ~76px of
+      phantom *vertical* scroll. `table.sr-only { position: fixed }` fixes both — a fixed element
+      contributes no scrollable overflow, and it stays a table, so the caption/header/cell relationships
+      these exist for survive. `display: block` would also have fixed the width and would have destroyed
+      exactly that. Verified after the fix: `display: table`, caption present, rows readable, still
+      clipped to invisibility, and `scrollWidth` back inside the viewport.)
 - [x] Below `lg:` the rail still stacks under the charts and the grid is single-column; existing
       TICKET-INC-17 specs pass unchanged. (`income-overview.component.spec.ts` — "leaves the two-column
       page grid and the DOM order that stacks the rail last unchanged"; the page grid's own classes are

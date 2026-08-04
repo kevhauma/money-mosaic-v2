@@ -608,10 +608,10 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     title:
       'The Income page now uses the width it has instead of stacking everything into one very long column',
     details: [
-      'The “Net vs gross” charts pair up two per row on a normal laptop — they were meant to, but the rule that decided it needed a wider column than the page ever gives it, so they were rendering one per row',
-      'Income growth and Income by year sit side by side for the same reason',
+      'The “Net vs gross” charts pair up two per row — they were meant to, but the rule that decided it needed a wider column than the page ever gives it, so they were rendering one under the other',
+      'That section now uses the full page width, so each of its four charts is much larger, and a wide monitor lines all four up in a single row',
       'The “Notable changes” rail stays with you as you scroll instead of disappearing off the top, and scrolls inside itself rather than stretching the page when you have years of history',
-      'Nothing was removed and nothing was hidden behind a tab — the same charts, in less scrolling',
+      'Nothing was removed and nothing was hidden behind a tab — the same charts, in about a quarter less scrolling',
     ],
     area: 'Income',
   },
