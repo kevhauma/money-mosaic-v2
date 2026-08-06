@@ -3,6 +3,8 @@ import { vi } from 'vitest';
 import { DashboardLayoutSettingsRepository, type DashboardRowId } from '@/core/data-access';
 import { DashboardLayoutSettingsStore } from './dashboard-layout-settings.store';
 
+// Mirrors `DEFAULT_DASHBOARD_ROW_ORDER`, which `resolveDashboardRowOrder` reconciles against —
+// a row added there (TICKET-STAT-29's `spending-heatmap`) belongs here too.
 const DEFAULT_ORDER: DashboardRowId[] = [
   'stats',
   'weekday-weekend',
@@ -12,6 +14,7 @@ const DEFAULT_ORDER: DashboardRowId[] = [
   'top-transactions',
   'action-queue',
   'account-balance',
+  'spending-heatmap',
 ];
 
 describe('DashboardLayoutSettingsStore', () => {
@@ -62,6 +65,7 @@ describe('DashboardLayoutSettingsStore', () => {
       'top-transactions',
       'action-queue',
       'account-balance',
+      'spending-heatmap',
     ];
     expect(repository.setRowOrder).toHaveBeenCalledExactlyOnceWith(expected);
     expect(store.rowOrder()).toEqual(expected);

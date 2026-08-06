@@ -27,6 +27,7 @@ export * from './full-history-range';
 export * from './granularity-for-span';
 export * from './chart-zoom-window';
 export * from './weekday-weekend-split';
+export * from './category-cycle-heatmap';
 export * from './top-transactions';
 export * from './year-over-year';
 export * from './period-window';

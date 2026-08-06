@@ -3,6 +3,7 @@ import {
   CHART_NO_COLOR_FALLBACK,
   resolveChartAnimation,
   resolveChartCategoricalColors,
+  resolveChartHeatmapColors,
   resolveGrossSeriesColor,
   type GrossSeriesColorId,
 } from './chart-theme';
@@ -149,5 +150,70 @@ describe('resolveGrossSeriesColor (TICKET-SET-08)', () => {
 describe('CHART_NO_COLOR_FALLBACK', () => {
   it('is the single shared neutral gray for entities without a user-assigned color', () => {
     expect(CHART_NO_COLOR_FALLBACK).toBe('#9ca3af');
+  });
+});
+
+describe('resolveChartHeatmapColors (TICKET-STAT-29)', () => {
+  const HEX = /^#[0-9a-f]{6}$/;
+
+  it('ramps from a faded tint up to the theme’s own leading accent', () => {
+    setDataTheme('deformable');
+
+    const ramp = resolveChartHeatmapColors();
+
+    expect(ramp).toHaveLength(3);
+    expect(ramp[2]).toBe(resolveChartCategoricalColors()[0]); // the top of the ramp is the accent itself
+    expect(ramp.every((color) => HEX.test(color))).toBe(true);
+  });
+
+  it('fades toward white on a light theme and toward black on a dark one', () => {
+    setDataTheme('deformable');
+    const lightLow = resolveChartHeatmapColors()[0];
+
+    setDataTheme('deformable-dark');
+    const darkLow = resolveChartHeatmapColors()[0];
+
+    // Same position in the ramp, opposite ends of the brightness scale.
+    const brightness = (hex: string): number =>
+      parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(3, 5), 16) + parseInt(hex.slice(5, 7), 16);
+    expect(brightness(lightLow)).toBeGreaterThan(brightness(darkLow));
+  });
+
+  it('rises monotonically in saturation from low to high stop', () => {
+    setDataTheme('cyberpunk');
+
+    const ramp = resolveChartHeatmapColors();
+
+    const distanceFromBlack = (hex: string): number =>
+      parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(3, 5), 16) + parseInt(hex.slice(5, 7), 16);
+    // Cyberpunk is a dark-plot theme, so each stop sits further from the background than the last.
+    expect(distanceFromBlack(ramp[0])).toBeLessThan(distanceFromBlack(ramp[1]));
+    expect(distanceFromBlack(ramp[1])).toBeLessThan(distanceFromBlack(ramp[2]));
+  });
+
+  it('gives every theme in the catalogue a valid three-stop ramp, unknown themes included', () => {
+    for (const theme of [
+      'deformable',
+      'deformable-dark',
+      'neumorphism',
+      'neumorphism-dark',
+      'liquid-glass',
+      'cyberpunk',
+      'skeuomorphism',
+      'anti-polish',
+      'memphis',
+      'retro-futurism',
+      'not-a-real-theme',
+    ]) {
+      setDataTheme(theme);
+
+      const ramp = resolveChartHeatmapColors();
+
+      expect(ramp, theme).toHaveLength(3);
+      expect(
+        ramp.every((color) => HEX.test(color)),
+        theme,
+      ).toBe(true);
+    }
   });
 });

@@ -9,6 +9,7 @@ export const DASHBOARD_ROW_LABELS: Record<DashboardRowId, string> = {
   'top-transactions': 'Biggest transactions',
   'action-queue': 'Action queue',
   'account-balance': 'Account balances',
+  'spending-heatmap': 'Spending heatmap',
 };
 
 /**

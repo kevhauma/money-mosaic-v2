@@ -33,6 +33,7 @@ import { ActionQueuePanelComponent } from '../action-queue-panel/action-queue-pa
 import { CategoryBreakdownPanelComponent } from '../category-breakdown-panel/category-breakdown-panel.component';
 import { CategoryComparisonPanelComponent } from '../category-comparison-panel/category-comparison-panel.component';
 import { DashboardCustomizePanelComponent } from '../dashboard-customize-panel/dashboard-customize-panel.component';
+import { SpendingHeatmapPanelComponent } from '../spending-heatmap-panel/spending-heatmap-panel.component';
 import { TopTransactionsPanelComponent } from '../top-transactions-panel/top-transactions-panel.component';
 import { TrendChartPanelComponent } from '../trend-chart-panel/trend-chart-panel.component';
 import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-panel/weekday-weekend-split-panel.component';
@@ -52,6 +53,7 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
     CategoryComparisonPanelComponent,
     TrendChartPanelComponent,
     WeekdayWeekendSplitPanelComponent,
+    SpendingHeatmapPanelComponent,
     TopTransactionsPanelComponent,
     ActionQueuePanelComponent,
     AccountBalanceStripComponent,

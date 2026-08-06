@@ -629,4 +629,19 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Privacy',
   },
+  {
+    date: '2026-08-05',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-STAT-29', 'TICKET-STAT-30'],
+    title: 'A new Dashboard heatmap shows which categories you spend on, and when',
+    details: [
+      'Your four biggest spending categories become rows, the days of the week become columns, and each square is darker the more you spent — so a “we always eat out on Friday” habit shows up at a glance',
+      'Switch the columns between day of the week, day of the month, month and quarter: every Monday (or every 1st, or every December) of the selected period folds into one square instead of being scattered across the calendar',
+      'Click any square to jump straight to that category’s transactions for the period',
+      'It reads the same numbers as the rest of the Dashboard, so transfers, savings and anything you have excluded are treated exactly as they are elsewhere',
+      'Like every other Dashboard panel it can be reordered or hidden under “Dashboard settings”, and with “Hide amounts” on it keeps its shape while withholding every figure',
+      'When your date range cannot cover a whole cycle — three months against twelve — it says so, rather than letting nine empty columns read as nine quiet months',
+    ],
+    area: 'Dashboard',
+  },
 ];

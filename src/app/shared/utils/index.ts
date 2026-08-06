@@ -6,6 +6,7 @@ export * from './date-format';
 export * from './date-format.pipe';
 export * from './locale-presets';
 export * from './date-buckets';
+export * from './calendar-cycles';
 export { formatPercent, formatRatio } from './number-format';
 export * from './fingerprint';
 export * from './with-archivable';

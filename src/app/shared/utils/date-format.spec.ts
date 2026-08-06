@@ -1,4 +1,4 @@
-import { formatDate, formatMonthShort } from './date-format';
+import { formatDate, formatMonthShort, formatWeekdayShort } from './date-format';
 import { syncFormatSettings } from './format-settings';
 import { withCleanFormatSettings } from './format-settings.testing';
 
@@ -42,5 +42,31 @@ describe('formatMonthShort', () => {
   it('falls back to the default locale when set to an empty string', () => {
     syncFormatSettings({ locale: '' });
     expect(formatMonthShort('2026-07-26')).toBe('Jul');
+  });
+});
+
+describe('formatWeekdayShort', () => {
+  withCleanFormatSettings();
+
+  it('gives the abbreviated weekday alone, with no date', () => {
+    // 2026-07-26 is a Sunday, 2026-07-27 a Monday.
+    expect(formatWeekdayShort('2026-07-26')).toBe('Sun');
+    expect(formatWeekdayShort('2026-07-27')).toBe('Mon');
+  });
+
+  it('takes the weekday from the ISO string in UTC, not the runner’s timezone', () => {
+    // Parsed as local time in any timezone behind UTC, this would roll back to Sunday.
+    expect(formatWeekdayShort('2026-01-05')).toBe('Mon');
+  });
+
+  it('abbreviates in the chosen locale rather than always in English', () => {
+    syncFormatSettings({ locale: 'nl-BE' });
+
+    expect(formatWeekdayShort('2026-07-27').toLowerCase()).toContain('ma');
+  });
+
+  it('falls back to the default locale when set to an empty string', () => {
+    syncFormatSettings({ locale: '' });
+    expect(formatWeekdayShort('2026-07-27')).toBe('Mon');
   });
 });

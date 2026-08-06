@@ -41,3 +41,16 @@ const SHORT_MONTH_FORMATTER = computed(
 export function formatMonthShort(isoDate: string): string {
   return SHORT_MONTH_FORMATTER().format(parseIsoDate(isoDate));
 }
+
+const SHORT_WEEKDAY_FORMATTER = computed(
+  () => new Intl.DateTimeFormat(locale(), { weekday: 'short', timeZone: 'UTC' }),
+);
+
+/**
+ * Just the weekday, abbreviated — `Mon` under `en-US`, `ma` under `nl-BE`. For an axis whose
+ * columns *are* the days of the week (TICKET-STAT-29), where the date itself is already folded
+ * away. Locale-aware for the same reason as `formatMonthShort` above.
+ */
+export function formatWeekdayShort(isoDate: string): string {
+  return SHORT_WEEKDAY_FORMATTER().format(parseIsoDate(isoDate));
+}

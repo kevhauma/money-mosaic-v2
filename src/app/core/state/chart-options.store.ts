@@ -1,6 +1,6 @@
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import type { ChartZoomByPercent } from '@/shared/echarts';
-import type { Granularity } from '@/shared/utils';
+import type { CycleKey, Granularity } from '@/shared/utils';
 
 /**
  * Every chart that remembers its own options for the session (TICKET-STAT-27). Adding one here is
@@ -21,6 +21,7 @@ export type ChartOptionsKey =
   | 'dashboard-trend'
   | 'dashboard-trend-income'
   | 'dashboard-trend-expense'
+  | 'dashboard-heatmap'
   | 'income-by-category';
 
 type ChartOptionsEntry = {
@@ -28,6 +29,8 @@ type ChartOptionsEntry = {
   /** Series the user toggled off, keyed by series **name** — indices shift when an account is archived or the top-5 composition changes. */
   hiddenSeries: readonly string[];
   zoom?: ChartZoomByPercent;
+  /** Which repeating calendar cycle a heatmap folds onto (TICKET-STAT-30) — a *position* vocabulary, separate from `granularity`'s bucket sizes. */
+  cycle?: CycleKey;
 };
 
 type ChartOptionsStoreState = {
@@ -72,6 +75,13 @@ export const ChartOptionsStore = signalStore(
 
       setGranularity: (chart: ChartOptionsKey, granularity: Granularity): void => {
         patchChart(chart, { granularity });
+      },
+
+      /** `undefined` until the user picks one — the caller then falls back to the chart's own default cycle (TICKET-STAT-30). */
+      cycle: (chart: ChartOptionsKey): CycleKey | undefined => entryFor(chart).cycle,
+
+      setCycle: (chart: ChartOptionsKey, cycle: CycleKey): void => {
+        patchChart(chart, { cycle });
       },
 
       hiddenSeries: (chart: ChartOptionsKey): readonly string[] => entryFor(chart).hiddenSeries,

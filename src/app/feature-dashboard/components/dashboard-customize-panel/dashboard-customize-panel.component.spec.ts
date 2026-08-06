@@ -3,6 +3,8 @@ import { vi } from 'vitest';
 import { DashboardLayoutSettingsRepository, type DashboardRowId } from '@/core/data-access';
 import { DashboardCustomizePanelComponent } from './dashboard-customize-panel.component';
 
+// Mirrors `DEFAULT_DASHBOARD_ROW_ORDER`, which the store resolves saved layouts against — a row
+// added there (TICKET-STAT-29's `spending-heatmap`) belongs here too.
 const DEFAULT_ORDER: DashboardRowId[] = [
   'stats',
   'weekday-weekend',
@@ -12,6 +14,7 @@ const DEFAULT_ORDER: DashboardRowId[] = [
   'top-transactions',
   'action-queue',
   'account-balance',
+  'spending-heatmap',
 ];
 
 describe('DashboardCustomizePanelComponent', () => {
@@ -52,6 +55,7 @@ describe('DashboardCustomizePanelComponent', () => {
       'top-transactions',
       'action-queue',
       'account-balance',
+      'spending-heatmap',
     ]);
   });
 
@@ -83,6 +87,7 @@ describe('DashboardCustomizePanelComponent', () => {
       'top-transactions',
       'action-queue',
       'account-balance',
+      'spending-heatmap',
     ]);
   });
 });

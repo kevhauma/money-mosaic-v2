@@ -1,6 +1,6 @@
 import { computed, effect, inject, untracked, type Signal } from '@angular/core';
 import type { ChartZoomByPercent } from '@/shared/echarts';
-import type { Granularity } from '@/shared/utils';
+import type { CycleKey, Granularity } from '@/shared/utils';
 import { ChartOptionsStore, type ChartOptionsKey } from './chart-options.store';
 
 export type ChartGranularityControl = {
@@ -37,6 +37,29 @@ export const chartGranularity = (
   return {
     value: computed(() => chartOptions.granularity(chart) ?? initial),
     set: (granularity: Granularity): void => chartOptions.setGranularity(chart, granularity),
+  };
+};
+
+export type ChartCycleControl = {
+  value: Signal<CycleKey>;
+  set: (cycle: CycleKey) => void;
+};
+
+/**
+ * A heatmap's calendar-cycle control, held for the session (TICKET-STAT-30) — the same shape and
+ * the same reasoning as `chartGranularity` above: a `computed()` read over the store plus an
+ * explicit setter, never a local writable mirrored into it, so the seed can't be recorded as if it
+ * were the user's choice.
+ *
+ * Must be called from an injection context — a component field initializer.
+ */
+export const chartCycle = (chart: ChartOptionsKey, seed: () => CycleKey): ChartCycleControl => {
+  const chartOptions = inject(ChartOptionsStore);
+  const initial = untracked(seed);
+
+  return {
+    value: computed(() => chartOptions.cycle(chart) ?? initial),
+    set: (cycle: CycleKey): void => chartOptions.setCycle(chart, cycle),
   };
 };
 

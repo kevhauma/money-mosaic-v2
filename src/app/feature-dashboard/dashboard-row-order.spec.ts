@@ -5,6 +5,8 @@ import {
   visibleDashboardRows,
 } from './dashboard-row-order';
 
+// Mirrors `DEFAULT_DASHBOARD_ROW_ORDER` — `moveDashboardRow`/`resolveDashboardRowOrder` fall back
+// to the real one, so a row added there (TICKET-STAT-29's `spending-heatmap`) belongs here too.
 const DEFAULT_ORDER: DashboardRowId[] = [
   'stats',
   'weekday-weekend',
@@ -14,6 +16,7 @@ const DEFAULT_ORDER: DashboardRowId[] = [
   'top-transactions',
   'action-queue',
   'account-balance',
+  'spending-heatmap',
 ];
 
 describe('resolveDashboardRowOrder', () => {
@@ -40,6 +43,26 @@ describe('resolveDashboardRowOrder', () => {
       'top-transactions',
       'action-queue',
       'account-balance',
+      'spending-heatmap',
+    ]);
+  });
+
+  it('appends a row a saved layout predates, leaving the arranged order untouched (TICKET-STAT-29)', () => {
+    // Exactly what an existing user's persisted `rowOrder` looks like from before the heatmap row.
+    const savedBeforeHeatmap: DashboardRowId[] = [
+      'account-balance',
+      'stats',
+      'weekday-weekend',
+      'category-breakdown',
+      'category-comparison',
+      'trend-chart',
+      'top-transactions',
+      'action-queue',
+    ];
+
+    expect(resolveDashboardRowOrder(savedBeforeHeatmap)).toEqual([
+      ...savedBeforeHeatmap,
+      'spending-heatmap',
     ]);
   });
 });
@@ -55,6 +78,7 @@ describe('visibleDashboardRows', () => {
       'trend-chart',
       'top-transactions',
       'account-balance',
+      'spending-heatmap',
     ]);
   });
 
@@ -74,6 +98,7 @@ describe('moveDashboardRow', () => {
       'top-transactions',
       'action-queue',
       'account-balance',
+      'spending-heatmap',
     ]);
   });
 
@@ -87,6 +112,7 @@ describe('moveDashboardRow', () => {
       'top-transactions',
       'action-queue',
       'account-balance',
+      'spending-heatmap',
     ]);
   });
 
@@ -95,7 +121,7 @@ describe('moveDashboardRow', () => {
   });
 
   it('is a no-op moving the last row down', () => {
-    expect(moveDashboardRow(DEFAULT_ORDER, 'account-balance', 'down')).toEqual(DEFAULT_ORDER);
+    expect(moveDashboardRow(DEFAULT_ORDER, 'spending-heatmap', 'down')).toEqual(DEFAULT_ORDER);
   });
 
   it('is a no-op for an unknown row id', () => {

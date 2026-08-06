@@ -1,6 +1,7 @@
 import { Injector, runInInjectionContext, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
+  chartCycle,
   chartGranularity,
   chartSeriesFilter,
   chartZoomControl,
@@ -94,6 +95,67 @@ describe('chartGranularity (TICKET-STAT-27)', () => {
     );
 
     expect(second.value()).toBe('month');
+  });
+});
+
+describe('chartCycle (TICKET-STAT-30)', () => {
+  let injector: Injector;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    injector = TestBed.inject(Injector);
+  });
+
+  it('seeds from the caller when the session holds nothing for that chart', () => {
+    const cycle = runInInjectionContext(injector, () =>
+      chartCycle('dashboard-heatmap', () => 'day-of-week'),
+    );
+
+    expect(cycle.value()).toBe('day-of-week');
+  });
+
+  it("adopts the session's value instead of re-seeding, so a remount keeps the user's axis", () => {
+    TestBed.inject(ChartOptionsStore).setCycle('dashboard-heatmap', 'month-of-year');
+
+    const cycle = runInInjectionContext(injector, () =>
+      chartCycle('dashboard-heatmap', () => 'day-of-week'),
+    );
+
+    expect(cycle.value()).toBe('month-of-year');
+  });
+
+  it('writes straight to the store, which is what a later mount reads back', () => {
+    const cycle = runInInjectionContext(injector, () =>
+      chartCycle('dashboard-heatmap', () => 'day-of-week'),
+    );
+
+    cycle.set('quarter-of-year');
+
+    expect(TestBed.inject(ChartOptionsStore).cycle('dashboard-heatmap')).toBe('quarter-of-year');
+    expect(cycle.value()).toBe('quarter-of-year');
+  });
+
+  it('never records the seed as a choice', () => {
+    const cycle = runInInjectionContext(injector, () =>
+      chartCycle('dashboard-heatmap', () => 'day-of-week'),
+    );
+
+    expect(cycle.value()).toBe('day-of-week');
+    expect(TestBed.inject(ChartOptionsStore).cycle('dashboard-heatmap')).toBeUndefined();
+  });
+
+  it('is independent of the same chart id’s bucket size — two vocabularies, one entry', () => {
+    const cycle = runInInjectionContext(injector, () =>
+      chartCycle('dashboard-heatmap', () => 'day-of-week'),
+    );
+    const granularity = runInInjectionContext(injector, () =>
+      chartGranularity('dashboard-heatmap', () => 'month'),
+    );
+
+    cycle.set('quarter-of-year');
+
+    expect(granularity.value()).toBe('month');
+    expect(cycle.value()).toBe('quarter-of-year');
   });
 });
 

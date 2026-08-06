@@ -1,0 +1,51 @@
+@if (hasSpend()) {
+  <mm-paper [fullHeight]="true">
+    <mm-flex align="center" justify="between" gap="2">
+      <h2 class="card-title text-base">Spending heatmap</h2>
+      <mm-cycle-picker [value]="cycle()" (valueChange)="setCycle($event)" />
+    </mm-flex>
+    <mm-text variant="caption">Your biggest categories, by {{ axisNoun() }}</mm-text>
+
+    <div
+      echarts
+      [options]="chartOption()"
+      (chartClick)="onChartClick($event)"
+      class="mt-2 h-64 w-full"
+      role="img"
+      [attr.aria-label]="chartAriaLabel()"
+    ></div>
+
+    @if (partialCycleNote(); as note) {
+      <mm-text as="p" variant="caption">{{ note }}</mm-text>
+    }
+
+    <!-- Screen-reader-only companion table for the grid above — not a visible data table, so it
+         skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
+    <table class="sr-only">
+      <caption>
+        Spending per category per
+        {{
+          axisNoun()
+        }}, underlying the heatmap above
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Category</th>
+          @for (label of columnLabels(); track label) {
+            <th scope="col">{{ label }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of accessibleRows(); track row.name) {
+          <tr>
+            <th scope="row">{{ row.name }}</th>
+            @for (amount of row.amounts; track $index) {
+              <td>{{ amount }}</td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </mm-paper>
+}

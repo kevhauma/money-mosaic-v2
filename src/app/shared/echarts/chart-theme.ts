@@ -113,6 +113,44 @@ export function resolveGrossSeriesColor(id: GrossSeriesColorId | undefined): str
 /** Single source for the "no color assigned" neutral gray (an uncategorised entry, or an account/category predating the color-picker feature) — previously duplicated as a hardcoded hex literal per chart component. Theme-neutral: this hex also leaks into computed stat series (core/stats), so it stays one global value. */
 export const CHART_NO_COLOR_FALLBACK = '#9ca3af';
 
+/** The slot the heatmap ramp is built from — the theme's leading accent. Safe to share with a series palette: a heatmap has no categorical series to collide with. */
+const HEATMAP_RAMP_SLOT = 0;
+
+const hexChannels = (hex: string): [number, number, number] => [
+  parseInt(hex.slice(1, 3), 16),
+  parseInt(hex.slice(3, 5), 16),
+  parseInt(hex.slice(5, 7), 16),
+];
+
+const toHex = (channel: number): string =>
+  Math.round(Math.min(255, Math.max(0, channel)))
+    .toString(16)
+    .padStart(2, '0');
+
+/** `ratio` 0 keeps `hex`, 1 becomes `toward`. Plain channel lerp — good enough for a ramp, and it keeps this file dependency-free. */
+const mixHex = (hex: string, toward: string, ratio: number): string => {
+  const from = hexChannels(hex);
+  const to = hexChannels(toward);
+  return `#${from.map((channel, index) => toHex(channel + (to[index] - channel) * ratio)).join('')}`;
+};
+
+/**
+ * A three-stop sequential ramp for a heatmap's `visualMap` (TICKET-STAT-29), low to high: the
+ * theme's leading accent faded most of the way into its own plot background, then half way, then
+ * the accent itself. Derived rather than hand-authored per theme, so a theme added later gets a
+ * ramp that already matches its palette instead of a hardcoded blue that matches nothing.
+ *
+ * Sequential, never categorical: a heatmap cell's colour encodes *magnitude*, and cycling the
+ * categorical palette across intensities would read as six unrelated buckets.
+ */
+export function resolveChartHeatmapColors(): string[] {
+  const theme = activeDataTheme();
+  const accent = (CHART_CATEGORICAL_COLORS[theme] ?? DEFORMABLE_LIGHT)[HEATMAP_RAMP_SLOT];
+  const plotBackground = DARK_PLOT_THEMES.includes(theme) ? '#000000' : '#ffffff';
+
+  return [mixHex(accent, plotBackground, 0.88), mixHex(accent, plotBackground, 0.45), accent];
+}
+
 /** Literal union (not `string`) so the spread stays assignable to ECharts' `AnimationEasing`-typed option fields. */
 type ChartEasing = 'elasticOut' | 'bounceOut' | 'cubicOut' | 'linear' | 'backOut';
 

@@ -189,6 +189,19 @@
             </mm-paper>
           }
         }
+        @case ('spending-heatmap') {
+          @defer (on viewport; prefetch on idle) {
+            <app-spending-heatmap-panel />
+          } @placeholder {
+            <mm-paper [fullHeight]="true">
+              <h2 class="card-title text-base">Spending heatmap</h2>
+              <span class="sr-only">
+                Spending heatmap by category and day of the week loads when scrolled into view.
+              </span>
+              <div class="skeleton mt-2 h-64 w-full"></div>
+            </mm-paper>
+          }
+        }
       }
     </div>
   }

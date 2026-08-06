@@ -400,8 +400,15 @@ export type DashboardRowId =
   | 'trend-chart'
   | 'top-transactions'
   | 'action-queue'
-  | 'account-balance';
+  | 'account-balance'
+  | 'spending-heatmap';
 
+/**
+ * A row added by a later ticket goes on the **end** (TICKET-STAT-29's `spending-heatmap` is the
+ * first to do so): `resolveDashboardRowOrder` appends ids an existing saved layout doesn't know
+ * about, so appending here is what makes a new row arrive in the same place for a new user and a
+ * returning one, instead of shuffling a layout someone already arranged.
+ */
 export const DEFAULT_DASHBOARD_ROW_ORDER: DashboardRowId[] = [
   'stats',
   'weekday-weekend',
@@ -411,6 +418,7 @@ export const DEFAULT_DASHBOARD_ROW_ORDER: DashboardRowId[] = [
   'top-transactions',
   'action-queue',
   'account-balance',
+  'spending-heatmap',
 ];
 
 /** Singleton row (id always 1) persisting the user's Dashboard row order and hidden rows (TICKET-STAT-14). */

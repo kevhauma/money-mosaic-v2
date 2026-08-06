@@ -3,6 +3,7 @@ export * from './category-breakdown-panel/category-breakdown-panel.component';
 export * from './category-comparison-panel/category-comparison-panel.component';
 export * from './trend-chart-panel/trend-chart-panel.component';
 export * from './weekday-weekend-split-panel/weekday-weekend-split-panel.component';
+export * from './spending-heatmap-panel/spending-heatmap-panel.component';
 export * from './top-transactions-panel/top-transactions-panel.component';
 export * from './action-queue-panel/action-queue-panel.component';
 export * from './account-balance-strip/account-balance-strip.component';
