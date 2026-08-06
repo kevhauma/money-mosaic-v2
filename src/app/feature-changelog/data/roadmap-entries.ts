@@ -63,35 +63,29 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-EXP-01',
-    title: 'A new Explore page with its own date range, for the big-picture diagrams',
-    area: 'Explore',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-EXP-02',
+    ticketId: 'TICKET-REC-01',
     title:
-      'A money flow diagram: income arriving in your accounts and leaving again for categories, savings and what stayed put',
-    area: 'Explore',
+      'Automatic detection of payments that repeat — same counterparty, similar amount, regular rhythm',
+    area: 'Recurring payments',
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-EXP-03',
-    title: 'Route the money flow diagram through your category groups before individual categories',
-    area: 'Explore',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-EXP-04',
+    ticketId: 'TICKET-REC-02',
     title:
-      'Click any ribbon in the money flow diagram to see the transactions behind it, with amounts and shares',
-    area: 'Explore',
+      'One list of every detected recurring payment, with what it typically costs and the total per month',
+    area: 'Recurring payments',
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-EXP-05',
-    title: 'A rotatable 3D landscape of what you spent per category per month',
-    area: 'Explore',
+    ticketId: 'TICKET-REC-03',
+    title: 'A calendar showing the days your recurring payments are expected to land',
+    area: 'Recurring payments',
+  },
+  {
+    versionFolder: 'v2.1_extra_graphs',
+    ticketId: 'TICKET-REC-04',
+    title: 'Flags when a recurring payment gets more expensive, runs late, or stops entirely',
+    area: 'Recurring payments',
   },
   {
     versionFolder: 'v9999_ideas',

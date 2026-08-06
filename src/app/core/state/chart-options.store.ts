@@ -22,6 +22,7 @@ export type ChartOptionsKey =
   | 'dashboard-trend-income'
   | 'dashboard-trend-expense'
   | 'dashboard-heatmap'
+  | 'explore-money-flow'
   | 'income-by-category';
 
 type ChartOptionsEntry = {
@@ -31,6 +32,8 @@ type ChartOptionsEntry = {
   zoom?: ChartZoomByPercent;
   /** Which repeating calendar cycle a heatmap folds onto (TICKET-STAT-30) — a *position* vocabulary, separate from `granularity`'s bucket sizes. */
   cycle?: CycleKey;
+  /** Whether the money flow Sankey routes spending through `Category.group` before reaching individual categories (TICKET-EXP-03). */
+  groupCategories?: boolean;
 };
 
 type ChartOptionsStoreState = {
@@ -82,6 +85,14 @@ export const ChartOptionsStore = signalStore(
 
       setCycle: (chart: ChartOptionsKey, cycle: CycleKey): void => {
         patchChart(chart, { cycle });
+      },
+
+      /** `undefined` until the user picks one — the caller then falls back to the chart's own default (TICKET-EXP-03). */
+      groupCategories: (chart: ChartOptionsKey): boolean | undefined =>
+        entryFor(chart).groupCategories,
+
+      setGroupCategories: (chart: ChartOptionsKey, groupCategories: boolean): void => {
+        patchChart(chart, { groupCategories });
       },
 
       hiddenSeries: (chart: ChartOptionsKey): readonly string[] => entryFor(chart).hiddenSeries,

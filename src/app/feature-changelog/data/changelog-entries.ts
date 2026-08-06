@@ -644,4 +644,20 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Dashboard',
   },
+  {
+    date: '2026-08-06',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-EXP-01', 'TICKET-EXP-02', 'TICKET-EXP-03', 'TICKET-EXP-04'],
+    title: 'A new Explore page shows the whole shape of a period’s money in one diagram',
+    details: [
+      'Explore is a new page in the sidebar with its own date range — set it to last year there and your Dashboard stays exactly where you left it',
+      'Its money flow diagram follows a period end to end: income arriving from each source, into each of your accounts, and back out again to categories, savings and whatever stayed put',
+      'The diagram is built to balance. What goes into an account comes out of it, so a ribbon twice as thick really is twice the money — and where a period’s spending outran its income, the difference is drawn and named “Carried in” rather than quietly smoothed away',
+      'Savings are shown as a destination rather than an expense, matching how the Dashboard counts them, and money you moved between your own accounts is left out so nothing is counted twice',
+      'If your categories are sorted into groups, a “Group categories” toggle routes spending through those groups first — so you can see that half your money goes to “Housing” without adding up six thin ribbons',
+      'Hover any ribbon or box for the amount and what share of the total it is, and click it to jump to exactly those transactions',
+      'With “Hide amounts” on, every figure disappears from the labels, the tooltips and the screen-reader table while the diagram keeps its full shape',
+    ],
+    area: 'Explore',
+  },
 ];

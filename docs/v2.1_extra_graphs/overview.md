@@ -23,6 +23,14 @@ since it lives on the Dashboard. **No Dexie schema change anywhere in this versi
 toggle) go into the in-memory, session-scoped `ChartOptionsStore` established by [TICKET-STAT-27](../v1.6.2_interface_polish/tickets/TICKET-STAT-27-session-persistent-chart-options.md),
 not into `appSettings`.
 
+**Added 2026-08-06 — a third track.** Recurring-payment detection was originally parked in "Considered, not ticketed
+yet" below ("needs *detection* before it needs a chart"); it has now been pulled into this version as its own track,
+`TICKET-REC-01..04`, on the strength of [competitive-analysis.md](../v9999_ideas/competitive-analysis.md) gap #3 (the
+most-praised Monarch feature that is fully achievable offline — cadence + amount + counterparty clustering over data we
+already have). It adds a second new requirement family, **FR-REC**, and keeps every rule above intact: no Dexie change
+(detection is stateless inference, flags are computed not stored), and its one piece of new UI state (the bill
+calendar's visible month) goes into the session-scoped `ChartOptionsStore` like the rest.
+
 ## Dashboard track (heatmap — independent of the Explore track)
 
 - [x] [TICKET-STAT-29](./tickets/TICKET-STAT-29-spending-heatmap-panel.md) — Spending heatmap: top categories × day of week, as a new Dashboard row (adds FR-STAT-15) — first: it introduces the cycle aggregate, the heatmap ECharts registration and the sequential colour ramp everything else in this track builds on
@@ -33,10 +41,19 @@ not into `appSettings`.
 ## Explore track (Sankey + 3D — independent of the Dashboard track)
 
 - [x] [TICKET-EXP-01](./tickets/TICKET-EXP-01-explore-page-scaffold.md) — Explore page: route, shell, nav item, own date range (adds FR-EXP-1) — prerequisite for every other ticket in this track; no chart of its own
-- [ ] [TICKET-EXP-02](./tickets/TICKET-EXP-02-money-flow-sankey.md) — Money flow Sankey: income sources → accounts → categories/savings/left-over, on a graph that provably balances (adds FR-EXP-2) — **needs EXP-01**; the headline section, and the base EXP-03/04 both extend
-- [ ] [TICKET-EXP-03](./tickets/TICKET-EXP-03-sankey-category-group-level.md) — Category groups as an intermediate Sankey level, from `Category.group` (extends FR-EXP-2) — **needs EXP-02**; independent of EXP-04
-- [ ] [TICKET-EXP-04](./tickets/TICKET-EXP-04-sankey-tooltips-drilldown-privacy.md) — Sankey amounts, share-of-total, drill-down to transactions, and privacy mode (extends FR-EXP-2) — **needs EXP-02**; independent of EXP-03, and what turns the diagram from a poster into a query interface
-- [ ] [TICKET-EXP-05](./tickets/TICKET-EXP-05-3d-spending-landscape.md) — 3D spending landscape, months × categories × amount via `echarts-gl` (adds FR-EXP-3) — **needs EXP-01** only; deliberately **last**: it is the riskiest and least load-bearing ticket here, and it carries explicit kill criteria
+- [x] [TICKET-EXP-02](./tickets/TICKET-EXP-02-money-flow-sankey.md) — Money flow Sankey: income sources → accounts → categories/savings/left-over, on a graph that provably balances (adds FR-EXP-2) — **needs EXP-01**; the headline section, and the base EXP-03/04 both extend — ⚠ **the live *visual* browser check is still outstanding** on this and the two below (the figures were verified live against real data and match the Dashboard exactly; only "does it look right" is unchecked)
+- [x] [TICKET-EXP-03](./tickets/TICKET-EXP-03-sankey-category-group-level.md) — Category groups as an intermediate Sankey level, from `Category.group` (extends FR-EXP-2) — **needs EXP-02**; independent of EXP-04 — ⚠ visual browser check outstanding
+- [x] [TICKET-EXP-04](./tickets/TICKET-EXP-04-sankey-tooltips-drilldown-privacy.md) — Sankey amounts, share-of-total, drill-down to transactions, and privacy mode (extends FR-EXP-2) — **needs EXP-02**; independent of EXP-03, and what turns the diagram from a poster into a query interface — ⚠ visual browser check outstanding
+- [x] ~~[TICKET-EXP-05](./tickets/TICKET-EXP-05-3d-spending-landscape.md) — 3D spending landscape, months × categories × amount via `echarts-gl` (adds FR-EXP-3)~~ — **closed 2026-08-06 as won't do**, at its own feasibility gate and before any UI work: `echarts-gl@2.1.0` imports 16 deep paths into `echarts`/`zrender` without a `.js` extension, which both packages' strict `exports` maps refuse, so `ng build` cannot resolve it — kill criterion 1 ("cannot render against ECharts 6 without … patching the dependency"). **FR-EXP-3 is not delivered.** The finding, the rejected workarounds and the named follow-up (a WebGL-free isometric SVG landscape) are recorded in the ticket's Notes
+
+## Recurring track (detection + bill calendar — independent of both tracks above)
+
+Needs only [TICKET-EXP-01](./tickets/TICKET-EXP-01-explore-page-scaffold.md)'s shipped scaffold for a place to render.
+
+- [ ] [TICKET-REC-01](./tickets/TICKET-REC-01-recurring-payment-detection.md) — Detect recurring payments: same counterparty, similar amount, regular rhythm (adds FR-REC-1) — first: the pure aggregate every other REC ticket consumes; no UI of its own
+- [ ] [TICKET-REC-02](./tickets/TICKET-REC-02-recurring-payments-panel.md) — Recurring payments panel on Explore: what repeats, what it costs per month (adds FR-REC-2) — **needs REC-01**
+- [ ] [TICKET-REC-03](./tickets/TICKET-REC-03-upcoming-bills-calendar.md) — Upcoming bills calendar: expected payments on the days they'll land (adds FR-REC-3) — **needs REC-01**; independent of REC-02's code, sits after it on the page
+- [ ] [TICKET-REC-04](./tickets/TICKET-REC-04-recurring-change-flags.md) — Flag what changed: price increases, missed payments, stopped series (extends FR-REC-1/2) — **needs REC-01 + REC-02**; its calendar marker extends REC-03 where shipped
 
 ## Considered, not ticketed yet
 
@@ -54,9 +71,11 @@ not into `appSettings`.
   the in-app Roadmap. This version deliberately ships three *specific, opinionated* charts instead: each encodes a
   question worth asking, where a builder hands the user a blank canvas and the burden of knowing what to ask. If all
   three prove useful, a builder is the natural next step; if they don't, a builder wouldn't have saved them.
-- **Recurring-payment / bill-calendar visualisations** — the other chart-shaped gap in the competitive analysis (§3).
-  Out of scope here because it needs *detection* (cadence + counterparty clustering) before it needs a chart; that is a
-  feature milestone of its own, not a graph ticket.
+- **Recurring-payment / bill-calendar visualisations** — *graduated, 2026-08-06.* Originally parked here because it
+  needs *detection* before it needs a chart; both halves are now the Recurring track above (TICKET-REC-01..04). What
+  stays out of this version: user overrides on detection ("this is not recurring", merging two series, dismissing a
+  flag) and a "what changed since last visit" inbox consuming REC-04's flags — each needs persistence, and this version
+  ships no Dexie change.
 - **A treemap ("mosaic") of category groups → categories.** Considered as a bundle-free alternative to the 3D view,
   since it ships inside core ECharts and matches the app's name. Not ticketed: it would show the same composition the
   category breakdown pie and the Sankey's destination level already show, in a third form. If EXP-05's kill criteria
@@ -71,7 +90,8 @@ not into `appSettings`.
 
 Per [../../CLAUDE.md](../../CLAUDE.md): `ng lint` + `ng test` + `ng build --configuration development` all pass, plus the
 `Fallow` code-quality check, plus a live browser check for any UI-visible change (every ticket here is UI-visible except
-EXP-01, which is a route/shell scaffold and is verified by its route spec plus a navigation check). **No Dexie schema
+EXP-01, which is a route/shell scaffold and is verified by its route spec plus a navigation check, and REC-01, a pure
+aggregate verified by its spec). **No Dexie schema
 change in this version** — no new table, no version bump, no `appSettings` field; `DashboardRowId` gains one member
 (`'spending-heatmap'`), which is a *type* change resolved for existing users by `resolveDashboardRowOrder`'s
 append-unknown-ids behaviour, not a migration. Components and stores never touch `appDb` directly — the new charts read

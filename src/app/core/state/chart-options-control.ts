@@ -63,6 +63,33 @@ export const chartCycle = (chart: ChartOptionsKey, seed: () => CycleKey): ChartC
   };
 };
 
+export type ChartGroupCategoriesControl = {
+  value: Signal<boolean>;
+  set: (groupCategories: boolean) => void;
+};
+
+/**
+ * The money flow Sankey's "Group categories" toggle, held for the session (TICKET-EXP-03) — same
+ * shape and same reasoning as the two controls above: a `computed()` read over the store plus an
+ * explicit setter, never a local writable mirrored into it, so the seed can't be recorded as if it
+ * were the user's choice.
+ *
+ * Must be called from an injection context — a component field initializer.
+ */
+export const chartGroupCategories = (
+  chart: ChartOptionsKey,
+  seed: () => boolean,
+): ChartGroupCategoriesControl => {
+  const chartOptions = inject(ChartOptionsStore);
+  const initial = untracked(seed);
+
+  return {
+    value: computed(() => chartOptions.groupCategories(chart) ?? initial),
+    set: (groupCategories: boolean): void =>
+      chartOptions.setGroupCategories(chart, groupCategories),
+  };
+};
+
 /** Structurally echarts' `legendselectchanged` payload — the map of every legend entry to whether it is currently shown. */
 export type LegendSelectChangedEvent = { selected?: Record<string, boolean> };
 

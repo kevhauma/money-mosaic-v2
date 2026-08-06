@@ -2,6 +2,7 @@ import { Injector, runInInjectionContext, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   chartCycle,
+  chartGroupCategories,
   chartGranularity,
   chartSeriesFilter,
   chartZoomControl,
@@ -231,5 +232,52 @@ describe('chartZoomControl (TICKET-STAT-27)', () => {
 
     zoom.onDataZoom({});
     expect(zoom.manual()).toEqual({ start: 30, end: 90 });
+  });
+});
+
+describe('chartGroupCategories (TICKET-EXP-03)', () => {
+  let injector: Injector;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    injector = TestBed.inject(Injector);
+  });
+
+  it('seeds from the caller when the session holds nothing for that chart', () => {
+    const grouping = runInInjectionContext(injector, () =>
+      chartGroupCategories('explore-money-flow', () => true),
+    );
+
+    expect(grouping.value()).toBe(true);
+  });
+
+  it("adopts the session's value instead of re-seeding, so a remount keeps the user's choice", () => {
+    TestBed.inject(ChartOptionsStore).setGroupCategories('explore-money-flow', false);
+
+    const grouping = runInInjectionContext(injector, () =>
+      chartGroupCategories('explore-money-flow', () => true),
+    );
+
+    expect(grouping.value()).toBe(false);
+  });
+
+  it('writes straight to the store, which is what a later mount reads back', () => {
+    const grouping = runInInjectionContext(injector, () =>
+      chartGroupCategories('explore-money-flow', () => true),
+    );
+
+    grouping.set(false);
+
+    expect(TestBed.inject(ChartOptionsStore).groupCategories('explore-money-flow')).toBe(false);
+    expect(grouping.value()).toBe(false);
+  });
+
+  it('never records the seed as a choice — `false` off the store must be the user, not the default', () => {
+    const grouping = runInInjectionContext(injector, () =>
+      chartGroupCategories('explore-money-flow', () => true),
+    );
+
+    expect(grouping.value()).toBe(true);
+    expect(TestBed.inject(ChartOptionsStore).groupCategories('explore-money-flow')).toBeUndefined();
   });
 });

@@ -1,5 +1,13 @@
 # TICKET-EXP-05 — 3D spending landscape (months × categories × amount)
 
+> **CLOSED 2026-08-06 as *won't do*. Kill criterion 1 fired at the feasibility gate**, before any UI
+> work: `echarts-gl` cannot be built against the installed ECharts 6 / zrender 6 without patching it.
+> Full finding in [Notes](#notes) below; `echarts-gl` was installed to run the gate and has been
+> uninstalled again, so the working tree carries no trace of it. If the appetite for the visual
+> remains, the follow-up named at the bottom of this ticket — a WebGL-free isometric SVG landscape
+> over the same `computeCategoryCompositionTrend` output — is the replacement, and is deliberately
+> not specced here.
+
 - **Area:** Explore
 - **Type:** Feature
 - **Traceability:** new capability, adds **FR-EXP-3**. Graduated from the "Extra graphs" idea in [v9999_ideas/requirements.md](../../v9999_ideas/requirements.md) ("cool fancy 3d graph?"). Constrained by CLAUDE.md's hard rule: **the `angular.json` bundle budget is never raised.**
@@ -35,7 +43,11 @@ Adds a second Explore section: an `echarts-gl` `bar3D` surface with months on on
 
 ## Acceptance criteria
 
-- [ ] The feasibility gate is executed and its result recorded in this ticket's Notes **before** implementation proceeds: `echarts-gl` either renders against the installed ECharts 6, or the fallback path is taken.
+**Every criterion below except the first is now moot — the ticket is closed as won't-do and no
+implementation exists.** They are left unchecked rather than deleted, so the shape of what was
+*not* built stays legible next to the reason it wasn't.
+
+- [x] The feasibility gate is executed and its result recorded in this ticket's Notes **before** implementation proceeds: `echarts-gl` either renders against the installed ECharts 6, or the fallback path is taken. (Executed 2026-08-06; full finding in Notes. Result: it does **not** build against ECharts 6, kill criterion 1 fires, and the ticket closes with no UI work done.)
 - [ ] `angular.json` budgets are unchanged, and a production build shows the `initial` bundle unchanged (±0 kB attributable to this ticket) — recorded as before/after figures in the ticket.
 - [ ] `echarts-gl` is imported dynamically from within `feature-explore` only; a build shows it in its own chunk, and the Dashboard/Accounts/Income chunk sizes are unchanged. `echarts-setup.ts` is not modified by this ticket.
 - [ ] The 3D chunk is fetched only when the user opens the 3D section — not on `/explore` load.
@@ -58,6 +70,60 @@ Adds a second Explore section: an `echarts-gl` `bar3D` surface with months on on
 If a kill criterion fires, close the ticket with the finding recorded here and, if the appetite for the visual remains, open a follow-up for a WebGL-free pseudo-3D rendering (an isometric SVG landscape built from the same `computeCategoryCompositionTrend` output, no new dependency) — deliberately *not* specced here, because that is a different ticket with a different risk profile.
 
 ## Notes
+
+### Feasibility gate result, 2026-08-06 — FAILED (kill criterion 1)
+
+Run against `echarts-gl@2.1.0` (published 2026-05-28, the current release) on this repo's
+`echarts@6.1.0` / `zrender@6.x` / `ngx-echarts@21.0.0`.
+
+**What works.** The premise in the to-be — "`echarts-gl`'s current release targets ECharts 5's
+internal APIs" — is out of date. 2.1.0 declares `peerDependencies: { echarts: "^5.1.2 || ^6.0.0" }`,
+it imports cleanly under Vite's resolver, and ECharts 6 genuinely accepts its series types: a
+`setOption` carrying `type: 'bar3D'` was handed straight to the GL renderer, which got as far as
+compiling GLSL. So the *API* compatibility the ticket was worried about is real.
+
+**What fails, and why it is fatal.** `ng build` cannot resolve the package at all:
+
+```
+X [ERROR] Could not resolve "zrender/lib/core/matrix"
+X [ERROR] Could not resolve "zrender/lib/animation/requestAnimationFrame"
+X [ERROR] Could not resolve "echarts/lib/util/layout"
+X [ERROR] Could not resolve "echarts/lib/data/Graph"        … and more
+```
+
+`echarts-gl`'s ESM sources import **16 distinct deep paths into `echarts`/`zrender` without a `.js`
+extension**. Both packages ship a strict `exports` map whose catch-all is `"./*": "./*"` — an exact
+mapping with no extension probing — so every one of those specifiers resolves to a file that does
+not exist. Vitest passes only because Vite's dev resolver is more forgiving than the esbuild
+resolver Angular builds with; the *build* is what ships.
+
+Three ways out, all excluded:
+
+1. **Patch `echarts-gl`** (add the extensions, or vendor it) — named verbatim in kill criterion 1.
+2. **Downgrade ECharts / zrender, or pin an older `ngx-echarts`** — also named verbatim, and the
+   to-be says "**do not**" twice.
+3. **Import the prebuilt UMD bundle** (`echarts-gl/dist/echarts-gl.min.js`) instead of the package
+   entry. This *does* build — measured at a **4.25 MB dev chunk**, from a 625 kB minified / 175 kB
+   gzipped artifact. Rejected on two counts: it embeds its own copy of echarts and zrender, so it
+   would ship a second copy of a library already in the bundle *and* register `bar3D` on its own
+   embedded instance rather than the app's `provideEchartsCore({ echarts })` one — meaning the chart
+   would not render on the app's chart at all. A build that succeeds and a chart that stays blank is
+   the worst of both outcomes.
+
+**Two by-products of the gate were kept**, because both are corrections independent of this ticket:
+
+- `echarts-jsdom.testing.ts` now answers `null` for `getContext('webgl' | 'webgl2' | …)`, as a real
+  jsdom canvas does. Its catch-all proxy previously claimed WebGL existed, which is how the gate got
+  as far as a GLSL compile error instead of a clean "no WebGL" signal — a stub that lies about a
+  capability is worse than one that admits it lacks it.
+- `echarts-setup.ts`'s comment now records that `echarts-gl` is deliberately *not* a dependency, and
+  points here, so the next person to reach for it starts from this finding.
+
+**Cost of the investigation:** `echarts-gl` was installed to run the gate and uninstalled afterwards;
+`package.json`, `package-lock.json` and `angular.json` are all unchanged, and no `initial` bundle
+figure moved.
+
+### Original notes
 
 - **Why this is ticketed despite the risk.** The user asked for it explicitly, having been shown the bundle trade-off. The ticket therefore carries the constraints as acceptance criteria rather than the ambiguity as a caveat: the guard rails are the deliverable.
 - **Why `bar3D` over a `surface`.** Months × categories is a genuinely discrete grid; a smoothed surface would interpolate between two unrelated categories and imply a continuum that isn't there.

@@ -1,0 +1,42 @@
+<!-- Title · date range (TICKET-UI-24: the range changes *what the page shows*, so it goes in the
+     start slot beside the title). This page has no end-slot control of its own yet. -->
+<mm-page-header title="Explore">
+  <mm-range-grouping-switcher
+    actions-start
+    [value]="range.value()"
+    (presetChange)="range.onPresetChange($event)"
+    (customRangeChange)="range.onCustomRangeChange($event)"
+    (rangeShift)="range.onRangeShift($event)"
+  />
+</mm-page-header>
+
+@if (hasNoTransactions()) {
+  <mm-empty-state
+    title="Nothing to explore yet"
+    message="Import a bank CSV export and the money flow diagram fills in here."
+  >
+    <ng-icon icon name="tablerFileImport" size="40" aria-hidden="true" />
+    <mm-button action color="primary" class="mt-2" link="/import">Import transactions</mm-button>
+  </mm-empty-state>
+} @else {
+  <!-- The page's sections, in reading order: the money flow Sankey (TICKET-EXP-02) and, beneath it,
+       the 3D spending landscape (TICKET-EXP-05). Each panel decides for itself whether it has
+       anything to draw, so a range with no flow leaves no empty frame behind. -->
+  <app-money-flow-panel />
+
+  @if (hasNothingInRange()) {
+    <mm-paper>
+      <div class="flex flex-col items-center gap-2 py-10 text-center">
+        <ng-icon
+          name="tablerChartSankey"
+          size="32"
+          aria-hidden="true"
+          class="text-base-content/40"
+        />
+        <mm-text as="p" variant="caption">
+          Nothing moved in this range — widen the date range to see the money flow.
+        </mm-text>
+      </div>
+    </mm-paper>
+  }
+}

@@ -1,0 +1,69 @@
+@if (hasFlow()) {
+  <mm-paper>
+    <mm-flex align="center" justify="between" gap="2">
+      <h2 class="card-title text-base">Money flow</h2>
+      <!-- Panel-scoped, so it stays on the panel rather than in the page header (TICKET-UI-22).
+           Absent entirely when no category in range has a group (TICKET-EXP-03). -->
+      @if (canGroup()) {
+        <mm-label as="label" class="gap-2">
+          <mm-text variant="caption" color="base-content">Group categories</mm-text>
+          <input
+            type="checkbox"
+            class="toggle toggle-sm"
+            [checked]="groupCategories()"
+            (change)="setGroupCategories(!groupCategories())"
+          />
+        </mm-label>
+      }
+    </mm-flex>
+    <mm-text variant="caption">
+      Where this range's money came from, which accounts it passed through, and where it ended up
+    </mm-text>
+
+    <div
+      echarts
+      [options]="chartOption()"
+      (chartClick)="onChartClick($event)"
+      class="mt-2 h-[32rem] w-full"
+      role="img"
+      [attr.aria-label]="chartAriaLabel()"
+    ></div>
+
+    @if (nettedOutNote(); as note) {
+      <mm-text as="p" variant="caption">{{ note }}</mm-text>
+    }
+
+    <!-- Screen-reader-only companion table for the diagram above — not a visible data table, so it
+         skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). Each row carries the
+         same drill-down link its ribbon does (TICKET-EXP-04), so the interaction isn't mouse-only. -->
+    <table class="sr-only">
+      <caption>
+        Every flow in the diagram above, as source, destination and amount
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">From</th>
+          <th scope="col">To</th>
+          <th scope="col">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of accessibleRows(); track row.source + row.target) {
+          <tr>
+            <th scope="row">{{ row.source }}</th>
+            <td>{{ row.target }}</td>
+            <td>
+              @if (row.queryParams; as queryParams) {
+                <a routerLink="/transactions" [queryParams]="queryParams">
+                  {{ row.amount ?? hiddenAmountLabel }}
+                </a>
+              } @else {
+                {{ row.amount ?? hiddenAmountLabel }}
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </mm-paper>
+}
