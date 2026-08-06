@@ -31,6 +31,15 @@ already have). It adds a second new requirement family, **FR-REC**, and keeps ev
 (detection is stateless inference, flags are computed not stored), and its one piece of new UI state (the bill
 calendar's visible month) goes into the session-scoped `ChartOptionsStore` like the rest.
 
+**Added 2026-08-06, later the same day — category applicability.** From the rent example ("not applicable anymore
+shouldn't be in the list"): `TICKET-CAT-10/11` give a category an optional applicability window and make the
+category pickers/filters respect it, and `TICKET-REC-05` keeps a concluded category's series out of the recurring
+list. This **qualifies the no-schema promise above**, deliberately and narrowly: `Category` gains two optional,
+non-indexed fields (`activeFrom`/`activeUntil`) — new persisted data, but still **no new table and no Dexie version
+bump**, because `.stores()` declares indexes, not fields (the `appSettings` precedent recorded in the data-model
+skill). Stat panels and aggregates deliberately do *not* consume the window (a 2022 range showing rent is correct);
+the scope decision is recorded in CAT-11's Notes.
+
 ## Dashboard track (heatmap — independent of the Explore track)
 
 - [x] [TICKET-STAT-29](./tickets/TICKET-STAT-29-spending-heatmap-panel.md) — Spending heatmap: top categories × day of week, as a new Dashboard row (adds FR-STAT-15) — first: it introduces the cycle aggregate, the heatmap ECharts registration and the sequential colour ramp everything else in this track builds on
@@ -54,6 +63,9 @@ Needs only [TICKET-EXP-01](./tickets/TICKET-EXP-01-explore-page-scaffold.md)'s s
 - [ ] [TICKET-REC-02](./tickets/TICKET-REC-02-recurring-payments-panel.md) — Recurring payments panel on Explore: what repeats, what it costs per month (adds FR-REC-2) — **needs REC-01**
 - [ ] [TICKET-REC-03](./tickets/TICKET-REC-03-upcoming-bills-calendar.md) — Upcoming bills calendar: expected payments on the days they'll land (adds FR-REC-3) — **needs REC-01**; independent of REC-02's code, sits after it on the page
 - [ ] [TICKET-REC-04](./tickets/TICKET-REC-04-recurring-change-flags.md) — Flag what changed: price increases, missed payments, stopped series (extends FR-REC-1/2) — **needs REC-01 + REC-02**; its calendar marker extends REC-03 where shipped
+- [ ] [TICKET-CAT-10](./tickets/TICKET-CAT-10-category-applicability-range.md) — Assign an applicability range to a category (adds FR-CAT-9) — independent of every REC ticket, can ship any time; two optional non-indexed `Category` fields, no version bump
+- [ ] [TICKET-CAT-11](./tickets/TICKET-CAT-11-pickers-respect-applicability.md) — Pickers and filters only offer categories that apply to the date at hand (extends FR-CAT-9) — **needs CAT-10**
+- [ ] [TICKET-REC-05](./tickets/TICKET-REC-05-recurring-honours-category-range.md) — The recurring list honours a category's applicability range (extends FR-REC-1/2/3) — **needs CAT-10 + REC-01/02**; deliberately last — its calendar-clipping and flag clauses land with REC-03/04, or fold into them if worked together
 
 ## Considered, not ticketed yet
 
@@ -92,7 +104,8 @@ Per [../../CLAUDE.md](../../CLAUDE.md): `ng lint` + `ng test` + `ng build --conf
 `Fallow` code-quality check, plus a live browser check for any UI-visible change (every ticket here is UI-visible except
 EXP-01, which is a route/shell scaffold and is verified by its route spec plus a navigation check, and REC-01, a pure
 aggregate verified by its spec). **No Dexie schema
-change in this version** — no new table, no version bump, no `appSettings` field; `DashboardRowId` gains one member
+change in this version** — no new table, no version bump, no `appSettings` field (CAT-10 adds two optional
+non-indexed fields to `Category` — new persisted data, but non-indexed fields need no version block; see its ticket); `DashboardRowId` gains one member
 (`'spending-heatmap'`), which is a *type* change resolved for existing users by `resolveDashboardRowOrder`'s
 append-unknown-ids behaviour, not a migration. Components and stores never touch `appDb` directly — the new charts read
 `TransactionsStore`/`CategoriesStore`/`AccountsStore`/`RangeStore` from `@/core/state`. Every new aggregate is a pure
