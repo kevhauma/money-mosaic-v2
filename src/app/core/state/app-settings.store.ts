@@ -72,6 +72,14 @@ export const AppSettingsStore = signalStore(
         patchState(store, { excludedIncomeCategoryIds });
       },
 
+      /** Categories the Dashboard's spending heatmap leaves out entirely (TICKET-STAT-32). */
+      setHeatmapExcludedCategoryIds: async (
+        heatmapExcludedCategoryIds: number[],
+      ): Promise<void> => {
+        await appSettingsRepository.setHeatmapExcludedCategoryIds(heatmapExcludedCategoryIds);
+        patchState(store, { heatmapExcludedCategoryIds });
+      },
+
       setCareerStartDate: async (careerStartDate: string | undefined): Promise<void> => {
         await appSettingsRepository.setCareerStartDate(careerStartDate);
         patchState(store, { careerStartDate });

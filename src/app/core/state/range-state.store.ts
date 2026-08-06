@@ -12,9 +12,9 @@ import {
  * The pages that own a date range (TICKET-UI-23). Adding one here is the whole cost of giving a
  * new page its own range; a page that isn't listed has no range control and never reads one.
  */
-export type RangePageKey = 'dashboard' | 'accounts';
+export type RangePageKey = 'dashboard' | 'accounts' | 'explore';
 
-const RANGE_PAGE_KEYS: readonly RangePageKey[] = ['dashboard', 'accounts'];
+const RANGE_PAGE_KEYS: readonly RangePageKey[] = ['dashboard', 'accounts', 'explore'];
 
 type RangeState = {
   preset: RangePreset | 'custom';

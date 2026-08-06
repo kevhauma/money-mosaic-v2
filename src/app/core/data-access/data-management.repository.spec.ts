@@ -105,6 +105,7 @@ describe('DataManagementRepository', () => {
         grossColor: 'violet',
         mainIncomeCategoryId: 7,
         seenGuideSlugs: ['getting-started-with-the-income-page'],
+        heatmapExcludedCategoryIds: [4],
         privacyMode: true,
       });
 
@@ -119,6 +120,7 @@ describe('DataManagementRepository', () => {
       expect(restored?.grossColor).toBe('violet');
       expect(restored?.mainIncomeCategoryId).toBe(7);
       expect(restored?.seenGuideSlugs).toEqual(['getting-started-with-the-income-page']);
+      expect(restored?.heatmapExcludedCategoryIds).toEqual([4]);
       expect(restored?.privacyMode).toBe(true);
     });
   });

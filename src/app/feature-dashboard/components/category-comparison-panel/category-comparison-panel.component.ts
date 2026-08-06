@@ -1,12 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import {
-  ButtonComponent,
-  DropdownComponent,
-  FlexComponent,
-  LabelComponent,
-  PaperComponent,
-  TypographyComponent,
-} from '@/shared/ui';
+import { FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import {
   buildTransactionDrilldownParams,
   formatAlignedRangeLabel,
@@ -15,18 +8,12 @@ import {
   formatPercent,
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
-import { AppSettingsStore, CategoriesStore } from '@/core/state';
+import { AppSettingsStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { StatsStore } from '../../stats.store';
 import type { CategoryComparisonVm, ComparisonBarVm } from '../../category-comparison-vm';
+import { CategoryExclusionDropdownComponent } from '../category-exclusion-dropdown/category-exclusion-dropdown.component';
 import { ComparisonCategoryCardComponent } from '../comparison-category-card/comparison-category-card.component';
-
-/** One row in the "exclude categories" checklist. */
-type ExcludableCategoryVm = {
-  id: number;
-  name: string;
-  excluded: boolean;
-};
 
 /**
  * Top expense categories for the selected range, each compared against the nearest same-length
@@ -40,11 +27,9 @@ type ExcludableCategoryVm = {
 @Component({
   selector: 'app-category-comparison-panel',
   imports: [
-    ButtonComponent,
+    CategoryExclusionDropdownComponent,
     ComparisonCategoryCardComponent,
-    DropdownComponent,
     FlexComponent,
-    LabelComponent,
     PaperComponent,
     TypographyComponent,
   ],
@@ -53,7 +38,6 @@ type ExcludableCategoryVm = {
 })
 export class CategoryComparisonPanelComponent {
   private readonly statsStore = inject(StatsStore);
-  private readonly categoriesStore = inject(CategoriesStore);
   private readonly categoryComparisonSettingsStore = inject(CategoryComparisonSettingsStore);
 
   /** Handed to each card's `[blurred]` (TICKET-PRIV-01) — the cards stay presentational, so the store read lives here. */
@@ -119,30 +103,11 @@ export class CategoryComparisonPanelComponent {
     });
   });
 
-  private readonly excludedCategoryIds = computed(
+  protected readonly excludedCategoryIds = computed(
     () => new Set(this.categoryComparisonSettingsStore.excludedCategoryIds()),
   );
 
-  protected readonly excludableCategories = computed<ExcludableCategoryVm[]>(() => {
-    const excluded = this.excludedCategoryIds();
-    return this.categoriesStore
-      .activeCategories()
-      .filter((category) => category.kind === 'expense')
-      .map((category) => ({
-        id: category.id!,
-        name: category.name,
-        excluded: excluded.has(category.id!),
-      }));
-  });
-
-  protected readonly excludedCount = computed(
-    () => this.excludableCategories().filter((category) => category.excluded).length,
-  );
-
-  protected toggleExcluded(categoryId: number, excluded: boolean): void {
-    const next = new Set(this.excludedCategoryIds());
-    if (excluded) next.add(categoryId);
-    else next.delete(categoryId);
-    this.categoryComparisonSettingsStore.setExcludedCategoryIds([...next]);
+  protected setExcludedCategoryIds(excludedCategoryIds: number[]): void {
+    void this.categoryComparisonSettingsStore.setExcludedCategoryIds(excludedCategoryIds);
   }
 }

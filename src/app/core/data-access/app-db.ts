@@ -594,6 +594,22 @@ export type AppSettings = {
    */
   seenGuideSlugs: string[] | undefined;
   /**
+   * Additive field (TICKET-STAT-32) — expense categories the user has left out of the Dashboard's
+   * spending heatmap (FR-STAT-15), so one dominant fixed cost stops taking a row *and* setting the
+   * colour scale every other category is then measured against. Excluded spend is dropped from the
+   * grid entirely rather than folded into its "Other" row — folding it would leave the same money
+   * in the same cells under a different label.
+   *
+   * Deliberately separate from `CategoryComparisonSettings.excludedCategoryIds`: "not interesting
+   * to compare period-over-period" and "drowning out the heatmap" are different judgements about
+   * different charts. Lives here rather than in a fourth singleton table because the newer
+   * convention for a list of category ids is a field on this row (see `excludedIncomeCategoryIds`)
+   * — `.stores()` declares indexes, not fields, so no version bump.
+   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as the fields
+   * above.
+   */
+  heatmapExcludedCategoryIds: number[] | undefined;
+  /**
    * Additive field (TICKET-PRIV-01) — whether privacy mode is on, blurring every figure on the
    * Dashboard so the page survives a screen-share. `undefined` means off, which is what an unset
    * field already means; `AppSettingsStore.privacyModeEnabled` resolves the `?? false` once so no
@@ -622,6 +638,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   grossColor: undefined,
   mainIncomeCategoryId: undefined,
   seenGuideSlugs: undefined,
+  heatmapExcludedCategoryIds: undefined,
   privacyMode: undefined,
 };
 

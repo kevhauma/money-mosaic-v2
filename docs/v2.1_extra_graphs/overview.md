@@ -27,10 +27,12 @@ not into `appSettings`.
 
 - [x] [TICKET-STAT-29](./tickets/TICKET-STAT-29-spending-heatmap-panel.md) — Spending heatmap: top categories × day of week, as a new Dashboard row (adds FR-STAT-15) — first: it introduces the cycle aggregate, the heatmap ECharts registration and the sequential colour ramp everything else in this track builds on
 - [x] [TICKET-STAT-30](./tickets/TICKET-STAT-30-heatmap-cycle-switcher.md) — Switch the heatmap between day of week, day of month, month and quarter (extends FR-STAT-15) — **needs STAT-29**; widens its `cycle` parameter and adds the per-chart control
+- [ ] [TICKET-STAT-31](./tickets/TICKET-STAT-31-heatmap-cycles-fit-the-range.md) — Only offer heatmap cycles the selected range can actually fill (bug fix, revises FR-STAT-15 — the picker offers all four cycles whatever the range, so a one-week range can be switched to a Month view whose columns are empty for calendar reasons) — **needs STAT-30**; from feedback on the shipped panel
+- [ ] [TICKET-STAT-32](./tickets/TICKET-STAT-32-heatmap-exclude-categories.md) — Exclude categories from the spending heatmap, like the category period comparison panel already allows (extends FR-STAT-15) — **needs STAT-29**; independent of STAT-31, also from feedback on the shipped panel
 
 ## Explore track (Sankey + 3D — independent of the Dashboard track)
 
-- [ ] [TICKET-EXP-01](./tickets/TICKET-EXP-01-explore-page-scaffold.md) — Explore page: route, shell, nav item, own date range (adds FR-EXP-1) — prerequisite for every other ticket in this track; no chart of its own
+- [x] [TICKET-EXP-01](./tickets/TICKET-EXP-01-explore-page-scaffold.md) — Explore page: route, shell, nav item, own date range (adds FR-EXP-1) — prerequisite for every other ticket in this track; no chart of its own
 - [ ] [TICKET-EXP-02](./tickets/TICKET-EXP-02-money-flow-sankey.md) — Money flow Sankey: income sources → accounts → categories/savings/left-over, on a graph that provably balances (adds FR-EXP-2) — **needs EXP-01**; the headline section, and the base EXP-03/04 both extend
 - [ ] [TICKET-EXP-03](./tickets/TICKET-EXP-03-sankey-category-group-level.md) — Category groups as an intermediate Sankey level, from `Category.group` (extends FR-EXP-2) — **needs EXP-02**; independent of EXP-04
 - [ ] [TICKET-EXP-04](./tickets/TICKET-EXP-04-sankey-tooltips-drilldown-privacy.md) — Sankey amounts, share-of-total, drill-down to transactions, and privacy mode (extends FR-EXP-2) — **needs EXP-02**; independent of EXP-03, and what turns the diagram from a poster into a query interface

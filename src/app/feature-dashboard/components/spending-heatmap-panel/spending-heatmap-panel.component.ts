@@ -4,6 +4,7 @@ import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { computeCategoryCycleHeatmap, type CategoryCycleHeatmap } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
+import { CategoryExclusionDropdownComponent } from '../category-exclusion-dropdown/category-exclusion-dropdown.component';
 import {
   AccountsStore,
   AppSettingsStore,
@@ -22,6 +23,7 @@ import {
 import {
   buildTransactionDrilldownParams,
   cycleColumnLabels,
+  cyclesForRange,
   formatCurrency,
   type CycleKey,
 } from '@/shared/utils';
@@ -132,6 +134,7 @@ export const buildHeatmapChartOption = (
   selector: 'app-spending-heatmap-panel',
   imports: [
     NgxEchartsDirective,
+    CategoryExclusionDropdownComponent,
     CyclePickerComponent,
     FlexComponent,
     PaperComponent,
@@ -147,7 +150,22 @@ export class SpendingHeatmapPanelComponent {
   private readonly rangeStore = inject(RangeStore);
   private readonly router = inject(Router);
 
-  protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
+  private readonly appSettingsStore = inject(AppSettingsStore);
+
+  protected readonly privacyMode = this.appSettingsStore.privacyModeEnabled;
+
+  /**
+   * Categories the user has left out (TICKET-STAT-32) — persisted on `appSettings`, and its own
+   * list rather than the category comparison panel's: "not worth comparing period-over-period" and
+   * "drowning out this heatmap's colour scale" are different judgements about different charts.
+   */
+  protected readonly excludedCategoryIds = computed(
+    () => new Set(this.appSettingsStore.heatmapExcludedCategoryIds() ?? []),
+  );
+
+  protected setExcludedCategoryIds(excludedCategoryIds: number[]): void {
+    void this.appSettingsStore.setHeatmapExcludedCategoryIds(excludedCategoryIds);
+  }
 
   /**
    * Which cycle the columns fold onto (TICKET-STAT-30), held for the session by `ChartOptionsStore`
@@ -155,8 +173,24 @@ export class SpendingHeatmapPanelComponent {
    * to day-of-week, the axis this panel shipped with.
    */
   private readonly cycleControl = chartCycle('dashboard-heatmap', () => 'day-of-week');
-  protected readonly cycle = this.cycleControl.value;
   protected readonly setCycle = this.cycleControl.set;
+
+  /** The cycles this range is long enough to fill (TICKET-STAT-31) — the picker offers only these. */
+  protected readonly availableCycles = computed(() =>
+    cyclesForRange(this.rangeStore.from('dashboard'), this.rangeStore.to('dashboard')),
+  );
+
+  /**
+   * What the panel actually draws (TICKET-STAT-31): the stored choice when the current range can
+   * fill it, else the longest cycle it can. The stored choice is deliberately left alone rather
+   * than corrected — widening the range back restores what the user picked, and a range change
+   * should never masquerade as a click on the picker.
+   */
+  protected readonly cycle = computed<CycleKey>(() => {
+    const available = this.availableCycles();
+    const stored = this.cycleControl.value();
+    return available.includes(stored) ? stored : available[available.length - 1];
+  });
 
   private readonly ownSavingsIbans = computed(() =>
     savingsAccountIbans(this.accountsStore.accounts()),
@@ -171,6 +205,7 @@ export class SpendingHeatmapPanelComponent {
       this.cycle(),
       this.ownSavingsIbans(),
       this.accountsStore.accountsById(),
+      this.excludedCategoryIds(),
     ),
   );
 

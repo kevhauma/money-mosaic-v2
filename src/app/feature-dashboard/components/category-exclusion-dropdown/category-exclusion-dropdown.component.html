@@ -1,0 +1,23 @@
+@if (hasCategories()) {
+  <mm-dropdown align="end" contentClass="z-10 w-56">
+    <mm-button trigger variant="ghost" size="sm">
+      Exclude categories
+      @if (excludedCount() > 0) {
+        ({{ excludedCount() }})
+      }
+    </mm-button>
+    @for (category of categories(); track category.id) {
+      <li>
+        <mm-label as="label" class="justify-start gap-2">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm"
+            [checked]="category.excluded"
+            (change)="toggle(category.id, !category.excluded)"
+          />
+          <mm-text variant="caption" color="base-content">{{ category.name }}</mm-text>
+        </mm-label>
+      </li>
+    }
+  </mm-dropdown>
+}

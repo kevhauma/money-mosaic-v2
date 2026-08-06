@@ -36,6 +36,13 @@ export class AppSettingsRepository {
     return appDb.appSettings.put({ ...current, id: 1, excludedIncomeCategoryIds });
   };
 
+  // Read-merge-put like every setter here: the row carries a dozen independent fields, so writing
+  // one must not clobber the rest (TICKET-STAT-32).
+  setHeatmapExcludedCategoryIds = async (heatmapExcludedCategoryIds: number[]): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, heatmapExcludedCategoryIds });
+  };
+
   // `undefined` clears the setting (TICKET-INC-12) — the Income page falls back to the full data
   // history, which is exactly what an unset field already means.
   setCareerStartDate = async (careerStartDate: string | undefined): Promise<number> => {

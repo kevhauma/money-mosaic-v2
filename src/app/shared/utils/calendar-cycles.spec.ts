@@ -1,4 +1,9 @@
-import { cycleColumnIndex, cycleColumnKeys, cycleColumnLabels } from './calendar-cycles';
+import {
+  cycleColumnIndex,
+  cycleColumnKeys,
+  cycleColumnLabels,
+  cyclesForRange,
+} from './calendar-cycles';
 import { syncFormatSettings } from './format-settings';
 import { withCleanFormatSettings } from './format-settings.testing';
 
@@ -91,5 +96,39 @@ describe('cycleColumnIndex', () => {
     expect(cycleColumnIndex('2026-03-31', 'quarter-of-year')).toBe(0);
     expect(cycleColumnIndex('2026-04-01', 'quarter-of-year')).toBe(1);
     expect(cycleColumnIndex('2026-11-01', 'quarter-of-year')).toBe(3);
+  });
+});
+
+describe('cyclesForRange (TICKET-STAT-31)', () => {
+  it('offers day of week alone for a week, and nothing bigger', () => {
+    // 2026-07-06..12 is exactly seven days, inclusive.
+    expect(cyclesForRange('2026-07-06', '2026-07-12')).toEqual(['day-of-week']);
+  });
+
+  it('keeps day of week even for a range too short to fill it — a picker with nothing in it is worse', () => {
+    expect(cyclesForRange('2026-07-06', '2026-07-08')).toEqual(['day-of-week']);
+  });
+
+  it('adds day of month at 28 days, the shortest calendar month, and not at 27', () => {
+    expect(cyclesForRange('2026-07-01', '2026-07-27')).toEqual(['day-of-week']); // 27 days
+    expect(cyclesForRange('2026-07-01', '2026-07-28')).toEqual(['day-of-week', 'day-of-month']); // 28
+    expect(cyclesForRange('2026-02-01', '2026-02-28')).toContain('day-of-month'); // a whole February
+  });
+
+  it('adds month and quarter at a full year, and not a day earlier', () => {
+    expect(cyclesForRange('2026-01-02', '2026-12-31')).toEqual(['day-of-week', 'day-of-month']); // 364 days
+    expect(cyclesForRange('2026-01-01', '2026-12-31')).toEqual([
+      'day-of-week',
+      'day-of-month',
+      'month-of-year',
+      'quarter-of-year',
+    ]); // 365
+  });
+
+  it('returns cycles shortest-first, so the last entry is the longest available', () => {
+    const cycles = cyclesForRange('2024-01-01', '2026-12-31');
+
+    expect(cycles[0]).toBe('day-of-week');
+    expect(cycles[cycles.length - 1]).toBe('quarter-of-year');
   });
 });

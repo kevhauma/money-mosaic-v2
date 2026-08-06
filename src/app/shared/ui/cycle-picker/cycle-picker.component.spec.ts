@@ -36,6 +36,16 @@ describe('CyclePickerComponent (TICKET-STAT-30)', () => {
     expect(group.getAttribute('aria-label')).toBe('Calendar cycle');
   });
 
+  it('renders only the cycles the caller says are available (TICKET-STAT-31)', () => {
+    fixture.componentRef.setInput('available', ['day-of-week', 'day-of-month']);
+    fixture.detectChanges();
+
+    expect(buttons().map((button) => button.textContent?.trim())).toEqual([
+      'Day of week',
+      'Day of month',
+    ]);
+  });
+
   it('emits the clicked cycle without changing its own state — the caller owns the value', () => {
     const emitted: CyclePickerValue[] = [];
     fixture.componentInstance.valueChange.subscribe((value) => emitted.push(value));

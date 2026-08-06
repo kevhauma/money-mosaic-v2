@@ -2,7 +2,18 @@
   <mm-paper [fullHeight]="true">
     <mm-flex align="center" justify="between" gap="2">
       <h2 class="card-title text-base">Spending heatmap</h2>
-      <mm-cycle-picker [value]="cycle()" (valueChange)="setCycle($event)" />
+      <mm-flex align="center" gap="2">
+        <mm-cycle-picker
+          [value]="cycle()"
+          [available]="availableCycles()"
+          (valueChange)="setCycle($event)"
+        />
+        <!-- Same control, same place as the category period comparison panel's (TICKET-STAT-32). -->
+        <app-category-exclusion-dropdown
+          [excludedIds]="excludedCategoryIds()"
+          (excludedChange)="setExcludedCategoryIds($event)"
+        />
+      </mm-flex>
     </mm-flex>
     <mm-text variant="caption">Your biggest categories, by {{ axisNoun() }}</mm-text>
 

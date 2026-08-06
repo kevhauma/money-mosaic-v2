@@ -54,6 +54,14 @@ Widens [TICKET-STAT-29](./TICKET-STAT-29-spending-heatmap-panel.md)'s aggregate 
 > The property that criterion asked for is preserved: the chart option and the screen-reader table
 > both read the panel's single `columnLabels()` signal, so the two still cannot disagree.
 
+> **Revised by [TICKET-STAT-31](./TICKET-STAT-31-heatmap-cycles-fit-the-range.md) (2026-08-06).**
+> The picker no longer offers every cycle unconditionally — only those the selected range is long
+> enough to fill — and the panel falls back to the longest available cycle when the stored choice
+> stops fitting. One consequence for the record below: the "This range only covers 1 of 12 months"
+> example is no longer reachable, since any range long enough to offer a year-shaped cycle also
+> covers all twelve of its columns. The caption itself still fires, on day-of-month over a short
+> month.
+
 ## Acceptance criteria
 
 - [x] `computeCategoryCycleHeatmap` supports all four `CycleKey` values, each emitting its complete column set in calendar order with zero cells for empty positions. (`cycleColumnKeys`/`cycleColumnIndex` switch on all four with no default branch, so a fifth member fails to compile; specs "buckets by day of the month, keeping every one of the 31 columns", "buckets by quarter", "folds the same month of two different years into one column", plus [calendar-cycles.spec.ts](../../../src/app/shared/utils/calendar-cycles.spec.ts)'s four `cycleColumnKeys` specs.)

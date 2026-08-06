@@ -49,6 +49,20 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // are no longer listed here; the five Explore tickets below are still open.
   {
     versionFolder: 'v2.1_extra_graphs',
+    ticketId: 'TICKET-STAT-31',
+    title:
+      'The spending heatmap only offers the time views your selected date range is long enough for',
+    area: 'Dashboard',
+  },
+  {
+    versionFolder: 'v2.1_extra_graphs',
+    ticketId: 'TICKET-STAT-32',
+    title:
+      'Leave categories out of the spending heatmap, so one big fixed cost stops washing it out',
+    area: 'Dashboard',
+  },
+  {
+    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-EXP-01',
     title: 'A new Explore page with its own date range, for the big-picture diagrams',
     area: 'Explore',

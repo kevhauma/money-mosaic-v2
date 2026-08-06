@@ -205,6 +205,122 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
     expect(tooltipFormatter({ value: [0, 0, 40] })).toContain('€40.00');
   });
 
+  describe('cycles restricted to the range (TICKET-STAT-31)', () => {
+    it('offers day of week alone on a week-long range', async () => {
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-06', '2026-07-12');
+      await seedGroceries(transaction({ id: 1, amount: -40 }));
+
+      expect(fixture.componentInstance['availableCycles']()).toEqual(['day-of-week']);
+      const buttons = Array.from(
+        fixture.nativeElement.querySelectorAll('mm-cycle-picker button') as NodeListOf<HTMLElement>,
+      ).map((button) => button.textContent?.trim());
+      expect(buttons).toEqual(['Day of week']);
+    });
+
+    it('falls back to the longest cycle the range can fill, without overwriting the stored choice', async () => {
+      await seedGroceries(transaction({ id: 1, amount: -40 }));
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2025-07-06', '2026-07-12');
+      fixture.componentInstance['setCycle']('month-of-year');
+      fixture.detectChanges();
+      expect(fixture.componentInstance['cycle']()).toBe('month-of-year');
+
+      // Narrow to a single week: month-of-year no longer fits.
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-06', '2026-07-12');
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance['cycle']()).toBe('day-of-week');
+      // The user's choice is still on record — a range change is not a click on the picker.
+      expect(TestBed.inject(ChartOptionsStore).cycle('dashboard-heatmap')).toBe('month-of-year');
+
+      // Widen back past a year and the stored choice returns.
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2025-07-06', '2026-07-12');
+      fixture.detectChanges();
+      expect(fixture.componentInstance['cycle']()).toBe('month-of-year');
+    });
+
+    it('draws the effective cycle, not the stored one, in the chart and the table', async () => {
+      await seedGroceries(transaction({ id: 1, amount: -40 }));
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2025-07-06', '2026-07-12');
+      fixture.componentInstance['setCycle']('month-of-year');
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-06', '2026-07-12');
+      fixture.detectChanges();
+
+      expect(
+        (fixture.componentInstance['chartOption']()['xAxis'] as { data: string[] }).data,
+      ).toHaveLength(7);
+      expect(fixture.nativeElement.querySelector('table.sr-only caption').textContent).toContain(
+        'day of the week',
+      );
+    });
+  });
+
+  describe('excluded categories (TICKET-STAT-32)', () => {
+    const rent = { ...groceries, id: 2, name: 'Rent' };
+
+    const seedTwoCategories = async (): Promise<void> => {
+      await TestBed.inject(CategoriesStore).addCategory(groceries);
+      await TestBed.inject(CategoriesStore).addCategory(rent);
+      TestBed.inject(TransactionsStore).addMany([
+        transaction({ id: 1, amount: -40, categoryId: 1 }),
+        transaction({ id: 2, amount: -900, categoryId: 2 }),
+      ]);
+      fixture.detectChanges();
+    };
+
+    it('renders the shared exclusion checklist with every active expense category', async () => {
+      await seedTwoCategories();
+
+      expect(fixture.nativeElement.querySelector('app-category-exclusion-dropdown')).not.toBeNull();
+      const labels = Array.from(
+        fixture.nativeElement.querySelectorAll('.dropdown-content li') as NodeListOf<HTMLElement>,
+      ).map((row) => row.textContent?.trim());
+      expect(labels).toEqual(['Groceries', 'Rent']);
+      expect(fixture.nativeElement.textContent).toContain('Exclude categories');
+    });
+
+    it('drops an excluded category from the grid and rescales the colours', async () => {
+      await seedTwoCategories();
+      expect(fixture.componentInstance['heatmap']().maxAmount).toBe(900);
+
+      await TestBed.inject(AppSettingsStore).setHeatmapExcludedCategoryIds([2]);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance['heatmap']().rows.map((row) => row.name)).toEqual([
+        'Groceries',
+      ]);
+      expect(fixture.componentInstance['heatmap']().maxAmount).toBe(40);
+      const triggerText = (
+        fixture.nativeElement.querySelector('app-category-exclusion-dropdown') as HTMLElement
+      ).textContent?.replace(/\s+/g, ' ');
+      expect(triggerText).toContain('Exclude categories (1)');
+    });
+
+    it('ticking a category in the checklist writes the whole set through AppSettingsStore', async () => {
+      await seedTwoCategories();
+      const setExcluded = vi
+        .spyOn(TestBed.inject(AppSettingsStore), 'setHeatmapExcludedCategoryIds')
+        .mockResolvedValue();
+
+      const checkboxes = fixture.nativeElement.querySelectorAll(
+        '.dropdown-content input[type="checkbox"]',
+      ) as NodeListOf<HTMLInputElement>;
+      checkboxes[1].dispatchEvent(new Event('change')); // Rent
+      fixture.detectChanges();
+
+      expect(setExcluded).toHaveBeenCalledExactlyOnceWith([2]);
+    });
+
+    it('self-hides when everything is excluded', async () => {
+      await seedTwoCategories();
+
+      await TestBed.inject(AppSettingsStore).setHeatmapExcludedCategoryIds([1, 2]);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance['hasSpend']()).toBe(false);
+      expect(fixture.nativeElement.textContent.trim()).toBe('');
+    });
+  });
+
   describe('cycle switching (TICKET-STAT-30)', () => {
     const xAxisLabels = (): string[] =>
       (fixture.componentInstance['chartOption']()['xAxis'] as { data: string[] }).data;
@@ -218,6 +334,8 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
 
     it('switches the chart, its table and its accessible name together', async () => {
       await seedGroceries(transaction({ id: 1, amount: -40 }));
+      // A year-shaped cycle needs a year-shaped range to be on offer at all (TICKET-STAT-31).
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2025-07-06', '2026-07-12');
 
       fixture.componentInstance['setCycle']('month-of-year');
       fixture.detectChanges();
@@ -237,6 +355,7 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
 
     it('holds the chosen cycle in ChartOptionsStore, so a remount keeps it', async () => {
       await seedGroceries(transaction({ id: 1, amount: -40 }));
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2025-07-06', '2026-07-12');
 
       fixture.componentInstance['setCycle']('quarter-of-year');
 
@@ -247,20 +366,25 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
       expect(remounted.componentInstance['cycle']()).toBe('quarter-of-year');
     });
 
-    it('says so when the range cannot reach every column, and stays quiet when it can', async () => {
-      await seedGroceries(transaction({ id: 1, amount: -40 }));
+    it('says so when an offered cycle still cannot reach every column, and stays quiet when it can', async () => {
+      // A whole February: long enough to offer day-of-month (TICKET-STAT-31's 28-day threshold),
+      // but it never reaches the 29th-31st — which is exactly the case this note exists for.
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-02-01', '2026-02-28');
+      await seedGroceries(transaction({ id: 1, bookingDate: '2026-02-03', amount: -40 }));
 
-      // Three weeks covers all seven weekdays...
+      // Four weeks covers all seven weekdays...
       expect(fixture.componentInstance['partialCycleNote']()).toBeNull();
 
-      // ...but only one of twelve months.
-      fixture.componentInstance['setCycle']('month-of-year');
+      // ...but only 28 of the 31 day-of-month columns.
+      fixture.componentInstance['setCycle']('day-of-month');
       fixture.detectChanges();
 
       expect(fixture.componentInstance['partialCycleNote']()).toBe(
-        'This range only covers 1 of 12 months',
+        'This range only covers 28 of 31 days of the month',
       );
-      expect(fixture.nativeElement.textContent).toContain('This range only covers 1 of 12 months');
+      expect(fixture.nativeElement.textContent).toContain(
+        'This range only covers 28 of 31 days of the month',
+      );
     });
   });
 });

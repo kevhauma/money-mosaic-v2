@@ -37,4 +37,15 @@ describe('app routes: unmatched URLs', () => {
 
     expect(resolved).toBe(true);
   });
+
+  // Longer timeout than the default 5s, for the same reason the ML worker spec carries one:
+  // resolving this route dynamically imports `EXPLORE_ROUTES`, whose route-level
+  // `provideEchartsCore({ echarts })` drags the whole echarts core in with it. That import is fast
+  // in isolation and comfortably over 5s inside the full suite's cold module graph — a timeout that
+  // says nothing about the route table, which is what this case is actually asserting.
+  it('resolves /explore, the routed home for the full-width diagrams (TICKET-EXP-01)', async () => {
+    const { resolved } = await navigate('/explore');
+
+    expect(resolved).toBe(true);
+  }, 30000);
 });

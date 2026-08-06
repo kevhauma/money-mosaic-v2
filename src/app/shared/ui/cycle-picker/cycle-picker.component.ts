@@ -19,6 +19,8 @@ const CYCLE_LABELS: Record<CyclePickerValue, string> = {
 
 type CycleOption = { value: CyclePickerValue; label: string };
 
+const ALL_CYCLES = Object.keys(CYCLE_LABELS) as CyclePickerValue[];
+
 /**
  * Presentational calendar-cycle toggle for a heatmap's column axis (TICKET-STAT-30) — which
  * repeating position the columns fold onto, not how big a bucket is (that's
@@ -36,13 +38,20 @@ export class CyclePickerComponent {
 
   readonly valueChange = output<CyclePickerValue>();
 
+  /**
+   * The cycles this picker may offer (TICKET-STAT-31) — the caller decides which ones the current
+   * date range is long enough for. Defaults to all four, so a caller with no such constraint gets
+   * the full set.
+   */
+  readonly available = input<readonly CyclePickerValue[]>(ALL_CYCLES);
+
   /** Routes a template `class="..."` onto the real `.join` wrapper, per the shared-primitive convention. */
   readonly class = input('', { alias: 'class' });
 
   protected readonly classes = computed(() => daisyClasses('join', [], this.class()));
 
-  /** Resolved once here rather than per-cell in the template — templates branch on state, they don't derive it. */
-  protected readonly options: CycleOption[] = (Object.keys(CYCLE_LABELS) as CyclePickerValue[]).map(
-    (value) => ({ value, label: CYCLE_LABELS[value] }),
+  /** Resolved here rather than per-cell in the template — templates branch on state, they don't derive it. */
+  protected readonly options = computed<CycleOption[]>(() =>
+    this.available().map((value) => ({ value, label: CYCLE_LABELS[value] })),
   );
 }

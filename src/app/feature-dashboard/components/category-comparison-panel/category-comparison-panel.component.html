@@ -3,29 +3,10 @@
     <mm-flex align="center" justify="between" gap="2">
       <h2 class="card-title text-base">Category period comparison</h2>
 
-      @if (excludableCategories().length > 0) {
-        <mm-dropdown align="end" contentClass="z-10 w-56">
-          <mm-button trigger variant="ghost" size="sm">
-            Exclude categories
-            @if (excludedCount() > 0) {
-              ({{ excludedCount() }})
-            }
-          </mm-button>
-          @for (category of excludableCategories(); track category.id) {
-            <li>
-              <mm-label as="label" class="justify-start gap-2">
-                <input
-                  type="checkbox"
-                  class="checkbox checkbox-sm"
-                  [checked]="category.excluded"
-                  (change)="toggleExcluded(category.id, !category.excluded)"
-                />
-                <mm-text variant="caption" color="base-content">{{ category.name }}</mm-text>
-              </mm-label>
-            </li>
-          }
-        </mm-dropdown>
-      }
+      <app-category-exclusion-dropdown
+        [excludedIds]="excludedCategoryIds()"
+        (excludedChange)="setExcludedCategoryIds($event)"
+      />
     </mm-flex>
 
     @if (c.hasEnoughData) {

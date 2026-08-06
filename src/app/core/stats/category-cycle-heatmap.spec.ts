@@ -315,3 +315,121 @@ describe('computeCategoryCycleHeatmap', () => {
     expect(heatmap.rows[0].total).toBe(25);
   });
 });
+
+describe('computeCategoryCycleHeatmap: excluded categories (TICKET-STAT-32)', () => {
+  const excluded = (...ids: number[]): ReadonlySet<number> => new Set(ids);
+
+  it('drops an excluded category from the rows, the cells and the colour scale', () => {
+    const transactions = [
+      transaction({ id: 1, amount: -900, categoryId: 2 }), // Rent, excluded below
+      transaction({ id: 2, amount: -40, categoryId: 1 }),
+    ];
+
+    const heatmap = computeCategoryCycleHeatmap(
+      transactions,
+      categoriesById(GROCERIES, RENT),
+      FROM,
+      TO,
+      'day-of-week',
+      new Set(),
+      new Map(),
+      excluded(2),
+    );
+
+    expect(heatmap.rows.map((row) => row.name)).toEqual(['Groceries']);
+    expect(heatmap.maxAmount).toBe(40); // the scale is set by what is left, not by the excluded rent
+    expect(heatmap.cells.every((cell) => cell.amount <= 40)).toBe(true);
+  });
+
+  it('does not fold an excluded category into "Other" — that would leave the same money in the grid', () => {
+    const transactions = [
+      transaction({ id: 1, amount: -900, categoryId: 2 }),
+      transaction({ id: 2, amount: -40, categoryId: 1 }),
+    ];
+
+    const heatmap = computeCategoryCycleHeatmap(
+      transactions,
+      categoriesById(GROCERIES, RENT),
+      FROM,
+      TO,
+      'day-of-week',
+      new Set(),
+      new Map(),
+      excluded(2),
+    );
+
+    expect(heatmap.rows.some((row) => row.name === 'Other')).toBe(false);
+    expect(heatmap.rows.reduce((sum, row) => sum + row.total, 0)).toBe(40);
+  });
+
+  it('still folds a non-excluded 5th category into "Other"', () => {
+    const categories = categoriesById(
+      GROCERIES,
+      RENT,
+      category(3, 'Transport'),
+      category(4, 'Fun'),
+      category(5, 'Pets'),
+    );
+    const transactions = [
+      transaction({ id: 1, amount: -500, categoryId: 2 }),
+      transaction({ id: 2, amount: -400, categoryId: 1 }),
+      transaction({ id: 3, amount: -300, categoryId: 3 }),
+      transaction({ id: 4, amount: -200, categoryId: 4 }),
+      transaction({ id: 5, amount: -100, categoryId: 5 }),
+    ];
+
+    const heatmap = computeCategoryCycleHeatmap(
+      transactions,
+      categories,
+      FROM,
+      TO,
+      'day-of-week',
+      new Set(),
+      new Map(),
+      excluded(2), // Rent out; Pets is still the 5th-ranked and still folds
+    );
+
+    expect(heatmap.rows.map((row) => row.name)).toEqual(['Groceries', 'Transport', 'Fun', 'Pets']);
+    expect(heatmap.rows.some((row) => row.name === 'Other')).toBe(false);
+  });
+
+  it('behaves exactly as before for an empty exclusion set', () => {
+    const transactions = [
+      transaction({ id: 1, amount: -900, categoryId: 2 }),
+      transaction({ id: 2, amount: -40, categoryId: 1 }),
+    ];
+    const categories = categoriesById(GROCERIES, RENT);
+
+    const withEmptySet = computeCategoryCycleHeatmap(
+      transactions,
+      categories,
+      FROM,
+      TO,
+      'day-of-week',
+      new Set(),
+      new Map(),
+      new Set(),
+    );
+    const withDefault = computeCategoryCycleHeatmap(transactions, categories, FROM, TO);
+
+    expect(withEmptySet).toEqual(withDefault);
+  });
+
+  it('leaves nothing to plot when every spending category is excluded', () => {
+    const transactions = [transaction({ id: 1, amount: -900, categoryId: 2 })];
+
+    const heatmap = computeCategoryCycleHeatmap(
+      transactions,
+      categoriesById(GROCERIES, RENT),
+      FROM,
+      TO,
+      'day-of-week',
+      new Set(),
+      new Map(),
+      excluded(1, 2),
+    );
+
+    expect(heatmap.rows).toEqual([]);
+    expect(heatmap.maxAmount).toBe(0);
+  });
+});

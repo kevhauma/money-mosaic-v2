@@ -91,6 +91,44 @@ const weekdayIndex = (isoDate: string): number =>
 /** Read off the ISO string rather than a `Date`: `YYYY-MM-DD` is fixed-width, and parsing it can only introduce a timezone to get wrong. */
 const monthIndex = (isoDate: string): number => Number(isoDate.slice(5, 7)) - 1;
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * How long a range has to be before a cycle is worth asking about (TICKET-STAT-31), in days:
+ * a full week, the shortest calendar month, and a full year for the two year-shaped cycles.
+ * Quarter takes the year threshold rather than ~90 days for the same reason as month — a
+ * single-quarter range puts everything in one of four columns, which is the defect, not the view.
+ */
+const MINIMUM_RANGE_DAYS: Record<CycleKey, number> = {
+  'day-of-week': 7,
+  'day-of-month': 28,
+  'month-of-year': 365,
+  'quarter-of-year': 365,
+};
+
+/** Inclusive day count of an ISO date range — `2026-07-06`..`2026-07-12` is 7, not 6. */
+const rangeDayCount = (from: string, to: string): number =>
+  Math.floor((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / MS_PER_DAY) + 1;
+
+/**
+ * The cycles a range is long enough to fill, shortest first (TICKET-STAT-31) — a one-week range
+ * has no business offering a month-of-year view, where eleven columns would be empty for calendar
+ * reasons rather than spending ones.
+ *
+ * `'day-of-week'` is always included, even for a three-day range: it is the smallest unit on offer
+ * and the default, and a picker with nothing in it is worse than one honest option.
+ *
+ * Gated on range *length*, not on column coverage: a whole 28-day February never reaches the 31st,
+ * but it is plainly enough range to read day-of-month patterns from. Coverage is a separate
+ * question, and the panel reports it separately.
+ */
+export const cyclesForRange = (from: string, to: string): CycleKey[] => {
+  const days = rangeDayCount(from, to);
+  return (Object.keys(MINIMUM_RANGE_DAYS) as CycleKey[]).filter(
+    (cycle) => cycle === 'day-of-week' || days >= MINIMUM_RANGE_DAYS[cycle],
+  );
+};
+
 /** Which of the cycle's columns a date falls in. */
 export const cycleColumnIndex = (isoDate: string, cycle: CycleKey): number => {
   switch (cycle) {

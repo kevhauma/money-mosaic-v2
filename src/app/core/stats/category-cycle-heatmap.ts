@@ -81,6 +81,7 @@ const accumulateCellTotals = (
   accountsById: ReadonlyMap<number, Account>,
   rowIndexByCategoryId: ReadonlyMap<number, number>,
   otherRowIndex: number,
+  excludedCategoryIds: ReadonlySet<number>,
 ): CellTotals => {
   const byCell = new Map<string, number>();
   let otherRowUsed = false;
@@ -95,6 +96,9 @@ const accumulateCellTotals = (
       accountsById,
     );
     if (result.kind !== 'expense') continue;
+    // Dropped, not folded into "Other" (TICKET-STAT-32) — folding would leave the same money in
+    // the same cells under a different label, and still set the colour scale.
+    if (result.categoryId != null && excludedCategoryIds.has(result.categoryId)) continue;
 
     const ownRowIndex =
       result.categoryId != null ? rowIndexByCategoryId.get(result.categoryId) : undefined;
@@ -177,7 +181,10 @@ const buildRows = (
  *
  * Every per-transaction exclusion/routing decision is delegated to `classifyForStats` (CR3-2.1) —
  * only `expense`-classified amounts accumulate, so a heatmap cell and a Dashboard stat card can't
- * drift apart on what counts as spending.
+ * drift apart on what counts as spending. `excludedCategoryIds` (TICKET-STAT-32) is the one
+ * exclusion this aggregate owns: the user's own "leave this category out of the heatmap" list,
+ * applied before ranking, before the `Other` fold and before `maxAmount`, so an excluded category
+ * neither takes a row nor sets the colour scale everything else is measured against.
  */
 export const computeCategoryCycleHeatmap = (
   transactions: Transaction[],
@@ -187,6 +194,7 @@ export const computeCategoryCycleHeatmap = (
   cycle: CycleKey = 'day-of-week',
   ownSavingsIbans: ReadonlySet<string> = new Set(),
   accountsById: ReadonlyMap<number, Account> = new Map(),
+  excludedCategoryIds: ReadonlySet<number> = new Set(),
   topN: number = DEFAULT_TOP_CATEGORY_COUNT,
 ): CategoryCycleHeatmap => {
   const columnKeys = cycleColumnKeys(cycle);
@@ -201,7 +209,10 @@ export const computeCategoryCycleHeatmap = (
   );
 
   const topCategoryIds = expenseByCategory
-    .filter((entry) => entry.categoryId != null && entry.total > 0)
+    .filter(
+      (entry) =>
+        entry.categoryId != null && entry.total > 0 && !excludedCategoryIds.has(entry.categoryId),
+    )
     .slice(0, topN)
     .map((entry) => entry.categoryId as number);
 
@@ -219,6 +230,7 @@ export const computeCategoryCycleHeatmap = (
     accountsById,
     rowIndexByCategoryId,
     otherRowIndex,
+    excludedCategoryIds,
   );
 
   const coveredColumnCount = countCoveredColumns(from, to, cycle);

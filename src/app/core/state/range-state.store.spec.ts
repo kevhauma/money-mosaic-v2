@@ -160,8 +160,28 @@ describe('RangeStore: one range per page (TICKET-UI-23)', () => {
 
     expect(rangeStore.preset('dashboard')).toBe('this-month');
     expect(rangeStore.preset('accounts')).toBe('this-month');
+    expect(rangeStore.preset('explore')).toBe('this-month');
     expect(rangeStore.from('dashboard')).toBe(rangeStore.from('accounts'));
     expect(rangeStore.to('dashboard')).toBe(rangeStore.to('accounts'));
+    expect(rangeStore.from('dashboard')).toBe(rangeStore.from('explore'));
+    expect(rangeStore.to('dashboard')).toBe(rangeStore.to('explore'));
+  });
+
+  it('setting the Explore range leaves the Dashboard range untouched, and vice versa (TICKET-EXP-01)', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    const dashboardFrom = rangeStore.from('dashboard');
+
+    rangeStore.setCustomRange('explore', '2023-05-01', '2023-05-31');
+
+    expect(rangeStore.preset('explore')).toBe('custom');
+    expect(rangeStore.from('explore')).toBe('2023-05-01');
+    expect(rangeStore.preset('dashboard')).toBe('this-month');
+    expect(rangeStore.from('dashboard')).toBe(dashboardFrom);
+
+    rangeStore.setPreset('dashboard', 'last-year');
+
+    expect(rangeStore.from('explore')).toBe('2023-05-01');
+    expect(rangeStore.to('explore')).toBe('2023-05-31');
   });
 
   it('setting the Dashboard range leaves the Accounts range untouched', () => {

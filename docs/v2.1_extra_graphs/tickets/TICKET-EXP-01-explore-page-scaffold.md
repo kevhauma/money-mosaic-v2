@@ -33,17 +33,17 @@ Scaffolds a new routed feature area — `/explore` → `feature-explore/` — wi
 
 ## Acceptance criteria
 
-- [ ] `/explore` resolves to a lazily-loaded `feature-explore` chunk; the feature is imported only through its `@/feature-explore` barrel (no deep imports from other features).
-- [ ] `provideEchartsCore({ echarts })` is declared at the Explore route level, not in the component and not globally; `ng build --configuration development` shows no echarts in the main bundle and `angular.json`'s budgets are unchanged.
-- [ ] `RangePageKey` and `RANGE_PAGE_KEYS` both gain `'explore'`, and the page's range is independent of the Dashboard's (changing one leaves the other alone).
-- [ ] The page header uses `mm-page-header` + `mm-range-grouping-switcher` bound to `pageRangeControl('explore')`.
-- [ ] A sidebar "Explore" nav item routes to `/explore` and marks itself active, with markup consistent with the surrounding items.
-- [ ] With zero transactions the page renders `mm-empty-state` with a working `/import` CTA, and does not render the (still empty) chart sections.
-- [ ] No new Dexie table, no schema version bump, no `appSettings` field.
-- [ ] Unit tests cover: the route resolving; the range isolation between `'explore'` and `'dashboard'`; the empty-state branch and the normal branch.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: the nav item appears and navigates, the range switcher works and stays independent of the Dashboard's, and the empty state shows on a cleared database.
+- [x] `/explore` resolves to a lazily-loaded `feature-explore` chunk; the feature is imported only through its `@/feature-explore` barrel (no deep imports from other features). (`app.routes.ts` uses `loadChildren: () => import('@/feature-explore')`; `explore.routes.ts` lazy-loads the overview via `loadComponent`; spec `app routes: unmatched URLs > resolves /explore, the routed home for the full-width diagrams`)
+- [x] `provideEchartsCore({ echarts })` is declared at the Explore route level, not in the component and not globally; `ng build --configuration development` shows no echarts in the main bundle and `angular.json`'s budgets are unchanged. (`explore.routes.ts:14` route-level `providers`; `grep -c echarts dist/money-mosaic-vibe/browser/main.js` → 0 after `ng build --configuration development`; `angular.json` untouched by this ticket)
+- [x] `RangePageKey` and `RANGE_PAGE_KEYS` both gain `'explore'`, and the page's range is independent of the Dashboard's (changing one leaves the other alone). (`range-state.store.ts:15-17`; spec `RangeStore: one range per page > setting the Explore range leaves the Dashboard range untouched, and vice versa (TICKET-EXP-01)`)
+- [x] The page header uses `mm-page-header` + `mm-range-grouping-switcher` bound to `pageRangeControl('explore')`. (`explore-overview.component.html:4-11`, `explore-overview.component.ts` `range = pageRangeControl('explore')`; spec `renders the page header with the Explore range switcher bound to it`)
+- [x] A sidebar "Explore" nav item routes to `/explore` and marks itself active, with markup consistent with the surrounding items. (`app-shell.component.html`, `tablerChartSankey` registered in `app-shell.component.ts`; observed live on `/explore` — the anchor carried `menu-active`, and the sidebar order reads `/dashboard, /income, /explore, /accounts, …`)
+- [x] With zero transactions the page renders `mm-empty-state` with a working `/import` CTA, and does not render the (still empty) chart sections. (spec `renders the empty state, and not the chart sections, when there are no transactions` + its `once transactions exist` twin)
+- [x] No new Dexie table, no schema version bump, no `appSettings` field. (this ticket touches no file under `core/data-access/`)
+- [x] Unit tests cover: the route resolving; the range isolation between `'explore'` and `'dashboard'`; the empty-state branch and the normal branch. (`app.routes.spec.ts`, `range-state.store.spec.ts`, `explore-overview.component.spec.ts` — 4 cases)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (lint: "All files pass linting"; test: 235 files / 2398 tests passed; build: "Application bundle generation complete")
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD`: 0 dead-code issues, 0 duplication clone groups, and no complexity finding in any `feature-explore` file — the one `introduced: true` finding belongs to the unrelated in-flight `category-comparison-panel` work)
+- [x] Verified live in the browser: the nav item appears and navigates, the range switcher works and stays independent of the Dashboard's, and the empty state shows on a cleared database. (nav + navigation + active state confirmed on `localhost:4210/explore`, no console errors; range isolation confirmed by setting Explore to "Last year", navigating to `/dashboard` — still "This month" — and back to `/explore`, still "Last year" with `?from=2025-01-01&to=2025-12-31`. **The cleared-database half was covered by the two spec cases above rather than live**: the dev profile holds 41 real imported transactions and wiping them to see an empty state is not a check worth that price.)
 
 ## Notes
 
