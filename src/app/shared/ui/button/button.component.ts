@@ -24,6 +24,16 @@ export class ButtonComponent {
   readonly disabled = input(false);
   readonly link = input<string>();
   readonly ariaLabel = input<string>();
+  /**
+   * For a button that discloses something (a row's detail, a collapsible section) — native
+   * attributes do not forward through a wrapping component, so a disclosure button has no way to
+   * announce its state without its own input. Left `undefined` on every ordinary button, which is
+   * correct: `aria-expanded` on a control that expands nothing is a lie to a screen reader.
+   *
+   * Applied to the `<button>` branch only, deliberately — the `link()` branch renders an `<a>`,
+   * which navigates rather than discloses, and has nothing to be expanded.
+   */
+  readonly ariaExpanded = input<boolean>();
   readonly class = input('', { alias: 'class' });
 
   protected readonly classes = computed(() =>

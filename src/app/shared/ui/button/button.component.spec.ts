@@ -61,6 +61,23 @@ describe('ButtonComponent', () => {
     },
   );
 
+  it('omits aria-expanded until a disclosure button sets it, then reflects the state', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('button').hasAttribute('aria-expanded')).toBe(false);
+
+    fixture.componentRef.setInput('ariaExpanded', false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('button').getAttribute('aria-expanded')).toBe(
+      'false',
+    );
+
+    fixture.componentRef.setInput('ariaExpanded', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('button').getAttribute('aria-expanded')).toBe(
+      'true',
+    );
+  });
+
   it('applies the shape modifier class', () => {
     fixture.componentRef.setInput('shape', 'square');
     fixture.detectChanges();

@@ -63,15 +63,16 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-02',
+    ticketId: 'TICKET-EXP-07',
     title:
-      'One list of every detected recurring payment, with what it typically costs and the total per month',
-    area: 'Recurring payments',
+      'A spending mosaic: tiles sized by money, groups subdividing into categories, click to zoom in',
+    area: 'Explore',
   },
   {
     versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-REC-03',
-    title: 'A calendar showing the days your recurring payments are expected to land',
+    title:
+      'Upcoming bills as a calendar or a list — your choice — showing when each recurring payment is expected to land',
     area: 'Recurring payments',
   },
   {

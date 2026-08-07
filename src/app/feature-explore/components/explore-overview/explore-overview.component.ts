@@ -11,6 +11,7 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { MoneyFlowPanelComponent } from '../money-flow-panel/money-flow-panel.component';
+import { RecurringPaymentsPanelComponent } from '../recurring-payments-panel/recurring-payments-panel.component';
 
 /**
  * The `/explore` page container (FR-EXP-1, TICKET-EXP-01) — the home for the diagrams that need
@@ -37,6 +38,7 @@ import { MoneyFlowPanelComponent } from '../money-flow-panel/money-flow-panel.co
     PageHeaderComponent,
     PaperComponent,
     RangeGroupingSwitcherComponent,
+    RecurringPaymentsPanelComponent,
     TypographyComponent,
   ],
   templateUrl: './explore-overview.component.html',

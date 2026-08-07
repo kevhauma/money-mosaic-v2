@@ -1,0 +1,108 @@
+<mm-paper>
+  <mm-flex align="center" justify="between" gap="3" [wrap]="true">
+    <h2 class="card-title text-base">Recurring payments</h2>
+
+    @if (seriesCount() > 0) {
+      <mm-text variant="caption" color="base-content">
+        {{ summaryLabel() }}
+        <mm-privacy-blur [blurred]="privacyMode()">{{ monthlyTotal() }}</mm-privacy-blur>
+        /month
+      </mm-text>
+    }
+  </mm-flex>
+
+  <!-- Said plainly, because the page header carries a date range this section does not obey:
+       cadence only exists across time, so detection reads the whole history (TICKET-REC-02). -->
+  <mm-text as="p" variant="caption" class="mt-1">
+    Detected across your whole history — not filtered by the range above.
+  </mm-text>
+
+  @if (rows().length === 0) {
+    <mm-empty-state
+      title="Nothing repeating found yet"
+      message="A payment is detected once it has happened at least three times at the same place, for a similar amount, on a regular rhythm."
+    />
+  } @else {
+    <mm-table class="mt-3 bg-base-100">
+      <caption class="sr-only">
+        Detected recurring payments, most expensive per month first
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Payment</th>
+          <th scope="col">Category</th>
+          <th scope="col">Cadence</th>
+          <th scope="col" class="text-right">Typical</th>
+          <th scope="col">Last paid</th>
+          <th scope="col">Next expected</th>
+          <th scope="col" class="text-right">Per month</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.key) {
+          <tr>
+            <!-- A row header, not a cell: the payment's name is what identifies the row a screen
+                 reader is reading the other six columns of. -->
+            <th scope="row">
+              <mm-button
+                variant="ghost"
+                size="xs"
+                class="max-w-full justify-start px-1"
+                [ariaExpanded]="row.expanded"
+                [ariaLabel]="row.toggleAriaLabel"
+                (click)="toggle(row.key)"
+              >
+                <span aria-hidden="true">{{ row.expandIcon }}</span>
+                <span class="truncate">{{ row.label }}</span>
+              </mm-button>
+            </th>
+            <td>
+              <mm-flex align="center" gap="2">
+                <span
+                  class="inline-block size-2 shrink-0 rounded-full"
+                  [style.background-color]="row.categoryColor"
+                  aria-hidden="true"
+                ></span>
+                {{ row.categoryName }}
+              </mm-flex>
+            </td>
+            <td>{{ row.cadence }}</td>
+            <td class="text-right">
+              <mm-privacy-blur [blurred]="privacyMode()">{{ row.typicalAmount }}</mm-privacy-blur>
+            </td>
+            <td>{{ row.lastDate }}</td>
+            <td>{{ row.nextExpectedDate }}</td>
+            <td class="text-right">
+              <mm-privacy-blur [blurred]="privacyMode()">{{
+                row.monthlyEquivalent
+              }}</mm-privacy-blur>
+            </td>
+          </tr>
+
+          <!-- The evidence behind the detection, so a false positive is diagnosable without
+               leaving the page (deep-linking would need a counterparty param the Transactions
+               filters do not have — recorded in the ticket's Notes). -->
+          @if (row.expanded) {
+            <tr>
+              <td colspan="7" class="bg-base-200/40">
+                <mm-text as="p" variant="caption" class="mb-1">
+                  {{ row.occurrenceCount }} payments detected
+                </mm-text>
+                <ul class="flex flex-col gap-1">
+                  @for (occurrence of row.occurrences; track occurrence.transactionId) {
+                    <li class="flex justify-between gap-4 text-sm">
+                      <span>{{ occurrence.date }}</span>
+                      <mm-privacy-blur [blurred]="privacyMode()">{{
+                        occurrence.amount
+                      }}</mm-privacy-blur>
+                    </li>
+                  }
+                </ul>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </mm-table>
+  }
+</mm-paper>

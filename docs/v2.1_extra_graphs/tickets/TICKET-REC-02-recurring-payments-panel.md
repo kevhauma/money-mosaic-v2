@@ -58,25 +58,60 @@ behind each series.
 
 ## Acceptance criteria
 
-- [ ] The panel renders on `/explore` with the detected series, their cadence, typical amount,
+- [x] The panel renders on `/explore` with the detected series, their cadence, typical amount,
       last paid, next expected, and monthly equivalent, sorted by monthly equivalent descending.
-- [ ] The summary line shows the series count and the summed monthly-equivalent total.
-- [ ] Expanding a series shows its individual occurrences with dates and amounts.
-- [ ] The section does not react to the Explore date range, and the caption saying so is present.
-- [ ] All amounts (rows, occurrences, summary) honour privacy mode; dates and amounts use
-      `localeDate`/`formatCurrency()`.
-- [ ] The empty state renders when no series is detected and explains the three-occurrence
-      minimum.
-- [ ] Data access goes through `TransactionsStore`/`CategoriesStore`/`AccountsStore` from
-      `@/core/state` — no repository or Dexie import in the component.
-- [ ] Unit tests cover: series render with correct per-row figures and sort order; the summary
+      (`recurring-payments-panel.component.html` renders the seven-column table;
+      `explore-overview.component.html` mounts `<app-recurring-payments-panel />`. Specs: *"lists
+      each detected series with its cadence, typical amount, dates and monthly equivalent"* and
+      *"sorts the series by monthly equivalent, most expensive first"*.)
+- [x] The summary line shows the series count and the summed monthly-equivalent total. (Spec:
+      *"summarises the count and the summed monthly-equivalent total"* — "2 recurring payments"
+      and €17.99 from a €12.99 + €5.00 pair. The total is summed from the series' own
+      `monthlyEquivalent`s, so it can never disagree with the column above it.)
+- [x] Expanding a series shows its individual occurrences with dates and amounts. (Spec: *"expands
+      a series to its individual occurrences, and collapses again"* — four dated rows, and
+      `aria-expanded` flipping on the disclosure button both ways.)
+- [x] The section does not react to the Explore date range, and the caption saying so is present.
+      (Spec: *"states that detection ignores the page range, and does not react when the range
+      changes"* — a range excluding every occurrence leaves the rendered cells identical. The panel
+      injects no `RangeStore`, which is what makes that structural rather than incidental.)
+- [x] All amounts (rows, occurrences, summary) honour privacy mode; dates and amounts use
+      `localeDate`/`formatCurrency()`. (Spec: *"blurs every amount under privacy mode — rows,
+      occurrences and the summary"*, which asserts both the 7 expected `.mm-privacy-blurred`
+      wrappers *and* that no element renders a currency figure as its own text outside one. Dates
+      go through `formatDate` — `localeDate`'s own pure function — in the row view-model rather
+      than the pipe, since the row is built in the class.)
+- [x] The empty state renders when no series is detected and explains the three-occurrence
+      minimum. (Spec: *"explains the three-occurrence minimum when nothing is detected"*; rendered
+      via `mm-empty-state` rather than a hand-rolled block.)
+- [x] Data access goes through `TransactionsStore`/`CategoriesStore`/`AccountsStore` from
+      `@/core/state` — no repository or Dexie import in the component. (Plus `AppSettingsStore` for
+      privacy mode; the component's only other imports are `@/core/stats`, `@/core/transfers`,
+      `@/shared/ui`, `@/shared/echarts` and `@/shared/utils`. Confirmed by the
+      `conventions-reviewer`: "store access exclusively via `@/core/state`".)
+- [x] Unit tests cover: series render with correct per-row figures and sort order; the summary
       total; row expansion showing occurrences; privacy-mode masking; the empty state; the
-      panel ignoring an Explore range change.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      panel ignoring an Explore range change. (`recurring-payments-panel.component.spec.ts`, 8
+      cases — the listed six plus the uncategorised-label case; `explore-overview.component.spec.ts`
+      additionally asserts the panel survives the empty-range branch, which is the overview's own
+      composition decision and not provable from the panel's spec.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (2026-08-07: "All files pass linting"; 239 spec files / 2485 tests passed;
+      "Application bundle generation complete", no budget warning, `angular.json` not in the diff.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD`:
+      maintainability 93.6 "good", dead files 0.0%, **dead exports 0.0%** — this panel is REC-01's
+      first consumer, so its temporary `unused-export` suppression was removed with this ticket as
+      its own comment promised — 0 duplication, no CRITICAL function. `conventions-reviewer` raised
+      nine findings, all applied: display facts moved off the template into
+      `feature-explore/recurring-payments-row-vm.ts` (`expandIcon`, `toggleAriaLabel`,
+      `summaryLabel`), `CHART_NO_COLOR_FALLBACK` imported instead of a duplicated hex, typography
+      utilities dropped from the `mm-button` call site, `mm-empty-state` reused instead of a
+      re-authored block, `scope="col"`/`scope="row"` added, `seriesCount` decoupled from row
+      expansion, and spec cases added for the new `ariaExpanded` input and the overview placement.)
 - [ ] Verified live in the browser: the panel renders on `/explore` with real imported data and a
-      known real subscription appears with a plausible cadence and next-expected date.
+      known real subscription appears with a plausible cadence and next-expected date. — **not
+      done: the user explicitly asked to work this ticket without a browser check.** Left open
+      rather than ticked, since nothing here proves how it looks or behaves against a real import.
 
 ## Notes
 

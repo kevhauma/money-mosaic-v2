@@ -301,9 +301,6 @@ const candidatesByCounterparty = (
  * Series come back most-expensive-first by `monthlyEquivalent`, which is the order a "what do my
  * commitments cost me" panel wants and the only order this aggregate has an opinion about.
  */
-// REC-01 ships the detector with no caller by design — REC-02 is the first consumer, and this
-// suppression comes back out with that ticket (fallow reports it as stale once it does).
-// fallow-ignore-next-line unused-export
 export const detectRecurringPayments = (
   transactions: Transaction[],
   categoriesById: ReadonlyMap<number, Category>,

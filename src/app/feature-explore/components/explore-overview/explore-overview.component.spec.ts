@@ -71,7 +71,9 @@ describe('ExploreOverviewComponent (TICKET-EXP-01)', () => {
     fixture.detectChanges();
     const host = fixture.nativeElement as HTMLElement;
 
-    expect(host.querySelector('mm-empty-state')).toBeNull();
+    // `:scope >` on purpose — the recurring panel (TICKET-REC-02) renders an empty state of its
+    // own when nothing repeating is detected, which is not the page going blank.
+    expect(host.querySelector(':scope > mm-empty-state')).toBeNull();
     expect(host.querySelector('app-money-flow-panel mm-paper')).not.toBeNull();
     expect(host.textContent).not.toContain('Nothing moved in this range');
   });
@@ -82,9 +84,14 @@ describe('ExploreOverviewComponent (TICKET-EXP-01)', () => {
     fixture.detectChanges();
     const host = fixture.nativeElement as HTMLElement;
 
-    expect(host.querySelector('mm-empty-state')).toBeNull();
+    // `:scope >` on purpose — the recurring panel (TICKET-REC-02) renders an empty state of its
+    // own when nothing repeating is detected, which is not the page going blank.
+    expect(host.querySelector(':scope > mm-empty-state')).toBeNull();
     expect(host.querySelector('app-money-flow-panel mm-paper')).toBeNull();
     expect(host.textContent).toContain('Nothing moved in this range');
+    // The recurring section reads the whole history, so an empty *range* must not take it away
+    // with the Sankey (TICKET-REC-02) — this placement is the overview's own decision to prove.
+    expect(host.querySelector('app-recurring-payments-panel')).not.toBeNull();
   });
 
   it('renders the page header with the Explore range switcher bound to it', async () => {

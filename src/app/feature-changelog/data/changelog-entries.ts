@@ -667,4 +667,20 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-07',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-02'],
+    title: 'Explore now lists the payments that repeat, and what they cost you per month',
+    details: [
+      'A new “Recurring payments” section on Explore finds the payments that keep coming back — same place, similar amount, regular rhythm — without you tagging anything',
+      'Weekly, monthly, quarterly and yearly rhythms are each recognised, and every one is converted to a per-month cost so a €120 yearly subscription can be compared with a €10 monthly one',
+      'A summary line adds it all up: how many recurring payments you have, and roughly what they come to each month',
+      'Expand any row to see the individual payments behind it, with their dates and amounts — so if something was detected that should not have been, you can see exactly why',
+      'It reads your whole history rather than the date range at the top of the page, and says so: a rhythm cannot be seen inside a range shorter than a few of its own repeats',
+      'A payment is only listed once it has happened at least three times, so a single unusual purchase never shows up as a commitment',
+      'Refunds, transfers between your own accounts, and anything you have excluded are treated exactly as they are everywhere else, and with “Hide amounts” on every figure is withheld',
+    ],
+    area: 'Explore',
+  },
 ];

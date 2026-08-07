@@ -55,14 +55,15 @@ the scope decision is recorded in CAT-11's Notes.
 - [x] [TICKET-EXP-04](./tickets/TICKET-EXP-04-sankey-tooltips-drilldown-privacy.md) — Sankey amounts, share-of-total, drill-down to transactions, and privacy mode (extends FR-EXP-2) — **needs EXP-02**; independent of EXP-03, and what turns the diagram from a poster into a query interface — ⚠ visual browser check outstanding
 - [x] [TICKET-EXP-06](./tickets/TICKET-EXP-06-money-flow-account-balance-tiers.md) — Money flow reads account balances, and draws transfers between your own accounts (revises FR-EXP-2) — **from feedback on the shipped diagram**; reverses EXP-02's "route everything through `classifyForStats`" decision, drops ownership weighting, and adds a second account tier so a checking → joint transfer is visible — ⚠ visual browser check outstanding on the reporter's own dataset
 - [x] ~~[TICKET-EXP-05](./tickets/TICKET-EXP-05-3d-spending-landscape.md) — 3D spending landscape, months × categories × amount via `echarts-gl` (adds FR-EXP-3)~~ — **closed 2026-08-06 as won't do**, at its own feasibility gate and before any UI work: `echarts-gl@2.1.0` imports 16 deep paths into `echarts`/`zrender` without a `.js` extension, which both packages' strict `exports` maps refuse, so `ng build` cannot resolve it — kill criterion 1 ("cannot render against ECharts 6 without … patching the dependency"). **FR-EXP-3 is not delivered.** The finding, the rejected workarounds and the named follow-up (a WebGL-free isometric SVG landscape) are recorded in the ticket's Notes
+- [ ] [TICKET-EXP-07](./tickets/TICKET-EXP-07-spending-mosaic-treemap.md) — Spending mosaic: a treemap of category groups → categories, area-true with native drill-down (adds FR-EXP-4) — **needs EXP-01** only; graduated 2026-08-07 from "Considered, not ticketed yet" as EXP-05's named cheapest replacement, now that its kill criteria have fired; core ECharts, no new dependency
 
 ## Recurring track (detection + bill calendar — independent of both tracks above)
 
 Needs only [TICKET-EXP-01](./tickets/TICKET-EXP-01-explore-page-scaffold.md)'s shipped scaffold for a place to render.
 
 - [x] [TICKET-REC-01](./tickets/TICKET-REC-01-recurring-payment-detection.md) — Detect recurring payments: same counterparty, similar amount, regular rhythm (adds FR-REC-1) — first: the pure aggregate every other REC ticket consumes; no UI of its own
-- [ ] [TICKET-REC-02](./tickets/TICKET-REC-02-recurring-payments-panel.md) — Recurring payments panel on Explore: what repeats, what it costs per month (adds FR-REC-2) — **needs REC-01**
-- [ ] [TICKET-REC-03](./tickets/TICKET-REC-03-upcoming-bills-calendar.md) — Upcoming bills calendar: expected payments on the days they'll land (adds FR-REC-3) — **needs REC-01**; independent of REC-02's code, sits after it on the page
+- [x] [TICKET-REC-02](./tickets/TICKET-REC-02-recurring-payments-panel.md) — Recurring payments panel on Explore: what repeats, what it costs per month (adds FR-REC-2) — **needs REC-01** — ⚠ **the live browser check is outstanding**, waived by the user when this shipped; every other criterion is covered by the panel's 8 specs
+- [ ] [TICKET-REC-03](./tickets/TICKET-REC-03-upcoming-bills-calendar.md) — Upcoming bills: expected payments as a calendar or a date-ordered list, with a view switcher (adds FR-REC-3) — **needs REC-01**; independent of REC-02's code, sits after it on the page
 - [ ] [TICKET-REC-04](./tickets/TICKET-REC-04-recurring-change-flags.md) — Flag what changed: price increases, missed payments, stopped series (extends FR-REC-1/2) — **needs REC-01 + REC-02**; its calendar marker extends REC-03 where shipped
 - [ ] [TICKET-CAT-10](./tickets/TICKET-CAT-10-category-applicability-range.md) — Assign an applicability range to a category (adds FR-CAT-9) — independent of every REC ticket, can ship any time; two optional non-indexed `Category` fields, no version bump
 - [ ] [TICKET-CAT-11](./tickets/TICKET-CAT-11-pickers-respect-applicability.md) — Pickers and filters only offer categories that apply to the date at hand (extends FR-CAT-9) — **needs CAT-10**
@@ -89,11 +90,12 @@ Needs only [TICKET-EXP-01](./tickets/TICKET-EXP-01-explore-page-scaffold.md)'s s
   stays out of this version: user overrides on detection ("this is not recurring", merging two series, dismissing a
   flag) and a "what changed since last visit" inbox consuming REC-04's flags — each needs persistence, and this version
   ships no Dexie change.
-- **A treemap ("mosaic") of category groups → categories.** Considered as a bundle-free alternative to the 3D view,
-  since it ships inside core ECharts and matches the app's name. Not ticketed: it would show the same composition the
-  category breakdown pie and the Sankey's destination level already show, in a third form. If EXP-05's kill criteria
-  fire and the appetite for a showpiece remains, this is the cheapest replacement — as is the isometric SVG fallback
-  named in EXP-05 itself.
+- **A treemap ("mosaic") of category groups → categories** — *graduated, 2026-08-07, as
+  [TICKET-EXP-07](./tickets/TICKET-EXP-07-spending-mosaic-treemap.md).* Originally parked as showing the same
+  composition the pie and the Sankey's destination level already show; EXP-05's kill criteria then fired and the
+  appetite for a showpiece remained, exactly the condition this entry named. The ticket answers the duplication
+  objection (it is the only hierarchical, *area-true* composition view) — the isometric SVG fallback from EXP-05's
+  Notes stays unticketed.
 - **Persisting chart choices across reloads.** The heatmap's cycle and the Sankey's grouping toggle live in
   `ChartOptionsStore`, which is in-memory by the deliberate decision recorded in its own doc comment (a hidden series or
   an unexpected axis surviving a browser restart reads as the app being simply wrong). Moving either into `appSettings`
