@@ -60,7 +60,7 @@ the scope decision is recorded in CAT-11's Notes.
 
 Needs only [TICKET-EXP-01](./tickets/TICKET-EXP-01-explore-page-scaffold.md)'s shipped scaffold for a place to render.
 
-- [ ] [TICKET-REC-01](./tickets/TICKET-REC-01-recurring-payment-detection.md) — Detect recurring payments: same counterparty, similar amount, regular rhythm (adds FR-REC-1) — first: the pure aggregate every other REC ticket consumes; no UI of its own
+- [x] [TICKET-REC-01](./tickets/TICKET-REC-01-recurring-payment-detection.md) — Detect recurring payments: same counterparty, similar amount, regular rhythm (adds FR-REC-1) — first: the pure aggregate every other REC ticket consumes; no UI of its own
 - [ ] [TICKET-REC-02](./tickets/TICKET-REC-02-recurring-payments-panel.md) — Recurring payments panel on Explore: what repeats, what it costs per month (adds FR-REC-2) — **needs REC-01**
 - [ ] [TICKET-REC-03](./tickets/TICKET-REC-03-upcoming-bills-calendar.md) — Upcoming bills calendar: expected payments on the days they'll land (adds FR-REC-3) — **needs REC-01**; independent of REC-02's code, sits after it on the page
 - [ ] [TICKET-REC-04](./tickets/TICKET-REC-04-recurring-change-flags.md) — Flag what changed: price increases, missed payments, stopped series (extends FR-REC-1/2) — **needs REC-01 + REC-02**; its calendar marker extends REC-03 where shipped

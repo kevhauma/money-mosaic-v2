@@ -63,13 +63,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-01',
-    title:
-      'Automatic detection of payments that repeat — same counterparty, similar amount, regular rhythm',
-    area: 'Recurring payments',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-REC-02',
     title:
       'One list of every detected recurring payment, with what it typically costs and the total per month',

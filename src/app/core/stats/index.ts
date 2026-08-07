@@ -33,3 +33,4 @@ export * from './top-transactions';
 export * from './year-over-year';
 export * from './period-window';
 export * from './category-period-comparison';
+export * from './recurring-payments';
