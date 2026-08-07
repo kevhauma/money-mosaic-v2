@@ -24,12 +24,19 @@
       echarts
       [options]="chartOption()"
       (chartClick)="onChartClick($event)"
-      class="mt-2 h-[32rem] w-full"
+      [style.height.px]="chartHeightPx()"
+      class="mt-2 w-full"
       role="img"
       [attr.aria-label]="chartAriaLabel()"
     ></div>
 
+    @if (balanceNodesNote(); as note) {
+      <mm-text as="p" variant="caption">{{ note }}</mm-text>
+    }
     @if (nettedOutNote(); as note) {
+      <mm-text as="p" variant="caption">{{ note }}</mm-text>
+    }
+    @if (sameTierNote(); as note) {
       <mm-text as="p" variant="caption">{{ note }}</mm-text>
     }
 

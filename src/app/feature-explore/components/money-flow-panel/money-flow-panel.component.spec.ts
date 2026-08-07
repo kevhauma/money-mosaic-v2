@@ -49,6 +49,24 @@ const checking: Account = {
   archived: false,
 };
 
+const savings: Account = {
+  ...checking,
+  id: 2,
+  name: 'Rainy day',
+  type: 'savings',
+  iban: 'NL02BANK0000000002',
+  color: '#222222',
+};
+
+/** Same `checking` type as the main account, so a move between them has nowhere to go in a Sankey. */
+const secondChecking: Account = {
+  ...checking,
+  id: 3,
+  name: 'Second account',
+  iban: 'NL03BANK0000000003',
+  color: '#333333',
+};
+
 const salary: Category = {
   id: 10,
   name: 'Salary',
@@ -89,7 +107,13 @@ const graph: MoneyFlowGraph = {
       kind: 'income-source',
       categoryId: 10,
     },
-    { id: 'carried-in', name: 'Carried in', level: 0, color: '#9ca3af', kind: 'carried-in' },
+    {
+      id: 'existing-balance',
+      name: 'Existing balance',
+      level: 0,
+      color: '#9ca3af',
+      kind: 'existing-balance',
+    },
     {
       id: 'account:1',
       name: 'Main account',
@@ -101,7 +125,7 @@ const graph: MoneyFlowGraph = {
     {
       id: 'category:20',
       name: 'Groceries',
-      level: 2,
+      level: 3,
       color: '#ff0000',
       kind: 'category',
       categoryId: 20,
@@ -110,22 +134,23 @@ const graph: MoneyFlowGraph = {
     {
       id: 'category:21',
       name: 'Main account',
-      level: 2,
+      level: 3,
       color: '#0000ff',
       kind: 'category',
       categoryId: 21,
     },
-    { id: 'left-over', name: 'Left over', level: 2, color: '#9ca3af', kind: 'left-over' },
+    { id: 'left-over', name: 'Left over', level: 3, color: '#9ca3af', kind: 'left-over' },
   ],
   links: [
     { source: 'income:10', target: 'account:1', value: 2000 },
-    { source: 'carried-in', target: 'account:1', value: 100 },
+    { source: 'existing-balance', target: 'account:1', value: 100 },
     { source: 'account:1', target: 'category:20', value: 500 },
     { source: 'account:1', target: 'category:21', value: 100 },
     { source: 'account:1', target: 'left-over', value: 1500 },
   ],
   nettedOutLinkCount: 0,
   groupableCategoryCount: 0,
+  sameTierTransferCount: 0,
 };
 
 type SankeyNode = { name: string; depth: number; itemStyle: { color: string }; cursor: string };
@@ -145,7 +170,7 @@ const labelFormatterOf = (
 ): ((params: { name: string }) => string) => seriesOf(option).label.formatter;
 
 const palette = ['#a00000', '#b00000', '#c00000', '#d00000'];
-const synthetic = { carriedIn: '#c00000', leftOver: '#a00000' };
+const synthetic = { existingBalance: '#c00000', leftOver: '#a00000' };
 const totals = summariseMoneyFlow(graph);
 
 const optionFor = (privacyMode = false) =>
@@ -158,7 +183,7 @@ describe('buildMoneyFlowChartOption (TICKET-EXP-02)', () => {
     // Two nodes are both named "Main account"; keying by name would silently merge them into one.
     expect(series.data.map((node) => node.name)).toEqual([
       'income:10',
-      'carried-in',
+      'existing-balance',
       'account:1',
       'category:20',
       'category:21',
@@ -173,7 +198,7 @@ describe('buildMoneyFlowChartOption (TICKET-EXP-02)', () => {
 
     expect(colorOf('account:1')).toBe('#111111');
     expect(colorOf('category:20')).toBe('#ff0000');
-    expect(colorOf('carried-in')).toBe(synthetic.carriedIn);
+    expect(colorOf('existing-balance')).toBe(synthetic.existingBalance);
     expect(colorOf('left-over')).toBe(synthetic.leftOver);
   });
 
@@ -185,14 +210,14 @@ describe('buildMoneyFlowChartOption (TICKET-EXP-02)', () => {
       graph.links,
     );
     expect(series.data.find((node) => node.name === 'account:1')!.depth).toBe(1);
-    expect(series.data.find((node) => node.name === 'left-over')!.depth).toBe(2);
+    expect(series.data.find((node) => node.name === 'left-over')!.depth).toBe(3);
   });
 
   it('renders the display name as the label, so ids never reach the canvas', () => {
     const label = labelFormatterOf(optionFor());
 
     expect(label({ name: 'category:20' })).toBe('Groceries · €500.00');
-    expect(label({ name: 'carried-in' })).toBe('Carried in · €100.00');
+    expect(label({ name: 'existing-balance' })).toBe('Existing balance · €100.00');
     // A node the graph doesn't carry degrades to its own key rather than to an empty label.
     expect(label({ name: 'account:99' })).toBe('account:99');
   });
@@ -244,10 +269,11 @@ describe('money flow tooltips (TICKET-EXP-04)', () => {
 
   it('omits the share line entirely when there is no denominator to be a share of', () => {
     const empty = summariseMoneyFlow({
-      nodes: [{ id: 'category:20', name: 'Groceries', level: 2, color: '#f00', kind: 'category' }],
+      nodes: [{ id: 'category:20', name: 'Groceries', level: 3, color: '#f00', kind: 'category' }],
       links: [],
       nettedOutLinkCount: 0,
       groupableCategoryCount: 0,
+      sameTierTransferCount: 0,
     });
 
     expect(formatMoneyFlowNodeTooltip('category:20', empty, false)).toBe('Groceries');
@@ -306,7 +332,7 @@ describe('money flow drill-down (TICKET-EXP-04)', () => {
         {
           id: 'category:none',
           name: 'Uncategorised',
-          level: 2,
+          level: 3,
           color: '#9ca3af',
           kind: 'category',
           categoryId: null,
@@ -315,6 +341,7 @@ describe('money flow drill-down (TICKET-EXP-04)', () => {
       links: [],
       nettedOutLinkCount: 0,
       groupableCategoryCount: 0,
+      sameTierTransferCount: 0,
     });
 
     expect(
@@ -337,11 +364,11 @@ describe('money flow drill-down (TICKET-EXP-04)', () => {
           kind: 'account',
           accountId: 1,
         },
-        { id: 'group:Living', name: 'Living', level: 2, color: '#f00', kind: 'group' },
+        { id: 'group:Living', name: 'Living', level: 3, color: '#f00', kind: 'group' },
         {
           id: 'category:20',
           name: 'Groceries',
-          level: 3,
+          level: 4,
           color: '#f00',
           kind: 'category',
           categoryId: 20,
@@ -353,6 +380,7 @@ describe('money flow drill-down (TICKET-EXP-04)', () => {
       ],
       nettedOutLinkCount: 0,
       groupableCategoryCount: 1,
+      sameTierTransferCount: 0,
     });
 
     // The group hop drops the account half — a group can hold several accounts' spending — but the
@@ -377,19 +405,21 @@ describe('money flow drill-down (TICKET-EXP-04)', () => {
     ).toBeUndefined();
   });
 
-  it('makes savings, carried-in and left-over non-interactive, in params and in cursor', () => {
-    for (const id of ['carried-in', 'left-over']) {
+  it('makes savings, existing-balance and left-over non-interactive, in params and in cursor', () => {
+    for (const id of ['existing-balance', 'left-over']) {
       expect(paramsFor({ kind: 'node', id })).toBeUndefined();
     }
     expect(paramsFor({ kind: 'link', source: 'account:1', target: 'left-over' })).toBeUndefined();
-    expect(paramsFor({ kind: 'link', source: 'carried-in', target: 'account:1' })).toBeUndefined();
+    expect(
+      paramsFor({ kind: 'link', source: 'existing-balance', target: 'account:1' }),
+    ).toBeUndefined();
 
     const series = seriesOf(optionFor());
     const cursorOfNode = (id: string) => series.data.find((node) => node.name === id)!.cursor;
     expect(cursorOfNode('account:1')).toBe('pointer');
     expect(cursorOfNode('category:20')).toBe('pointer');
     expect(cursorOfNode('left-over')).toBe('default');
-    expect(cursorOfNode('carried-in')).toBe('default');
+    expect(cursorOfNode('existing-balance')).toBe('default');
 
     const cursorOfLink = (source: string, target: string) =>
       series.links.find((link) => link.source === source && link.target === target)!.cursor;
@@ -404,6 +434,7 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
   const createFixture = async (
     transactions: Transaction[],
     categories: Category[] = [salary, groceries],
+    accounts: Account[] = [checking],
   ): Promise<ComponentFixture<MoneyFlowPanelComponent>> => {
     await TestBed.configureTestingModule({
       imports: [MoneyFlowPanelComponent],
@@ -416,7 +447,7 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
         },
         {
           provide: AccountsRepository,
-          useValue: { getAll: vi.fn().mockResolvedValue([checking]) },
+          useValue: { getAll: vi.fn().mockResolvedValue(accounts) },
         },
         {
           provide: CategoriesRepository,
@@ -481,14 +512,58 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
   });
 
   it('says so when a flow was netted out, rather than under-reporting silently', async () => {
-    const fixture = await createFixture([
-      transaction({ id: 1, amount: 2000, categoryId: salary.id }),
-      transaction({ id: 2, amount: -500, categoryId: groceries.id }),
-      transaction({ id: 3, amount: 500, categoryId: groceries.id }),
-    ]);
+    // Under balance semantics only an account-to-account ribbon can net out: an expense and an
+    // income ribbon each accumulate one sign, so they can never cancel each other (TICKET-EXP-06).
+    const fixture = await createFixture(
+      [
+        transaction({ id: 1, amount: 2000, categoryId: salary.id }),
+        transaction({ id: 2, amount: -500, counterpartyIban: savings.iban }),
+        transaction({ id: 3, amount: 500, counterpartyIban: savings.iban }),
+      ],
+      [salary, groceries],
+      [checking, savings],
+    );
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('1 flow is not shown');
+  });
+
+  // An unexplained node standing for money from outside the range reads as a mystery income source,
+  // especially once every real source is categorised — which is the feedback that prompted both the
+  // rename and this note (TICKET-EXP-06). It explains only what is actually drawn.
+  it('explains the left-over ribbon, and stays quiet about the one it did not draw', async () => {
+    const fixture = await createFixture([
+      transaction({ id: 1, amount: 2000, categoryId: salary.id }),
+      transaction({ id: 2, amount: -500, categoryId: groceries.id }),
+    ]);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('“Left over” is money that arrived');
+    expect(text).not.toContain('“Existing balance”');
+  });
+
+  it('explains the existing-balance ribbon when an account spends without taking anything in', async () => {
+    const fixture = await createFixture([
+      transaction({ id: 1, amount: -500, categoryId: groceries.id }),
+    ]);
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('“Existing balance” is money an account was already holding');
+    expect(text).not.toContain('“Left over”');
+  });
+
+  it('says so when a transfer runs between two accounts of the same kind, which it cannot draw', async () => {
+    const fixture = await createFixture(
+      [
+        transaction({ id: 1, amount: 2000, categoryId: salary.id }),
+        transaction({ id: 2, amount: -400, counterpartyIban: secondChecking.iban }),
+      ],
+      [salary, groceries],
+      [checking, secondChecking],
+    );
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('1 transfer between two accounts of the same kind is not shown');
   });
 
   describe('drill-down and privacy (TICKET-EXP-04)', () => {

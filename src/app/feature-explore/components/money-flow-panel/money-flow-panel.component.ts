@@ -8,7 +8,6 @@ import {
   type FlowNode,
   type MoneyFlowGraph,
 } from '@/core/stats';
-import { savingsAccountIbans } from '@/core/transfers';
 import {
   AccountsStore,
   AppSettingsStore,
@@ -37,13 +36,13 @@ export type MoneyFlowAccessibleRow = {
 };
 
 /**
- * Which palette slot each synthetic node takes. `carried-in` and `left-over` are the only nodes with
- * no entity of their own to be coloured by, and the aggregate is theme-free by the `core/` never
- * imports `shared/echarts` rule — so their colour is resolved here, where the palette already is.
- * Two ends of the palette, because the two never mean the same thing: one is money arriving from
- * before the range, the other money that never left.
+ * Which palette slot each synthetic node takes. `existing-balance` and `left-over` are the only
+ * nodes with no entity of their own to be coloured by, and the aggregate is theme-free by the
+ * `core/` never imports `shared/echarts` rule — so their colour is resolved here, where the palette
+ * already is. Two ends of the palette, because the two never mean the same thing: one is the
+ * account's balance falling over the range, the other it rising.
  */
-const CARRIED_IN_COLOR_SLOT = 2;
+const EXISTING_BALANCE_COLOR_SLOT = 2;
 const LEFT_OVER_COLOR_SLOT = 0;
 
 /** What the screen-reader table says in place of an amount while privacy mode is on. */
@@ -166,9 +165,11 @@ const nodeFilter = (node: FlowNode | undefined): TransactionDrilldownParams | un
  * The `/transactions` filter a clicked element stands for, or `undefined` when it stands for none —
  * which is what makes the diagram a query interface over the same data rather than a poster.
  *
- * `savings`, `carried-in`, `left-over` and `group` deliberately yield nothing: no single transaction
- * filter expresses "money that stayed put", and a group is several categories at once. They are
- * rendered non-interactive rather than clickable-but-inert.
+ * `existing-balance`, `left-over` and `group` deliberately yield nothing: no single transaction filter
+ * expresses "money that stayed put", and a group is several categories at once. They are rendered
+ * non-interactive rather than clickable-but-inert. A savings account is *not* in that list any more
+ * (TICKET-EXP-06): it is an ordinary account node now, so it drills down by `accountId` like any
+ * other, and an account-to-account ribbon filters by the account the money left.
  */
 export const moneyFlowDrilldownParams = (
   target: MoneyFlowClickTarget,
@@ -202,6 +203,12 @@ export const moneyFlowDrilldownParams = (
     };
   }
 
+  // A transfer between two of the user's own accounts (TICKET-EXP-06). The transactions behind it
+  // live on the account the money *left*, which is the only end a single filter can name.
+  if (source?.kind === 'account' && destination?.kind === 'account') {
+    return { ...range, accountId: source.accountId };
+  }
+
   return undefined;
 };
 
@@ -218,12 +225,12 @@ export const moneyFlowDrilldownParams = (
 export const buildMoneyFlowChartOption = (
   graph: MoneyFlowGraph,
   palette: string[],
-  syntheticColors: { carriedIn: string; leftOver: string },
+  syntheticColors: { existingBalance: string; leftOver: string },
   totals: MoneyFlowTotals,
   privacyMode: boolean,
 ): EChartsCoreOption => {
   const colorFor = (node: FlowNode): string => {
-    if (node.kind === 'carried-in') return syntheticColors.carriedIn;
+    if (node.kind === 'existing-balance') return syntheticColors.existingBalance;
     if (node.kind === 'left-over') return syntheticColors.leftOver;
     return node.color;
   };
@@ -259,12 +266,24 @@ export const buildMoneyFlowChartOption = (
     series: [
       {
         type: 'sankey',
+        // Generous right margin: sankey draws a node's label *outside* the last column, so a
+        // right-edge label is clipped without room reserved for it.
         left: 8,
-        right: 8,
+        right: 160,
         top: 8,
         bottom: 8,
         emphasis: { focus: 'adjacency' },
         nodeAlign: 'justify',
+        // Explicit `depth` pins each node's column but leaves the vertical ordering to echarts'
+        // crossing-minimisation pass, which is where ribbon overlap actually comes from. The
+        // default 32 iterations is not enough once links span two columns (a purchase straight
+        // from a checking account jumps the secondary-account tier), so this buys the layout more
+        // room to untangle before it settles.
+        layoutIterations: 128,
+        // Wider gap than the default 8. A node's *height* is proportional to its value, so a €7
+        // refund source is a two-pixel sliver however tall the chart is — only the gap can stop its
+        // label landing on its neighbour's. This is the lever that actually separates small nodes.
+        nodeGap: 16,
         data: graph.nodes.map((node) => ({
           name: node.id,
           depth: node.level,
@@ -337,10 +356,6 @@ export class MoneyFlowPanelComponent {
 
   protected readonly privacyMode = this.appSettingsStore.privacyModeEnabled;
 
-  private readonly ownSavingsIbans = computed(() =>
-    savingsAccountIbans(this.accountsStore.accounts()),
-  );
-
   /**
    * Whether spending routes through `Category.group` on its way to individual categories
    * (TICKET-EXP-03), held for the session by `ChartOptionsStore`. Seeded on — someone who has
@@ -363,7 +378,6 @@ export class MoneyFlowPanelComponent {
       this.accountsStore.accountsById(),
       this.range().from,
       this.range().to,
-      this.ownSavingsIbans(),
       this.groupCategories(),
     ),
   );
@@ -371,6 +385,21 @@ export class MoneyFlowPanelComponent {
   private readonly totals = computed(() => summariseMoneyFlow(this.graph()));
 
   protected readonly hasFlow = computed(() => this.graph().links.length > 0);
+
+  /**
+   * Tall enough for the busiest column. A Sankey's readability is set by how many nodes have to
+   * share the vertical space, and a fixed height turned a dozen income sources into a stack of
+   * colliding labels. Scales with the fullest column and stops growing at a height that still fits
+   * a laptop screen — past that, the layout is better served by grouping than by more pixels.
+   */
+  protected readonly chartHeightPx = computed(() => {
+    const perLevel = new Map<number, number>();
+    for (const node of this.graph().nodes) {
+      perLevel.set(node.level, (perLevel.get(node.level) ?? 0) + 1);
+    }
+    const busiestColumn = Math.max(1, ...perLevel.values());
+    return Math.min(1400, Math.max(560, busiestColumn * 46));
+  });
 
   /**
    * The toggle only appears once at least one category in range actually carries a group: a control
@@ -384,7 +413,7 @@ export class MoneyFlowPanelComponent {
       this.graph(),
       palette,
       {
-        carriedIn: palette[CARRIED_IN_COLOR_SLOT] ?? palette[0],
+        existingBalance: palette[EXISTING_BALANCE_COLOR_SLOT] ?? palette[0],
         leftOver: palette[LEFT_OVER_COLOR_SLOT] ?? palette[0],
       },
       this.totals(),
@@ -401,8 +430,42 @@ export class MoneyFlowPanelComponent {
     const count = this.graph().nettedOutLinkCount;
     if (count === 0) return null;
     return count === 1
-      ? '1 flow is not shown: it was fully refunded or withdrawn again within this range.'
-      : `${count} flows are not shown: they were fully refunded or withdrawn again within this range.`;
+      ? '1 flow is not shown: the money moved back again within this range.'
+      : `${count} flows are not shown: the money moved back again within this range.`;
+  });
+
+  /**
+   * What the two synthetic ribbons mean, said in the panel rather than left to the labels — the
+   * feedback that prompted the rename was that a node standing for "money from before this range"
+   * reads as an unexplained income source, especially once every real source is categorised.
+   *
+   * Only explains what is actually drawn: a range where nothing was left over should not carry a
+   * sentence about leftovers.
+   */
+  protected readonly balanceNodesNote = computed<string | null>(() => {
+    const kinds = new Set(this.graph().nodes.map((node) => node.kind));
+    const existingBalance = kinds.has('existing-balance')
+      ? '“Existing balance” is money an account was already holding when this range began, spent during it'
+      : null;
+    const leftOver = kinds.has('left-over')
+      ? '“Left over” is money that arrived and had not left again by the end of it'
+      : null;
+
+    const parts = [existingBalance, leftOver].filter((part): part is string => part !== null);
+    return parts.length === 0 ? null : `${parts.join('; ')}.`;
+  });
+
+  /**
+   * Movements between two accounts on the same tier — checking to checking, or savings to joint.
+   * A Sankey column cannot link to itself, so they are genuinely undrawable rather than merely
+   * omitted, and saying so beats leaving the reader to wonder where a transfer went.
+   */
+  protected readonly sameTierNote = computed<string | null>(() => {
+    const count = this.graph().sameTierTransferCount;
+    if (count === 0) return null;
+    return count === 1
+      ? '1 transfer between two accounts of the same kind is not shown — the diagram can only draw a move from an everyday account into a joint, savings or investment one.'
+      : `${count} transfers between two accounts of the same kind are not shown — the diagram can only draw a move from an everyday account into a joint, savings or investment one.`;
   });
 
   protected readonly chartAriaLabel = computed(
