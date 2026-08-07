@@ -70,13 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-03',
-    title:
-      'Upcoming bills as a calendar or a list — your choice — showing when each recurring payment is expected to land',
-    area: 'Recurring payments',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-REC-04',
     title: 'Flags when a recurring payment gets more expensive, runs late, or stops entirely',
     area: 'Recurring payments',

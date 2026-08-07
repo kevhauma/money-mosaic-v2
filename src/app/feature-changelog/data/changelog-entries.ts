@@ -683,4 +683,19 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-07',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-03'],
+    title: 'See when your recurring payments are expected to land, as a calendar or a list',
+    details: [
+      'An “Upcoming bills” section on Explore projects every detected recurring payment forward onto the days it is expected to arrive',
+      'Two ways to read the same month, switchable: a calendar grid for the month’s shape — where the clusters and the quiet weeks are — or a date-ordered list for scanning what is next',
+      'Browse month by month with prev/next, or jump back to the current one; today is marked, and the month’s expected total is shown either way',
+      'Expected, not promised: the app knows your payment rhythms rather than your bills, so a payment can land a day or two either side of its square — past days of the current month show what was expected, not what arrived',
+      'A busy day collapses to “+2 more” with the full day on hover, and the list view always shows everything',
+      'The month you are looking at and the view you chose both last for the session, and reset when you reload — the date range at the top of the page does not apply here, because this section looks forward while the range looks back',
+    ],
+    area: 'Explore',
+  },
 ];

@@ -1,7 +1,7 @@
 import { computed, effect, inject, untracked, type Signal } from '@angular/core';
 import type { ChartZoomByPercent } from '@/shared/echarts';
 import type { CycleKey, Granularity } from '@/shared/utils';
-import { ChartOptionsStore, type ChartOptionsKey } from './chart-options.store';
+import { ChartOptionsStore, type BillsView, type ChartOptionsKey } from './chart-options.store';
 
 export type ChartGranularityControl = {
   value: Signal<Granularity>;
@@ -87,6 +87,61 @@ export const chartGroupCategories = (
     value: computed(() => chartOptions.groupCategories(chart) ?? initial),
     set: (groupCategories: boolean): void =>
       chartOptions.setGroupCategories(chart, groupCategories),
+  };
+};
+
+export type ChartVisibleMonthControl = {
+  /** A `YYYY-MM` bucket key. */
+  value: Signal<string>;
+  set: (visibleMonth: string) => void;
+};
+
+/**
+ * The month a bill calendar is browsing, held for the session (TICKET-REC-03) — same shape and
+ * reasoning as the controls above: a `computed()` read over the store plus an explicit setter,
+ * never a local writable mirrored into it.
+ *
+ * Not a `RangeStore` key on purpose: this section looks *forward* from today at projections, while
+ * every page range looks backward at data, so one following the other would fight the user in both
+ * directions.
+ *
+ * Must be called from an injection context — a component field initializer.
+ */
+export const chartVisibleMonth = (
+  chart: ChartOptionsKey,
+  seed: () => string,
+): ChartVisibleMonthControl => {
+  const chartOptions = inject(ChartOptionsStore);
+  const initial = untracked(seed);
+
+  return {
+    value: computed(() => chartOptions.visibleMonth(chart) ?? initial),
+    set: (visibleMonth: string): void => chartOptions.setVisibleMonth(chart, visibleMonth),
+  };
+};
+
+export type ChartBillsViewControl = {
+  value: Signal<BillsView>;
+  set: (view: BillsView) => void;
+};
+
+/**
+ * Whether a projected-occurrence section draws a grid or a list, held for the session
+ * (TICKET-REC-03). Purely presentational — both views render the identical projection, so this can
+ * never change *what* is shown, only its shape.
+ *
+ * Must be called from an injection context — a component field initializer.
+ */
+export const chartBillsView = (
+  chart: ChartOptionsKey,
+  seed: () => BillsView,
+): ChartBillsViewControl => {
+  const chartOptions = inject(ChartOptionsStore);
+  const initial = untracked(seed);
+
+  return {
+    value: computed(() => chartOptions.billsView(chart) ?? initial),
+    set: (view: BillsView): void => chartOptions.setBillsView(chart, view),
   };
 };
 

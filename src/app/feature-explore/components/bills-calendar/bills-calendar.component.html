@@ -1,0 +1,61 @@
+@if (hasSeries()) {
+  <mm-paper>
+    <mm-flex align="center" justify="between" gap="3" [wrap]="true">
+      <h2 class="card-title text-base">Upcoming bills</h2>
+      <mm-tabs
+        [tabs]="viewTabs"
+        [selected]="view()"
+        (selectedChange)="setView($event)"
+        variant="box"
+        class="w-fit"
+      />
+    </mm-flex>
+
+    <mm-flex align="center" justify="between" gap="3" [wrap]="true" class="mt-2">
+      <mm-flex align="center" gap="1">
+        <mm-button
+          variant="ghost"
+          size="sm"
+          shape="square"
+          ariaLabel="Previous month"
+          (click)="stepMonth(-1)"
+        >
+          <ng-icon name="tablerChevronLeft" size="16" aria-hidden="true" />
+        </mm-button>
+        <mm-button variant="ghost" size="sm" (click)="goToThisMonth()">This month</mm-button>
+        <mm-button
+          variant="ghost"
+          size="sm"
+          shape="square"
+          ariaLabel="Next month"
+          (click)="stepMonth(1)"
+        >
+          <ng-icon name="tablerChevronRight" size="16" aria-hidden="true" />
+        </mm-button>
+        <mm-text weight="medium" class="ml-2">{{ monthLabel() }}</mm-text>
+      </mm-flex>
+
+      <!-- "Expected", never "due": the app knows rhythms, not bill contracts. -->
+      <mm-text variant="caption" color="base-content">
+        <mm-privacy-blur [blurred]="privacyMode()">{{ monthTotal() }}</mm-privacy-blur>
+        expected this month
+      </mm-text>
+    </mm-flex>
+
+    @if (view() === 'calendar') {
+      <app-bills-month-grid
+        [weekdayLabels]="weekdayLabels()"
+        [dayCells]="dayCells()"
+        [accessibleRows]="accessibleRows()"
+        [monthLabel]="monthLabel()"
+        [privacyMode]="privacyMode()"
+      />
+    } @else {
+      <app-bills-day-list
+        [days]="listDays()"
+        [monthLabel]="monthLabel()"
+        [privacyMode]="privacyMode()"
+      />
+    }
+  </mm-paper>
+}

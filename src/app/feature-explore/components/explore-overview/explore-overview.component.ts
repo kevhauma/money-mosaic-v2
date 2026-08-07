@@ -10,28 +10,32 @@ import {
   RangeGroupingSwitcherComponent,
   TypographyComponent,
 } from '@/shared/ui';
+import { BillsCalendarComponent } from '../bills-calendar/bills-calendar.component';
 import { MoneyFlowPanelComponent } from '../money-flow-panel/money-flow-panel.component';
 import { RecurringPaymentsPanelComponent } from '../recurring-payments-panel/recurring-payments-panel.component';
 
 /**
- * The `/explore` page container (FR-EXP-1, TICKET-EXP-01) — the home for the diagrams that need
- * the whole page rather than a Dashboard row: the money flow Sankey (TICKET-EXP-02) and the 3D
- * spending landscape (TICKET-EXP-05). "Explore" rather than "Money flow" so the second section
- * doesn't make the page's name a lie.
+ * The `/explore` page container (FR-EXP-1, TICKET-EXP-01) — the home for the sections that need the
+ * whole page rather than a Dashboard row: the money flow Sankey (TICKET-EXP-02), the recurring
+ * payments panel (TICKET-REC-02) and the upcoming-bills calendar (TICKET-REC-03). "Explore" rather
+ * than "Money flow" so the later sections don't make the page's name a lie.
  *
  * Its date range is its own (`pageRangeControl('explore')`, TICKET-UI-23): narrowing the Dashboard
  * to last month leaves whatever span someone set up here alone, which is the point of the keyed
- * `RangeStore` rather than one global range.
+ * `RangeStore` rather than one global range. **The two recurring sections deliberately do not obey
+ * it** — cadence only exists across time — which is why they sit outside the range-dependent
+ * branches in the template.
  *
- * **No store, deliberately.** Page-level chart state belongs to `ChartOptionsStore` (per-chart,
- * session-scoped) and `RangeStore` (per-page); an `ExploreStore` earns its place only once a later
- * ticket needs state shared *between* this page's sections. Recorded so its absence reads as a
- * decision rather than an omission.
+ * **Still no page-level store.** Per-chart session state belongs to `ChartOptionsStore` and the
+ * page range to `RangeStore`, so neither has ever needed one. What TICKET-REC-03 did add is
+ * narrower: `RecurringSeriesStore`, holding the one *derivation* two sections genuinely share, so
+ * detection runs once per page rather than once per section.
  */
 @Component({
   selector: 'app-explore-overview',
   imports: [
     NgIcon,
+    BillsCalendarComponent,
     ButtonComponent,
     EmptyStateComponent,
     MoneyFlowPanelComponent,

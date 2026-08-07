@@ -84,8 +84,13 @@ export const cycleColumnLabels = (cycle: CycleKey): string[] => {
   }
 };
 
-/** Monday-first index (`Date`'s own week starts on Sunday), on the UTC calendar date — the same convention as `weekday-weekend-split.ts`. */
-const weekdayIndex = (isoDate: string): number =>
+/**
+ * Monday-first index (`Date`'s own week starts on Sunday), on the UTC calendar date — the same
+ * convention as `weekday-weekend-split.ts`. Exported because any Monday-first calendar layout needs
+ * exactly this (TICKET-REC-03's bill grid aligns its first row with it); a second copy would be a
+ * second chance to get the Sunday offset wrong.
+ */
+export const mondayFirstWeekdayIndex = (isoDate: string): number =>
   (new Date(`${isoDate}T00:00:00Z`).getUTCDay() + 6) % 7;
 
 /** Read off the ISO string rather than a `Date`: `YYYY-MM-DD` is fixed-width, and parsing it can only introduce a timezone to get wrong. */
@@ -133,7 +138,7 @@ export const cyclesForRange = (from: string, to: string): CycleKey[] => {
 export const cycleColumnIndex = (isoDate: string, cycle: CycleKey): number => {
   switch (cycle) {
     case 'day-of-week':
-      return weekdayIndex(isoDate);
+      return mondayFirstWeekdayIndex(isoDate);
     case 'day-of-month':
       return Number(isoDate.slice(8, 10)) - 1;
     case 'month-of-year':

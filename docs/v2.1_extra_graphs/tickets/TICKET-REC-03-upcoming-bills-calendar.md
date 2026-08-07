@@ -76,34 +76,95 @@ views only render its output. Built with CSS grid and daisyUI, no calendar depen
 
 ## Acceptance criteria
 
-- [ ] `projectRecurringOccurrences` is a pure function in `core/stats/recurring-projection.ts`,
+**Implementation note, 2026-08-07 — three departures from the to-be section, all deliberate.**
+(1) The single `app-bills-calendar` became a **shell plus two presentational children**,
+`app-bills-month-grid` and `app-bills-day-list`: with both views in one template it measured
+CRITICAL on fallow's template complexity (12 cyclomatic / 35 cognitive), and "one component renders
+one view" is the convention anyway. The shell still owns the month, the view and the projection, so
+the "both views render the same projection" guarantee is unchanged — strengthened, in fact, since
+neither child can derive occurrences of its own. (2) The grid projects across its **whole
+Monday-first window**, not just the month: a leading/trailing cell is a real day, and one rendering
+empty while a payment is expected on it would be a lie the dimming does not excuse. Everything
+month-scoped — the header total, the list, the hidden table — reads a month-filtered subset.
+(3) Detection moved out of the component into a shared `RecurringSeriesStore` (see the last
+acceptance criterion).
+
+- [x] `projectRecurringOccurrences` is a pure function in `core/stats/recurring-projection.ts`,
       exported from the barrel; monthly, weekly and yearly series project the right number of
       dated occurrences into a given month window — asserted in unit tests.
-- [ ] The section opens in calendar view on the current month by default, with today marked,
-      expected payments on their days, and correct Monday-first day alignment.
-- [ ] The view switcher swaps to a date-ordered list grouped by day (empty days absent) and back;
+      (`recurring-projection.spec.ts`, 8 cases: monthly once, weekly five times across August,
+      quarterly only in its own months, yearly one month in twelve, plus calendar-stepping —
+      a 31st projected into February lands on the 28th and gets its 31st back in March.)
+- [x] The section opens in calendar view on the current month by default, with today marked,
+      expected payments on their days, and correct Monday-first day alignment. (Specs: *"opens in
+      calendar view on whole Monday-first weeks…"* — July 2026 renders 7 headers + 35 cells with
+      1 July in the third column and 29 June dimmed — *"places an expected payment on its own
+      day…"*, and *"marks today in both views"*.)
+- [x] The view switcher swaps to a date-ordered list grouped by day (empty days absent) and back;
       both views show exactly the same occurrences for the visible month — asserted by a spec
-      comparing the two renderings' data.
-- [ ] Prev/today/next controls navigate months in both views; the visible month **and the chosen
+      comparing the two renderings' data. (Spec: *"shows the same occurrences in list view,
+      date-ordered and with empty days absent"* — it collects the in-month cells' labels and the
+      list's labels and asserts every calendar label appears in the list, the list being the
+      superset because the grid collapses a crowded day to "+N more".)
+- [x] Prev/today/next controls navigate months in both views; the visible month **and the chosen
       view** live in `ChartOptionsStore` (session-scoped, in-memory) — not in `appSettings`, not
-      in the URL.
-- [ ] The month's expected total is shown in both views and equals the sum of the listed
-      occurrences.
-- [ ] The section ignores the Explore date range; amounts honour privacy mode and
-      `formatCurrency()` in both views.
-- [ ] With no detected series the section renders nothing in either view.
-- [ ] In calendar view a visually-hidden table mirrors the month's expected occurrences; the list
-      view is itself accessible list markup and carries no duplicate mirror.
-- [ ] No new dependency is added; `angular.json` budgets untouched.
-- [ ] Unit tests cover: projection counts per cadence over a window; grid alignment for a month
+      in the URL. (Specs: *"navigates months through the session store, and back to today"*,
+      *"rolls the year over at December, rather than producing a month 13"*, and *"keeps the chosen
+      view in the session store rather than local state"*. `chart-options-control.spec.ts` adds
+      nine cases for `chartVisibleMonth`/`chartBillsView`, mirroring the existing controls'
+      block — including "never records the seed as a choice", which matters most here because the
+      month seed is clock-derived.)
+- [x] The month's expected total is shown in both views and equals the sum of the listed
+      occurrences. (Rendered in the shell above the view switch, so it is view-independent by
+      construction; summed from `monthOccurrences`, the same month-scoped signal the list and the
+      hidden table read. The view-comparison spec asserts the total is byte-identical either way.)
+- [x] The section ignores the Explore date range; amounts honour privacy mode and
+      `formatCurrency()` in both views. (Spec: *"ignores the Explore date range entirely"* — the
+      component injects no `RangeStore` at all — and *"blurs every amount under privacy mode…"*.)
+- [x] With no detected series the section renders nothing in either view. (Spec: *"renders nothing
+      at all when no series was detected"* — the host's text content is empty.)
+- [x] In calendar view a visually-hidden table mirrors the month's expected occurrences; the list
+      view is itself accessible list markup and carries no duplicate mirror. (Spec: *"drops the
+      visually-hidden mirror in list view, which is its own accessible reading"*. The grid itself
+      is `aria-hidden="true"` so the mirror is the *single* accessible reading — without that a
+      screen reader hears every payment twice and the mirror's privacy-mode withholding is undone
+      by the visible cells being announced anyway.)
+- [x] No new dependency is added; `angular.json` budgets untouched. (Grid is CSS `grid-cols-7`;
+      `package.json` and `angular.json` are not in the diff.)
+- [x] Unit tests cover: projection counts per cadence over a window; grid alignment for a month
       starting mid-week; the "+N more" collapse; view switching (same data both ways, choice
       persisted in the store); the list's day grouping and ordering; month navigation via the
-      store; privacy masking; the empty case.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      store; privacy masking; the empty case. (8 projection cases + 12 component cases + 9 control
+      cases.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (2026-08-07: "All
+      files pass linting"; 241 spec files / 2514 tests passed; "Application bundle generation
+      complete", no budget warning.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD`:
+      maintainability 92.5 "good", dead files/exports 0.0%, **0 duplicate clone groups** and no
+      CRITICAL in the new code after the fixes below. `conventions-reviewer` raised twelve
+      findings, all applied — the significant one being a **privacy leak**: the day cell's native
+      `title` tooltip is painted by the browser outside the `mm-privacy-blur` box, so it showed
+      every amount in cleartext under privacy mode; `fullDayTitle` now carries `hidden` instead,
+      asserted in the privacy spec. Also applied: the grid `aria-hidden` above; `HIDDEN_AMOUNT`
+      resolved in the class instead of `?? 'hidden'` in a binding; chevron icons instead of literal
+      `‹`/`›` glyphs; `mondayFirstWeekdayIndex` exported from `calendar-cycles.ts` instead of
+      copied; `shiftMonth` built on `shiftRangeByCalendarUnit` with its inverted sign documented
+      once; typography utilities dropped from `mm-text` call sites; the components barrel
+      re-alphabetised; prettier run. The two clone groups fallow flagged against `period-window.ts`
+      are gone too — `parseIsoDate`/`formatIsoDate`/`MS_PER_DAY` are now exported from
+      `date-buckets.ts` and imported rather than re-declared.)
+- [x] **Added criterion** — detection is derived once per page, not once per section. The new
+      `feature-explore/recurring-series.store.ts` holds the shared `series`/`today`/`hasSeries`
+      derivation that REC-02's panel and this section both read; before it, `/explore` ran
+      `detectRecurringPayments` over the whole history twice per render, and REC-04 would have made
+      it three times. This is the condition the Explore page's "no store, on purpose" note reserved
+      a store for, so its absence is no longer the right call.
 - [ ] Verified live in the browser: the section renders on `/explore`, a known monthly payment
       appears on a plausible upcoming day, month navigation works, and switching to list view
-      shows the same payments date-ordered.
+      shows the same payments date-ordered. — **not done: the user asked for this track to be
+      worked without browser checks.** Left open rather than ticked. The grid's *appearance* — cell
+      height, how a crowded day reads, whether the dimmed out-of-month days are legible — is the
+      part no spec here speaks for.
 
 ## Notes
 

@@ -23,7 +23,11 @@ export type ChartOptionsKey =
   | 'dashboard-trend-expense'
   | 'dashboard-heatmap'
   | 'explore-money-flow'
+  | 'explore-bills-calendar'
   | 'income-by-category';
+
+/** How a projected-occurrence section draws the same month: as a grid, or as a date-ordered list (TICKET-REC-03). */
+export type BillsView = 'calendar' | 'list';
 
 type ChartOptionsEntry = {
   granularity?: Granularity;
@@ -34,6 +38,10 @@ type ChartOptionsEntry = {
   cycle?: CycleKey;
   /** Whether the money flow Sankey routes spending through `Category.group` before reaching individual categories (TICKET-EXP-03). */
   groupCategories?: boolean;
+  /** Which month a bill calendar is browsing, as a `YYYY-MM` bucket key (TICKET-REC-03) — it looks *forward* from today, so it deliberately does not follow `RangeStore`. */
+  visibleMonth?: string;
+  /** Grid or date-ordered list, for a section that draws the same projected occurrences both ways (TICKET-REC-03). */
+  billsView?: BillsView;
 };
 
 type ChartOptionsStoreState = {
@@ -93,6 +101,20 @@ export const ChartOptionsStore = signalStore(
 
       setGroupCategories: (chart: ChartOptionsKey, groupCategories: boolean): void => {
         patchChart(chart, { groupCategories });
+      },
+
+      /** `undefined` until the user navigates — the caller then falls back to the current month (TICKET-REC-03). */
+      visibleMonth: (chart: ChartOptionsKey): string | undefined => entryFor(chart).visibleMonth,
+
+      setVisibleMonth: (chart: ChartOptionsKey, visibleMonth: string): void => {
+        patchChart(chart, { visibleMonth });
+      },
+
+      /** `undefined` until the user switches — the caller then falls back to the section's own default view (TICKET-REC-03). */
+      billsView: (chart: ChartOptionsKey): BillsView | undefined => entryFor(chart).billsView,
+
+      setBillsView: (chart: ChartOptionsKey, billsView: BillsView): void => {
+        patchChart(chart, { billsView });
       },
 
       hiddenSeries: (chart: ChartOptionsKey): readonly string[] => entryFor(chart).hiddenSeries,

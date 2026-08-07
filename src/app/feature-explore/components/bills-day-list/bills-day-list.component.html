@@ -1,0 +1,25 @@
+@if (days().length === 0) {
+  <mm-text as="p" variant="caption" class="mt-3 block">
+    Nothing is expected in {{ monthLabel() }}.
+  </mm-text>
+} @else {
+  <ul class="mt-3 flex flex-col gap-3">
+    @for (day of days(); track day.date) {
+      <li>
+        <mm-text as="p" variant="caption" [weight]="day.headingWeight" [color]="day.headingColor">
+          {{ day.dateLabel }}
+        </mm-text>
+        <ul class="mt-1 flex flex-col gap-1">
+          @for (entry of day.entries; track entry.seriesKey) {
+            <li class="flex justify-between gap-4">
+              <mm-text class="truncate">{{ entry.label }}</mm-text>
+              <mm-privacy-blur [blurred]="privacyMode()">
+                <mm-text>{{ entry.amount }}</mm-text>
+              </mm-privacy-blur>
+            </li>
+          }
+        </ul>
+      </li>
+    }
+  </ul>
+}

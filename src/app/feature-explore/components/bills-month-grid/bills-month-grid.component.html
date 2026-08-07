@@ -1,0 +1,58 @@
+<div class="mt-3 grid grid-cols-7 gap-px rounded-box bg-base-300 p-px" aria-hidden="true">
+  @for (weekday of weekdayLabels(); track weekday) {
+    <div class="bg-base-200 px-1 py-1 text-center">
+      <mm-text variant="caption">{{ weekday }}</mm-text>
+    </div>
+  }
+
+  @for (cell of dayCells(); track cell.date) {
+    <div
+      class="min-h-20 bg-base-100 p-1"
+      [class.opacity-40]="!cell.inMonth"
+      [class.ring-1]="cell.isToday"
+      [class.ring-primary]="cell.isToday"
+      [title]="cell.fullDayTitle"
+    >
+      <mm-text variant="caption" class="block text-right">{{ cell.dayLabel }}</mm-text>
+
+      @for (entry of cell.entries; track entry.seriesKey) {
+        <div class="mt-0.5 flex justify-between gap-1 rounded bg-base-200 px-1">
+          <mm-text variant="caption" class="truncate">{{ entry.label }}</mm-text>
+          <mm-privacy-blur [blurred]="privacyMode()">
+            <mm-text variant="caption">{{ entry.amount }}</mm-text>
+          </mm-privacy-blur>
+        </div>
+      }
+      @if (cell.moreLabel) {
+        <mm-text variant="caption" class="block px-1">{{ cell.moreLabel }}</mm-text>
+      }
+    </div>
+  }
+</div>
+
+<!-- The grid above is a layout, so this is the accessible reading of the same month
+     (TICKET-STAT-20). The list view needs no such mirror — it is already list markup. -->
+<table class="sr-only">
+  <caption>
+    Payments expected in
+    {{
+      monthLabel()
+    }}
+  </caption>
+  <thead>
+    <tr>
+      <th scope="col">Date</th>
+      <th scope="col">Payment</th>
+      <th scope="col">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of accessibleRows(); track $index) {
+      <tr>
+        <td>{{ row.dateLabel }}</td>
+        <td>{{ row.label }}</td>
+        <td>{{ row.amount }}</td>
+      </tr>
+    }
+  </tbody>
+</table>

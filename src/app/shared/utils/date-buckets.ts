@@ -16,11 +16,17 @@ export type RangePreset =
   | 'year-to-date'
   | 'all-time';
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+export const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-const parseIsoDate = (isoDate: string): Date => new Date(`${isoDate}T00:00:00Z`);
+/**
+ * `YYYY-MM-DD` → a UTC `Date`. Exported alongside `formatIsoDate` and `MS_PER_DAY` because every
+ * date-walking helper in the app needs exactly this trio, and each private copy is another chance
+ * to drop the `Z` and pick up the local timezone — which is a whole-day error at either end of the
+ * day, not a rounding one.
+ */
+export const parseIsoDate = (isoDate: string): Date => new Date(`${isoDate}T00:00:00Z`);
 
-const formatIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
+export const formatIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
 
 const pad = (value: number, length = 2): string => String(value).padStart(length, '0');
 

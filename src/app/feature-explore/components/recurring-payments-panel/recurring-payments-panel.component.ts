@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { detectRecurringPayments, type RecurringCadence } from '@/core/stats';
-import { savingsAccountIbans } from '@/core/transfers';
-import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import { type RecurringCadence } from '@/core/stats';
+import { AppSettingsStore, CategoriesStore } from '@/core/state';
 import { CHART_NO_COLOR_FALLBACK } from '@/shared/echarts';
 import {
   ButtonComponent,
@@ -13,10 +12,8 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { formatCurrency, formatDate } from '@/shared/utils';
+import { RecurringSeriesStore } from '../../recurring-series.store';
 import type { RecurringSeriesRow } from '../../recurring-payments-row-vm';
-
-/** Today, read once per derivation — `detectRecurringPayments` stays clock-free, the way every other aggregate does. */
-const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 const UNCATEGORISED_LABEL = 'Uncategorised';
 
@@ -57,25 +54,16 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecurringPaymentsPanelComponent {
-  private readonly transactionsStore = inject(TransactionsStore);
   private readonly categoriesStore = inject(CategoriesStore);
-  private readonly accountsStore = inject(AccountsStore);
   private readonly appSettingsStore = inject(AppSettingsStore);
+
+  /** Shared with the bills calendar below, so detection runs once per page rather than once per section. */
+  private readonly recurringSeriesStore = inject(RecurringSeriesStore);
 
   protected readonly privacyMode = this.appSettingsStore.privacyModeEnabled;
 
   /** Which series have their occurrences unfolded. Component-local: it is a reading aid, not state anything else needs. */
   private readonly expandedKeys = signal<ReadonlySet<string>>(new Set());
-
-  private readonly detected = computed(() =>
-    detectRecurringPayments(
-      this.transactionsStore.transactions(),
-      this.categoriesStore.categoriesById(),
-      this.accountsStore.accountsById(),
-      todayIso(),
-      savingsAccountIbans(this.accountsStore.accounts()),
-    ),
-  );
 
   /**
    * Already sorted most-expensive-first by the aggregate, which owns that order; this only turns
@@ -88,7 +76,7 @@ export class RecurringPaymentsPanelComponent {
   >(() => {
     const categoriesById = this.categoriesStore.categoriesById();
 
-    return this.detected().series.map((series) => {
+    return this.recurringSeriesStore.series().map((series) => {
       const category =
         series.categoryId != null ? categoriesById.get(series.categoryId) : undefined;
 
@@ -127,8 +115,8 @@ export class RecurringPaymentsPanelComponent {
     });
   });
 
-  /** Off `detected()`, not `rows()` — a count has no business re-deriving because a row was unfolded. */
-  protected readonly seriesCount = computed(() => this.detected().series.length);
+  /** Off the shared series, not `rows()` — a count has no business re-deriving because a row was unfolded. */
+  protected readonly seriesCount = computed(() => this.recurringSeriesStore.series().length);
 
   /** The summary sentence, resolved here so the template renders a string instead of pluralising one. */
   protected readonly summaryLabel = computed(() => {
@@ -139,7 +127,9 @@ export class RecurringPaymentsPanelComponent {
   /** Summed from the series' own monthly equivalents, so the total can never disagree with the column above it. */
   protected readonly monthlyTotal = computed(() =>
     formatCurrency(
-      this.detected().series.reduce((total, series) => total + series.monthlyEquivalent, 0),
+      this.recurringSeriesStore
+        .series()
+        .reduce((total, series) => total + series.monthlyEquivalent, 0),
     ),
   );
 
