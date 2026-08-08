@@ -39,6 +39,20 @@
       </mm-fieldset>
     </div>
 
+    <!-- The period this category actually applied to (TICKET-CAT-10). Both bounds optional: blank
+         means unbounded on that side, which is the normal case for a category still in use. -->
+    <div class="grid grid-cols-2 gap-3">
+      <mm-fieldset legend="Applies from (optional)">
+        <mm-input type="date" formControlName="activeFrom" class="w-full" />
+      </mm-fieldset>
+      <mm-fieldset legend="Applies until (optional)">
+        <mm-input type="date" formControlName="activeUntil" class="w-full" />
+      </mm-fieldset>
+    </div>
+    @if (form.hasError('applicabilityRange')) {
+      <mm-label variant="error">“Applies until” cannot be before “applies from”.</mm-label>
+    }
+
     <div class="modal-action">
       <mm-button (click)="cancel()">Cancel</mm-button>
       <mm-button type="submit" color="primary">

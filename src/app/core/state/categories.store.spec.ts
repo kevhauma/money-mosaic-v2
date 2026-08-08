@@ -191,3 +191,63 @@ describe('CategoriesStore: removeCategory clears the category off referencing tr
     expect(categoriesStore.categories().some((c) => c.id === 8)).toBe(true);
   });
 });
+
+describe('CategoriesStore: applicability window (TICKET-CAT-10)', () => {
+  const categoriesRepository = {
+    getAll: vi.fn().mockResolvedValue([category({ id: 1, name: 'Rent' })]),
+    update: vi.fn().mockResolvedValue(1),
+  };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+      ],
+    });
+  });
+
+  it('persists a window through the repository, not by writing Dexie directly', async () => {
+    const store = TestBed.inject(CategoriesStore);
+    await store.hydrate();
+
+    await store.updateCategory(1, { activeFrom: '2020-01-01', activeUntil: '2023-06-30' });
+
+    expect(categoriesRepository.update).toHaveBeenCalledWith(1, {
+      activeFrom: '2020-01-01',
+      activeUntil: '2023-06-30',
+    });
+    expect(store.categories()[0]).toMatchObject({
+      activeFrom: '2020-01-01',
+      activeUntil: '2023-06-30',
+    });
+  });
+
+  it('leaves the window untouched across an archive/unarchive round trip', async () => {
+    const store = TestBed.inject(CategoriesStore);
+    await store.hydrate();
+    await store.updateCategory(1, { activeFrom: '2020-01-01', activeUntil: '2023-06-30' });
+
+    await store.archiveCategory(1);
+    await store.unarchiveCategory(1);
+
+    // Ended and archived are independent axes — neither operation may imply the other.
+    expect(store.categories()[0]).toMatchObject({
+      archived: false,
+      activeFrom: '2020-01-01',
+      activeUntil: '2023-06-30',
+    });
+  });
+
+  it('clears a bound when it is set back to undefined', async () => {
+    const store = TestBed.inject(CategoriesStore);
+    await store.hydrate();
+    await store.updateCategory(1, { activeUntil: '2023-06-30' });
+
+    await store.updateCategory(1, { activeUntil: undefined });
+
+    expect(store.categories()[0].activeUntil).toBeUndefined();
+  });
+});

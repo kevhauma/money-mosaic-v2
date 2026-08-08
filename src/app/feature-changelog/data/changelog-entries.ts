@@ -714,4 +714,19 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-08',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-CAT-10'],
+    title: 'Record the period a category actually applied to',
+    details: [
+      'A category can now carry an optional “applies from” and “applies until” — rent until you moved, a subscription until you cancelled it',
+      'Either side can be left blank: a category with no dates applies to everything, exactly as before, and every category you already have is untouched',
+      'Once its end date has passed, the category is marked “Ended” with the date on the Categories page',
+      'This is not the same as archiving. Archiving hides a category everywhere; a date range records that it was true until then — which is what lets a later update keep offering it for the years it really applied to',
+      'Both dates are included in your JSON export and restored on import',
+      'Nothing else changes yet: your pickers, charts and totals all still behave exactly as they did',
+    ],
+    area: 'Categories',
+  },
 ];

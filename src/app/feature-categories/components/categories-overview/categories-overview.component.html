@@ -46,16 +46,16 @@
       </tr>
     </thead>
     <tbody>
-      @for (category of visibleCategories(); track category.id) {
-        <tr [class.opacity-60]="category.archived">
+      @for (row of categoryRows(); track row.category.id) {
+        <tr [class.opacity-60]="row.category.archived">
           <td>
             <mm-flex align="center" gap="1">
               <mm-button
                 variant="ghost"
                 shape="square"
                 size="xs"
-                [disabled]="isFirst(category)"
-                (click)="moveCategory(category, 'up')"
+                [disabled]="row.isFirst"
+                (click)="moveCategory(row.category, 'up')"
                 ariaLabel="Move category up"
               >
                 <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
@@ -64,8 +64,8 @@
                 variant="ghost"
                 shape="square"
                 size="xs"
-                [disabled]="isLast(category)"
-                (click)="moveCategory(category, 'down')"
+                [disabled]="row.isLast"
+                (click)="moveCategory(row.category, 'down')"
                 ariaLabel="Move category down"
               >
                 <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
@@ -78,26 +78,29 @@
                 align="center"
                 justify="center"
                 class="h-7 w-7 rounded-full"
-                [style.background-color]="category.color + '33'"
-                [style.color]="category.color"
+                [style.background-color]="row.category.color + '33'"
+                [style.color]="row.category.color"
               >
-                <ng-icon [name]="categoryIconName(category.icon)" size="16" aria-hidden="true" />
+                <ng-icon [name]="row.iconName" size="16" aria-hidden="true" />
               </mm-flex>
-              <mm-text weight="medium">{{ category.name }}</mm-text>
+              <mm-text weight="medium">{{ row.category.name }}</mm-text>
+              <!-- The applicability window having closed (TICKET-CAT-10). Independent of archiving,
+                   so it renders in the archived list too — and says the date in words, since a
+                   quiet badge that only differed by colour would say nothing at all. -->
+              @if (row.endedLabel) {
+                <mm-badge variant="outline" size="sm" color="neutral">{{
+                  row.endedLabel
+                }}</mm-badge>
+              }
             </mm-flex>
           </td>
           <td>
-            <mm-badge
-              variant="outline"
-              size="sm"
-              class="capitalize"
-              [color]="badgeColorFor(category.kind)"
-            >
-              {{ category.kind }}
+            <mm-badge variant="outline" size="sm" class="capitalize" [color]="row.kindBadgeColor">
+              {{ row.category.kind }}
             </mm-badge>
           </td>
-          <td class="text-sm text-base-content/60">{{ category.group || '—' }}</td>
-          <td class="text-right">{{ transactionCountFor(category) }}</td>
+          <td class="text-sm text-base-content/60">{{ row.category.group || '—' }}</td>
+          <td class="text-right">{{ row.transactionCount }}</td>
           <td>
             <mm-dropdown align="end" contentClass="z-10 w-44">
               <mm-button
@@ -110,23 +113,23 @@
                 <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
               </mm-button>
               <li>
-                <button type="button" (click)="openEditForm(category)">
+                <button type="button" (click)="openEditForm(row.category)">
                   <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
                   Edit
                 </button>
               </li>
               <li>
-                <button type="button" (click)="toggleArchive(category)">
+                <button type="button" (click)="toggleArchive(row.category)">
                   <ng-icon
-                    [name]="category.archived ? 'tablerArchiveOff' : 'tablerArchive'"
+                    [name]="row.category.archived ? 'tablerArchiveOff' : 'tablerArchive'"
                     size="14"
                     aria-hidden="true"
                   />
-                  {{ category.archived ? 'Unarchive' : 'Archive' }}
+                  {{ row.category.archived ? 'Unarchive' : 'Archive' }}
                 </button>
               </li>
               <li>
-                <button type="button" class="text-error" (click)="confirmDelete(category)">
+                <button type="button" class="text-error" (click)="confirmDelete(row.category)">
                   <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
                   Delete
                 </button>

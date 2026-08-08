@@ -141,6 +141,22 @@ export type Category = {
   isSystem: boolean;
   /** Manual display order (TICKET-CAT-03) — `undefined` sorts after every category that has one. */
   sortOrder?: number;
+  /**
+   * The period this category actually applied to (FR-CAT-9, TICKET-CAT-10) — rent until the move,
+   * a subscription until it was cancelled. ISO (`YYYY-MM-DD`) dates, both optional and independent:
+   * an absent bound is unbounded on that side, so every category predating this field behaves
+   * exactly as before.
+   *
+   * **Independent of `archived`, deliberately.** Archiving is timeless ("hide this everywhere, I'm
+   * done seeing it"); a window is a dated fact ("this was true until then, and still is about that
+   * period"), which is what lets a picker keep offering an ended category for a 2022 transaction it
+   * genuinely applied to (TICKET-CAT-11).
+   *
+   * Both are **non-indexed**, so adding them needed no `.version(n + 1)` block — `.stores()`
+   * declares indexes, not fields (the `appSettings` precedent in the data-model skill).
+   */
+  activeFrom?: string;
+  activeUntil?: string;
 };
 
 export type RuleCondition = {

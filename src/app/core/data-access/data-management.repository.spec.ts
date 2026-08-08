@@ -87,6 +87,32 @@ describe('DataManagementRepository', () => {
     });
   });
 
+  describe('non-indexed Category applicability window (TICKET-CAT-10)', () => {
+    // Same reasoning as the `appSettings` block below: `.stores()` declares indexes, not fields, and
+    // export/import moves whole rows — so `activeFrom`/`activeUntil` need no repository change. A
+    // round trip that silently dropped them would look exactly like the user never set a window.
+    it('round-trips through export → import intact', async () => {
+      await appDb.categories.clear();
+      await appDb.categories.bulkAdd([
+        category({ name: 'Rent', activeFrom: '2020-01-01', activeUntil: '2023-06-30' }),
+        category({ name: 'Groceries' }), // no window — must come back with neither field invented
+      ]);
+
+      const exported = await repository.exportAll();
+      await appDb.categories.clear();
+      await repository.importAll(exported, 'replace');
+
+      const restored = await appDb.categories.toArray();
+      const rent = restored.find(({ name }) => name === 'Rent');
+      const groceries = restored.find(({ name }) => name === 'Groceries');
+
+      expect(rent?.activeFrom).toBe('2020-01-01');
+      expect(rent?.activeUntil).toBe('2023-06-30');
+      expect(groceries?.activeFrom).toBeUndefined();
+      expect(groceries?.activeUntil).toBeUndefined();
+    });
+  });
+
   describe('non-indexed appSettings fields', () => {
     // `.stores()` declares indexes, not fields, and export/import moves whole rows — so an additive
     // field like these needs no repository change. Asserted rather than assumed, because a

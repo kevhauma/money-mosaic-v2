@@ -1,3 +1,4 @@
+export * from './category-applicability';
 export * from './co-owner-contribution';
 export * from './co-owner-contribution.service';
 export * from './rule-matching';

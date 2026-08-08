@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { CategoriesRepository } from '@/core/data-access';
+import { CategoriesRepository, type Category } from '@/core/data-access';
+import { CategoriesStore } from '@/core/state';
+import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 
 import { CategoriesOverviewComponent } from './categories-overview.component';
 
@@ -110,5 +112,68 @@ describe('CategoriesOverviewComponent', () => {
 
     expect(fixture.nativeElement.querySelector('.skeleton')).not.toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('No categories yet');
+  });
+
+  describe('applicability window (TICKET-CAT-10)', () => {
+    withCleanFormatSettings();
+
+    const category = (overrides: Partial<Category> = {}): Category => ({
+      id: 1,
+      name: 'Rent',
+      kind: 'expense',
+      color: '#7F77DD',
+      icon: 'tag',
+      archived: false,
+      isSystem: false,
+      ...overrides,
+    });
+
+    const renderWith = async (categories: Category[]): Promise<HTMLElement> => {
+      await setup([
+        {
+          provide: CategoriesRepository,
+          useValue: { getAll: vi.fn().mockResolvedValue(categories) },
+        },
+      ]);
+      await TestBed.inject(CategoriesStore).hydrate();
+      fixture.detectChanges();
+      return fixture.nativeElement;
+    };
+
+    /** The row's badges, minus the kind badge every row carries. */
+    const endedBadges = (host: HTMLElement): string[] =>
+      [...host.querySelectorAll('tbody mm-badge')]
+        .map((badge) => badge.textContent?.trim() ?? '')
+        .filter((text) => text.startsWith('Ended'));
+
+    it('marks a category whose window has closed, with the date in words', async () => {
+      const host = await renderWith([category({ activeUntil: '2023-06-30' })]);
+
+      expect(endedBadges(host)).toEqual(['Ended 06/30/2023']);
+    });
+
+    it('marks nothing for an end date still in the future', async () => {
+      expect(endedBadges(await renderWith([category({ activeUntil: '2099-01-01' })]))).toEqual([]);
+    });
+
+    it('marks nothing for a category with no window at all', async () => {
+      expect(endedBadges(await renderWith([category()]))).toEqual([]);
+    });
+
+    it('marks nothing for an open-ended window that has merely started', async () => {
+      expect(endedBadges(await renderWith([category({ activeFrom: '2020-01-01' })]))).toEqual([]);
+    });
+
+    it('renders the badge in the archived list too — ended and archived are independent axes', async () => {
+      const host = await renderWith([category({ archived: true, activeUntil: '2023-06-30' })]);
+
+      // Archived rows are hidden until the toggle is on, so nothing shows yet.
+      expect(endedBadges(host)).toEqual([]);
+
+      (host.querySelector('mm-page-header input[type="checkbox"]') as HTMLInputElement).click();
+      fixture.detectChanges();
+
+      expect(endedBadges(host)).toEqual(['Ended 06/30/2023']);
+    });
   });
 });

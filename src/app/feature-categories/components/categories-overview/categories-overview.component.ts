@@ -27,13 +27,24 @@ import {
   type BadgeColor,
   type TabDefinition,
 } from '@/shared/ui';
-import { createConfirmState } from '@/shared/utils';
+import { createConfirmState, formatDate } from '@/shared/utils';
+import { categoryHasEnded } from '@/core/categorisation';
 import { CATEGORY_ICON_SET, categoryIconName } from '../../category-icons';
 import { CategoriesStore } from '@/core/state';
+import type { CategoryRowVm } from '../../category-row-vm';
 import {
   CategoryFormComponent,
   type CategoryFormValue,
 } from '../category-form/category-form.component';
+
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
+/** Which badge colour each kind takes. A lookup, not a `switch` in a method the template calls. */
+const KIND_BADGE_COLORS: Record<Category['kind'], BadgeColor | undefined> = {
+  income: 'success',
+  neutral: 'neutral',
+  expense: undefined,
+};
 
 const CATEGORIES_TABS: TabDefinition[] = [
   { label: 'Categories', value: 'categories', link: '/categories', exact: true },
@@ -87,6 +98,32 @@ export class CategoriesOverviewComponent {
       : this.categoriesStore.activeCategories(),
   );
 
+  /**
+   * Every row's render state, joined once (TICKET-CAT-10) — the `@for` reads plain fields instead
+   * of running six method calls per row per change-detection pass. `first`/`last` are measured
+   * against the **full** ordered list, not the visible one, so the reorder arrows still refer to
+   * the order actually being edited when the archived rows are hidden.
+   */
+  protected readonly categoryRows = computed<CategoryRowVm[]>(() => {
+    const ordered = this.categoriesStore.categories();
+    const firstId = ordered[0]?.id;
+    const lastId = ordered[ordered.length - 1]?.id;
+    const countById = this.categoriesStore.transactionCountById();
+    const today = todayIso();
+
+    return this.visibleCategories().map((category) => ({
+      category,
+      iconName: categoryIconName(category.icon),
+      kindBadgeColor: KIND_BADGE_COLORS[category.kind],
+      transactionCount: category.id != null ? (countById.get(category.id) ?? 0) : 0,
+      isFirst: category.id === firstId,
+      isLast: category.id === lastId,
+      endedLabel: categoryHasEnded(category, today)
+        ? `Ended ${formatDate(category.activeUntil as string)}`
+        : '',
+    }));
+  });
+
   protected readonly formOpen = signal(false);
   protected readonly editingCategory = signal<Category | null>(null);
 
@@ -128,15 +165,6 @@ export class CategoriesOverviewComponent {
     void this.categoriesStore.moveCategory(category.id, direction);
   }
 
-  protected isFirst(category: Category): boolean {
-    return this.categoriesStore.categories()[0]?.id === category.id;
-  }
-
-  protected isLast(category: Category): boolean {
-    const ordered = this.categoriesStore.categories();
-    return ordered[ordered.length - 1]?.id === category.id;
-  }
-
   protected toggleArchive(category: Category): void {
     if (category.id == null) {
       return;
@@ -157,17 +185,7 @@ export class CategoriesOverviewComponent {
     }
   }
 
-  protected badgeColorFor(kind: Category['kind']): BadgeColor | undefined {
-    switch (kind) {
-      case 'income':
-        return 'success';
-      case 'neutral':
-        return 'neutral';
-      case 'expense':
-        return undefined;
-    }
-  }
-
+  /** Still a method: the delete-confirmation message needs it outside the row loop. */
   protected transactionCountFor(category: Category): number {
     return category.id != null
       ? (this.categoriesStore.transactionCountById().get(category.id) ?? 0)

@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-CAT-10',
-    title: 'Give a category the period it applied to — like rent that ended when you moved',
-    area: 'Categories',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-CAT-11',
     title:
       'Category dropdowns stop offering categories that no longer apply, without rewriting history',
