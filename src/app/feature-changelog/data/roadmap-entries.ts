@@ -83,6 +83,86 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Recurring payments',
   },
   {
+    versionFolder: 'v2.1_extra_graphs',
+    ticketId: 'TICKET-REC-06',
+    title:
+      'Stopped payments tuck away behind a closed "Stopped" section, so the list leads with what you still pay',
+    area: 'Recurring payments',
+  },
+  {
+    versionFolder: 'v2.1_extra_graphs',
+    ticketId: 'TICKET-REC-07',
+    title:
+      'Weekly and every-two-weeks payments get detected as recurring, even when a week is skipped',
+    area: 'Recurring payments',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-01',
+    title: 'Measure how much you actually saved per month, over a window of history you choose',
+    area: 'Forecast',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-02',
+    title: 'Your goals and forecast settings are saved, so the plan is still there tomorrow',
+    area: 'Goals',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-03',
+    title: 'A Future page: a place of its own for what happens next, instead of what already did',
+    area: 'Forecast',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-04',
+    title:
+      'List what you want to buy and what it costs, then drag it into the order you would buy it',
+    area: 'Goals',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-05',
+    title:
+      'See the month you could afford each goal if you keep saving the way you have been, in the order you set',
+    area: 'Forecast',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-06',
+    title:
+      'Choose how far back the forecast looks, what counts as saving, and how much cash to keep untouched',
+    area: 'Forecast',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-07',
+    title: 'Watch your projected net worth rise and dip as each goal gets bought',
+    area: 'Forecast',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-08',
+    title:
+      'Point the forecast at just the accounts you would actually spend from, and leave the rest out',
+    area: 'Forecast',
+  },
+  {
+    versionFolder: 'v2.3_navigation',
+    ticketId: 'TICKET-UI-26',
+    title:
+      'Group the sidebar into the pages that show you your money and the pages that feed it, both always open',
+    area: 'UI / App shell',
+  },
+  {
+    versionFolder: 'v2.3_navigation',
+    ticketId: 'TICKET-PRIV-02',
+    title:
+      'Hide your amounts with one click from any page that shows figures, not just the Dashboard',
+    area: 'Privacy Mode',
+  },
+  {
     versionFolder: 'v9999_ideas',
     ticketId: 'topic-chart-builder',
     title: 'Chart builder: create your own custom visualizations from your data',
