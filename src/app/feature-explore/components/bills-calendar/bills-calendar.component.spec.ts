@@ -46,9 +46,9 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
 });
 
 /**
- * A monthly series on the 11th, ending in April 2026 — so `nextExpectedDate` is 2026-05-12 and the
- * projection reaches any month the spec navigates to. Dates are historical, so the component's real
- * `todayIso()` never moves them.
+ * A monthly series on the 11th, ending in April 2026 — so `nextExpectedDate` is 2026-05-12, one day
+ * after the pinned `TODAY`, which keeps it comfortably active and lets the projection reach any
+ * month the spec navigates to.
  */
 const streamlyMonthly = (): Transaction[] =>
   ['2026-01-11', '2026-02-11', '2026-03-11', '2026-04-11'].map((bookingDate, index) =>
@@ -109,7 +109,7 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
     return fixture;
   };
 
-  /** Every spec picks its own month — the seed is the real current month, which moves with the clock. */
+  /** Every spec picks its own month explicitly, rather than relying on the seeded current one. */
   const showMonth = (fixture: ComponentFixture<BillsCalendarComponent>, month: string): void => {
     TestBed.inject(ChartOptionsStore).setVisibleMonth('explore-bills-calendar', month);
     fixture.detectChanges();

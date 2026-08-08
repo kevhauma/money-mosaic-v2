@@ -81,8 +81,10 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
  * conclude the page's range is broken.
  *
  * A real `<table>` with a caption, not a chart — so the accessible rendering *is* the UI and no
- * `sr-only` mirror (the TICKET-STAT-20 convention for canvas charts) applies here. Amounts blur
- * under privacy mode via `mm-privacy-blur`, which works because every one of them is visible text.
+ * `sr-only` mirror (the TICKET-STAT-20 convention for canvas charts) applies here. Column amounts
+ * blur under privacy mode via `mm-privacy-blur`, which works because they are visible text; a
+ * badge's amounts are baked into its own label, out of the blur's reach, so those are withheld at
+ * build time instead (TICKET-REC-04).
  */
 @Component({
   selector: 'app-recurring-payments-panel',
@@ -114,9 +116,10 @@ export class RecurringPaymentsPanelComponent {
 
   /**
    * Already sorted most-expensive-first by the aggregate, which owns that order; this only turns
-   * each series into display facts. Reads `formatCurrency`/`formatDate`, so it re-derives when the
-   * locale or currency setting changes — and deliberately *not* when a row is expanded, which is
-   * why `expanded` is stitched on by the cheap `rows` map below rather than resolved here.
+   * each series into display facts. Re-derives when the locale/currency setting changes (through
+   * `formatCurrency`/`formatDate`) and when privacy mode does (badge amounts are withheld here, not
+   * blurred downstream) — but deliberately *not* when a row is expanded, which is why `expanded` is
+   * stitched on by the cheap `rows` map below rather than resolved here.
    */
   private readonly formattedRows = computed<
     Omit<RecurringSeriesRow, 'expanded' | 'expandIcon' | 'toggleAriaLabel'>[]
