@@ -11,6 +11,8 @@ const series = (overrides: Partial<RecurringPaymentSeries> = {}): RecurringPayme
   lastDate: '2026-07-11',
   nextExpectedDate: '2026-08-11',
   monthlyEquivalent: 12.99,
+  intervalDays: 31,
+  flags: {},
   ...overrides,
 });
 
@@ -34,6 +36,7 @@ describe('projectRecurringOccurrences', () => {
       categoryId: 1,
       date: '2026-08-11',
       amount: 12.99,
+      overdue: false,
     });
   });
 
@@ -80,6 +83,20 @@ describe('projectRecurringOccurrences', () => {
 
     expect(datesOf([monthly], { from: '2026-06-01', to: '2026-06-30' })).toEqual(['2026-06-11']);
     expect(datesOf([monthly], { from: '2026-08-01', to: '2026-08-31' })).toEqual(['2026-08-11']);
+  });
+
+  it('marks only the date a series is actually waiting on as overdue (TICKET-REC-04)', () => {
+    const late = series({
+      nextExpectedDate: '2026-08-11',
+      flags: { overdue: { expectedDate: '2026-08-11' } },
+    });
+
+    const august = projectRecurringOccurrences([late], AUGUST.from, AUGUST.to);
+    expect(august.map(({ date, overdue }) => [date, overdue])).toEqual([['2026-08-11', true]]);
+
+    // Every later projection off the same series is an ordinary expectation, not a second miss.
+    const september = projectRecurringOccurrences([late], '2026-09-01', '2026-09-30');
+    expect(september.map(({ overdue }) => overdue)).toEqual([false]);
   });
 
   it('orders by date across series, breaking ties by label', () => {

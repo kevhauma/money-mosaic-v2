@@ -5,6 +5,8 @@ export type BillEntry = {
   seriesKey: string;
   label: string;
   amount: string;
+  /** Was expected here and has not arrived (TICKET-REC-04) — styled distinctly, and said in words too. */
+  overdue: boolean;
 };
 
 /**

@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { type RecurringCadence } from '@/core/stats';
+import { NgTemplateOutlet } from '@angular/common';
+import { type RecurringCadence, type RecurringFlags } from '@/core/stats';
 import { AppSettingsStore, CategoriesStore } from '@/core/state';
 import { CHART_NO_COLOR_FALLBACK } from '@/shared/echarts';
 import {
+  BadgeComponent,
   ButtonComponent,
   EmptyStateComponent,
   FlexComponent,
@@ -13,9 +15,52 @@ import {
 } from '@/shared/ui';
 import { formatCurrency, formatDate } from '@/shared/utils';
 import { RecurringSeriesStore } from '../../recurring-series.store';
-import type { RecurringSeriesRow } from '../../recurring-payments-row-vm';
+import type { RecurringFlagBadge, RecurringSeriesRow } from '../../recurring-payments-row-vm';
 
 const UNCATEGORISED_LABEL = 'Uncategorised';
+
+/**
+ * What a badge shows in place of an amount while privacy mode is on. Distinct from the bills
+ * calendar's `HIDDEN_AMOUNT`, and deliberately so: that one is *read aloud* from an `sr-only`
+ * table, so it says the word "hidden"; this one is seen, so it takes the shape of a masked figure.
+ */
+const MASKED_AMOUNT = '•••';
+
+/**
+ * The flags a series carries, as badges (TICKET-REC-04). Each says what happened in words, so the
+ * colour only reinforces a meaning the text already carries. A price *cut* is deliberately not
+ * `success` and a rise not `error`: the app has no business judging whether a cheaper subscription
+ * is good news, only reporting that the price moved.
+ */
+const flagBadges = (flags: RecurringFlags, privacyMode: boolean): RecurringFlagBadge[] => {
+  const badges: RecurringFlagBadge[] = [];
+
+  if (flags.priceChange) {
+    const { from, to } = flags.priceChange;
+    const amounts = privacyMode
+      ? `${MASKED_AMOUNT} → ${MASKED_AMOUNT}`
+      : `${formatCurrency(from)} → ${formatCurrency(to)}`;
+    badges.push({
+      kind: 'priceChange',
+      text: `Price ${to > from ? '↑' : '↓'} ${amounts}`,
+      color: 'info',
+    });
+  }
+  if (flags.overdue) {
+    // "Overdue —" and not just the date: the row's own "Next expected" column already shows that
+    // date, so without the word the badge's only signal would be its colour.
+    badges.push({
+      kind: 'overdue',
+      text: `Overdue — expected ${formatDate(flags.overdue.expectedDate)}`,
+      color: 'warning',
+    });
+  }
+  if (flags.stopped) {
+    badges.push({ kind: 'stopped', text: 'Stopped', color: 'neutral' });
+  }
+
+  return badges;
+};
 
 /** Cadence as a word, since "quarterly" is a rhythm the user reads, not an enum they decode. */
 const CADENCE_LABELS: Record<RecurringCadence, string> = {
@@ -42,6 +87,8 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
 @Component({
   selector: 'app-recurring-payments-panel',
   imports: [
+    NgTemplateOutlet,
+    BadgeComponent,
     ButtonComponent,
     EmptyStateComponent,
     FlexComponent,
@@ -75,6 +122,7 @@ export class RecurringPaymentsPanelComponent {
     Omit<RecurringSeriesRow, 'expanded' | 'expandIcon' | 'toggleAriaLabel'>[]
   >(() => {
     const categoriesById = this.categoriesStore.categoriesById();
+    const privacyMode = this.privacyMode();
 
     return this.recurringSeriesStore.series().map((series) => {
       const category =
@@ -96,6 +144,10 @@ export class RecurringPaymentsPanelComponent {
           date: formatDate(occurrence.date),
           amount: formatCurrency(occurrence.amount),
         })),
+        // A badge's amounts are baked into its text, so `mm-privacy-blur` can't reach them —
+        // they are withheld at build time instead (TICKET-PRIV-01).
+        badges: flagBadges(series.flags, privacyMode),
+        stopped: series.flags.stopped !== undefined,
       };
     });
   });
@@ -115,8 +167,15 @@ export class RecurringPaymentsPanelComponent {
     });
   });
 
+  /**
+   * Live commitments and finished ones, listed apart (TICKET-REC-04) — a cancelled subscription
+   * among the things you still pay for reads as something you still pay for.
+   */
+  protected readonly activeRows = computed(() => this.rows().filter((row) => !row.stopped));
+  protected readonly stoppedRows = computed(() => this.rows().filter((row) => row.stopped));
+
   /** Off the shared series, not `rows()` — a count has no business re-deriving because a row was unfolded. */
-  protected readonly seriesCount = computed(() => this.recurringSeriesStore.series().length);
+  protected readonly seriesCount = computed(() => this.recurringSeriesStore.activeSeries().length);
 
   /** The summary sentence, resolved here so the template renders a string instead of pluralising one. */
   protected readonly summaryLabel = computed(() => {
@@ -124,11 +183,15 @@ export class RecurringPaymentsPanelComponent {
     return `${count} recurring ${count === 1 ? 'payment' : 'payments'} ≈`;
   });
 
-  /** Summed from the series' own monthly equivalents, so the total can never disagree with the column above it. */
+  /**
+   * Summed from the series' own monthly equivalents, so the total can never disagree with the column
+   * above it — and over the **active** ones only: a stopped series costs nothing per month, and
+   * including it would overstate the commitment the number exists to state (TICKET-REC-04).
+   */
   protected readonly monthlyTotal = computed(() =>
     formatCurrency(
       this.recurringSeriesStore
-        .series()
+        .activeSeries()
         .reduce((total, series) => total + series.monthlyEquivalent, 0),
     ),
   );

@@ -47,6 +47,13 @@ export const RecurringSeriesStore = signalStore(
 
     return {
       series,
+      /**
+       * The series still running — everything except those flagged `stopped` (TICKET-REC-04).
+       * Shared rather than filtered twice: the panel excludes stopped series from its count and
+       * monthly total, and the bills calendar must not keep projecting a cancelled subscription
+       * onto future days, or the two sections of one page would contradict each other.
+       */
+      activeSeries: computed(() => series().filter((entry) => entry.flags.stopped === undefined)),
       /** The date detection treated as "now" — consumers project forward from the same instant. */
       today: computed(() => today),
       hasSeries: computed(() => series().length > 0),

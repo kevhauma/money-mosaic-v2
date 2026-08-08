@@ -16,7 +16,13 @@
       <mm-text variant="caption" class="block text-right">{{ cell.dayLabel }}</mm-text>
 
       @for (entry of cell.entries; track entry.seriesKey) {
-        <div class="mt-0.5 flex justify-between gap-1 rounded bg-base-200 px-1">
+        <!-- An overdue expectation is outlined rather than filled red (TICKET-REC-04): the app
+             infers rhythms, so "didn't arrive" is a nudge to look, not an alarm. -->
+        <div
+          class="mt-0.5 flex justify-between gap-1 rounded bg-base-200 px-1"
+          [class.ring-1]="entry.overdue"
+          [class.ring-warning]="entry.overdue"
+        >
           <mm-text variant="caption" class="truncate">{{ entry.label }}</mm-text>
           <mm-privacy-blur [blurred]="privacyMode()">
             <mm-text variant="caption">{{ entry.amount }}</mm-text>

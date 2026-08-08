@@ -43,6 +43,10 @@ const occurrencesOf = (
 const detect = (transactions: Transaction[], categories: Map<number, Category> = NO_CATEGORIES) =>
   detectRecurringPayments(transactions, categories, NO_ACCOUNTS, TODAY);
 
+/** For the timing flags, whose whole subject is where "now" sits relative to the rhythm. */
+const detectAt = (todayIso: string, transactions: Transaction[]) =>
+  detectRecurringPayments(transactions, NO_CATEGORIES, NO_ACCOUNTS, todayIso);
+
 describe('detectRecurringPayments', () => {
   it('returns no series for an empty history', () => {
     expect(detectRecurringPayments([], NO_CATEGORIES, NO_ACCOUNTS, TODAY)).toEqual({ series: [] });
@@ -297,5 +301,110 @@ describe('detectRecurringPayments', () => {
     ).series;
     expect(byDescription).toHaveLength(1);
     expect(byDescription[0].label).toBe('DIRECT DEBIT WATER BOARD');
+  });
+});
+
+describe('detectRecurringPayments: change flags (TICKET-REC-04)', () => {
+  /** Monthly on the 5th, three payments at one price then three at another. */
+  const repriced = (before: number, after: number): Transaction[] =>
+    occurrencesOf([
+      ['2026-01-05', -before],
+      ['2026-02-05', -before],
+      ['2026-03-05', -before],
+      ['2026-04-05', -after],
+      ['2026-05-05', -after],
+      ['2026-06-05', -after],
+    ]);
+
+  /** A monthly series whose last payment is 2026-06-05, so `nextExpectedDate` is 2026-07-05. */
+  const monthlyThroughJune = (): Transaction[] =>
+    occurrencesOf([
+      ['2026-04-05', -20],
+      ['2026-05-05', -20],
+      ['2026-06-05', -20],
+    ]);
+
+  it('folds a sustained price rise back into one series carrying the step', () => {
+    const { series } = detect(repriced(9.99, 12.99));
+
+    expect(series).toHaveLength(1);
+    expect(series[0].flags.priceChange).toEqual({
+      from: 9.99,
+      to: 12.99,
+      atDate: '2026-04-05',
+    });
+    // The new level owns the forward-looking figures; the old one survives only as history.
+    expect(series[0].typicalAmount).toBe(12.99);
+    expect(series[0].occurrences).toHaveLength(6);
+  });
+
+  it('flags a price cut the same way — a decrease is news too', () => {
+    const { series } = detect(repriced(12.99, 9.99));
+
+    expect(series).toHaveLength(1);
+    expect(series[0].flags.priceChange).toMatchObject({ from: 12.99, to: 9.99 });
+    expect(series[0].typicalAmount).toBe(9.99);
+  });
+
+  it('does not merge two commitments that are simply too far apart to be one repricing', () => {
+    // €10 ending as €40 begins is not a subscription that got dearer, it is two subscriptions.
+    const { series } = detect(repriced(10, 40));
+
+    expect(series).toHaveLength(2);
+    expect(series.every((entry) => entry.flags.priceChange === undefined)).toBe(true);
+  });
+
+  it('does not read a single within-tolerance outlier as a price change', () => {
+    // €10.50 is ~5% off €9.99 — inside the band, so it never becomes a level of its own.
+    const { series } = detect(
+      occurrencesOf([
+        ['2026-03-05', -9.99],
+        ['2026-04-05', -9.99],
+        ['2026-05-05', -10.5],
+        ['2026-06-05', -9.99],
+      ]),
+    );
+
+    expect(series).toHaveLength(1);
+    expect(series[0].flags.priceChange).toBeUndefined();
+  });
+
+  it('leaves a series unflagged inside the grace allowance, and overdue outside it', () => {
+    // nextExpectedDate is 2026-07-05; the rhythm's median interval is 30 days.
+    expect(detectAt('2026-07-10', monthlyThroughJune()).series[0].flags).toEqual({});
+
+    const late = detectAt('2026-07-20', monthlyThroughJune()).series[0];
+    expect(late.flags.overdue).toEqual({ expectedDate: '2026-07-05' });
+    expect(late.flags.stopped).toBeUndefined();
+  });
+
+  it('calls a series stopped after two whole intervals of silence, and keeps it listed', () => {
+    const { series } = detectAt('2026-09-01', monthlyThroughJune());
+
+    expect(series).toHaveLength(1); // still there — vanishing is the opposite of announcing
+    expect(series[0].flags.stopped).toEqual({ since: '2026-06-05' });
+    // Never both: overdue is the early warning, stopped the conclusion.
+    expect(series[0].flags.overdue).toBeUndefined();
+  });
+
+  it('measures lateness in the rhythm’s own intervals, not in days', () => {
+    const weekly = occurrencesOf([
+      ['2026-06-01', -8],
+      ['2026-06-08', -8],
+      ['2026-06-15', -8],
+    ]);
+
+    // 24 days of silence is three weekly intervals — long stopped...
+    expect(detectAt('2026-07-09', weekly).series[0].flags.stopped).toBeDefined();
+    // ...while the same 24 days is nothing at all to a monthly rhythm.
+    expect(detectAt('2026-06-29', monthlyThroughJune()).series[0].flags).toEqual({});
+  });
+
+  it('reports a repriced series’ timing against its new level, not the old one', () => {
+    const { series } = detectAt('2026-09-01', repriced(9.99, 12.99));
+
+    expect(series).toHaveLength(1);
+    expect(series[0].flags.priceChange).toBeDefined();
+    expect(series[0].flags.stopped).toEqual({ since: '2026-06-05' });
   });
 });

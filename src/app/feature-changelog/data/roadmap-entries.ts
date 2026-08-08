@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-04',
-    title: 'Flags when a recurring payment gets more expensive, runs late, or stops entirely',
-    area: 'Recurring payments',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-CAT-10',
     title: 'Give a category the period it applied to — like rent that ended when you moved',
     area: 'Categories',

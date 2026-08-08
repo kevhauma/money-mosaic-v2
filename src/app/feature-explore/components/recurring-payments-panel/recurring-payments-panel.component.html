@@ -30,6 +30,7 @@
       <thead>
         <tr>
           <th scope="col">Payment</th>
+          <th scope="col">Status</th>
           <th scope="col">Category</th>
           <th scope="col">Cadence</th>
           <th scope="col" class="text-right">Typical</th>
@@ -38,71 +39,105 @@
           <th scope="col" class="text-right">Per month</th>
         </tr>
       </thead>
-      <tbody>
-        @for (row of rows(); track row.key) {
+      <!-- One template, two groups: live commitments, then the finished ones under their own
+           heading (TICKET-REC-04). `ngTemplateOutlet` rather than a child component because a
+           `<tr>` cannot sit inside a wrapper element without breaking the table. -->
+      <ng-template #seriesRow let-row>
+        <tr>
+          <!-- A row header, not a cell: the payment's name is what identifies the row a screen
+               reader is reading the other six columns of. -->
+          <th scope="row">
+            <mm-button
+              variant="ghost"
+              size="xs"
+              class="max-w-full justify-start px-1"
+              [ariaExpanded]="row.expanded"
+              [ariaLabel]="row.toggleAriaLabel"
+              (click)="toggle(row.key)"
+            >
+              <span aria-hidden="true">{{ row.expandIcon }}</span>
+              <span class="truncate">{{ row.label }}</span>
+            </mm-button>
+          </th>
+          <!-- A cell of its own rather than part of the row header: a `<th scope="row">` is
+               re-announced before every data cell in the row, so badges living there would repeat
+               "Stopped" six times per series (TICKET-REC-04). -->
+          <td>
+            <mm-flex align="center" gap="1" [wrap]="true">
+              @for (badge of row.badges; track badge.kind) {
+                <mm-badge [color]="badge.color" variant="soft" size="sm">{{ badge.text }}</mm-badge>
+              }
+            </mm-flex>
+          </td>
+          <td>
+            <mm-flex align="center" gap="2">
+              <span
+                class="inline-block size-2 shrink-0 rounded-full"
+                [style.background-color]="row.categoryColor"
+                aria-hidden="true"
+              ></span>
+              {{ row.categoryName }}
+            </mm-flex>
+          </td>
+          <td>{{ row.cadence }}</td>
+          <td class="text-right">
+            <mm-privacy-blur [blurred]="privacyMode()">{{ row.typicalAmount }}</mm-privacy-blur>
+          </td>
+          <td>{{ row.lastDate }}</td>
+          <td>{{ row.nextExpectedDate }}</td>
+          <td class="text-right">
+            <mm-privacy-blur [blurred]="privacyMode()">{{ row.monthlyEquivalent }}</mm-privacy-blur>
+          </td>
+        </tr>
+
+        <!-- The evidence behind the detection, so a false positive is diagnosable without
+             leaving the page (deep-linking would need a counterparty param the Transactions
+             filters do not have — recorded in the ticket's Notes). -->
+        @if (row.expanded) {
           <tr>
-            <!-- A row header, not a cell: the payment's name is what identifies the row a screen
-                 reader is reading the other six columns of. -->
-            <th scope="row">
-              <mm-button
-                variant="ghost"
-                size="xs"
-                class="max-w-full justify-start px-1"
-                [ariaExpanded]="row.expanded"
-                [ariaLabel]="row.toggleAriaLabel"
-                (click)="toggle(row.key)"
-              >
-                <span aria-hidden="true">{{ row.expandIcon }}</span>
-                <span class="truncate">{{ row.label }}</span>
-              </mm-button>
-            </th>
-            <td>
-              <mm-flex align="center" gap="2">
-                <span
-                  class="inline-block size-2 shrink-0 rounded-full"
-                  [style.background-color]="row.categoryColor"
-                  aria-hidden="true"
-                ></span>
-                {{ row.categoryName }}
-              </mm-flex>
-            </td>
-            <td>{{ row.cadence }}</td>
-            <td class="text-right">
-              <mm-privacy-blur [blurred]="privacyMode()">{{ row.typicalAmount }}</mm-privacy-blur>
-            </td>
-            <td>{{ row.lastDate }}</td>
-            <td>{{ row.nextExpectedDate }}</td>
-            <td class="text-right">
-              <mm-privacy-blur [blurred]="privacyMode()">{{
-                row.monthlyEquivalent
-              }}</mm-privacy-blur>
+            <td colspan="8" class="bg-base-200/40">
+              <mm-text as="p" variant="caption" class="mb-1">
+                {{ row.occurrenceCount }} payments detected
+              </mm-text>
+              <ul class="flex flex-col gap-1">
+                @for (occurrence of row.occurrences; track occurrence.transactionId) {
+                  <li class="flex justify-between gap-4 text-sm">
+                    <span>{{ occurrence.date }}</span>
+                    <mm-privacy-blur [blurred]="privacyMode()">{{
+                      occurrence.amount
+                    }}</mm-privacy-blur>
+                  </li>
+                }
+              </ul>
             </td>
           </tr>
+        }
+      </ng-template>
 
-          <!-- The evidence behind the detection, so a false positive is diagnosable without
-               leaving the page (deep-linking would need a counterparty param the Transactions
-               filters do not have — recorded in the ticket's Notes). -->
-          @if (row.expanded) {
-            <tr>
-              <td colspan="7" class="bg-base-200/40">
-                <mm-text as="p" variant="caption" class="mb-1">
-                  {{ row.occurrenceCount }} payments detected
-                </mm-text>
-                <ul class="flex flex-col gap-1">
-                  @for (occurrence of row.occurrences; track occurrence.transactionId) {
-                    <li class="flex justify-between gap-4 text-sm">
-                      <span>{{ occurrence.date }}</span>
-                      <mm-privacy-blur [blurred]="privacyMode()">{{
-                        occurrence.amount
-                      }}</mm-privacy-blur>
-                    </li>
-                  }
-                </ul>
-              </td>
-            </tr>
-          }
+      <tbody>
+        @for (row of activeRows(); track row.key) {
+          <ng-container
+            [ngTemplateOutlet]="seriesRow"
+            [ngTemplateOutletContext]="{ $implicit: row }"
+          />
         }
       </tbody>
+
+      @if (stoppedRows().length > 0) {
+        <tbody>
+          <tr>
+            <th scope="rowgroup" colspan="8" class="bg-base-200/60">
+              <mm-text variant="caption">Stopped — no longer counted in the monthly total</mm-text>
+            </th>
+          </tr>
+          @for (row of stoppedRows(); track row.key) {
+            <ng-container
+              [ngTemplateOutlet]="seriesRow"
+              [ngTemplateOutletContext]="{ $implicit: row }"
+            />
+          }
+        </tbody>
+      }
     </mm-table>
   }
 </mm-paper>

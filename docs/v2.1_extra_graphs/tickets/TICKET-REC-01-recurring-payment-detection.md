@@ -170,6 +170,14 @@ shape and position every sibling aggregate uses (`period-stats.ts`, `category-br
   change. Recorded in the version overview's "Considered, not ticketed yet".
 - Detection quality thresholds will need tuning against real imported data; the constants-block
   convention exists precisely so that tuning is cheap.
+- **Update, 2026-08-08 — TICKET-REC-04 shipped and resolved two of the three below.** (2) is fixed:
+  `mergePriceChanges` folds the two bands a repricing creates back into one series carrying a
+  `priceChange` flag, so a price change now *announces* itself instead of splitting the series.
+  (3) is enforced rather than merely warned about: nothing persists `key`, and REC-04's flags are
+  computed on every read. **(1) still stands** — one out-of-window gap still rejects a whole band,
+  so a subscription that skipped a single month mid-history is still not detected at all. REC-04's
+  `stopped`/`overdue` only cover *trailing* silence, which is a different thing; a skip-aware gap
+  test remains unbuilt and unticketed.
 - **Three consequences of the shipped model that TICKET-REC-04 should start from, not rediscover**
   (surfaced by the conventions review, deliberately not built here — each changes what REC-02
   renders and deserves its own decision):

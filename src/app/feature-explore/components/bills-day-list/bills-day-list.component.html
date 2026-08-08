@@ -12,7 +12,14 @@
         <ul class="mt-1 flex flex-col gap-1">
           @for (entry of day.entries; track entry.seriesKey) {
             <li class="flex justify-between gap-4">
-              <mm-text class="truncate">{{ entry.label }}</mm-text>
+              <mm-flex align="center" gap="2" class="min-w-0">
+                <mm-text class="truncate">{{ entry.label }}</mm-text>
+                <!-- The same fact the grid marks with an outline — said in words here, because a
+                     list has no cell to outline and colour is never the only signal. -->
+                @if (entry.overdue) {
+                  <mm-badge color="warning" variant="soft" size="sm">Not yet arrived</mm-badge>
+                }
+              </mm-flex>
               <mm-privacy-blur [blurred]="privacyMode()">
                 <mm-text>{{ entry.amount }}</mm-text>
               </mm-privacy-blur>

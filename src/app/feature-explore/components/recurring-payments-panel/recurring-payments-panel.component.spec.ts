@@ -56,20 +56,40 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   ...overrides,
 });
 
-/** A four-occurrence monthly series at €12.99 — the smallest fixture the detector accepts. */
+/**
+ * "Today" for every fixture below. Pinned rather than read from the real clock: the panel's series
+ * come from `RecurringSeriesStore`, which snapshots `new Date()` when it is first injected, and
+ * whether a series reads as active or stopped (TICKET-REC-04) is entirely a question of where now
+ * sits relative to its last payment.
+ */
+const TODAY = '2026-05-11T12:00:00.000Z';
+
+/** A four-occurrence monthly series at €12.99, the most recent one two days ago — an active commitment. */
 const streamlyMonthly = (): Transaction[] =>
-  ['2026-01-11', '2026-02-11', '2026-03-11', '2026-04-11'].map((bookingDate, index) =>
+  ['2026-02-09', '2026-03-09', '2026-04-09', '2026-05-09'].map((bookingDate, index) =>
     transaction({ id: index + 1, bookingDate }),
   );
 
 /** A second, cheaper monthly series so sort order has something to prove. */
 const gymMonthly = (): Transaction[] =>
-  ['2026-01-04', '2026-02-04', '2026-03-04'].map((bookingDate, index) =>
+  ['2026-03-04', '2026-04-04', '2026-05-04'].map((bookingDate, index) =>
     transaction({
       id: 100 + index,
       bookingDate,
       amount: -5,
       counterpartyName: 'Gym',
+      categoryId: undefined,
+    }),
+  );
+
+/** A monthly series that went quiet in the autumn — far past `STOPPED_INTERVALS`. */
+const cancelledMonthly = (): Transaction[] =>
+  ['2025-08-04', '2025-09-04', '2025-10-04'].map((bookingDate, index) =>
+    transaction({
+      id: 200 + index,
+      bookingDate,
+      amount: -30,
+      counterpartyName: 'Old gym',
       categoryId: undefined,
     }),
   );
@@ -82,6 +102,12 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
   const createFixture = async (
     transactions: Transaction[],
   ): Promise<ComponentFixture<RecurringPaymentsPanelComponent>> => {
+    // Fakes only `Date`, not timers — this app is zoneless and `whenStable()` needs real ones.
+    // Set before `TestBed` builds anything, since `RecurringSeriesStore` reads the clock once, on
+    // its first injection.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(TODAY));
+
     await TestBed.configureTestingModule({
       imports: [RecurringPaymentsPanelComponent],
       providers: [
@@ -110,10 +136,11 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
   };
 
   afterEach(async () => {
+    vi.useRealTimers();
     await appDb.appSettings.clear();
   });
 
-  /** Each series row's seven cells in order — the name is a `<th scope="row">`, the rest `<td>`. */
+  /** Each series row's eight cells in order — the name is a `<th scope="row">`, the rest `<td>`. */
   const cellsOf = (host: HTMLElement): string[][] =>
     [...host.querySelectorAll('tbody tr')].map((row) =>
       [...row.querySelectorAll('th, td')].map((cell) => cell.textContent?.trim() ?? ''),
@@ -124,12 +151,13 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     const [row] = cellsOf(fixture.nativeElement as HTMLElement);
 
     expect(row[0]).toContain('Streamly');
-    expect(row[1]).toContain('Subscriptions');
-    expect(row[2]).toBe('Monthly');
-    expect(row[3]).toBe('€12.99');
-    expect(row[4]).toBe('04/11/2026'); // last paid
-    expect(row[5]).toBe('05/12/2026'); // next expected: last + the 31-day median gap
-    expect(row[6]).toBe('€12.99');
+    expect(row[1]).toBe(''); // status: an active series in good standing carries no badge
+    expect(row[2]).toContain('Subscriptions');
+    expect(row[3]).toBe('Monthly');
+    expect(row[4]).toBe('€12.99');
+    expect(row[5]).toBe('05/09/2026'); // last paid
+    expect(row[6]).toBe('06/08/2026'); // next expected: last + the 30-day median gap
+    expect(row[7]).toBe('€12.99');
   });
 
   it('sorts the series by monthly equivalent, most expensive first', async () => {
@@ -143,7 +171,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
   it('names an uncategorised series explicitly rather than leaving the cell blank', async () => {
     const fixture = await createFixture(gymMonthly());
 
-    expect(cellsOf(fixture.nativeElement as HTMLElement)[0][1]).toContain('Uncategorised');
+    expect(cellsOf(fixture.nativeElement as HTMLElement)[0][2]).toContain('Uncategorised');
   });
 
   it('summarises the count and the summed monthly-equivalent total', async () => {
@@ -169,8 +197,8 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       (item) => item.textContent?.replace(/\s+/g, '').trim() ?? '',
     );
     expect(occurrences).toHaveLength(4);
-    expect(occurrences[0]).toBe('01/11/2026€12.99');
-    expect(occurrences[3]).toBe('04/11/2026€12.99');
+    expect(occurrences[0]).toBe('02/09/2026€12.99');
+    expect(occurrences[3]).toBe('05/09/2026€12.99');
     expect(host.querySelector('tbody button')?.getAttribute('aria-expanded')).toBe('true');
 
     (host.querySelector('tbody button') as HTMLButtonElement).click();
@@ -228,5 +256,62 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     fixture.detectChanges();
 
     expect(cellsOf(host)).toEqual(before);
+  });
+
+  describe('change flags (TICKET-REC-04)', () => {
+    it('lists stopped series under their own heading, not among live commitments', async () => {
+      const fixture = await createFixture([...streamlyMonthly(), ...cancelledMonthly()]);
+      const host = fixture.nativeElement as HTMLElement;
+
+      const [active, stopped] = [...host.querySelectorAll('tbody')];
+      expect(active.textContent).toContain('Streamly');
+      expect(active.textContent).not.toContain('Old gym');
+      expect(stopped.textContent).toContain('Stopped — no longer counted in the monthly total');
+      expect(stopped.textContent).toContain('Old gym');
+    });
+
+    it('leaves stopped series out of the count and the monthly total', async () => {
+      const fixture = await createFixture([...streamlyMonthly(), ...cancelledMonthly()]);
+      const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+      // One active series at €12.99 — the cancelled €30 one costs nothing per month any more.
+      expect(text).toContain('1 recurring payment ≈');
+      expect(text).not.toContain('€42.99');
+    });
+
+    it('badges a stopped series, in words rather than by colour alone', async () => {
+      const fixture = await createFixture(cancelledMonthly());
+      const badges = [...(fixture.nativeElement as HTMLElement).querySelectorAll('mm-badge')];
+
+      expect(badges).toHaveLength(1);
+      expect(badges[0].textContent?.trim()).toBe('Stopped');
+    });
+
+    it('badges a price step with both levels, and withholds them under privacy mode', async () => {
+      // Three payments at €9.99, then three at €12.99 — a sustained new level, monthly throughout.
+      const fixture = await createFixture(
+        ['2025-12-09', '2026-01-09', '2026-02-09', '2026-03-09', '2026-04-09', '2026-05-09'].map(
+          (bookingDate, index) =>
+            transaction({
+              id: index + 1,
+              bookingDate,
+              amount: index < 3 ? -9.99 : -12.99,
+            }),
+        ),
+      );
+      const host = fixture.nativeElement as HTMLElement;
+
+      const badge = host.querySelector('mm-badge');
+      expect(badge?.textContent?.trim()).toBe('Price ↑ €9.99 → €12.99');
+
+      await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
+      fixture.detectChanges();
+
+      // The figures are baked into the badge's text, so `mm-privacy-blur` can't reach them —
+      // they have to be withheld rather than blurred.
+      const masked = host.querySelector('mm-badge')?.textContent?.trim();
+      expect(masked).toBe('Price ↑ ••• → •••');
+      expect(masked).not.toContain('€');
+    });
   });
 });

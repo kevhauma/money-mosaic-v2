@@ -68,12 +68,23 @@ const fiveOnTheSameDay = (): Transaction[] =>
     ),
   );
 
+/**
+ * "Today" for every fixture here. Pinned rather than read from the real clock: whether a series is
+ * still running or has stopped (TICKET-REC-04) decides whether it is projected at all, and
+ * `RecurringSeriesStore` snapshots `new Date()` when it is first injected.
+ */
+const TODAY = '2026-05-11T12:00:00.000Z';
+
 describe('BillsCalendarComponent (TICKET-REC-03)', () => {
   withCleanFormatSettings();
 
   const createFixture = async (
     transactions: Transaction[],
   ): Promise<ComponentFixture<BillsCalendarComponent>> => {
+    // Fakes only `Date`, not timers — this app is zoneless and `whenStable()` needs real ones.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(TODAY));
+
     await TestBed.configureTestingModule({
       imports: [BillsCalendarComponent],
       providers: [
@@ -126,6 +137,7 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
   };
 
   afterEach(async () => {
+    vi.useRealTimers();
     await appDb.appSettings.clear();
   });
 
@@ -314,6 +326,63 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
     );
     expect(todayCells).toHaveLength(1);
     expect(todayCells[0].textContent).toContain(String(Number(today.slice(8, 10))));
+  });
+
+  describe('change flags (TICKET-REC-04)', () => {
+    /**
+     * Monthly at 30-day steps, last paid 2026-04-01: expected 2026-05-01, which is 10 days before
+     * the pinned `TODAY` — past the 7-day grace, and nowhere near two whole intervals of silence.
+     */
+    const overdueMonthly = (): Transaction[] =>
+      ['2026-02-01', '2026-03-03', '2026-04-02'].map((bookingDate, index) =>
+        transaction({ id: index + 1, bookingDate }),
+      );
+
+    /** Quiet since the autumn — far past two intervals, so `stopped` rather than merely late. */
+    const cancelledMonthly = (): Transaction[] =>
+      ['2025-08-04', '2025-09-04', '2025-10-04'].map((bookingDate, index) =>
+        transaction({ id: 200 + index, bookingDate, counterpartyName: 'Old gym' }),
+      );
+
+    it('marks an overdue expected occurrence on its past day, in words as well as styling', async () => {
+      const fixture = await createFixture(overdueMonthly());
+      showMonth(fixture, '2026-05');
+      const host = fixture.nativeElement as HTMLElement;
+
+      const marked = [...host.querySelectorAll('.grid > div div')].filter((entry) =>
+        entry.className.includes('ring-warning'),
+      );
+      expect(marked).toHaveLength(1);
+      expect(marked[0].textContent).toContain('Streamly');
+
+      // Colour is never the only signal: the hidden mirror and the day tooltip both say it.
+      expect(host.querySelector('table.sr-only')?.textContent).toContain('not yet arrived');
+      const titles = [...host.querySelectorAll('[title]')].map((cell) =>
+        cell.getAttribute('title'),
+      );
+      expect(titles.some((title) => title?.includes('not yet arrived'))).toBe(true);
+    });
+
+    it('says the same thing in list view, where there is no cell to outline', async () => {
+      const fixture = await createFixture(overdueMonthly());
+      showMonth(fixture, '2026-05');
+      showView(fixture, 'list');
+      const host = fixture.nativeElement as HTMLElement;
+
+      const badges = [...host.querySelectorAll('mm-badge')];
+      expect(badges).toHaveLength(1);
+      expect(badges[0].textContent?.trim()).toBe('Not yet arrived');
+    });
+
+    it('stops projecting a stopped series — the panel above has just called it finished', async () => {
+      const fixture = await createFixture([...overdueMonthly(), ...cancelledMonthly()]);
+      showMonth(fixture, '2026-05');
+      const host = fixture.nativeElement as HTMLElement;
+
+      // The cancelled series' rhythm would otherwise still land on the 4th of every month.
+      expect(host.textContent).not.toContain('Old gym');
+      expect(host.textContent).toContain('Streamly');
+    });
   });
 
   it('ignores the Explore date range entirely', async () => {

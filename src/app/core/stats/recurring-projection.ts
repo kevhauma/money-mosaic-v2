@@ -13,6 +13,12 @@ export type ProjectedOccurrence = {
   date: string;
   /** The series' `typicalAmount` — a projection has no actual amount to report, only an expectation. */
   amount: number;
+  /**
+   * True for the occurrence a series is *waiting on* while its `overdue` flag is set (TICKET-REC-04)
+   * — "this was expected here and did not arrive". Only ever the one date the flag names; every
+   * other projected date, past or future, is an ordinary expectation.
+   */
+  overdue: boolean;
 };
 
 /**
@@ -109,6 +115,7 @@ export const projectRecurringOccurrences = (
         categoryId: entry.categoryId,
         date,
         amount: entry.typicalAmount,
+        overdue: entry.flags.overdue?.expectedDate === date,
       });
     }
   }

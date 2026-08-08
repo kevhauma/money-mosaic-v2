@@ -1,3 +1,15 @@
+import type { BadgeColor } from '@/shared/ui';
+
+/**
+ * One change flag as a row renders it (TICKET-REC-04). `text` carries the whole meaning — colour is
+ * never the only signal — and the amounts inside it are already formatted.
+ */
+export type RecurringFlagBadge = {
+  kind: 'priceChange' | 'overdue' | 'stopped';
+  text: string;
+  color: BadgeColor;
+};
+
 /** One occurrence as a series' expansion renders it — the evidence behind the detection. */
 export type RecurringOccurrenceRow = {
   transactionId: number;
@@ -27,4 +39,8 @@ export type RecurringSeriesRow = {
   expandIcon: string;
   /** What a screen reader hears on the disclosure button — it has to name the row, not just "expand". */
   toggleAriaLabel: string;
+  /** Empty for a series with nothing to report (TICKET-REC-04). */
+  badges: RecurringFlagBadge[];
+  /** A stopped series is listed under its own heading rather than among live commitments. */
+  stopped: boolean;
 };

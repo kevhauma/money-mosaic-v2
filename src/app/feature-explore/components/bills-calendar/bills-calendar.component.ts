@@ -41,6 +41,12 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const HIDDEN_AMOUNT = 'hidden';
 
 /**
+ * Said in words wherever an overdue expectation is only *shown* by an outline (TICKET-REC-04) —
+ * colour is never the sole carrier of a meaning, and the `sr-only` mirror sees no styling at all.
+ */
+const OVERDUE_SUFFIX = ' — not yet arrived';
+
+/**
  * Entries a day cell shows before collapsing the rest into "+N more". Four fits the cell height a
  * week row can give without the grid growing past a screenful; nothing is lost, since the full day
  * is on the cell's own tooltip and in the list view.
@@ -143,7 +149,9 @@ export class BillsCalendarComponent {
    */
   private readonly gridOccurrences = computed<ProjectedOccurrence[]>(() => {
     const { start, end } = this.gridBounds();
-    return projectRecurringOccurrences(this.recurringSeriesStore.series(), start, end);
+    // `activeSeries`, not `series`: a stopped subscription must not keep billing you in a forecast,
+    // least of all directly below a panel that has just called it stopped (TICKET-REC-04).
+    return projectRecurringOccurrences(this.recurringSeriesStore.activeSeries(), start, end);
   });
 
   /** The visible month alone — what "expected this month", the list and the hidden table all mean. */
@@ -159,6 +167,7 @@ export class BillsCalendarComponent {
         seriesKey: occurrence.seriesKey,
         label: occurrence.label,
         amount: formatCurrency(occurrence.amount),
+        overdue: occurrence.overdue,
       };
       const day = byDate.get(occurrence.date);
       if (day) day.push(entry);
@@ -200,7 +209,10 @@ export class BillsCalendarComponent {
         // Amount-free under privacy mode: the browser paints a native tooltip outside the
         // `mm-privacy-blur` box, so a figure left in here would survive the blur entirely.
         fullDayTitle: entries
-          .map(({ label, amount }) => `${label} ${privacyMode ? HIDDEN_AMOUNT : amount}`)
+          .map(
+            ({ label, amount, overdue }) =>
+              `${label} ${privacyMode ? HIDDEN_AMOUNT : amount}${overdue ? OVERDUE_SUFFIX : ''}`,
+          )
           .join('\n'),
       };
     });
@@ -228,7 +240,7 @@ export class BillsCalendarComponent {
     const privacyMode = this.privacyMode();
     return this.monthOccurrences().map((occurrence) => ({
       dateLabel: formatDate(occurrence.date),
-      label: occurrence.label,
+      label: `${occurrence.label}${occurrence.overdue ? OVERDUE_SUFFIX : ''}`,
       // Withheld, not blurred: `.sr-only` clips the table to a 1px box, so a CSS filter paints
       // nothing and a screen reader would read the amount out regardless (TICKET-PRIV-01).
       amount: privacyMode ? HIDDEN_AMOUNT : formatCurrency(occurrence.amount),

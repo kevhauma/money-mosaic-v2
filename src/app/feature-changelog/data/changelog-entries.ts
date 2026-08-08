@@ -698,4 +698,20 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-08',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-04'],
+    title: 'Recurring payments now tell you when one gets dearer, runs late, or stops',
+    details: [
+      'A subscription that settles at a new price is flagged with both figures — “Price ↑ €9.99 → €12.99” — instead of quietly nudging its average, and a price *cut* is flagged the same way',
+      'A payment that has not arrived by a week after it was expected is marked overdue, in the list and on its day in the calendar',
+      'A payment that has been silent for two of its own intervals is marked stopped and moved to its own group at the bottom, rather than vanishing from the list — something you cancelled and forgot is exactly what you want to be told about',
+      'Stopped payments no longer count toward your monthly total, and no longer appear on the upcoming-bills calendar',
+      'Everything is measured in the payment’s own rhythm: a weekly bill is called late and stopped far sooner than a yearly one',
+      'Every flag says what it means in words, so the colours only reinforce it — and with “Hide amounts” on, the price-step figures are withheld rather than blurred, because they are part of the label',
+      'Nothing here is stored: import more transactions and the flags update or clear themselves',
+    ],
+    area: 'Explore',
+  },
 ];

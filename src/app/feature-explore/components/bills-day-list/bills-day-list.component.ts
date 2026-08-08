@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { PrivacyBlurComponent, TypographyComponent } from '@/shared/ui';
+import {
+  BadgeComponent,
+  FlexComponent,
+  PrivacyBlurComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import type { BillListDay } from '../../bills-calendar-vm';
 
 /**
@@ -12,7 +17,7 @@ import type { BillListDay } from '../../bills-calendar-vm';
  */
 @Component({
   selector: 'app-bills-day-list',
-  imports: [PrivacyBlurComponent, TypographyComponent],
+  imports: [BadgeComponent, FlexComponent, PrivacyBlurComponent, TypographyComponent],
   templateUrl: './bills-day-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

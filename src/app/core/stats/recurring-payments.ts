@@ -11,6 +11,27 @@ export type RecurringOccurrence = {
   amount: number;
 };
 
+/** A sustained move to a new price level, in either direction (TICKET-REC-04). */
+export type RecurringPriceChange = {
+  from: number;
+  to: number;
+  /** The first occurrence at the new level. */
+  atDate: string;
+};
+
+/**
+ * What changed about a series (FR-REC-1 extended, TICKET-REC-04) — computed, never stored, so a
+ * fresh import naturally updates or clears them. `overdue` and `stopped` are mutually exclusive by
+ * construction: one is the early warning, the other the conclusion.
+ */
+export type RecurringFlags = {
+  priceChange?: RecurringPriceChange;
+  /** Past its expected date by more than the grace allowance, but not yet silent long enough to be stopped. */
+  overdue?: { expectedDate: string };
+  /** Silent for `STOPPED_INTERVALS` whole expected intervals. Carries the last date it did arrive. */
+  stopped?: { since: string };
+};
+
 export type RecurringPaymentSeries = {
   /**
    * The cluster key plus the band's typical amount — stable across re-derivations of a *given*
@@ -31,6 +52,9 @@ export type RecurringPaymentSeries = {
   lastDate: string;
   nextExpectedDate: string;
   monthlyEquivalent: number;
+  /** The median gap between occurrences, in days — the rhythm's own step, which jitter makes shorter or longer than its nominal cadence. */
+  intervalDays: number;
+  flags: RecurringFlags;
 };
 
 export type RecurringPaymentsResult = { series: RecurringPaymentSeries[] };
@@ -47,6 +71,45 @@ const AMOUNT_BAND_TOLERANCE = 0.15;
  * always "regular" — three is the smallest number that can disagree with itself.
  */
 const MIN_OCCURRENCES = 3;
+
+/**
+ * Days past `nextExpectedDate` before a payment is *late* rather than merely jittery
+ * (TICKET-REC-04). Generous on purpose: `CADENCE_BANDS` already tolerates several days of wobble on
+ * the way in, a debit due on a Saturday often lands on the Monday, and a false "overdue" on a bill
+ * that arrives tomorrow costs more trust than a flag a few days late costs information.
+ */
+const OVERDUE_GRACE_DAYS = 7;
+
+/**
+ * Whole expected intervals of silence after which a series has *stopped* rather than run late
+ * (TICKET-REC-04). Two, not one: skipping a single payment is a failed direct debit or a holiday,
+ * and the `income-gap-detection` lesson is that one quiet period means nothing. A stopped series
+ * keeps its place in the result carrying this flag — a cancelled subscription vanishing from the
+ * list is the opposite of announcing itself.
+ */
+const STOPPED_INTERVALS = 2;
+
+/**
+ * How many cadence intervals may separate one price level's last occurrence from the next level's
+ * first and still read as the *same* commitment repricing (TICKET-REC-04), rather than two
+ * unrelated runs at one merchant. Two, matching `STOPPED_INTERVALS`: a repricing that leaves a
+ * longer hole than a stop would is a new commitment, not a new price.
+ *
+ * The *size* threshold that separates a real step from jitter is `AMOUNT_BAND_TOLERANCE` itself —
+ * two amounts closer than it never form separate bands, so a within-tolerance outlier cannot
+ * produce a price change however oddly it is placed. That is the whole reason this is detected by
+ * merging bands rather than by scanning amounts for a jump.
+ */
+const PRICE_CHANGE_MAX_GAP_INTERVALS = 2;
+
+/**
+ * The largest ratio between two levels that still reads as *the same* commitment repricing rather
+ * than two different ones at one merchant (TICKET-REC-04). `AMOUNT_BAND_TOLERANCE` guarantees the
+ * levels are at least 15% apart but says nothing about how far apart they can be, so without this
+ * a €10 subscription ending as a €40 one began would be reported as a 4× price rise. Tripling is
+ * already an extraordinary repricing; beyond it, "two commitments" is the better explanation.
+ */
+const MAX_PRICE_CHANGE_RATIO = 3;
 
 /**
  * The recognised rhythms, as inclusive day-gap windows around each nominal period. The windows are
@@ -234,7 +297,105 @@ const toSeries = (band: readonly Candidate[]): RecurringPaymentSeries | null => 
     lastDate,
     nextExpectedDate: formatIsoDate(parseIsoDate(lastDate) + rhythm.medianGapDays * MS_PER_DAY),
     monthlyEquivalent: typicalAmount * rhythm.perMonth,
+    intervalDays: rhythm.medianGapDays,
+    // Filled by the passes below, once the series is whole and the clock is known.
+    flags: {},
   };
+};
+
+/**
+ * Folds a repriced commitment back into one series (TICKET-REC-04). A €9.99 → €12.99 step is more
+ * than `AMOUNT_BAND_TOLERANCE` apart, so `bandByAmount` necessarily put the two levels in separate
+ * bands — which is exactly the signal: a *sustained* new level is one that gathered enough
+ * occurrences to be a rhythm in its own right. Two same-counterparty, same-cadence series that run
+ * back to back, with no more than `PRICE_CHANGE_MAX_GAP_INTERVALS` between the old level's end and
+ * the new level's start, are therefore one commitment that changed price.
+ *
+ * Merging (rather than reporting two series) is what stops the old price showing up as a separate
+ * "Stopped" commitment beside the new one, and what lets the panel say what a subscription *was*.
+ * The trade-off is stated plainly: a price change only becomes visible once the new level has
+ * `MIN_OCCURRENCES` payments behind it — before that the new band is not yet a rhythm, and the
+ * series simply reads as overdue, then stopped.
+ */
+const isRepricingOf = (earlier: RecurringPaymentSeries, later: RecurringPaymentSeries): boolean => {
+  const gapDays = daysBetween(earlier.lastDate, later.occurrences[0].date);
+  if (gapDays <= 0 || gapDays > earlier.intervalDays * PRICE_CHANGE_MAX_GAP_INTERVALS) return false;
+
+  const ratio = later.typicalAmount / earlier.typicalAmount;
+  return Math.max(ratio, 1 / ratio) <= MAX_PRICE_CHANGE_RATIO;
+};
+
+/** The two levels folded into one series, the newer owning every forward-looking figure. */
+const repriced = (
+  earlier: RecurringPaymentSeries,
+  later: RecurringPaymentSeries,
+): RecurringPaymentSeries => ({
+  ...later,
+  occurrences: [...earlier.occurrences, ...later.occurrences],
+  flags: {
+    priceChange: {
+      from: earlier.typicalAmount,
+      to: later.typicalAmount,
+      atDate: later.occurrences[0].date,
+    },
+  },
+});
+
+/** Same counterparty, same cadence — the two things a repricing keeps and the amount does not. */
+const byClusterAndCadence = (
+  series: readonly RecurringPaymentSeries[],
+): Map<string, RecurringPaymentSeries[]> => {
+  const groups = new Map<string, RecurringPaymentSeries[]>();
+  for (const entry of series) {
+    // `key` is `<clusterKey>|<amount>`, and the amount is precisely what is changing here, so it is
+    // cut back to the cluster before grouping.
+    const clusterKey = entry.key.slice(0, entry.key.lastIndexOf('|'));
+    const groupKey = `${clusterKey}|${entry.cadence}`;
+    const group = groups.get(groupKey);
+    if (group) group.push(entry);
+    else groups.set(groupKey, [entry]);
+  }
+  return groups;
+};
+
+const mergePriceChanges = (series: RecurringPaymentSeries[]): RecurringPaymentSeries[] => {
+  const merged: RecurringPaymentSeries[] = [];
+
+  for (const group of byClusterAndCadence(series).values()) {
+    const chronological = [...group].sort((a, b) =>
+      a.occurrences[0].date.localeCompare(b.occurrences[0].date),
+    );
+
+    let current = chronological[0];
+    for (const next of chronological.slice(1)) {
+      if (isRepricingOf(current, next)) {
+        current = repriced(current, next);
+      } else {
+        merged.push(current);
+        current = next;
+      }
+    }
+    merged.push(current);
+  }
+
+  return merged;
+};
+
+/**
+ * Whether a series is late, or has stopped altogether (TICKET-REC-04). Measured from `lastDate` and
+ * the rhythm's own interval, so a weekly series is called overdue and stopped far sooner than a
+ * yearly one — which is the point of measuring in intervals rather than in days.
+ */
+const timingFlags = (series: RecurringPaymentSeries, todayIso: string): RecurringFlags => {
+  const silentDays = daysBetween(series.lastDate, todayIso);
+
+  if (silentDays > series.intervalDays * STOPPED_INTERVALS) {
+    return { stopped: { since: series.lastDate } };
+  }
+  if (daysBetween(series.nextExpectedDate, todayIso) > OVERDUE_GRACE_DAYS) {
+    return { overdue: { expectedDate: series.nextExpectedDate } };
+  }
+  return {};
 };
 
 /** The start of the history actually held, so `classifyForStats`' range bound excludes nothing real. */
@@ -300,6 +461,11 @@ const candidatesByCounterparty = (
  *
  * Series come back most-expensive-first by `monthlyEquivalent`, which is the order a "what do my
  * commitments cost me" panel wants and the only order this aggregate has an opinion about.
+ *
+ * Each carries `flags` (TICKET-REC-04) describing what *changed*: a sustained price step, a payment
+ * that is late, or a rhythm that has stopped. A stopped series keeps its place in the result rather
+ * than un-detecting itself — a cancelled subscription quietly vanishing is the opposite of the
+ * announcement this exists to make.
  */
 export const detectRecurringPayments = (
   transactions: Transaction[],
@@ -319,13 +485,18 @@ export const detectRecurringPayments = (
     ownSavingsIbans,
   );
 
-  const series: RecurringPaymentSeries[] = [];
+  const detected: RecurringPaymentSeries[] = [];
   for (const cluster of byCluster.values()) {
     for (const band of bandByAmount(cluster)) {
-      const detected = toSeries(band);
-      if (detected) series.push(detected);
+      const series = toSeries(band);
+      if (series) detected.push(series);
     }
   }
+
+  const series = mergePriceChanges(detected).map((entry) => ({
+    ...entry,
+    flags: { ...entry.flags, ...timingFlags(entry, todayIso) },
+  }));
 
   return { series: series.sort((a, b) => b.monthlyEquivalent - a.monthlyEquivalent) };
 };

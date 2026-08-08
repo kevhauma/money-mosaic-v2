@@ -61,26 +61,76 @@ panel and on the bills calendar.
 
 ## Acceptance criteria
 
-- [ ] A series whose amount steps to a sustained new level carries `priceChange` with the right
+**Implementation note, 2026-08-08 — how `priceChange` is actually detected.** Not by scanning a
+series' amounts for a jump, but by **merging two bands back together**. REC-01's `bandByAmount`
+already splits €9.99 from €12.99 (they are more than `AMOUNT_BAND_TOLERANCE` apart), so a sustained
+new level *necessarily* arrives as its own detected series — which is precisely the signal wanted:
+a level that gathered `MIN_OCCURRENCES` payments is one that sustained. `mergePriceChanges` folds
+two same-counterparty, same-cadence series that run back to back into one carrying the step. This
+resolves consequence (2) recorded in REC-01's Notes ("a price change can make a series disappear"),
+and it makes the within-tolerance-outlier criterion true by construction rather than by threshold.
+Two named constants bound it: `PRICE_CHANGE_MAX_GAP_INTERVALS` (how long a hole may be) and
+`MAX_PRICE_CHANGE_RATIO` (how large a step may be before "two commitments" is the better
+explanation). The stated trade-off: a price change only becomes visible once the new level has three
+payments behind it — before that the series reads as overdue, then stopped.
+
+- [x] A series whose amount steps to a sustained new level carries `priceChange` with the right
       `from`/`to`; a single within-tolerance outlier does not trigger it; a price *decrease* is
-      flagged too.
-- [ ] A series past its expected date plus grace carries `overdue`; within grace it carries
-      nothing.
-- [ ] A series silent for two expected intervals carries `stopped`, remains in the result, and is
-      never simultaneously `overdue`.
-- [ ] All three thresholds are named, doc-commented constants; the aggregate stays pure and
-      clock-free (`todayIso` parameter only).
-- [ ] The panel shows the three badges (with amounts formatted via `formatCurrency()` and masked
+      flagged too. (Specs: *"folds a sustained price rise back into one series carrying the step"*,
+      *"flags a price cut the same way — a decrease is news too"*, *"does not read a single
+      within-tolerance outlier as a price change"*, and *"does not merge two commitments that are
+      simply too far apart to be one repricing"* — €10 → €40 stays two series.)
+- [x] A series past its expected date plus grace carries `overdue`; within grace it carries
+      nothing. (Spec: *"leaves a series unflagged inside the grace allowance, and overdue outside
+      it"* — day 5 past expected is silent, day 15 is flagged.)
+- [x] A series silent for two expected intervals carries `stopped`, remains in the result, and is
+      never simultaneously `overdue`. (Specs: *"calls a series stopped after two whole intervals of
+      silence, and keeps it listed"* and *"measures lateness in the rhythm's own intervals, not in
+      days"* — 24 days is three weekly intervals but nothing at all to a monthly rhythm.)
+- [x] All three thresholds are named, doc-commented constants; the aggregate stays pure and
+      clock-free (`todayIso` parameter only). (`OVERDUE_GRACE_DAYS`, `STOPPED_INTERVALS`,
+      `PRICE_CHANGE_MAX_GAP_INTERVALS`, plus `MAX_PRICE_CHANGE_RATIO` added in review. Confirmed by
+      `conventions-reviewer`: "core/stats stays pure and clock-free … all three thresholds are
+      named, doc-commented constants".)
+- [x] The panel shows the three badges (with amounts formatted via `formatCurrency()` and masked
       under privacy mode), groups stopped series separately, and excludes them from the summary
-      total.
-- [ ] The calendar marks an overdue expected occurrence on its past day.
-- [ ] Unit tests cover: price step up and down; the within-tolerance outlier non-flag; overdue
+      total. (Specs: *"badges a stopped series, in words rather than by colour alone"*, *"badges a
+      price step with both levels, and withholds them under privacy mode"* — a badge's amounts are
+      baked into its text, so `mm-privacy-blur` cannot reach them and they are withheld as `•••`
+      instead — *"lists stopped series under their own heading, not among live commitments"*, and
+      *"leaves stopped series out of the count and the monthly total"*.)
+- [x] The calendar marks an overdue expected occurrence on its past day. (Spec: *"marks an overdue
+      expected occurrence on its past day, in words as well as styling"*. `ProjectedOccurrence`
+      gained `overdue`, true only for the one date the flag names; the grid outlines that entry and
+      the `sr-only` mirror and day tooltip both say "not yet arrived", since colour is never the only
+      signal. The list view says the same thing as a badge — *"says the same thing in list view,
+      where there is no cell to outline"*.)
+- [x] Unit tests cover: price step up and down; the within-tolerance outlier non-flag; overdue
       inside vs. outside grace; the two-interval stop; a stopped series staying listed; badge
-      rendering and the stopped-group split in the panel.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      rendering and the stopped-group split in the panel. (7 aggregate cases + 4 panel cases + 3
+      calendar cases + 1 projection case.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (2026-08-08: "All
+      files pass linting"; 241 spec files / 2530 tests passed; "Application bundle generation
+      complete", no budget warning. One run hit the **pre-existing** `app-settings.repository.spec.ts`
+      flake diagnosed during REC-01 — a cross-spec `fake-indexeddb` leak, unrelated to this change —
+      which did not reproduce on re-run.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD`:
+      maintainability 92.3 "good", dead files/exports 0.0%, no duplicate clone groups, no CRITICAL.
+      `conventions-reviewer` raised twelve findings; the significant one was a **contradiction
+      between the two panels** — the bills calendar kept projecting stopped series onto future days,
+      directly below a panel saying "no longer counted in the monthly total". `RecurringSeriesStore`
+      now exposes `activeSeries` and both sections read it, so the rule lives in one place. Also
+      applied: the overdue badge says "Overdue —" rather than only a date the row already shows;
+      badges moved out of `<th scope="row">` into their own Status column, since a row header is
+      re-announced before every cell; `scope="rowgroup"` on the stopped-group heading; the list view
+      gained the overdue badge it was missing; `MAX_PRICE_CHANGE_RATIO` added so "same commitment
+      repriced" is as tight as its comment claims; `mergePriceChanges` split into three named
+      helpers, clearing fallow's HIGH on it; `MASKED_AMOUNT` renamed apart from the calendar's
+      `HIDDEN_AMOUNT`; and both component specs switched from real-clock arithmetic to the repo's
+      `vi.useFakeTimers({ toFake: ['Date'] })` pattern with literal fixture dates.)
 - [ ] Verified live in the browser: badges render in the panel on `/explore` with real data (or a
-      crafted import exercising each flag).
+      crafted import exercising each flag). — **not done: the user asked for this track to be worked
+      without browser checks.** Left open rather than ticked.
 
 ## Notes
 
