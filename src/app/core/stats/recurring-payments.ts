@@ -664,6 +664,9 @@ const candidatesByCounterparty = (
       ownSavingsIbans,
       categoriesById,
       accountsById,
+      // Attribution disregarded (TICKET-REC-09): what repeats is not a question about whose money
+      // it was. Everything else `classifyForStats` excludes still excludes.
+      'raw',
     );
     if (result.kind !== 'expense' || result.amount <= 0) continue;
 
@@ -695,10 +698,18 @@ const candidatesByCounterparty = (
  *
  * Every per-transaction decision is delegated to `classifyForStats` (CR3-2.1): only `expense`
  * results with a **positive** amount become occurrences, so linked transfers, savings movements,
- * `nullified` rows, `neutral` categories and co-owner/`notMine` joint legs never reach this logic,
- * and a refund — a negative expense delta — is silently not an occurrence rather than a gap that
- * breaks the series' rhythm. Income cadence is deliberately out of scope: it is FR-INC territory
- * (`detectIncomeGaps` and friends own it at category level).
+ * `nullified` rows and `neutral` categories never reach this logic, and a refund — a negative
+ * expense delta — is silently not an occurrence rather than a gap that breaks the series' rhythm.
+ * Income cadence is deliberately out of scope: it is FR-INC territory (`detectIncomeGaps` and
+ * friends own it at category level).
+ *
+ * It asks for that classification in `'raw'` joint mode (TICKET-REC-09), the **one** caller that
+ * does: a €90 household bill on a half-owned joint account is one €90 rhythm, not a €45 one, and a
+ * leg attributed to a co-owner is still a payment that happens every month. The consequence is
+ * deliberate and stated in the panel's caption — these amounts are the whole bill, so they do not
+ * reconcile with the Dashboard's ownership-weighted figures. Scaling also used to *split* a rhythm:
+ * `AMOUNT_BAND_TOLERANCE` banded on the scaled figure, so a share that changed over the history put
+ * one commitment in two bands.
  *
  * Series come back most-expensive-first by `monthlyEquivalent`, which is the order a "what do my
  * commitments cost me" panel wants and the only order this aggregate has an opinion about.

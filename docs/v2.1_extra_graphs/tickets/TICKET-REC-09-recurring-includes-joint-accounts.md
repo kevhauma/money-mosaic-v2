@@ -62,29 +62,54 @@ transactions **raw**.
 
 ## Acceptance criteria
 
-- [ ] A monthly payment on a `joint` account with `ownershipShare: 0.5` is detected, with
+- [x] A monthly payment on a `joint` account with `ownershipShare: 0.5` is detected, with
       `typicalAmount` and `monthlyEquivalent` equal to the **full** transaction amount.
-- [ ] A leg that `resolveContribution` would exclude (co-owner share, `notMine`) still becomes an
-      occurrence for detection purposes.
-- [ ] A transaction carrying an `attributionOverride` is read raw too — the override changes
+      (`recurring-payments.spec.ts` → "detects a half-owned joint bill at the full amount that left
+      the account": €90, not €45, and the occurrence amounts are €90 each too.)
+- [x] A leg that `resolveContribution` would exclude (co-owner share, `notMine`) still becomes an
+      occurrence for detection purposes. (`recurring-payments.spec.ts` → "keeps a leg attribution
+      would have excluded". **Read narrowly, and deliberately:** `notMine` is the only excludable
+      case tested, because `classifyJointLeg` only ever returns `coOwnerIn` for a *positive* amount —
+      an inflow, which under `'raw'` nets an expense category down and is filtered by the aggregate's
+      existing `amount <= 0` guard rather than becoming an occurrence. A co-owner's share is not a
+      cost leaving the account, so nothing here changes that; `notMine` is the exclusion that could
+      be an expense, and it is.)
+- [x] A transaction carrying an `attributionOverride` is read raw too — the override changes
       attribution, and attribution is what this ticket is disregarding.
-- [ ] Every non-attribution guard still excludes: a `nullified` row, a zero amount, a savings
+      (`recurring-payments.spec.ts` → "reads a transaction carrying an attributionOverride raw too":
+      a `shared` override pointing at the half-owned account, on a plain checking account, is
+      detected at €90 where the default mode weights it to €45.)
+- [x] Every non-attribution guard still excludes: a `nullified` row, a zero amount, a savings
       movement, a row with a `transferId`, a `neutral`-kind category, an income-kind category, and a
       refund (positive amount on an expense category) each produce no occurrence.
-- [ ] `classifyForStats`' default behaviour is unchanged: every existing spec of
+      (`recurring-payments.spec.ts` → "still applies every guard that is not about attribution" —
+      all seven asserted, each on the same joint account the case above detects.)
+- [x] `classifyForStats`' default behaviour is unchanged: every existing spec of
       `computePeriodStats`, `computeCategoryBreakdown`, `computeWeekdayWeekendSplit` and the
-      `classify-for-stats` decision table passes untouched.
-- [ ] The recurring panel's caption states that joint payments are shown at their full amount, so the
+      `classify-for-stats` decision table passes untouched. (`jointMode` is a trailing parameter
+      defaulting to `'share'`, so no call site changed but recurring detection's. All 243 spec files
+      pass; none of those four specs were edited.)
+- [x] The recurring panel's caption states that joint payments are shown at their full amount, so the
       mismatch against the Dashboard reads as a stated choice rather than a bug.
-- [ ] No Dexie change, no store or repository touched; detection remains stateless inference.
-- [ ] Unit tests cover: the joint 50%-share detection at full amount; the excluded-leg inclusion; the
+      (`recurring-payments-panel.component.html` caption + the panel spec's "states that joint
+      payments are shown whole, so the Dashboard mismatch reads as a choice".)
+- [x] No Dexie change, no store or repository touched; detection remains stateless inference.
+      (This change's diff: `classify-for-stats.ts`, `recurring-payments.ts`, the panel template, and
+      three spec files.)
+- [x] Unit tests cover: the joint 50%-share detection at full amount; the excluded-leg inclusion; the
       `attributionOverride` case; at least two of the still-excluded guards on a joint account
       (proving the mode changes attribution only); and a `classify-for-stats` case asserting the
-      default mode is untouched.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      default mode is untouched. (Four specs under `describe('detectRecurringPayments: joint
+      accounts, read raw (TICKET-REC-09)')` — seven guards, not two — plus
+      `classify-for-stats.spec.ts` → "applies the share weighting when no joint mode is passed",
+      which asserts the omitted argument, the explicit `'share'`, and that `'raw'` really differs.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (Lint clean; 2620
+      tests in 243 files pass; dev build completes.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 introduced findings.)
 - [ ] Verified live in the browser: a joint-account bill on the reporter's dataset appears in the
-      panel on `/explore` at its full amount.
+      panel on `/explore` at its full amount. — **not done: the live browser check was waived by the
+      user for this ticket.**
 
 ## Notes
 

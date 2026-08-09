@@ -290,6 +290,16 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     expect(cellsOf(host)).toEqual(before);
   });
 
+  it('states that joint payments are shown whole, so the Dashboard mismatch reads as a choice (TICKET-REC-09)', async () => {
+    const fixture = await createFixture(streamlyMonthly());
+    // Collapsed, because the caption wraps across lines in the template.
+    const text = ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
+
+    expect(text).toContain(
+      'Joint-account payments are shown at their full amount, not your share.',
+    );
+  });
+
   describe('change flags (TICKET-REC-04)', () => {
     it('lists stopped series under their own heading, not among live commitments', async () => {
       const fixture = await createFixture([...streamlyMonthly(), ...cancelledMonthly()]);

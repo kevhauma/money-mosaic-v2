@@ -8,6 +8,22 @@ export type StatsClassification =
   | { kind: 'savings'; amount: number }
   | { kind: 'income' | 'expense'; amount: number; categoryId: number | null };
 
+/**
+ * How a caller wants joint-account attribution applied (TICKET-REC-09).
+ *
+ * `'share'` is the default and everything the app asks "what did *I* spend" — a co-owner's leg is
+ * excluded and the rest is weighted by `ownershipShare`, exactly as before this mode existed.
+ *
+ * `'raw'` disregards attribution entirely: the full transaction amount, for every account type, with
+ * no exclusion. Recurring detection is its one caller, because "what repeats" is not a question
+ * about whose money it was — a €90 joint utility bill is one €90 rhythm, not a €45 one, and a leg
+ * attributed to a co-owner is still a payment that happens every month. It is a mode on this
+ * function rather than a second classifier on purpose: CR3-2.1 centralised the exclusion *order*
+ * (`nullified` before savings, transfer-link below it) precisely so two aggregates could not drift
+ * on it, and everything except attribution is shared between the two modes here.
+ */
+export type StatsJointMode = 'share' | 'raw';
+
 const inRange = (transaction: Transaction, from: string, to: string): boolean =>
   transaction.bookingDate >= from && transaction.bookingDate <= to;
 
@@ -39,6 +55,11 @@ const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
  *
  * `amount` is always the signed delta the caller adds to its running total — it can be negative
  * when a leg nets a bucket down (a payback/refund) rather than up.
+ *
+ * `jointMode` (TICKET-REC-09) is the one dial on all of this, and it turns **only** the
+ * joint/override branch off: `'raw'` reads every account at its full amount, and every exclusion
+ * above that branch — range, `nullified`, zero, savings, transfer link — plus the
+ * `categoryKindContribution` netting below it apply identically in both modes.
  */
 export const classifyForStats = (
   transaction: Transaction,
@@ -47,6 +68,7 @@ export const classifyForStats = (
   ownSavingsIbans: ReadonlySet<string>,
   categoriesById: ReadonlyMap<number, Category>,
   accountsById: ReadonlyMap<number, Account>,
+  jointMode: StatsJointMode = 'share',
 ): StatsClassification => {
   if (!inRange(transaction, from, to)) return { kind: 'skip' };
   if (transaction.nullified) return { kind: 'skip' };
@@ -63,7 +85,11 @@ export const classifyForStats = (
   const categoryId = category?.id ?? null;
 
   const account = accountsById.get(transaction.accountId);
-  if (account && (account.type === 'joint' || transaction.attributionOverride)) {
+  if (
+    jointMode === 'share' &&
+    account &&
+    (account.type === 'joint' || transaction.attributionOverride)
+  ) {
     const jointLegContext: JointLegContext = {
       ...emptyJointLegContext,
       categoriesById,

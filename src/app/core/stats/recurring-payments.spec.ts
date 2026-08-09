@@ -587,6 +587,112 @@ describe('detectRecurringPayments: fuzzy description clustering (TICKET-REC-08)'
   });
 });
 
+describe('detectRecurringPayments: joint accounts, read raw (TICKET-REC-09)', () => {
+  const account = (overrides: Partial<Account> = {}): Account => ({
+    id: 1,
+    name: 'Main account',
+    type: 'checking',
+    iban: 'NL01BANK0000000001',
+    currency: 'EUR',
+    openingBalance: 0,
+    openingBalanceDate: '2024-01-01',
+    color: '#111111',
+    icon: 'wallet',
+    archived: false,
+    ...overrides,
+  });
+
+  /** Half mine, so a scaled reading would band and report every bill at half its real size. */
+  const household = account({
+    id: 2,
+    name: 'Household',
+    type: 'joint',
+    iban: 'NL55BANK0000000055',
+    ownershipShare: 0.5,
+  });
+
+  const ACCOUNTS = new Map<number, Account>([
+    [1, account()],
+    [2, household],
+  ]);
+  const CATEGORIES = new Map<number, Category>([
+    [1, category()],
+    [2, category({ id: 2, name: 'Settling up', kind: 'neutral' })],
+    [3, category({ id: 3, name: 'Salary', kind: 'income' })],
+  ]);
+
+  const detectJoint = (
+    transactions: Transaction[],
+    ownSavingsIbans: ReadonlySet<string> = new Set(),
+  ) => detectRecurringPayments(transactions, CATEGORIES, ACCOUNTS, TODAY, ownSavingsIbans);
+
+  /** A €90 monthly household bill, paid from the half-owned joint account. */
+  const householdBill = (overrides: Partial<Transaction> = {}): Transaction[] =>
+    ['2026-05-08', '2026-06-08', '2026-07-08'].map((bookingDate, index) =>
+      transaction({
+        id: index + 1,
+        accountId: 2,
+        bookingDate,
+        amount: -90,
+        counterpartyName: 'Energy Co',
+        categoryId: 1,
+        ...overrides,
+      }),
+    );
+
+  it('detects a half-owned joint bill at the full amount that left the account', () => {
+    const { series } = detectJoint(householdBill());
+
+    expect(series).toHaveLength(1);
+    expect(series[0].cadence).toBe('monthly');
+    // 90, not the 45 `ownershipShare` weighting would have produced — and the occurrences carry the
+    // whole bill too, so the expanded detail agrees with the column above it.
+    expect(series[0].typicalAmount).toBe(90);
+    expect(series[0].monthlyEquivalent).toBeCloseTo(90, 2);
+    expect(series[0].occurrences.map((occurrence) => occurrence.amount)).toEqual([90, 90, 90]);
+  });
+
+  it('keeps a leg attribution would have excluded — a co-owner’s bill still arrives every month', () => {
+    // `notMine` resolves as `excluded` under the default mode, so this series did not exist at all.
+    const { series } = detectJoint(householdBill({ attributionOverride: { mode: 'notMine' } }));
+
+    expect(series).toHaveLength(1);
+    expect(series[0].occurrences).toHaveLength(3);
+    expect(series[0].typicalAmount).toBe(90);
+  });
+
+  it('reads a transaction carrying an attributionOverride raw too', () => {
+    // A shared expense paid from my own account: the override weights it to 45 under the default
+    // mode. The override changes attribution, and attribution is what this ticket disregards.
+    const { series } = detectJoint(
+      householdBill({
+        accountId: 1,
+        attributionOverride: { mode: 'shared', jointAccountId: 2 },
+      }),
+    );
+
+    expect(series).toHaveLength(1);
+    expect(series[0].typicalAmount).toBe(90);
+  });
+
+  it('still applies every guard that is not about attribution', () => {
+    // The mode turns off the joint/override branch and nothing else: each of these is excluded by a
+    // rule above or below it, on the same joint account that the case above detects.
+    expect(detectJoint(householdBill({ nullified: true })).series).toEqual([]);
+    expect(detectJoint(householdBill({ amount: 0 })).series).toEqual([]);
+    expect(detectJoint(householdBill({ transferId: 7 })).series).toEqual([]);
+    expect(detectJoint(householdBill({ categoryId: 2 })).series).toEqual([]); // neutral kind
+    expect(detectJoint(householdBill({ categoryId: 3 })).series).toEqual([]); // income kind
+    expect(detectJoint(householdBill({ amount: 90 })).series).toEqual([]); // a refund, not a cost
+    expect(
+      detectJoint(
+        householdBill({ counterpartyIban: 'NL99SAVE0000000099' }),
+        new Set(['NL99SAVE0000000099']),
+      ).series,
+    ).toEqual([]); // a savings movement
+  });
+});
+
 describe('detectRecurringPayments: change flags (TICKET-REC-04)', () => {
   /** Monthly on the 5th, three payments at one price then three at another. */
   const repriced = (before: number, after: number): Transaction[] =>

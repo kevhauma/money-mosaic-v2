@@ -800,4 +800,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-09'],
+    title: 'The bills you pay from a joint account are detected, at the full amount',
+    details: [
+      'Household bills paid from a joint account were either missing from the recurring list or listed at your share of them. They are now detected at the amount that actually leaves the account — a €90 utility bill is a €90 rhythm, not a €45 one',
+      'A payment attributed to your co-owner still counts as a payment that happens every month, because the question here is what repeats, not whose money it was',
+      'Because of that, the recurring panel’s monthly total will be higher than the figures elsewhere in the app, which are weighted by your ownership share. The panel now says so in its caption',
+      'Everything else the list already ignored it still ignores: transfers between your own accounts, savings movements, excluded rows, and refunds',
+      'The rest of the app — the Dashboard, category breakdowns, income and expense totals — is unchanged and still shows your share',
+    ],
+    area: 'Explore',
+  },
 ];

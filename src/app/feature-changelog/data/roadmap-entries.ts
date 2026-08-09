@@ -83,12 +83,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-09',
-    title: 'Detect the bills you pay from a joint account, at the full amount that leaves it',
-    area: 'Recurring payments',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-REC-10',
     title:
       'Fit the recurring payments table on screen, with long payment names shortened and shown in full on hover',

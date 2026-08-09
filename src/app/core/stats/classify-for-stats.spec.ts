@@ -169,6 +169,25 @@ describe('classifyForStats: joint account routing (TICKET-STAT-03)', () => {
       ),
     ).toEqual({ kind: 'expense', amount: -20, categoryId: 1 });
   });
+
+  it('applies the share weighting when no joint mode is passed, so TICKET-REC-09 changed nothing by default', () => {
+    // Every caller but recurring detection omits the argument; this pins that omitting it is
+    // `'share'`, not merely that `'share'` behaves the way it always did.
+    const jointSpend = transaction({ accountId: 1, amount: -400 });
+
+    expect(classifyForStats(jointSpend, FROM, TO, new Set(), new Map(), accountsById)).toEqual({
+      kind: 'expense',
+      amount: 200,
+      categoryId: null,
+    });
+    expect(
+      classifyForStats(jointSpend, FROM, TO, new Set(), new Map(), accountsById, 'share'),
+    ).toEqual({ kind: 'expense', amount: 200, categoryId: null });
+    // And the opposite mode really is a different answer, so the assertion above has teeth.
+    expect(
+      classifyForStats(jointSpend, FROM, TO, new Set(), new Map(), accountsById, 'raw'),
+    ).toEqual({ kind: 'expense', amount: 400, categoryId: null });
+  });
 });
 
 describe('classifyForStats: manual attributionOverride (TICKET-TXN-03)', () => {
