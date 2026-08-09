@@ -100,6 +100,80 @@ describe('detectRecurringPayments', () => {
     expect(series[0].monthlyEquivalent).toBeCloseTo(34.79, 2); // 8 × 365.25 / 7 / 12
   });
 
+  it('forgives a skipped week rather than un-detecting the whole series (TICKET-REC-07)', () => {
+    // Gaps of 7, 14, 7, 7: the median still says weekly, and the 14 is one missed beat, not a
+    // different rhythm — which is the case that made the panel read as "monthly and quarterly only".
+    const { series } = detect(
+      occurrencesOf([
+        ['2026-05-04', -8],
+        ['2026-05-11', -8],
+        ['2026-05-25', -8],
+        ['2026-06-01', -8],
+        ['2026-06-08', -8],
+      ]),
+    );
+
+    expect(series).toHaveLength(1);
+    expect(series[0].cadence).toBe('weekly');
+    expect(series[0].intervalDays).toBe(7);
+    expect(series[0].monthlyEquivalent).toBeCloseTo(34.79, 2); // 8 × 365.25 / 7 / 12
+    // The skipped week is forgiven, never invented: no occurrence appears where none was paid.
+    expect(series[0].occurrences.map((occurrence) => occurrence.date)).toEqual([
+      '2026-05-04',
+      '2026-05-11',
+      '2026-05-25',
+      '2026-06-01',
+      '2026-06-08',
+    ]);
+  });
+
+  it('produces no series once a gap skips more beats than the allowance permits (TICKET-REC-07)', () => {
+    // 28 days is four whole weekly periods — three skipped beats, one past `MAX_SKIPPED_INTERVALS`.
+    const { series } = detect(
+      occurrencesOf([
+        ['2026-05-04', -8],
+        ['2026-05-11', -8],
+        ['2026-06-08', -8],
+        ['2026-06-15', -8],
+      ]),
+    );
+
+    expect(series).toEqual([]);
+  });
+
+  it('detects a fortnightly rhythm and its monthly equivalent (TICKET-REC-07)', () => {
+    const { series } = detect(
+      occurrencesOf([
+        ['2026-05-01', -20],
+        ['2026-05-15', -20],
+        ['2026-05-29', -20],
+        ['2026-06-12', -20],
+      ]),
+    );
+
+    expect(series).toHaveLength(1);
+    expect(series[0].cadence).toBe('fortnightly');
+    expect(series[0].nextExpectedDate).toBe('2026-06-26');
+    expect(series[0].monthlyEquivalent).toBeCloseTo(43.48, 2); // 20 × 365.25 / 14 / 12
+  });
+
+  it('reads a jittery fortnightly rhythm as fortnightly, not as weekly with skips (TICKET-REC-07)', () => {
+    // Gaps of 13, 15 and 14 days: the median picks the band, so skip-forgiveness can never promote a
+    // series out of the rhythm its own dates keep.
+    const { series } = detect(
+      occurrencesOf([
+        ['2026-05-01', -20],
+        ['2026-05-14', -20],
+        ['2026-05-29', -20],
+        ['2026-06-12', -20],
+      ]),
+    );
+
+    expect(series).toHaveLength(1);
+    expect(series[0].cadence).toBe('fortnightly');
+    expect(series[0].intervalDays).toBe(14);
+  });
+
   it('detects a quarterly rhythm and its monthly equivalent', () => {
     const { series } = detect(
       occurrencesOf([
@@ -192,6 +266,36 @@ describe('detectRecurringPayments', () => {
         ['2026-01-20', -20],
         ['2026-04-02', -20],
         ['2026-04-30', -20],
+      ]),
+    );
+
+    expect(series).toEqual([]);
+  });
+
+  it('produces no series for three payments in one week and one a year later', () => {
+    // The rejection skip-forgiveness had to keep (TICKET-REC-07): the median gap of 2 days matches no
+    // band at all, so nothing here is ever averaged into a plausible-looking cadence.
+    const { series } = detect(
+      occurrencesOf([
+        ['2025-01-06', -20],
+        ['2025-01-08', -20],
+        ['2025-01-10', -20],
+        ['2026-01-10', -20],
+      ]),
+    );
+
+    expect(series).toEqual([]);
+  });
+
+  it('produces no series for a four-monthly rhythm, which is still no cadence at all', () => {
+    // Gaps of 123, 122 and 120 days sit in the hole between quarterly and yearly. TICKET-REC-07
+    // narrowed that hole by giving fortnightly its own band; it did not remove it.
+    const { series } = detect(
+      occurrencesOf([
+        ['2025-05-15', -60],
+        ['2025-09-15', -60],
+        ['2026-01-15', -60],
+        ['2026-05-15', -60],
       ]),
     );
 
@@ -356,6 +460,26 @@ describe('detectRecurringPayments: change flags (TICKET-REC-04)', () => {
 
     expect(series).toHaveLength(2);
     expect(series.every((entry) => entry.flags.priceChange === undefined)).toBe(true);
+  });
+
+  it('does not spend the merge’s gap allowance on a skip forgiven inside a level (TICKET-REC-07)', () => {
+    // The old level skips March, so its gaps are 31 and 59 days — forgiven, and `intervalDays` stays
+    // the median 31 rather than stretching. The 30-day hand-over to the new level is therefore well
+    // inside `PRICE_CHANGE_MAX_GAP_INTERVALS`, and the two levels still read as one repricing.
+    const { series } = detect(
+      occurrencesOf([
+        ['2026-01-05', -9.99],
+        ['2026-02-05', -9.99],
+        ['2026-04-05', -9.99],
+        ['2026-05-05', -12.99],
+        ['2026-06-05', -12.99],
+        ['2026-07-05', -12.99],
+      ]),
+    );
+
+    expect(series).toHaveLength(1);
+    expect(series[0].flags.priceChange).toEqual({ from: 9.99, to: 12.99, atDate: '2026-05-05' });
+    expect(series[0].occurrences).toHaveLength(6);
   });
 
   it('does not read a single within-tolerance outlier as a price change', () => {

@@ -65,6 +65,7 @@ const flagBadges = (flags: RecurringFlags, privacyMode: boolean): RecurringFlagB
 /** Cadence as a word, since "quarterly" is a rhythm the user reads, not an enum they decode. */
 const CADENCE_LABELS: Record<RecurringCadence, string> = {
   weekly: 'Weekly',
+  fortnightly: 'Fortnightly',
   monthly: 'Monthly',
   quarterly: 'Quarterly',
   yearly: 'Yearly',

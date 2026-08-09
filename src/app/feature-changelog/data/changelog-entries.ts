@@ -773,4 +773,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-07'],
+    title: 'Weekly and every-two-weeks payments finally show up as recurring',
+    details: [
+      'A weekly payment that skipped a week — a holiday, a paused delivery, a debit that failed once — used to vanish from the recurring list entirely. A missed beat now reads as a missed beat, and the series stays',
+      'Payments that arrive every two weeks are detected as “Fortnightly” instead of falling in the gap between weekly and monthly and being ignored',
+      'A fortnightly payment is projected on the upcoming-bills calendar on its own 14-day rhythm, not twice a month on the same date',
+      'A payment with more holes than rhythm still produces nothing, and a four-monthly one is still not rounded into “quarterly” — the list would rather say nothing than guess',
+    ],
+    area: 'Explore',
+  },
 ];

@@ -3,7 +3,7 @@ import { categoryHasEnded } from '@/core/categorisation';
 import { normalizeIban } from '@/shared/utils';
 import { classifyForStats } from './classify-for-stats';
 
-export type RecurringCadence = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+export type RecurringCadence = 'weekly' | 'fortnightly' | 'monthly' | 'quarterly' | 'yearly';
 
 export type RecurringOccurrence = {
   transactionId: number;
@@ -130,28 +130,71 @@ const PRICE_CHANGE_MAX_GAP_INTERVALS = 2;
 const MAX_PRICE_CHANGE_RATIO = 3;
 
 /**
+ * How many beats of its own rhythm a series may miss in one go and still be the same series
+ * (TICKET-REC-07). A weekly delivery paused for a holiday, or a direct debit that failed once, leaves
+ * a gap that is a whole multiple of the cadence — visibly a *missed beat*, not a different rhythm —
+ * and un-detecting the entire series over it is what made the panel read as "monthly and quarterly
+ * only": ordinary monthly jitter fits inside 24..38 days, but a skipped week does not fit inside
+ * 5..10.
+ *
+ * Two, so at most three nominal periods may separate two occurrences. It is the *per-gap* bound; the
+ * series-wide guard is the median, which still has to land in the band — a set of dates that is
+ * mostly holes has a median gap of several periods and matches no band at all.
+ */
+const MAX_SKIPPED_INTERVALS = 2;
+
+/**
  * The recognised rhythms, as inclusive day-gap windows around each nominal period. The windows are
  * the jitter tolerance: a monthly debit shifted off a weekend, or moved between the 11th and the
  * 13th, still lands inside `monthly`, while month-length differences (28..31) never push it out.
- * The deliberate gaps between windows (11..23, 39..74, 106..329 days) reject everything that is not
- * one of the four cadences the model has — a fortnightly or four-monthly rhythm is *not* silently
- * rounded into a neighbour, it produces no series at all.
+ * The deliberate gaps between windows (11, 18..23, 39..74, 106..329 days) are where a *median* gap
+ * finds no cadence at all — a four-monthly rhythm is not silently rounded into a neighbour, it
+ * produces no series. (An individual gap inside an already-chosen band is judged by `fitsBand`,
+ * which also accepts whole multiples of the band's period; the median is what picks the band.)
  *
- * `perMonth` converts the cadence to a per-month cost from its **nominal** period rather than the
- * observed gaps, so two identical yearly subscriptions can't report different monthly equivalents
- * because one happened to be paid a day late.
+ * `fortnightly` (TICKET-REC-07) carries weekly's own jitter shape (−2/+3 days) around its nominal 14,
+ * which is what keeps a rejection gap on *both* sides of it rather than letting the bands run
+ * together into "anything between a week and a month".
+ *
+ * The per-month cost is derived from the **nominal** period rather than the observed gaps, so two
+ * identical yearly subscriptions can't report different monthly equivalents because one happened to
+ * be paid a day late.
  */
 const CADENCE_BANDS: readonly {
   cadence: RecurringCadence;
+  nominalDays: number;
   minGapDays: number;
   maxGapDays: number;
-  perMonth: number;
 }[] = [
-  { cadence: 'weekly', minGapDays: 5, maxGapDays: 10, perMonth: 365.25 / 7 / 12 },
-  { cadence: 'monthly', minGapDays: 24, maxGapDays: 38, perMonth: 1 },
-  { cadence: 'quarterly', minGapDays: 75, maxGapDays: 105, perMonth: 1 / 3 },
-  { cadence: 'yearly', minGapDays: 330, maxGapDays: 400, perMonth: 1 / 12 },
+  { cadence: 'weekly', nominalDays: 7, minGapDays: 5, maxGapDays: 10 },
+  { cadence: 'fortnightly', nominalDays: 14, minGapDays: 12, maxGapDays: 17 },
+  { cadence: 'monthly', nominalDays: 365.25 / 12, minGapDays: 24, maxGapDays: 38 },
+  { cadence: 'quarterly', nominalDays: 365.25 / 4, minGapDays: 75, maxGapDays: 105 },
+  { cadence: 'yearly', nominalDays: 365.25, minGapDays: 330, maxGapDays: 400 },
 ];
+
+type CadenceBand = (typeof CADENCE_BANDS)[number];
+
+/** The nominal period as a per-month multiplier — exactly 1 for monthly, 1/3 for quarterly. */
+const perMonthOf = ({ nominalDays }: CadenceBand): number => 365.25 / nominalDays / 12;
+
+/**
+ * Whether one gap belongs to a rhythm: either the nominal step, or a whole number of them with up to
+ * `MAX_SKIPPED_INTERVALS` beats missed in between (TICKET-REC-07). The band's jitter allowance is
+ * applied *unscaled* around each multiple — a payment that resumes after a skipped week is still
+ * expected within a day or two of its usual weekday, so the tolerance has no reason to widen with the
+ * hole. At one interval this is precisely the band's own window.
+ */
+const fitsBand = (gapDays: number, band: CadenceBand): boolean => {
+  const lowerJitter = band.nominalDays - band.minGapDays;
+  const upperJitter = band.maxGapDays - band.nominalDays;
+
+  for (let intervals = 1; intervals <= 1 + MAX_SKIPPED_INTERVALS; intervals++) {
+    const nominal = band.nominalDays * intervals;
+    if (gapDays >= nominal - lowerJitter && gapDays <= nominal + upperJitter) return true;
+  }
+  return false;
+};
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -247,10 +290,11 @@ const bandByAmount = (candidates: readonly Candidate[]): Candidate[][] => {
 };
 
 /**
- * The rhythm a band's dates keep, or `null` if they keep none. The median gap chooses the band —
- * one holiday-delayed payment can't reclassify a series — but *every* gap must also fit that same
- * window, so "three payments in one week and one a year later" is rejected rather than averaged
- * into a plausible-looking monthly.
+ * The rhythm a band's dates keep, or `null` if they keep none. The median gap chooses the band — one
+ * holiday-delayed payment can't reclassify a series, and a skip can only ever be *forgiven* inside a
+ * band, never promote the series into a slower one — but every gap must also fit that same band,
+ * whole beats included, so "three payments in one week and one a year later" is rejected rather than
+ * averaged into a plausible-looking monthly.
  */
 const recogniseCadence = (
   dates: readonly string[],
@@ -266,9 +310,9 @@ const recogniseCadence = (
     ({ minGapDays, maxGapDays }) => medianGapDays >= minGapDays && medianGapDays <= maxGapDays,
   );
   if (!band) return null;
-  if (gaps.some((gap) => gap < band.minGapDays || gap > band.maxGapDays)) return null;
+  if (gaps.some((gap) => !fitsBand(gap, band))) return null;
 
-  return { cadence: band.cadence, medianGapDays, perMonth: band.perMonth };
+  return { cadence: band.cadence, medianGapDays, perMonth: perMonthOf(band) };
 };
 
 /** The category most of the band's occurrences carry, ties going to the earliest occurrence. */

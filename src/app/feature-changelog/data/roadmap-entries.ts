@@ -63,17 +63,23 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
+    ticketId: 'TICKET-STAT-34',
+    title:
+      'Shade each heatmap row in its own category colour, lighter or darker than usual for that category',
+    area: 'Dashboard',
+  },
+  {
+    versionFolder: 'v2.1_extra_graphs',
+    ticketId: 'TICKET-STAT-33',
+    title: 'An "All" row across the top of the spending heatmap, showing your total rhythm',
+    area: 'Dashboard',
+  },
+  {
+    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-EXP-07',
     title:
       'A spending mosaic: tiles sized by money, groups subdividing into categories, click to zoom in',
     area: 'Explore',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-07',
-    title:
-      'Weekly and every-two-weeks payments get detected as recurring, even when a week is skipped',
-    area: 'Recurring payments',
   },
   {
     versionFolder: 'v2.2_goals_and_forecast',

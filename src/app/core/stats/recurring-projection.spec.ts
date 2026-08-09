@@ -52,6 +52,22 @@ describe('projectRecurringOccurrences', () => {
     ]);
   });
 
+  it('lands a fortnightly series on its own 14-day beat, not twice a month (TICKET-REC-07)', () => {
+    const fortnightly = series({
+      cadence: 'fortnightly',
+      intervalDays: 14,
+      nextExpectedDate: '2026-08-05',
+    });
+
+    expect(datesOf([fortnightly])).toEqual(['2026-08-05', '2026-08-19']);
+    // September's hits fall on the alternating weekdays the rhythm reaches, not on the 5th and 19th.
+    expect(datesOf([fortnightly], { from: '2026-09-01', to: '2026-09-30' })).toEqual([
+      '2026-09-02',
+      '2026-09-16',
+      '2026-09-30',
+    ]);
+  });
+
   it('lands a quarterly series only in the months its rhythm reaches', () => {
     const quarterly = series({ cadence: 'quarterly', nextExpectedDate: '2026-09-15' });
 

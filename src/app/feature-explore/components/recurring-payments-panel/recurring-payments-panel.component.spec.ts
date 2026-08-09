@@ -82,6 +82,18 @@ const gymMonthly = (): Transaction[] =>
     }),
   );
 
+/** A four-occurrence every-two-weeks series, last paid a fortnight ago — active (TICKET-REC-07). */
+const fortnightly = (): Transaction[] =>
+  ['2026-03-16', '2026-03-30', '2026-04-13', '2026-04-27'].map((bookingDate, index) =>
+    transaction({
+      id: 300 + index,
+      bookingDate,
+      amount: -7,
+      counterpartyName: 'Veg box',
+      categoryId: undefined,
+    }),
+  );
+
 /** A monthly series that went quiet in the autumn — far past `STOPPED_INTERVALS`. */
 const cancelledMonthly = (): Transaction[] =>
   ['2025-08-04', '2025-09-04', '2025-10-04'].map((bookingDate, index) =>
@@ -169,6 +181,15 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     expect(row[5]).toBe('05/09/2026'); // last paid
     expect(row[6]).toBe('06/08/2026'); // next expected: last + the 30-day median gap
     expect(row[7]).toBe('€12.99');
+  });
+
+  it('names an every-two-weeks rhythm "Fortnightly" in the cadence column (TICKET-REC-07)', async () => {
+    const fixture = await createFixture(fortnightly());
+    const [row] = cellsOf(fixture.nativeElement as HTMLElement);
+
+    expect(row[3]).toBe('Fortnightly');
+    expect(row[4]).toBe('€7.00');
+    expect(row[7]).toBe('€15.22'); // 7 × 365.25 / 14 / 12
   });
 
   it('sorts the series by monthly equivalent, most expensive first', async () => {

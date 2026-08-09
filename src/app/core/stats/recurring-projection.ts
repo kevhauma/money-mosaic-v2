@@ -39,15 +39,27 @@ const MONTHS_PER_STEP: Partial<Record<RecurringCadence, number>> = {
 };
 
 /**
- * The anchor date shifted by `steps` whole cadence periods, **by the calendar rather than by a
- * day-count**: a bill on the 28th stays on the 28th instead of drifting a day or two per month the
- * way a fixed 30.44-day step would. A step that would overflow a shorter month lands on its last
- * day — the 31st projected into February is the 28th, not the 3rd of March.
+ * The sub-monthly rhythms, which step by whole days rather than by the calendar — a fortnightly bill
+ * keeps its 14-day beat and alternates weeks of the month, which is exactly what makes it fortnightly
+ * rather than twice-monthly (TICKET-REC-07).
+ */
+const DAYS_PER_STEP: Partial<Record<RecurringCadence, number>> = {
+  weekly: 7,
+  fortnightly: 14,
+};
+
+/**
+ * The anchor date shifted by `steps` whole cadence periods — by whole days for the sub-monthly
+ * rhythms (`DAYS_PER_STEP`), and **by the calendar rather than by a day-count** for the rest: a bill
+ * on the 28th stays on the 28th instead of drifting a day or two per month the way a fixed 30.44-day
+ * step would. A step that would overflow a shorter month lands on its last day — the 31st projected
+ * into February is the 28th, not the 3rd of March.
  */
 const stepBy = (anchorIso: string, cadence: RecurringCadence, steps: number): string => {
   const anchor = parseIsoDate(anchorIso);
-  if (cadence === 'weekly') {
-    return formatIsoDate(new Date(anchor.getTime() + steps * 7 * MS_PER_DAY));
+  const daysPerStep = DAYS_PER_STEP[cadence];
+  if (daysPerStep) {
+    return formatIsoDate(new Date(anchor.getTime() + steps * daysPerStep * MS_PER_DAY));
   }
 
   const monthsPerStep = MONTHS_PER_STEP[cadence] ?? 1;
