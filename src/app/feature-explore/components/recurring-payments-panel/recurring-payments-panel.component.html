@@ -40,7 +40,6 @@
       <thead>
         <tr>
           <th scope="col">Payment</th>
-          <th scope="col">Status</th>
           <th scope="col">Category</th>
           <th scope="col">Cadence</th>
           <th scope="col" class="text-right">Typical</th>
@@ -73,26 +72,19 @@
                    for the clipped text; the keyboard and screen-reader path is already covered by
                    the toggle's `aria-label`, which carries the whole label.
 
-                   8rem, measured rather than chosen: at a 1280px viewport the shell leaves this
-                   panel 909px, and the other seven columns need 703px of it, so the name has ~140px
+                   12rem, measured rather than chosen: at a 1280px viewport the shell leaves this
+                   panel 909px, and the other six columns take the rest, so the name has ~213px
                    before the table overflows again. It steps up to 16rem at `2xl`, where the panel
-                   is wide enough to afford it — a single generous clamp would put the horizontal
-                   scrollbar straight back at 1280. -->
-              <span class="block max-w-32 truncate 2xl:max-w-3xs" [title]="row.label">{{
+                   is wide enough to afford it — a single generous clamp puts the horizontal
+                   scrollbar straight back at 1280.
+
+                   **Re-measure this if a column is added or removed.** It was 8rem while the Status
+                   column existed; dropping that column (2026-08-09) returned ~73px to the budget. -->
+              <span class="block max-w-48 truncate 2xl:max-w-3xs" [title]="row.label">{{
                 row.label
               }}</span>
             </mm-button>
           </th>
-          <!-- A cell of its own rather than part of the row header: a `<th scope="row">` is
-               re-announced before every data cell in the row, so badges living there would repeat
-               "Stopped" six times per series (TICKET-REC-04). -->
-          <td>
-            <mm-flex align="center" gap="1" [wrap]="true">
-              @for (badge of row.badges; track badge.kind) {
-                <mm-badge [color]="badge.color" variant="soft" size="sm">{{ badge.text }}</mm-badge>
-              }
-            </mm-flex>
-          </td>
           <td>
             <mm-flex align="center" gap="2">
               <span
@@ -119,7 +111,7 @@
              filters do not have — recorded in the ticket's Notes). -->
         @if (row.expanded) {
           <tr>
-            <td colspan="8" class="bg-base-200/40">
+            <td colspan="7" class="bg-base-200/40">
               <mm-text as="p" variant="caption" class="mb-1">
                 {{ row.occurrenceCount }} payments detected
               </mm-text>
@@ -155,7 +147,7 @@
              group is still announced as a row group when it is open. -->
         <tbody>
           <tr>
-            <th scope="rowgroup" colspan="8" class="bg-base-200/60">
+            <th scope="rowgroup" colspan="7" class="bg-base-200/60">
               <mm-button
                 variant="ghost"
                 size="xs"

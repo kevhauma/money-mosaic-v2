@@ -173,23 +173,23 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     const fixture = await createFixture(streamlyMonthly());
     const [row] = cellsOf(fixture.nativeElement as HTMLElement);
 
+    expect(row).toHaveLength(7); // the Status column was removed on 2026-08-09
     expect(row[0]).toContain('Streamly');
-    expect(row[1]).toBe(''); // status: an active series in good standing carries no badge
-    expect(row[2]).toContain('Subscriptions');
-    expect(row[3]).toBe('Monthly');
-    expect(row[4]).toBe('€12.99');
-    expect(row[5]).toBe('05/09/2026'); // last paid
-    expect(row[6]).toBe('06/08/2026'); // next expected: last + the 30-day median gap
-    expect(row[7]).toBe('€12.99');
+    expect(row[1]).toContain('Subscriptions');
+    expect(row[2]).toBe('Monthly');
+    expect(row[3]).toBe('€12.99');
+    expect(row[4]).toBe('05/09/2026'); // last paid
+    expect(row[5]).toBe('06/08/2026'); // next expected: last + the 30-day median gap
+    expect(row[6]).toBe('€12.99');
   });
 
   it('names an every-two-weeks rhythm "Fortnightly" in the cadence column (TICKET-REC-07)', async () => {
     const fixture = await createFixture(fortnightly());
     const [row] = cellsOf(fixture.nativeElement as HTMLElement);
 
-    expect(row[3]).toBe('Fortnightly');
-    expect(row[4]).toBe('€7.00');
-    expect(row[7]).toBe('€15.22'); // 7 × 365.25 / 14 / 12
+    expect(row[2]).toBe('Fortnightly');
+    expect(row[3]).toBe('€7.00');
+    expect(row[6]).toBe('€15.22'); // 7 × 365.25 / 14 / 12
   });
 
   it('sorts the series by monthly equivalent, most expensive first', async () => {
@@ -203,7 +203,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
   it('names an uncategorised series explicitly rather than leaving the cell blank', async () => {
     const fixture = await createFixture(gymMonthly());
 
-    expect(cellsOf(fixture.nativeElement as HTMLElement)[0][2]).toContain('Uncategorised');
+    expect(cellsOf(fixture.nativeElement as HTMLElement)[0][1]).toContain('Uncategorised');
   });
 
   it('summarises the count and the summed monthly-equivalent total', async () => {
@@ -324,41 +324,38 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       expect(text).not.toContain('€42.99');
     });
 
-    it('badges a stopped series, in words rather than by colour alone', async () => {
-      const fixture = await createFixture(cancelledMonthly());
-      // The badge lives on the row, which the group hides until opened (TICKET-REC-06).
-      openStoppedGroup(fixture);
-      const badges = [...(fixture.nativeElement as HTMLElement).querySelectorAll('mm-badge')];
-
-      expect(badges).toHaveLength(1);
-      expect(badges[0].textContent?.trim()).toBe('Stopped');
-    });
-
-    it('badges a price step with both levels, and withholds them under privacy mode', async () => {
-      // Three payments at €9.99, then three at €12.99 — a sustained new level, monthly throughout.
-      const fixture = await createFixture(
-        ['2025-12-09', '2026-01-09', '2026-02-09', '2026-03-09', '2026-04-09', '2026-05-09'].map(
-          (bookingDate, index) =>
-            transaction({
-              id: index + 1,
-              bookingDate,
-              amount: index < 3 ? -9.99 : -12.99,
-            }),
-        ),
+    it('renders no flag badges at all — the Status column was removed on 2026-08-09', async () => {
+      // Three payments at €9.99 then three at €12.99 (a sustained repricing), plus a cancelled
+      // series: between them these carry all three of REC-04's flags. None of them reaches the UI
+      // any more. What survives is the *grouping*, which the two tests above assert.
+      const repricedMonthly = [
+        '2025-12-09',
+        '2026-01-09',
+        '2026-02-09',
+        '2026-03-09',
+        '2026-04-09',
+        '2026-05-09',
+      ].map((bookingDate, index) =>
+        transaction({ id: index + 1, bookingDate, amount: index < 3 ? -9.99 : -12.99 }),
       );
+      const fixture = await createFixture([...repricedMonthly, ...cancelledMonthly()]);
       const host = fixture.nativeElement as HTMLElement;
+      openStoppedGroup(fixture);
 
-      const badge = host.querySelector('mm-badge');
-      expect(badge?.textContent?.trim()).toBe('Price ↑ €9.99 → €12.99');
-
-      await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
-      fixture.detectChanges();
-
-      // The figures are baked into the badge's text, so `mm-privacy-blur` can't reach them —
-      // they have to be withheld rather than blurred.
-      const masked = host.querySelector('mm-badge')?.textContent?.trim();
-      expect(masked).toBe('Price ↑ ••• → •••');
-      expect(masked).not.toContain('€');
+      expect(host.querySelectorAll('mm-badge')).toHaveLength(0);
+      expect(host.textContent).not.toContain('Price ↑');
+      expect(host.textContent).not.toContain('Overdue');
+      expect([...host.querySelectorAll('thead th')].map((th) => th.textContent?.trim())).toEqual([
+        'Payment',
+        'Category',
+        'Cadence',
+        'Typical',
+        'Last paid',
+        'Next expected',
+        'Per month',
+      ]);
+      // Detection is untouched: the two price levels still folded into one series at the new one.
+      expect(cellsOf(host)[0][3]).toBe('€12.99');
     });
   });
 
@@ -380,9 +377,10 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       const label = labelSpanOf(fixture.nativeElement as HTMLElement);
 
       expect(label?.textContent?.trim()).toBe(LONG_LABEL);
-      // A maximum, not a width: a short name still shrinks the column below it. 8rem is the
-      // measured budget at 1280px, stepping up to 16rem once the panel is wide enough to afford it.
-      expect(label?.classList.contains('max-w-32')).toBe(true);
+      // A maximum, not a width: a short name still shrinks the column below it. 12rem is the
+      // measured budget at 1280px for the seven-column table, stepping up to 16rem once the panel
+      // is wide enough to afford it — re-measure if a column is ever added or removed.
+      expect(label?.classList.contains('max-w-48')).toBe(true);
       expect(label?.classList.contains('2xl:max-w-3xs')).toBe(true);
       expect(label?.classList.contains('truncate')).toBe(true);
     });
@@ -408,9 +406,9 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
   describe('the collapsed stopped group (TICKET-REC-06)', () => {
     const bothSeries = (): Transaction[] => [...streamlyMonthly(), ...cancelledMonthly()];
 
-    /** Series rows only — the group's heading is a `<tr>` too, but carries one cell, not eight. */
+    /** Series rows only — the group's heading is a `<tr>` too, but carries one cell, not seven. */
     const seriesRowsOf = (host: HTMLElement): string[][] =>
-      cellsOf(host).filter((cells) => cells.length === 8);
+      cellsOf(host).filter((cells) => cells.length === 7);
 
     it('renders the group header with its count, and none of its rows, on first render', async () => {
       const fixture = await createFixture(bothSeries());
@@ -435,10 +433,12 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
 
       const [, stopped] = [...host.querySelectorAll('tbody')];
       expect(stopped.textContent).toContain('Old gym');
-      // The `scope="rowgroup"` heading and the row's own eight columns survive being unfolded.
+      // The `scope="rowgroup"` heading and the row's own seven columns survive being unfolded.
       expect(host.querySelector('th[scope="rowgroup"]')).not.toBeNull();
       expect(seriesRowsOf(host)).toHaveLength(2);
-      expect(seriesRowsOf(host)[1][1]).toContain('Stopped'); // its badge column
+      // The row itself no longer says "Stopped" — since 2026-08-09 the group heading is the only
+      // place that does, which is why the disclosure carries the count.
+      expect(seriesRowsOf(host)[1][0]).toContain('Old gym');
       expect(stoppedToggleOf(host)?.getAttribute('aria-expanded')).toBe('true');
 
       openStoppedGroup(fixture);

@@ -56,6 +56,12 @@ that cost only when asked.
 
 ## Acceptance criteria
 
+> ⚠️ **Detail drift, 2026-08-09.** The Status column was removed from the panel on request, so where
+> the boxes below say a revealed row renders "eight columns" and its "Stopped" badge, it now renders
+> **seven** and no badge — the group heading is the only place stopped-ness is stated. The behaviour
+> this ticket is actually about (closed by default, count in the heading, rows folded by not being
+> rendered, `scope="rowgroup"` preserved) is unchanged and still covered by its specs.
+
 - [x] With at least one stopped series, the panel renders the stopped-group header (with count)
       but none of the stopped rows on first render; active rows are unaffected.
       (`stoppedGroup` computed + the `@if (stoppedGroup().open)` guard inside the second `<tbody>`;

@@ -61,6 +61,20 @@ panel and on the bills calendar.
 
 ## Acceptance criteria
 
+> ⚠️ **Partly superseded, 2026-08-09.** The Status column and its badges were removed from the panel
+> on request. The boxes below were true when this shipped and are left ticked as the record of that,
+> but **the badge criteria no longer describe the UI**: `Price ↑ …`, `Overdue — expected …` and the
+> per-row `Stopped` badge render nowhere in the table.
+>
+> Two of the three flags still reach the user by another route, so only one is genuinely lost:
+> **stopped** — the series leaves the live list for the collapsed "Stopped (n)" group
+> ([TICKET-REC-06](./TICKET-REC-06-stopped-series-collapsed.md)) and counts toward nothing in the
+> monthly total; **overdue** — still outlined on the bills calendar and announced in its day list
+> and `sr-only` text (this ticket's calendar criteria are unaffected); **priceChange** — now shown
+> **nowhere**. The aggregate is untouched: all three are still computed on every series and covered
+> by `recurring-payments.spec.ts`, so restoring the price flag is a template change, not a detection
+> one.
+
 **Implementation note, 2026-08-08 — how `priceChange` is actually detected.** Not by scanning a
 series' amounts for a jump, but by **merging two bands back together**. REC-01's `bandByAmount`
 already splits €9.99 from €12.99 (they are more than `AMOUNT_BAND_TOLERANCE` apart), so a sustained

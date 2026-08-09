@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { type RecurringCadence, type RecurringFlags } from '@/core/stats';
+import { type RecurringCadence } from '@/core/stats';
 import { AppSettingsStore, CategoriesStore } from '@/core/state';
 import { CHART_NO_COLOR_FALLBACK } from '@/shared/echarts';
 import {
-  BadgeComponent,
   ButtonComponent,
   EmptyStateComponent,
   FlexComponent,
@@ -15,52 +14,9 @@ import {
 } from '@/shared/ui';
 import { formatCurrency, formatDate } from '@/shared/utils';
 import { RecurringSeriesStore } from '../../recurring-series.store';
-import type { RecurringFlagBadge, RecurringSeriesRow } from '../../recurring-payments-row-vm';
+import type { RecurringSeriesRow } from '../../recurring-payments-row-vm';
 
 const UNCATEGORISED_LABEL = 'Uncategorised';
-
-/**
- * What a badge shows in place of an amount while privacy mode is on. Distinct from the bills
- * calendar's `HIDDEN_AMOUNT`, and deliberately so: that one is *read aloud* from an `sr-only`
- * table, so it says the word "hidden"; this one is seen, so it takes the shape of a masked figure.
- */
-const MASKED_AMOUNT = '•••';
-
-/**
- * The flags a series carries, as badges (TICKET-REC-04). Each says what happened in words, so the
- * colour only reinforces a meaning the text already carries. A price *cut* is deliberately not
- * `success` and a rise not `error`: the app has no business judging whether a cheaper subscription
- * is good news, only reporting that the price moved.
- */
-const flagBadges = (flags: RecurringFlags, privacyMode: boolean): RecurringFlagBadge[] => {
-  const badges: RecurringFlagBadge[] = [];
-
-  if (flags.priceChange) {
-    const { from, to } = flags.priceChange;
-    const amounts = privacyMode
-      ? `${MASKED_AMOUNT} → ${MASKED_AMOUNT}`
-      : `${formatCurrency(from)} → ${formatCurrency(to)}`;
-    badges.push({
-      kind: 'priceChange',
-      text: `Price ${to > from ? '↑' : '↓'} ${amounts}`,
-      color: 'info',
-    });
-  }
-  if (flags.overdue) {
-    // "Overdue —" and not just the date: the row's own "Next expected" column already shows that
-    // date, so without the word the badge's only signal would be its colour.
-    badges.push({
-      kind: 'overdue',
-      text: `Overdue — expected ${formatDate(flags.overdue.expectedDate)}`,
-      color: 'warning',
-    });
-  }
-  if (flags.stopped) {
-    badges.push({ kind: 'stopped', text: 'Stopped', color: 'neutral' });
-  }
-
-  return badges;
-};
 
 /** Cadence as a word, since "quarterly" is a rhythm the user reads, not an enum they decode. */
 const CADENCE_LABELS: Record<RecurringCadence, string> = {
@@ -83,15 +39,20 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
  *
  * A real `<table>` with a caption, not a chart — so the accessible rendering *is* the UI and no
  * `sr-only` mirror (the TICKET-STAT-20 convention for canvas charts) applies here. Column amounts
- * blur under privacy mode via `mm-privacy-blur`, which works because they are visible text; a
- * badge's amounts are baked into its own label, out of the blur's reach, so those are withheld at
- * build time instead (TICKET-REC-04).
+ * blur under privacy mode via `mm-privacy-blur`, which works because they are visible text.
+ *
+ * **Seven columns, no Status column.** TICKET-REC-04's per-row flag badges — a price step, an
+ * overdue payment, a stopped series — were removed from this table on request (2026-08-09). Two of
+ * the three flags still reach the user by another route: a stopped series leaves the live list for
+ * the collapsed "Stopped (n)" group (TICKET-REC-06) and counts toward nothing in the monthly total,
+ * and an overdue expectation is still outlined on the bills calendar below and announced in its day
+ * list. **`priceChange` is now shown nowhere.** All three remain computed on the series and are
+ * covered by the aggregate's specs, so restoring any of them here is a template change.
  */
 @Component({
   selector: 'app-recurring-payments-panel',
   imports: [
     NgTemplateOutlet,
-    BadgeComponent,
     ButtonComponent,
     EmptyStateComponent,
     FlexComponent,
@@ -118,15 +79,15 @@ export class RecurringPaymentsPanelComponent {
   /**
    * Already sorted most-expensive-first by the aggregate, which owns that order; this only turns
    * each series into display facts. Re-derives when the locale/currency setting changes (through
-   * `formatCurrency`/`formatDate`) and when privacy mode does (badge amounts are withheld here, not
-   * blurred downstream) — but deliberately *not* when a row is expanded, which is why `expanded` is
-   * stitched on by the cheap `rows` map below rather than resolved here.
+   * `formatCurrency`/`formatDate`) — but deliberately *not* when a row is expanded, which is why
+   * `expanded` is stitched on by the cheap `rows` map below rather than resolved here, and no longer
+   * when privacy mode changes: every amount this builds is visible text that `mm-privacy-blur`
+   * reaches on its own, now that the badges baking amounts into a label are gone.
    */
   private readonly formattedRows = computed<
     Omit<RecurringSeriesRow, 'expanded' | 'expandIcon' | 'toggleAriaLabel'>[]
   >(() => {
     const categoriesById = this.categoriesStore.categoriesById();
-    const privacyMode = this.privacyMode();
 
     return this.recurringSeriesStore.series().map((series) => {
       const category =
@@ -148,9 +109,6 @@ export class RecurringPaymentsPanelComponent {
           date: formatDate(occurrence.date),
           amount: formatCurrency(occurrence.amount),
         })),
-        // A badge's amounts are baked into its text, so `mm-privacy-blur` can't reach them —
-        // they are withheld at build time instead (TICKET-PRIV-01).
-        badges: flagBadges(series.flags, privacyMode),
         stopped: series.flags.stopped !== undefined,
       };
     });

@@ -51,12 +51,20 @@ hover (or focus) away.
 
 ## Acceptance criteria
 
-> **Implementation note, 2026-08-09.** The clamp shipped is **8rem**, stepping up to 16rem at `2xl`
-> — not the single generous max-width first written. Measured live at a 1280px viewport: the app
-> shell leaves this panel **909px**, and the other seven columns need **703px** of it, so the payment
-> name has ~140px before the table overflows again. A flat 16rem (256px) put the horizontal
-> scrollbar straight back (`scrollWidth` 1024 vs `clientWidth` 909). The two-step clamp is what makes
-> the first criterion below true at 1280 without punishing a wide monitor.
+> **Implementation note, 2026-08-09.** The clamp is a measured constant, not a chosen one, and it
+> **depends on the column count — re-measure it whenever a column is added or removed.**
+>
+> As shipped: **8rem**, stepping up to 16rem at `2xl` — not the single generous max-width first
+> written. Measured live at a 1280px viewport, where the app shell leaves this panel **909px** and
+> the other seven columns needed **703px** of it, so the payment name had ~140px before the table
+> overflowed again. A flat 16rem (256px) put the horizontal scrollbar straight back (`scrollWidth`
+> 1024 vs `clientWidth` 909).
+>
+> **Re-measured later the same day**, after the Status column was removed from the panel on request:
+> six other columns instead of seven returns ~73px to the budget, so the name now has ~213px and the
+> clamp was widened to **12rem** (`max-w-48`), still stepping to 16rem at `2xl`. Re-verified at both
+> viewports — 1280×900: 909 = 909; 1536×900: 1165 = 1165. Every measurement quoted in the criteria
+> below is from that second pass unless it names the eight-column table.
 
 - [x] At a 1280px-wide viewport with a long payment name in the data, the recurring table's wrapper
       has no horizontal overflow (`scrollWidth <= clientWidth`) and the "Per month" column is fully
@@ -65,9 +73,9 @@ hover (or focus) away.
       and its cells have a `right` edge inside the wrapper's. Re-measured at 1536×900, where the
       clamp steps to 256px: 1165 = 1165. Also holds with a row expanded.)
 - [x] A payment name too long for the column renders ellipsised rather than widening the column or
-      wrapping to a second line. (Same session: the label span renders at exactly 128px against a
+      wrapping to a second line. (Same session: the label span renders at exactly 192px against a
       426px full-text width, `scrollWidth > clientWidth` so the ellipsis is active, and its height is
-      one line. Computed style on the live element: `max-width: 128px`, `overflow: hidden`,
+      one line. Computed style on the live element: `max-width: 192px`, `overflow: hidden`,
       `text-overflow: ellipsis`, `white-space: nowrap`. `truncate`'s `overflow: hidden` is also what
       zeroes the flex item's automatic minimum size, so the max-width binds inside the button's flex
       row rather than being overridden by `min-width: auto`.)
@@ -103,7 +111,8 @@ hover (or focus) away.
 - [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
       verdict `pass`, 0 introduced findings; styling health A / 94.5, no new Tailwind arbitrary
       values — the clamp uses the named scale.)
-- [x] Verified live in the browser: the panel on `/explore` shows all eight columns with no
+- [x] Verified live in the browser: the panel on `/explore` shows all eight columns (seven, since
+      the Status column was removed — see the note above) with no
       horizontal scrollbar, and hovering a truncated name reveals it in full. (Measured on
       `http://localhost:4210/explore` at 1280×900 and 1536×900 — see the first two criteria. The
       hover text is the `title` attribute on the label span, read back off the live element as the

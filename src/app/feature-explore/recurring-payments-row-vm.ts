@@ -1,15 +1,3 @@
-import type { BadgeColor } from '@/shared/ui';
-
-/**
- * One change flag as a row renders it (TICKET-REC-04). `text` carries the whole meaning — colour is
- * never the only signal — and the amounts inside it are already formatted.
- */
-export type RecurringFlagBadge = {
-  kind: 'priceChange' | 'overdue' | 'stopped';
-  text: string;
-  color: BadgeColor;
-};
-
 /** One occurrence as a series' expansion renders it — the evidence behind the detection. */
 export type RecurringOccurrenceRow = {
   transactionId: number;
@@ -39,8 +27,11 @@ export type RecurringSeriesRow = {
   expandIcon: string;
   /** What a screen reader hears on the disclosure button — it has to name the row, not just "expand". */
   toggleAriaLabel: string;
-  /** Empty for a series with nothing to report (TICKET-REC-04). */
-  badges: RecurringFlagBadge[];
-  /** A stopped series is listed under its own heading rather than among live commitments. */
+  /**
+   * A stopped series is listed under its own heading rather than among live commitments — all this
+   * row still carries of TICKET-REC-04's flags, now that the Status column and its badges have been
+   * removed (2026-08-09). `overdue` still reaches the user through the bills calendar;
+   * `priceChange` is shown nowhere.
+   */
   stopped: boolean;
 };
