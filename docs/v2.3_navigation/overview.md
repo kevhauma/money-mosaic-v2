@@ -29,7 +29,7 @@ tickets rather than left to be rediscovered.
 
 ## Recommended order
 
-- [ ] [TICKET-UI-26](./tickets/TICKET-UI-26-grouped-sidebar-navigation.md) — Sidebar nav grouped into "Insights" and "Data", both groups always visible (ui-layout-spec §Navigation; no FR change) — first: it defines the classification the next ticket applies, and is independently shippable on its own merit
+- [x] [TICKET-UI-26](./tickets/TICKET-UI-26-grouped-sidebar-navigation.md) — Sidebar nav grouped into "Insights" and "Data", both groups always visible (ui-layout-spec §Navigation; no FR change) — first: it defines the classification the next ticket applies, and is independently shippable on its own merit
 - [ ] [TICKET-PRIV-02](./tickets/TICKET-PRIV-02-hide-amounts-on-every-insight-page.md) — "Hide amounts" on every insight page, not just the Dashboard (extends TICKET-PRIV-01) — **needs UI-26** for the Insights/Data line it draws its scope along; the shared `mm-privacy-toggle` it extracts is what any future insight page picks up for free
 
 ## Considered, not ticketed yet

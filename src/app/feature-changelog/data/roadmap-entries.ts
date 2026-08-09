@@ -129,13 +129,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.3_navigation',
-    ticketId: 'TICKET-UI-26',
-    title:
-      'Group the sidebar into the pages that show you your money and the pages that feed it, both always open',
-    area: 'UI / App shell',
-  },
-  {
-    versionFolder: 'v2.3_navigation',
     ticketId: 'TICKET-PRIV-02',
     title:
       'Hide your amounts with one click from any page that shows figures, not just the Dashboard',

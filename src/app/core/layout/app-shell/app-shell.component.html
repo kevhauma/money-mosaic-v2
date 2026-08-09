@@ -43,57 +43,76 @@
         </span>
         <span class="mm-brand-stripe mt-3" aria-hidden="true"></span>
       </span>
+      <!-- Two labelled groups, both permanently expanded (TICKET-UI-26): the pages you go to in
+           order to look at something, and the pages you go to in order to feed or shape the data.
+           Deliberately headings + nested lists, never `<details>` — with eight items the sidebar has
+           no height problem to solve, so collapsing would cost a second click and an open/closed
+           state to persist for no gain. `aria-labelledby` is what makes each heading the group's
+           accessible name; the heading order matches the reading order the flat list already had.
+           `text-base-content/60` overrides daisyUI's own `.menu-title` colour, which is `/40` and
+           measured 3.49:1 against this sidebar — below the 4.5:1 AA floor. `/60` is the app's own
+           label tier (`typography.component.ts`) and clears it. -->
       <ul class="menu-vertical gap-1">
         <li>
-          <a routerLink="/dashboard" routerLinkActive="menu-active" [class]="navItemClass">
-            <ng-icon name="tablerHome" size="18" aria-hidden="true" />
-            <mm-text as="span">Dashboard</mm-text>
-          </a>
+          <h2 class="menu-title text-base-content/60" id="nav-group-insights">Insights</h2>
+          <ul aria-labelledby="nav-group-insights">
+            <li>
+              <a routerLink="/dashboard" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerHome" size="18" aria-hidden="true" />
+                <mm-text as="span">Dashboard</mm-text>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/income" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerTrendingUp" size="18" aria-hidden="true" />
+                <mm-text as="span">Income (Beta)</mm-text>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/explore" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerChartSankey" size="18" aria-hidden="true" />
+                <mm-text as="span">Explore</mm-text>
+              </a>
+            </li>
+          </ul>
         </li>
         <li>
-          <a routerLink="/income" routerLinkActive="menu-active" [class]="navItemClass">
-            <ng-icon name="tablerTrendingUp" size="18" aria-hidden="true" />
-            <mm-text as="span">Income (Beta)</mm-text>
-          </a>
-        </li>
-        <li>
-          <a routerLink="/explore" routerLinkActive="menu-active" [class]="navItemClass">
-            <ng-icon name="tablerChartSankey" size="18" aria-hidden="true" />
-            <mm-text as="span">Explore</mm-text>
-          </a>
-        </li>
-        <li>
-          <a routerLink="/accounts" routerLinkActive="menu-active" [class]="navItemClass">
-            <ng-icon name="tablerBuildingBank" size="18" aria-hidden="true" />
-            <mm-text as="span">Accounts</mm-text>
-          </a>
-        </li>
-        <li>
-          <a routerLink="/transactions" routerLinkActive="menu-active" [class]="navItemClass">
-            <ng-icon name="tablerArrowsExchange" size="18" aria-hidden="true" />
-            <mm-text as="span">Transactions</mm-text>
-            @if (transactionsStore.uncategorisedCount(); as count) {
-              <span class="badge badge-warning badge-sm ml-auto">{{ count }}</span>
-            }
-          </a>
-        </li>
-        <li>
-          <a routerLink="/categories" routerLinkActive="menu-active" [class]="navItemClass">
-            <ng-icon name="tablerTags" size="18" aria-hidden="true" />
-            <mm-text as="span">Categories</mm-text>
-          </a>
-        </li>
-        <li>
-          <a routerLink="/learning" routerLinkActive="menu-active" [class]="navItemClass">
-            <ng-icon name="tablerBulb" size="18" aria-hidden="true" />
-            <mm-text as="span">Learning</mm-text>
-          </a>
-        </li>
-        <li>
-          <a routerLink="/import" routerLinkActive="menu-active" [class]="navItemClass">
-            <ng-icon name="tablerFileImport" size="18" aria-hidden="true" />
-            <mm-text as="span">Import</mm-text>
-          </a>
+          <h2 class="menu-title text-base-content/60" id="nav-group-data">Data</h2>
+          <ul aria-labelledby="nav-group-data">
+            <li>
+              <a routerLink="/accounts" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerBuildingBank" size="18" aria-hidden="true" />
+                <mm-text as="span">Accounts</mm-text>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/transactions" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerArrowsExchange" size="18" aria-hidden="true" />
+                <mm-text as="span">Transactions</mm-text>
+                @if (transactionsStore.uncategorisedCount(); as count) {
+                  <span class="badge badge-warning badge-sm ml-auto">{{ count }}</span>
+                }
+              </a>
+            </li>
+            <li>
+              <a routerLink="/categories" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerTags" size="18" aria-hidden="true" />
+                <mm-text as="span">Categories</mm-text>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/learning" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerBulb" size="18" aria-hidden="true" />
+                <mm-text as="span">Learning</mm-text>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/import" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerFileImport" size="18" aria-hidden="true" />
+                <mm-text as="span">Import</mm-text>
+              </a>
+            </li>
+          </ul>
         </li>
       </ul>
       <!-- Pinned to the very bottom of the sidebar (`.menu` is a flex column; mt-auto absorbs the slack). -->

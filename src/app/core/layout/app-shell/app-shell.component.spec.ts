@@ -1,15 +1,37 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
+import { TransactionsRepository, type Transaction } from '@/core/data-access';
+import { TransactionsStore } from '@/core/state';
 import { AppShellComponent } from './app-shell.component';
 
-describe('AppShellComponent', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [AppShellComponent],
-      providers: [provideRouter([])],
-    }).compileComponents();
-  });
+const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
 
+/** Uncategorised by `TransactionsStore`'s definition: no category, not linked as a transfer, not a savings movement. */
+const uncategorised = (id: number): Transaction => ({
+  id,
+  accountId: 1,
+  bookingDate: '2026-08-01',
+  amount: -12,
+  currency: 'EUR',
+  rawDescription: 'Coffee',
+  fingerprint: `fp-${id}`,
+  createdAt: '2026-08-01T00:00:00.000Z',
+});
+
+beforeEach(async () => {
+  vi.clearAllMocks();
+  transactionsRepository.getAll.mockResolvedValue([]);
+  await TestBed.configureTestingModule({
+    imports: [AppShellComponent],
+    providers: [
+      provideRouter([]),
+      { provide: TransactionsRepository, useValue: transactionsRepository },
+    ],
+  }).compileComponents();
+});
+
+describe('AppShellComponent', () => {
   it('should create the shell', () => {
     const fixture = TestBed.createComponent(AppShellComponent);
     const app = fixture.componentInstance;
@@ -36,5 +58,112 @@ describe('AppShellComponent', () => {
 
     expect(shell.querySelector('mm-range-grouping-switcher')).toBeNull();
     expect(shell.querySelector('mm-date-range-input')).toBeNull();
+  });
+});
+
+// TICKET-UI-26 — the eight feature links are two labelled, always-expanded groups. The meta list at
+// the foot of the sidebar (How-to's, FAQ, Changelog, Settings) is deliberately not one of them: its
+// position is already the grouping signal, so it has no heading and is excluded from these queries.
+describe('AppShellComponent: grouped sidebar navigation (TICKET-UI-26)', () => {
+  /** The `<ul>` a `menu-title` heading labels, looked up the way a screen reader resolves it. */
+  const groupFor = (shell: HTMLElement, heading: string): HTMLUListElement => {
+    const title = [...shell.querySelectorAll('h2.menu-title')].find(
+      (element) => element.textContent?.trim() === heading,
+    );
+    expect(title).toBeDefined();
+    const group = shell.querySelector<HTMLUListElement>(`ul[aria-labelledby="${title?.id}"]`);
+    expect(group).not.toBeNull();
+    return group as HTMLUListElement;
+  };
+
+  const hrefsIn = (list: HTMLUListElement): (string | null)[] =>
+    [...list.querySelectorAll('a')].map((anchor) => anchor.getAttribute('href'));
+
+  const renderShell = async (transactions: Transaction[] = []): Promise<HTMLElement> => {
+    transactionsRepository.getAll.mockResolvedValue(transactions);
+    const fixture = TestBed.createComponent(AppShellComponent);
+    await TestBed.inject(TransactionsStore).hydrate({ force: true });
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  it('renders exactly two feature group headings, "Insights" then "Data"', async () => {
+    const shell = await renderShell();
+
+    const headings = [...shell.querySelectorAll('h2.menu-title')].map((element) =>
+      element.textContent?.trim(),
+    );
+
+    expect(headings).toEqual(['Insights', 'Data']);
+  });
+
+  it('puts Dashboard, Income and Explore in Insights — and nothing else', async () => {
+    const shell = await renderShell();
+
+    expect(hrefsIn(groupFor(shell, 'Insights'))).toEqual(['/dashboard', '/income', '/explore']);
+  });
+
+  it('puts Accounts, Transactions, Categories, Learning and Import in Data — and nothing else', async () => {
+    const shell = await renderShell();
+
+    expect(hrefsIn(groupFor(shell, 'Data'))).toEqual([
+      '/accounts',
+      '/transactions',
+      '/categories',
+      '/learning',
+      '/import',
+    ]);
+  });
+
+  it('keeps both groups permanently expanded — no <details>, so every link is one click away', async () => {
+    const shell = await renderShell();
+
+    expect(shell.querySelector('details')).toBeNull();
+    expect(shell.querySelector('summary')).toBeNull();
+  });
+
+  it('leaves the group headings out of the tab order, out of the link set, and off NAV_ITEM_CLASS', async () => {
+    const shell = await renderShell();
+
+    // Counted first: a bare `for` over an empty list would pass this vacuously.
+    const headings = [...shell.querySelectorAll('h2.menu-title')];
+    expect(headings.length).toBe(2);
+
+    for (const heading of headings) {
+      expect(heading.getAttribute('tabindex')).toBeNull();
+      expect(heading.querySelector('a')).toBeNull();
+      // daisyUI's heading class plus the AA contrast override, and nothing else — in particular
+      // never the nav items' NAV_ITEM_CLASS.
+      expect(heading.className).toBe('menu-title text-base-content/60');
+    }
+  });
+
+  it('still renders the Transactions badge from uncategorisedCount(), now inside the Data group', async () => {
+    const shell = await renderShell([uncategorised(1), uncategorised(2), uncategorised(3)]);
+
+    const transactionsLink = groupFor(shell, 'Data').querySelector('a[href="/transactions"]');
+
+    expect(transactionsLink?.querySelector('.badge-warning')?.textContent?.trim()).toBe('3');
+  });
+
+  it('renders no badge when nothing is uncategorised', async () => {
+    const shell = await renderShell();
+
+    expect(shell.querySelector('.badge-warning')).toBeNull();
+  });
+
+  it('leaves the meta list unheaded and pinned to the foot of the sidebar', async () => {
+    const shell = await renderShell();
+
+    const metaList = shell.querySelector<HTMLUListElement>('ul.mt-auto');
+
+    expect(metaList).not.toBeNull();
+    expect(metaList?.querySelector('.menu-title')).toBeNull();
+    expect(hrefsIn(metaList as HTMLUListElement)).toEqual([
+      '/help',
+      '/help/faq',
+      '/changelog',
+      '/settings',
+    ]);
   });
 });

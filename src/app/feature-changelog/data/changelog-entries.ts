@@ -858,4 +858,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Dashboard',
   },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.3_navigation',
+    ticketIds: ['TICKET-UI-26'],
+    title: 'The sidebar now sorts your pages into “Insights” and “Data”',
+    details: [
+      'Insights holds the pages you open to look at something — Dashboard, Income and Explore. Data holds the ones you open to put money in or shape it — Accounts, Transactions, Categories, Learning and Import',
+      'Both groups are always open. Nothing folds away, so every page is still one click from wherever you are',
+      'Nothing moved: the order, names, icons and the counter on Transactions are all exactly where they were — they just have headings over them now',
+      'How-to’s, FAQ, Changelog and Settings stay together at the foot of the sidebar, as before',
+    ],
+    area: 'UI / App shell',
+  },
 ];
