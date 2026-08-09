@@ -33,6 +33,13 @@ export type CategoryCycleHeatmap = {
   rows: HeatmapRow[];
   /** One cell per (row, column) pair — a complete grid, so an empty position reads as €0, not as a hole. */
   cells: HeatmapCell[];
+  /**
+   * One amount per column, the sum of every row the heatmap is showing (TICKET-STAT-33) — "when do
+   * I spend, full stop", which four moderate rows can hide. Its own field rather than a fifth entry
+   * in `rows`: `rows`/`cells`/`maxAmount` are the per-category contract three other things already
+   * read, and a band that is always the largest value in the grid has no business redefining them.
+   */
+  totalsRow: number[];
   maxAmount: number;
   /**
    * How many of the cycle's columns the *range* can reach at all (TICKET-STAT-30) — a three-month
@@ -121,9 +128,12 @@ const buildGrid = (
   byCell: ReadonlyMap<string, number>,
   rowCount: number,
   columnCount: number,
-): { cells: HeatmapCell[]; rowTotals: number[]; maxAmount: number } => {
+): { cells: HeatmapCell[]; rowTotals: number[]; totalsRow: number[]; maxAmount: number } => {
   const cells: HeatmapCell[] = [];
   const rowTotals = new Array<number>(rowCount).fill(0);
+  // Accumulated off the same clamped cell the grid draws (TICKET-STAT-33), so the band can never
+  // state a number its own column doesn't add up to.
+  const totalsRow = new Array<number>(columnCount).fill(0);
   let maxAmount = 0;
 
   for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
@@ -131,11 +141,14 @@ const buildGrid = (
       const amount = Math.max(0, byCell.get(`${rowIndex}:${columnIndex}`) ?? 0);
       cells.push({ rowIndex, columnIndex, amount });
       rowTotals[rowIndex] += amount;
+      totalsRow[columnIndex] += amount;
+      // Deliberately the *cell* maximum, not the band's: `maxAmount` is the per-category contract
+      // TICKET-STAT-29..32 already read, and the band is scaled separately by the panel.
       if (amount > maxAmount) maxAmount = amount;
     }
   }
 
-  return { cells, rowTotals, maxAmount };
+  return { cells, rowTotals, totalsRow, maxAmount };
 };
 
 /** One row per top category, plus the "Other" fold when anything landed in it. */
@@ -184,7 +197,8 @@ const buildRows = (
  * drift apart on what counts as spending. `excludedCategoryIds` (TICKET-STAT-32) is the one
  * exclusion this aggregate owns: the user's own "leave this category out of the heatmap" list,
  * applied before ranking, before the `Other` fold and before `maxAmount`, so an excluded category
- * neither takes a row nor sets the colour scale everything else is measured against.
+ * neither takes a row nor sets the colour scale everything else is measured against — nor lands in
+ * `totalsRow`, which sums what the chart is showing rather than what it is hiding.
  */
 export const computeCategoryCycleHeatmap = (
   transactions: Transaction[],
@@ -237,15 +251,25 @@ export const computeCategoryCycleHeatmap = (
 
   const rowCount = otherRowIndex + (otherRowUsed ? 1 : 0);
   if (rowCount === 0) {
-    return { columnKeys, rows: [], cells: [], maxAmount: 0, coveredColumnCount };
+    return {
+      columnKeys,
+      rows: [],
+      cells: [],
+      // Zeroes rather than an empty array: the band is one amount per column, and a caller reading
+      // `totalsRow[i]` shouldn't have to special-case "no rows" to get the €0 that is true there.
+      totalsRow: new Array<number>(columnKeys.length).fill(0),
+      maxAmount: 0,
+      coveredColumnCount,
+    };
   }
 
-  const { cells, rowTotals, maxAmount } = buildGrid(byCell, rowCount, columnKeys.length);
+  const { cells, rowTotals, totalsRow, maxAmount } = buildGrid(byCell, rowCount, columnKeys.length);
 
   return {
     columnKeys,
     rows: buildRows(topCategoryIds, categoriesById, rowTotals, otherRowUsed),
     cells,
+    totalsRow,
     maxAmount,
     coveredColumnCount,
   };

@@ -58,27 +58,68 @@ can only be read to infer — four moderate rows can hide a Friday that is the h
 
 ## Acceptance criteria
 
-- [ ] `computeCategoryCycleHeatmap` returns a `totalsRow` whose value at each column equals the sum
+- [x] `computeCategoryCycleHeatmap` returns a `totalsRow` whose value at each column equals the sum
       of that column across `cells`, and leaves `rows`, `cells`, `maxAmount` and
       `coveredColumnCount` byte-for-byte unchanged (the existing STAT-29..32 specs still pass).
-- [ ] The heatmap renders the band as its top row, labelled `All`, above the category rows.
-- [ ] The band is coloured against its own maximum, so the category rows' shading is identical with
-      and without it.
-- [ ] A visible gap or divider separates the band from the category rows.
-- [ ] Excluded categories (STAT-32) are absent from the totals, and changing the cycle (STAT-30)
-      re-folds the band with the grid.
-- [ ] The `sr-only` companion table carries the band as its first row, named `All`, reading
-      `hidden` per cell under privacy mode like every other row.
-- [ ] Clicking a band cell navigates to `/transactions` with the panel's range and no `categoryId`.
-- [ ] The panel still renders nothing at all when there is no spend (`hasSpend()` is unchanged — a
-      band of zeroes is not a reason to show an empty chart).
-- [ ] Unit tests cover: the column sums against a known grid; exclusions leaving the totals; the
+      (Accumulated inside `buildGrid` off the same clamped cell the grid draws, so the two can't
+      disagree. `category-cycle-heatmap.spec.ts` › "holds the sum of every column of the grid" —
+      which asserts the literal `[940, 0, 0, 0, 0, 25, 0]` *and* re-derives every column from
+      `cells` — and "leaves rows, cells, maxAmount and coveredColumnCount exactly as they were",
+      which pins `maxAmount` at 900 while the band's Monday is 940. Every pre-existing STAT-29..32
+      aggregate spec passes untouched — the diff to that spec file is purely additive, with no
+      removed lines.)
+- [x] The heatmap renders the band as its top row, labelled `All`, above the category rows.
+      (`buildHeatmapChartOption`'s y-axis is `[...categories reversed, '', 'All']`;
+      `spending-heatmap-panel.component.spec.ts` › "draws the band on top, separated from the
+      categories by an empty axis row" and "plots one band cell per column, holding the aggregate's
+      totals".)
+- [x] The band is coloured against its own maximum, so the category rows' shading is identical with
+      and without it. (Its own `rowScale(totalsRow)` fed to STAT-34's `resolveHeatmapCellColor`.
+      Spec › "scales the band on its own maximum, off the theme's leading accent", and ›
+      "leaves the category rows' shading identical to what it is without the band", which
+      multiplies the band 100× and re-asserts all four category cells byte-for-byte.)
+- [x] A visible gap or divider separates the band from the category rows. (One **empty** y-axis
+      category between them — `totalsBandAxisIndex(rowCount) === rowCount + 1`. Nothing plots on
+      the spacer, asserted by the same "separated by an empty axis row" spec, which also checks no
+      cell carries axis index 2; that also makes the gap unclickable.)
+- [x] Excluded categories (STAT-32) are absent from the totals, and changing the cycle (STAT-30)
+      re-folds the band with the grid. (`category-cycle-heatmap.spec.ts` › "sums what the chart is
+      showing, never what an exclusion is hiding" and › "re-folds with the cycle"; end-to-end
+      through the panel in `spending-heatmap-panel.component.spec.ts` › "follows the totals when a
+      category is excluded", where Monday drops €940 → €40, and › "re-folds with the cycle".)
+- [x] The `sr-only` companion table carries the band as its first row, named `All`, reading
+      `hidden` per cell under privacy mode like every other row. (`accessibleRows` prepends it and
+      routes every amount — the band's included — through the same `asText`. Specs › "leads the
+      screen-reader table with an \"All\" row of the column totals" and › "withholds the band's
+      figures under privacy mode like every other row".)
+- [x] Clicking a band cell navigates to `/transactions` with the panel's range and no `categoryId`.
+      (`drilldownFor` returns `{}` for the band, exactly what it returns for the `Other` fold's
+      `null` category. Spec › "drills down to the range with no category filter, like the \"Other\"
+      fold".)
+- [x] The panel still renders nothing at all when there is no spend (`hasSpend()` is unchanged — a
+      band of zeroes is not a reason to show an empty chart). (`hasSpend` is the same expression it
+      was; spec › "still renders nothing at all when there is no spend". The aggregate returns a
+      `totalsRow` of zeroes rather than an empty array in that case —
+      `category-cycle-heatmap.spec.ts` › "is a column of zeroes — not an empty array".)
+- [x] Unit tests cover: the column sums against a known grid; exclusions leaving the totals; the
       untouched `maxAmount`; the band's own scale; the accessible table's first row, including its
-      privacy-mode text; the band's drill-down params.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: the `All` band on `/dashboard`, separated from the categories,
-      with a category excluded and re-included to watch the totals follow.
+      privacy-mode text; the band's drill-down params. (Five cases in `category-cycle-heatmap.spec.ts`
+      › "the totals band (TICKET-STAT-33)", five in the panel spec's › "the \"All\" band
+      (TICKET-STAT-33)", and five more through the option builder in its own › "the \"All\" band"
+      block. 2649 tests green overall, up from 2633.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (2026-08-09: lint
+      clean, 243 files / 2649 tests green, dev build completes. Two specs unrelated to this ticket —
+      `import-wizard.component.spec.ts` and `app.routes.spec.ts` — flake intermittently under load,
+      a known pre-existing issue; a clean full run was obtained and neither heatmap spec ever
+      appeared among the failures.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD`:
+      verdict **pass**, 0 dead code, 0 duplication, 0 introduced complexity — `onChartClick` first
+      landed at CRAP 56 and the row→drill-down decision was extracted into the pure `drilldownFor`
+      to clear it. `conventions-reviewer` on the diff: convention-clean, no violations.)
+- [ ] ~~Verified live in the browser~~ — **waived by the user on 2026-08-09**, who chose to skip the
+      browser check. Not verified by eye: how wide the empty spacer actually reads as a gap on the
+      rendered canvas, and whether the band's accent shading sits comfortably beside the category
+      rows'.
 
 ## Notes
 

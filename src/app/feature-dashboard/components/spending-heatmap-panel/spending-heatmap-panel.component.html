@@ -38,7 +38,7 @@
          skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
     <table class="sr-only">
       <caption>
-        Spending per category per
+        Spending in total and per category per
         {{
           axisNoun()
         }}, underlying the heatmap above
@@ -52,7 +52,9 @@
         </tr>
       </thead>
       <tbody>
-        @for (row of accessibleRows(); track row.name) {
+        <!-- Tracked by index, not name: the "All" band and two same-named categories are both
+             possible, and a duplicate track key is a runtime error. -->
+        @for (row of accessibleRows(); track $index) {
           <tr>
             <th scope="row">{{ row.name }}</th>
             @for (amount of row.amounts; track $index) {

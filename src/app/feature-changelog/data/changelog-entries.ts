@@ -843,4 +843,19 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Dashboard',
   },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-STAT-33'],
+    title: 'An “All” row across the top of the spending heatmap',
+    details: [
+      'A summary row now sits above the categories, showing what you spend in total on each day of the week — or each month, or quarter, whichever the heatmap is set to',
+      'It answers “when do I spend, full stop”, which four moderate category rows can hide between them: a Friday that is your heaviest day overall is easy to miss when no single category shouts about it',
+      'The row is shaded on its own scale, so putting it there changes nothing about how the category rows below read',
+      'A gap separates it from the categories, because it is a summary of them rather than one more of them',
+      'It follows the rest of the chart: leave a category out and it drops out of the total too, switch the view and it re-folds with the grid, and its figures are hidden along with everything else in privacy mode',
+      'Clicking a square in it opens those transactions for the whole period, with no category filter — the same as clicking the “Other” row',
+    ],
+    area: 'Dashboard',
+  },
 ];

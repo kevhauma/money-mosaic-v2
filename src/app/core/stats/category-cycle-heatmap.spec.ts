@@ -433,3 +433,84 @@ describe('computeCategoryCycleHeatmap: excluded categories (TICKET-STAT-32)', ()
     expect(heatmap.maxAmount).toBe(0);
   });
 });
+
+describe('computeCategoryCycleHeatmap: the totals band (TICKET-STAT-33)', () => {
+  const excluded = (...ids: number[]): ReadonlySet<number> => new Set(ids);
+
+  /** Rent 900 on Monday, Groceries 40 on Monday and 25 on Saturday. */
+  const twoCategories = [
+    transaction({ id: 1, bookingDate: '2026-07-06', amount: -900, categoryId: 2 }),
+    transaction({ id: 2, bookingDate: '2026-07-06', amount: -40, categoryId: 1 }),
+    transaction({ id: 3, bookingDate: '2026-07-11', amount: -25, categoryId: 1 }),
+  ];
+
+  it('holds the sum of every column of the grid, one amount per column', () => {
+    const heatmap = computeCategoryCycleHeatmap(
+      twoCategories,
+      categoriesById(GROCERIES, RENT),
+      FROM,
+      TO,
+    );
+
+    expect(heatmap.totalsRow).toHaveLength(7);
+    expect(heatmap.totalsRow).toEqual([940, 0, 0, 0, 0, 25, 0]); // Mon 900 + 40, Sat 25
+    // Stated against the grid itself, so the two can never disagree.
+    for (let columnIndex = 0; columnIndex < 7; columnIndex++) {
+      const column = heatmap.cells
+        .filter((cell) => cell.columnIndex === columnIndex)
+        .reduce((sum, cell) => sum + cell.amount, 0);
+      expect(heatmap.totalsRow[columnIndex], `column ${columnIndex}`).toBe(column);
+    }
+  });
+
+  it('leaves rows, cells, maxAmount and coveredColumnCount exactly as they were', () => {
+    const heatmap = computeCategoryCycleHeatmap(
+      twoCategories,
+      categoriesById(GROCERIES, RENT),
+      FROM,
+      TO,
+    );
+
+    // The band is 940 on Monday and is deliberately *not* the scale the category rows are read
+    // against — `maxAmount` is still the heaviest single cell (TICKET-STAT-29..32's contract).
+    expect(heatmap.maxAmount).toBe(900);
+    expect(heatmap.rows.map((row) => row.name)).toEqual(['Rent', 'Groceries']);
+    expect(heatmap.cells).toHaveLength(14);
+    expect(heatmap.coveredColumnCount).toBe(7);
+  });
+
+  it('sums what the chart is showing, never what an exclusion is hiding (TICKET-STAT-32)', () => {
+    const heatmap = computeCategoryCycleHeatmap(
+      twoCategories,
+      categoriesById(GROCERIES, RENT),
+      FROM,
+      TO,
+      'day-of-week',
+      new Set(),
+      new Map(),
+      excluded(2), // Rent
+    );
+
+    expect(heatmap.totalsRow).toEqual([40, 0, 0, 0, 0, 25, 0]); // Rent's 900 is gone
+  });
+
+  it('re-folds with the cycle (TICKET-STAT-30)', () => {
+    const heatmap = computeCategoryCycleHeatmap(
+      twoCategories,
+      categoriesById(GROCERIES, RENT),
+      FROM,
+      TO,
+      'day-of-month',
+    );
+
+    expect(heatmap.totalsRow).toHaveLength(31);
+    expect(heatmap.totalsRow[5]).toBe(940); // the 6th
+    expect(heatmap.totalsRow[10]).toBe(25); // the 11th
+  });
+
+  it('is a column of zeroes — not an empty array — when there is nothing to plot', () => {
+    const heatmap = computeCategoryCycleHeatmap([], categoriesById(GROCERIES), FROM, TO);
+
+    expect(heatmap.totalsRow).toEqual([0, 0, 0, 0, 0, 0, 0]);
+  });
+});

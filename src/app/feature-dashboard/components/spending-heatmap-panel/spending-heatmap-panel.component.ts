@@ -6,6 +6,7 @@ import {
   computeCategoryCycleHeatmap,
   type CategoryCycleHeatmap,
   type HeatmapCell,
+  type HeatmapRow,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
 import { CategoryExclusionDropdownComponent } from '../category-exclusion-dropdown/category-exclusion-dropdown.component';
@@ -21,6 +22,7 @@ import {
   resolveChartAnimation,
   resolveChartPlotMode,
   resolveHeatmapCellColor,
+  resolveHeatmapTotalsColor,
   type ChartPlotMode,
   type HeatmapRowScale,
 } from '@/shared/echarts';
@@ -86,6 +88,44 @@ const rowScale = (amounts: readonly number[]): HeatmapRowScale => ({
 });
 
 /**
+ * What the totals band is called (TICKET-STAT-33). `All`, not `Total`: the columns are cyclical
+ * folds, so the figure is a sum across every Monday in the range, and "total" invites reading it as
+ * a period total.
+ */
+const TOTALS_ROW_NAME = 'All';
+
+/**
+ * Where the band sits on the reversed y-axis: above every category row, with one **empty** axis
+ * category between them (`rowCount`) as the visible gap. Nothing plots on the spacer, so it reads
+ * as a divider and can't be clicked — and the band reads as a summary rather than as a fifth
+ * category competing with the others.
+ */
+const totalsBandAxisIndex = (rowCount: number): number => rowCount + 1;
+
+/**
+ * What a click on axis row `axisRowIndex` drills down to, or `undefined` when it landed on the
+ * empty spacer between the band and the categories, which stands for nothing.
+ *
+ * The `All` band sums every category, so it drills down to the range alone — the same thing the
+ * `Other` fold already does, for the same reason: the cell stands for several categories.
+ */
+const drilldownFor = (
+  rows: readonly HeatmapRow[],
+  axisRowIndex: number,
+): { categoryId?: number } | undefined => {
+  if (axisRowIndex === totalsBandAxisIndex(rows.length)) return {};
+  const row = rows[rows.length - 1 - axisRowIndex];
+  return row ? { categoryId: row.categoryId ?? undefined } : undefined;
+};
+
+/** The theme-resolved values the option builder needs, kept as inputs so it stays a pure function of its arguments. */
+export type HeatmapChartTheme = {
+  plotMode: ChartPlotMode;
+  /** The anchor the `All` band ramps from — it has no category, so it takes the theme's leading accent. */
+  bandColor: string;
+};
+
+/**
  * Pure echarts-option builder, kept outside the component so the axis/series mapping is testable
  * without a chart instance or `TestBed` (the `buildColumnChartOption` precedent in
  * `trend-chart-panel.component.ts`).
@@ -97,18 +137,26 @@ const rowScale = (amounts: readonly number[]): HeatmapRowScale => ({
  * scale across a whole series, and every row here is read against its own min/average/max in its
  * own category's colour. Keeping the resolution in the option builder is what lets the option shape
  * stay flat — one series, one `itemStyle` per data item — instead of one `visualMap` per row.
+ *
+ * The `All` band (TICKET-STAT-33) rides on exactly that machinery: it is one more set of cells on
+ * one more axis row, scaled against **its own** extent. Sharing the categories' scale would set
+ * every category cell against a number 4–5× larger than anything it contains and flatten the whole
+ * grid to the pale end, which is the opposite of what the band is for.
  */
 export const buildHeatmapChartOption = (
   heatmap: CategoryCycleHeatmap,
   columnLabels: readonly string[],
-  plotMode: ChartPlotMode,
+  theme: HeatmapChartTheme,
   privacyMode: boolean,
 ): EChartsCoreOption => {
-  const { columnKeys, rows, cells } = heatmap;
+  const { columnKeys, rows, cells, totalsRow } = heatmap;
+  const { plotMode, bandColor } = theme;
   const lastRowIndex = rows.length - 1;
   const columnCount = columnKeys.length;
 
   const scales = rows.map((_, rowIndex) => rowScale(rowAmounts(cells, rowIndex, columnCount)));
+  const bandAxisIndex = totalsBandAxisIndex(rows.length);
+  const bandScale = rowScale(totalsRow);
 
   return {
     ...resolveChartAnimation(),
@@ -116,7 +164,11 @@ export const buildHeatmapChartOption = (
       position: 'top',
       formatter: (params: { value: [number, number, number] }) => {
         const [columnIndex, axisRowIndex, amount] = params.value;
-        const heading = `${rows[lastRowIndex - axisRowIndex]?.name ?? ''} · ${columnLabels[columnIndex] ?? ''}`;
+        const name =
+          axisRowIndex === bandAxisIndex
+            ? TOTALS_ROW_NAME
+            : (rows[lastRowIndex - axisRowIndex]?.name ?? '');
+        const heading = `${name} · ${columnLabels[columnIndex] ?? ''}`;
         // Privacy mode keeps the *shape* readable and drops the figure (TICKET-PRIV-01) — the cell
         // colour is a proportion, the tooltip's amount is not.
         return privacyMode ? heading : `${heading}<br/>${formatCurrency(amount)}`;
@@ -130,23 +182,33 @@ export const buildHeatmapChartOption = (
     },
     yAxis: {
       type: 'category',
-      data: [...rows].reverse().map((row) => row.name),
+      // Bottom to top: the categories reversed (echarts draws index 0 at the bottom), then the
+      // empty spacer, then the band on top where the eye starts.
+      data: [...[...rows].reverse().map((row) => row.name), '', TOTALS_ROW_NAME],
       splitArea: { show: true },
     },
     series: [
       {
         type: 'heatmap',
-        data: cells.map((cell) => ({
-          value: [cell.columnIndex, lastRowIndex - cell.rowIndex, cell.amount],
-          itemStyle: {
-            color: resolveHeatmapCellColor(
-              rows[cell.rowIndex].color,
-              scales[cell.rowIndex],
-              cell.amount,
-              plotMode,
-            ),
-          },
-        })),
+        data: [
+          ...cells.map((cell) => ({
+            value: [cell.columnIndex, lastRowIndex - cell.rowIndex, cell.amount],
+            itemStyle: {
+              color: resolveHeatmapCellColor(
+                rows[cell.rowIndex].color,
+                scales[cell.rowIndex],
+                cell.amount,
+                plotMode,
+              ),
+            },
+          })),
+          ...totalsRow.map((amount, columnIndex) => ({
+            value: [columnIndex, bandAxisIndex, amount],
+            itemStyle: {
+              color: resolveHeatmapCellColor(bandColor, bandScale, amount, plotMode),
+            },
+          })),
+        ],
         label: { show: false },
       },
     ],
@@ -271,7 +333,7 @@ export class SpendingHeatmapPanelComponent {
     buildHeatmapChartOption(
       this.heatmap(),
       this.columnLabels(),
-      resolveChartPlotMode(),
+      { plotMode: resolveChartPlotMode(), bandColor: resolveHeatmapTotalsColor() },
       this.privacyMode(),
     ),
   );
@@ -289,40 +351,46 @@ export class SpendingHeatmapPanelComponent {
    * chart renders so the two can't diverge.
    */
   protected readonly accessibleRows = computed<HeatmapAccessibleRow[]>(() => {
-    const { columnKeys, rows, cells } = this.heatmap();
+    const { columnKeys, rows, cells, totalsRow } = this.heatmap();
     const privacyMode = this.privacyMode();
     const columnCount = columnKeys.length;
 
-    return rows.map((row, rowIndex) => ({
-      name: row.name,
-      // Privacy mode has to *withhold* the figure here, not blur it: `.sr-only` clips the table
-      // to a 1px box, so a CSS blur paints nothing, and a screen reader would read the amount out
-      // regardless (TICKET-PRIV-01's intent, caught in convention review).
-      amounts: rowAmounts(cells, rowIndex, columnCount).map((amount) =>
-        privacyMode ? HIDDEN_AMOUNT : formatCurrency(amount),
-      ),
-    }));
+    // Privacy mode has to *withhold* the figure here, not blur it: `.sr-only` clips the table to a
+    // 1px box, so a CSS blur paints nothing, and a screen reader would read the amount out
+    // regardless (TICKET-PRIV-01's intent, caught in convention review).
+    const asText = (amount: number): string =>
+      privacyMode ? HIDDEN_AMOUNT : formatCurrency(amount);
+
+    return [
+      // The band leads the table for the same reason it leads the chart: it is the summary the
+      // category rows underneath break down (TICKET-STAT-33).
+      { name: TOTALS_ROW_NAME, amounts: totalsRow.map(asText) },
+      ...rows.map((row, rowIndex) => ({
+        name: row.name,
+        amounts: rowAmounts(cells, rowIndex, columnCount).map(asText),
+      })),
+    ];
   });
 
   /**
    * A cell drills down to its category over the panel's range. The *day-of-week* half of the
    * selection is deliberately dropped: the transaction filter has no weekday param (see the
    * ticket's Notes), and inventing one inside a chart ticket would be a Transactions feature in
-   * disguise. The "Other" row folds several categories, so it drills down to the range alone.
+   * disguise. Which row means which category — including the `Other` fold and TICKET-STAT-33's
+   * `All` band, both of which drill down to the range alone — is `drilldownFor`'s business.
    */
   protected onChartClick(event: ECElementEvent): void {
     const value = event.value as [number, number, number] | undefined;
     if (!value) return;
 
-    const { rows } = this.heatmap();
-    const row = rows[rows.length - 1 - value[1]];
-    if (!row) return;
+    const drilldown = drilldownFor(this.heatmap().rows, value[1]);
+    if (!drilldown) return;
 
     void this.router.navigate(['/transactions'], {
       queryParams: buildTransactionDrilldownParams({
         from: this.rangeStore.from('dashboard'),
         to: this.rangeStore.to('dashboard'),
-        categoryId: row.categoryId ?? undefined,
+        ...drilldown,
       }),
     });
   }

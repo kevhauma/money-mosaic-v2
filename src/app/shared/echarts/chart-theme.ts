@@ -138,6 +138,18 @@ export function resolveChartPlotMode(): ChartPlotMode {
   return DARK_PLOT_THEMES.includes(activeDataTheme()) ? 'dark' : 'light';
 }
 
+/** The slot a heatmap row that is *not* a category shades from — the theme's leading accent. Safe to share with a series palette: a heatmap has no categorical series to collide with. */
+const HEATMAP_ACCENT_SLOT = 0;
+
+/**
+ * The colour the heatmap's `All` band ramps from (TICKET-STAT-33). The theme's leading accent
+ * rather than `CHART_NO_COLOR_FALLBACK`'s grey, which the app reads as "uncategorised" everywhere
+ * else and would be a lie on a row that sums every category there is.
+ */
+export function resolveHeatmapTotalsColor(): string {
+  return (CHART_CATEGORICAL_COLORS[activeDataTheme()] ?? DEFORMABLE_LIGHT)[HEATMAP_ACCENT_SLOT];
+}
+
 /** One heatmap row's own extent, the scale a cell in it is read against (TICKET-STAT-34). */
 export type HeatmapRowScale = { min: number; average: number; max: number };
 
