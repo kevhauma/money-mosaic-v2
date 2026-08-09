@@ -217,34 +217,164 @@ const median = (values: readonly number[]): number =>
 const normalizeText = (value: string | undefined): string =>
   (value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
 
-type Candidate = RecurringOccurrence & {
-  clusterKey: string;
-  counterpartyIban?: string;
-  label: string;
-  categoryId: number | null;
+/**
+ * How alike two descriptions must be to belong to one cluster (TICKET-REC-08) — the Sørensen–Dice
+ * coefficient over their token sets, at or above which they merge.
+ *
+ * **A starting point, not a finding.** It was chosen before seeing a real bank export and is
+ * expected to be tuned against one. When tuning, err *high*: a missed merge only leaves the status
+ * quo — a payment that is simply not detected — while a false merge invents a commitment the user
+ * does not have, and `bandByAmount`/`recogniseCadence` will happily find a plausible rhythm inside a
+ * cluster of two unrelated payees.
+ */
+const DESCRIPTION_MATCH_THRESHOLD = 0.8;
+
+/**
+ * A description's distinguishing words (TICKET-REC-08). Split on anything that is neither a letter
+ * nor a digit, then **every pure-numeric token is dropped**: terminal IDs, sequence numbers, card
+ * suffixes and booking dates are precisely the parts a bank varies between two payments at the same
+ * place, so keeping them would score every card payment as its own merchant. Dates need no rule of
+ * their own — `12/07` and `2026-08-09` split into numeric pieces and fall out under the same one.
+ *
+ * A *set*, because Dice compares sets: a description repeating a word is not a better match for one
+ * that says it once.
+ */
+const descriptionTokens = (normalizedDescription: string): ReadonlySet<string> => {
+  const tokens = new Set<string>();
+  for (const token of normalizedDescription.split(/[^\p{L}\p{N}]+/u)) {
+    if (token && !/^\p{N}+$/u.test(token)) tokens.add(token);
+  }
+  return tokens;
 };
 
 /**
- * Strongest counterparty signal first: a normalized IBAN identifies a payee even when the name is
- * spelled three ways; a name survives banks that don't export IBANs; the raw description is the last
- * resort for a card payment carrying neither.
+ * Sørensen–Dice over two **non-empty** token sets: `2 × |A ∩ B| / (|A| + |B|)` — 1 for identical
+ * sets, 0 for disjoint ones. Chosen over a whole-string edit-distance ratio because bank boilerplate
+ * (`SEPA DIRECT DEBIT REF …`) makes two *different* payees look character-identical while the one
+ * token that distinguishes them is a few letters long.
  */
-const clusterIdentity = (
-  transaction: Transaction,
-): { clusterKey: string; counterpartyIban?: string } => {
+const diceCoefficient = (a: ReadonlySet<string>, b: ReadonlySet<string>): number => {
+  const [smaller, larger] = a.size <= b.size ? [a, b] : [b, a];
+  let shared = 0;
+  for (const token of smaller) {
+    if (larger.has(token)) shared++;
+  }
+  return (2 * shared) / (a.size + b.size);
+};
+
+type DescriptionCluster = {
+  /** `desc:<the normalized description of the first transaction to open the cluster>`. */
+  key: string;
+  tokens: ReadonlySet<string>;
+  /** Creation order, so "the first matching cluster" is well defined without re-scanning them all. */
+  ordinal: number;
+};
+
+/**
+ * The fuzzy last-resort cluster tier (TICKET-REC-08) — a stateful assigner, created once per
+ * detection run, that answers "which description cluster does this belong to".
+ *
+ * Assignment is **greedy in input order**: a description joins the first (lowest-ordinal) existing
+ * cluster it scores `DESCRIPTION_MATCH_THRESHOLD` or better against, and otherwise opens a new one
+ * that it names. Greedy and order-bound is what makes `series[].key` reproducible across repeated
+ * detection over the same transactions, which is what lets the panel use it as a render key.
+ *
+ * Candidates come from an inverted token → cluster index, never an all-pairs sweep: two descriptions
+ * sharing no token score 0, so only clusters sharing at least one are worth measuring. This
+ * aggregate is uncached and re-runs on every read (the `bandByAmount` note records the same
+ * constraint), so the hundreds of card payments at one supermarket must cost one comparison each,
+ * not one per payment seen so far.
+ *
+ * A description that tokenises to **nothing** — a reference number and no words — falls back to
+ * exact equality. An empty token set scores 0 against everything, so it would otherwise open a fresh
+ * cluster per transaction; keying it exactly instead keeps identical references together without
+ * letting the empty set become a bucket that swallows unrelated payments.
+ */
+const createDescriptionClusters = (): ((description: string) => string) => {
+  const byToken = new Map<string, DescriptionCluster[]>();
+  const byExactKey = new Map<string, DescriptionCluster>();
+  let created = 0;
+
+  const open = (normalized: string, tokens: ReadonlySet<string>): DescriptionCluster => {
+    const cluster: DescriptionCluster = { key: `desc:${normalized}`, tokens, ordinal: created++ };
+    for (const token of tokens) {
+      const bucket = byToken.get(token);
+      if (bucket) bucket.push(cluster);
+      else byToken.set(token, [cluster]);
+    }
+    return cluster;
+  };
+
+  /** The exact-equality half, for a description with no comparable token of its own. */
+  const exactCluster = (normalized: string): DescriptionCluster => {
+    const existing = byExactKey.get(normalized);
+    if (existing) return existing;
+
+    const cluster = open(normalized, new Set());
+    byExactKey.set(normalized, cluster);
+    return cluster;
+  };
+
+  /**
+   * The only clusters worth measuring — those sharing at least one token, deduplicated and back in
+   * creation order. Everything else scores 0 by definition, which is what the token index buys.
+   */
+  const candidatesFor = (tokens: ReadonlySet<string>): DescriptionCluster[] => {
+    const candidates = new Set<DescriptionCluster>();
+    for (const token of tokens) {
+      for (const cluster of byToken.get(token) ?? []) candidates.add(cluster);
+    }
+    return [...candidates].sort((a, b) => a.ordinal - b.ordinal);
+  };
+
+  /** The first cluster, in creation order, this token set matches — `undefined` if none does. */
+  const firstMatch = (tokens: ReadonlySet<string>): DescriptionCluster | undefined =>
+    candidatesFor(tokens).find(
+      (cluster) => diceCoefficient(tokens, cluster.tokens) >= DESCRIPTION_MATCH_THRESHOLD,
+    );
+
+  return (description: string): string => {
+    const normalized = normalizeText(description);
+    const tokens = descriptionTokens(normalized);
+
+    if (tokens.size === 0) return exactCluster(normalized).key;
+    return (firstMatch(tokens) ?? open(normalized, tokens)).key;
+  };
+};
+
+type ClusterIdentity = { clusterKey: string; counterpartyIban?: string };
+
+type Candidate = RecurringOccurrence &
+  ClusterIdentity & {
+    label: string;
+    categoryId: number | null;
+  };
+
+/**
+ * The **exact-match** counterparty tiers, strongest signal first: a normalized IBAN identifies a
+ * payee even when the name is spelled three ways; a name survives banks that don't export IBANs.
+ * Both stay exact equality — an IBAN is an identifier, and a name is a strong enough signal that a
+ * false merge there would be more surprising than the missed merge it prevents, so TICKET-REC-08
+ * narrows similarity matching to descriptions only.
+ *
+ * `undefined` when the transaction carries neither, which is the card payment the fuzzy `desc:` tier
+ * exists for.
+ */
+const exactClusterIdentity = (transaction: Transaction): ClusterIdentity | undefined => {
   const iban = normalizeIban(transaction.counterpartyIban);
   if (iban) return { clusterKey: `iban:${iban}`, counterpartyIban: iban };
 
   const name = normalizeText(transaction.counterpartyName);
   if (name) return { clusterKey: `name:${name}` };
 
-  return { clusterKey: `desc:${normalizeText(transaction.rawDescription)}` };
+  return undefined;
 };
 
 const toCandidate = (
   transaction: Transaction,
   amount: number,
   categoryId: number | null,
+  identity: ClusterIdentity,
 ): Candidate | null => {
   if (transaction.id == null) return null;
   return {
@@ -253,7 +383,7 @@ const toCandidate = (
     amount,
     categoryId,
     label: transaction.counterpartyName?.trim() || transaction.rawDescription,
-    ...clusterIdentity(transaction),
+    ...identity,
   };
 };
 
@@ -509,7 +639,12 @@ const earliestBookingDate = (transactions: readonly Transaction[]): string => {
   return earliest;
 };
 
-/** Every occurrence-worthy expense, grouped under its counterparty's strongest available key. */
+/**
+ * Every occurrence-worthy expense, grouped under its counterparty's strongest available key —
+ * exact on an IBAN or a name, and by description *similarity* when the transaction carries neither
+ * (TICKET-REC-08). The clusterer is created here rather than shared, so its greedy assignment
+ * depends on nothing but this run's own input order.
+ */
 const candidatesByCounterparty = (
   transactions: readonly Transaction[],
   categoriesById: ReadonlyMap<number, Category>,
@@ -519,6 +654,7 @@ const candidatesByCounterparty = (
   ownSavingsIbans: ReadonlySet<string>,
 ): Map<string, Candidate[]> => {
   const byCluster = new Map<string, Candidate[]>();
+  const descriptionClusterKey = createDescriptionClusters();
 
   for (const transaction of transactions) {
     const result = classifyForStats(
@@ -531,7 +667,10 @@ const candidatesByCounterparty = (
     );
     if (result.kind !== 'expense' || result.amount <= 0) continue;
 
-    const candidate = toCandidate(transaction, result.amount, result.categoryId);
+    const identity = exactClusterIdentity(transaction) ?? {
+      clusterKey: descriptionClusterKey(transaction.rawDescription),
+    };
+    const candidate = toCandidate(transaction, result.amount, result.categoryId, identity);
     if (!candidate) continue;
 
     const cluster = byCluster.get(candidate.clusterKey);

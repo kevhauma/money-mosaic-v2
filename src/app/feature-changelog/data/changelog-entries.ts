@@ -786,4 +786,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-08'],
+    title: 'Payments at the same place are recognised as the same place',
+    details: [
+      'If your bank writes a different reference into every card payment — a terminal number, the city, the date — those payments used to look like a dozen different shops, none of them repeating often enough to be detected. They are now matched on the words they have in common',
+      'Terminal IDs, sequence numbers and dates are ignored when comparing two descriptions, because those are exactly the parts your bank changes every time',
+      'Two payments that only share the bank’s own boilerplate — “SEPA DD” and an account number — are still treated as two different payees. Missing a repeat is a nuisance; inventing a commitment you do not have is worse',
+      'A description that is nothing but a reference number is matched exactly, so it never becomes a bucket that swallows unrelated payments',
+      'Payments that carry a counterparty name or IBAN are unaffected — those were never the problem, and are still matched exactly',
+    ],
+    area: 'Explore',
+  },
 ];

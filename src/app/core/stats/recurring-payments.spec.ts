@@ -412,6 +412,181 @@ describe('detectRecurringPayments', () => {
   });
 });
 
+describe('detectRecurringPayments: fuzzy description clustering (TICKET-REC-08)', () => {
+  /** Neither IBAN nor counterparty name, so the fuzzy `desc:` tier is the only thing clustering these. */
+  const descriptionKeyed = (
+    entries: readonly (readonly [string, string, number])[],
+    firstId = 1,
+  ): Transaction[] =>
+    entries.map(([bookingDate, rawDescription, amount], index) =>
+      transaction({
+        id: firstId + index,
+        bookingDate,
+        amount,
+        rawDescription,
+        counterpartyName: undefined,
+      }),
+    );
+
+  /** The reporter's case: one supermarket, a different terminal ID, city and date on every payment. */
+  const supermarketCardPayments = (): Transaction[] =>
+    descriptionKeyed([
+      ['2026-05-12', 'CARD PMT 4429 ALBERT HEIJN 1183 AMSTERDAM 12/05', -45],
+      ['2026-06-11', 'CARD PMT 7781 ALBERT HEIJN 2094 UTRECHT 11/06', -46.2],
+      ['2026-07-12', 'CARD PMT 3310 ALBERT HEIJN 1183 ROTTERDAM 12/07', -44.1],
+    ]);
+
+  it('clusters card payments that differ only in a terminal ID, a city and a date', () => {
+    // Five tokens each once the numerics are dropped, four shared — Dice 0.80, exactly the threshold.
+    const { series } = detect(supermarketCardPayments());
+
+    expect(series).toHaveLength(1);
+    expect(series[0].cadence).toBe('monthly');
+    expect(series[0].occurrences).toHaveLength(3);
+    expect(series[0].typicalAmount).toBe(45);
+    // The cluster is named by the first transaction to open it, in input order.
+    expect(series[0].label).toBe('CARD PMT 4429 ALBERT HEIJN 1183 AMSTERDAM 12/05');
+  });
+
+  it('keeps two payees apart when all they share is bank boilerplate', () => {
+    // Both carry `SEPA DD <iban>`; only the payee token differs, so Dice is 2 × 3 / (5 + 5) = 0.60.
+    // A false merge here would read as one fortnightly rhythm instead of two monthly ones.
+    const { series } = detect(
+      descriptionKeyed([
+        ['2026-05-04', 'SEPA DD NL92ABNA0417164300 ACME INSURANCE', -30],
+        ['2026-06-04', 'SEPA DD NL92ABNA0417164300 ACME INSURANCE', -30],
+        ['2026-07-04', 'SEPA DD NL92ABNA0417164300 ACME INSURANCE', -30],
+        ['2026-05-18', 'SEPA DD NL92ABNA0417164300 ZETA TELECOM', -30],
+        ['2026-06-18', 'SEPA DD NL92ABNA0417164300 ZETA TELECOM', -30],
+        ['2026-07-18', 'SEPA DD NL92ABNA0417164300 ZETA TELECOM', -30],
+      ]),
+    );
+
+    expect(series).toHaveLength(2);
+    expect(series.every((entry) => entry.cadence === 'monthly')).toBe(true);
+    expect(series.map((entry) => entry.label).sort()).toEqual([
+      'SEPA DD NL92ABNA0417164300 ACME INSURANCE',
+      'SEPA DD NL92ABNA0417164300 ZETA TELECOM',
+    ]);
+  });
+
+  it('does not let a description that tokenises to nothing swallow unrelated payments', () => {
+    // Pure reference numbers: every token is numeric, so both token sets are empty and would score
+    // 0 against everything. Exact equality holds each reference together and neither absorbs the
+    // other — merged, these six dates would read as one fortnightly series.
+    const { series } = detect([
+      ...descriptionKeyed([
+        ['2026-05-05', '0001 12/07', -20],
+        ['2026-06-05', '0001 12/07', -20],
+        ['2026-07-05', '0001 12/07', -20],
+      ]),
+      ...descriptionKeyed(
+        [
+          ['2026-05-19', '9999 26/07', -20],
+          ['2026-06-19', '9999 26/07', -20],
+          ['2026-07-19', '9999 26/07', -20],
+        ],
+        10,
+      ),
+    ]);
+
+    expect(series).toHaveLength(2);
+    expect(series.every((entry) => entry.occurrences.length === 3)).toBe(true);
+    expect(series.map((entry) => entry.label).sort()).toEqual(['0001 12/07', '9999 26/07']);
+  });
+
+  it('merges at the threshold and leaves the descriptions just below it alone', () => {
+    // Five tokens each, four shared: 2 × 4 / (5 + 5) = 0.80 — at `DESCRIPTION_MATCH_THRESHOLD`.
+    const atThreshold = detect(
+      descriptionKeyed([
+        ['2026-05-06', 'alpha beta gamma delta epsilon', -25],
+        ['2026-06-06', 'alpha beta gamma delta zeta', -25],
+        ['2026-07-06', 'alpha beta gamma delta eta', -25],
+      ]),
+    ).series;
+
+    expect(atThreshold).toHaveLength(1);
+    expect(atThreshold[0].occurrences).toHaveLength(3);
+
+    // Four tokens each, three shared: 2 × 3 / (4 + 4) = 0.75 — three clusters of one, no series.
+    const belowThreshold = detect(
+      descriptionKeyed([
+        ['2026-05-06', 'alpha beta gamma delta', -25],
+        ['2026-06-06', 'alpha beta gamma zeta', -25],
+        ['2026-07-06', 'alpha beta gamma eta', -25],
+      ]),
+    ).series;
+
+    expect(belowThreshold).toEqual([]);
+  });
+
+  it('returns the same series keys on every run, so `key` stays safe as a render key', () => {
+    const first = detect(supermarketCardPayments()).series;
+    const second = detect(supermarketCardPayments()).series;
+
+    expect(first.map((entry) => entry.key)).toEqual(second.map((entry) => entry.key));
+    // Named after the cluster's opener, not after whichever member happened to sort first.
+    expect(first[0].key).toBe('desc:card pmt 4429 albert heijn 1183 amsterdam 12/05|45.00');
+  });
+
+  it('leaves the name and IBAN tiers on exact equality, however alike they look', () => {
+    const monthlyOn = (day: string): readonly string[] => [
+      `2026-05-${day}`,
+      `2026-06-${day}`,
+      `2026-07-${day}`,
+    ];
+
+    // Token-wise these two names score 2 × 3 / (3 + 4) ≈ 0.86 — above the threshold — but the
+    // `name:` tier never asks: a fuzzy merge on a name is the surprise REC-08 refused to risk.
+    const byName = detect([
+      ...monthlyOn('07').map((bookingDate, index) =>
+        transaction({
+          id: index + 1,
+          bookingDate,
+          amount: -22,
+          counterpartyName: 'Albert Heijn 1183 Amsterdam',
+        }),
+      ),
+      ...monthlyOn('21').map((bookingDate, index) =>
+        transaction({
+          id: 10 + index,
+          bookingDate,
+          amount: -22,
+          counterpartyName: 'Albert Heijn 1183 Amsterdam BV',
+        }),
+      ),
+    ]).series;
+
+    expect(byName).toHaveLength(2);
+
+    // Identical descriptions, two IBANs: the strongest tier wins and the description is never read.
+    const byIban = detect([
+      ...monthlyOn('07').map((bookingDate, index) =>
+        transaction({
+          id: index + 1,
+          bookingDate,
+          amount: -22,
+          counterpartyName: undefined,
+          counterpartyIban: 'NL01BANK0000000001',
+          rawDescription: 'MONTHLY BILL',
+        }),
+      ),
+      ...monthlyOn('21').map((bookingDate, index) =>
+        transaction({
+          id: 10 + index,
+          bookingDate,
+          amount: -22,
+          counterpartyName: undefined,
+          counterpartyIban: 'NL02BANK0000000002',
+          rawDescription: 'MONTHLY BILL',
+        }),
+      ),
+    ]).series;
+
+    expect(byIban).toHaveLength(2);
+  });
+});
+
 describe('detectRecurringPayments: change flags (TICKET-REC-04)', () => {
   /** Monthly on the 5th, three payments at one price then three at another. */
   const repriced = (before: number, after: number): Transaction[] =>
