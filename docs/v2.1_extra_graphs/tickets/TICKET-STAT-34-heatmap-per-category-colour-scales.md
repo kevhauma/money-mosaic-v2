@@ -68,30 +68,69 @@ means "stands out more", on light and dark alike.
 
 ## Acceptance criteria
 
-- [ ] A pure, unit-tested colour function takes a category colour, a row's min/average/max and the
+- [x] A pure, unit-tested colour function takes a category colour, a row's min/average/max and the
       active theme's mode, and returns the cell's colour — no component reimplements the mixing.
-- [ ] A cell at its row's average resolves to the category's configured colour exactly.
-- [ ] On a dark theme, a below-average cell is darker than the category colour and an above-average
+      (`resolveHeatmapCellColor(categoryColor, HeatmapRowScale, amount, ChartPlotMode)` in
+      `shared/echarts/chart-theme.ts`; the panel's `buildHeatmapChartOption` only calls it, and the
+      `#ffffff`/`#000000` endpoints live in that file's `HEATMAP_RAMP` table alone.)
+- [x] A cell at its row's average resolves to the category's configured colour exactly.
+      (`chart-theme.spec.ts` › "draws a cell at its row's average in the category colour exactly,
+      in either mode".)
+- [x] On a dark theme, a below-average cell is darker than the category colour and an above-average
       cell is lighter; on a light theme both are reversed. Asserted against the theme's actual
-      `data-theme` value, the way `chart-theme.spec.ts` already drives it.
-- [ ] Hue is preserved: only the lightness of the category colour moves along a row's ramp.
-- [ ] Every row is scaled against its **own** min/max, so changing one category's amounts leaves
-      every other row's colours untouched.
-- [ ] A row with no spread (all cells equal, including all zero) renders flat in the category colour
-      and never produces `NaN`, a division by zero, or a non-hex string.
-- [ ] Colours are emitted as `#rrggbb`, never `oklch()` or a CSS variable — an echarts canvas option
-      cannot consume those (the existing `chart-theme.spec.ts` rule).
-- [ ] A category with no colour, and the `Other` fold, ramp from `CHART_NO_COLOR_FALLBACK`.
-- [ ] The single global amount scale is gone and a caption states what the shading is relative to.
-- [ ] The cycle picker, category exclusion, cell drill-down, the `sr-only` table's figures and
-      privacy mode's withholding are all unchanged (their existing specs pass untouched).
-- [ ] Unit tests cover: the average anchor; both directions on both theme modes; hue preservation;
+      `data-theme` value, the way `chart-theme.spec.ts` already drives it. (`chart-theme.spec.ts` ›
+      "on a dark theme, draws below average darker and above average lighter" / "on a light theme,
+      reverses both directions" — each calls `setDataTheme(...)` then `resolveChartPlotMode()`,
+      which itself is specced in "resolveChartPlotMode (TICKET-STAT-34)".)
+- [x] Hue is preserved: only the lightness of the category colour moves along a row's ramp.
+      (`chart-theme.spec.ts` › "moves lightness only, keeping the category's hue at every
+      intensity" — hue drift under 1° across five amounts × both modes; mixing toward pure
+      white/black scales every channel difference uniformly.)
+- [x] Every row is scaled against its **own** min/max, so changing one category's amounts leaves
+      every other row's colours untouched. (`chart-theme.spec.ts` › "scales every row against its
+      own extent"; and end-to-end through the option builder in
+      `spending-heatmap-panel.component.spec.ts` › "leaves one row's colours untouched when another
+      row's amounts change", which multiplies the Rent row by 10 and re-asserts the grocery cells.)
+- [x] A row with no spread (all cells equal, including all zero) renders flat in the category colour
+      and never produces `NaN`, a division by zero, or a non-hex string. (`chart-theme.spec.ts` ›
+      "draws a row with no spread flat in the category colour, all-zero included".)
+- [x] Colours are emitted as `#rrggbb`, never `oklch()` or a CSS variable — an echarts canvas option
+      cannot consume those (the existing `chart-theme.spec.ts` rule). (`chart-theme.spec.ts` ›
+      "never emits NaN, a division by zero or a non-hex string an echarts canvas could not
+      consume" — every theme in the catalogue × five anchors, an `oklch(...)` string and `''`
+      included, which `normalizeHex` routes to `CHART_NO_COLOR_FALLBACK`.)
+- [x] A category with no colour, and the `Other` fold, ramp from `CHART_NO_COLOR_FALLBACK`.
+      (The aggregate already sets `row.color` to that gray for both — `category-cycle-heatmap.ts`'s
+      `buildRows` — and the panel ramps from whatever `row.color` holds:
+      `spending-heatmap-panel.component.spec.ts` › "ramps the \"Other\" fold from the neutral gray
+      the aggregate hands it", plus `chart-theme.spec.ts` › "ramps an uncoloured category".)
+- [x] The single global amount scale is gone and a caption states what the shading is relative to.
+      (`buildHeatmapChartOption` emits no `visualMap` at all and hands `grid.bottom` back to 8;
+      `HEATMAP_SHADING_CAPTION` renders under the chart. Specs: "drops the single amount scale — no
+      colour maps to one amount any more" and "states what the shading is relative to, in place of
+      the removed amount scale".)
+- [x] The cycle picker, category exclusion, cell drill-down, the `sr-only` table's figures and
+      privacy mode's withholding are all unchanged (their existing specs pass untouched). (All of
+      TICKET-STAT-29..32's specs pass as written. Two assertions inside the privacy-mode specs were
+      rewritten because they asserted on the *removed* `visualMap` — `visualMap.show === false`
+      became `visualMap` is `undefined`; the withholding itself, the tooltip suppression and the
+      `sr-only` figures are asserted exactly as before.)
+- [x] Unit tests cover: the average anchor; both directions on both theme modes; hue preservation;
       the no-spread row; the missing-colour fallback; per-row independence; the hex-only rule.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: the heatmap on `/dashboard` in a light theme and a dark one,
-      confirming each row carries its category's hue and that the heavier cells are the ones that
-      stand out in both.
+      (Nine cases in `chart-theme.spec.ts` › "resolveHeatmapCellColor (TICKET-STAT-34)" plus two in
+      "resolveChartPlotMode (TICKET-STAT-34)", and four more through the option builder in
+      `spending-heatmap-panel.component.spec.ts` › "per-category colour scales (TICKET-STAT-34)".)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (2026-08-09: lint
+      clean, 2633 tests / 243 files green, dev build completes.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD`:
+      verdict **pass**, 0 dead code, 0 duplication, 0 introduced complexity — `resolveHeatmapCellColor`
+      first landed at CRAP 42 and was restructured around the `HEATMAP_RAMP` table to clear it.
+      `conventions-reviewer` on the diff: no blocking violations; its three notes were all applied —
+      `HEATMAP_SHADING_CAPTION` un-exported, the row-slice de-duplicated into `rowAmounts`, and
+      `coding-conventions/SKILL.md`'s now-stale `visualMap` privacy example refreshed.)
+- [ ] ~~Verified live in the browser~~ — **waived by the user on 2026-08-09**, who chose to skip the
+      browser check for this ticket. Not verified: how the per-row ramps actually read on
+      `/dashboard` in a light vs. a dark theme.
 
 ## Notes
 

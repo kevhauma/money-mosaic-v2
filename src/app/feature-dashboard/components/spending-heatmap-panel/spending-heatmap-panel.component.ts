@@ -2,7 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
-import { computeCategoryCycleHeatmap, type CategoryCycleHeatmap } from '@/core/stats';
+import {
+  computeCategoryCycleHeatmap,
+  type CategoryCycleHeatmap,
+  type HeatmapCell,
+} from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
 import { CategoryExclusionDropdownComponent } from '../category-exclusion-dropdown/category-exclusion-dropdown.component';
 import {
@@ -13,7 +17,13 @@ import {
   RangeStore,
   TransactionsStore,
 } from '@/core/state';
-import { resolveChartAnimation, resolveChartHeatmapColors } from '@/shared/echarts';
+import {
+  resolveChartAnimation,
+  resolveChartPlotMode,
+  resolveHeatmapCellColor,
+  type ChartPlotMode,
+  type HeatmapRowScale,
+} from '@/shared/echarts';
 import {
   CyclePickerComponent,
   FlexComponent,
@@ -50,21 +60,55 @@ const CYCLE_AXIS_NOUNS: Record<CycleKey, string> = {
 };
 
 /**
+ * What the shading means, now that no single scale can be drawn under the chart (TICKET-STAT-34) —
+ * every row has its own, so one colour no longer maps to one amount anywhere in the grid.
+ */
+const HEATMAP_SHADING_CAPTION =
+  'Shading is relative to each category’s own average — heavier spend stands out more';
+
+/**
+ * One row's amounts, left to right. `cells` is dense and row-major (`buildGrid` fills every
+ * position), so a row is a direct slice — no per-cell search. The chart's colour scales and the
+ * screen-reader table both read a row through here, so the two can't slice it differently.
+ */
+const rowAmounts = (
+  cells: readonly HeatmapCell[],
+  rowIndex: number,
+  columnCount: number,
+): number[] =>
+  cells.slice(rowIndex * columnCount, (rowIndex + 1) * columnCount).map((cell) => cell.amount);
+
+/** A row's own extent, the scale its cells are coloured against (TICKET-STAT-34). */
+const rowScale = (amounts: readonly number[]): HeatmapRowScale => ({
+  min: Math.min(...amounts),
+  max: Math.max(...amounts),
+  average: amounts.reduce((sum, amount) => sum + amount, 0) / amounts.length,
+});
+
+/**
  * Pure echarts-option builder, kept outside the component so the axis/series mapping is testable
  * without a chart instance or `TestBed` (the `buildColumnChartOption` precedent in
  * `trend-chart-panel.component.ts`).
  *
  * The y-axis is the aggregate's rows **reversed**: echarts draws category index 0 at the bottom,
  * and the heaviest category belongs at the top where the eye starts.
+ *
+ * Colour is resolved per cell rather than by a `visualMap` (TICKET-STAT-34): a `visualMap` maps one
+ * scale across a whole series, and every row here is read against its own min/average/max in its
+ * own category's colour. Keeping the resolution in the option builder is what lets the option shape
+ * stay flat — one series, one `itemStyle` per data item — instead of one `visualMap` per row.
  */
 export const buildHeatmapChartOption = (
   heatmap: CategoryCycleHeatmap,
   columnLabels: readonly string[],
-  rampColors: string[],
+  plotMode: ChartPlotMode,
   privacyMode: boolean,
 ): EChartsCoreOption => {
-  const { rows, cells, maxAmount } = heatmap;
+  const { columnKeys, rows, cells } = heatmap;
   const lastRowIndex = rows.length - 1;
+  const columnCount = columnKeys.length;
+
+  const scales = rows.map((_, rowIndex) => rowScale(rowAmounts(cells, rowIndex, columnCount)));
 
   return {
     ...resolveChartAnimation(),
@@ -78,9 +122,7 @@ export const buildHeatmapChartOption = (
         return privacyMode ? heading : `${heading}<br/>${formatCurrency(amount)}`;
       },
     },
-    // The scale sits under the axis labels, so the grid has to give up the room it occupies —
-    // without it echarts draws the bar past the canvas edge and clips it (seen in the browser check).
-    grid: { left: 8, right: 8, top: 8, bottom: privacyMode ? 8 : 48, containLabel: true },
+    grid: { left: 8, right: 8, top: 8, bottom: 8, containLabel: true },
     xAxis: {
       type: 'category',
       data: [...columnLabels],
@@ -91,30 +133,20 @@ export const buildHeatmapChartOption = (
       data: [...rows].reverse().map((row) => row.name),
       splitArea: { show: true },
     },
-    visualMap: {
-      min: 0,
-      max: maxAmount,
-      calculable: false,
-      orient: 'horizontal',
-      left: 'center',
-      bottom: 2,
-      // Horizontal orientation swaps the two: `itemHeight` is the bar's length, `itemWidth` its thickness.
-      itemHeight: 120,
-      itemWidth: 10,
-      textStyle: { fontSize: 10 },
-      // Stated as end labels rather than left to the default numeric ones, so the scale reads in
-      // the user's own currency format — `[high, low]`, which horizontal orientation draws right-to-left.
-      text: [formatCurrency(maxAmount), formatCurrency(0)],
-      inRange: { color: rampColors },
-      // The scale's own labels are amounts, so it goes away entirely with privacy mode on; the
-      // colours it drives stay applied either way.
-      show: !privacyMode,
-      formatter: (value: number) => formatCurrency(value),
-    },
     series: [
       {
         type: 'heatmap',
-        data: cells.map((cell) => [cell.columnIndex, lastRowIndex - cell.rowIndex, cell.amount]),
+        data: cells.map((cell) => ({
+          value: [cell.columnIndex, lastRowIndex - cell.rowIndex, cell.amount],
+          itemStyle: {
+            color: resolveHeatmapCellColor(
+              rows[cell.rowIndex].color,
+              scales[cell.rowIndex],
+              cell.amount,
+              plotMode,
+            ),
+          },
+        })),
         label: { show: false },
       },
     ],
@@ -232,11 +264,14 @@ export class SpendingHeatmapPanelComponent {
    */
   protected readonly columnLabels = computed(() => cycleColumnLabels(this.cycle()));
 
+  /** What the colours mean, in place of the amount scale a per-row ramp can no longer draw (TICKET-STAT-34). */
+  protected readonly shadingCaption = HEATMAP_SHADING_CAPTION;
+
   protected readonly chartOption = computed<EChartsCoreOption>(() =>
     buildHeatmapChartOption(
       this.heatmap(),
       this.columnLabels(),
-      resolveChartHeatmapColors(),
+      resolveChartPlotMode(),
       this.privacyMode(),
     ),
   );
@@ -258,16 +293,14 @@ export class SpendingHeatmapPanelComponent {
     const privacyMode = this.privacyMode();
     const columnCount = columnKeys.length;
 
-    // `cells` is a dense, row-major grid (`buildGrid` fills every position), so the row's slice is
-    // a direct index — no per-cell search.
     return rows.map((row, rowIndex) => ({
       name: row.name,
-      amounts: cells
-        .slice(rowIndex * columnCount, (rowIndex + 1) * columnCount)
-        // Privacy mode has to *withhold* the figure here, not blur it: `.sr-only` clips the table
-        // to a 1px box, so a CSS blur paints nothing, and a screen reader would read the amount out
-        // regardless (TICKET-PRIV-01's intent, caught in convention review).
-        .map((cell) => (privacyMode ? HIDDEN_AMOUNT : formatCurrency(cell.amount))),
+      // Privacy mode has to *withhold* the figure here, not blur it: `.sr-only` clips the table
+      // to a 1px box, so a CSS blur paints nothing, and a screen reader would read the amount out
+      // regardless (TICKET-PRIV-01's intent, caught in convention review).
+      amounts: rowAmounts(cells, rowIndex, columnCount).map((amount) =>
+        privacyMode ? HIDDEN_AMOUNT : formatCurrency(amount),
+      ),
     }));
   });
 

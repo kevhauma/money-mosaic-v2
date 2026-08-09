@@ -63,13 +63,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-STAT-34',
-    title:
-      'Shade each heatmap row in its own category colour, lighter or darker than usual for that category',
-    area: 'Dashboard',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-STAT-33',
     title: 'An "All" row across the top of the spending heatmap, showing your total rhythm',
     area: 'Dashboard',

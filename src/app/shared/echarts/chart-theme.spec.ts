@@ -3,8 +3,9 @@ import {
   CHART_NO_COLOR_FALLBACK,
   resolveChartAnimation,
   resolveChartCategoricalColors,
-  resolveChartHeatmapColors,
+  resolveChartPlotMode,
   resolveGrossSeriesColor,
+  resolveHeatmapCellColor,
   type GrossSeriesColorId,
 } from './chart-theme';
 
@@ -153,67 +154,159 @@ describe('CHART_NO_COLOR_FALLBACK', () => {
   });
 });
 
-describe('resolveChartHeatmapColors (TICKET-STAT-29)', () => {
+const ALL_THEMES = [
+  'deformable',
+  'deformable-dark',
+  'neumorphism',
+  'neumorphism-dark',
+  'liquid-glass',
+  'cyberpunk',
+  'skeuomorphism',
+  'anti-polish',
+  'memphis',
+  'retro-futurism',
+  'not-a-real-theme',
+];
+
+describe('resolveChartPlotMode (TICKET-STAT-34)', () => {
+  it('reports dark for a theme whose plot sits on a dark background', () => {
+    setDataTheme('deformable-dark');
+    expect(resolveChartPlotMode()).toBe('dark');
+
+    setDataTheme('cyberpunk');
+    expect(resolveChartPlotMode()).toBe('dark');
+  });
+
+  it('reports light for a light theme, an unset one and an unknown one', () => {
+    setDataTheme('deformable');
+    expect(resolveChartPlotMode()).toBe('light');
+
+    setDataTheme(null);
+    expect(resolveChartPlotMode()).toBe('light');
+
+    setDataTheme('not-a-theme');
+    expect(resolveChartPlotMode()).toBe('light');
+  });
+});
+
+describe('resolveHeatmapCellColor (TICKET-STAT-34)', () => {
   const HEX = /^#[0-9a-f]{6}$/;
 
-  it('ramps from a faded tint up to the theme’s own leading accent', () => {
-    setDataTheme('deformable');
+  /** A row with a genuine spread on both sides of its average. */
+  const scale = { min: 0, average: 40, max: 100 };
+  const GROCERIES = '#3366cc';
 
-    const ramp = resolveChartHeatmapColors();
+  const brightness = (hex: string): number =>
+    parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(3, 5), 16) + parseInt(hex.slice(5, 7), 16);
 
-    expect(ramp).toHaveLength(3);
-    expect(ramp[2]).toBe(resolveChartCategoricalColors()[0]); // the top of the ramp is the accent itself
-    expect(ramp.every((color) => HEX.test(color))).toBe(true);
+  /** Hue in degrees — the thing that must survive a move along a row's ramp. */
+  const hue = (hex: string): number => {
+    const [red, green, blue] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16) / 255);
+    const max = Math.max(red, green, blue);
+    const spread = max - Math.min(red, green, blue);
+    if (spread === 0) return 0;
+    const sixths =
+      max === red
+        ? (green - blue) / spread
+        : max === green
+          ? (blue - red) / spread + 2
+          : (red - green) / spread + 4;
+    return (sixths * 60 + 360) % 360;
+  };
+
+  it('draws a cell at its row’s average in the category colour exactly, in either mode', () => {
+    expect(resolveHeatmapCellColor(GROCERIES, scale, 40, 'light')).toBe(GROCERIES);
+    expect(resolveHeatmapCellColor(GROCERIES, scale, 40, 'dark')).toBe(GROCERIES);
   });
 
-  it('fades toward white on a light theme and toward black on a dark one', () => {
-    setDataTheme('deformable');
-    const lightLow = resolveChartHeatmapColors()[0];
-
+  it('on a dark theme, draws below average darker and above average lighter', () => {
     setDataTheme('deformable-dark');
-    const darkLow = resolveChartHeatmapColors()[0];
+    const mode = resolveChartPlotMode();
 
-    // Same position in the ramp, opposite ends of the brightness scale.
-    const brightness = (hex: string): number =>
-      parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(3, 5), 16) + parseInt(hex.slice(5, 7), 16);
-    expect(brightness(lightLow)).toBeGreaterThan(brightness(darkLow));
+    const quiet = resolveHeatmapCellColor(GROCERIES, scale, 0, mode);
+    const heavy = resolveHeatmapCellColor(GROCERIES, scale, 100, mode);
+
+    expect(brightness(quiet)).toBeLessThan(brightness(GROCERIES));
+    expect(brightness(heavy)).toBeGreaterThan(brightness(GROCERIES));
   });
 
-  it('rises monotonically in saturation from low to high stop', () => {
-    setDataTheme('cyberpunk');
+  it('on a light theme, reverses both directions — heavier spend still stands out more', () => {
+    setDataTheme('deformable');
+    const mode = resolveChartPlotMode();
 
-    const ramp = resolveChartHeatmapColors();
+    const quiet = resolveHeatmapCellColor(GROCERIES, scale, 0, mode);
+    const heavy = resolveHeatmapCellColor(GROCERIES, scale, 100, mode);
 
-    const distanceFromBlack = (hex: string): number =>
-      parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(3, 5), 16) + parseInt(hex.slice(5, 7), 16);
-    // Cyberpunk is a dark-plot theme, so each stop sits further from the background than the last.
-    expect(distanceFromBlack(ramp[0])).toBeLessThan(distanceFromBlack(ramp[1]));
-    expect(distanceFromBlack(ramp[1])).toBeLessThan(distanceFromBlack(ramp[2]));
+    expect(brightness(quiet)).toBeGreaterThan(brightness(GROCERIES));
+    expect(brightness(heavy)).toBeLessThan(brightness(GROCERIES));
   });
 
-  it('gives every theme in the catalogue a valid three-stop ramp, unknown themes included', () => {
-    for (const theme of [
-      'deformable',
-      'deformable-dark',
-      'neumorphism',
-      'neumorphism-dark',
-      'liquid-glass',
-      'cyberpunk',
-      'skeuomorphism',
-      'anti-polish',
-      'memphis',
-      'retro-futurism',
-      'not-a-real-theme',
-    ]) {
+  it('moves lightness only, keeping the category’s hue at every intensity', () => {
+    const anchorHue = hue(GROCERIES);
+
+    for (const mode of ['light', 'dark'] as const) {
+      for (const amount of [0, 10, 40, 70, 100]) {
+        // Under a degree of channel-rounding wobble; the hue itself is preserved by mixing toward
+        // pure white/black, which scales every channel difference uniformly.
+        const drift = Math.abs(
+          hue(resolveHeatmapCellColor(GROCERIES, scale, amount, mode)) - anchorHue,
+        );
+        expect(drift, `${mode} @ ${amount}`).toBeLessThan(1);
+      }
+    }
+  });
+
+  it('draws a row with no spread flat in the category colour, all-zero included', () => {
+    const flat = { min: 25, average: 25, max: 25 };
+    const empty = { min: 0, average: 0, max: 0 };
+
+    for (const mode of ['light', 'dark'] as const) {
+      expect(resolveHeatmapCellColor(GROCERIES, flat, 25, mode)).toBe(GROCERIES);
+      expect(resolveHeatmapCellColor(GROCERIES, empty, 0, mode)).toBe(GROCERIES);
+    }
+  });
+
+  it('scales every row against its own extent, so absolute amounts never leak between rows', () => {
+    // Same shape, amounts 100x apart: a cell at the same position in its own row draws identically.
+    const small = { min: 0, average: 4, max: 10 };
+    const large = { min: 0, average: 400, max: 1000 };
+
+    expect(resolveHeatmapCellColor(GROCERIES, small, 10, 'light')).toBe(
+      resolveHeatmapCellColor(GROCERIES, large, 1000, 'light'),
+    );
+    expect(resolveHeatmapCellColor(GROCERIES, small, 0, 'dark')).toBe(
+      resolveHeatmapCellColor(GROCERIES, large, 0, 'dark'),
+    );
+  });
+
+  it('ramps an uncoloured category — and the "Other" fold — from the neutral gray', () => {
+    // What the aggregate hands the panel for a category with no colour and for the fold.
+    const heavy = resolveHeatmapCellColor(CHART_NO_COLOR_FALLBACK, scale, 100, 'light');
+
+    expect(resolveHeatmapCellColor(CHART_NO_COLOR_FALLBACK, scale, 40, 'light')).toBe(
+      CHART_NO_COLOR_FALLBACK,
+    );
+    expect(heavy).toMatch(HEX);
+    expect(brightness(heavy)).toBeLessThan(brightness(CHART_NO_COLOR_FALLBACK));
+  });
+
+  it('never emits NaN, a division by zero or a non-hex string an echarts canvas could not consume', () => {
+    const anchors = [GROCERIES, '#FFAA00', CHART_NO_COLOR_FALLBACK, 'oklch(0.7 0.1 200)', ''];
+    const scales = [scale, { min: 0, average: 0, max: 0 }, { min: 5, average: 5, max: 5 }];
+
+    for (const theme of ALL_THEMES) {
       setDataTheme(theme);
-
-      const ramp = resolveChartHeatmapColors();
-
-      expect(ramp, theme).toHaveLength(3);
-      expect(
-        ramp.every((color) => HEX.test(color)),
-        theme,
-      ).toBe(true);
+      const mode = resolveChartPlotMode();
+      for (const anchor of anchors) {
+        for (const rowScale of scales) {
+          for (const amount of [0, rowScale.average, rowScale.max, 999]) {
+            expect(
+              resolveHeatmapCellColor(anchor, rowScale, amount, mode),
+              `${theme} ${anchor}`,
+            ).toMatch(HEX);
+          }
+        }
+      }
     }
   });
 });

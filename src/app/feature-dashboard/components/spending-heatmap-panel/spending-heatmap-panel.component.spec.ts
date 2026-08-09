@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import type { ECElementEvent } from 'echarts/core';
+import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import { appDb, CategoriesRepository, type Category, type Transaction } from '@/core/data-access';
@@ -11,7 +11,7 @@ import {
   RangeStore,
   TransactionsStore,
 } from '@/core/state';
-import { echarts } from '@/shared/echarts';
+import { CHART_NO_COLOR_FALLBACK, echarts, resolveHeatmapCellColor } from '@/shared/echarts';
 import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import {
@@ -20,6 +20,9 @@ import {
 } from './spending-heatmap-panel.component';
 
 stubEchartsBrowserApis();
+
+/** What one cell looks like once its colour is resolved per row (TICKET-STAT-34) rather than by a `visualMap`. */
+type HeatmapCellItem = { value: [number, number, number]; itemStyle: { color: string } };
 
 const groceries: Category = {
   id: 1,
@@ -135,7 +138,7 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
     fixture.detectChanges();
 
     const option = fixture.componentInstance['chartOption']();
-    const series = option['series'] as [{ data: [number, number, number][] }];
+    const series = option['series'] as [{ data: HeatmapCellItem[] }];
     const yAxis = option['yAxis'] as { data: string[] };
 
     expect(series[0].data).toHaveLength(14); // two rows x seven columns
@@ -186,14 +189,23 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
     expect(tableText).toContain('hidden');
 
     const option = fixture.componentInstance['chartOption']();
-    // The scale's labels are amounts, so it goes away; the cells it colours do not.
-    expect((option['visualMap'] as { show: boolean }).show).toBe(false);
+    // No amount-labelled scale exists to leak a figure any more (TICKET-STAT-34); the cells stay.
+    expect(option['visualMap']).toBeUndefined();
     expect((option['series'] as [{ data: unknown[] }])[0].data.length).toBe(7);
 
     const tooltipFormatter = (option['tooltip'] as { formatter: (p: unknown) => string }).formatter;
     const tooltipText = tooltipFormatter({ value: [0, 0, 40] });
     expect(tooltipText).toContain('Groceries');
     expect(tooltipText).not.toContain('40');
+  });
+
+  it('states what the shading is relative to, in place of the removed amount scale (TICKET-STAT-34)', async () => {
+    await seedGroceries(transaction({ id: 1, amount: -40 }));
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Shading is relative to each category’s own average',
+    );
+    expect(fixture.componentInstance['chartOption']()['visualMap']).toBeUndefined();
   });
 
   it('shows the amount in the tooltip while privacy mode is off', async () => {
@@ -410,27 +422,25 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
     coveredColumnCount: 2,
   };
 
+  /** Each row's own extent, the scale TICKET-STAT-34 colours it against — restated here so the
+   *  expectations read as arithmetic on the fixture rather than as whatever the builder computed. */
+  const RENT_SCALE = { min: 0, average: 450, max: 900 };
+  const GROCERIES_SCALE = { min: 15, average: 20, max: 25 };
+
+  const cellItems = (option: EChartsCoreOption): HeatmapCellItem[] =>
+    (option['series'] as [{ data: HeatmapCellItem[] }])[0].data;
+
   it('reverses the rows onto the y-axis, so the heaviest category sits on top', () => {
-    const option = buildHeatmapChartOption(
-      heatmap,
-      ['Mon', 'Tue'],
-      ['#eee', '#999', '#333'],
-      false,
-    );
+    const option = buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], 'light', false);
 
     expect((option['yAxis'] as { data: string[] }).data).toEqual(['Groceries', 'Rent']);
     expect((option['xAxis'] as { data: string[] }).data).toEqual(['Mon', 'Tue']);
   });
 
   it('emits one [column, row, amount] tuple per cell, with the row index mirrored to match the axis', () => {
-    const option = buildHeatmapChartOption(
-      heatmap,
-      ['Mon', 'Tue'],
-      ['#eee', '#999', '#333'],
-      false,
-    );
+    const option = buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], 'light', false);
 
-    expect((option['series'] as [{ data: number[][] }])[0].data).toEqual([
+    expect(cellItems(option).map((item) => item.value)).toEqual([
       [0, 1, 900],
       [1, 1, 0],
       [0, 0, 25],
@@ -438,23 +448,106 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
     ]);
   });
 
-  it('scales the colour ramp from zero to the grid’s own maximum', () => {
-    const ramp = ['#eee', '#999', '#333'];
+  describe('per-category colour scales (TICKET-STAT-34)', () => {
+    it('drops the single amount scale — no colour maps to one amount any more', () => {
+      const option = buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], 'light', false);
 
-    const visualMap = buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], ramp, false)[
-      'visualMap'
-    ] as { min: number; max: number; show: boolean; inRange: { color: string[] }; text: string[] };
+      expect(option['visualMap']).toBeUndefined();
+      // The room the scale used to claim under the axis labels goes back to the grid.
+      expect(option['grid']).toEqual({ left: 8, right: 8, top: 8, bottom: 8, containLabel: true });
+    });
 
-    expect(visualMap.min).toBe(0);
-    expect(visualMap.max).toBe(900);
-    expect(visualMap.inRange.color).toBe(ramp);
-    expect(visualMap.text).toEqual(['€900.00', '€0.00']);
+    it('colours each cell from its own row’s category colour and its own row’s scale', () => {
+      const items = cellItems(buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], 'light', false));
+
+      // Rent: cells [900, 0], average 450 — both ends of its own range, off #ff0000.
+      expect(items[0].itemStyle.color).toBe(
+        resolveHeatmapCellColor('#ff0000', RENT_SCALE, 900, 'light'),
+      );
+      expect(items[1].itemStyle.color).toBe(
+        resolveHeatmapCellColor('#ff0000', RENT_SCALE, 0, 'light'),
+      );
+      // Groceries: cells [25, 15], average 20 — a far smaller row, still using its full range.
+      expect(items[2].itemStyle.color).toBe(
+        resolveHeatmapCellColor('#00ff00', GROCERIES_SCALE, 25, 'light'),
+      );
+      expect(items[3].itemStyle.color).toBe(
+        resolveHeatmapCellColor('#00ff00', GROCERIES_SCALE, 15, 'light'),
+      );
+    });
+
+    it('leaves one row’s colours untouched when another row’s amounts change', () => {
+      const before = cellItems(buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], 'light', false));
+      const rentInflated = {
+        ...heatmap,
+        cells: heatmap.cells.map((cell) =>
+          cell.rowIndex === 0 ? { ...cell, amount: cell.amount * 10 } : cell,
+        ),
+        maxAmount: 9000,
+      };
+
+      const after = cellItems(
+        buildHeatmapChartOption(rentInflated, ['Mon', 'Tue'], 'light', false),
+      );
+
+      // The grocery row's two cells (indices 2 and 3) are scaled against themselves alone.
+      expect(after[2].itemStyle.color).toBe(before[2].itemStyle.color);
+      expect(after[3].itemStyle.color).toBe(before[3].itemStyle.color);
+    });
+
+    it('ramps the "Other" fold from the neutral gray the aggregate hands it', () => {
+      const withOther = {
+        ...heatmap,
+        rows: [
+          ...heatmap.rows,
+          { categoryId: null, name: 'Other', color: CHART_NO_COLOR_FALLBACK, total: 30 },
+        ],
+        cells: [
+          ...heatmap.cells,
+          { rowIndex: 2, columnIndex: 0, amount: 20 },
+          { rowIndex: 2, columnIndex: 1, amount: 10 },
+        ],
+      };
+
+      const items = cellItems(buildHeatmapChartOption(withOther, ['Mon', 'Tue'], 'light', false));
+
+      // The fold's own scale: cells [20, 10], average 15.
+      expect(items[4].itemStyle.color).toBe(
+        resolveHeatmapCellColor(
+          CHART_NO_COLOR_FALLBACK,
+          { min: 10, average: 15, max: 20 },
+          20,
+          'light',
+        ),
+      );
+      expect(items[5].itemStyle.color).toBe(
+        resolveHeatmapCellColor(
+          CHART_NO_COLOR_FALLBACK,
+          { min: 10, average: 15, max: 20 },
+          10,
+          'light',
+        ),
+      );
+    });
+
+    it('flips the direction with the theme’s mode', () => {
+      const light = cellItems(buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], 'light', false));
+      const dark = cellItems(buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], 'dark', false));
+
+      const brightness = (hex: string): number =>
+        parseInt(hex.slice(1, 3), 16) +
+        parseInt(hex.slice(3, 5), 16) +
+        parseInt(hex.slice(5, 7), 16);
+
+      // Rent's Monday is its heaviest cell: darker than #ff0000 on light, lighter on dark.
+      expect(brightness(light[0].itemStyle.color)).toBeLessThan(brightness('#ff0000'));
+      expect(brightness(dark[0].itemStyle.color)).toBeGreaterThan(brightness('#ff0000'));
+    });
   });
 
-  it('hides the amount-labelled scale, and the tooltip’s amount, in privacy mode', () => {
-    const option = buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], ['#eee', '#999', '#333'], true);
+  it('drops the tooltip’s amount in privacy mode', () => {
+    const option = buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], 'light', true);
 
-    expect((option['visualMap'] as { show: boolean }).show).toBe(false);
     const tooltip = (option['tooltip'] as { formatter: (p: unknown) => string }).formatter({
       value: [0, 1, 900],
     });

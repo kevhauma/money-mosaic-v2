@@ -26,6 +26,10 @@
       [attr.aria-label]="chartAriaLabel()"
     ></div>
 
+    <!-- Replaces the amount scale the single ramp used to draw under the chart (TICKET-STAT-34):
+         each row has its own scale now, so no one colour maps to one amount. -->
+    <mm-text as="p" variant="caption">{{ shadingCaption }}</mm-text>
+
     @if (partialCycleNote(); as note) {
       <mm-text as="p" variant="caption">{{ note }}</mm-text>
     }

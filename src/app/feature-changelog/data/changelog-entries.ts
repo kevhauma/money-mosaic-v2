@@ -828,4 +828,19 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-STAT-34'],
+    title: 'Every spending heatmap row is now shaded in its own category’s colour',
+    details: [
+      'The heatmap used to draw the whole grid in one colour, on one scale — so your biggest category set the shading for all of them, and a lighter row collapsed into two barely-different pale squares',
+      'Each row now uses the colour you gave that category, the same one on its dot everywhere else in the app',
+      'A square lands exactly on the category colour when you spent your usual amount for it on that day; lighter or darker means less or more than usual for that category',
+      'Heavier spending always stands out more, whichever theme you are in — on a dark theme that means brighter, on a light theme darker',
+      'Every row is read against its own normal, so one expensive category no longer flattens the rest',
+      'The colour bar under the chart is gone, because no single colour maps to one amount any more. The exact figures are still in the tooltip and in the table screen readers read',
+    ],
+    area: 'Dashboard',
+  },
 ];

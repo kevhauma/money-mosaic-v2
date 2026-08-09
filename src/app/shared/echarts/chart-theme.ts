@@ -113,9 +113,6 @@ export function resolveGrossSeriesColor(id: GrossSeriesColorId | undefined): str
 /** Single source for the "no color assigned" neutral gray (an uncategorised entry, or an account/category predating the color-picker feature) — previously duplicated as a hardcoded hex literal per chart component. Theme-neutral: this hex also leaks into computed stat series (core/stats), so it stays one global value. */
 export const CHART_NO_COLOR_FALLBACK = '#9ca3af';
 
-/** The slot the heatmap ramp is built from — the theme's leading accent. Safe to share with a series palette: a heatmap has no categorical series to collide with. */
-const HEATMAP_RAMP_SLOT = 0;
-
 const hexChannels = (hex: string): [number, number, number] => [
   parseInt(hex.slice(1, 3), 16),
   parseInt(hex.slice(3, 5), 16),
@@ -134,21 +131,95 @@ const mixHex = (hex: string, toward: string, ratio: number): string => {
   return `#${from.map((channel, index) => toHex(channel + (to[index] - channel) * ratio)).join('')}`;
 };
 
-/**
- * A three-stop sequential ramp for a heatmap's `visualMap` (TICKET-STAT-29), low to high: the
- * theme's leading accent faded most of the way into its own plot background, then half way, then
- * the accent itself. Derived rather than hand-authored per theme, so a theme added later gets a
- * ramp that already matches its palette instead of a hardcoded blue that matches nothing.
- *
- * Sequential, never categorical: a heatmap cell's colour encodes *magnitude*, and cycling the
- * categorical palette across intensities would read as six unrelated buckets.
- */
-export function resolveChartHeatmapColors(): string[] {
-  const theme = activeDataTheme();
-  const accent = (CHART_CATEGORICAL_COLORS[theme] ?? DEFORMABLE_LIGHT)[HEATMAP_RAMP_SLOT];
-  const plotBackground = DARK_PLOT_THEMES.includes(theme) ? '#000000' : '#ffffff';
+/** Whether the active theme's plot sits on a dark background — the one bit of theme a colour ramp needs to know which way "stands out more" points. */
+export type ChartPlotMode = 'light' | 'dark';
 
-  return [mixHex(accent, plotBackground, 0.88), mixHex(accent, plotBackground, 0.45), accent];
+export function resolveChartPlotMode(): ChartPlotMode {
+  return DARK_PLOT_THEMES.includes(activeDataTheme()) ? 'dark' : 'light';
+}
+
+/** One heatmap row's own extent, the scale a cell in it is read against (TICKET-STAT-34). */
+export type HeatmapRowScale = { min: number; average: number; max: number };
+
+/**
+ * How far the quietest cell in a row fades into the plot background. High, because a below-average
+ * cell is meant to recede — but short of 1, so the row keeps a visible floor rather than dissolving
+ * into empty grid.
+ */
+const TOWARD_BACKGROUND_MAX_MIX = 0.7;
+
+/**
+ * How far the heaviest cell moves away from it. Deliberately lower: mixing much past half way into
+ * pure white/black washes the hue out, and a row that stops looking like its category defeats the
+ * point of shading it in the category's colour at all.
+ */
+const AWAY_FROM_BACKGROUND_MAX_MIX = 0.5;
+
+/**
+ * Where a cell's colour travels, and how far, per side of its row's average — the whole direction
+ * rule in four rows rather than a ternary per branch. *Heavier spend always stands out more*: on a
+ * dark plot that means toward white, on a light one toward black, and the quiet side is the mirror
+ * of it in both.
+ */
+const HEATMAP_RAMP: Record<
+  ChartPlotMode,
+  Record<'below' | 'above', { toward: string; mix: number }>
+> = {
+  light: {
+    below: { toward: '#ffffff', mix: TOWARD_BACKGROUND_MAX_MIX },
+    above: { toward: '#000000', mix: AWAY_FROM_BACKGROUND_MAX_MIX },
+  },
+  dark: {
+    below: { toward: '#000000', mix: TOWARD_BACKGROUND_MAX_MIX },
+    above: { toward: '#ffffff', mix: AWAY_FROM_BACKGROUND_MAX_MIX },
+  },
+};
+
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+/** Anything the colour picker can't have produced (legacy/imported data) falls back rather than reaching `parseInt` and returning `#NaNNaNNaN`. */
+const normalizeHex = (hex: string): string =>
+  HEX_COLOR.test(hex) ? `#${hex.slice(1).toLowerCase()}` : CHART_NO_COLOR_FALLBACK;
+
+const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
+
+/**
+ * One heatmap cell's colour, on its own row's scale (TICKET-STAT-34) — replacing TICKET-STAT-29's
+ * single grid-wide ramp, under which one heavy category flattened every other row to two
+ * indistinguishable pale shades.
+ *
+ * The row's **average** is the anchor: a cell there draws in the category's configured colour
+ * exactly, so the colour most of the row's cells sit near is the one on the category's dot
+ * everywhere else in the app. Below it the colour moves toward the plot background, above it away
+ * from it — stated once as *heavier spend always stands out more*, which on a dark theme means
+ * lighter and on a light theme darker, rather than two palettes to keep in sync.
+ *
+ * The average, not the range's midpoint: a row with one huge Friday and four quiet days has an
+ * average far below its midpoint, and it is "what this category usually costs on a day like this"
+ * that a cell is read against.
+ *
+ * Only lightness moves — mixing toward pure white or pure black scales every channel difference
+ * uniformly, so the hue survives untouched and the row stays recognisably *that* category's at
+ * every intensity. A row with no spread (every cell equal, all-zero included) draws flat in the
+ * category colour instead of dividing by an empty range.
+ */
+export function resolveHeatmapCellColor(
+  categoryColor: string,
+  scale: HeatmapRowScale,
+  amount: number,
+  mode: ChartPlotMode,
+): string {
+  const anchor = normalizeHex(categoryColor);
+  const { min, average, max } = scale;
+  const above = amount >= average;
+
+  // The row's own reach on the side the cell falls. Zero on a row with no spread — including the
+  // all-equal and all-zero cases — which draws flat rather than dividing by it.
+  const span = above ? max - average : average - min;
+  if (span <= 0) return anchor;
+
+  const { toward, mix } = HEATMAP_RAMP[mode][above ? 'above' : 'below'];
+  return mixHex(anchor, toward, clamp01(Math.abs(amount - average) / span) * mix);
 }
 
 /** Literal union (not `string`) so the spread stays assignable to ECharts' `AnimationEasing`-typed option fields. */
