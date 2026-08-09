@@ -23,6 +23,7 @@
     [count]="selection.count()"
     [filteredCount]="filteredTransactions().length"
     [canLink]="canLinkSelection()"
+    [selectedDateSpan]="selectedDateSpan()"
     (applyCategory)="applyBulkCategory($event)"
     (linkRequested)="linkSelection()"
     (selectAllRequested)="selectAllFiltered()"

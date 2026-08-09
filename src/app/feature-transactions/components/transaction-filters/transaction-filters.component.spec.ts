@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
+import { CategoriesRepository, TransactionsRepository, type Category } from '@/core/data-access';
+import { CategoriesStore } from '@/core/state';
 import type { TransactionFilters } from '../../transaction-filters';
 import { TransactionFiltersComponent } from './transaction-filters.component';
 
@@ -287,5 +290,114 @@ describe('TransactionFiltersComponent', () => {
 
       expect(emittedCount).toBe(1);
     });
+  });
+});
+
+describe('TransactionFiltersComponent: applicability-aware category list (TICKET-CAT-11)', () => {
+  let fixture: ComponentFixture<TransactionFiltersComponent>;
+
+  const category = (id: number, name: string, window: Partial<Category> = {}): Category => ({
+    id,
+    name,
+    kind: 'expense',
+    color: '#7F77DD',
+    icon: 'tag',
+    archived: false,
+    isSystem: false,
+    sortOrder: id,
+    ...window,
+  });
+
+  const setupWith = async (
+    categories: Category[],
+    queryParams: Record<string, string> = {},
+  ): Promise<HTMLElement> => {
+    await TestBed.configureTestingModule({
+      imports: [TransactionFiltersComponent],
+      providers: [
+        provideRouter([]),
+        { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        {
+          provide: CategoriesRepository,
+          useValue: { getAll: vi.fn().mockResolvedValue(categories) },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TransactionFiltersComponent);
+    await TestBed.inject(CategoriesStore).hydrate();
+    fixture.componentRef.setInput('accountId', queryParams['accountId']);
+    fixture.componentRef.setInput('from', queryParams['from']);
+    fixture.componentRef.setInput('to', queryParams['to']);
+    fixture.componentRef.setInput('categoryId', queryParams['categoryId']);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  /** The Category fieldset's own options — the Account select above it has its own. */
+  const categoryOptionLabels = (host: HTMLElement): string[] => {
+    const fieldset = [...host.querySelectorAll('mm-fieldset')].find((element) =>
+      element.textContent?.includes('All categories'),
+    );
+    return [...(fieldset?.querySelectorAll('option') ?? [])].map(
+      (option) => option.textContent?.trim() ?? '',
+    );
+  };
+
+  it('offers every active category when no date filter is set — the whole history is on the table', async () => {
+    const host = await setupWith([
+      category(7, 'Groceries'),
+      category(9, 'Rent', { activeUntil: '2023-06-30' }),
+    ]);
+
+    expect(categoryOptionLabels(host)).toEqual([
+      'All categories',
+      'Uncategorised',
+      'Groceries',
+      'Rent (ended)',
+    ]);
+  });
+
+  it('drops a category whose window misses the active date filter', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2023-06-30' })],
+      { from: '2026-01-01', to: '2026-12-31' },
+    );
+
+    expect(categoryOptionLabels(host)).toEqual(['All categories', 'Uncategorised', 'Groceries']);
+  });
+
+  it('keeps a category whose window overlaps the active date filter', async () => {
+    const host = await setupWith([category(9, 'Rent', { activeUntil: '2023-06-30' })], {
+      from: '2023-01-01',
+      to: '2023-12-31',
+    });
+
+    expect(categoryOptionLabels(host)).toEqual(['All categories', 'Uncategorised', 'Rent (ended)']);
+  });
+
+  it('keeps the current selection offerable even when the range would drop it', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2023-06-30' })],
+      { from: '2026-01-01', to: '2026-12-31', categoryId: '9' },
+    );
+
+    expect(categoryOptionLabels(host)).toEqual([
+      'All categories',
+      'Uncategorised',
+      'Groceries',
+      'Rent (ended)',
+    ]);
+  });
+
+  it('leaves windowless categories offered for any range', async () => {
+    const host = await setupWith([category(7, 'Groceries')], {
+      from: '1999-01-01',
+      to: '1999-12-31',
+    });
+
+    expect(categoryOptionLabels(host)).toEqual(['All categories', 'Uncategorised', 'Groceries']);
   });
 });

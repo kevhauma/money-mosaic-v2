@@ -3,11 +3,9 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerPencil, tablerUnlink } from '@ng-icons/tabler-icons';
 import { BadgeComponent, ButtonComponent, FlexComponent, TypographyComponent } from '@/shared/ui';
 import { LocaleDatePipe, SignedAmountPipe } from '@/shared/utils';
+import type { CategorySelectOption } from '../../category-picker';
 import type { TransactionRowVm } from '../../transaction-row-vm';
-import {
-  CategorySelectCellComponent,
-  type CategorySelectOption,
-} from '../category-select-cell/category-select-cell.component';
+import { CategorySelectCellComponent } from '../category-select-cell/category-select-cell.component';
 
 /**
  * One row of the transactions table (TICKET-TXN-09, CR4-1 §5 Option C) — purely presentational:

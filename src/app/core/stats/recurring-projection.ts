@@ -98,6 +98,9 @@ const datesInWindow = (
  * Pure and window-bounded, with no clock of its own — the caller decides which month it is asking
  * about, which is what lets the same function serve a calendar, a list and (later) a forecast.
  * Results come back date-ordered, ties broken by label so the order is stable across derivations.
+ *
+ * A series carrying `projectUntil` (TICKET-REC-05) stops there even when the caller asked about a
+ * wider span — a commitment the user has dated the end of is not expected past that date.
  */
 export const projectRecurringOccurrences = (
   series: readonly RecurringPaymentSeries[],
@@ -108,7 +111,14 @@ export const projectRecurringOccurrences = (
 
   const projected: ProjectedOccurrence[] = [];
   for (const entry of series) {
-    for (const date of datesInWindow(entry, fromIso, toIso)) {
+    // A series whose category window closes inside the asked-about span stops there (TICKET-REC-05).
+    // Read off the series' own `projectUntil` rather than by looking a category up: this function
+    // has no business knowing what a category window is, only that this rhythm is not expected past
+    // a date.
+    const lastDate = entry.projectUntil && entry.projectUntil < toIso ? entry.projectUntil : toIso;
+    if (fromIso > lastDate) continue;
+
+    for (const date of datesInWindow(entry, fromIso, lastDate)) {
       projected.push({
         seriesKey: entry.key,
         label: entry.label,

@@ -13,6 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, map } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerFilterOff } from '@ng-icons/tabler-icons';
+import { categoryOverlapsRange, withEndedSuffix } from '@/core/categorisation';
 import { AccountsStore, CategoriesStore } from '@/core/state';
 import {
   ButtonComponent,
@@ -37,9 +38,12 @@ import {
   type AmountDirection,
   type TransactionFilters,
 } from '../../transaction-filters';
+import type { CategorySelectOption } from '../../category-picker';
 
 /** The filter fields that apply immediately, i.e. everything except the debounced free-text needle (CR-2.4). */
 type StructuralFilters = Omit<TransactionFilters, 'text'>;
+
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 /**
  * Drops the free-text field so structural filters can be compared/emitted independently of debounced
@@ -77,7 +81,7 @@ function structuralFiltersOf(value: Partial<TransactionFilters>): StructuralFilt
 })
 export class TransactionFiltersComponent {
   protected readonly accountsStore = inject(AccountsStore);
-  protected readonly categoriesStore = inject(CategoriesStore);
+  private readonly categoriesStore = inject(CategoriesStore);
 
   private readonly formBuilder = inject(FormBuilder);
 
@@ -164,6 +168,39 @@ export class TransactionFiltersComponent {
   );
 
   protected readonly amountDirection = computed(() => this.structuralFilters().amountDirection);
+
+  /**
+   * The categories worth filtering by, given the range already being filtered (TICKET-CAT-11):
+   * those whose applicability window overlaps it. With **no** date filter set the list is complete —
+   * the whole history is on the table, and a category that ended in 2023 is exactly what someone
+   * looking back at 2023 needs to pick.
+   *
+   * A half-open range counts: `dateFrom` alone means "everything since", so the far bound is left
+   * unbounded rather than defaulting to today, which would hide a category whose window has not
+   * started yet from a filter that would still match its future rows.
+   */
+  protected readonly categoryOptions = computed<CategorySelectOption[]>(() => {
+    const { dateFrom, dateTo, categoryId } = this.structuralFilters();
+    const categories = this.categoriesStore.activeCategories();
+    const today = todayIso();
+
+    const inRange =
+      dateFrom || dateTo
+        ? categories.filter((category) =>
+            categoryOverlapsRange(category, dateFrom || '0000-01-01', dateTo || '9999-12-31'),
+          )
+        : categories;
+
+    // A `<select>` whose value is not among its options is a broken control: narrowing the range
+    // must never silently drop the selection that produced the rows on screen.
+    const selected = categories.find((category) => String(category.id) === categoryId);
+    const options = selected && !inRange.includes(selected) ? [...inRange, selected] : inRange;
+
+    return options.map((category) => ({
+      value: String(category.id),
+      label: withEndedSuffix(category.name, category, today),
+    }));
+  });
 
   protected readonly amountDirections = AMOUNT_DIRECTION_OPTIONS;
 

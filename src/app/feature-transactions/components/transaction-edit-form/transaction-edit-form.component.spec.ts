@@ -8,9 +8,10 @@ import {
   TransactionsRepository,
   TransfersRepository,
   type Account,
+  type Category,
   type Transaction,
 } from '@/core/data-access';
-import { AccountsStore } from '@/core/state';
+import { AccountsStore, CategoriesStore } from '@/core/state';
 import type { AttributionOverrideFieldsetComponent } from '../attribution-override-fieldset/attribution-override-fieldset.component';
 import { TransactionEditFormComponent } from './transaction-edit-form.component';
 
@@ -334,5 +335,96 @@ describe('TransactionEditFormComponent: delete', () => {
     fixture.detectChanges();
 
     expect(nativeElement.textContent).toContain('Its linked transfer will also be removed');
+  });
+});
+
+describe('TransactionEditFormComponent: applicability-aware category picker (TICKET-CAT-11)', () => {
+  let fixture: ComponentFixture<TransactionEditFormComponent>;
+
+  const category = (id: number, name: string, window: Partial<Category> = {}): Category => ({
+    id,
+    name,
+    kind: 'expense',
+    color: '#7F77DD',
+    icon: 'tag',
+    archived: false,
+    isSystem: false,
+    sortOrder: id,
+    ...window,
+  });
+
+  const setupWith = async (categories: Category[], edited: Transaction): Promise<HTMLElement> => {
+    await TestBed.configureTestingModule({
+      imports: [TransactionEditFormComponent],
+      providers: [
+        { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        {
+          provide: CategoriesRepository,
+          useValue: { getAll: vi.fn().mockResolvedValue(categories) },
+        },
+        { provide: RulesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TransactionEditFormComponent);
+    await TestBed.inject(CategoriesStore).hydrate();
+    fixture.componentRef.setInput('transaction', edited);
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  const optionLabels = (host: HTMLElement): string[] =>
+    [...host.querySelectorAll('mm-select option')].map(
+      (option) => option.textContent?.trim() ?? '',
+    );
+
+  it('offers a windowless category to a transaction from any year', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries')],
+      transaction({ bookingDate: '2020-01-15' }),
+    );
+
+    expect(optionLabels(host)).toEqual(['Uncategorised', 'Groceries']);
+  });
+
+  it('hides a category whose window closed before the booking date', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2023-06-30' })],
+      transaction({ bookingDate: '2026-07-01' }),
+    );
+
+    expect(optionLabels(host)).toEqual(['Uncategorised', 'Groceries']);
+  });
+
+  it('still offers that category to a transaction from inside its own window', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2023-06-30' })],
+      transaction({ bookingDate: '2022-11-01' }),
+    );
+
+    expect(optionLabels(host)).toEqual(['Uncategorised', 'Groceries', 'Rent']);
+  });
+
+  it('keeps the assigned out-of-window category, marked "(ended)", rather than dropping it', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2023-06-30' })],
+      transaction({ bookingDate: '2026-07-01', categoryId: 9 }),
+    );
+
+    expect(optionLabels(host)).toEqual(['Uncategorised', 'Groceries', 'Rent (ended)']);
+    // The control's value stays selectable, which is the whole point of keeping it.
+    expect(host.querySelector<HTMLSelectElement>('mm-select select')?.value).toBe('9');
+  });
+
+  it('prefixes a grouped category exactly as before', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries', { group: 'Living' })],
+      transaction({ bookingDate: '2026-07-01' }),
+    );
+
+    expect(optionLabels(host)).toEqual(['Uncategorised', 'Living · Groceries']);
   });
 });

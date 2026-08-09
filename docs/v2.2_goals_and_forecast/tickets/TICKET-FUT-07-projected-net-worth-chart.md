@@ -114,5 +114,11 @@ costs rather than just when it completes.
 - The chart inherits every simplification listed in FUT-05's Notes — straight line, no compounding,
   no inflation, no known upcoming bills. The caption says so in one sentence rather than letting a
   smooth curve imply precision the data can't support.
+- **Revised by [TICKET-FUT-09](./TICKET-FUT-09-required-saving-rate-mode.md)**, which makes this
+  chart mode-aware rather than adding a second one: in required-rate mode the line rises at the
+  *required* rate and steps down on each goal's `targetDate`, with the measured-rate projection drawn
+  as a dashed comparison series. Build the series as a parameterised projection (rate in, step dates
+  in) rather than hard-wiring `perMonth` and `affordableOn`, and FUT-09 is a caller rather than a
+  rewrite.
 - Needs FUT-05 (and therefore FUT-01/02/04) plus FUT-03's provider scope. Independent of FUT-06,
   though it reads the same settings and gets better once FUT-06's controls exist.

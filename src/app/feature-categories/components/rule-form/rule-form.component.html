@@ -22,8 +22,8 @@
       <mm-fieldset legend="Assign category" class="col-span-2">
         <mm-select formControlName="categoryId" class="w-full">
           <option value="" disabled>Choose a category</option>
-          @for (category of categoriesStore.activeCategories(); track category.id) {
-            <option [value]="category.id">{{ category.name }}</option>
+          @for (option of categoryOptions(); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
           }
         </mm-select>
       </mm-fieldset>

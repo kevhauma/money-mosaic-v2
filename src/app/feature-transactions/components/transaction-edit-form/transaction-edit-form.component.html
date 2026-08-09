@@ -8,8 +8,8 @@
     <mm-fieldset legend="Category">
       <mm-select formControlName="categoryId" class="w-full">
         <option value="">Uncategorised</option>
-        @for (category of categoriesStore.activeCategories(); track category.id) {
-          <option [value]="category.id">{{ categoryLabel(category) }}</option>
+        @for (option of categoryOptions(); track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
         }
       </mm-select>
     </mm-fieldset>

@@ -17,6 +17,12 @@
     Detected across your whole history — not filtered by the range above.
   </mm-text>
 
+  <!-- A series leaving the list without a word is the disappearance REC-04 refused to allow, so
+       the declared conclusions say so (TICKET-REC-05). -->
+  @if (concludedCaption(); as caption) {
+    <mm-text as="p" variant="caption" class="mt-1">{{ caption }}</mm-text>
+  }
+
   @if (rows().length === 0) {
     <mm-empty-state
       title="Nothing repeating found yet"
@@ -124,17 +130,34 @@
       </tbody>
 
       @if (stoppedRows().length > 0) {
+        <!-- Closed by default, and folded by *not rendering the rows* rather than by wrapping the
+             group in `mm-collapse` (TICKET-REC-06): a `<tbody>` cannot sit inside a wrapper element
+             without breaking the table, the same HTML constraint the `ngTemplateOutlet` note above
+             records for `<tr>`. The disclosure lives inside the `scope="rowgroup"` heading so the
+             group is still announced as a row group when it is open. -->
         <tbody>
           <tr>
             <th scope="rowgroup" colspan="8" class="bg-base-200/60">
-              <mm-text variant="caption">Stopped — no longer counted in the monthly total</mm-text>
+              <mm-button
+                variant="ghost"
+                size="xs"
+                class="max-w-full justify-start px-1"
+                [ariaExpanded]="stoppedGroup().open"
+                [ariaLabel]="stoppedGroup().toggleAriaLabel"
+                (click)="toggleStoppedGroup()"
+              >
+                <span aria-hidden="true">{{ stoppedGroup().expandIcon }}</span>
+                <mm-text variant="caption">{{ stoppedGroup().label }}</mm-text>
+              </mm-button>
             </th>
           </tr>
-          @for (row of stoppedRows(); track row.key) {
-            <ng-container
-              [ngTemplateOutlet]="seriesRow"
-              [ngTemplateOutletContext]="{ $implicit: row }"
-            />
+          @if (stoppedGroup().open) {
+            @for (row of stoppedRows(); track row.key) {
+              <ng-container
+                [ngTemplateOutlet]="seriesRow"
+                [ngTemplateOutletContext]="{ $implicit: row }"
+              />
+            }
           }
         </tbody>
       }

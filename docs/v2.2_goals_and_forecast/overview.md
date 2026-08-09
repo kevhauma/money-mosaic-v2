@@ -6,6 +6,13 @@ qualifiers that turn it from a calculator into a tool: **you have more than one 
 their order matters**; **you decide how far back "like I did" reaches**; **you can insist on having
 some money left in the bank afterwards**; and **you can tell it which accounts to consider at all**.
 
+And its inverse, asked on 2026-08-09: *"I already know when I need it — how much do I have to save
+each month to get there?"* Same plan, same order, same safety net, read in the opposite direction:
+fix the rate and solve for the date ([FUT-05](./tickets/TICKET-FUT-05-goal-affordability-projection.md)),
+or fix the date and solve for the rate ([FUT-09](./tickets/TICKET-FUT-09-required-saving-rate-mode.md)).
+A page-level **mode toggle** picks which question `/future` is answering; the measured rate stays on
+screen in both, as the estimate in the first and as the thing you're falling short of in the second.
+
 This is the app's first **forward-looking** feature. Everything shipped so far is hindsight — stats,
 comparisons, heatmaps, Sankey, recurring detection — and the one thing that points at the future,
 [TICKET-REC-03](../v2.1_extra_graphs/tickets/TICKET-REC-03-upcoming-bills-calendar.md)'s bill
@@ -24,7 +31,11 @@ makes reordering worth building: dragging a goal up pushes every goal below it f
 exactly the trade-off the user is trying to reason about. Then draw it
 ([FUT-07](./tickets/TICKET-FUT-07-projected-net-worth-chart.md)) as a sawtooth — rising at the saving
 rate, stepping down each time a goal is actually bought — because "when can I afford it" and "what am
-I left with" are the same question asked twice.
+I left with" are the same question asked twice. Run that same walk backwards from a date the user
+sets and you get the second mode ([FUT-09](./tickets/TICKET-FUT-09-required-saving-rate-mode.md)): the
+€/month each dated goal demands, and — because funding is sequential — one plan rate that is the
+**maximum** of them, never the sum. The chart then draws that required rate against the measured one,
+so the gap is the picture.
 
 **Two limits the user sets on the money, and they are not the same limit.** The **safety net**
 ([FUT-06](./tickets/TICKET-FUT-06-forecast-controls.md)) is *how much* has to stay untouched — a floor
@@ -34,7 +45,7 @@ the purchase, and the chart draws the floor as a line. The **account scope**
 narrowing both the starting balance and the measured rate to the accounts you pick. "Plan with my
 current account, and never take it below €2.000" is both of them at once.
 
-**Two new requirement families**, `FR-FUT-1..5`, and a new area prefix, `TICKET-FUT`. Neither Goals
+**Two new requirement families**, `FR-FUT-1..6`, and a new area prefix, `TICKET-FUT`. Neither Goals
 nor Forecast has been ticketed before.
 
 **This version does change the Dexie schema** — the first since `.version(13)`. Goals are
@@ -45,7 +56,9 @@ are new and empty — the `appSettings`/`salaryMetadata` precedent). No shipped 
 edited. `forecastSettings` is deliberately *persisted* rather than session-scoped, reversing
 `ChartOptionsStore`'s in-memory rule for this one row: a legend that resets on reload is harmless, a
 forecast window that silently resets is not. That reversal is argued in FUT-02's Notes rather than
-made quietly.
+made quietly, and it is why the mode toggle is a field on the same row: `mode` is declared in
+`.version(14)`'s type from the start and is non-indexed, so [FUT-09](./tickets/TICKET-FUT-09-required-saving-rate-mode.md)
+adds **no second schema change**.
 
 **Honesty is a design constraint here, not a polish pass.** A forecast is the one thing in this app
 that can be confidently wrong. So: the projection is a straight line with no compounding, inflation
@@ -59,9 +72,10 @@ criterion, not a note.
 ## Recommended order
 
 A single dependency chain with two places it forks — FUT-01/02 are independent of each other, and
-FUT-06/07 are independent of each other once FUT-05 lands. FUT-08 is deliberately last: it revises
-FUT-01's signature and FUT-07's caption, and is far cheaper to build against shipped, working
-versions of both than to design around up front.
+FUT-06/07 are independent of each other once FUT-05 lands. FUT-09 comes after FUT-07 because it makes
+that chart mode-aware rather than adding one. FUT-08 is deliberately last: it revises FUT-01's
+signature and FUT-07's caption, and is far cheaper to build against shipped, working versions of both
+than to design around up front.
 
 - [ ] [TICKET-FUT-01](./tickets/TICKET-FUT-01-saving-velocity-aggregate.md) — Saving velocity: how much I actually saved per month, over a configurable lookback (adds FR-FUT-1) — first: the pure aggregate every projection consumes, no UI of its own; independent of FUT-02/03, can be built in parallel with them
 - [ ] [TICKET-FUT-02](./tickets/TICKET-FUT-02-goals-persistence.md) — Goals persistence: `savingsGoals` + `forecastSettings`, their repositories and stores (adds FR-FUT-2) — the version's only Dexie change, `.version(14)`, additive; independent of FUT-01
@@ -70,6 +84,7 @@ versions of both than to design around up front.
 - [ ] [TICKET-FUT-05](./tickets/TICKET-FUT-05-goal-affordability-projection.md) — When can I afford it: an ETA per goal, funded in the order I set (adds FR-FUT-4) — **needs FUT-01 + FUT-02 + FUT-04**; the headline ticket, and the one the whole version exists for
 - [ ] [TICKET-FUT-06](./tickets/TICKET-FUT-06-forecast-controls.md) — Forecast controls: lookback window, what counts as saving, safety net, and the spread behind the number (extends FR-FUT-1) — **needs FUT-05**; until it ships the forecast runs on FUT-02's defaults with no way to change them, which is why it lands early rather than as polish
 - [ ] [TICKET-FUT-07](./tickets/TICKET-FUT-07-projected-net-worth-chart.md) — Projected net worth: the sawtooth, stepping down as each goal gets bought (adds FR-FUT-5) — **needs FUT-05** + FUT-03's provider scope; independent of FUT-06, reads the same settings
+- [ ] [TICKET-FUT-09](./tickets/TICKET-FUT-09-required-saving-rate-mode.md) — What do I need to save: hit a goal by a date I choose, and see the gap against what I actually save (adds FR-FUT-6, revises FR-FUT-5) — **needs FUT-05 + FUT-07**; the second mode and its page-level toggle, reusing FUT-05's cumulative targets and making FUT-07's chart mode-aware; no Dexie change of its own
 - [ ] [TICKET-FUT-08](./tickets/TICKET-FUT-08-account-scope.md) — Only count these accounts: scope the starting balance *and* the measured rate to the accounts I pick (revises FR-FUT-1/FR-FUT-4) — **needs FUT-05 + FUT-06**; last on purpose, and the only ticket here that refactors shipped code (`AccountsStore.netWorth` into a per-account contribution map, so a scoped total can't drift from the Dashboard's card)
 
 ## Considered, not ticketed yet
@@ -87,6 +102,13 @@ versions of both than to design around up front.
   "In what order would you actually buy these?" is a question people can answer unprompted, which is
   why sequential funding ships first. If the ordering proves too blunt against real use, this is the
   next iteration.
+- **Solving for the date instead of the rate** — "you can't find another €120/month, but push the
+  camera to September and you're already on track".
+  [FUT-09](./tickets/TICKET-FUT-09-required-saving-rate-mode.md) answers "what would it take" with a
+  number of euros; the third reading answers it with a date, and is the obvious next thing to want
+  once the gap turns out to be unaffordable. It is left out because FUT-05 already computes that date
+  — it is the goal's ETA — so the feature is a piece of copy and a "use this date" affordance rather
+  than new maths, and it is worth designing once both modes have been read against real data.
 - **Per-goal account scopes** ("fund the holiday from savings, the laptop from checking").
   [FUT-08](./tickets/TICKET-FUT-08-account-scope.md) gives the *whole forecast* one scope, which is
   what was asked for; per-goal scoping needs a balance and a velocity per goal, and the sequential

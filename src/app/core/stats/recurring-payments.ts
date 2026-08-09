@@ -1,4 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
+import { categoryHasEnded } from '@/core/categorisation';
 import { normalizeIban } from '@/shared/utils';
 import { classifyForStats } from './classify-for-stats';
 
@@ -54,10 +55,27 @@ export type RecurringPaymentSeries = {
   monthlyEquivalent: number;
   /** The median gap between occurrences, in days — the rhythm's own step, which jitter makes shorter or longer than its nominal cadence. */
   intervalDays: number;
+  /**
+   * The last date this series may be projected to, when its category's applicability window closes
+   * in the future (FR-CAT-9, TICKET-REC-05); absent when nothing bounds it.
+   *
+   * Carried on the series rather than looked up downstream so `projectRecurringOccurrences` stays
+   * category-unaware: the calendar has no business knowing what a category window is, only that
+   * this rhythm is not expected past a date.
+   */
+  projectUntil?: string;
   flags: RecurringFlags;
 };
 
-export type RecurringPaymentsResult = { series: RecurringPaymentSeries[] };
+export type RecurringPaymentsResult = {
+  series: RecurringPaymentSeries[];
+  /**
+   * Series dropped because their category's window had already closed (TICKET-REC-05) — reported
+   * rather than silently swallowed, the `nettedOutLinkCount` precedent from the money-flow
+   * aggregate, so the panel can explain the absence instead of leaving it spooky.
+   */
+  concludedSeriesCount: number;
+};
 
 /**
  * How far an occurrence's amount may sit from its band's median and still belong to it. Wide enough
@@ -398,6 +416,46 @@ const timingFlags = (series: RecurringPaymentSeries, todayIso: string): Recurrin
   return {};
 };
 
+/**
+ * The applicability window of a series' category, or `undefined` when it has none (TICKET-REC-05).
+ * An uncategorised series (`categoryId: null`) has no window by construction and is unaffected.
+ */
+const categoryOf = (
+  series: RecurringPaymentSeries,
+  categoriesById: ReadonlyMap<number, Category>,
+): Category | undefined =>
+  series.categoryId != null ? categoriesById.get(series.categoryId) : undefined;
+
+/**
+ * A series bounded by its category's window (TICKET-REC-05), or `null` when the window has already
+ * closed and the series is *concluded by declaration* — the user dated the end of this commitment,
+ * so it leaves the results entirely rather than reappearing as REC-04's "Stopped".
+ *
+ * A window closing in the **future** keeps the series live but clips it: `nextExpectedDate` never
+ * runs past `activeUntil`, and `projectUntil` carries the same bound to the calendar. A gym
+ * membership cancelled per end-of-year drops off the calendar exactly at year end instead of
+ * billing you into January.
+ *
+ * `categoryHasEnded` is CAT-10/CAT-11's shared predicate, so this aggregate and the pickers cannot
+ * disagree by a day about where the boundary falls.
+ */
+const boundedByCategoryWindow = (
+  series: RecurringPaymentSeries,
+  categoriesById: ReadonlyMap<number, Category>,
+  todayIso: string,
+): RecurringPaymentSeries | null => {
+  const category = categoryOf(series, categoriesById);
+  if (!category?.activeUntil) return series;
+  if (categoryHasEnded(category, todayIso)) return null;
+
+  const { activeUntil } = category;
+  return {
+    ...series,
+    nextExpectedDate: series.nextExpectedDate > activeUntil ? activeUntil : series.nextExpectedDate,
+    projectUntil: activeUntil,
+  };
+};
+
 /** The start of the history actually held, so `classifyForStats`' range bound excludes nothing real. */
 const earliestBookingDate = (transactions: readonly Transaction[]): string => {
   let earliest = transactions[0].bookingDate;
@@ -466,6 +524,11 @@ const candidatesByCounterparty = (
  * that is late, or a rhythm that has stopped. A stopped series keeps its place in the result rather
  * than un-detecting itself — a cancelled subscription quietly vanishing is the opposite of the
  * announcement this exists to make.
+ *
+ * The one exception is a **declared** conclusion (TICKET-REC-05): a series whose category's
+ * applicability window has already closed did not stop unexpectedly, the user dated its end, so it
+ * leaves the results and is counted in `concludedSeriesCount` instead. Declaration beats inference —
+ * the `stopped` flag keeps answering the *other* question, "did something quietly fail".
  */
 export const detectRecurringPayments = (
   transactions: Transaction[],
@@ -474,7 +537,7 @@ export const detectRecurringPayments = (
   todayIso: string,
   ownSavingsIbans: ReadonlySet<string> = new Set(),
 ): RecurringPaymentsResult => {
-  if (transactions.length === 0) return { series: [] };
+  if (transactions.length === 0) return { series: [], concludedSeriesCount: 0 };
 
   const byCluster = candidatesByCounterparty(
     transactions,
@@ -493,10 +556,22 @@ export const detectRecurringPayments = (
     }
   }
 
-  const series = mergePriceChanges(detected).map((entry) => ({
+  const merged = mergePriceChanges(detected);
+
+  // The window pass runs before the flags, so a concluded series never gets an `overdue`/`stopped`
+  // verdict computed for it at all — it is simply absent, which is the stronger statement
+  // (TICKET-REC-05).
+  const bounded = merged
+    .map((entry) => boundedByCategoryWindow(entry, categoriesById, todayIso))
+    .filter((entry): entry is RecurringPaymentSeries => entry !== null);
+
+  const series = bounded.map((entry) => ({
     ...entry,
     flags: { ...entry.flags, ...timingFlags(entry, todayIso) },
   }));
 
-  return { series: series.sort((a, b) => b.monthlyEquivalent - a.monthlyEquivalent) };
+  return {
+    series: series.sort((a, b) => b.monthlyEquivalent - a.monthlyEquivalent),
+    concludedSeriesCount: merged.length - bounded.length,
+  };
 };

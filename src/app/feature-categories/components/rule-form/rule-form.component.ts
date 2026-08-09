@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Rule, RuleCondition } from '@/core/data-access';
+import { withEndedSuffix } from '@/core/categorisation';
 import { CategoriesStore } from '@/core/state';
 import {
   AlertComponent,
@@ -62,7 +63,24 @@ export class RuleFormComponent {
   /** True once `rule()` is a persisted rule (has an `id`) — false for a fresh add, including a pre-filled draft with no `id` yet (TICKET-CAT-07). */
   protected readonly isEditingExisting = computed(() => this.rule()?.id != null);
 
-  protected readonly categoriesStore = inject(CategoriesStore);
+  private readonly categoriesStore = inject(CategoriesStore);
+
+  /**
+   * Every active category, ended ones marked rather than hidden (TICKET-CAT-11).
+   *
+   * **Deliberately unfiltered**, unlike the transaction pickers: a rule runs over whatever dates the
+   * next import happens to contain, so there is no single date to test a window against, and hiding
+   * an ended category would break a rule that is still perfectly valid for backfilled history. The
+   * suffix is a nudge, not a rule — assigning an ended category to new rows is the user's call.
+   */
+  protected readonly categoryOptions = computed(() => {
+    const today = new Date().toISOString().slice(0, 10);
+
+    return this.categoriesStore.activeCategories().map((category) => ({
+      value: String(category.id),
+      label: withEndedSuffix(category.name, category, today),
+    }));
+  });
 
   private readonly formBuilder = inject(FormBuilder);
 

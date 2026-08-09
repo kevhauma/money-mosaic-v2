@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import {
-  CategorySelectCellComponent,
-  type CategorySelectOption,
-} from './category-select-cell.component';
+import type { CategorySelectOption } from '../../category-picker';
+import { CategorySelectCellComponent } from './category-select-cell.component';
 
 const options: CategorySelectOption[] = [
   { value: '7', label: 'Groceries' },

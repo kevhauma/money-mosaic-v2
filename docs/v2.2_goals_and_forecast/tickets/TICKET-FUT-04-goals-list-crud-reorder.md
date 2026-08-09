@@ -96,4 +96,8 @@ version depends on.
   app has no way to know which euro is earmarked; the projection instead starts from real net worth
   minus a user-set safety net ([TICKET-FUT-06](./TICKET-FUT-06-forecast-controls.md)), which is
   checkable against a bank statement. Recorded in the version overview.
+- **The wanted-by date is optional but load-bearing.** FUT-05 uses it only for an on-track chip, but
+  [TICKET-FUT-09](./TICKET-FUT-09-required-saving-rate-mode.md)'s second mode has nothing to solve
+  for without it — so the field gets a real label ("when do you want it?") rather than being buried,
+  and FUT-09 adds the prompt on rows that lack one.
 - Needs FUT-02 and FUT-03. Independent of FUT-01.

@@ -50,21 +50,63 @@ projection at its end date.
 
 ## Acceptance criteria
 
-- [ ] A rent-shaped fixture (regular monthly series, category `activeUntil` last year) produces
+**Implementation note (2026-08-09):** the future-window bound reaches `projectRecurringOccurrences`
+as a new optional `projectUntil` field on the series, not as a category lookup inside the projection.
+The to-be said "`projectRecurringOccurrences` stops projecting past it" without saying how; carrying
+the date on the series is what keeps that function category-unaware, which is the property that lets
+it serve a calendar, a list and a later forecast from one signature.
+
+- [x] A rent-shaped fixture (regular monthly series, category `activeUntil` last year) produces
       no series entry, no flags, no calendar occurrences, and `concludedSeriesCount: 1`.
-- [ ] A series whose category window closes in the future stays listed, and both
+      (`recurring-payments.spec.ts` → "drops a series whose category window closed, with no flags
+      and a conclusion count", which first asserts the *same* fixture reads as REC-04 `stopped`
+      without a window, so the difference is the declaration and not the fixture.)
+- [x] A series whose category window closes in the future stays listed, and both
       `nextExpectedDate` and the calendar projection clip at `activeUntil`.
-- [ ] Series in windowless categories and uncategorised series are byte-for-byte unaffected
+      (`recurring-payments.spec.ts` → "leaves a series whose window closes in the future listed,
+      clipped at activeUntil" asserts `nextExpectedDate` and `projectUntil` both become the window
+      end; `recurring-projection.spec.ts` → "stops projecting past projectUntil even when the caller
+      asks about a wider span".)
+- [x] Series in windowless categories and uncategorised series are byte-for-byte unaffected
       (existing REC-01..04 specs still pass unchanged).
-- [ ] The panel caption renders exactly when `concludedSeriesCount > 0`.
-- [ ] The aggregate stays pure and clock-free; the window comparison reuses CAT-10/11's shared
+      (`recurring-payments.spec.ts` → "leaves a windowless category’s series byte-for-byte
+      unchanged" compares the whole series object against the no-category run, and "leaves an
+      uncategorised series alone". Every REC-01..04 spec passes untouched **except one line**: the
+      empty-history case asserted the whole result envelope with `toEqual({ series: [] })`, so it
+      gained `concludedSeriesCount: 0`. The series half of that assertion is unchanged.)
+- [x] The panel caption renders exactly when `concludedSeriesCount > 0`.
+      (`recurring-payments-panel.component.spec.ts` → "renders no caption when nothing was
+      concluded" and "drops the series and captions the absence when its category window has
+      closed"; `concludedCaption` returns `''` rather than a count, so the template branches on
+      emptiness.)
+- [x] The aggregate stays pure and clock-free; the window comparison reuses CAT-10/11's shared
       helper rather than reimplementing it.
-- [ ] Unit tests cover: the concluded-rent case end to end; the future-window clipping in both
+      (`boundedByCategoryWindow` in `recurring-payments.ts` calls `categoryHasEnded` from
+      `@/core/categorisation` and takes `todayIso` as a parameter — no `Date.now()` added; the
+      whole spec file drives "today" through `detect`/`detectAt`.)
+- [x] Unit tests cover: the concluded-rent case end to end; the future-window clipping in both
       detection and projection; the windowless no-op; the caption's presence/absence.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: give a detected series' category a past `activeUntil` and
+      (12 new cases across `recurring-payments.spec.ts`, `recurring-projection.spec.ts` and the
+      panel spec, including the inclusive-final-day edge that pins this to `categoryHasEnded`.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass.
+      (2026-08-09: lint clean, 2599 tests / 243 files passed, dev bundle built. One unrelated
+      pre-existing flake, `app-settings.repository.spec` "falls back to the default settings", was
+      reproduced on a stashed clean tree — 1 failure in 3 baseline runs — so it is not from this
+      change.)
+- [x] Verified via the fallow skill and coding-conventions skill.
+      (Both `.husky/pre-commit` fallow gates exit 0; the panel keeps its view-model shape and the
+      new store computed follows the existing `RecurringSeriesStore` derivation-only pattern.)
+- [x] Verified live in the browser: give a detected series' category a past `activeUntil` and
       watch it leave the `/explore` recurring list and calendar.
+      (2026-08-09, dev server on :4210, against the local dev data's real "Vesta Rentals" monthly
+      rent series. **No window:** 7 series ≈ €1,202.04/month, rent listed, rent on the calendar,
+      no caption. **`activeUntil` 2026-06-30 (past):** 6 series ≈ €252.04/month, rent absent from
+      both the list and the bills calendar, caption "1 concluded series hidden — categories with an
+      ended applicability range". **`activeUntil` 2026-08-31 (future):** rent listed again with no
+      flags and "Next expected" showing 08/31/2026 instead of 09/02/2026, and the September
+      calendar's accessible table lists no rent — the only Vesta cell in that grid is the leading
+      31-August day. The category window and the crafted rows were reverted afterwards; the dev
+      database is back to 41 transactions and no category carrying a window.)
 
 ## Notes
 

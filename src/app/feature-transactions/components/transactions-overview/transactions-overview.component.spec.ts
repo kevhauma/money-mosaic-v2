@@ -17,7 +17,7 @@ import { RulesStore, type RuleFormValue } from '@/feature-categories';
 import type { SelectionModel } from '@/shared/utils';
 import type { TransactionFilters } from '../../transaction-filters';
 import type { TransactionRowVm } from '../../transaction-row-vm';
-import type { CategorySelectOption } from '../category-select-cell/category-select-cell.component';
+import type { CategorySelectOption } from '../../category-picker';
 import { TransactionsOverviewComponent } from './transactions-overview.component';
 
 /** Protected surface we reach into for selection/bulk/filter assertions. */
@@ -30,6 +30,7 @@ type Internals = {
   pagination: { pagedItems: () => Transaction[] };
   rows: () => TransactionRowVm[];
   categoryOptions: () => CategorySelectOption[];
+  selectedDateSpan: () => { from: string; to: string } | null;
   selectAllFiltered: () => void;
   applyBulkCategory: (categoryId: number) => Promise<void>;
   showUncategorisedOnly: () => void;
@@ -489,6 +490,100 @@ describe('TransactionsOverviewComponent', () => {
           .rules()
           .some((r) => r.id === 55),
       ).toBe(true);
+    });
+  });
+
+  describe('applicability-aware quick-set options (TICKET-CAT-11)', () => {
+    const category = (id: number, name: string, window: Partial<Category> = {}): Category => ({
+      id,
+      name,
+      kind: 'expense',
+      color: '#7F77DD',
+      icon: 'tag',
+      archived: false,
+      isSystem: false,
+      sortOrder: id,
+      ...window,
+    });
+
+    /** Same seeding shape as the row view-model block — both stores hydrate on injection. */
+    const setupWith = async (
+      transactions: Transaction[],
+      categories: Category[],
+    ): Promise<Internals> => {
+      transactionsRepository.getAll.mockResolvedValue(transactions);
+      categoriesRepository.getAll.mockResolvedValue(categories);
+      await setup();
+      await TestBed.inject(TransactionsStore).hydrate();
+      await TestBed.inject(CategoriesStore).hydrate();
+      await fixture.whenStable();
+      return internals();
+    };
+
+    it('leaves a windowless category offered to every row, exactly as before', async () => {
+      // `transaction(1)` is booked 2026-06-01.
+      const component = await setupWith([transaction(1)], [category(7, 'Groceries')]);
+
+      expect(component.categoryOptions()).toEqual([{ value: '7', label: 'Groceries' }]);
+    });
+
+    it('drops a category whose window closed before every visible row', async () => {
+      const component = await setupWith(
+        [transaction(1)],
+        [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2024-12-31' })],
+      );
+
+      expect(component.categoryOptions()).toEqual([{ value: '7', label: 'Groceries' }]);
+    });
+
+    it('offers a category whose window overlaps any part of the visible span', async () => {
+      const component = await setupWith(
+        [
+          { ...transaction(1), bookingDate: '2024-03-01' },
+          { ...transaction(2), bookingDate: '2026-06-01' },
+        ],
+        [category(9, 'Rent', { activeUntil: '2024-12-31' })],
+      );
+
+      expect(component.categoryOptions()).toEqual([{ value: '9', label: 'Rent' }]);
+    });
+
+    it('keeps an out-of-window category a visible row is already assigned to, suffixed', async () => {
+      const component = await setupWith(
+        [{ ...transaction(1), categoryId: 9 }],
+        [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2024-12-31' })],
+      );
+
+      expect(component.categoryOptions()).toEqual([
+        { value: '7', label: 'Groceries' },
+        { value: '9', label: 'Rent (ended)' },
+      ]);
+    });
+
+    it('hands every row the very same option array, not one per row (TICKET-TXN-09)', async () => {
+      const component = await setupWith(
+        [transaction(1), transaction(2), transaction(3)],
+        [category(7, 'Groceries')],
+      );
+
+      expect(component.rows()).toHaveLength(3);
+      // Identity, not equality: the memoised computed is what stops fifty rows stringifying
+      // fifty copies of the same list.
+      expect(component.categoryOptions()).toBe(component.categoryOptions());
+    });
+
+    it('spans the selection, not the page, for the bulk bar', async () => {
+      const component = await setupWith(
+        [
+          { ...transaction(1), bookingDate: '2024-03-01' },
+          { ...transaction(2), bookingDate: '2026-06-01' },
+        ],
+        [],
+      );
+
+      component.selection.selectAll([2]);
+
+      expect(component.selectedDateSpan()).toEqual({ from: '2026-06-01', to: '2026-06-01' });
     });
   });
 });

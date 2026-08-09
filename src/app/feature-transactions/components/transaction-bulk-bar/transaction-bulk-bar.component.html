@@ -13,8 +13,8 @@
   <mm-flex align="end" gap="2">
     <mm-select [formControl]="categoryControl" size="sm">
       <option value="">Assign category…</option>
-      @for (category of categoriesStore.activeCategories(); track category.id) {
-        <option [value]="category.id">{{ category.name }}</option>
+      @for (option of categoryOptions(); track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
       }
     </mm-select>
     <mm-button

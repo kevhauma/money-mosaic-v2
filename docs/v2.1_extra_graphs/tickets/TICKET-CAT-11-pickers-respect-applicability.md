@@ -59,25 +59,67 @@ Every picker renders `activeCategories()` wholesale, whatever dates are involved
 
 ## Acceptance criteria
 
-- [ ] The window helper is a pure, unit-tested function used by every touched site — no site
+**Implementation note (2026-08-09):** the filters dropdown marks *every* ended category it offers
+with the "(ended)" suffix, not only a kept-but-out-of-range current selection. The to-be only asked
+for the selection, but that dropdown is the one site that offers ended categories on purpose (no
+date filter = the whole history is on the table), so suffixing only the current pick would label the
+same category two different ways depending on the range — a superset of the criterion below, not a
+departure from it.
+
+Vocabulary the pickers now share (`CategorySelectOption`, `BookingDateSpan`, `bookingDateSpan`) moved
+out of `category-select-cell.component.ts` into `feature-transactions/category-picker.ts` on the way:
+this ticket took that type from two consumers to five, and the coding-conventions skill puts
+widely-shared vocabulary in a feature-root module rather than in a sibling component's file.
+
+- [x] The window helper is a pure, unit-tested function used by every touched site — no site
       reimplements the comparison; absent `activeFrom`/`activeUntil` mean unbounded and windowless
       categories appear everywhere, exactly as today.
-- [ ] The edit form filters by the transaction's booking date, and shows the assigned
+      (`core/categorisation/category-applicability.ts` — `categoryAppliesOn` /
+      `categoryOverlapsRange` / `withEndedSuffix`, imported by all four sites plus the rule form;
+      `category-applicability.spec.ts` covers open/closed/inclusive-edge bounds, and each site's
+      spec has a "leaves windowless categories …" case.)
+- [x] The edit form filters by the transaction's booking date, and shows the assigned
       out-of-window category with the "(ended)" suffix rather than dropping it.
-- [ ] The inline quick-set filters by the visible rows' date span with the option list still
+      (`categoryOptions` in `transaction-edit-form.component.ts`; specs "hides a category whose
+      window closed before the booking date", "still offers that category to a transaction from
+      inside its own window", "keeps the assigned out-of-window category, marked \"(ended)\"" —
+      the last also asserts the `<select>`'s value stays `9`.)
+- [x] The inline quick-set filters by the visible rows' date span with the option list still
       computed once per change (not per row) — asserted by a spec on the shared list.
-- [ ] The bulk bar filters by the selected transactions' date span.
-- [ ] The filters dropdown filters by overlap with the active date filter, offers everything when
+      (`visibleDateSpan` + `categoryOptions` in `transactions-overview.component.ts`; spec "hands
+      every row the very same option array, not one per row (TICKET-TXN-09)" asserts identity via
+      `toBe`, alongside the drop/overlap/kept-suffixed cases.)
+- [x] The bulk bar filters by the selected transactions' date span.
+      (`selectedDateSpan` input fed from the page's `selectedTransactions()`; bulk-bar specs
+      "drops a category whose window misses the selected rows entirely" and "keeps a category whose
+      window overlaps any part of the selected span".)
+- [x] The filters dropdown filters by overlap with the active date filter, offers everything when
       no date filter is set, and keeps its current selection offerable.
-- [ ] Assigning and un-assigning categories behaves as before in every other respect
+      (`categoryOptions` in `transaction-filters.component.ts`; five specs including "offers every
+      active category when no date filter is set" and "keeps the current selection offerable even
+      when the range would drop it".)
+- [x] Assigning and un-assigning categories behaves as before in every other respect
       (`categoryManual` handling untouched).
-- [ ] Unit tests cover: helper bounds (open, closed, inclusive edges); each of the four sites'
+      (`onCategoryChange` / `submit` / `applyBulkCategory` are unchanged in the diff — only the
+      option lists feeding them moved; the existing assignment specs pass unmodified.)
+- [x] Unit tests cover: helper bounds (open, closed, inclusive edges); each of the four sites'
       filtering; the kept-current-value rule with suffix; the no-window categories unchanged
-      case.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: a category ended last year is absent from a fresh
+      case. (29 new cases across `category-applicability.spec.ts` and the four component specs.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass.
+      (2026-08-09: lint clean, 2582 tests / 243 files passed, dev bundle built.)
+- [x] Verified via the fallow skill and coding-conventions skill.
+      (Both `.husky/pre-commit` fallow gates exit 0 — `dead-code --baseline` and
+      `health --complexity --max-crap 1000`; the two newly-introduced findings are CRAP-only at
+      cc 5 under fallow's estimated-zero-coverage model. The conventions pass moved the shared
+      picker vocabulary into `category-picker.ts`, see the note above.)
+- [x] Verified live in the browser: a category ended last year is absent from a fresh
       transaction's picker, present (suffixed) on an old transaction that uses it.
+      (2026-08-09, dev server on :4210, "Housing" given `activeUntil` 2026-06-30 via the category
+      form. Edit form on the 08/15 groceries row: no Housing option at all. Edit form on the 08/03
+      "Monthly rent" row: `Housing (ended)` present and selected. Edit form on a 06/15 row: plain
+      `Housing`, in place. Filter bar over 07/01–08/31: no Housing; over 05/01–06/30:
+      `Housing (ended)`. Bulk bar with an 08/15 row selected: no Housing; with a 06/15 row
+      selected: `Housing`. The category's window was reverted afterwards.)
 
 ## Notes
 

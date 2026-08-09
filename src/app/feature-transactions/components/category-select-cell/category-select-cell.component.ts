@@ -1,10 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-
-/** A category rendered as one `<option>` — pre-stringified once by the page, not per row. */
-export type CategorySelectOption = {
-  value: string;
-  label: string;
-};
+import type { CategorySelectOption } from '../../category-picker';
 
 /**
  * The transactions table's inline category quick-set cell (TICKET-TXN-09, CR4-1 §5 Option B).

@@ -79,6 +79,11 @@ saving basis, safety net), each with a repository and a store. No UI.
     /** Cash kept aside and never spent on a goal — the emergency float. Never negative. */
     safetyNetAmount: number;
     /**
+     * Which question `/future` is answering (FUT-09) — solve for the date, or for the rate.
+     * Declared here so the row has one shape; non-indexed, so FUT-09 needs no version bump.
+     */
+    mode?: ForecastMode;
+    /**
      * Accounts the forecast is allowed to consider (FUT-08). `undefined` or empty = every account,
      * which is the behaviour of every ticket before FUT-08 — declared here so the row has one
      * shape, since a non-indexed field needs no version bump either way (the CAT-10 precedent).
@@ -91,6 +96,7 @@ saving basis, safety net), each with a repository and a store. No UI.
     lookbackMonths: 6,
     basis: 'net-cash-flow',
     safetyNetAmount: 0,
+    mode: 'when-affordable',
   };
   ```
 
@@ -103,7 +109,10 @@ saving basis, safety net), each with a repository and a store. No UI.
   A new goal gets `sortOrder` = highest existing + 1, so it lands last rather than jumping the
   queue.
 - `ForecastSettingsStore` in `core/state/`, hydrating from the repository and exposing the three
-  settings plus per-field setters — defaults applied when the row does not exist yet.
+  settings plus per-field setters — defaults applied when the row does not exist yet. `mode` is
+  declared and defaulted here but gets no setter and no reader until
+  [TICKET-FUT-09](./TICKET-FUT-09-required-saving-rate-mode.md), the same way `scopeAccountIds` waits
+  for [TICKET-FUT-08](./TICKET-FUT-08-account-scope.md).
 - Both stores exported from [`core/state/index.ts`](../../../src/app/core/state/index.ts); both
   repositories from [`core/data-access/index.ts`](../../../src/app/core/data-access/index.ts).
 - Data management (export/import/wipe) picks up the two new tables so a backup is still complete —
@@ -151,6 +160,11 @@ saving basis, safety net), each with a repository and a store. No UI.
 - `archived` is carried from the start rather than added later: a reached goal that the user wants
   out of the list but not deleted is the obvious next request, and `withArchivable` already exists.
   No UI for it ships in FUT-04 — the field simply isn't set yet.
+- **`mode` is typed inline here, not imported.** FUT-09 owns the named `ForecastMode` union and only
+  exists after this ticket, so `app-db.ts` declares and exports `ForecastMode` itself and FUT-09's
+  aggregate re-uses it — the one place this version's type flow runs data-access → stats rather than
+  the other way. If the conventions review prefers it the usual direction, FUT-02 inlines the union
+  on the field and FUT-09 replaces it with the imported name.
 - The `SavingBasis` type is FUT-01's; `app-db.ts` imports it from `@/core/stats` (a type-only
   import, so no runtime dependency from data-access to stats). If that direction is rejected by the
   conventions review, inline the union in `app-db.ts` and have FUT-01 import it back the other way.

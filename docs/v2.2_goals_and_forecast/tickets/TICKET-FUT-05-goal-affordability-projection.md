@@ -153,5 +153,9 @@ verdict for any goal with a wanted-by date.
   known upcoming bills. Each of those makes the number *look* more precise while making it harder
   to explain, and none of them is measurable from imported bank CSVs alone. FUT-06's spread readout
   (median, min, max) is the honesty mechanism instead.
+- **This is one of two readings of the same plan.** [TICKET-FUT-09](./TICKET-FUT-09-required-saving-rate-mode.md)
+  fixes the date and solves for the rate, reusing this ticket's `cumulativeTarget`, its spendable
+  balance (net worth − safety net) and its month-end grid rather than re-deriving any of them — so
+  the two modes can never disagree about what the order costs. Keep those three concerns extractable.
 - Removes FUT-01's temporary `unused-export` suppression — this is its first consumer.
 - Needs FUT-01, FUT-02 and FUT-04.

@@ -34,19 +34,26 @@ export const RecurringSeriesStore = signalStore(
 
     const today = todayIso();
 
-    const series = computed(
-      () =>
-        detectRecurringPayments(
-          transactionsStore.transactions(),
-          categoriesStore.categoriesById(),
-          accountsStore.accountsById(),
-          today,
-          savingsAccountIbans(accountsStore.accounts()),
-        ).series,
+    const detected = computed(() =>
+      detectRecurringPayments(
+        transactionsStore.transactions(),
+        categoriesStore.categoriesById(),
+        accountsStore.accountsById(),
+        today,
+        savingsAccountIbans(accountsStore.accounts()),
+      ),
     );
+
+    const series = computed(() => detected().series);
 
     return {
       series,
+      /**
+       * Series left out because their category's applicability window had closed (TICKET-REC-05).
+       * Shared so the panel can caption the absence — a series disappearing without a word is the
+       * one thing this feature's "announce, don't vanish" rule (REC-04) does not allow.
+       */
+      concludedSeriesCount: computed(() => detected().concludedSeriesCount),
       /**
        * The series still running — everything except those flagged `stopped` (TICKET-REC-04).
        * Shared rather than filtered twice: the panel excludes stopped series from its count and

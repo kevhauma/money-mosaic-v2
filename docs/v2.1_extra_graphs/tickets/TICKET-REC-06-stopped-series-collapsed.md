@@ -56,22 +56,52 @@ that cost only when asked.
 
 ## Acceptance criteria
 
-- [ ] With at least one stopped series, the panel renders the stopped-group header (with count)
+- [x] With at least one stopped series, the panel renders the stopped-group header (with count)
       but none of the stopped rows on first render; active rows are unaffected.
-- [ ] Activating the header shows the stopped rows (badges, columns and the `scope="rowgroup"`
+      (`stoppedGroup` computed + the `@if (stoppedGroup().open)` guard inside the second `<tbody>`;
+      spec "renders the group header with its count, and none of its rows, on first render".)
+- [x] Activating the header shows the stopped rows (badges, columns and the `scope="rowgroup"`
       heading intact); activating it again hides them. The control is a button with
       `aria-expanded` reflecting the state.
-- [ ] With zero stopped series, no header and no toggle render (as today).
-- [ ] The state is a component-local signal — nothing written to `appSettings`, `ChartOptionsStore`
+      (Spec "reveals the rows on activation and hides them again, flipping aria-expanded" asserts
+      the row's eight columns, its "Stopped" badge cell, the surviving
+      `th[scope="rowgroup"]`, and `aria-expanded` in both directions. The disclosure is an
+      `mm-button` **inside** the heading, so the group is still announced as a row group; the
+      affordance is the ▸/▾ glyph plus the label, never colour alone.)
+- [x] With zero stopped series, no header and no toggle render (as today).
+      (Spec "renders no group and no toggle when nothing is stopped".)
+- [x] The state is a component-local signal — nothing written to `appSettings`, `ChartOptionsStore`
       or any repository; no Dexie change.
-- [ ] The summary count and monthly total remain computed from `activeSeries()` regardless of the
+      (`private readonly stoppedGroupOpen = signal(false)` beside `expandedKeys`; spec "writes
+      nothing to appSettings — the state is component-local and session-only" asserts
+      `appDb.appSettings.count()` is 0 after toggling. No store, repository or schema file is in
+      this ticket's diff.)
+- [x] The summary count and monthly total remain computed from `activeSeries()` regardless of the
       group's open/closed state.
-- [ ] Unit tests cover: closed by default with stopped series present; toggling open reveals the
+      (Untouched in the diff; spec "keeps the count and monthly total off the group’s open/closed
+      state" pins both before and after opening.)
+- [x] Unit tests cover: closed by default with stopped series present; toggling open reveals the
       rows and updates `aria-expanded`; toggling closed hides them again; count shown in the
       collapsed header; no group rendered when nothing is stopped.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: the collapsed group on `/explore` with real or crafted data,
+      (Five new cases in `recurring-payments-panel.component.spec.ts` under "the collapsed stopped
+      group (TICKET-REC-06)". Two REC-04 specs were updated rather than left passing by accident —
+      they read the heading text and the stopped row's badge, both of which the fold now changes;
+      they open the group explicitly via the new `openStoppedGroup` helper.)
+- [x] Verified via the fallow skill and coding-conventions skill.
+      (Both `.husky/pre-commit` fallow gates exit 0; the header's display facts are resolved on the
+      `stoppedGroup` view-model rather than derived in the template, per the conventions skill.)
+- [x] Verified live in the browser: the collapsed group on `/explore` with real or crafted data,
       opened and closed.
+      (2026-08-09, dev server on :4210, with a crafted stopped series — three monthly €30 rows
+      ending 2025-11-10, long past `STOPPED_INTERVALS`. **Closed on load:** header reads
+      "▸ Stopped (1) — no longer counted in the monthly total", `aria-expanded="false"`,
+      `aria-label="Show the 1 stopped payment"`, and "Old Gym Fixture" appears nowhere in the
+      panel; the seven active rows and the "7 recurring payments ≈ €1,202.04 /month" summary are
+      unchanged. **Opened:** glyph ▾, `aria-expanded="true"`, label "Hide the 1 stopped payment",
+      the row renders all eight columns with its "Stopped" badge, the `th[scope="rowgroup"]`
+      heading survives, and the summary total is still €1,202.04. **Closed again:** back to ▸,
+      `aria-expanded="false"`, row gone. The crafted rows were deleted afterwards — the dev
+      database is back to its original 41 transactions.)
 
 ## Notes
 

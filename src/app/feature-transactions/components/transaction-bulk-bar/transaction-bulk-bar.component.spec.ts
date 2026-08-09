@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
+import { CategoriesRepository, TransactionsRepository, type Category } from '@/core/data-access';
+import { CategoriesStore } from '@/core/state';
 import { TransactionBulkBarComponent } from './transaction-bulk-bar.component';
 
 describe('TransactionBulkBarComponent', () => {
@@ -99,5 +102,89 @@ describe('TransactionBulkBarComponent', () => {
       ?.click();
 
     expect(deleteCount).toBe(1);
+  });
+});
+
+describe('TransactionBulkBarComponent: applicability-aware picker (TICKET-CAT-11)', () => {
+  let fixture: ComponentFixture<TransactionBulkBarComponent>;
+
+  const category = (id: number, name: string, window: Partial<Category> = {}): Category => ({
+    id,
+    name,
+    kind: 'expense',
+    color: '#7F77DD',
+    icon: 'tag',
+    archived: false,
+    isSystem: false,
+    sortOrder: id,
+    ...window,
+  });
+
+  const setupWith = async (
+    categories: Category[],
+    selectedDateSpan: { from: string; to: string } | null,
+  ): Promise<HTMLElement> => {
+    await TestBed.configureTestingModule({
+      imports: [TransactionBulkBarComponent],
+      providers: [
+        provideRouter([]),
+        { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        {
+          provide: CategoriesRepository,
+          useValue: { getAll: vi.fn().mockResolvedValue(categories) },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TransactionBulkBarComponent);
+    await TestBed.inject(CategoriesStore).hydrate();
+    fixture.componentRef.setInput('count', 2);
+    fixture.componentRef.setInput('filteredCount', 5);
+    fixture.componentRef.setInput('selectedDateSpan', selectedDateSpan);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  const optionLabels = (host: HTMLElement): string[] =>
+    [...host.querySelectorAll('mm-select option')].map(
+      (option) => option.textContent?.trim() ?? '',
+    );
+
+  it('offers every active category when nothing is selected yet', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2023-06-30' })],
+      null,
+    );
+
+    expect(optionLabels(host)).toEqual(['Assign category…', 'Groceries', 'Rent']);
+  });
+
+  it('drops a category whose window misses the selected rows entirely', async () => {
+    const host = await setupWith(
+      [category(7, 'Groceries'), category(9, 'Rent', { activeUntil: '2023-06-30' })],
+      { from: '2026-06-01', to: '2026-07-01' },
+    );
+
+    expect(optionLabels(host)).toEqual(['Assign category…', 'Groceries']);
+  });
+
+  it('keeps a category whose window overlaps any part of the selected span', async () => {
+    const host = await setupWith([category(9, 'Rent', { activeUntil: '2023-06-30' })], {
+      from: '2023-01-01',
+      to: '2026-07-01',
+    });
+
+    expect(optionLabels(host)).toEqual(['Assign category…', 'Rent']);
+  });
+
+  it('leaves windowless categories offered for any span', async () => {
+    const host = await setupWith([category(7, 'Groceries')], {
+      from: '1999-01-01',
+      to: '1999-01-02',
+    });
+
+    expect(optionLabels(host)).toEqual(['Assign category…', 'Groceries']);
   });
 });

@@ -177,8 +177,51 @@ export class RecurringPaymentsPanelComponent {
   protected readonly activeRows = computed(() => this.rows().filter((row) => !row.stopped));
   protected readonly stoppedRows = computed(() => this.rows().filter((row) => row.stopped));
 
+  /**
+   * Whether the stopped group is unfolded (TICKET-REC-06). **Closed on every visit**, and
+   * deliberately component-local and session-only — the same reading-aid status as `expandedKeys`,
+   * so it is neither persisted to `appSettings` nor promoted to a store. A stopped series is kept
+   * listed for life (REC-04), so this half of the table only ever grows: the panel should pay for
+   * rendering it when asked, and lead with what the user still pays for otherwise.
+   */
+  private readonly stoppedGroupOpen = signal(false);
+
+  /**
+   * The stopped group's header as one set of display facts (TICKET-REC-06) — the count is in the
+   * label so the *collapsed* state still says what it hides, and the glyph carries the state in
+   * something other than colour.
+   */
+  protected readonly stoppedGroup = computed(() => {
+    const count = this.stoppedRows().length;
+    const open = this.stoppedGroupOpen();
+
+    return {
+      open,
+      expandIcon: open ? '▾' : '▸',
+      label: `Stopped (${count}) — no longer counted in the monthly total`,
+      toggleAriaLabel: `${open ? 'Hide' : 'Show'} the ${count} stopped ${count === 1 ? 'payment' : 'payments'}`,
+    };
+  });
+
+  protected toggleStoppedGroup(): void {
+    this.stoppedGroupOpen.update((open) => !open);
+  }
+
   /** Off the shared series, not `rows()` — a count has no business re-deriving because a row was unfolded. */
   protected readonly seriesCount = computed(() => this.recurringSeriesStore.activeSeries().length);
+
+  /**
+   * Why the list is shorter than the user's history (TICKET-REC-05) — `''` when nothing was left
+   * out, so the template branches on emptiness rather than on a count. Says *what* was hidden and
+   * *why*: a series silently gone is exactly the disappearance REC-04 refused to allow.
+   */
+  protected readonly concludedCaption = computed(() => {
+    const count = this.recurringSeriesStore.concludedSeriesCount();
+    // "series" is its own plural, so this needs no pluralisation branch — unlike `summaryLabel`.
+    return count === 0
+      ? ''
+      : `${count} concluded series hidden — categories with an ended applicability range`;
+  });
 
   /** The summary sentence, resolved here so the template renders a string instead of pluralising one. */
   protected readonly summaryLabel = computed(() => {

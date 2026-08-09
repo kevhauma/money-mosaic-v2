@@ -70,27 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-CAT-11',
-    title:
-      'Category dropdowns stop offering categories that no longer apply, without rewriting history',
-    area: 'Categories',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-05',
-    title:
-      'A recurring payment whose category ended leaves the recurring list instead of showing as stopped',
-    area: 'Recurring payments',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-06',
-    title:
-      'Stopped payments tuck away behind a closed "Stopped" section, so the list leads with what you still pay',
-    area: 'Recurring payments',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-REC-07',
     title:
       'Weekly and every-two-weeks payments get detected as recurring, even when a week is skipped',
@@ -139,6 +118,13 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     versionFolder: 'v2.2_goals_and_forecast',
     ticketId: 'TICKET-FUT-07',
     title: 'Watch your projected net worth rise and dip as each goal gets bought',
+    area: 'Forecast',
+  },
+  {
+    versionFolder: 'v2.2_goals_and_forecast',
+    ticketId: 'TICKET-FUT-09',
+    title:
+      'Switch the forecast around: pick the date you need something by and see what it takes to save for it each month',
     area: 'Forecast',
   },
   {

@@ -101,6 +101,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
 
   const createFixture = async (
     transactions: Transaction[],
+    categories: Category[] = [subscriptions],
   ): Promise<ComponentFixture<RecurringPaymentsPanelComponent>> => {
     // Fakes only `Date`, not timers — this app is zoneless and `whenStable()` needs real ones.
     // Set before `TestBed` builds anything, since `RecurringSeriesStore` reads the clock once, on
@@ -121,7 +122,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
         },
         {
           provide: CategoriesRepository,
-          useValue: { getAll: vi.fn().mockResolvedValue([subscriptions]) },
+          useValue: { getAll: vi.fn().mockResolvedValue(categories) },
         },
       ],
     }).compileComponents();
@@ -139,6 +140,16 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     vi.useRealTimers();
     await appDb.appSettings.clear();
   });
+
+  /** The stopped group's disclosure — the button inside its `scope="rowgroup"` heading (TICKET-REC-06). */
+  const stoppedToggleOf = (host: HTMLElement): HTMLButtonElement | null =>
+    host.querySelector('th[scope="rowgroup"] button');
+
+  /** Clicks that disclosure and settles the view, for assertions about the rows behind it. */
+  const openStoppedGroup = (fixture: ComponentFixture<RecurringPaymentsPanelComponent>): void => {
+    stoppedToggleOf(fixture.nativeElement as HTMLElement)?.click();
+    fixture.detectChanges();
+  };
 
   /** Each series row's eight cells in order — the name is a `<th scope="row">`, the rest `<td>`. */
   const cellsOf = (host: HTMLElement): string[][] =>
@@ -266,8 +277,11 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       const [active, stopped] = [...host.querySelectorAll('tbody')];
       expect(active.textContent).toContain('Streamly');
       expect(active.textContent).not.toContain('Old gym');
-      expect(stopped.textContent).toContain('Stopped — no longer counted in the monthly total');
-      expect(stopped.textContent).toContain('Old gym');
+      // The heading now carries the group's count and folds the rows away (TICKET-REC-06), so the
+      // rows are asserted through its toggle rather than on first render.
+      expect(stopped.textContent).toContain('Stopped (1) — no longer counted in the monthly total');
+      openStoppedGroup(fixture);
+      expect([...host.querySelectorAll('tbody')][1].textContent).toContain('Old gym');
     });
 
     it('leaves stopped series out of the count and the monthly total', async () => {
@@ -281,6 +295,8 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
 
     it('badges a stopped series, in words rather than by colour alone', async () => {
       const fixture = await createFixture(cancelledMonthly());
+      // The badge lives on the row, which the group hides until opened (TICKET-REC-06).
+      openStoppedGroup(fixture);
       const badges = [...(fixture.nativeElement as HTMLElement).querySelectorAll('mm-badge')];
 
       expect(badges).toHaveLength(1);
@@ -312,6 +328,115 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       const masked = host.querySelector('mm-badge')?.textContent?.trim();
       expect(masked).toBe('Price ↑ ••• → •••');
       expect(masked).not.toContain('€');
+    });
+  });
+
+  describe('the collapsed stopped group (TICKET-REC-06)', () => {
+    const bothSeries = (): Transaction[] => [...streamlyMonthly(), ...cancelledMonthly()];
+
+    /** Series rows only — the group's heading is a `<tr>` too, but carries one cell, not eight. */
+    const seriesRowsOf = (host: HTMLElement): string[][] =>
+      cellsOf(host).filter((cells) => cells.length === 8);
+
+    it('renders the group header with its count, and none of its rows, on first render', async () => {
+      const fixture = await createFixture(bothSeries());
+      const host = fixture.nativeElement as HTMLElement;
+
+      expect(stoppedToggleOf(host)?.textContent).toContain(
+        'Stopped (1) — no longer counted in the monthly total',
+      );
+      expect(stoppedToggleOf(host)?.getAttribute('aria-expanded')).toBe('false');
+      // The active half is untouched: one row, and it is the live commitment.
+      expect(seriesRowsOf(host).map((row) => row[0])).toEqual([
+        expect.stringContaining('Streamly'),
+      ]);
+      expect(host.textContent).not.toContain('Old gym');
+    });
+
+    it('reveals the rows on activation and hides them again, flipping aria-expanded', async () => {
+      const fixture = await createFixture(bothSeries());
+      const host = fixture.nativeElement as HTMLElement;
+
+      openStoppedGroup(fixture);
+
+      const [, stopped] = [...host.querySelectorAll('tbody')];
+      expect(stopped.textContent).toContain('Old gym');
+      // The `scope="rowgroup"` heading and the row's own eight columns survive being unfolded.
+      expect(host.querySelector('th[scope="rowgroup"]')).not.toBeNull();
+      expect(seriesRowsOf(host)).toHaveLength(2);
+      expect(seriesRowsOf(host)[1][1]).toContain('Stopped'); // its badge column
+      expect(stoppedToggleOf(host)?.getAttribute('aria-expanded')).toBe('true');
+
+      openStoppedGroup(fixture);
+
+      expect(seriesRowsOf(host).map((row) => row[0])).toEqual([
+        expect.stringContaining('Streamly'),
+      ]);
+      expect(stoppedToggleOf(host)?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('renders no group and no toggle when nothing is stopped', async () => {
+      const fixture = await createFixture(streamlyMonthly());
+      const host = fixture.nativeElement as HTMLElement;
+
+      expect(stoppedToggleOf(host)).toBeNull();
+      expect(host.textContent).not.toContain('Stopped');
+    });
+
+    it('keeps the count and monthly total off the group’s open/closed state', async () => {
+      const fixture = await createFixture(bothSeries());
+      const textOf = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+      expect(textOf()).toContain('1 recurring payment ≈');
+      expect(textOf()).toContain('€12.99');
+
+      openStoppedGroup(fixture);
+
+      expect(textOf()).toContain('1 recurring payment ≈');
+      expect(textOf()).not.toContain('€42.99'); // 12.99 + the stopped 30.00
+    });
+
+    it('writes nothing to appSettings — the state is component-local and session-only', async () => {
+      const fixture = await createFixture(bothSeries());
+
+      openStoppedGroup(fixture);
+
+      expect(await appDb.appSettings.count()).toBe(0);
+    });
+  });
+
+  describe('a category’s applicability range (TICKET-REC-05)', () => {
+    /** `streamlyMonthly` is categorised 1; ending that window last month concludes the series. */
+    const endedSubscriptions: Category = { ...subscriptions, activeUntil: '2026-04-30' };
+
+    it('renders no caption when nothing was concluded', async () => {
+      const fixture = await createFixture(streamlyMonthly());
+
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+        'concluded series hidden',
+      );
+    });
+
+    it('drops the series and captions the absence when its category window has closed', async () => {
+      const fixture = await createFixture(streamlyMonthly(), [endedSubscriptions]);
+      const host = fixture.nativeElement as HTMLElement;
+
+      expect(cellsOf(host)).toEqual([]);
+      expect(host.textContent).toContain('1 concluded series hidden');
+      expect(host.textContent).toContain('categories with an ended applicability range');
+      // Absent, not flagged: the empty state stands in for the list, and no Stopped group appears.
+      expect(host.textContent).not.toContain('Stopped');
+    });
+
+    it('leaves an uncategorised series listed, since it has no window to honour', async () => {
+      const fixture = await createFixture(
+        [...gymMonthly(), ...streamlyMonthly()],
+        [endedSubscriptions],
+      );
+      const host = fixture.nativeElement as HTMLElement;
+
+      expect(cellsOf(host).map((row) => row[0])).toEqual([expect.stringContaining('Gym')]);
+      expect(host.textContent).toContain('1 concluded series hidden');
     });
   });
 });

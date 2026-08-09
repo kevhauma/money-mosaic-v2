@@ -117,3 +117,34 @@ describe('projectRecurringOccurrences', () => {
     ]);
   });
 });
+
+describe('projectRecurringOccurrences: a series clipped by its category window (TICKET-REC-05)', () => {
+  it('stops projecting past projectUntil even when the caller asks about a wider span', () => {
+    const weekly = series({ cadence: 'weekly', nextExpectedDate: '2026-08-03' });
+
+    expect(datesOf([weekly])).toEqual([
+      '2026-08-03',
+      '2026-08-10',
+      '2026-08-17',
+      '2026-08-24',
+      '2026-08-31',
+    ]);
+    expect(datesOf([{ ...weekly, projectUntil: '2026-08-17' }])).toEqual([
+      '2026-08-03',
+      '2026-08-10',
+      '2026-08-17',
+    ]);
+  });
+
+  it('drops the series entirely once the window closed before the asked-about span', () => {
+    expect(datesOf([series({ projectUntil: '2026-07-31' })])).toEqual([]);
+  });
+
+  it('changes nothing when projectUntil sits past the asked-about span', () => {
+    expect(datesOf([series({ projectUntil: '2026-12-31' })])).toEqual(['2026-08-11']);
+  });
+
+  it('leaves a series without projectUntil exactly as before', () => {
+    expect(datesOf([series()])).toEqual(['2026-08-11']);
+  });
+});

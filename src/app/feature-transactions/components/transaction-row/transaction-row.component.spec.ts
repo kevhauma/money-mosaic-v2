@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { AppSettingsRepository, type Transaction } from '@/core/data-access';
 import type { TransactionRowVm } from '../../transaction-row-vm';
-import type { CategorySelectOption } from '../category-select-cell/category-select-cell.component';
+import type { CategorySelectOption } from '../../category-picker';
 import { TransactionRowComponent } from './transaction-row.component';
 
 const categoryOptions: CategorySelectOption[] = [

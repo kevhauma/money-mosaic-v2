@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import type { Category, Transaction } from '@/core/data-access';
+import { categoryAppliesOn, withEndedSuffix } from '@/core/categorisation';
 import { validateNullified } from '@/core/transactions';
 import { AccountsStore, CategoriesStore } from '@/core/state';
 import { RulesStore } from '@/feature-categories';
@@ -27,6 +28,9 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { AttributionOverrideFieldsetComponent } from '../attribution-override-fieldset/attribution-override-fieldset.component';
+import type { CategorySelectOption } from '../../category-picker';
+
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 export type TransactionEditResult = Partial<
   Pick<Transaction, 'categoryId' | 'categoryManual' | 'notes' | 'attributionOverride' | 'nullified'>
@@ -56,7 +60,7 @@ export class TransactionEditFormComponent {
   readonly saved = output<TransactionEditResult>();
   readonly deleteRequested = output<void>();
 
-  protected readonly categoriesStore = inject(CategoriesStore);
+  private readonly categoriesStore = inject(CategoriesStore);
   private readonly rulesStore = inject(RulesStore);
   private readonly accountsStore = inject(AccountsStore);
 
@@ -93,9 +97,39 @@ export class TransactionEditFormComponent {
     });
   }
 
-  protected categoryLabel(category: Category): string {
+  private categoryLabel(category: Category): string {
     return category.group ? `${category.group} · ${category.name}` : category.name;
   }
+
+  /**
+   * The categories offerable to *this* transaction (TICKET-CAT-11) — those whose applicability
+   * window covers its booking date, so editing a 2022 row still offers a rent that ended in 2023
+   * while a fresh import from this month does not.
+   *
+   * The already-assigned category is appended when the window filter drops it, marked "(ended)":
+   * a `<select>` whose value is not among its options is a broken control, and re-opening an old
+   * transaction is not the moment to silently un-categorise it.
+   */
+  protected readonly categoryOptions = computed<CategorySelectOption[]>(() => {
+    const transaction = this.transaction();
+    const categories = this.categoriesStore.activeCategories();
+    if (!transaction) return [];
+
+    const today = todayIso();
+    const options = categories
+      .filter((category) => categoryAppliesOn(category, transaction.bookingDate))
+      .map((category) => ({ value: String(category.id), label: this.categoryLabel(category) }));
+
+    const assigned = categories.find((category) => category.id === transaction.categoryId);
+    if (assigned && !categoryAppliesOn(assigned, transaction.bookingDate)) {
+      options.push({
+        value: String(assigned.id),
+        label: withEndedSuffix(this.categoryLabel(assigned), assigned, today),
+      });
+    }
+
+    return options;
+  });
 
   protected readonly showAlwaysCategorise = computed(() => !!this.transaction()?.counterpartyName);
 

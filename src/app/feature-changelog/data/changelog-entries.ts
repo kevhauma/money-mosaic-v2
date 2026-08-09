@@ -729,4 +729,48 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Categories',
   },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-CAT-11'],
+    title: 'Category pick lists only offer what applied on the date you are looking at',
+    details: [
+      'Categorising this month’s import no longer means scrolling past the rent you stopped paying last year — a category with an end date drops out of the pickers once that date has passed',
+      'History is untouched: open a transaction from a year the category did apply and it is offered exactly as before',
+      'A transaction already filed under an ended category keeps it, marked “(ended)”, so re-opening an old row never quietly un-categorises it',
+      'Each picker asks about the dates it is actually working with — the edit popup about that one transaction, the inline dropdown and the bulk bar about the rows on screen or selected, the filter bar about the range you are filtering',
+      'With no date filter set, the filter bar still offers everything: the whole history is on the table, and an ended category is exactly what you need to look back at the years it covered',
+      'Rule targets are deliberately not filtered — a rule runs over whatever dates the next import brings — but ended categories are marked there too',
+      'Categories with no dates behave exactly as they always have, everywhere',
+    ],
+    area: 'Categories',
+  },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-05'],
+    title:
+      'A commitment you have dated the end of leaves the recurring list, quietly and correctly',
+    details: [
+      'Rent that ended when you bought a house was being flagged “Stopped” and listed forever, as though something had gone wrong — give its category an end date and the whole series simply leaves the list and the upcoming-bills calendar',
+      'The panel says how many series it left out and why, so nothing disappears without a word',
+      'The “Stopped” flag keeps doing its real job: telling you about a payment that quietly failed or lapsed. This only removes the ones you have explicitly declared finished',
+      'A category whose end date is still in the future keeps its series listed, but stops it there — a membership cancelled per year-end drops off the calendar exactly at year-end instead of billing you into January',
+      'Uncategorised series and categories without dates are untouched',
+    ],
+    area: 'Explore',
+  },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-06'],
+    title: 'Stopped payments fold away behind a closed section',
+    details: [
+      'The “Stopped” group at the bottom of the recurring payments list now starts collapsed, so the panel leads with what you still pay for',
+      'Its header carries the count — “Stopped (3)” — so the closed state still says what it is hiding',
+      'Open it whenever you want to look; it closes again on your next visit, since every subscription you ever cancelled stays listed for good and that half of the table only grows',
+      'The stopped payments still keep their badges and columns when opened, and still count toward nothing in your monthly total',
+    ],
+    area: 'Explore',
+  },
 ];

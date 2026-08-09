@@ -49,7 +49,11 @@ const detectAt = (todayIso: string, transactions: Transaction[]) =>
 
 describe('detectRecurringPayments', () => {
   it('returns no series for an empty history', () => {
-    expect(detectRecurringPayments([], NO_CATEGORIES, NO_ACCOUNTS, TODAY)).toEqual({ series: [] });
+    // The envelope gained `concludedSeriesCount` with TICKET-REC-05; the series half is unchanged.
+    expect(detectRecurringPayments([], NO_CATEGORIES, NO_ACCOUNTS, TODAY)).toEqual({
+      series: [],
+      concludedSeriesCount: 0,
+    });
   });
 
   it('detects a monthly subscription whose dates jitter around the 11th', () => {
@@ -406,5 +410,97 @@ describe('detectRecurringPayments: change flags (TICKET-REC-04)', () => {
     expect(series).toHaveLength(1);
     expect(series[0].flags.priceChange).toBeDefined();
     expect(series[0].flags.stopped).toEqual({ since: '2026-06-05' });
+  });
+});
+
+describe('detectRecurringPayments: a category’s applicability window (TICKET-REC-05)', () => {
+  const HOUSING_ID = 4;
+
+  /** A rent-shaped series: monthly, same amount, four occurrences ending well before TODAY. */
+  const rent = (): Transaction[] =>
+    occurrencesOf(
+      [
+        ['2026-01-03', -950],
+        ['2026-02-03', -950],
+        ['2026-03-03', -950],
+        ['2026-04-03', -950],
+      ],
+      { counterpartyName: 'Vesta Rentals', categoryId: HOUSING_ID },
+    );
+
+  const housing = (overrides: Partial<Category> = {}): Map<number, Category> =>
+    new Map([[HOUSING_ID, category({ id: HOUSING_ID, name: 'Housing', ...overrides })]]);
+
+  it('drops a series whose category window closed, with no flags and a conclusion count', () => {
+    const withoutWindow = detect(rent(), housing());
+    // Without a window this rent is exactly REC-04's "Stopped" case — which is what makes the
+    // declared conclusion below a different answer rather than a coincidence.
+    expect(withoutWindow.series).toHaveLength(1);
+    expect(withoutWindow.series[0].flags.stopped).toBeDefined();
+    expect(withoutWindow.concludedSeriesCount).toBe(0);
+
+    const concluded = detect(rent(), housing({ activeUntil: '2026-04-30' }));
+
+    expect(concluded.series).toEqual([]);
+    expect(concluded.concludedSeriesCount).toBe(1);
+  });
+
+  it('leaves a series whose window closes in the future listed, clipped at activeUntil', () => {
+    // Runs to 2026-08-03 so the next expected date (2026-09-02) sits past the window's end.
+    const gym = occurrencesOf(
+      [
+        ['2026-05-03', -30],
+        ['2026-06-03', -30],
+        ['2026-07-03', -30],
+        ['2026-08-03', -30],
+      ],
+      { counterpartyName: 'City Gym', categoryId: HOUSING_ID },
+    );
+
+    const { series, concludedSeriesCount } = detect(gym, housing({ activeUntil: '2026-08-31' }));
+
+    expect(concludedSeriesCount).toBe(0);
+    expect(series).toHaveLength(1);
+    expect(series[0].nextExpectedDate).toBe('2026-08-31');
+    expect(series[0].projectUntil).toBe('2026-08-31');
+    expect(series[0].flags.stopped).toBeUndefined();
+  });
+
+  it('leaves a windowless category’s series byte-for-byte unchanged', () => {
+    const withCategory = detect(rent(), housing());
+    const withoutCategory = detect(rent(), NO_CATEGORIES);
+
+    expect(withCategory.series[0]).toEqual({
+      ...withoutCategory.series[0],
+      categoryId: HOUSING_ID,
+    });
+    expect(withCategory.series[0].projectUntil).toBeUndefined();
+  });
+
+  it('leaves an uncategorised series alone — it has no window to honour', () => {
+    const uncategorised = occurrencesOf(
+      [
+        ['2026-01-03', -950],
+        ['2026-02-03', -950],
+        ['2026-03-03', -950],
+        ['2026-04-03', -950],
+      ],
+      { counterpartyName: 'Vesta Rentals' },
+    );
+
+    const { series, concludedSeriesCount } = detect(
+      uncategorised,
+      housing({ activeUntil: '2026-04-30' }),
+    );
+
+    expect(series).toHaveLength(1);
+    expect(series[0].categoryId).toBeNull();
+    expect(concludedSeriesCount).toBe(0);
+  });
+
+  it('treats the window’s final day as still applying, matching categoryHasEnded', () => {
+    // TODAY is 2026-08-07 — a window ending exactly today has not ended yet.
+    expect(detect(rent(), housing({ activeUntil: TODAY })).series).toHaveLength(1);
+    expect(detect(rent(), housing({ activeUntil: '2026-08-06' })).series).toEqual([]);
   });
 });

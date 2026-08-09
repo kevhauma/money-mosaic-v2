@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { AccountsStore, CategoriesStore, TransactionsStore, TransfersStore } from '@/core/state';
 import type { Rule, Transaction } from '@/core/data-access';
+import { categoryOverlapsRange, withEndedSuffix } from '@/core/categorisation';
 import { isLikelyTransfer, savingsAccountIbans } from '@/core/transfers';
 import { RuleFormComponent, RulesStore, type RuleFormValue } from '@/feature-categories';
 import {
@@ -30,7 +31,7 @@ import {
   type TransactionFilters,
 } from '../../transaction-filters';
 import type { TransactionRowVm } from '../../transaction-row-vm';
-import type { CategorySelectOption } from '../category-select-cell/category-select-cell.component';
+import { bookingDateSpan, type CategorySelectOption } from '../../category-picker';
 import { TransactionBulkBarComponent } from '../transaction-bulk-bar/transaction-bulk-bar.component';
 import {
   TransactionEditFormComponent,
@@ -42,6 +43,8 @@ import { TransferReviewComponent } from '../transfer-review/transfer-review.comp
 
 /** Rows rendered per page — keeps the table from materialising thousands of `<tr>` at once (CR-2.1). */
 const PAGE_SIZE = 50;
+
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 const EMPTY_FILTERS: TransactionFilters = {
   accountId: '',
@@ -152,13 +155,46 @@ export class TransactionsOverviewComponent {
     );
   });
 
-  /** The inline category quick-set's `<option>` list, stringified once per category change rather
-   * than once per option per row (TICKET-TXN-09). */
-  protected readonly categoryOptions = computed<CategorySelectOption[]>(() =>
-    this.categoriesStore
-      .activeCategories()
-      .map((category) => ({ value: String(category.id), label: category.name })),
+  /** The booking dates the current page actually covers — the span its quick-set picker serves (TICKET-CAT-11). */
+  private readonly visibleDateSpan = computed(() => bookingDateSpan(this.pagination.pagedItems()));
+
+  /** The same, over the selection, handed down to the bulk bar's picker (TICKET-CAT-11). */
+  protected readonly selectedDateSpan = computed(() =>
+    bookingDateSpan(this.selectedTransactions()),
   );
+
+  /**
+   * The inline category quick-set's `<option>` list, stringified once per category change rather
+   * than once per option per row (TICKET-TXN-09).
+   *
+   * Applicability-filtered against the **visible rows' span** rather than per row (TICKET-CAT-11):
+   * one list shared by every row on the page is the whole point of TICKET-TXN-09's memoisation, so
+   * the span is the union of the dates it has to serve, recomputed per page/data change and never
+   * per row. Any category a visible row is already assigned to is kept regardless — the same
+   * broken-`<select>` rule the edit form follows, applied to fifty selects at once.
+   */
+  protected readonly categoryOptions = computed<CategorySelectOption[]>(() => {
+    const categories = this.categoriesStore.activeCategories();
+    const span = this.visibleDateSpan();
+    if (!span) return [];
+
+    const today = todayIso();
+    const assignedIds = new Set(
+      this.pagination.pagedItems().map((transaction) => transaction.categoryId),
+    );
+
+    return categories
+      .filter(
+        (category) =>
+          categoryOverlapsRange(category, span.from, span.to) || assignedIds.has(category.id),
+      )
+      .map((category) => ({
+        value: String(category.id),
+        label: categoryOverlapsRange(category, span.from, span.to)
+          ? category.name
+          : withEndedSuffix(category.name, category, today),
+      }));
+  });
 
   /**
    * Joins each visible row's account name, category, transfer, likely-transfer, selected flag, and
