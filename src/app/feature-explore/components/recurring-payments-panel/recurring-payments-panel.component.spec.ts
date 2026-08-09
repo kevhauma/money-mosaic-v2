@@ -362,6 +362,49 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     });
   });
 
+  describe('the payment column’s width clamp (TICKET-REC-10)', () => {
+    /** The shape that pushed the table past its panel: a description-keyed series, so no short name. */
+    const LONG_LABEL = 'SEPA INCASSO NUTSBEDRIJF ENERGIELEVERING MAANDTERMIJN AFREKENING';
+
+    const longNameMonthly = (): Transaction[] =>
+      ['2026-02-09', '2026-03-09', '2026-04-09', '2026-05-09'].map((bookingDate, index) =>
+        transaction({ id: 400 + index, bookingDate, counterpartyName: LONG_LABEL }),
+      );
+
+    /** The label span inside the row header's toggle — the second of the button's two spans. */
+    const labelSpanOf = (host: HTMLElement): HTMLElement | null =>
+      host.querySelector('tbody th[scope="row"] button > span:last-of-type');
+
+    it('bounds the label and ellipsises it, so the column stops growing to fit a name', async () => {
+      const fixture = await createFixture(longNameMonthly());
+      const label = labelSpanOf(fixture.nativeElement as HTMLElement);
+
+      expect(label?.textContent?.trim()).toBe(LONG_LABEL);
+      // A maximum, not a width: a short name still shrinks the column below it. 8rem is the
+      // measured budget at 1280px, stepping up to 16rem once the panel is wide enough to afford it.
+      expect(label?.classList.contains('max-w-32')).toBe(true);
+      expect(label?.classList.contains('2xl:max-w-3xs')).toBe(true);
+      expect(label?.classList.contains('truncate')).toBe(true);
+    });
+
+    it('keeps the full name on hover and in the toggle’s accessible name', async () => {
+      const fixture = await createFixture(longNameMonthly());
+      const host = fixture.nativeElement as HTMLElement;
+
+      expect(labelSpanOf(host)?.getAttribute('title')).toBe(LONG_LABEL);
+      expect(
+        host.querySelector('tbody th[scope="row"] button')?.getAttribute('aria-label'),
+      ).toContain(LONG_LABEL);
+    });
+
+    it('leaves mm-table’s horizontal scroll wrapper in place for narrow viewports', async () => {
+      const fixture = await createFixture(longNameMonthly());
+      const wrapper = (fixture.nativeElement as HTMLElement).querySelector('.mm-table-wrap');
+
+      expect(wrapper?.classList.contains('overflow-x-auto')).toBe(true);
+    });
+  });
+
   describe('the collapsed stopped group (TICKET-REC-06)', () => {
     const bothSeries = (): Transaction[] => [...streamlyMonthly(), ...cancelledMonthly()];
 

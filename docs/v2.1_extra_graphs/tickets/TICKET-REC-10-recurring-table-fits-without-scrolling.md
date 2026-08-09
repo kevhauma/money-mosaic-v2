@@ -51,27 +51,64 @@ hover (or focus) away.
 
 ## Acceptance criteria
 
-- [ ] At a 1280px-wide viewport with a long payment name in the data, the recurring table's wrapper
+> **Implementation note, 2026-08-09.** The clamp shipped is **8rem**, stepping up to 16rem at `2xl`
+> — not the single generous max-width first written. Measured live at a 1280px viewport: the app
+> shell leaves this panel **909px**, and the other seven columns need **703px** of it, so the payment
+> name has ~140px before the table overflows again. A flat 16rem (256px) put the horizontal
+> scrollbar straight back (`scrollWidth` 1024 vs `clientWidth` 909). The two-step clamp is what makes
+> the first criterion below true at 1280 without punishing a wide monitor.
+
+- [x] At a 1280px-wide viewport with a long payment name in the data, the recurring table's wrapper
       has no horizontal overflow (`scrollWidth <= clientWidth`) and the "Per month" column is fully
-      visible.
-- [ ] A payment name too long for the column renders ellipsised rather than widening the column or
-      wrapping to a second line.
-- [ ] The full, untruncated name is reachable on hover, and the toggle's existing `aria-label` still
+      visible. (Measured in the browser on `/explore` at 1280×900 with a 68-character label in the
+      Payment column: wrapper `scrollWidth` 909 = `clientWidth` 909, and both the "Per month" `<th>`
+      and its cells have a `right` edge inside the wrapper's. Re-measured at 1536×900, where the
+      clamp steps to 256px: 1165 = 1165. Also holds with a row expanded.)
+- [x] A payment name too long for the column renders ellipsised rather than widening the column or
+      wrapping to a second line. (Same session: the label span renders at exactly 128px against a
+      426px full-text width, `scrollWidth > clientWidth` so the ellipsis is active, and its height is
+      one line. Computed style on the live element: `max-width: 128px`, `overflow: hidden`,
+      `text-overflow: ellipsis`, `white-space: nowrap`. `truncate`'s `overflow: hidden` is also what
+      zeroes the flex item's automatic minimum size, so the max-width binds inside the button's flex
+      row rather than being overridden by `min-width: auto`.)
+- [x] The full, untruncated name is reachable on hover, and the toggle's existing `aria-label` still
       carries the full `row.label` so nothing is lost to a screen reader.
-- [ ] A short payment name is not padded out to the clamp — the column still shrinks to content below
-      the maximum.
-- [ ] `mm-table` keeps its `overflow-x-auto` wrapper, so a narrow viewport can still reach every
+      (`recurring-payments-panel.component.spec.ts` → "keeps the full name on hover and in the
+      toggle's accessible name": `title` on the label span equals the full label, and the button's
+      `aria-label` still contains it. `title` is the native hover affordance; no new component.)
+- [x] A short payment name is not padded out to the clamp — the column still shrinks to content below
+      the maximum. (Measured on the live page's seven real series at 1536, where the clamp is 256px:
+      the labels render at 36–69px — "NS Rail" 36, "Trattoria Bella" 69 — so the column is sized by
+      its content, not by the maximum.)
+- [x] `mm-table` keeps its `overflow-x-auto` wrapper, so a narrow viewport can still reach every
       column; the shared primitive itself is unchanged (this is a panel-level fix, not a change to
-      every table in the app).
-- [ ] The expandable occurrence rows, the stopped-group disclosure and the `colspan="8"` detail rows
-      still render and behave as before.
-- [ ] Unit tests cover: the truncation class/width constraint being applied to the payment cell; the
+      every table in the app). (`table.component.ts` is untouched by this change's diff;
+      `recurring-payments-panel.component.spec.ts` → "leaves mm-table's horizontal scroll wrapper in
+      place for narrow viewports" asserts `.mm-table-wrap` still carries `overflow-x-auto`.)
+- [x] The expandable occurrence rows, the stopped-group disclosure and the `colspan="8"` detail rows
+      still render and behave as before. (All 22 pre-existing specs in
+      `recurring-payments-panel.component.spec.ts` pass unmodified, including "expands a series to
+      its individual occurrences, and collapses again" and the whole "collapsed stopped group
+      (TICKET-REC-06)" block. Confirmed live too: expanding "Vesta Rentals" renders a
+      `colspan="8"` row listing its 4 payments, the toggle's `aria-label` flips to "Hide the 4
+      payments behind Vesta Rentals", and the wrapper still measures 909 = 909 while open. The
+      stopped-group disclosure had nothing to show on this dataset — no stopped series — so that
+      half is covered by its specs only.)
+- [x] Unit tests cover: the truncation class/width constraint being applied to the payment cell; the
       full label still present in the toggle's accessible name; and the existing expand/collapse and
-      stopped-group specs passing unchanged.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: the panel on `/explore` shows all eight columns with no
-      horizontal scrollbar, and hovering a truncated name reveals it in full.
+      stopped-group specs passing unchanged. (Three specs under `describe('the payment column's width
+      clamp (TICKET-REC-10)')`; 25 specs pass in that file, up from 22.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (Lint clean; 2623
+      tests in 243 files pass; dev build completes.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 introduced findings; styling health A / 94.5, no new Tailwind arbitrary
+      values — the clamp uses the named scale.)
+- [x] Verified live in the browser: the panel on `/explore` shows all eight columns with no
+      horizontal scrollbar, and hovering a truncated name reveals it in full. (Measured on
+      `http://localhost:4210/explore` at 1280×900 and 1536×900 — see the first two criteria. The
+      hover text is the `title` attribute on the label span, read back off the live element as the
+      full label. No screenshot: the Browser pane was not displayed in this session, so the page
+      composited no frames; the DOM/geometry measurements above stand in for it.)
 
 ## Notes
 

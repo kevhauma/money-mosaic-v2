@@ -814,4 +814,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Explore',
   },
+  {
+    date: '2026-08-09',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-REC-10'],
+    title: 'The recurring payments table fits on screen again',
+    details: [
+      'A long payment name used to stretch the table past its panel and push “Per month” — the column the whole section exists to show — behind a horizontal scrollbar',
+      'Long names are now shortened with an ellipsis, and hovering one shows it in full',
+      'Short names still take only the room they need; the column has not been given a fixed width',
+      'Nothing is lost to a screen reader: the row’s button still announces the complete payment name',
+      'On a narrow window you can still scroll the table sideways to reach every column — this removes the need to, not the ability',
+    ],
+    area: 'Explore',
+  },
 ];

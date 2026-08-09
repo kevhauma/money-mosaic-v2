@@ -82,13 +82,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Explore',
   },
   {
-    versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-REC-10',
-    title:
-      'Fit the recurring payments table on screen, with long payment names shortened and shown in full on hover',
-    area: 'Recurring payments',
-  },
-  {
     versionFolder: 'v2.2_goals_and_forecast',
     ticketId: 'TICKET-FUT-01',
     title: 'Measure how much you actually saved per month, over a window of history you choose',

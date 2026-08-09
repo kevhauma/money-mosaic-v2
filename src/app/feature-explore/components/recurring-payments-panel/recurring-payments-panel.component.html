@@ -66,7 +66,21 @@
               (click)="toggle(row.key)"
             >
               <span aria-hidden="true">{{ row.expandIcon }}</span>
-              <span class="truncate">{{ row.label }}</span>
+              <!-- The clamp lives here rather than on the `<th>` (TICKET-REC-10): `truncate` needs a
+                   bounded box to do anything, and a table cell in auto layout sizes to its content
+                   instead of honouring a max-width. A *max*-width, so a short name still shrinks the
+                   column rather than being padded out to it. The `title` is the sighted affordance
+                   for the clipped text; the keyboard and screen-reader path is already covered by
+                   the toggle's `aria-label`, which carries the whole label.
+
+                   8rem, measured rather than chosen: at a 1280px viewport the shell leaves this
+                   panel 909px, and the other seven columns need 703px of it, so the name has ~140px
+                   before the table overflows again. It steps up to 16rem at `2xl`, where the panel
+                   is wide enough to afford it — a single generous clamp would put the horizontal
+                   scrollbar straight back at 1280. -->
+              <span class="block max-w-32 truncate 2xl:max-w-3xs" [title]="row.label">{{
+                row.label
+              }}</span>
             </mm-button>
           </th>
           <!-- A cell of its own rather than part of the row header: a `<th scope="row">` is
