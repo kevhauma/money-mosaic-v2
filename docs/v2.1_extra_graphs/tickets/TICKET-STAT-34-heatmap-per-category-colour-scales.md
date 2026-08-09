@@ -66,6 +66,26 @@ means "stands out more", on light and dark alike.
 - Nothing else about the panel changes: the cycle picker, exclusions, drill-down, the accessible
   table's figures, and privacy mode's withholding all behave exactly as they do today.
 
+## Implementation note — 2026-08-09, after the browser check
+
+Two things changed during the live check and the criteria below are amended to match, rather than
+left describing code that does not exist:
+
+1. **The `visualMap` could not be removed outright.** ECharts throws
+   `Error: Heatmap must use with visualMap` for a `heatmap` series on a cartesian grid and renders
+   **no cells at all** without one — the whole chart came up blank. A hidden, label-less `visualMap`
+   now exists purely to satisfy that; every cell's colour still comes from its own `itemStyle`,
+   which takes precedence. The *reader-visible* amount scale is gone, which was the point. No
+   option-shape unit test can catch this, which is why the criterion below now names the browser as
+   its evidence.
+2. **Per-row scales became one shared category scale**, at the user's direction on 2026-08-09:
+   every category row is now read against a single scale pooled over the whole grid, so a shade
+   means the same thing in every row and the rows can be compared with each other. Hue is still the
+   row's own category colour. TICKET-STAT-33's `All` band is now the *only* row with its own scale.
+   This deliberately gives up this ticket's original "read each row against its own normal" — the
+   trade the user chose is cross-row comparability, and one heavy category can once again flatten a
+   lighter one (which is what TICKET-STAT-32's exclusions exist for).
+
 ## Acceptance criteria
 
 - [x] A pure, unit-tested colour function takes a category colour, a row's min/average/max and the
@@ -86,11 +106,14 @@ means "stands out more", on light and dark alike.
       (`chart-theme.spec.ts` › "moves lightness only, keeping the category's hue at every
       intensity" — hue drift under 1° across five amounts × both modes; mixing toward pure
       white/black scales every channel difference uniformly.)
-- [x] Every row is scaled against its **own** min/max, so changing one category's amounts leaves
-      every other row's colours untouched. (`chart-theme.spec.ts` › "scales every row against its
-      own extent"; and end-to-end through the option builder in
-      `spending-heatmap-panel.component.spec.ts` › "leaves one row's colours untouched when another
-      row's amounts change", which multiplies the Rent row by 10 and re-asserts the grocery cells.)
+- [x] ~~Every row is scaled against its **own** min/max, so changing one category's amounts leaves
+      every other row's colours untouched.~~ **Superseded 2026-08-09 (see the implementation note):
+      every category row shares one scale pooled over the whole grid; only the `All` band has its
+      own.** The colour function still takes a scale per call and is specced both ways
+      (`chart-theme.spec.ts` › "scales every row against its own extent" — the function's own
+      contract); what the panel *passes* is now one shared category scale, asserted in
+      `spending-heatmap-panel.component.spec.ts` › "reads every category row against the same scale,
+      so equal amounts shade equally".
 - [x] A row with no spread (all cells equal, including all zero) renders flat in the category colour
       and never produces `NaN`, a division by zero, or a non-hex string. (`chart-theme.spec.ts` ›
       "draws a row with no spread flat in the category colour, all-zero included".)
@@ -105,10 +128,11 @@ means "stands out more", on light and dark alike.
       `spending-heatmap-panel.component.spec.ts` › "ramps the \"Other\" fold from the neutral gray
       the aggregate hands it", plus `chart-theme.spec.ts` › "ramps an uncoloured category".)
 - [x] The single global amount scale is gone and a caption states what the shading is relative to.
-      (`buildHeatmapChartOption` emits no `visualMap` at all and hands `grid.bottom` back to 8;
-      `HEATMAP_SHADING_CAPTION` renders under the chart. Specs: "drops the single amount scale — no
-      colour maps to one amount any more" and "states what the shading is relative to, in place of
-      the removed amount scale".)
+      (The *reader-visible* scale is gone — no bar, no amount labels, and the room it claimed under
+      the axis is back. A hidden `visualMap` remains because echarts will not draw a cartesian
+      heatmap without one at all; see the implementation note. `HEATMAP_SHADING_CAPTION` renders
+      under the chart and now names both scales. Specs: "draws no reader-visible amount scale" and
+      "states what the shading is relative to". Confirmed in the browser: no scale is drawn.)
 - [x] The cycle picker, category exclusion, cell drill-down, the `sr-only` table's figures and
       privacy mode's withholding are all unchanged (their existing specs pass untouched). (All of
       TICKET-STAT-29..32's specs pass as written. Two assertions inside the privacy-mode specs were
@@ -128,9 +152,16 @@ means "stands out more", on light and dark alike.
       `conventions-reviewer` on the diff: no blocking violations; its three notes were all applied —
       `HEATMAP_SHADING_CAPTION` un-exported, the row-slice de-duplicated into `rowAmounts`, and
       `coding-conventions/SKILL.md`'s now-stale `visualMap` privacy example refreshed.)
-- [ ] ~~Verified live in the browser~~ — **waived by the user on 2026-08-09**, who chose to skip the
-      browser check for this ticket. Not verified: how the per-row ramps actually read on
-      `/dashboard` in a light vs. a dark theme.
+- [x] Verified live in the browser: the heatmap on `/dashboard` in a light theme and a dark one,
+      confirming each row carries its category's hue and that the heavier cells are the ones that
+      stand out in both. (2026-08-09, initially waived then run at the user's request — and it
+      earned its keep: it is what found the `Heatmap must use with visualMap` throw that left the
+      chart blank. Canvas pixels sampled per cell, cross-checked against the `sr-only` figures.
+      Light theme (`deformable`): Housing `[950,0,950,0,950,0,950]` → `#7e491e` / `#fedec5`
+      alternating exactly with the data; Utilities blue, Groceries green, Eating Out olive, `Other`
+      grey — one hue per row. Dark theme (`deformable-dark`, switched through the real theme
+      picker): the same Housing row → `#fdc99e` (luminance 204) on heavy days against `#4b2c12`
+      (46) on quiet ones — the direction flips, heavier still stands out.)
 
 ## Notes
 

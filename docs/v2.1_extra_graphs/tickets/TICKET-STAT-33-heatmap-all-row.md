@@ -78,10 +78,14 @@ can only be read to infer — four moderate rows can hide a Friday that is the h
       Spec › "scales the band on its own maximum, off the theme's leading accent", and ›
       "leaves the category rows' shading identical to what it is without the band", which
       multiplies the band 100× and re-asserts all four category cells byte-for-byte.)
-- [x] A visible gap or divider separates the band from the category rows. (One **empty** y-axis
-      category between them — `totalsBandAxisIndex(rowCount) === rowCount + 1`. Nothing plots on
-      the spacer, asserted by the same "separated by an empty axis row" spec, which also checks no
-      cell carries axis index 2; that also makes the gap unclickable.)
+- [x] A visible gap or divider separates the band from the category rows. (**Revised 2026-08-09 at
+      the user's direction**: the first build used a whole empty y-axis row, which the browser check
+      showed to be a ~32px band — far more than a separator needs. The band and the categories are
+      now **two grids**, the band's 22px strip above the categories' with a 10px margin between
+      them; an echarts category axis spaces its rows evenly, so a single grid could only separate
+      them with a whole row. Spec › "draws the band on its own grid above the categories, with a
+      margin between them", which asserts the categories' grid starts below the band's strip plus a
+      gap and that both grids share a left inset so the columns line up.)
 - [x] Excluded categories (STAT-32) are absent from the totals, and changing the cycle (STAT-30)
       re-folds the band with the grid. (`category-cycle-heatmap.spec.ts` › "sums what the chart is
       showing, never what an exclusion is hiding" and › "re-folds with the cycle"; end-to-end
@@ -93,9 +97,9 @@ can only be read to infer — four moderate rows can hide a Friday that is the h
       screen-reader table with an \"All\" row of the column totals" and › "withholds the band's
       figures under privacy mode like every other row".)
 - [x] Clicking a band cell navigates to `/transactions` with the panel's range and no `categoryId`.
-      (`drilldownFor` returns `{}` for the band, exactly what it returns for the `Other` fold's
-      `null` category. Spec › "drills down to the range with no category filter, like the \"Other\"
-      fold".)
+      (`drilldownFor` returns `{}` for the band — identified by its `seriesIndex`, now that it is
+      its own series — exactly what it returns for the `Other` fold's `null` category. Spec ›
+      "drills down to the range with no category filter, like the \"Other\" fold".)
 - [x] The panel still renders nothing at all when there is no spend (`hasSpend()` is unchanged — a
       band of zeroes is not a reason to show an empty chart). (`hasSpend` is the same expression it
       was; spec › "still renders nothing at all when there is no spend". The aggregate returns a
@@ -116,10 +120,14 @@ can only be read to infer — four moderate rows can hide a Friday that is the h
       verdict **pass**, 0 dead code, 0 duplication, 0 introduced complexity — `onChartClick` first
       landed at CRAP 56 and the row→drill-down decision was extracted into the pure `drilldownFor`
       to clear it. `conventions-reviewer` on the diff: convention-clean, no violations.)
-- [ ] ~~Verified live in the browser~~ — **waived by the user on 2026-08-09**, who chose to skip the
-      browser check. Not verified by eye: how wide the empty spacer actually reads as a gap on the
-      rendered canvas, and whether the band's accent shading sits comfortably beside the category
-      rows'.
+- [ ] Verified live in the browser: the `All` band on `/dashboard`, separated from the categories,
+      with a category excluded and re-included to watch the totals follow. **Partly done, 2026-08-09
+      — not yet complete.** Confirmed on the canvas *before* the two-grid revision: the band drew on
+      top, its cells matched `totalsRow` (`[1174.54, 56.29, 1173.25, …]`, verified against the
+      `sr-only` table), and the separator was a real ~32px empty band. That check is also what
+      exposed the blank-chart bug. **Still to confirm on the revised build**: the 10px margin, and
+      the exclusion round-trip. The Browser pane stopped compositing, so the panel's `@defer` block
+      no longer mounts — waiting on the pane being displayed again.
 
 ## Notes
 

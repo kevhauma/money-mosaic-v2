@@ -62,11 +62,12 @@ const CYCLE_AXIS_NOUNS: Record<CycleKey, string> = {
 };
 
 /**
- * What the shading means, now that no single scale can be drawn under the chart (TICKET-STAT-34) —
- * every row has its own, so one colour no longer maps to one amount anywhere in the grid.
+ * What the shading means, in place of the amount scale the panel used to draw (TICKET-STAT-34).
+ * Two scales, so no one colour maps to one amount across the whole chart: the categories share
+ * theirs, and the `All` band is on its own.
  */
 const HEATMAP_SHADING_CAPTION =
-  'Shading is relative to each category’s own average — heavier spend stands out more';
+  'Shading is relative to your average across these categories — heavier spend stands out more. The All row has its own scale.';
 
 /**
  * One row's amounts, left to right. `cells` is dense and row-major (`buildGrid` fills every
@@ -95,25 +96,33 @@ const rowScale = (amounts: readonly number[]): HeatmapRowScale => ({
 const TOTALS_ROW_NAME = 'All';
 
 /**
- * Where the band sits on the reversed y-axis: above every category row, with one **empty** axis
- * category between them (`rowCount`) as the visible gap. Nothing plots on the spacer, so it reads
- * as a divider and can't be clicked — and the band reads as a summary rather than as a fifth
- * category competing with the others.
+ * The band and the categories are drawn as **two grids, one above the other**, not as rows of one
+ * grid: it is what buys a margin between them (an echarts category axis spaces its rows evenly, so
+ * a single grid can only separate them with a whole empty row) and what lets each carry its own
+ * colour scale.
  */
-const totalsBandAxisIndex = (rowCount: number): number => rowCount + 1;
+const BAND_SERIES_INDEX = 0;
+const CATEGORY_SERIES_INDEX = 1;
+
+/** Room for the y-axis labels. Fixed rather than `containLabel` so both grids' plots start at the same x and the columns line up. */
+const AXIS_LABEL_WIDTH = 76;
+
+/** The band's own strip, and the margin under it that separates the two. */
+const BAND_HEIGHT = 22;
+const BAND_MARGIN = 10;
 
 /**
- * What a click on axis row `axisRowIndex` drills down to, or `undefined` when it landed on the
- * empty spacer between the band and the categories, which stands for nothing.
+ * What a click drills down to, or `undefined` when the click landed on nothing.
  *
  * The `All` band sums every category, so it drills down to the range alone — the same thing the
  * `Other` fold already does, for the same reason: the cell stands for several categories.
  */
 const drilldownFor = (
   rows: readonly HeatmapRow[],
+  seriesIndex: number,
   axisRowIndex: number,
 ): { categoryId?: number } | undefined => {
-  if (axisRowIndex === totalsBandAxisIndex(rows.length)) return {};
+  if (seriesIndex === BAND_SERIES_INDEX) return {};
   const row = rows[rows.length - 1 - axisRowIndex];
   return row ? { categoryId: row.categoryId ?? undefined } : undefined;
 };
@@ -133,15 +142,19 @@ export type HeatmapChartTheme = {
  * The y-axis is the aggregate's rows **reversed**: echarts draws category index 0 at the bottom,
  * and the heaviest category belongs at the top where the eye starts.
  *
- * Colour is resolved per cell rather than by a `visualMap` (TICKET-STAT-34): a `visualMap` maps one
- * scale across a whole series, and every row here is read against its own min/average/max in its
- * own category's colour. Keeping the resolution in the option builder is what lets the option shape
- * stay flat — one series, one `itemStyle` per data item — instead of one `visualMap` per row.
+ * Colour is resolved per cell rather than by a `visualMap` (TICKET-STAT-34): each cell is drawn in
+ * its own row's category colour, moved along a lightness ramp by how the amount sits against a
+ * scale. Keeping the resolution here is what lets the option shape stay flat — one `itemStyle` per
+ * data item — instead of one `visualMap` per row.
  *
- * The `All` band (TICKET-STAT-33) rides on exactly that machinery: it is one more set of cells on
- * one more axis row, scaled against **its own** extent. Sharing the categories' scale would set
- * every category cell against a number 4–5× larger than anything it contains and flatten the whole
- * grid to the pale end, which is the opposite of what the band is for.
+ * **Two scales, not one per row.** Every category row shares one scale, pooled over the whole grid,
+ * so a cell's shade means the same thing in every row and the rows can be read against each other.
+ * The `All` band (TICKET-STAT-33) is the single exception and carries its own: it is 4–5× larger
+ * than anything in the grid, and pooling it in would flatten every category cell to the pale end.
+ *
+ * The two are drawn as **two grids**, the band's strip above the categories' with a margin between
+ * them — an echarts category axis spaces its rows evenly, so one grid could only separate them with
+ * a whole empty row. Both grids take the same fixed `left`, so their columns line up.
  */
 export const buildHeatmapChartOption = (
   heatmap: CategoryCycleHeatmap,
@@ -149,23 +162,25 @@ export const buildHeatmapChartOption = (
   theme: HeatmapChartTheme,
   privacyMode: boolean,
 ): EChartsCoreOption => {
-  const { columnKeys, rows, cells, totalsRow } = heatmap;
+  const { rows, cells, totalsRow } = heatmap;
   const { plotMode, bandColor } = theme;
   const lastRowIndex = rows.length - 1;
-  const columnCount = columnKeys.length;
 
-  const scales = rows.map((_, rowIndex) => rowScale(rowAmounts(cells, rowIndex, columnCount)));
-  const bandAxisIndex = totalsBandAxisIndex(rows.length);
+  // One scale for every category row, pooled over the whole grid; the band gets its own.
+  const categoryScale = rowScale(cells.map((cell) => cell.amount));
   const bandScale = rowScale(totalsRow);
+
+  const axisLabel = { width: AXIS_LABEL_WIDTH - 12, overflow: 'truncate' as const };
+  const categoriesTop = 8 + BAND_HEIGHT + BAND_MARGIN;
 
   return {
     ...resolveChartAnimation(),
     tooltip: {
       position: 'top',
-      formatter: (params: { value: [number, number, number] }) => {
+      formatter: (params: { seriesIndex: number; value: [number, number, number] }) => {
         const [columnIndex, axisRowIndex, amount] = params.value;
         const name =
-          axisRowIndex === bandAxisIndex
+          params.seriesIndex === BAND_SERIES_INDEX
             ? TOTALS_ROW_NAME
             : (rows[lastRowIndex - axisRowIndex]?.name ?? '');
         const heading = `${name} · ${columnLabels[columnIndex] ?? ''}`;
@@ -174,41 +189,78 @@ export const buildHeatmapChartOption = (
         return privacyMode ? heading : `${heading}<br/>${formatCurrency(amount)}`;
       },
     },
-    grid: { left: 8, right: 8, top: 8, bottom: 8, containLabel: true },
-    xAxis: {
-      type: 'category',
-      data: [...columnLabels],
-      splitArea: { show: true },
+    grid: [
+      { left: AXIS_LABEL_WIDTH, right: 8, top: 8, height: BAND_HEIGHT },
+      { left: AXIS_LABEL_WIDTH, right: 8, top: categoriesTop, bottom: 24 },
+    ],
+    // Required, not decorative: a `heatmap` series on a cartesian grid throws
+    // "Heatmap must use with visualMap" and renders *no cells at all* without a `visualMap`
+    // targeting it (caught in the browser — an option-shape unit test cannot see it). Every cell's
+    // real colour comes from its own `itemStyle` below, which takes precedence over this mapping,
+    // so this component is hidden and its range is a formality.
+    visualMap: {
+      show: false,
+      min: 0,
+      max: heatmap.maxAmount || 1,
+      seriesIndex: [BAND_SERIES_INDEX, CATEGORY_SERIES_INDEX],
     },
-    yAxis: {
-      type: 'category',
-      // Bottom to top: the categories reversed (echarts draws index 0 at the bottom), then the
-      // empty spacer, then the band on top where the eye starts.
-      data: [...[...rows].reverse().map((row) => row.name), '', TOTALS_ROW_NAME],
-      splitArea: { show: true },
-    },
+    xAxis: [
+      // The band shares the categories' columns but not their labels — one set of day names under
+      // the whole chart, not two.
+      {
+        gridIndex: 0,
+        type: 'category',
+        data: [...columnLabels],
+        axisLabel: { show: false },
+        axisTick: { show: false },
+        splitArea: { show: true },
+      },
+      { gridIndex: 1, type: 'category', data: [...columnLabels], splitArea: { show: true } },
+    ],
+    yAxis: [
+      {
+        gridIndex: 0,
+        type: 'category',
+        data: [TOTALS_ROW_NAME],
+        axisLabel,
+        splitArea: { show: true },
+      },
+      {
+        gridIndex: 1,
+        type: 'category',
+        // echarts draws category index 0 at the bottom, so the ranking is reversed and the heaviest
+        // category sits at the top, nearest the band.
+        data: [...rows].reverse().map((row) => row.name),
+        axisLabel,
+        splitArea: { show: true },
+      },
+    ],
     series: [
       {
         type: 'heatmap',
-        data: [
-          ...cells.map((cell) => ({
-            value: [cell.columnIndex, lastRowIndex - cell.rowIndex, cell.amount],
-            itemStyle: {
-              color: resolveHeatmapCellColor(
-                rows[cell.rowIndex].color,
-                scales[cell.rowIndex],
-                cell.amount,
-                plotMode,
-              ),
-            },
-          })),
-          ...totalsRow.map((amount, columnIndex) => ({
-            value: [columnIndex, bandAxisIndex, amount],
-            itemStyle: {
-              color: resolveHeatmapCellColor(bandColor, bandScale, amount, plotMode),
-            },
-          })),
-        ],
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: totalsRow.map((amount, columnIndex) => ({
+          value: [columnIndex, 0, amount],
+          itemStyle: { color: resolveHeatmapCellColor(bandColor, bandScale, amount, plotMode) },
+        })),
+        label: { show: false },
+      },
+      {
+        type: 'heatmap',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: cells.map((cell) => ({
+          value: [cell.columnIndex, lastRowIndex - cell.rowIndex, cell.amount],
+          itemStyle: {
+            color: resolveHeatmapCellColor(
+              rows[cell.rowIndex].color,
+              categoryScale,
+              cell.amount,
+              plotMode,
+            ),
+          },
+        })),
         label: { show: false },
       },
     ],
@@ -383,7 +435,7 @@ export class SpendingHeatmapPanelComponent {
     const value = event.value as [number, number, number] | undefined;
     if (!value) return;
 
-    const drilldown = drilldownFor(this.heatmap().rows, value[1]);
+    const drilldown = drilldownFor(this.heatmap().rows, event.seriesIndex ?? -1, value[1]);
     if (!drilldown) return;
 
     void this.router.navigate(['/transactions'], {
