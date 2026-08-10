@@ -11,18 +11,17 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
  * **whole** transaction history, derived once and shared, rather than recomputed by each panel that
  * happens to want it.
  *
- * It exists because `/explore` grew a second consumer: the recurring payments panel (TICKET-REC-02)
- * and the bills calendar (TICKET-REC-03) both need the identical detection with the identical
- * arguments, and TICKET-REC-04's flags will make it three. That is exactly the condition the
- * Explore page's "no store, on purpose" note reserved a store for — state (here, a derivation)
- * genuinely shared *between* the page's sections — so it is no longer an omission.
+ * It exists because the recurring payments panel (TICKET-REC-02) and the bills calendar
+ * (TICKET-REC-03) need the identical detection with the identical arguments. Both sections lived on
+ * `/explore` when this was written, and it is what that page's "no store, on purpose" note reserved
+ * a store for — state (here, a derivation) genuinely shared *between* a page's sections.
  *
  * Pure `computed()` derivation, no state and no methods, the `StatsStore` shape: importing a
  * transaction updates `TransactionsStore` and flows straight through with no invalidation. Snapshotting
  * `today` here also settles it for every consumer at once, so two sections can never disagree about
  * where the history ends.
  *
- * Lives in `feature-explore` rather than `core/state` because only this feature consumes it; move
+ * Lives in `feature-recurring` rather than `core/state` because only this feature consumes it; move
  * it if a Dashboard card ever wants the same series.
  */
 export const RecurringSeriesStore = signalStore(

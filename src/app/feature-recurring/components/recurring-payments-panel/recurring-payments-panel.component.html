@@ -11,14 +11,13 @@
     }
   </mm-flex>
 
-  <!-- Said plainly, because the page header carries a date range this section does not obey:
-       cadence only exists across time, so detection reads the whole history (TICKET-REC-02). The
-       second sentence is the same courtesy for the other deliberate mismatch: these amounts are the
-       whole bill, so they will not add up to the Dashboard's ownership-weighted figures
-       (TICKET-REC-09), and a stated choice reads differently from a bug. -->
+  <!-- The "whole history, no date range" half of this caption moved up to the page intro when these
+       sections got their own route — the page has no range to disobey any more. What stays is the
+       other deliberate mismatch, which is this panel's alone: these amounts are the whole bill, so
+       they will not add up to the Dashboard's ownership-weighted figures (TICKET-REC-09), and a
+       stated choice reads differently from a bug. -->
   <mm-text as="p" variant="caption" class="mt-1">
-    Detected across your whole history — not filtered by the range above. Joint-account payments are
-    shown at their full amount, not your share.
+    Joint-account payments are shown at their full amount, not your share.
   </mm-text>
 
   <!-- A series leaving the list without a word is the disappearance REC-04 refused to allow, so

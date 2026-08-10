@@ -69,4 +69,14 @@ describe('app routes: unmatched URLs', () => {
     },
     ROUTE_RESOLUTION_TIMEOUT_MS,
   );
+
+  it(
+    'resolves /recurring, the routed home for the recurring payments panel and bills calendar',
+    async () => {
+      const { resolved } = await navigate('/recurring');
+
+      expect(resolved).toBe(true);
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
 });

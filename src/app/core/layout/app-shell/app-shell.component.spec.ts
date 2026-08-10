@@ -97,10 +97,15 @@ describe('AppShellComponent: grouped sidebar navigation (TICKET-UI-26)', () => {
     expect(headings).toEqual(['Insights', 'Data']);
   });
 
-  it('puts Dashboard, Income and Explore in Insights — and nothing else', async () => {
+  it('puts Dashboard, Income, Recurring and Explore in Insights — and nothing else', async () => {
     const shell = await renderShell();
 
-    expect(hrefsIn(groupFor(shell, 'Insights'))).toEqual(['/dashboard', '/income', '/explore']);
+    expect(hrefsIn(groupFor(shell, 'Insights'))).toEqual([
+      '/dashboard',
+      '/income',
+      '/recurring',
+      '/explore',
+    ]);
   });
 
   it('puts Accounts, Transactions, Categories, Learning and Import in Data — and nothing else', async () => {

@@ -33,7 +33,8 @@ import type {
   CalendarDayCell,
 } from '../../bills-calendar-vm';
 
-const CHART_KEY = 'explore-bills-calendar';
+/** Renamed with the route (was `explore-bills-calendar`) — the store is session-only, so nothing persisted carries the old key. */
+const CHART_KEY = 'recurring-bills-calendar';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -85,12 +86,14 @@ const shiftMonth = (monthKey: string, count: number): string => {
  * their layouts. Both render the identical `projectRecurringOccurrences` output, so switching views
  * can change the shape of what is shown but never its content.
  *
- * The visible month and the chosen view are session-scoped in `ChartOptionsStore` and deliberately
- * do **not** follow the Explore date range: this section looks forward from today at projections,
- * while the page range looks backward at data.
+ * The visible month and the chosen view are session-scoped in `ChartOptionsStore`. This section
+ * looks *forward* from today at projections, which is half of why the two recurring sections moved
+ * off `/explore` onto their own route: they never obeyed that page's backward-looking date range,
+ * and here there is none to disobey.
  *
  * Renders nothing at all when no series was detected — REC-02's panel directly above already
- * explains why, and a second empty state saying the same thing is noise.
+ * explains why, and a second empty state saying the same thing is noise. That "directly above" is
+ * now a page-level guarantee: `/recurring` renders exactly these two sections, in that order.
  */
 @Component({
   selector: 'app-bills-calendar',

@@ -111,17 +111,17 @@ describe('chartVisibleMonth (TICKET-REC-03)', () => {
 
   it('seeds from the caller when the session holds nothing for that chart', () => {
     const month = runInInjectionContext(injector, () =>
-      chartVisibleMonth('explore-bills-calendar', () => '2026-08'),
+      chartVisibleMonth('recurring-bills-calendar', () => '2026-08'),
     );
 
     expect(month.value()).toBe('2026-08');
   });
 
   it("adopts the session's value instead of re-seeding, so a remount keeps the browsed month", () => {
-    TestBed.inject(ChartOptionsStore).setVisibleMonth('explore-bills-calendar', '2026-11');
+    TestBed.inject(ChartOptionsStore).setVisibleMonth('recurring-bills-calendar', '2026-11');
 
     const month = runInInjectionContext(injector, () =>
-      chartVisibleMonth('explore-bills-calendar', () => '2026-08'),
+      chartVisibleMonth('recurring-bills-calendar', () => '2026-08'),
     );
 
     expect(month.value()).toBe('2026-11');
@@ -129,12 +129,12 @@ describe('chartVisibleMonth (TICKET-REC-03)', () => {
 
   it('writes straight to the store, which is what a later mount reads back', () => {
     const month = runInInjectionContext(injector, () =>
-      chartVisibleMonth('explore-bills-calendar', () => '2026-08'),
+      chartVisibleMonth('recurring-bills-calendar', () => '2026-08'),
     );
 
     month.set('2027-01');
 
-    expect(TestBed.inject(ChartOptionsStore).visibleMonth('explore-bills-calendar')).toBe(
+    expect(TestBed.inject(ChartOptionsStore).visibleMonth('recurring-bills-calendar')).toBe(
       '2027-01',
     );
     expect(month.value()).toBe('2027-01');
@@ -142,12 +142,12 @@ describe('chartVisibleMonth (TICKET-REC-03)', () => {
 
   it('never records the seed as a choice — it is clock-derived, so recording it would pin the month', () => {
     const month = runInInjectionContext(injector, () =>
-      chartVisibleMonth('explore-bills-calendar', () => '2026-08'),
+      chartVisibleMonth('recurring-bills-calendar', () => '2026-08'),
     );
 
     expect(month.value()).toBe('2026-08');
     expect(
-      TestBed.inject(ChartOptionsStore).visibleMonth('explore-bills-calendar'),
+      TestBed.inject(ChartOptionsStore).visibleMonth('recurring-bills-calendar'),
     ).toBeUndefined();
   });
 });
@@ -162,17 +162,17 @@ describe('chartBillsView (TICKET-REC-03)', () => {
 
   it('seeds from the caller when the session holds nothing for that chart', () => {
     const view = runInInjectionContext(injector, () =>
-      chartBillsView('explore-bills-calendar', () => 'calendar'),
+      chartBillsView('recurring-bills-calendar', () => 'calendar'),
     );
 
     expect(view.value()).toBe('calendar');
   });
 
   it("adopts the session's value instead of re-seeding, so a remount keeps the chosen view", () => {
-    TestBed.inject(ChartOptionsStore).setBillsView('explore-bills-calendar', 'list');
+    TestBed.inject(ChartOptionsStore).setBillsView('recurring-bills-calendar', 'list');
 
     const view = runInInjectionContext(injector, () =>
-      chartBillsView('explore-bills-calendar', () => 'calendar'),
+      chartBillsView('recurring-bills-calendar', () => 'calendar'),
     );
 
     expect(view.value()).toBe('list');
@@ -180,30 +180,30 @@ describe('chartBillsView (TICKET-REC-03)', () => {
 
   it('writes straight to the store, which is what a later mount reads back', () => {
     const view = runInInjectionContext(injector, () =>
-      chartBillsView('explore-bills-calendar', () => 'calendar'),
+      chartBillsView('recurring-bills-calendar', () => 'calendar'),
     );
 
     view.set('list');
 
-    expect(TestBed.inject(ChartOptionsStore).billsView('explore-bills-calendar')).toBe('list');
+    expect(TestBed.inject(ChartOptionsStore).billsView('recurring-bills-calendar')).toBe('list');
     expect(view.value()).toBe('list');
   });
 
   it('never records the seed as a choice', () => {
     const view = runInInjectionContext(injector, () =>
-      chartBillsView('explore-bills-calendar', () => 'calendar'),
+      chartBillsView('recurring-bills-calendar', () => 'calendar'),
     );
 
     expect(view.value()).toBe('calendar');
-    expect(TestBed.inject(ChartOptionsStore).billsView('explore-bills-calendar')).toBeUndefined();
+    expect(TestBed.inject(ChartOptionsStore).billsView('recurring-bills-calendar')).toBeUndefined();
   });
 
   it('is independent of the same chart id’s visible month — two choices, one entry', () => {
     const view = runInInjectionContext(injector, () =>
-      chartBillsView('explore-bills-calendar', () => 'calendar'),
+      chartBillsView('recurring-bills-calendar', () => 'calendar'),
     );
     const month = runInInjectionContext(injector, () =>
-      chartVisibleMonth('explore-bills-calendar', () => '2026-08'),
+      chartVisibleMonth('recurring-bills-calendar', () => '2026-08'),
     );
 
     view.set('list');

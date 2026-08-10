@@ -1,0 +1,27 @@
+<!-- No `actions-start` range switcher, unlike Explore's and the Dashboard's: neither section on this
+     page is range-scoped, so there is no page-level control to project (TICKET-UI-22/UI-24). -->
+<mm-page-header title="Recurring" />
+
+@if (hasNoTransactions()) {
+  <mm-empty-state
+    title="Nothing recurring yet"
+    message="Import a bank CSV export and the payments you make on a rhythm are detected here."
+  >
+    <ng-icon icon name="tablerFileImport" size="40" aria-hidden="true" />
+    <mm-button action color="primary" class="mt-2" link="/import">Import transactions</mm-button>
+  </mm-empty-state>
+} @else {
+  <!-- The explanatory sentence lives in the body, since `mm-page-header` has no subtitle by design.
+       It states the one thing that surprises people about this page: it reads the whole history
+       rather than a date range, because a cadence only exists across time. -->
+  <mm-text as="p" variant="caption" class="mb-4 block">
+    Detected across your whole transaction history — a rhythm can't be read from a single month, so
+    this page has no date range.
+  </mm-text>
+
+  <!-- Reading order: what you pay on a rhythm (TICKET-REC-02), then when the next ones land
+       (TICKET-REC-03). The calendar renders nothing at all when no series was detected, so the
+       spacing sits on the panel above it rather than between them. -->
+  <app-recurring-payments-panel class="mb-6 block" />
+  <app-bills-calendar />
+}

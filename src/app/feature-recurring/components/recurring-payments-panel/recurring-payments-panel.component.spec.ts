@@ -275,11 +275,12 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('tbody')).toBeNull();
   });
 
-  it('states that detection ignores the page range, and does not react when the range changes', async () => {
+  // The page it sits on has no range at all since the move to /recurring, and the caption saying so
+  // moved up to the page intro. This still holds the panel itself to reading no `RangeStore` key.
+  it('does not react when any page range changes', async () => {
     const fixture = await createFixture(streamlyMonthly());
     const host = fixture.nativeElement as HTMLElement;
 
-    expect(host.textContent).toContain('not filtered by the range above');
     const before = cellsOf(host);
 
     // A range that excludes every occurrence — the series must survive it, or cadence detection

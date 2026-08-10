@@ -28,14 +28,15 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
 };
 
 /**
- * The Explore page's recurring-payments section (FR-REC-2, TICKET-REC-02) — one list of every
- * payment `detectRecurringPayments` (FR-REC-1) found repeating, what each typically costs, and what
- * the whole commitment comes to per month.
+ * The Recurring page's payments section (FR-REC-2, TICKET-REC-02) — one list of every payment
+ * `detectRecurringPayments` (FR-REC-1) found repeating, what each typically costs, and what the
+ * whole commitment comes to per month.
  *
- * **Deliberately not filtered by the Explore date range.** Cadence only exists across time: a
+ * **Detected across the whole history, never a date range.** Cadence only exists across time: a
  * one-month range cannot contain three monthly occurrences, so range-scoping the detector would
- * make it find nothing. The panel says so in its own caption rather than leaving a reader to
- * conclude the page's range is broken.
+ * make it find nothing. On `/explore` this had to be captioned as disobedience of that page's
+ * range; on its own route it is simply how the page works, and the page says so once at the top
+ * instead of each section apologising for itself.
  *
  * A real `<table>` with a caption, not a chart — so the accessible rendering *is* the UI and no
  * `sr-only` mirror (the TICKET-STAT-20 convention for canvas charts) applies here. Column amounts

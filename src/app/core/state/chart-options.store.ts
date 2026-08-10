@@ -23,7 +23,7 @@ export type ChartOptionsKey =
   | 'dashboard-trend-expense'
   | 'dashboard-heatmap'
   | 'explore-money-flow'
-  | 'explore-bills-calendar'
+  | 'recurring-bills-calendar'
   | 'income-by-category';
 
 /** How a projected-occurrence section draws the same month: as a grid, or as a date-ordered list (TICKET-REC-03). */

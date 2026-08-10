@@ -45,7 +45,7 @@
       </span>
       <!-- Two labelled groups, both permanently expanded (TICKET-UI-26): the pages you go to in
            order to look at something, and the pages you go to in order to feed or shape the data.
-           Deliberately headings + nested lists, never `<details>` — with eight items the sidebar has
+           Deliberately headings + nested lists, never `<details>` — with nine items the sidebar has
            no height problem to solve, so collapsing would cost a second click and an open/closed
            state to persist for no gain. `aria-labelledby` is what makes each heading the group's
            accessible name; the heading order matches the reading order the flat list already had.
@@ -66,6 +66,12 @@
               <a routerLink="/income" routerLinkActive="menu-active" [class]="navItemClass">
                 <ng-icon name="tablerTrendingUp" size="18" aria-hidden="true" />
                 <mm-text as="span">Income (Beta)</mm-text>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/recurring" routerLinkActive="menu-active" [class]="navItemClass">
+                <ng-icon name="tablerRepeat" size="18" aria-hidden="true" />
+                <mm-text as="span">Recurring</mm-text>
               </a>
             </li>
             <li>

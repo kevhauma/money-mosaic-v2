@@ -111,7 +111,7 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
 
   /** Every spec picks its own month explicitly, rather than relying on the seeded current one. */
   const showMonth = (fixture: ComponentFixture<BillsCalendarComponent>, month: string): void => {
-    TestBed.inject(ChartOptionsStore).setVisibleMonth('explore-bills-calendar', month);
+    TestBed.inject(ChartOptionsStore).setVisibleMonth('recurring-bills-calendar', month);
     fixture.detectChanges();
   };
 
@@ -119,7 +119,7 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
     fixture: ComponentFixture<BillsCalendarComponent>,
     view: 'calendar' | 'list',
   ): void => {
-    TestBed.inject(ChartOptionsStore).setBillsView('explore-bills-calendar', view);
+    TestBed.inject(ChartOptionsStore).setBillsView('recurring-bills-calendar', view);
     fixture.detectChanges();
   };
 
@@ -255,17 +255,17 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
 
     clickButton(host, 'Next month');
     fixture.detectChanges();
-    expect(chartOptions.visibleMonth('explore-bills-calendar')).toBe('2026-08');
+    expect(chartOptions.visibleMonth('recurring-bills-calendar')).toBe('2026-08');
     expect(host.textContent).toContain('August 2026');
 
     clickButton(host, 'Previous month');
     clickButton(host, 'Previous month');
     fixture.detectChanges();
-    expect(chartOptions.visibleMonth('explore-bills-calendar')).toBe('2026-06');
+    expect(chartOptions.visibleMonth('recurring-bills-calendar')).toBe('2026-06');
 
     clickButton(host, 'This month');
     fixture.detectChanges();
-    expect(chartOptions.visibleMonth('explore-bills-calendar')).toBe(
+    expect(chartOptions.visibleMonth('recurring-bills-calendar')).toBe(
       new Date().toISOString().slice(0, 7),
     );
   });
@@ -278,7 +278,7 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
     clickButton(host, 'Next month');
     fixture.detectChanges();
 
-    expect(TestBed.inject(ChartOptionsStore).visibleMonth('explore-bills-calendar')).toBe(
+    expect(TestBed.inject(ChartOptionsStore).visibleMonth('recurring-bills-calendar')).toBe(
       '2027-01',
     );
     expect(host.textContent).toContain('January 2027');
@@ -289,11 +289,11 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
     const chartOptions = TestBed.inject(ChartOptionsStore);
 
     // Nothing stored until the user chooses — the seed is a fallback, never a recorded choice.
-    expect(chartOptions.billsView('explore-bills-calendar')).toBeUndefined();
+    expect(chartOptions.billsView('recurring-bills-calendar')).toBeUndefined();
     expect(fixture.nativeElement.querySelector('.grid')).not.toBeNull();
 
     showView(fixture, 'list');
-    expect(chartOptions.billsView('explore-bills-calendar')).toBe('list');
+    expect(chartOptions.billsView('recurring-bills-calendar')).toBe('list');
   });
 
   it('blurs every amount under privacy mode, and withholds them from the hidden mirror', async () => {
@@ -385,7 +385,8 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
     });
   });
 
-  it('ignores the Explore date range entirely', async () => {
+  // /recurring has no range of its own; poking another page's key proves this reads none at all.
+  it('ignores every page date range entirely', async () => {
     const fixture = await createFixture(streamlyMonthly());
     showMonth(fixture, '2026-07');
     const host = fixture.nativeElement as HTMLElement;

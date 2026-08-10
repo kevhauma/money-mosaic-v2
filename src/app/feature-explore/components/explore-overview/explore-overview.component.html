@@ -19,9 +19,9 @@
     <mm-button action color="primary" class="mt-2" link="/import">Import transactions</mm-button>
   </mm-empty-state>
 } @else {
-  <!-- The page's sections, in reading order: the money flow Sankey (TICKET-EXP-02) and, beneath it,
-       the recurring payments list (TICKET-REC-02). Each panel decides for itself whether it has
-       anything to draw, so a range with no flow leaves no empty frame behind. -->
+  <!-- The page's sections: the money flow Sankey (TICKET-EXP-02), and whatever range-scoped section
+       lands here next. Each panel decides for itself whether it has anything to draw, so a range
+       with no flow leaves no empty frame behind. -->
   <app-money-flow-panel />
 
   @if (hasNothingInRange()) {
@@ -39,9 +39,4 @@
       </div>
     </mm-paper>
   }
-
-  <!-- Deliberately outside the range-dependent branches above: detection reads the whole history,
-       so this section has something to say even when the chosen range is empty (TICKET-REC-02). -->
-  <app-recurring-payments-panel />
-  <app-bills-calendar />
 }
