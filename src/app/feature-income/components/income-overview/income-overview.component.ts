@@ -23,8 +23,9 @@ import {
   MmModalComponent,
   PageHeaderComponent,
   PaperComponent,
+  PrivacyToggleComponent,
 } from '@/shared/ui';
-import { formatCurrency } from '@/shared/utils';
+import { formatCurrency, HIDDEN_AMOUNT_TEXT } from '@/shared/utils';
 import { AppSettingsStore, chartSeriesFilter, chartZoomControl } from '@/core/state';
 import { GUIDES } from '@/feature-help';
 import { IncomeStore } from '../../income.store';
@@ -129,6 +130,7 @@ export const buildIncomeTrendChartOption = (
     NgxEchartsDirective,
     PageHeaderComponent,
     PaperComponent,
+    PrivacyToggleComponent,
     SalaryMonthModalComponent,
   ],
   templateUrl: './income-overview.component.html',
@@ -207,12 +209,19 @@ export class IncomeOverviewComponent {
    * Mirrors the chart's underlying figures into DOM text for assistive tech (same treatment as the
    * dashboard's trend panel, TICKET-STAT-20) — sourced from the same `trend()` signal the chart
    * renders, so it can never diverge.
+   *
+   * Withholds the total while privacy mode is on rather than blurring it (TICKET-STAT-29's rule,
+   * applied here by TICKET-PRIV-02): this table is `sr-only`, so a CSS blur paints nothing over it
+   * and a screen reader would read the real figure straight out of a "hidden" page. The month stays.
    */
   protected readonly accessibleRows = computed<IncomeTrendAccessibleRow[]>(() => {
     const { bucketKeys, series } = this.trend();
+    const privacyMode = this.appSettingsStore.privacyModeEnabled();
     return bucketKeys.map((bucketKey, index) => ({
       bucketKey,
-      total: formatCurrency(series.reduce((sum, entry) => sum + entry.values[index], 0)),
+      total: privacyMode
+        ? HIDDEN_AMOUNT_TEXT
+        : formatCurrency(series.reduce((sum, entry) => sum + entry.values[index], 0)),
     }));
   });
 

@@ -1,6 +1,11 @@
 <!-- No `actions-start` range switcher, unlike Explore's and the Dashboard's: neither section on this
-     page is range-scoped, so there is no page-level control to project (TICKET-UI-22/UI-24). -->
-<mm-page-header title="Recurring" />
+     page is range-scoped, so there is no page-level control to project there (TICKET-UI-22/UI-24).
+     The end slot carries the privacy toggle: this page moved into the Insights nav group after
+     TICKET-PRIV-02 was written, and both its sections have masked their figures since
+     TICKET-PRIV-01 — it was the last insight page where you could only turn that on from elsewhere. -->
+<mm-page-header title="Recurring">
+  <mm-privacy-toggle actions-end />
+</mm-page-header>
 
 @if (hasNoTransactions()) {
   <mm-empty-state

@@ -24,4 +24,5 @@ export * from './structural-filters';
 export * from './with-persisted-crud';
 export * from './download-json';
 export * from './theme-hooks';
+export * from './hidden-amount';
 export * from './link-control-to-setting';

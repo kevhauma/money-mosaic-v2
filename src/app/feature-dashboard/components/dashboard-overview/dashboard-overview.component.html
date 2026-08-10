@@ -11,11 +11,9 @@
   />
   <!-- Privacy toggle stays reachable even in the empty state (TICKET-PRIV-01): it writes a global
        persisted setting, so its placement shouldn't move with how much data happens to be loaded.
-       Labelled, not a bare eye — same reasoning TICKET-STAT-25 applied to the button beside it. -->
-  <mm-button actions-end variant="ghost" size="sm" (click)="togglePrivacyMode()">
-    <ng-icon [name]="privacyToggle().icon" size="16" aria-hidden="true" />
-    {{ privacyToggle().label }}
-  </mm-button>
+       The shared control since TICKET-PRIV-02 — the same one Income, Recurring and Explore project,
+       so its label and icon can't drift from theirs. -->
+  <mm-privacy-toggle actions-end />
   <!-- Nothing to reorder or hide while the empty state is showing, so customize mode is unreachable there (TICKET-STAT-22). -->
   @if (!hasNoTransactions()) {
     <!-- The visible label *is* the accessible name (TICKET-STAT-25) — a bare pencil left a sighted

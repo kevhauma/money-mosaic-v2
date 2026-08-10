@@ -23,8 +23,8 @@ export const AppSettingsStore = signalStore(
     /**
      * `privacyMode` resolved against its off-by-default (TICKET-PRIV-01). Every consumer reads this
      * rather than `privacyMode() ?? false` — the stored field is a tri-state-via-`undefined` like
-     * its neighbours, and PRIV-01 is deliberately only the first screen to honour it, so the `??`
-     * belongs in one place instead of at each new call site the follow-up screens add.
+     * its neighbours, and the screens honouring it grew from one to four (TICKET-PRIV-02), so the
+     * `??` belongs in one place instead of at each new call site.
      */
     privacyModeEnabled: computed(() => privacyMode() ?? false),
   })),
@@ -100,7 +100,7 @@ export const AppSettingsStore = signalStore(
         patchState(store, { mainIncomeCategoryId });
       },
 
-      /** Blurs every figure on the Dashboard while on (TICKET-PRIV-01). */
+      /** Blurs every figure on the insight pages while on — Dashboard, Income, Recurring, Explore (TICKET-PRIV-01, widened by TICKET-PRIV-02). */
       setPrivacyMode: async (privacyMode: boolean): Promise<void> => {
         await appSettingsRepository.setPrivacyMode(privacyMode);
         patchState(store, { privacyMode });

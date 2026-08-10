@@ -6,9 +6,10 @@ import {
   type GrossNetGrowthPoint,
   type GrossNetRatioPoint,
 } from '@/core/stats';
+import { AppSettingsStore } from '@/core/state';
 import { resolveGrossSeriesColor } from '@/shared/echarts';
 import { PaperComponent, TypographyComponent } from '@/shared/ui';
-import { formatCurrency, formatPercent } from '@/shared/utils';
+import { formatCurrency, formatPercent, HIDDEN_AMOUNT_TEXT } from '@/shared/utils';
 import {
   buildGrossNetGrowthChartOption,
   buildTakeHomeChartOption,
@@ -22,9 +23,6 @@ import {
 
 /** Printed for a month with nothing to report — the user hasn't said, which is not the same as zero. */
 const NOT_ENTERED = '—';
-
-const currencyOrDash = (value: number | null): string =>
-  value === null ? NOT_ENTERED : formatCurrency(value);
 
 const percentOrDash = (value: number | null): string =>
   value === null ? NOT_ENTERED : formatPercent(value);
@@ -62,6 +60,22 @@ const percentOrDash = (value: number | null): string =>
 })
 export class IncomeGrossNetSectionComponent {
   private readonly incomeStore = inject(IncomeStore);
+  private readonly appSettingsStore = inject(AppSettingsStore);
+
+  /**
+   * This section has **no visible amount to blur** (TICKET-PRIV-02): every figure it shows is drawn
+   * inside an echarts canvas, which `mm-privacy-blur` cannot reach and which that ticket's Notes put
+   * out of scope. What it does have is four `sr-only` companion tables, and those a blur cannot hide
+   * either — so privacy mode is honoured here by withholding their currency instead
+   * (TICKET-STAT-29's rule). Percentages stay: a take-home rate is not an amount.
+   */
+  private readonly privacyMode = this.appSettingsStore.privacyModeEnabled;
+
+  /** A companion table's currency cell: the dash for "not entered", the word for "withheld", the figure otherwise. */
+  private amountCell(value: number | null): string {
+    if (value === null) return NOT_ENTERED;
+    return this.privacyMode() ? HIDDEN_AMOUNT_TEXT : formatCurrency(value);
+  }
 
   /**
    * Months where gross or net came out as **zero** are dropped from all four cells, not drawn as a
@@ -111,21 +125,21 @@ export class IncomeGrossNetSectionComponent {
   protected readonly takeHomeRows = computed<ChartCellRow[]>(() =>
     this.points().map((point) => ({
       key: point.bucketKey,
-      cells: [formatCurrency(point.net), currencyOrDash(point.gross), percentOrDash(point.ratio)],
+      cells: [this.amountCell(point.net), this.amountCell(point.gross), percentOrDash(point.ratio)],
     })),
   );
 
   protected readonly absoluteRows = computed<ChartCellRow[]>(() =>
     this.growth().map((point) => ({
       key: point.bucketKey,
-      cells: [currencyOrDash(point.netValue), currencyOrDash(point.grossValue)],
+      cells: [this.amountCell(point.netValue), this.amountCell(point.grossValue)],
     })),
   );
 
   protected readonly fromStartRows = computed<ChartCellRow[]>(() =>
     this.growth().map((point) => ({
       key: point.bucketKey,
-      cells: [currencyOrDash(point.netFromStart), currencyOrDash(point.grossFromStart)],
+      cells: [this.amountCell(point.netFromStart), this.amountCell(point.grossFromStart)],
     })),
   );
 

@@ -6,6 +6,7 @@ import {
   ButtonComponent,
   EmptyStateComponent,
   PageHeaderComponent,
+  PrivacyToggleComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { BillsCalendarComponent } from '../bills-calendar/bills-calendar.component';
@@ -35,6 +36,7 @@ import { RecurringPaymentsPanelComponent } from '../recurring-payments-panel/rec
     ButtonComponent,
     EmptyStateComponent,
     PageHeaderComponent,
+    PrivacyToggleComponent,
     RecurringPaymentsPanelComponent,
     TypographyComponent,
   ],

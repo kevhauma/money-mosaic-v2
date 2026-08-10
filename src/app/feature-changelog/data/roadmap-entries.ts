@@ -128,13 +128,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Forecast',
   },
   {
-    versionFolder: 'v2.3_navigation',
-    ticketId: 'TICKET-PRIV-02',
-    title:
-      'Hide your amounts with one click from any page that shows figures, not just the Dashboard',
-    area: 'Privacy Mode',
-  },
-  {
     versionFolder: 'v9999_ideas',
     ticketId: 'topic-chart-builder',
     title: 'Chart builder: create your own custom visualizations from your data',

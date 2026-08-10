@@ -248,6 +248,8 @@ describe('IncomeOverviewComponent', () => {
        * `[]` to get the first-visit state back.
        */
       seenGuideSlugs?: string[];
+      /** Privacy mode as persisted, so the page opens already blurred (TICKET-PRIV-02). */
+      privacyMode?: boolean;
     } = {},
   ): Promise<void> => {
     accountsRepository.getAll.mockResolvedValue([account]);
@@ -259,6 +261,7 @@ describe('IncomeOverviewComponent', () => {
       careerStartDate,
       smoothedBonusCategoryIds: extra.smoothedBonusCategoryIds,
       seenGuideSlugs: extra.seenGuideSlugs ?? ['getting-started-with-the-income-page'],
+      privacyMode: extra.privacyMode,
     } as AppSettings);
 
     await TestBed.configureTestingModule({
@@ -709,6 +712,69 @@ describe('IncomeOverviewComponent', () => {
       expect(pageGrid.className).toContain('grid-cols-1');
       // The rail comes second in the DOM so it falls under the charts below `lg:`.
       expect(pageGrid.lastElementChild).toBe(railHost());
+    });
+  });
+
+  describe('privacy mode (TICKET-PRIV-02)', () => {
+    it('carries the shared toggle in the header’s end slot, after the three content links', async () => {
+      await setup([salary]);
+      const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+      const toggle = header.querySelector('mm-privacy-toggle');
+
+      expect(toggle).not.toBeNull();
+      expect(toggle?.textContent?.trim()).toBe('Hide amounts');
+      expect(header.querySelector('.mm-page-actions')?.contains(toggle as Node)).toBe(true);
+      // Last of the end group's controls: the three above it are about the page's content, this one
+      // is about who can read the screen. The three links render as `<a>`, the toggle as a `<button>`.
+      const endLabels = [
+        ...(header.querySelectorAll(
+          '.mm-page-actions a, .mm-page-actions button',
+        ) as NodeListOf<HTMLElement>),
+      ].map((control) => control.textContent?.trim());
+      expect(endLabels).toEqual(['Income settings', 'Salary details', 'Guide', 'Hide amounts']);
+    });
+
+    it('blurs the page’s figures once the persisted setting is on, leaving titles and charts sharp', async () => {
+      await setup([salary], undefined, undefined, { privacyMode: true });
+      const page: HTMLElement = fixture.nativeElement;
+
+      // The growth panel's cards are the page's most prominent figures.
+      const card = page.querySelector('app-income-growth-panel mm-stat-card') as HTMLElement | null;
+      expect(card).not.toBeNull();
+      expect(card?.querySelector('.stat-value .mm-privacy-blurred')).not.toBeNull();
+      expect(card?.querySelector('.stat-title .mm-privacy-blurred')).toBeNull();
+      // No chart canvas ever ends up inside a blur wrapper (PRIV-01's rule, inherited here).
+      expect(
+        page.querySelector('.mm-privacy-blurred [echarts], .mm-privacy-blurred canvas'),
+      ).toBeNull();
+      // Panel headings stay readable — the point is that the page still says what it is.
+      expect(page.textContent).toContain('Income growth');
+      expect(page.textContent).toContain('Income by year');
+    });
+
+    it('renders the same figures plainly with the setting off', async () => {
+      await setup([salary]);
+
+      expect(fixture.nativeElement.querySelector('.mm-privacy-blurred')).toBeNull();
+    });
+
+    it('withholds the monthly companion table’s amounts rather than blurring them', async () => {
+      // `sr-only` is clipped to a 1px box, so a CSS blur paints nothing over it — a screen reader
+      // would read the real figure straight out of a "hidden" page (TICKET-STAT-29's rule).
+      await setup([salary], undefined, undefined, { privacyMode: true });
+      const totals = monthlyBucketRows('tbody td').map((cell) => cell.textContent?.trim());
+
+      expect(totals.length).toBeGreaterThan(0);
+      expect(totals.every((total) => total === 'hidden')).toBe(true);
+      // The month labels stay — which month is a label, not an amount.
+      expect(monthlyBucketKeys()[0]).toBe('2026-01');
+    });
+
+    it('reads the real totals into that table again with the setting off', async () => {
+      await setup([salary]);
+      const totals = monthlyBucketRows('tbody td').map((cell) => cell.textContent?.trim());
+
+      expect(totals[0]).toBe(formatCurrency(2000));
     });
   });
 });

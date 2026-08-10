@@ -418,6 +418,48 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
     });
   });
 
+  describe('privacy mode (TICKET-PRIV-02)', () => {
+    /** Every `.mm-privacy-blurred` box on the rail, as trimmed text. */
+    const blurredTexts = (): string[] =>
+      [...fixture.nativeElement.querySelectorAll('.mm-privacy-blurred')].map(
+        (element) => (element as HTMLElement).textContent?.replace(/\s+/g, ' ').trim() ?? '',
+      );
+
+    it('blurs a wage row’s two amounts and its percentage, not `Net` or the month', async () => {
+      await setup(A_RAISE(), [salary], { privacyMode: true });
+      const row = [...fixture.nativeElement.querySelectorAll('ol li')].find((item) =>
+        (item as HTMLElement).textContent?.includes('Net:'),
+      ) as HTMLElement;
+
+      expect(blurredTexts()).toContain('+€400.00');
+      expect(blurredTexts()).toContain('€2,900.00');
+      expect(blurredTexts()).toContain('16%');
+      // What moved, which way and when all stay readable.
+      expect(row.textContent).toContain('Net:');
+      expect(row.textContent).toContain('Jul');
+      expect(monthCellOf(row.textContent?.replace(/\s+/g, ' ').trim() ?? '')).toBeTruthy();
+      expect(row.querySelector('ng-icon')?.closest('.mm-privacy-blurred')).toBeNull();
+    });
+
+    it('blurs a sentence event whole, since it quotes its amounts inline', async () => {
+      await setup(A_RAISE(), [salary], { privacyMode: true }, [
+        { id: 1, yearMonth: '2026-01', grossWage: 4000, bonus: 1800 } as SalaryMetadata,
+      ]);
+
+      expect(blurredTexts().some((text) => text.includes('Bonus of €1,800.00'))).toBe(true);
+      // The year heading and the panel title are labels and stay sharp.
+      expect(yearHeadings()).toEqual(['2026', '2025']);
+      expect(fixture.nativeElement.querySelector('h2')?.closest('.mm-privacy-blurred')).toBeNull();
+    });
+
+    it('leaves the rail untouched with privacy mode off', async () => {
+      await setup(A_RAISE());
+
+      expect(events().length).toBeGreaterThan(0);
+      expect(fixture.nativeElement.querySelector('.mm-privacy-blurred')).toBeNull();
+    });
+  });
+
   describe('viewport-capped sticky column (TICKET-INC-22)', () => {
     const cardOf = (): HTMLElement => fixture.nativeElement.querySelector('.card');
     const scrollRegionOf = (): HTMLElement =>

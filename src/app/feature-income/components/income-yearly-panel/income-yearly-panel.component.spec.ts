@@ -265,6 +265,7 @@ describe('IncomeYearlyPanelComponent', () => {
     transactions: Transaction[],
     excludedIncomeCategoryIds?: number[],
     careerStartDate?: string,
+    privacyMode?: boolean,
   ): Promise<void> => {
     accountsRepository.getAll.mockResolvedValue([account]);
     categoriesRepository.getAll.mockResolvedValue([salary]);
@@ -273,6 +274,7 @@ describe('IncomeYearlyPanelComponent', () => {
       id: 1,
       excludedIncomeCategoryIds,
       careerStartDate,
+      privacyMode,
     } as AppSettings);
 
     await TestBed.configureTestingModule({
@@ -475,6 +477,62 @@ describe('IncomeYearlyPanelComponent', () => {
       // `computeFullHistoryRange` runs to today, so the newest year is always partial and would
       // read as a collapse if it anchored the span.
       expect(headline().subLabel).not.toContain(String(new Date().getFullYear()));
+    });
+  });
+
+  describe('privacy mode (TICKET-PRIV-02)', () => {
+    const twoYears = [payslip(1, '2024-06-01', 20000), payslip(2, '2025-06-01', 24000)];
+
+    it('blurs the headline card while leaving its label and the span picker alone', async () => {
+      await setup(twoYears, undefined, undefined, true);
+      const card = fixture.nativeElement.querySelector('mm-stat-card') as HTMLElement;
+
+      expect(card.querySelector('.stat-value .mm-privacy-blurred')).not.toBeNull();
+      expect(card.querySelector('.stat-desc .mm-privacy-blurred')).not.toBeNull();
+      expect(card.querySelector('.stat-title .mm-privacy-blurred')).toBeNull();
+      expect(card.querySelector('.stat-title')?.textContent).toContain('Change over the last');
+      // The picker stays interactive — blur is visual, not a lock.
+      expect(fixture.nativeElement.querySelectorAll('[role="group"] button')).toHaveLength(3);
+    });
+
+    it('blurs the headline tooltip, which is where the year totals are spelled out', async () => {
+      await setup(twoYears, undefined, undefined, true);
+      const tooltip = fixture.nativeElement.querySelector('.tooltip-content') as HTMLElement;
+
+      expect(tooltip.textContent).toContain('2024');
+      expect(tooltip.querySelector('.mm-privacy-blurred')).not.toBeNull();
+    });
+
+    it('withholds the companion table’s totals rather than blurring them', async () => {
+      // `sr-only` is clipped to a 1px box, so a CSS blur hides nothing from a screen reader
+      // (TICKET-STAT-29's rule).
+      await setup(twoYears, undefined, undefined, true);
+      // Three rows, not two: `computeFullHistoryRange` runs to today, so the in-progress current
+      // year is always a row of its own.
+      const rows = accessibleRows();
+
+      expect(rows.length).toBeGreaterThanOrEqual(2);
+      expect(rows.every((row) => row[1] === 'hidden')).toBe(true);
+      // The year and the year-over-year change stay: a percentage is not the amount.
+      expect(rows[0][0]).toBe('2024');
+      expect(rows[1][2]).toBe('+20%');
+    });
+
+    it('leaves both the card and the table plain with privacy mode off', async () => {
+      await setup(twoYears);
+
+      expect(fixture.nativeElement.querySelector('.mm-privacy-blurred')).toBeNull();
+      expect(accessibleRows()[0][1]).toContain('20,000');
+    });
+
+    it('never blurs the chart itself — the shape stays readable, the figures do not', async () => {
+      await setup(twoYears, undefined, undefined, true);
+
+      expect(
+        fixture.nativeElement.querySelector(
+          '.mm-privacy-blurred [echarts], .mm-privacy-blurred canvas',
+        ),
+      ).toBeNull();
     });
   });
 });

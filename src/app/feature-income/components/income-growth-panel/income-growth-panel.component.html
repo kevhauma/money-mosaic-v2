@@ -1,7 +1,12 @@
 <h2 class="card-title text-base">Income growth</h2>
 
 @if (hasComparableMonth()) {
-  <mm-text variant="caption" as="p">{{ caption() }}</mm-text>
+  <!-- The month names stay sharp and only the figure blurs (TICKET-PRIV-02): which month the two
+       deltas below compare is a label, not an amount. -->
+  <mm-text variant="caption" as="p">
+    {{ caption().text }}
+    <mm-privacy-blur [blurred]="privacyMode()">{{ caption().amount }}</mm-privacy-blur>
+  </mm-text>
 
   <!-- Each stat is its own free-standing card (not a joined .stats strip), matching the dashboard's
        stat row exactly; the alternating tilt hooks only render in themes that opt in (Memphis). -->
@@ -16,6 +21,7 @@
         [link]="card.link"
         [queryParams]="card.queryParams"
         [tilt]="$even ? 'a' : 'b'"
+        [blurred]="privacyMode()"
       />
     }
   </div>

@@ -34,9 +34,15 @@
                 <mm-text as="span" weight="bold" class="w-8 shrink-0 text-xs uppercase">{{
                   event.when
                 }}</mm-text>
+                <!-- Privacy mode (TICKET-PRIV-02) blurs the two amounts and the percentage but not
+                     `Net`/`Gross`, the arrow or the direction triangle — which is the whole rule:
+                     you keep seeing *that* your pay moved and which way, without the figures. -->
                 @if (event.wageChange; as wage) {
                   <mm-text as="span" variant="caption" color="base-content" class="min-w-0 grow">
-                    {{ wage.label }}: {{ wage.delta }} → {{ wage.to }}
+                    {{ wage.label }}:
+                    <mm-privacy-blur [blurred]="privacyMode()">{{ wage.delta }}</mm-privacy-blur>
+                    →
+                    <mm-privacy-blur [blurred]="privacyMode()">{{ wage.to }}</mm-privacy-blur>
                   </mm-text>
                   <mm-text
                     as="span"
@@ -45,13 +51,22 @@
                     [color]="wage.deltaColor"
                   >
                     <ng-icon [name]="wage.deltaIcon" size="10" aria-hidden="true" />
-                    {{ wage.deltaLabel }}
+                    <mm-privacy-blur [blurred]="privacyMode()">{{
+                      wage.deltaLabel
+                    }}</mm-privacy-blur>
                   </mm-text>
                 } @else {
+                  <!-- Blurred whole, unlike the row above: these sentences quote their amounts
+                       inline ("from about €2,000 to €2,200 a month"), and splitting one into sharp
+                       prose and blurred figures would mean a segmented view-model for the four event
+                       kinds. The month beside it and the year heading above stay sharp, so the
+                       timeline still reads as a timeline. -->
                   <span class="min-w-0">
-                    <mm-text as="span" variant="caption" color="base-content" class="block">{{
-                      event.message
-                    }}</mm-text>
+                    <mm-privacy-blur [blurred]="privacyMode()" class="block">
+                      <mm-text as="span" variant="caption" color="base-content" class="block">{{
+                        event.message
+                      }}</mm-text>
+                    </mm-privacy-blur>
                   </span>
                 }
               </li>

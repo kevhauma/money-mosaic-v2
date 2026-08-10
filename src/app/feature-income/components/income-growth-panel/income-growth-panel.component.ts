@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { computeIncomeGrowth, lastCompleteBucketKey, type IncomeGrowthWindow } from '@/core/stats';
-import { StatCardComponent, TypographyComponent } from '@/shared/ui';
+import { AppSettingsStore } from '@/core/state';
+import { PrivacyBlurComponent, StatCardComponent, TypographyComponent } from '@/shared/ui';
 import {
   bucketDateBoundaries,
   buildTransactionDrilldownParams,
@@ -91,12 +92,16 @@ export const buildIncomeGrowthCard = (
  */
 @Component({
   selector: 'app-income-growth-panel',
-  imports: [StatCardComponent, TypographyComponent],
+  imports: [PrivacyBlurComponent, StatCardComponent, TypographyComponent],
   templateUrl: './income-growth-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IncomeGrowthPanelComponent {
   private readonly incomeStore = inject(IncomeStore);
+  private readonly appSettingsStore = inject(AppSettingsStore);
+
+  /** Drives the cards' `[blurred]` and the caption's wrapper (TICKET-PRIV-02). */
+  protected readonly privacyMode = this.appSettingsStore.privacyModeEnabled;
 
   /** The newest month `incomeRange` fully covers, or `undefined` for a history with no complete month yet. */
   private readonly comparedMonth = computed(() =>
@@ -116,12 +121,26 @@ export class IncomeGrowthPanelComponent {
 
   protected readonly hasComparableMonth = computed(() => this.growth() !== null);
 
-  /** e.g. "January 2026 — your last complete month." Named in full so the two deltas below are unambiguous. */
+  /**
+   * e.g. "1 January 2026 – 31 January 2026, your last complete month: €3,200." Named in full so the
+   * two deltas below are unambiguous.
+   *
+   * Split into the sentence and its figure (TICKET-PRIV-02) rather than left as one string: privacy
+   * mode blurs the amount, and blurring the dates alongside it would hide *which* month the deltas
+   * compare — the half of this caption that is a label rather than a figure.
+   *
+   * Empty strings rather than `null` for the no-comparison case: the template only reaches this
+   * inside its `hasComparableMonth()` branch, and a nullable return would make it add a second `@if`
+   * for a state it has already ruled out.
+   */
   protected readonly caption = computed(() => {
     const growth = this.growth();
     return growth === null
-      ? ''
-      : `${formatDate(growth.from)} – ${formatDate(growth.to)}, your last complete month: ${formatCurrency(growth.current)}`;
+      ? { text: '', amount: '' }
+      : {
+          text: `${formatDate(growth.from)} – ${formatDate(growth.to)}, your last complete month:`,
+          amount: formatCurrency(growth.current),
+        };
   });
 
   protected readonly cards = computed<IncomeGrowthCardVm[]>(() => {

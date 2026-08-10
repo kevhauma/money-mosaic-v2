@@ -1,5 +1,7 @@
-<!-- Title · date range (TICKET-UI-24: the range changes *what the page shows*, so it goes in the
-     start slot beside the title). This page has no end-slot control of its own yet. -->
+<!-- Title · date range ‖ Hide amounts (TICKET-UI-24: the range changes *what the page shows*, so it
+     goes in the start slot beside the title; the privacy toggle acts on what is shown, so it goes in
+     the end slot). The Sankey has masked its figures since TICKET-PRIV-01 — TICKET-PRIV-02 is what
+     finally lets you say so from here instead of walking to the Dashboard first. -->
 <mm-page-header title="Explore">
   <mm-range-grouping-switcher
     actions-start
@@ -8,6 +10,7 @@
     (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
+  <mm-privacy-toggle actions-end />
 </mm-page-header>
 
 @if (hasNoTransactions()) {

@@ -42,9 +42,12 @@ export class StatCardComponent {
   readonly queryParams = input<Record<string, string>>();
   readonly tilt = input<StatCardTilt>('none');
   /**
-   * Blurs `value` and `subLabel` (TICKET-PRIV-01) — both are real figures, a YoY delta no less than
-   * the headline number. `label` stays sharp: the point is that the card still reads as "Income"
-   * while the amount doesn't. A boolean rather than a store read, so the card stays a dumb primitive.
+   * Blurs `value`, `subLabel` and the `tooltip` (TICKET-PRIV-01, tooltip added by TICKET-PRIV-02) —
+   * all three are real figures, a YoY delta no less than the headline number, and the tooltip is
+   * usually the *only* place a percentage card spells its amounts out in full ("Jan 2025 – Jan 2026:
+   * €38,400"). Blurring the card while a hover hands the figure back is not privacy mode. `label`
+   * stays sharp: the point is that the card still reads as "Income" while the amount doesn't. A
+   * boolean rather than a store read, so the card stays a dumb primitive.
    */
   readonly blurred = input(false);
   readonly class = input('', { alias: 'class' });

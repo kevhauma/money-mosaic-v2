@@ -7,6 +7,7 @@ import {
   EmptyStateComponent,
   PageHeaderComponent,
   PaperComponent,
+  PrivacyToggleComponent,
   RangeGroupingSwitcherComponent,
   TypographyComponent,
 } from '@/shared/ui';
@@ -37,6 +38,7 @@ import { MoneyFlowPanelComponent } from '../money-flow-panel/money-flow-panel.co
     MoneyFlowPanelComponent,
     PageHeaderComponent,
     PaperComponent,
+    PrivacyToggleComponent,
     RangeGroupingSwitcherComponent,
     TypographyComponent,
   ],

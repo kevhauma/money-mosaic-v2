@@ -99,6 +99,26 @@ describe('ExploreOverviewComponent (TICKET-EXP-01)', () => {
     expect(host.querySelector('mm-range-grouping-switcher')).not.toBeNull();
   });
 
+  it('carries the shared privacy toggle in the header’s end slot (TICKET-PRIV-02)', async () => {
+    const fixture = await createFixture([transaction()]);
+    const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+    const toggle = header.querySelector('mm-privacy-toggle');
+
+    expect(toggle).not.toBeNull();
+    expect(toggle?.textContent?.trim()).toBe('Hide amounts');
+    // The range changes what the page shows and goes start-side; the toggle acts on what is shown.
+    expect(header.querySelector('.mm-page-actions')?.contains(toggle as Node)).toBe(true);
+    expect(header.querySelector('.mm-page-actions-start')?.contains(toggle as Node)).toBe(false);
+  });
+
+  it('reaches the toggle in the empty state too — it writes a global setting (TICKET-PRIV-02)', async () => {
+    const fixture = await createFixture([]);
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('mm-empty-state')).not.toBeNull();
+    expect(host.querySelector('mm-page-header mm-privacy-toggle')).not.toBeNull();
+  });
+
   it('drives the "explore" range key, leaving the Dashboard range where it was', async () => {
     const fixture = await createFixture([transaction()]);
     const rangeStore = TestBed.inject(RangeStore);

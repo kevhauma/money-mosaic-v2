@@ -10,8 +10,13 @@ import {
   groupIncomeEventsByYear,
   lastCompleteBucketKey,
 } from '@/core/stats';
-import { CategoriesStore } from '@/core/state';
-import { PaperComponent, TypographyComponent, DividerComponent } from '@/shared/ui';
+import { AppSettingsStore, CategoriesStore } from '@/core/state';
+import {
+  PaperComponent,
+  PrivacyBlurComponent,
+  TypographyComponent,
+  DividerComponent,
+} from '@/shared/ui';
 import { buildIncomeEventYearVms, type IncomeEventYearVm } from '../../income-event-vm';
 import { INCOME_GRANULARITY } from '../../income-granularity';
 import { IncomeStore } from '../../income.store';
@@ -41,7 +46,7 @@ import { IncomeStore } from '../../income.store';
  */
 @Component({
   selector: 'app-income-events-sidebar',
-  imports: [NgIcon, PaperComponent, TypographyComponent, DividerComponent],
+  imports: [NgIcon, PaperComponent, PrivacyBlurComponent, TypographyComponent, DividerComponent],
   templateUrl: './income-events-sidebar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // The delta chip's pair, shared with the dashboard's period-comparison card. The only icons on
@@ -51,6 +56,14 @@ import { IncomeStore } from '../../income.store';
 export class IncomeEventsSidebarComponent {
   private readonly categoriesStore = inject(CategoriesStore);
   private readonly incomeStore = inject(IncomeStore);
+  private readonly appSettingsStore = inject(AppSettingsStore);
+
+  /**
+   * The rail is the densest run of figures on the page — every wage-change row carries a signed
+   * amount, a level and a percentage, and every sentence quotes two amounts — so privacy mode has to
+   * reach it (TICKET-PRIV-02), even though the ticket's acceptance criteria named only the panels.
+   */
+  protected readonly privacyMode = this.appSettingsStore.privacyModeEnabled;
 
   private readonly gaps = computed(() => {
     const trend = this.incomeStore.rawIncomeTrend();

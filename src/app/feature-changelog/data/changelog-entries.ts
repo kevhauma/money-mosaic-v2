@@ -871,4 +871,19 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'UI / App shell',
   },
+  {
+    date: '2026-08-10',
+    versionFolder: 'v2.3_navigation',
+    ticketIds: ['TICKET-PRIV-02'],
+    title: '“Hide amounts” is now on every page that shows you figures',
+    details: [
+      'The toggle used to sit on the Dashboard alone, so hiding your figures meant navigating back there first. It is now in the header of the Dashboard, Income, Recurring and Explore — one click, wherever you happen to be',
+      'It is the same setting everywhere: switch it on from Explore and the Dashboard is already blurred when you arrive, and it survives a reload',
+      'Income honours it for the first time — the growth cards, the yearly headline and the “Notable changes” rail all blur, and a hover no longer hands back the amount a blurred card is hiding',
+      'The screen-reader tables behind Income’s charts withhold their amounts instead of blurring them, since a blur hides nothing from a screen reader',
+      'Labels, headings, charts and links stay sharp and clickable throughout — only the numbers go',
+      'The pages where you work on your data — Accounts, Transactions, Categories — are deliberately left alone: a blurred balance cannot be checked against the bank',
+    ],
+    area: 'Privacy Mode',
+  },
 ];

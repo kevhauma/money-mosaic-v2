@@ -434,4 +434,47 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
     expect(optionOf('absoluteOption').series[1].itemStyle?.color).toBe(expected);
     expect(optionOf('pctFromStartOption').series[1].itemStyle?.color).toBe(expected);
   });
+
+  describe('privacy mode (TICKET-PRIV-02)', () => {
+    /** Two months with both figures known, so every cell has something to withhold. */
+    const withGross = (settings: Partial<AppSettings> = {}): Promise<void> =>
+      setup(
+        [payslip(1, '2026-01-25', 2160), payslip(2, '2026-02-25', 2300)],
+        [
+          { id: 1, yearMonth: '2026-01', grossWage: 3000 },
+          { id: 2, yearMonth: '2026-02', grossWage: 3300 },
+        ],
+        settings,
+      );
+
+    it('withholds every currency cell of every companion table, keeping the percentages', async () => {
+      // This section has no visible amount at all — its figures are canvas-only, which
+      // TICKET-PRIV-02's Notes leave out of scope — so the `sr-only` tables are the whole of what
+      // privacy mode can honour here, and a CSS blur cannot hide them (TICKET-STAT-29's rule).
+      await withGross({ privacyMode: true });
+
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', 'hidden', 'hidden', '72%']);
+      expect(rowsOf(ABSOLUTE)[0]).toEqual(['2026-01', 'hidden', 'hidden']);
+      expect(rowsOf(FROM_START)[1]).toEqual(['2026-02', 'hidden', 'hidden']);
+      // Percentages are not amounts, so this cell is unchanged.
+      expect(rowsOf(PCT_FROM_START)[0]).toEqual(['2026-01', '0%', '0%']);
+    });
+
+    it('still tells a "not entered" month apart from a withheld figure', async () => {
+      await setup(
+        [payslip(1, '2026-01-25', 2160), payslip(2, '2026-02-25', 2160)],
+        [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
+        { privacyMode: true },
+      );
+
+      // The dash means the user never said, which privacy mode has no reason to hide.
+      expect(rowsOf(TAKE_HOME)[1]).toEqual(['2026-02', 'hidden', '—', '—']);
+    });
+
+    it('reads the real figures back with privacy mode off', async () => {
+      await withGross();
+
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€2,160.00', '€3,000.00', '72%']);
+    });
+  });
 });

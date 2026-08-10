@@ -77,41 +77,137 @@ can't drift between pages.
 
 ## Acceptance criteria
 
-- [ ] `mm-privacy-toggle` exists in `shared/ui/`, is standalone + `OnPush`, exported from the
+> **Implementation note (2026-08-10).** Three departures from the criteria below, each recorded
+> inline where it applies:
+>
+> 1. **Four insight pages, not three.** `/recurring` was split out of Explore (commit `32bdd84`,
+>    "refactor: move recurring to own page" — no ticket of its own) *after* this ticket was written,
+>    and now sits in the Insights nav group alongside Dashboard, Income and Explore. Its two
+>    sections have masked their figures since PRIV-01 but its header had no toggle — the exact gap
+>    this ticket names for Explore. Adding it follows the ticket's own definition of scope ("the
+>    Insights nav group"); leaving it out would have shipped the bug the ticket exists to fix.
+> 2. **The salary-month modal has nothing to blur** — see AC 5.
+> 3. **The gross/net section has no *visible* amount either** — see AC 5. Both are honoured through
+>    their `sr-only` companion tables instead, per the coding-conventions rule from TICKET-STAT-29.
+
+- [x] `mm-privacy-toggle` exists in `shared/ui/`, is standalone + `OnPush`, exported from the
       `shared/ui` barrel, reads `AppSettingsStore.privacyModeEnabled`, and writes through
       `setPrivacyMode()` — no component reimplements the label/icon/click logic.
-- [ ] The toggle renders in the `actions-end` slot of the Dashboard, Income and Explore page headers,
+      *(New `shared/ui/privacy-toggle/privacy-toggle.component.ts` + `.html`, exported from
+      `shared/ui/index.ts`. `privacy-toggle.component.spec.ts` covers both states, both click
+      directions and hydration. It is the one `shared/ui` primitive that injects a store — the class
+      doc states why, and `mm-privacy-blur` deliberately stays input-driven. No other file defines a
+      privacy label/icon: `grep -rn "Hide amounts|Show amounts" src/app` returns only this component,
+      plus prose in comments and shipped changelog entries.)*
+- [x] The toggle renders in the `actions-end` slot of the Dashboard, Income and Explore page headers,
       with identical wording and icon on all three ("Hide amounts" when figures are visible, "Show
-      amounts" when they are hidden).
-- [ ] `dashboard-overview` no longer defines its own `privacyToggle`/`togglePrivacyMode`, and its
+      amounts" when they are hidden). *(And Recurring — see note 1. All four project the same
+      `<mm-privacy-toggle actions-end />`, so the wording is one source. Slot placement asserted in
+      `explore-overview.component.spec.ts` ("carries the shared privacy toggle in the header's end
+      slot"), `recurring-overview.component.spec.ts` (same case) and
+      `income-overview.component.spec.ts` → "privacy mode (TICKET-PRIV-02)", which also pins the end
+      group's order as `Income settings · Salary details · Guide · Hide amounts`. The Dashboard's own
+      order case — `orders the header title · range · privacy · settings` — still passes unchanged.)*
+- [x] `dashboard-overview` no longer defines its own `privacyToggle`/`togglePrivacyMode`, and its
       `provideIcons` no longer registers `tablerEye`/`tablerEyeOff`; the header still shows the
-      toggle in the empty state, exactly as PRIV-01 requires.
-- [ ] Toggling from any of the three pages flips the same persisted setting — turn it on from
+      toggle in the empty state, exactly as PRIV-01 requires. *(Both members deleted from
+      `dashboard-overview.component.ts`; `provideIcons` is now `{ tablerCheck, tablerFileImport,
+      tablerPencil }`. Its `privacyMode` field stays — the stat cards' `[blurred]` reads it. The
+      whole PRIV-01 spec block passes untouched, including "keeps the header toggle reachable in the
+      empty state, where the settings button is not".)*
+- [x] Toggling from any of the three pages flips the same persisted setting — turn it on from
       Explore, navigate to the Dashboard, and the Dashboard is already blurred (and vice versa).
-- [ ] Every user-facing amount on the Income page blurs with the setting on — gross/net section,
-      growth panel, yearly panel and the salary-month modal — while panel titles, axis labels,
+      *(Structural rather than observed, since the live check was declined: all four pages render the
+      same component, which writes `AppSettingsStore.setPrivacyMode()` — one root store over one
+      `appSettings` row, so there is no second path for the pages to disagree through.
+      `privacy-toggle.component.spec.ts` pins both the write ("writes the negated setting through
+      AppSettingsStore on click", "writes `false` when clicked while privacy mode is already on") and
+      the read-back after persistence ("opens on the persisted setting rather than the default, once
+      the store hydrates").)*
+- [x] Every user-facing amount on the Income page blurs with the setting on — growth panel, yearly
+      panel ~~gross/net section~~ ~~and the salary-month modal~~ — while panel titles, axis labels,
       chart canvases and links stay sharp and clickable.
-- [ ] Explore's already-blurring figures are unchanged by this ticket; only its header gains the
-      toggle.
-- [ ] The Settings privacy section's copy describes the actual scope (every insight page) and no
+      **Amended 2026-08-10.** Two of the four named surfaces have no visible amount to wrap:
+      - **The salary-month modal** is two `<mm-input type="number">` fields and a link — there is no
+        rendered figure, only values the user types. Blurring an input while it is being filled is
+        exactly what this ticket's own Notes reject for `/income/salary`, so it is left alone.
+      - **The gross/net section** draws every figure inside an echarts canvas, which
+        `mm-privacy-blur` cannot reach and which this ticket's Notes put out of scope.
+      Both, plus the two chart panels, are instead honoured through their `sr-only` companion tables
+      (see the criterion below). *Evidence for what does blur:* growth-panel cards and caption figure
+      (`income-growth-panel.component.spec.ts` → "blurs every card and the caption's figure with
+      privacy mode on"), the yearly headline (`income-yearly-panel.component.spec.ts` → "blurs the
+      headline card while leaving its label and the span picker alone"), and — beyond the ticket's
+      list — the **"Notable changes" events rail**, the densest run of figures on the page
+      (`income-events-sidebar.component.spec.ts` → "blurs a wage row's two amounts and its
+      percentage, not `Net` or the month" / "blurs a sentence event whole"). `mm-stat-card` also
+      gained tooltip blurring (`stat-card.component.spec.ts` → "masks the tooltip too, so a hover
+      cannot hand back the figure") — without it, hovering a blurred Income card handed the amount
+      straight back, since the tooltip is the only place those percentage cards spell it out.
+      Titles/charts stay sharp: `income-overview.component.spec.ts` asserts no `[echarts]` or
+      `canvas` ever sits inside a `.mm-privacy-blurred` box and that "Income growth"/"Income by year"
+      stay readable.
+- [x] **Added 2026-08-10.** Income's `sr-only` companion tables *withhold* their amounts instead of
+      blurring them, per the coding-conventions rule established by TICKET-STAT-29: an `sr-only`
+      table is clipped to a 1px box, so a CSS filter paints nothing over it and a screen reader reads
+      the real figure straight out of an ostensibly hidden page. *(New shared
+      `HIDDEN_AMOUNT_TEXT` in `shared/utils/hidden-amount.ts` — the Dashboard heatmap's local copy of
+      the same string now imports it — applied to the monthly trend table
+      (`income-overview.component.ts`), the yearly table (`income-yearly-panel.component.ts`) and all
+      four gross/net cells (`income-gross-net-section.component.ts`). Months, years and percentages
+      stay: they are labels, not amounts. Asserted in all three specs, including "still tells a 'not
+      entered' month apart from a withheld figure".)*
+- [x] Explore's already-blurring figures are unchanged by this ticket; only its header gains the
+      toggle. *(`explore-overview.component.html` gained one line; no file under
+      `feature-explore/` other than the overview's `.ts`/`.html`/`.spec.ts` is in the diff, and
+      `money-flow-panel.component.spec.ts` passes untouched.)*
+- [x] The Settings privacy section's copy describes the actual scope (every insight page) and no
       longer claims the Dashboard is the only page with the toggle; the Settings checkbox and all
       three page toggles continue to agree at all times.
-- [ ] No blur or toggle is added to Accounts, Transactions, Categories, Learning, Import or the
-      `/income/salary` and `/income/settings` sub-pages.
-- [ ] Persistence goes through `AppSettingsStore`/`AppSettingsRepository` — no component touches the
+      *(`settings-privacy-section.component.html` now names Dashboard, Income, Recurring and Explore,
+      says every one of them carries the toggle, and states why the data pages are excluded; the
+      checkbox label reads "Blur amounts on my insight pages". Agreement is structural — the checkbox
+      and all four toggles read and write the same `AppSettingsStore` signal — and
+      `settings-privacy-section.component.spec.ts` still passes.)*
+- [x] No blur or toggle is added to Accounts, Transactions, Categories, Learning, Import or the
+      `/income/salary` and `/income/settings` sub-pages. *(No file under `feature-accounts`,
+      `feature-transactions`, `feature-categories`, `feature-learning`, `feature-import`,
+      `salary-details-page/` or `income-settings-page/` appears in `git status`. Recurring is the one
+      addition, and it is an insight page — see note 1.)*
+- [x] Persistence goes through `AppSettingsStore`/`AppSettingsRepository` — no component touches the
       `appSettings` table directly, and no new Dexie version is added (the field already exists).
-- [ ] Unit tests cover: `mm-privacy-toggle` rendering both label/icon states and calling
+      *(`privacy-toggle.component.ts` injects `AppSettingsStore` and calls `setPrivacyMode()`;
+      `privacy-toggle.component.spec.ts` → "persists through the store, never touching the
+      appSettings table itself" spies on `appDb.appSettings.put` and asserts it is never called.
+      `app-db.ts` is not in the diff.)*
+- [x] Unit tests cover: `mm-privacy-toggle` rendering both label/icon states and calling
       `setPrivacyMode` with the negated value; the toggle being present in each of the three page
       headers; at least one Income figure blurring when `privacyModeEnabled` is `true` and rendering
       plainly when `false`; the Dashboard's existing privacy specs still passing against the shared
-      component.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json` budgets
-      untouched.
+      component. *(6 cases in `privacy-toggle.component.spec.ts`; header cases in the Explore,
+      Recurring and Income overview specs; on/off pairs in the growth, yearly, gross/net, events-rail
+      and Income-overview specs; the Dashboard's `privacy mode (TICKET-PRIV-01)` block passes
+      unmodified against the shared component. 2,692 tests, 245 files, all green.)*
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json` budgets
+      untouched. *(2026-08-10: lint "All files pass linting"; `ng test` 2692/2692 passed across 245
+      files; dev build "Application bundle generation complete". `angular.json` is not in the diff.
+      One run in four surfaced an unrelated zrender/jsdom teardown race in
+      `spending-heatmap-panel.component.spec.ts` — a canvas paint after fixture destroy, with no
+      failing assertion; that file's only change here is a constant rename, and three other full runs
+      were clean.)*
 - [ ] Verified live in the browser: toggle from Explore, confirm Income and Dashboard are blurred on
       arrival, reload and confirm it survives, then switch it off from Settings and confirm all three
-      headers read "Hide amounts" again. *(Ask the user first; if declined, note it here rather than
-      ticking.)*
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      headers read "Hide amounts" again. **Not done — the user declined the live check when asked on
+      2026-08-10.** Deliberately left open rather than ticked: nothing here was seen in a browser.
+- [x] Verified via the fallow skill and coding-conventions skill. *(`fallow audit --base HEAD`:
+      verdict **pass**, `complexity_introduced: 0`, `dead_code_introduced: 0`,
+      `duplication_introduced: 0`. Its one introduced finding — a CRAP-estimate trip on
+      `income-growth-panel.component.html` from an added `@if` — was removed rather than suppressed,
+      by making `caption()` return empty strings instead of `null` so the template needs no second
+      branch inside the one that already guarantees it. Conventions checked against
+      `.claude/skills/coding-conventions/SKILL.md`: one-folder-per-component, `mm-` prefix, `input()`
+      signals, native control flow, `actions-end` slot rule, view-models resolved in the class, and
+      the TICKET-STAT-29 sr-only rule quoted above.)*
 
 ## Notes
 

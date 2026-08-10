@@ -330,13 +330,16 @@ describe('IncomeGrowthPanelComponent', () => {
 
   describe('free-standing cards (TICKET-INC-15)', () => {
     /** Enough history for all three baselines to land on three different months. */
-    const withThreeBaselines = (): Promise<void> =>
-      setup([
-        payslip(1, '2024-03-15', 1500),
-        payslip(2, '2025-07-15', 2000),
-        payslip(3, '2026-01-15', 2500),
-        payslip(4, '2026-07-15', 3000),
-      ]);
+    const withThreeBaselines = (settings: Partial<AppSettings> = {}): Promise<void> =>
+      setup(
+        [
+          payslip(1, '2024-03-15', 1500),
+          payslip(2, '2025-07-15', 2000),
+          payslip(3, '2026-01-15', 2500),
+          payslip(4, '2026-07-15', 3000),
+        ],
+        settings,
+      );
 
     it('renders the cards outside any mm-paper, in the dashboard’s own stat-row container', async () => {
       await withThreeBaselines();
@@ -382,6 +385,42 @@ describe('IncomeGrowthPanelComponent', () => {
       expect(links[1]).toContain('2025-07-01');
       expect(links[2]).toContain('2026-01-01');
       expect(new Set(links).size).toBe(3);
+    });
+
+    it('blurs every card and the caption’s figure with privacy mode on (TICKET-PRIV-02)', async () => {
+      await withThreeBaselines({ privacyMode: true });
+      const cardElements = [
+        ...fixture.nativeElement.querySelectorAll('mm-stat-card'),
+      ] as HTMLElement[];
+
+      expect(cardElements.length).toBeGreaterThan(0);
+      for (const card of cardElements) {
+        expect(card.querySelector('.stat-value .mm-privacy-blurred')).not.toBeNull();
+        expect(card.querySelector('.stat-desc .mm-privacy-blurred')).not.toBeNull();
+        // The label is the whole point of leaving the card in place.
+        expect(card.querySelector('.stat-title .mm-privacy-blurred')).toBeNull();
+      }
+      // A hover must not hand the figure back: the tooltip is where these cards spell their
+      // amounts out in full (`€38,400`), and it is the only place they do.
+      const tooltips = [
+        ...fixture.nativeElement.querySelectorAll('.tooltip-content'),
+      ] as HTMLElement[];
+      expect(tooltips.length).toBeGreaterThan(0);
+      expect(tooltips.every((tip) => tip.querySelector('.mm-privacy-blurred') !== null)).toBe(true);
+      // Which month the deltas compare is a label, so the caption's prose stays sharp — only the
+      // figure at the end of it blurs.
+      expect(fixture.nativeElement.textContent).toContain('last complete month');
+      expect(fixture.nativeElement.querySelector('p .mm-privacy-blurred')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('p')?.textContent).toContain(
+        'last complete month',
+      );
+    });
+
+    it('renders the same cards unblurred with privacy mode off', async () => {
+      await withThreeBaselines();
+
+      expect(fixture.nativeElement.querySelector('.mm-privacy-blurred')).toBeNull();
+      expect(cards()).toHaveLength(3);
     });
 
     it('renders a card with no comparable window as plain text, not a dead link', async () => {

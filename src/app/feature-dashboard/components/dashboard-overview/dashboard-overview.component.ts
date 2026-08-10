@@ -1,12 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  tablerCheck,
-  tablerEye,
-  tablerEyeOff,
-  tablerFileImport,
-  tablerPencil,
-} from '@ng-icons/tabler-icons';
+import { tablerCheck, tablerFileImport, tablerPencil } from '@ng-icons/tabler-icons';
 import { computeNetMargin, computePeriodizedRate } from '@/core/stats';
 import {
   AccountsStore,
@@ -22,6 +16,7 @@ import {
   LoadingSkeletonComponent,
   PageHeaderComponent,
   PaperComponent,
+  PrivacyToggleComponent,
   RangeGroupingSwitcherComponent,
   StatCardComponent,
 } from '@/shared/ui';
@@ -47,6 +42,7 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
     LoadingSkeletonComponent,
     PageHeaderComponent,
     PaperComponent,
+    PrivacyToggleComponent,
     RangeGroupingSwitcherComponent,
     StatCardComponent,
     CategoryBreakdownPanelComponent,
@@ -61,9 +57,7 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
   ],
   templateUrl: './dashboard-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [
-    provideIcons({ tablerCheck, tablerEye, tablerEyeOff, tablerFileImport, tablerPencil }),
-  ],
+  viewProviders: [provideIcons({ tablerCheck, tablerFileImport, tablerPencil })],
 })
 export class DashboardOverviewComponent {
   protected readonly statsStore = inject(StatsStore);
@@ -110,21 +104,6 @@ export class DashboardOverviewComponent {
 
   protected toggleCustomizeMode(): void {
     this.customizeMode.set(!this.customizeMode());
-  }
-
-  /**
-   * Label + icon for the header's privacy toggle (TICKET-PRIV-01). Worded as the action it performs
-   * rather than the state it is in, and rendered as visible text like its neighbour — a bare eye
-   * icon is exactly what TICKET-STAT-25 removed from this header.
-   */
-  protected readonly privacyToggle = computed(() =>
-    this.privacyMode()
-      ? { label: 'Show amounts', icon: 'tablerEyeOff' }
-      : { label: 'Hide amounts', icon: 'tablerEye' },
-  );
-
-  protected togglePrivacyMode(): void {
-    void this.appSettingsStore.setPrivacyMode(!this.privacyMode());
   }
 
   protected readonly drilldownParams = computed(() =>

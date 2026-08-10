@@ -82,6 +82,26 @@ describe('RecurringOverviewComponent', () => {
     expect(host.textContent).toContain('Detected across your whole transaction history');
   });
 
+  it('carries the shared privacy toggle in the header’s end slot (TICKET-PRIV-02)', async () => {
+    const fixture = await createFixture([transaction()]);
+    const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
+    const toggle = header.querySelector('mm-privacy-toggle');
+
+    // Both sections here have masked their figures since TICKET-PRIV-01; this is what lets you say
+    // so without walking to the Dashboard.
+    expect(toggle).not.toBeNull();
+    expect(toggle?.textContent?.trim()).toBe('Hide amounts');
+    expect(header.querySelector('.mm-page-actions')?.contains(toggle as Node)).toBe(true);
+  });
+
+  it('reaches the toggle in the empty state too — it writes a global setting (TICKET-PRIV-02)', async () => {
+    const fixture = await createFixture([]);
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('mm-empty-state')).not.toBeNull();
+    expect(host.querySelector('mm-page-header mm-privacy-toggle')).not.toBeNull();
+  });
+
   it('leaves every other page range untouched, having none of its own', async () => {
     await createFixture([transaction()]);
     const rangeStore = TestBed.inject(RangeStore);

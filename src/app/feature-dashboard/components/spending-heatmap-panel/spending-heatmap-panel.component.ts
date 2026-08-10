@@ -37,13 +37,11 @@ import {
   cycleColumnLabels,
   cyclesForRange,
   formatCurrency,
+  HIDDEN_AMOUNT_TEXT,
   type CycleKey,
 } from '@/shared/utils';
 
 export type HeatmapAccessibleRow = { name: string; amounts: string[] };
-
-/** What the screen-reader table says in place of an amount while privacy mode is on. */
-const HIDDEN_AMOUNT = 'hidden';
 
 /** What one column *is*, per cycle — for the "this range only covers 3 of 12 months" note (TICKET-STAT-30). */
 const CYCLE_COLUMN_NOUNS: Record<CycleKey, string> = {
@@ -411,7 +409,7 @@ export class SpendingHeatmapPanelComponent {
     // 1px box, so a CSS blur paints nothing, and a screen reader would read the amount out
     // regardless (TICKET-PRIV-01's intent, caught in convention review).
     const asText = (amount: number): string =>
-      privacyMode ? HIDDEN_AMOUNT : formatCurrency(amount);
+      privacyMode ? HIDDEN_AMOUNT_TEXT : formatCurrency(amount);
 
     return [
       // The band leads the table for the same reason it leads the chart: it is the summary the

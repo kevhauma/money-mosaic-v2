@@ -9,7 +9,7 @@ import {
   type MultiYearIncomeSpan,
   type YearlyIncomeEntry,
 } from '@/core/stats';
-import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { savingsAccountIbans } from '@/core/transfers';
 import {
   formatAxisTooltip,
@@ -17,7 +17,7 @@ import {
   resolveChartCategoricalColors,
 } from '@/shared/echarts';
 import { FlexComponent, PaperComponent, StatCardComponent, type StatCardColor } from '@/shared/ui';
-import { formatCurrency, formatPercent } from '@/shared/utils';
+import { formatCurrency, formatPercent, HIDDEN_AMOUNT_TEXT } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 
 export type YearlyIncomeAccessibleRow = { year: string; total: string; change: string };
@@ -185,6 +185,10 @@ export class IncomeYearlyPanelComponent {
   private readonly categoriesStore = inject(CategoriesStore);
   private readonly transactionsStore = inject(TransactionsStore);
   private readonly incomeStore = inject(IncomeStore);
+  private readonly appSettingsStore = inject(AppSettingsStore);
+
+  /** Drives the headline card's `[blurred]` and the companion table's withholding (TICKET-PRIV-02). */
+  protected readonly privacyMode = this.appSettingsStore.privacyModeEnabled;
 
   /** The career-start-clamped span (FR-INC-12), which is the full data history until the user sets a date. */
   private readonly range = this.incomeStore.incomeRange;
@@ -209,11 +213,17 @@ export class IncomeYearlyPanelComponent {
    * Mirrors the chart's figures into DOM text for assistive tech (same treatment as the monthly
    * chart and the dashboard's trend panel, TICKET-STAT-20) — sourced from the same signal the chart
    * renders, so it can never diverge.
+   *
+   * Withholds the total while privacy mode is on rather than blurring it (TICKET-STAT-29's rule,
+   * applied here by TICKET-PRIV-02): this table is `sr-only`, so a CSS blur paints nothing over it
+   * and a screen reader would read the real figure straight out of a "hidden" page. The year and the
+   * year-over-year change stay — a percentage is not the amount, and the reason a year is
+   * incomparable is a label.
    */
   protected readonly accessibleRows = computed<YearlyIncomeAccessibleRow[]>(() =>
     this.yearlyIncome().map((entry) => ({
       year: entry.year,
-      total: formatCurrency(entry.total),
+      total: this.privacyMode() ? HIDDEN_AMOUNT_TEXT : formatCurrency(entry.total),
       // The tooltip's wording, not the bar label's `—`: a screen-reader user has no bar to hover
       // for the reason, so the table is where it has to be said.
       change: describeYearOverYearChange(entry),

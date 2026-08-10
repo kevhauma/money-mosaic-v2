@@ -1,5 +1,6 @@
-<!-- Both the figure and the sub-label go through mm-privacy-blur (TICKET-PRIV-01); the wrapper sits
-     inside the anchor branch, so a blurred card still drills down on click. -->
+<!-- The figure, the sub-label and the tooltip all go through mm-privacy-blur (TICKET-PRIV-01, tooltip
+     added by TICKET-PRIV-02); the wrapper sits inside the anchor branch, so a blurred card still
+     drills down on click. -->
 <ng-template #valueContent>
   <div class="stat-value">
     <mm-privacy-blur [blurred]="blurred()">
@@ -13,9 +14,11 @@
     @if (tooltip()) {
       <div class="tooltip tooltip-bottom">
         <div class="tooltip-content">
-          @for (line of tooltipLines(); track line) {
-            <div>{{ line }}</div>
-          }
+          <mm-privacy-blur [blurred]="blurred()">
+            @for (line of tooltipLines(); track line) {
+              <div>{{ line }}</div>
+            }
+          </mm-privacy-blur>
         </div>
         <div class="stat-desc">
           <mm-privacy-blur [blurred]="blurred()">{{ subLabel }}</mm-privacy-blur>

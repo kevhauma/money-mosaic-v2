@@ -67,7 +67,9 @@ describe('StatCardComponent', () => {
     );
     fixture.detectChanges();
     const tooltip = fixture.nativeElement.querySelector('.tooltip');
-    const lines = Array.from(tooltip?.querySelectorAll('.tooltip-content > div') ?? []).map((el) =>
+    // Not a direct child: the lines sit inside the tooltip's own `mm-privacy-blur` wrapper since
+    // TICKET-PRIV-02, so a hover can't hand back the figures a blurred card is hiding.
+    const lines = Array.from(tooltip?.querySelectorAll('.tooltip-content div') ?? []).map((el) =>
       (el as HTMLElement).textContent?.trim(),
     );
     expect(lines).toEqual(['Earned €1,000.00', 'between Jul 1, 2025 and Jul 31, 2025']);
@@ -99,6 +101,33 @@ describe('StatCardComponent', () => {
       }
       expect(fixture.nativeElement.querySelector('.stat-title').textContent.trim()).toBe('Income');
       expect(fixture.nativeElement.querySelector('.stat-title mm-privacy-blur')).toBeNull();
+    });
+
+    it('masks the tooltip too, so a hover cannot hand back the figure (TICKET-PRIV-02)', () => {
+      fixture.componentRef.setInput('subLabel', '+12% vs. last year');
+      fixture.componentRef.setInput('tooltip', 'Jan 2025: €38,400.00');
+      fixture.componentRef.setInput('blurred', true);
+      fixture.detectChanges();
+
+      const tooltipWrapper = fixture.nativeElement.querySelector(
+        '.tooltip-content mm-privacy-blur > span',
+      ) as HTMLElement;
+      expect(tooltipWrapper.classList).toContain('mm-privacy-blurred');
+      expect(tooltipWrapper.textContent).toContain('38,400');
+    });
+
+    it('leaves the tooltip sharp when the card is not blurred', () => {
+      fixture.componentRef.setInput('subLabel', '+12% vs. last year');
+      fixture.componentRef.setInput('tooltip', 'Jan 2025: €38,400.00');
+      fixture.detectChanges();
+
+      expect(
+        (
+          fixture.nativeElement.querySelector(
+            '.tooltip-content mm-privacy-blur > span',
+          ) as HTMLElement
+        ).classList,
+      ).not.toContain('mm-privacy-blurred');
     });
 
     it('keeps the drilldown link outside the blurred figure so it stays clickable', async () => {
