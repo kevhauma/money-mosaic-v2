@@ -63,6 +63,7 @@ describe('ExploreOverviewComponent (TICKET-EXP-01)', () => {
     expect(host.textContent).toContain('Nothing to explore yet');
     expect(host.querySelector('mm-empty-state')).not.toBeNull();
     expect(host.querySelector('app-money-flow-panel mm-paper')).toBeNull();
+    expect(host.querySelector('app-spending-mosaic-panel mm-paper')).toBeNull();
   });
 
   it('renders the chart sections, and not the empty state, once transactions exist', async () => {
@@ -73,6 +74,8 @@ describe('ExploreOverviewComponent (TICKET-EXP-01)', () => {
 
     expect(host.querySelector('mm-empty-state')).toBeNull();
     expect(host.querySelector('app-money-flow-panel mm-paper')).not.toBeNull();
+    // The mosaic is the page's second section (TICKET-EXP-07), on the same range as the Sankey.
+    expect(host.querySelector('app-spending-mosaic-panel mm-paper')).not.toBeNull();
     expect(host.textContent).not.toContain('Nothing moved in this range');
   });
 
@@ -84,6 +87,7 @@ describe('ExploreOverviewComponent (TICKET-EXP-01)', () => {
 
     expect(host.querySelector('mm-empty-state')).toBeNull();
     expect(host.querySelector('app-money-flow-panel mm-paper')).toBeNull();
+    expect(host.querySelector('app-spending-mosaic-panel mm-paper')).toBeNull();
     expect(host.textContent).toContain('Nothing moved in this range');
     // The recurring sections moved to /recurring precisely because they never obeyed this range —
     // nothing on this page may now survive an empty one.

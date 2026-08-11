@@ -886,4 +886,32 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Privacy Mode',
   },
+  {
+    date: '2026-08-11',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-EXP-07'],
+    title: 'Explore now lays your spending out as a mosaic, sized by what things actually cost',
+    details: [
+      'Every tile is a category, and its area is the money: a tile twice the size cost twice as much, so what dominates a period and what is a rounding error are visible at a glance',
+      'Categories you have sorted into a group share one tile, subdivided into the categories inside it',
+      'The figures come from the same place the Dashboard’s category breakdown does, so the two can never disagree about a total',
+      'Hovering a tile gives you its amount and its share of everything you spent in the range; with “Hide amounts” on, the share stays and the amount goes',
+      'It follows the Explore page’s own date range, and stays out of the way entirely when a range holds no spending',
+    ],
+    area: 'Explore',
+  },
+  {
+    date: '2026-08-11',
+    versionFolder: 'v2.1_extra_graphs',
+    ticketIds: ['TICKET-EXP-08'],
+    title: 'The spending mosaic now shows the individual payments inside every category',
+    details: [
+      'Each category tile is subdivided into one tile per payment, right there on the chart — so you can see at a glance whether €450 of groceries was one big shop or seven smaller ones, and compare that against the category next to it',
+      'Each payment tile is named after the shop and carries its date in the tooltip, since the same shop usually appears several times in a category',
+      'Refunds are not drawn as tiles — money coming back has no size on a mosaic — but the total that came back is stated under the chart, so the picture never quietly shows less than it holds',
+      'A category with a single payment stays as it is, and one too small to show its payments legibly draws as a single tile rather than a smear of slivers',
+      'Very busy categories show their forty largest payments plus one tile saying how many smaller ones are folded into it, so a box of hundreds of slivers stays readable',
+    ],
+    area: 'Explore',
+  },
 ];

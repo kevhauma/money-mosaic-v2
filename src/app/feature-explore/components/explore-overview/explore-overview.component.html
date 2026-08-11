@@ -16,16 +16,17 @@
 @if (hasNoTransactions()) {
   <mm-empty-state
     title="Nothing to explore yet"
-    message="Import a bank CSV export and the money flow diagram fills in here."
+    message="Import a bank CSV export and this page's charts fill in here."
   >
     <ng-icon icon name="tablerFileImport" size="40" aria-hidden="true" />
     <mm-button action color="primary" class="mt-2" link="/import">Import transactions</mm-button>
   </mm-empty-state>
 } @else {
-  <!-- The page's sections: the money flow Sankey (TICKET-EXP-02), and whatever range-scoped section
-       lands here next. Each panel decides for itself whether it has anything to draw, so a range
-       with no flow leaves no empty frame behind. -->
+  <!-- The page's sections: the money flow Sankey (TICKET-EXP-02) and the spending mosaic
+       (TICKET-EXP-07), plus whatever range-scoped section lands here next. Each panel decides for
+       itself whether it has anything to draw, so a range with no flow leaves no empty frame behind. -->
   <app-money-flow-panel />
+  <app-spending-mosaic-panel />
 
   @if (hasNothingInRange()) {
     <mm-paper>
@@ -37,7 +38,7 @@
           class="text-base-content/40"
         />
         <mm-text as="p" variant="caption">
-          Nothing moved in this range — widen the date range to see the money flow.
+          Nothing moved in this range — widen the date range to see this range's charts.
         </mm-text>
       </div>
     </mm-paper>

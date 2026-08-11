@@ -12,12 +12,13 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { MoneyFlowPanelComponent } from '../money-flow-panel/money-flow-panel.component';
+import { SpendingMosaicPanelComponent } from '../spending-mosaic-panel/spending-mosaic-panel.component';
 
 /**
  * The `/explore` page container (FR-EXP-1, TICKET-EXP-01) — the home for the range-scoped sections
- * that need the whole page rather than a Dashboard row. One today: the money flow Sankey
- * (TICKET-EXP-02). "Explore" rather than "Money flow" so a later section doesn't make the page's
- * name a lie.
+ * that need the whole page rather than a Dashboard row: the money flow Sankey (TICKET-EXP-02) and
+ * the spending mosaic (TICKET-EXP-07). "Explore" rather than "Money flow" so a later section doesn't
+ * make the page's name a lie.
  *
  * Its date range is its own (`pageRangeControl('explore')`, TICKET-UI-23): narrowing the Dashboard
  * to last month leaves whatever span someone set up here alone, which is the point of the keyed
@@ -40,6 +41,7 @@ import { MoneyFlowPanelComponent } from '../money-flow-panel/money-flow-panel.co
     PaperComponent,
     PrivacyToggleComponent,
     RangeGroupingSwitcherComponent,
+    SpendingMosaicPanelComponent,
     TypographyComponent,
   ],
   templateUrl: './explore-overview.component.html',

@@ -29,6 +29,8 @@ export * from './chart-zoom-window';
 export * from './weekday-weekend-split';
 export * from './category-cycle-heatmap';
 export * from './money-flow-graph';
+export * from './spending-mosaic';
+export * from './category-expense-transactions';
 export * from './top-transactions';
 export * from './year-over-year';
 export * from './period-window';

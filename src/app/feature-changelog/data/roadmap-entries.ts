@@ -45,8 +45,8 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     isTopic: true,
   },
   // The "heatmaps + Sankey + 3D" half of the extra-graphs idea has been ticketed as
-  // docs/v2.1_extra_graphs. Its two heatmap tickets have since shipped (see CHANGELOG_ENTRIES) and
-  // are no longer listed here; the five Explore tickets below are still open.
+  // docs/v2.1_extra_graphs. Its heatmap tickets and the spending mosaic have since shipped (see
+  // CHANGELOG_ENTRIES) and are no longer listed here; the two below are still open.
   {
     versionFolder: 'v2.1_extra_graphs',
     ticketId: 'TICKET-STAT-31',
@@ -60,13 +60,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     title:
       'Leave categories out of the spending heatmap, so one big fixed cost stops washing it out',
     area: 'Dashboard',
-  },
-  {
-    versionFolder: 'v2.1_extra_graphs',
-    ticketId: 'TICKET-EXP-07',
-    title:
-      'A spending mosaic: tiles sized by money, groups subdividing into categories, click to zoom in',
-    area: 'Explore',
   },
   {
     versionFolder: 'v2.2_goals_and_forecast',

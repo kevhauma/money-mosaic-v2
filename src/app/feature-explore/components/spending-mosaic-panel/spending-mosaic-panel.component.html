@@ -1,0 +1,54 @@
+@if (hasExpenses()) {
+  <mm-paper>
+    <h2 class="card-title text-base">Spending mosaic</h2>
+    <mm-text variant="caption">
+      Every euro this range went out on, as area — a tile twice the size cost twice as much. Each
+      category is subdivided into the individual payments behind it; hover any tile for what it is
+    </mm-text>
+
+    <div
+      echarts
+      [options]="chartOption()"
+      [style.height.px]="chartHeightPx"
+      class="mt-2 w-full"
+      role="img"
+      [attr.aria-label]="chartAriaLabel()"
+    ></div>
+
+    @if (refundNote(); as note) {
+      <mm-text as="p" variant="caption">
+        <mm-privacy-blur [blurred]="privacyMode()">{{ note.amount }}</mm-privacy-blur>
+        {{ note.text }}
+      </mm-text>
+    }
+
+    <!-- Screen-reader-only companion table for the mosaic above — not a visible data table, so it
+         skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). It carries every
+         level: the parent totals the drill-down makes visible on screen, and the individual payments
+         that only appear once a category is opened (TICKET-EXP-08). -->
+    <table class="sr-only">
+      <caption>
+        Every tile in the mosaic above — groups, categories and the payments inside them — as amount
+        and share of all spending
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Inside</th>
+          <th scope="col">Tile</th>
+          <th scope="col">Amount</th>
+          <th scope="col">Share</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr>
+            <th scope="row">{{ row.inside }}</th>
+            <td>{{ row.tile }}</td>
+            <td>{{ row.amount }}</td>
+            <td>{{ row.share }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </mm-paper>
+}
