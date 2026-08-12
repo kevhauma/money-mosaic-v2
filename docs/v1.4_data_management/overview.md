@@ -5,7 +5,7 @@ Full-database backup/restore, "delete all data", and a persistent-storage reques
 - [x] [TICKET-DAT-01](./tickets/TICKET-DAT-01-full-data-export-import.md) — Full data export & import (JSON backup/restore, replace-vs-merge) (adds FR-DAT-1, FR-DAT-2, NFR-STORE-1) — the core mechanism; build first since DAT-03's confirmation copy and v2's [TICKET-PUB-04](../v2/tickets/TICKET-PUB-04-local-data-migration-messaging.md) both reference it
 - [x] [TICKET-DAT-02](./tickets/TICKET-DAT-02-persistent-storage-request.md) — Request persistent browser storage (adds FR-DAT-4) — independent, no dependency on DAT-01/DAT-03, safe to build in parallel
 - [x] [TICKET-DAT-03](./tickets/TICKET-DAT-03-delete-all-data.md) — Delete all data, with confirmation (adds FR-DAT-3) — build last so its confirmation dialog can point at DAT-01's Export as a "back up first" suggestion
-- [ ] [TICKET-CAT-06](./tickets/TICKET-CAT-06-share-rules.md) — Share rules: export all or a selection, and import a shared rule file, matching categories by label with an "Uncategorised" fallback for unmatched ones (extends FR-CAT-2) — independent of DAT-01/02/03 (own repository/UI in `feature-categories`), fills the "partial export" gap noted below but scoped to rules only
+- [x] [TICKET-CAT-06](./tickets/TICKET-CAT-06-share-rules.md) — Share rules: export all or a selection, and import a shared rule file, matching categories by label with an "Uncategorised" fallback for unmatched ones (extends FR-CAT-2) — independent of DAT-01/02/03 (own repository/UI in `feature-categories`), fills the "partial export" gap noted below but scoped to rules only — every criterion met except the live browser check, which the user skipped and which stays open on the ticket
 
 ## Considered, not ticketed yet
 
