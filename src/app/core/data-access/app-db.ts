@@ -9,6 +9,9 @@ import type { FeatureConfig } from '@/core/ml/model-config';
 // `ThemeService` pulls in an `@Injectable` service transitively.
 import type { AccentColorId } from '@/core/theme/accent-colors';
 import type { CurrencySymbolPosition } from '@/shared/utils/format-settings';
+// Deep import (not the `core/stats` barrel) for the same reason as above. Type-only, so this is
+// erased at build time and data-access keeps no runtime dependency on stats (TICKET-FUT-02).
+import type { SavingBasis } from '@/core/stats/saving-velocity';
 
 /** A person sharing a `joint` account, and the IBAN(s) they pay in from (TICKET-ACC-03). */
 export type JointOwner = {
@@ -682,6 +685,66 @@ export type SalaryMetadata = {
   note?: string;
 };
 
+/**
+ * One thing the user is saving toward (TICKET-FUT-02, FR-FUT-2) — a name, what it costs, and where
+ * it sits in the queue. Goals are funded **top-down** (TICKET-FUT-05), so `sortOrder` is not a
+ * display preference here the way it is on `Account`/`Category`: it decides which goal's ETA moves
+ * when another one is dragged above it.
+ */
+export type SavingsGoal = {
+  id?: number;
+  name: string;
+  /** What it costs, in the app's currency. Always positive. */
+  targetAmount: number;
+  /** Manual funding order — goals are paid for top-down, so this drives every ETA (FUT-05). */
+  sortOrder?: number;
+  /** Optional "I want this by" date (ISO `YYYY-MM-DD`) — turns the ETA into on-track/behind. */
+  targetDate?: string;
+  note?: string;
+  archived: boolean;
+  /** ISO date the goal was created — the only ordering fallback before a manual order exists. */
+  createdAt: string;
+};
+
+/**
+ * Which question `/future` is answering (TICKET-FUT-09): walk the measured rate forward and solve
+ * for the *date* a goal becomes affordable, or fix the date and solve for the *rate* it demands.
+ *
+ * Declared here rather than in `core/stats` because FUT-09's aggregate only exists after this
+ * ticket, and the field has to be part of `.version(14)`'s row shape from the start so that adding
+ * the second mode needs no schema change (see TICKET-FUT-02's Notes).
+ */
+export type ForecastMode = 'when-affordable' | 'required-rate';
+
+/** The forecast's own parameters (TICKET-FUT-02) — one singleton row, `id: 1`, like `appSettings`. */
+export type ForecastSettings = {
+  id: 1;
+  /** Complete months of history the velocity is measured over (FUT-01). */
+  lookbackMonths: number;
+  basis: SavingBasis;
+  /** Cash kept aside and never spent on a goal — the emergency float. Never negative. */
+  safetyNetAmount: number;
+  /**
+   * Which question `/future` is answering (FUT-09) — solve for the date, or for the rate.
+   * Declared here so the row has one shape; non-indexed, so FUT-09 needs no version bump.
+   */
+  mode?: ForecastMode;
+  /**
+   * Accounts the forecast is allowed to consider (FUT-08). `undefined` or empty = every account,
+   * which is the behaviour of every ticket before FUT-08 — declared here so the row has one
+   * shape, since a non-indexed field needs no version bump either way (the CAT-10 precedent).
+   */
+  scopeAccountIds?: number[];
+};
+
+export const DEFAULT_FORECAST_SETTINGS: ForecastSettings = {
+  id: 1,
+  lookbackMonths: 6,
+  basis: 'net-cash-flow',
+  safetyNetAmount: 0,
+  mode: 'when-affordable',
+};
+
 class AppDb extends Dexie {
   accounts!: Table<Account, number>;
   transactions!: Table<Transaction, number>;
@@ -697,6 +760,8 @@ class AppDb extends Dexie {
   categoryModelSettings!: Table<CategoryModelSettings, number>;
   appSettings!: Table<AppSettings, number>;
   salaryMetadata!: Table<SalaryMetadata, number>;
+  savingsGoals!: Table<SavingsGoal, number>;
+  forecastSettings!: Table<ForecastSettings, number>;
 
   constructor() {
     super('money-mosaic');
@@ -944,6 +1009,17 @@ class AppDb extends Dexie {
     // needed, same as `appSettings` at v12.
     this.version(13).stores({
       salaryMetadata: '++id, &yearMonth',
+    });
+
+    // Adds the two tables v2.2's goals & forecast need (TICKET-FUT-02): `savingsGoals`, an entity
+    // table indexed on `sortOrder` because that order *is* the funding order every ETA reads, and
+    // `forecastSettings`, the usual `id: 1` singleton row. Purely additive — both are brand-new and
+    // empty — so no `.upgrade()` is needed, same as `appSettings` at v12 and `salaryMetadata` at
+    // v13. Only the non-indexed fields of `ForecastSettings` grow after this (`mode` for FUT-09,
+    // `scopeAccountIds` for FUT-08), so neither of those tickets bumps the version again.
+    this.version(14).stores({
+      savingsGoals: '++id, sortOrder',
+      forecastSettings: 'id',
     });
 
     this.on('populate', () => {

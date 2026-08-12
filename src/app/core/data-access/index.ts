@@ -13,3 +13,5 @@ export * from './dashboard-layout-settings.repository';
 export * from './data-management.repository';
 export * from './app-settings.repository';
 export * from './salary-metadata.repository';
+export * from './goals.repository';
+export * from './forecast-settings.repository';

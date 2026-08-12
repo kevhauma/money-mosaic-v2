@@ -120,30 +120,58 @@ saving basis, safety net), each with a repository and a store. No UI.
 
 ## Acceptance criteria
 
-- [ ] `.version(14)` adds `savingsGoals` and `forecastSettings` and **only** those two tables;
-      no shipped version block (1–13) is edited, and no `.upgrade()` is added.
-- [ ] `SavingsGoal` and `ForecastSettings`/`DEFAULT_FORECAST_SETTINGS` are exported from
-      `app-db.ts` and re-exported by the `core/data-access` barrel.
-- [ ] `GoalsRepository` covers add/update/remove/getAll plus a bulk `sortOrder` write for reorder;
+- [x] `.version(14)` adds `savingsGoals` and `forecastSettings` and **only** those two tables;
+      no shipped version block (1–13) is edited, and no `.upgrade()` is added. (`app-db.ts` — the
+      new block is `savingsGoals: '++id, sortOrder'` + `forecastSettings: 'id'` with no `.upgrade()`;
+      `git diff` touches no line inside `.version(1)`–`.version(13)`. Spec: "is at version 14" and
+      "leaves every table shipped before v14 in place" asserting the full 16-table list.)
+- [x] `SavingsGoal` and `ForecastSettings`/`DEFAULT_FORECAST_SETTINGS` are exported from
+      `app-db.ts` and re-exported by the `core/data-access` barrel. (Plus `ForecastMode`, per this
+      ticket's Notes; `SavingBasis` stays FUT-01's and is deep-imported type-only, so data-access
+      keeps no runtime dependency on stats.)
+- [x] `GoalsRepository` covers add/update/remove/getAll plus a bulk `sortOrder` write for reorder;
       `ForecastSettingsRepository.get()` returns `DEFAULT_FORECAST_SETTINGS` when the row is absent,
       and each setter read-merge-puts so it cannot clobber the other two fields.
-- [ ] `GoalsStore` exposes goals ordered by `sortOrder` (goals without one sorting last, then by
+      (`goals.repository.ts` / `forecast-settings.repository.ts`; specs
+      `goals.repository.spec.ts` (6 cases, incl. the bulk reorder and the empty no-op) and
+      `forecast-settings.repository.spec.ts` — "read-merge-puts, so setting one field never clobbers
+      the other two", plus a case proving a field with no setter yet (`scopeAccountIds`) survives.)
+- [x] `GoalsStore` exposes goals ordered by `sortOrder` (goals without one sorting last, then by
       `createdAt`), and a newly added goal receives the next `sortOrder` rather than `undefined`.
-- [ ] `GoalsStore.reorder` persists via `computeReorderUpdates` through the repository, never a
-      direct `appDb.savingsGoals` write from a component or store method body.
-- [ ] `ForecastSettingsStore` hydrates from the repository and each setter persists; an unwritten
+      (`goals.store.ts` via `sortedBySortOrder`; specs "orders goals by sortOrder regardless of
+      insertion order", "sorts a goal without a sortOrder last, then by creation order", "gives a
+      newly added goal the next sortOrder rather than undefined" (highest 3 → 4) and "gives the very
+      first goal sortOrder 0". Note: `compareBySortOrder`'s no-`sortOrder` tie-break is by `id`,
+      which is insertion order — `createdAt` is not read, since the two never disagree here.)
+- [x] `GoalsStore.reorder` persists via `computeReorderUpdates` through the repository, never a
+      direct `appDb.savingsGoals` write from a component or store method body. (Spec "persists a
+      reorder as one bulk write and reflects the new order in the signal" asserts the exact
+      `bulkUpdateSortOrder([{id:2,sortOrder:0},{id:1,sortOrder:1}])` payload; "does not write
+      anything when the goal is already at the boundary" covers the no-op.)
+- [x] `ForecastSettingsStore` hydrates from the repository and each setter persists; an unwritten
       row reads as the defaults (6 months, `net-cash-flow`, safety net 0).
-- [ ] Both new tables are included in the data-management export, import and wipe paths, and the
-      round trip restores goals with their order intact.
-- [ ] All persistence goes through the repositories — no component or store touches `appDb` tables
-      directly.
-- [ ] Unit tests cover: the `.version(14)` schema being present and versions 1–13 unchanged;
+      (`forecast-settings.store.spec.ts`, 4 cases including the once-only hydration guard.)
+- [x] Both new tables are included in the data-management export, import and wipe paths, and the
+      round trip restores goals with their order intact. (No repository change was needed —
+      `DataManagementRepository` iterates `appDb.tables` — so it is asserted rather than assumed:
+      `data-management.repository.spec.ts` describe "savingsGoals + forecastSettings (TICKET-FUT-02)"
+      round-trips the goals in `sortOrder` order (`['Holiday','Camera']`), round-trips the settings
+      row including `scopeAccountIds`, proves `deleteAll()` wipes both, and proves a v13 backup that
+      predates both tables still imports.)
+- [x] All persistence goes through the repositories — no component or store touches `appDb` tables
+      directly. (`appDb` appears in neither store; both inject their repository.)
+- [x] Unit tests cover: the `.version(14)` schema being present and versions 1–13 unchanged;
       repository CRUD; settings fallback to defaults and per-field read-merge-put; store ordering
       including the no-`sortOrder` fallback; next-`sortOrder` on add; reorder persistence; and the
-      data-management round trip.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      data-management round trip. (32 new cases across 5 spec files.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Lint clean; 2776 tests / 253 files green; dev build completed. One run
+      showed an unrelated `import-wizard.component.spec` failure that reproduced neither on a
+      stashed tree nor on a re-run — the project's known moving flake.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 introduced findings; the one complexity finding is `introduced: false`
+      (a pre-existing `app-db.ts` upgrade block). `GoalsStore`/`ForecastSettingsStore` carry
+      temporary `unused-export` suppressions until FUT-04/FUT-05/FUT-06 consume them.)
 
 ## Notes
 

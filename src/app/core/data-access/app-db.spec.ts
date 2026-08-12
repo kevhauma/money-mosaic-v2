@@ -24,6 +24,63 @@ describe('needsPartnerContributionSeed (TICKET-CAT-02 .version(6) upgrade idempo
   });
 });
 
+describe('goals & forecast schema (TICKET-FUT-02 .version(14))', () => {
+  it('is at version 14', async () => {
+    await appDb.open();
+
+    expect(appDb.verno).toBe(14);
+  });
+
+  it('declares savingsGoals as an auto-incrementing entity table indexed on sortOrder', async () => {
+    await appDb.open();
+
+    expect(appDb.savingsGoals.schema.primKey.auto).toBe(true);
+    expect(appDb.savingsGoals.schema.indexes.map((index) => index.name)).toEqual(['sortOrder']);
+  });
+
+  it('declares forecastSettings as a singleton row keyed on id, with no secondary indexes', async () => {
+    await appDb.open();
+
+    expect(appDb.forecastSettings.schema.primKey.keyPath).toBe('id');
+    expect(appDb.forecastSettings.schema.primKey.auto).toBe(false);
+    expect(appDb.forecastSettings.schema.indexes).toEqual([]);
+  });
+
+  it('leaves every table shipped before v14 in place — .version(14) is additive only', async () => {
+    await appDb.open();
+    const tableNames = appDb.tables.map((table) => table.name).sort();
+
+    expect(tableNames).toEqual([
+      'accounts',
+      'appSettings',
+      'categories',
+      'categoryComparisonSettings',
+      'categoryModel',
+      'categoryModelSettings',
+      'dashboardLayoutSettings',
+      'forecastSettings',
+      'importBatches',
+      'mappingProfiles',
+      'rules',
+      'salaryMetadata',
+      'savingsGoals',
+      'transactions',
+      'transferSettings',
+      'transfers',
+    ]);
+  });
+
+  // The FUT-09 mode toggle and the FUT-08 account scope are both non-indexed fields on the
+  // `forecastSettings` row, so neither ticket may add a `.version(15)`. This is the tripwire.
+  it('keeps forecastSettings’ later fields out of the index list', async () => {
+    await appDb.open();
+    const indexed = appDb.forecastSettings.schema.indexes.map((index) => index.name);
+
+    expect(indexed).not.toContain('mode');
+    expect(indexed).not.toContain('scopeAccountIds');
+  });
+});
+
 describe('category applicability window schema (TICKET-CAT-10)', () => {
   // `Category.activeFrom`/`activeUntil` are non-indexed fields, and `.stores()` declares indexes
   // rather than fields — so they needed no `.version(n + 1)` block (the `appSettings` precedent).

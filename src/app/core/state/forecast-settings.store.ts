@@ -1,0 +1,64 @@
+import { inject } from '@angular/core';
+import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import {
+  DEFAULT_FORECAST_SETTINGS,
+  ForecastSettingsRepository,
+  type ForecastSettings,
+} from '@/core/data-access';
+import type { SavingBasis } from '@/core/stats';
+
+/**
+ * The forecast's own parameters (TICKET-FUT-02, FR-FUT-2), edited by TICKET-FUT-06.
+ *
+ * **Persisted, unlike `ChartOptionsStore`.** That store is deliberately in-memory because a hidden
+ * chart series surviving a restart reads as the app being broken. These are inputs to a figure the
+ * user acts on — a forecast that silently reset its lookback window on every reload would be worse,
+ * not safer. The reversal is intentional and scoped to this one row.
+ */
+// Temporary until TICKET-FUT-05/06 read it — those tickets remove this line.
+// fallow-ignore-next-line unused-export
+export const ForecastSettingsStore = signalStore(
+  { providedIn: 'root' },
+  withState<ForecastSettings>(DEFAULT_FORECAST_SETTINGS),
+  withMethods((store) => {
+    const forecastSettingsRepository = inject(ForecastSettingsRepository);
+    let hydration: Promise<void> | null = null;
+
+    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
+    const hydrate = (): Promise<void> => {
+      if (!hydration) {
+        hydration = forecastSettingsRepository.get().then((settings) => {
+          patchState(store, settings);
+        });
+      }
+      return hydration;
+    };
+
+    return {
+      hydrate,
+
+      setLookbackMonths: async (lookbackMonths: number): Promise<void> => {
+        await forecastSettingsRepository.setLookbackMonths(lookbackMonths);
+        patchState(store, { lookbackMonths });
+      },
+
+      setBasis: async (basis: SavingBasis): Promise<void> => {
+        await forecastSettingsRepository.setBasis(basis);
+        patchState(store, { basis });
+      },
+
+      setSafetyNetAmount: async (safetyNetAmount: number): Promise<void> => {
+        await forecastSettingsRepository.setSafetyNetAmount(safetyNetAmount);
+        patchState(store, { safetyNetAmount });
+      },
+    };
+  }),
+  withHooks({
+    onInit(store) {
+      // Fire-and-forget: kicks off hydration the moment anything first injects this store,
+      // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
+      // `lookbackMonths()`/`basis()` synchronously can still `await store.hydrate()` as a guard.
+      void store.hydrate();
+    },
+  }),
+);

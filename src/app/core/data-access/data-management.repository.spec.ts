@@ -186,6 +186,97 @@ describe('DataManagementRepository', () => {
     });
   });
 
+  describe('savingsGoals + forecastSettings (TICKET-FUT-02)', () => {
+    it('round-trips goals with their funding order intact', async () => {
+      // Export/import iterate `appDb.tables`, so the two v14 tables need no change here — asserted
+      // rather than assumed, because a backup that silently drops the plan is worse than no backup.
+      // The order matters more than the rows: it is what every ETA in FUT-05 reads.
+      await appDb.savingsGoals.bulkPut([
+        {
+          id: 1,
+          name: 'Camera',
+          targetAmount: 1200,
+          sortOrder: 1,
+          archived: false,
+          createdAt: '2026-08-01',
+        },
+        {
+          id: 2,
+          name: 'Holiday',
+          targetAmount: 3000,
+          sortOrder: 0,
+          targetDate: '2027-06-01',
+          archived: false,
+          createdAt: '2026-08-02',
+        },
+      ]);
+
+      const exported = await repository.exportAll();
+      await appDb.savingsGoals.clear();
+      await repository.importAll(exported, 'replace');
+
+      const restored = await appDb.savingsGoals.orderBy('sortOrder').toArray();
+      expect(restored.map((entry) => entry.name)).toEqual(['Holiday', 'Camera']);
+      expect(restored[0].targetDate).toBe('2027-06-01');
+    });
+
+    it('round-trips the forecast settings row', async () => {
+      await appDb.forecastSettings.put({
+        id: 1,
+        lookbackMonths: 12,
+        basis: 'savings-transfers',
+        safetyNetAmount: 2000,
+        mode: 'when-affordable',
+        scopeAccountIds: [3],
+      });
+
+      const exported = await repository.exportAll();
+      await appDb.forecastSettings.clear();
+      await repository.importAll(exported, 'replace');
+
+      expect(await appDb.forecastSettings.get(1)).toEqual({
+        id: 1,
+        lookbackMonths: 12,
+        basis: 'savings-transfers',
+        safetyNetAmount: 2000,
+        mode: 'when-affordable',
+        scopeAccountIds: [3],
+      });
+    });
+
+    it('wipes both tables with the rest of the database', async () => {
+      await appDb.savingsGoals.put({
+        id: 1,
+        name: 'Camera',
+        targetAmount: 1200,
+        archived: false,
+        createdAt: '2026-08-01',
+      });
+      await appDb.forecastSettings.put({
+        id: 1,
+        lookbackMonths: 6,
+        basis: 'net-cash-flow',
+        safetyNetAmount: 0,
+      });
+
+      await repository.deleteAll();
+
+      expect(await appDb.savingsGoals.toArray()).toEqual([]);
+      expect(await appDb.forecastSettings.toArray()).toEqual([]);
+    });
+
+    it('accepts an older backup that predates both tables', async () => {
+      const olderBackup: AppDataExport = {
+        schemaVersion: 13,
+        exportedAt: new Date().toISOString(),
+        tables: { accounts: [account({ id: 1, name: 'Imported' })] },
+      };
+
+      await expect(repository.importAll(olderBackup, 'replace')).resolves.toBeUndefined();
+      expect(await appDb.savingsGoals.toArray()).toEqual([]);
+    });
+  });
+
   describe('importAll merge mode', () => {
     it('upserts imported rows without clearing pre-existing non-colliding rows', async () => {
       await appDb.accounts.clear();
