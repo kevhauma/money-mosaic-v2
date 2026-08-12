@@ -4,6 +4,13 @@ import { AppSettingsRepository } from './app-settings.repository';
 describe('AppSettingsRepository', () => {
   const repository = new AppSettingsRepository();
 
+  // Cleared on both sides: `appDb` is a module-level singleton and Vitest runs with `isolate:
+  // false`, so a row left behind by an earlier spec file in this worker would otherwise leak into
+  // the first test here — which asserts the table is empty.
+  beforeEach(async () => {
+    await appDb.appSettings.clear();
+  });
+
   afterEach(async () => {
     await appDb.appSettings.clear();
   });

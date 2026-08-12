@@ -3,6 +3,7 @@ import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
+  appDb,
   CategoriesRepository,
   TransactionsRepository,
   type Account,
@@ -267,6 +268,13 @@ describe('spendingMosaicRows (TICKET-STAT-20)', () => {
 
 describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
   withCleanFormatSettings();
+
+  // The privacy-mode tests below write the real `appSettings` singleton row through the real store.
+  // Vitest runs with `isolate: false`, so an uncleared row survives into the next spec file in this
+  // worker and breaks whoever expects an empty table (app-settings.repository.spec.ts).
+  afterEach(async () => {
+    await appDb.appSettings.clear();
+  });
 
   const createFixture = async (
     transactions: Transaction[],
