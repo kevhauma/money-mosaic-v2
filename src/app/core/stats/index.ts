@@ -37,3 +37,4 @@ export * from './period-window';
 export * from './category-period-comparison';
 export * from './recurring-payments';
 export * from './recurring-projection';
+export * from './saving-velocity';

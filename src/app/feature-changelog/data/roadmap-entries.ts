@@ -63,12 +63,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.2_goals_and_forecast',
-    ticketId: 'TICKET-FUT-01',
-    title: 'Measure how much you actually saved per month, over a window of history you choose',
-    area: 'Forecast',
-  },
-  {
-    versionFolder: 'v2.2_goals_and_forecast',
     ticketId: 'TICKET-FUT-02',
     title: 'Your goals and forecast settings are saved, so the plan is still there tomorrow',
     area: 'Goals',

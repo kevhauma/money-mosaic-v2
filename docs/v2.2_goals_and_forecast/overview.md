@@ -77,7 +77,7 @@ that chart mode-aware rather than adding one. FUT-08 is deliberately last: it re
 signature and FUT-07's caption, and is far cheaper to build against shipped, working versions of both
 than to design around up front.
 
-- [ ] [TICKET-FUT-01](./tickets/TICKET-FUT-01-saving-velocity-aggregate.md) — Saving velocity: how much I actually saved per month, over a configurable lookback (adds FR-FUT-1) — first: the pure aggregate every projection consumes, no UI of its own; independent of FUT-02/03, can be built in parallel with them
+- [x] [TICKET-FUT-01](./tickets/TICKET-FUT-01-saving-velocity-aggregate.md) — Saving velocity: how much I actually saved per month, over a configurable lookback (adds FR-FUT-1) — first: the pure aggregate every projection consumes, no UI of its own; independent of FUT-02/03, can be built in parallel with them
 - [ ] [TICKET-FUT-02](./tickets/TICKET-FUT-02-goals-persistence.md) — Goals persistence: `savingsGoals` + `forecastSettings`, their repositories and stores (adds FR-FUT-2) — the version's only Dexie change, `.version(14)`, additive; independent of FUT-01
 - [ ] [TICKET-FUT-03](./tickets/TICKET-FUT-03-future-page-scaffold.md) — Future page: route, shell, nav item, no date range (adds FR-FUT-3) — the stage every UI ticket below renders into, and where the route-level ECharts provider lives; independent of FUT-01/02
 - [ ] [TICKET-FUT-04](./tickets/TICKET-FUT-04-goals-list-crud-reorder.md) — Goals list: add, edit, delete, drag into priority order (extends FR-FUT-2) — **needs FUT-02 + FUT-03**; the order it sets is what FUT-05 funds top-down, so it ships before the projection that depends on it

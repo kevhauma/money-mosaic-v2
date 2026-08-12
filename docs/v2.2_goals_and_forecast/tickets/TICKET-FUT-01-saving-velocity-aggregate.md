@@ -95,29 +95,55 @@ this version consumes.
 
 ## Acceptance criteria
 
-- [ ] `computeSavingVelocity` returns one `MonthlySavingPoint` per complete calendar month in the
+- [x] `computeSavingVelocity` returns one `MonthlySavingPoint` per complete calendar month in the
       window, in chronological order, with `from`/`to` equal to that month's real boundary dates.
-- [ ] The current (partial) month is excluded from the window whatever `today`'s day-of-month is.
-- [ ] `basis: 'net-cash-flow'` reproduces `computePeriodStats(...).net` for each month, and
+      (`measureMonths` in `saving-velocity.ts` walks `bucketKeysInRange`/`bucketDateBoundaries`;
+      spec: "returns one point per complete calendar month, in order, with that month's real
+      boundaries" plus the leap-February case asserting `2024-02-29`.)
+- [x] The current (partial) month is excluded from the window whatever `today`'s day-of-month is.
+      (`resolveWindow` ends at `Date.UTC(year, month, 0)`; spec `it.each` over `2026-08-01`,
+      `2026-08-12`, `2026-08-31` — all three measure `['2026-06', '2026-07']` and drop August's 999.)
+- [x] `basis: 'net-cash-flow'` reproduces `computePeriodStats(...).net` for each month, and
       `basis: 'savings-transfers'` reproduces `.savings` — asserted against `computePeriodStats`
-      itself, not against hand-copied expectations.
-- [ ] `perMonth` is the mean over `monthsCovered`; `median`/`min`/`max` describe the same series.
-      With an even number of months the median is the mean of the two middle values.
-- [ ] Fewer complete months of history than requested → `monthsCovered` is the smaller number and
+      itself, not against hand-copied expectations. (Spec describe "bases agree with
+      computePeriodStats" loops every returned point and compares to a live `computePeriodStats`
+      call over that point's own `from`/`to`; a third case shows the two bases disagree — 1100 vs
+      225 — so the parameter is real.)
+- [x] `perMonth` is the mean over `monthsCovered`; `median`/`min`/`max` describe the same series.
+      With an even number of months the median is the mean of the two middle values. (Spec
+      "the spread behind the number": 100/500/300/200 → mean 275, median 250, min 100, max 500;
+      odd-count case → median 200.)
+- [x] Fewer complete months of history than requested → `monthsCovered` is the smaller number and
       `perMonth` divides by it; no history at all → `hasEnoughHistory: false`, `perMonth: 0`.
-- [ ] A month with no transactions is present in `months` with `amount: 0`.
-- [ ] A window in which expenses exceed income returns a negative `perMonth`, unclamped.
-- [ ] The function reads no clock — `today` is a parameter, and the spec proves it by running the
-      same fixture at two different "todays" and getting two different windows.
-- [ ] Pure function in `core/stats/`, exported via `core/stats/index.ts`, no Dexie or store import;
+      (`resolveWindow` clamps to `historyStartMonth`; spec "clamps to the months actually
+      available" asks for 12 months against 2 months of data → `monthsCovered: 2`, `perMonth: 400`
+      (800/2, not 800/12); plus the empty-transactions and current-month-only-history cases.)
+- [x] A month with no transactions is present in `months` with `amount: 0`. (Spec "emits a month
+      with no transactions at all as amount 0 rather than dropping it" → `[400, 0, 0, 800]`,
+      `monthsCovered: 4`.)
+- [x] A window in which expenses exceed income returns a negative `perMonth`, unclamped. (Spec
+      "returns a negative perMonth unclamped when expenses exceed income" → `perMonth: -200`,
+      `min: -300`, `max: -100`.)
+- [x] The function reads no clock — `today` is a parameter, and the spec proves it by running the
+      same fixture at two different "todays" and getting two different windows. (Spec "reads no
+      clock": the same four-month fixture at `2026-03-15` → `['2026-01','2026-02']`, at
+      `2026-05-15` → `['2026-03','2026-04']`; no `Date.now()` in the module.)
+- [x] Pure function in `core/stats/`, exported via `core/stats/index.ts`, no Dexie or store import;
       every per-transaction decision still goes through `classifyForStats` via `computePeriodStats`.
-- [ ] Unit tests cover: month enumeration and boundaries; current-month exclusion; both bases
+      (`src/app/core/stats/saving-velocity.ts` imports only `@/core/data-access` *types*,
+      `@/shared/utils` date helpers and `./period-stats`; re-exported from `core/stats/index.ts`.)
+- [x] Unit tests cover: month enumeration and boundaries; current-month exclusion; both bases
       against `computePeriodStats`; mean/median/min/max including the even-count median; clamped
       short history; zero history; empty months as zero; negative velocity; and the two-`today`
-      clock-free case.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      clock-free case. (`src/app/core/stats/saving-velocity.spec.ts`, 15 cases across 5 describes.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Lint clean; 2744 tests / 249 files green; dev build completed;
+      `angular.json` not in the diff.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 dead-code and 0 complexity findings. The first run flagged a CRAP-30
+      moderate on the single big function; resolved by extracting `resolveWindow`/`measureMonths`
+      rather than suppressing it. The `unused-export` on `computeSavingVelocity` carries the
+      temporary `fallow-ignore-next-line` this ticket's Notes predicted — FUT-05 removes it.)
 
 ## Notes
 
