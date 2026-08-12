@@ -15,6 +15,7 @@ import {
   tablerRepeat,
   tablerSettings,
   tablerTags,
+  tablerTargetArrow,
   tablerTrendingUp,
 } from '@ng-icons/tabler-icons';
 import { AppSettingsStore, TransactionsStore } from '@/core/state';
@@ -58,6 +59,7 @@ const NAV_ITEM_CLASS =
       tablerTrendingUp,
       tablerRepeat,
       tablerChartSankey,
+      tablerTargetArrow,
       tablerBuildingBank,
       tablerFileImport,
       tablerArrowsExchange,

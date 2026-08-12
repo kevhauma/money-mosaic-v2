@@ -1,0 +1,24 @@
+<!-- Title ‖ Hide amounts. No range switcher in the start slot, and not by omission: this page has no
+     date range at all (TICKET-FUT-03) — see the caption below. -->
+<mm-page-header title="Future">
+  <mm-privacy-toggle actions-end />
+</mm-page-header>
+
+<mm-paper>
+  <div class="flex flex-col gap-2">
+    <mm-text as="h2" variant="subheading">Plan a purchase against what you actually save</mm-text>
+    <mm-text as="p" variant="caption">
+      Everything on this page looks forward from today, so it takes no date range. The history it
+      measures your saving rate from is set per section, not per page.
+    </mm-text>
+  </div>
+</mm-paper>
+
+<!-- The stage the rest of v2.2 renders into: the goals list (TICKET-FUT-04), each goal's ETA
+     (TICKET-FUT-05) and the projected net-worth chart (TICKET-FUT-07). -->
+<mm-empty-state
+  title="Nothing planned yet"
+  message="Add something you're saving for and this page works out when you can afford it."
+>
+  <ng-icon icon name="tablerTargetArrow" size="40" aria-hidden="true" />
+</mm-empty-state>

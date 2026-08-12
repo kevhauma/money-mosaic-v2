@@ -52,25 +52,48 @@ forecast, no chart of its own.
 
 ## Acceptance criteria
 
-- [ ] `/future` resolves to the overview shell; the route is lazy and does not pull ECharts or the
+- [x] `/future` resolves to the overview shell; the route is lazy and does not pull ECharts or the
       feature into the initial bundle (checked against the build's chunk output).
-- [ ] The route is registered in `app.routes.ts` under the app-shell layout route via the
-      `@/feature-future` barrel, not a deep path.
-- [ ] The grouping route provides `provideEchartsCore({ echarts })` and the overview renders as its
-      `''` child, matching `EXPLORE_ROUTES`' shape.
-- [ ] The sidebar shows a "Future" item linking to `/future`, marked active on that route, with its
-      icon registered alongside the existing ones.
-- [ ] The page injects no `RangeStore` and shows no range picker, and the caption saying the page
-      looks forward from today is present.
-- [ ] Component is standalone + `OnPush`, exported through the feature's components barrel like its
-      Explore siblings.
-- [ ] Unit tests cover: the route resolving to the component; the nav item's `routerLink` and
+      (`future.routes.spec.ts` → "resolves /future to the overview component" walks the router
+      snapshot to the leaf and asserts its `loadComponent` resolves to `FutureOverviewComponent`.
+      `ng build --configuration development --verbose` lists
+      `chunk-5PNPQMZJ.js | future-overview-component | 296 bytes` under **Lazy chunk files**, and
+      `Initial total` stayed 2.16 MB.)
+- [x] The route is registered in `app.routes.ts` under the app-shell layout route via the
+      `@/feature-future` barrel, not a deep path. (`import('@/feature-future').then((m) =>
+      m.FUTURE_ROUTES)`, placed between `explore` and `accounts`.)
+- [x] The grouping route provides `provideEchartsCore({ echarts })` and the overview renders as its
+      `''` child, matching `EXPLORE_ROUTES`' shape. (`future.routes.ts`; spec "mirrors
+      EXPLORE_ROUTES: one component-less grouping route with the overview as its '' child" and
+      "provides the ECharts core at route level".)
+- [x] The sidebar shows a "Future" item linking to `/future`, marked active on that route, with its
+      icon registered alongside the existing ones. (`app-shell.component.html` + `tablerTargetArrow`
+      in `provideIcons`; `app-shell.component.spec.ts` asserts the Insights group is exactly
+      `['/dashboard','/income','/recurring','/explore','/future']` and that the item is labelled
+      "Future" with an icon. Active state observed live — see below.)
+- [x] The page injects no `RangeStore` and shows no range picker, and the caption saying the page
+      looks forward from today is present. (Spec "never touches RangeStore" spies on
+      `RangeStore.from`/`.to` and asserts neither is called while the component renders; "shows no
+      range picker at all" asserts no `mm-range-grouping-switcher`/`mm-date-range-input`; the
+      caption text is asserted verbatim.)
+- [x] Component is standalone + `OnPush`, exported through the feature's components barrel like its
+      Explore siblings. (`future-overview.component.ts`; `components/index.ts` → `index.ts`.)
+- [x] Unit tests cover: the route resolving to the component; the nav item's `routerLink` and
       active state; the absence of any `RangeStore` injection; the standfirst/caption rendering.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched — the new route is lazy and adds nothing to `initial`.
-- [ ] Verified live in the browser: the nav item appears, `/future` loads, and no console error is
-      logged. *(Ask the user first; if declined, note it here rather than ticking.)*
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      (9 cases across `future.routes.spec.ts` and `future-overview.component.spec.ts`, plus the two
+      updated `app-shell.component.spec.ts` cases.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched — the new route is lazy and adds nothing to `initial`. (Lint clean;
+      2786 tests / 255 files green; dev build completed. `angular.json` is not in the diff.)
+- [x] Verified live in the browser: the nav item appears, `/future` loads, and no console error is
+      logged. (Dev server on 4210, navigated to `/future`: the page renders its header, standfirst,
+      caption and empty state; the sidebar shows **Future** last in *Insights* — between Explore
+      and the Data group's Accounts — highlighted as the active item; `read_console_messages`
+      returned no errors.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, zero findings of any kind, introduced or inherited. Per the conventions
+      skill's Insights-group rule the page also carries `mm-privacy-toggle` in its header's end
+      slot from the start, though it has no figures to blur until FUT-05.)
 
 ## Notes
 

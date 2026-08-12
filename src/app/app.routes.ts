@@ -40,6 +40,10 @@ export const routes: Routes = [
         loadChildren: () => import('@/feature-explore').then((m) => m.EXPLORE_ROUTES),
       },
       {
+        path: 'future',
+        loadChildren: () => import('@/feature-future').then((m) => m.FUTURE_ROUTES),
+      },
+      {
         path: 'accounts',
         loadChildren: () => import('@/feature-accounts').then((m) => m.ACCOUNTS_ROUTES),
       },

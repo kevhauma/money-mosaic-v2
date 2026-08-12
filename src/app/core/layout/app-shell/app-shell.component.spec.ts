@@ -97,15 +97,26 @@ describe('AppShellComponent: grouped sidebar navigation (TICKET-UI-26)', () => {
     expect(headings).toEqual(['Insights', 'Data']);
   });
 
-  it('puts Dashboard, Income, Recurring and Explore in Insights — and nothing else', async () => {
+  it('puts Dashboard, Income, Recurring, Explore and Future in Insights — and nothing else', async () => {
     const shell = await renderShell();
 
+    // Future sits last in Insights, i.e. between Explore and the Data group's Accounts
+    // (TICKET-FUT-03).
     expect(hrefsIn(groupFor(shell, 'Insights'))).toEqual([
       '/dashboard',
       '/income',
       '/recurring',
       '/explore',
+      '/future',
     ]);
+  });
+
+  it('labels the Future nav item and gives it an icon (TICKET-FUT-03)', async () => {
+    const shell = await renderShell();
+    const link = groupFor(shell, 'Insights').querySelector('a[href="/future"]') as HTMLElement;
+
+    expect(link.textContent?.trim()).toBe('Future');
+    expect(link.querySelector('ng-icon')).not.toBeNull();
   });
 
   it('puts Accounts, Transactions, Categories, Learning and Import in Data — and nothing else', async () => {
