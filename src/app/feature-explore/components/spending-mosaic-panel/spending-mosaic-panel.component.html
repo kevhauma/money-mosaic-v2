@@ -1,10 +1,30 @@
 @if (hasExpenses()) {
   <mm-paper>
-    <h2 class="card-title text-base">Spending mosaic</h2>
+    <mm-flex align="center" justify="between" gap="2">
+      <h2 class="card-title text-base">Spending mosaic</h2>
+      <!-- Panel-scoped, like the Sankey's own toggle (TICKET-UI-22), and absent entirely when no
+           joint account or attribution override in range could make the two modes differ. -->
+      @if (canSplitAttribution()) {
+        <mm-label as="label" class="gap-2">
+          <mm-text variant="caption" color="base-content">My share only</mm-text>
+          <input
+            type="checkbox"
+            class="toggle toggle-sm"
+            [checked]="showMyShareOnly()"
+            (change)="toggleMyShareOnly(!showMyShareOnly())"
+          />
+        </mm-label>
+      }
+    </mm-flex>
     <mm-text variant="caption">
       Every euro this range went out on, as area — a tile twice the size cost twice as much. Each
       category is subdivided into the individual payments behind it; hover any tile for what it is
     </mm-text>
+    <!-- Empty, and so absent, wherever the switch isn't offered: on an account set with nothing to
+         attribute, "joint accounts count at your own share" is a sentence about nothing. -->
+    @if (modeNote(); as note) {
+      <mm-text as="p" variant="caption">{{ note }}</mm-text>
+    }
 
     <div
       echarts
@@ -29,7 +49,13 @@
     <table class="sr-only">
       <caption>
         Every tile in the mosaic above — groups, categories and the payments inside them — as amount
-        and share of all spending
+        and share of all spending.
+        <!-- A reader can land on this table without ever meeting the chart's own label, and the
+             switch changes every figure in it, so the mode is restated here rather than assumed.
+             Empty where there is no mode worth naming, so it needs no condition of its own. -->
+        {{
+          modeNote()
+        }}
       </caption>
       <thead>
         <tr>

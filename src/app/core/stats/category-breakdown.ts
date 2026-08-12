@@ -1,5 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
-import { classifyForStats } from './classify-for-stats';
+import { classifyForStats, type StatsJointMode } from './classify-for-stats';
 
 export type CategoryBreakdownEntry = {
   /** null = uncategorised entry (no category assigned, bucketed by amount sign). */
@@ -50,6 +50,11 @@ const addTotal = (
  * (TICKET-STAT-11). Every per-transaction exclusion/routing/bucketing decision is delegated to the
  * shared `classifyForStats` pipeline (CR3-2.1) — this aggregation only groups the classified amount
  * by `categoryId` and finalises shares.
+ *
+ * `jointMode` is passed straight through to that pipeline (TICKET-REC-09's dial): `'share'`, the
+ * default, is "what did *I* spend" — a co-owner's leg dropped and the rest weighted by
+ * `ownershipShare` — and `'raw'` is every leg at its full amount. Shares are computed *after* the
+ * classification either way, so they are always shares of the total the same mode produced.
  */
 export const computeCategoryBreakdown = (
   transactions: Transaction[],
@@ -58,6 +63,7 @@ export const computeCategoryBreakdown = (
   to: string,
   ownSavingsIbans: ReadonlySet<string> = new Set(),
   accountsById: ReadonlyMap<number, Account> = new Map(),
+  jointMode: StatsJointMode = 'share',
 ): CategoryBreakdown => {
   const expenseTotals = new Map<number | null, { total: number; count: number }>();
   const incomeTotals = new Map<number | null, { total: number; count: number }>();
@@ -70,6 +76,7 @@ export const computeCategoryBreakdown = (
       ownSavingsIbans,
       categoriesById,
       accountsById,
+      jointMode,
     );
     if (result.kind === 'income') addTotal(incomeTotals, result.categoryId, result.amount);
     else if (result.kind === 'expense') addTotal(expenseTotals, result.categoryId, result.amount);

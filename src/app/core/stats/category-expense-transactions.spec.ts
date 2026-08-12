@@ -31,7 +31,15 @@ const checking: Account = {
 
 const savings: Account = { ...checking, id: 2, type: 'savings', iban: 'NL02BANK0000000002' };
 
-const accountsById = new Map([checking, savings].map((one) => [one.id!, one]));
+const joint: Account = {
+  ...checking,
+  id: 3,
+  type: 'joint',
+  iban: 'NL03BANK0000000003',
+  ownershipShare: 0.5,
+};
+
+const accountsById = new Map([checking, savings, joint].map((one) => [one.id!, one]));
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -45,7 +53,7 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   ...overrides,
 });
 
-const run = (transactions: Transaction[]) =>
+const run = (transactions: Transaction[], jointMode?: 'share' | 'raw') =>
   computeCategoryExpenseTransactions(
     transactions,
     categoriesById,
@@ -53,6 +61,7 @@ const run = (transactions: Transaction[]) =>
     '2026-07-31',
     new Set(['NL02BANK0000000002']),
     accountsById,
+    jointMode,
   );
 
 describe('computeCategoryExpenseTransactions (TICKET-EXP-08)', () => {
@@ -121,5 +130,59 @@ describe('computeCategoryExpenseTransactions (TICKET-EXP-08)', () => {
       const paid = payments.transactions.reduce((sum, one) => sum + one.value, 0);
       expect(paid - payments.refunded).toBeCloseTo(entry.total, 10);
     }
+  });
+
+  it('weights a joint payment by the share, and draws it in full under raw mode', () => {
+    const transactions = [transaction({ id: 1, accountId: 3, amount: -90, categoryId: 1 })];
+
+    // Default: half the joint bill was mine, so half of it is what the payment contributed.
+    expect(
+      run(transactions)
+        .get(1)
+        ?.transactions.map((one) => one.value),
+    ).toEqual([45]);
+    // `'raw'`: the whole €90 left the account, whoever it belonged to.
+    expect(
+      run(transactions, 'raw')
+        .get(1)
+        ?.transactions.map((one) => one.value),
+    ).toEqual([90]);
+  });
+
+  it('keeps a category tile and the payments inside it in the same mode', () => {
+    const transactions = [
+      transaction({ id: 1, accountId: 3, amount: -90, categoryId: 1 }),
+      transaction({ id: 2, accountId: 1, amount: -10, categoryId: 1 }),
+    ];
+
+    for (const jointMode of ['share', 'raw'] as const) {
+      const { expenseByCategory } = computeCategoryBreakdown(
+        transactions,
+        categoriesById,
+        '2026-07-01',
+        '2026-07-31',
+        new Set(['NL02BANK0000000002']),
+        accountsById,
+        jointMode,
+      );
+      const payments = run(transactions, jointMode).get(1)!;
+      const paid = payments.transactions.reduce((sum, one) => sum + one.value, 0);
+
+      // The mosaic hangs these payments inside that category's tile — more inside the box than the
+      // box holds is exactly what passing two different modes would produce.
+      expect(paid).toBeCloseTo(expenseByCategory[0].total, 10);
+    }
+
+    // …and the two modes really are different pictures, not the same one twice.
+    expect(
+      run(transactions, 'raw')
+        .get(1)
+        ?.transactions.map((one) => one.value),
+    ).toEqual([90, 10]);
+    expect(
+      run(transactions)
+        .get(1)
+        ?.transactions.map((one) => one.value),
+    ).toEqual([45, 10]);
   });
 });

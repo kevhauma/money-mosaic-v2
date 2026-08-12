@@ -1,4 +1,5 @@
 import { computed, effect, inject, untracked, type Signal } from '@angular/core';
+import type { StatsJointMode } from '@/core/stats';
 import type { ChartZoomByPercent } from '@/shared/echarts';
 import type { CycleKey, Granularity } from '@/shared/utils';
 import { ChartOptionsStore, type BillsView, type ChartOptionsKey } from './chart-options.store';
@@ -87,6 +88,36 @@ export const chartGroupCategories = (
     value: computed(() => chartOptions.groupCategories(chart) ?? initial),
     set: (groupCategories: boolean): void =>
       chartOptions.setGroupCategories(chart, groupCategories),
+  };
+};
+
+export type ChartJointModeControl = {
+  value: Signal<StatsJointMode>;
+  set: (jointMode: StatsJointMode) => void;
+};
+
+/**
+ * Whether a chart reads joint accounts at the user's own share or at their full amounts, held for
+ * the session — same shape and same reasoning as the controls above: a `computed()` read over the
+ * store plus an explicit setter, never a local writable mirrored into it.
+ *
+ * Unlike the toggles beside it this one changes the *figures*, not the layout, so a chart that
+ * offers it has to say which mode it is in wherever it states its totals — a caption, an aria-label,
+ * an `sr-only` table. Session-scoped rather than persisted, like everything else in this store: a
+ * mode the user forgot they flipped would read as the app quietly disagreeing with the Dashboard.
+ *
+ * Must be called from an injection context — a component field initializer.
+ */
+export const chartJointMode = (
+  chart: ChartOptionsKey,
+  seed: () => StatsJointMode,
+): ChartJointModeControl => {
+  const chartOptions = inject(ChartOptionsStore);
+  const initial = untracked(seed);
+
+  return {
+    value: computed(() => chartOptions.jointMode(chart) ?? initial),
+    set: (jointMode: StatsJointMode): void => chartOptions.setJointMode(chart, jointMode),
   };
 };
 

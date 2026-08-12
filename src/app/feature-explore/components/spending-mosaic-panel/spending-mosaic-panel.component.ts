@@ -1,22 +1,31 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
+import type { Account, Transaction } from '@/core/data-access';
 import {
   computeCategoryBreakdown,
   computeCategoryExpenseTransactions,
   computeSpendingMosaic,
   type MosaicNode,
+  type StatsJointMode,
 } from '@/core/stats';
 import {
   AccountsStore,
   AppSettingsStore,
   CategoriesStore,
+  chartJointMode,
   RangeStore,
   TransactionsStore,
 } from '@/core/state';
 import { savingsAccountIbans } from '@/core/transfers';
 import { resolveChartAnimation } from '@/shared/echarts';
-import { PaperComponent, PrivacyBlurComponent, TypographyComponent } from '@/shared/ui';
+import {
+  FlexComponent,
+  LabelComponent,
+  PaperComponent,
+  PrivacyBlurComponent,
+  TypographyComponent,
+} from '@/shared/ui';
 import { formatCurrency, formatDate, formatPercent, HIDDEN_AMOUNT_TEXT } from '@/shared/utils';
 
 /**
@@ -235,6 +244,22 @@ export const buildSpendingMosaicOption = (
   };
 };
 
+/** Booking date inside the panel's own range — the `classifyForStats` window test, asked here only to decide whether to *offer* the switch. */
+const inRange = (transaction: Transaction, from: string, to: string): boolean =>
+  transaction.bookingDate >= from && transaction.bookingDate <= to;
+
+/**
+ * Whether a transaction's attribution is a question at all: it sits on a joint account, or the user
+ * weighted it by hand. Exactly the pair `classifyForStats` routes through `resolveContribution`, and
+ * the only inputs on which its two joint modes can disagree.
+ */
+const isAttributable = (
+  transaction: Transaction,
+  accountsById: ReadonlyMap<number, Account>,
+): boolean =>
+  transaction.attributionOverride != null ||
+  accountsById.get(transaction.accountId)?.type === 'joint';
+
 /**
  * The Explore page's mosaic (FR-EXP-4, TICKET-EXP-07/08): the range's expenses as one area-true
  * picture, three levels deep — group tiles subdivided into their categories, and each category into
@@ -246,12 +271,27 @@ export const buildSpendingMosaicOption = (
  * routed through `classifyForStats` on identical inputs, so no level can disagree with the one above
  * it or with the Dashboard's pie.
  *
+ * **The one switch on the panel** is which of those figures it asks for: your own share of a joint
+ * account's spending (the default, and the only thing the rest of the app draws), or every euro that
+ * actually left the accounts — `classifyForStats`'s existing `'share'`/`'raw'` dial rather than a
+ * second classifier, so the two modes differ in attribution and in nothing else. It is offered only
+ * where it could change something (`canSplitAttribution`), and while it is on `'raw'` the panel says
+ * so in its caption and its `aria-label`: an area picture that silently disagrees with the Dashboard
+ * would read as a bug rather than as a different question.
+ *
  * Renders nothing when the range holds no expenses — the page's own empty state (TICKET-EXP-01)
  * covers the no-data-anywhere case, and an empty treemap frame says less than no frame.
  */
 @Component({
   selector: 'app-spending-mosaic-panel',
-  imports: [NgxEchartsDirective, PaperComponent, PrivacyBlurComponent, TypographyComponent],
+  imports: [
+    FlexComponent,
+    LabelComponent,
+    NgxEchartsDirective,
+    PaperComponent,
+    PrivacyBlurComponent,
+    TypographyComponent,
+  ],
   templateUrl: './spending-mosaic-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -275,12 +315,52 @@ export class SpendingMosaicPanelComponent {
   );
 
   /**
-   * The six arguments every `classifyForStats`-backed aggregate in `core/stats` takes, in their
+   * Which question the mosaic is drawing an answer to — my share of the spending, or every euro that
+   * left the accounts (`'share'` / `'raw'`, `classifyForStats`'s own dial). Session-scoped like every
+   * other per-chart choice, and seeded to `'share'` so the mosaic opens agreeing with the Dashboard's
+   * pie; flipping it is an explicit act, and the panel says so in its caption while it lasts.
+   */
+  private readonly jointModeControl = chartJointMode(
+    'explore-spending-mosaic',
+    (): StatsJointMode => 'share',
+  );
+  protected readonly jointMode = this.jointModeControl.value;
+  protected readonly setJointMode = this.jointModeControl.set;
+  protected readonly showMyShareOnly = computed(() => this.jointMode() === 'share');
+
+  protected readonly toggleMyShareOnly = (myShareOnly: boolean): void =>
+    this.setJointMode(myShareOnly ? 'share' : 'raw');
+
+  /**
+   * Whether the switch has anything to switch — the `canGroup` precedent on the panel above. Without
+   * a joint account or a hand-set attribution override the two modes classify identically, and a
+   * control that provably cannot change the picture is worse than no control: it invites the reader
+   * to hunt for a difference that isn't there.
+   *
+   * Structural rather than a second aggregation run: it asks whether an attributable *input* exists
+   * at all, which is cheap, instead of computing both mosaics to compare their totals.
+   */
+  protected readonly canSplitAttribution = computed(() => {
+    const accountsById = this.accountsStore.accountsById();
+    const { from, to } = this.range();
+
+    return this.transactionsStore
+      .transactions()
+      .some(
+        (transaction) =>
+          inRange(transaction, from, to) && isAttributable(transaction, accountsById),
+      );
+  });
+
+  /**
+   * The seven arguments every `classifyForStats`-backed aggregate in `core/stats` takes, in their
    * shared order — **argument-for-argument what `StatsStore.categoryBreakdown` passes**, on this
-   * page's range instead of the Dashboard's. Held once rather than spelled out per call site: the
-   * ticket's "the mosaic, its payments and the Dashboard's pie can never disagree" promise is
-   * exactly the claim that all of them see the same inputs, and one tuple makes that structural
-   * instead of a thing to keep in step by hand.
+   * page's range instead of the Dashboard's and in this panel's joint mode instead of the default.
+   * Held once rather than spelled out per call site: the ticket's "the mosaic, its payments and the
+   * Dashboard's pie can never disagree" promise is exactly the claim that all of them see the same
+   * inputs, and one tuple makes that structural instead of a thing to keep in step by hand — the
+   * mode included, so the category tiles and the payments inside them can never be classified two
+   * different ways.
    */
   private readonly statsInput = computed(
     () =>
@@ -291,6 +371,7 @@ export class SpendingMosaicPanelComponent {
         this.range().to,
         this.ownSavingsIbans(),
         this.accountsStore.accountsById(),
+        this.jointMode(),
       ] as const,
   );
 
@@ -352,8 +433,31 @@ export class SpendingMosaicPanelComponent {
 
   protected readonly rows = computed(() => spendingMosaicRows(this.nodes(), this.privacyMode()));
 
-  protected readonly chartAriaLabel = computed(
-    () =>
-      `Spending mosaic: expenses by category group, category and individual payment, sized by amount, ${this.range().from}–${this.range().to}; table with values follows`,
+  /**
+   * What the tiles are measuring, in words — said in the caption, in the `sr-only` table's own
+   * caption and again in the chart's `aria-label`, because the switch changes every figure on the
+   * panel and a reader who arrives at the table would otherwise have no way to know which of the two
+   * totals they are reading.
+   *
+   * **Empty where the switch isn't offered**, which is what lets all three call sites state it the
+   * same way — "joint accounts count at your own share" is a sentence about nothing on an account
+   * set with nothing to attribute, and one signal deciding that beats three template conditions
+   * agreeing about it.
+   */
+  protected readonly modeNote = computed(() => {
+    if (!this.canSplitAttribution()) return '';
+    return this.showMyShareOnly()
+      ? 'Joint accounts count at your own share of them.'
+      : 'Joint accounts count in full, including the part a co-owner pays.';
+  });
+
+  protected readonly chartAriaLabel = computed(() =>
+    [
+      `Spending mosaic: expenses by category group, category and individual payment, sized by amount, ${this.range().from}–${this.range().to}.`,
+      this.modeNote(),
+      'Table with values follows',
+    ]
+      .filter(Boolean)
+      .join(' '),
   );
 }

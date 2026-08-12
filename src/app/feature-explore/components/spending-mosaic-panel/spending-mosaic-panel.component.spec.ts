@@ -43,6 +43,15 @@ const checking: Account = {
   archived: false,
 };
 
+const jointAccount: Account = {
+  ...checking,
+  id: 2,
+  name: 'Household account',
+  type: 'joint',
+  iban: 'NL02BANK0000000002',
+  ownershipShare: 0.5,
+};
+
 const groceries: Category = {
   id: 20,
   name: 'Groceries',
@@ -279,6 +288,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
   const createFixture = async (
     transactions: Transaction[],
     categories: Category[] = [salary, groceries, rent, cinema],
+    accounts: Account[] = [checking],
   ): Promise<ComponentFixture<SpendingMosaicPanelComponent>> => {
     await TestBed.configureTestingModule({
       imports: [SpendingMosaicPanelComponent],
@@ -290,7 +300,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
         },
         {
           provide: AccountsRepository,
-          useValue: { getAll: vi.fn().mockResolvedValue([checking]) },
+          useValue: { getAll: vi.fn().mockResolvedValue(accounts) },
         },
         {
           provide: CategoriesRepository,
@@ -409,6 +419,69 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
     const blur = (fixture.nativeElement as HTMLElement).querySelector('mm-privacy-blur');
     expect(blur?.textContent).toContain('€40.00');
     expect(fixture.componentInstance['privacyMode']()).toBe(true);
+  });
+
+  describe('the joint-attribution switch', () => {
+    const jointSpend = [
+      transaction({ id: 1, accountId: 2, amount: -500, categoryId: rent.id }),
+      transaction({ id: 2, amount: -250, categoryId: cinema.id }),
+    ];
+
+    const toggleOf = (fixture: ComponentFixture<SpendingMosaicPanelComponent>) =>
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input.toggle');
+
+    it('draws the user share by default, and says so', async () => {
+      const fixture = await createFixture(jointSpend, undefined, [checking, jointAccount]);
+
+      // Half the €500 household rent is the user's, so the mosaic opens agreeing with the pie.
+      expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€250.00', '50%']);
+      expect(toggleOf(fixture)?.checked).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Joint accounts count at your own share',
+      );
+    });
+
+    it('redraws every tile at full amounts once switched to all flow', async () => {
+      const fixture = await createFixture(jointSpend, undefined, [checking, jointAccount]);
+
+      toggleOf(fixture)!.click();
+      fixture.detectChanges();
+
+      // The whole €500 left the account now, so Rent both grows and takes a bigger share of a
+      // bigger total — and the caption and the chart's own label both name the mode.
+      expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€500.00', '66.7%']);
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.textContent).toContain('Joint accounts count in full');
+      expect(host.querySelector('[echarts]')?.getAttribute('aria-label')).toContain(
+        'Joint accounts count in full',
+      );
+    });
+
+    it('subdivides a joint category into payments in the same mode as the tile holding them', async () => {
+      const fixture = await createFixture(
+        [...jointSpend, transaction({ id: 3, accountId: 2, amount: -100, categoryId: rent.id })],
+        undefined,
+        [checking, jointAccount],
+      );
+
+      toggleOf(fixture)!.click();
+      fixture.detectChanges();
+
+      const rows = rowsOf(fixture);
+      // €600 of rent, drawn as €500 + €100 — not €600 of tile holding €300 of payments.
+      expect(rows).toContainEqual(['Living', 'All Rent', '€600.00', '70.6%']);
+      expect(rows).toContainEqual(['Rent', 'Something', '€500.00', '58.8%']);
+      expect(rows).toContainEqual(['Rent', 'Something', '€100.00', '11.8%']);
+    });
+
+    it('offers no switch when nothing in range could be attributed differently', async () => {
+      const fixture = await createFixture(spend);
+
+      // Every account here is the user's own, so the two modes provably agree — and a control that
+      // cannot change the picture only invites a hunt for a difference that is not there.
+      expect(toggleOf(fixture)).toBeNull();
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Joint accounts');
+    });
   });
 
   it('withholds every amount with privacy mode on, keeping the shares and the tiles', async () => {

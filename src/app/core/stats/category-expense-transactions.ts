@@ -1,5 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
-import { classifyForStats } from './classify-for-stats';
+import { classifyForStats, type StatsJointMode } from './classify-for-stats';
 
 /** One payment, at the amount it actually contributed to its category's expense total. */
 export type CategoryExpenseTransaction = {
@@ -62,6 +62,7 @@ const expenseContributionOf = (
   ownSavingsIbans: ReadonlySet<string>,
   categoriesById: ReadonlyMap<number, Category>,
   accountsById: ReadonlyMap<number, Account>,
+  jointMode: StatsJointMode,
 ): ExpenseContribution | undefined => {
   const transactionId = transaction.id;
   if (transactionId == null) return undefined;
@@ -73,6 +74,7 @@ const expenseContributionOf = (
     ownSavingsIbans,
     categoriesById,
     accountsById,
+    jointMode,
   );
   return result.kind === 'expense'
     ? { transactionId, categoryId: result.categoryId, amount: result.amount }
@@ -107,6 +109,11 @@ const entryIn = (
  * summed into `refunded` instead. Sorted heaviest first, and keyed by `categoryId` with `null` for
  * the uncategorised bucket, matching `CategoryBreakdownEntry`.
  *
+ * `jointMode` is passed through to `classifyForStats` unchanged, and **must be given the same value
+ * as the `computeCategoryBreakdown` call it is drawn beside**: the two are what the mosaic's
+ * category tiles and payment tiles are built from, so a payment classified at its full amount inside
+ * a category weighted by `ownershipShare` would put more payments in a box than the box holds.
+ *
  * Pure: no DI, no store, no Dexie.
  */
 export const computeCategoryExpenseTransactions = (
@@ -118,6 +125,7 @@ export const computeCategoryExpenseTransactions = (
   // account map silently changes what counts as an expense, and every caller here has both.
   ownSavingsIbans: ReadonlySet<string>,
   accountsById: ReadonlyMap<number, Account>,
+  jointMode: StatsJointMode = 'share',
 ): Map<number | null, CategoryExpenseTransactions> => {
   const byCategory = new Map<number | null, CategoryExpenseTransactions>();
 
@@ -129,6 +137,7 @@ export const computeCategoryExpenseTransactions = (
       ownSavingsIbans,
       categoriesById,
       accountsById,
+      jointMode,
     );
     if (!contribution) continue;
 

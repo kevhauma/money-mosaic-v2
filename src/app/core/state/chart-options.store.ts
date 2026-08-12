@@ -1,4 +1,5 @@
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import type { StatsJointMode } from '@/core/stats';
 import type { ChartZoomByPercent } from '@/shared/echarts';
 import type { CycleKey, Granularity } from '@/shared/utils';
 
@@ -23,6 +24,7 @@ export type ChartOptionsKey =
   | 'dashboard-trend-expense'
   | 'dashboard-heatmap'
   | 'explore-money-flow'
+  | 'explore-spending-mosaic'
   | 'recurring-bills-calendar'
   | 'income-by-category';
 
@@ -38,6 +40,13 @@ type ChartOptionsEntry = {
   cycle?: CycleKey;
   /** Whether the money flow Sankey routes spending through `Category.group` before reaching individual categories (TICKET-EXP-03). */
   groupCategories?: boolean;
+  /**
+   * Whether a chart weights a joint account's transactions by the user's own `ownershipShare`
+   * (`'share'`, what it costs *me*) or draws every leg at its full amount (`'raw'`, what left the
+   * accounts). A per-chart question rather than an app-wide setting: it changes what the picture is
+   * *of*, and only the charts that offer the switch have one.
+   */
+  jointMode?: StatsJointMode;
   /** Which month a bill calendar is browsing, as a `YYYY-MM` bucket key (TICKET-REC-03) — it looks *forward* from today, so it deliberately does not follow `RangeStore`. */
   visibleMonth?: string;
   /** Grid or date-ordered list, for a section that draws the same projected occurrences both ways (TICKET-REC-03). */
@@ -101,6 +110,13 @@ export const ChartOptionsStore = signalStore(
 
       setGroupCategories: (chart: ChartOptionsKey, groupCategories: boolean): void => {
         patchChart(chart, { groupCategories });
+      },
+
+      /** `undefined` until the user switches — the caller then falls back to the chart's own default mode. */
+      jointMode: (chart: ChartOptionsKey): StatsJointMode | undefined => entryFor(chart).jointMode,
+
+      setJointMode: (chart: ChartOptionsKey, jointMode: StatsJointMode): void => {
+        patchChart(chart, { jointMode });
       },
 
       /** `undefined` until the user navigates — the caller then falls back to the current month (TICKET-REC-03). */
