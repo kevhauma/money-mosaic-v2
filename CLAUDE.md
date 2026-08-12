@@ -38,6 +38,7 @@ Subagents in `.claude/agents/`: `conventions-reviewer` (diff review against proj
 - Rules must never overwrite a category the user set manually (`categoryManual` flag on `Transaction`).
 - Cross-feature imports go through the feature's `index.ts` barrel (`@/feature-x`), never deep paths. Exception already in place: `app.routes.ts` imports `feature-transactions/transactions.routes` directly to break a barrel cycle — don't "fix" it back.
 - Prettier (single quotes) runs via husky/lint-staged pre-commit; don't fight it.
+- **Never mention Claude, Anthropic, or any AI assistant in git history.** No `Co-Authored-By: Claude ...` trailer, no "Generated with Claude Code", no 🤖 — not in commit messages, branch names, tags, or PR bodies. Referring to the `CLAUDE.md` file by name is fine.
 
 
 ## Verifying
