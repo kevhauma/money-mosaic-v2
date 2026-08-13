@@ -3,15 +3,34 @@
 </span>
 
 <div class="min-w-0 flex-1">
-  <mm-text weight="medium" class="block truncate">{{ row().goal.name }}</mm-text>
+  <mm-flex align="center" gap="2" class="min-w-0">
+    <mm-text weight="medium" class="truncate">{{ row().goal.name }}</mm-text>
+    @if (row().trackLabel) {
+      <mm-badge variant="outline" size="sm" [color]="row().trackColor">{{
+        row().trackLabel
+      }}</mm-badge>
+    }
+  </mm-flex>
   @if (row().metaLabel) {
     <mm-text variant="caption" class="block truncate">{{ row().metaLabel }}</mm-text>
   }
 </div>
 
-<mm-privacy-blur [blurred]="privacyMode()">
-  <mm-text weight="semibold">{{ row().amountLabel }}</mm-text>
-</mm-privacy-blur>
+<!-- FUT-05's answer, and what the order costs to get there. The cumulative figure is an amount, so
+     it is masked like the target itself. -->
+<div class="text-right">
+  <mm-privacy-blur [blurred]="privacyMode()">
+    <mm-text weight="semibold">{{ row().amountLabel }}</mm-text>
+  </mm-privacy-blur>
+  @if (row().etaLabel) {
+    <mm-badge variant="soft" size="sm" [color]="row().etaColor" class="ml-2">{{
+      row().etaLabel
+    }}</mm-badge>
+    <mm-privacy-blur [blurred]="privacyMode()" class="block">
+      <mm-text variant="caption">{{ row().cumulativeLabel }}</mm-text>
+    </mm-privacy-blur>
+  }
+</div>
 
 <mm-flex align="center" gap="1">
   <mm-button

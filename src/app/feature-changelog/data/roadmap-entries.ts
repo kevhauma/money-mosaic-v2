@@ -63,13 +63,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.2_goals_and_forecast',
-    ticketId: 'TICKET-FUT-05',
-    title:
-      'See the month you could afford each goal if you keep saving the way you have been, in the order you set',
-    area: 'Forecast',
-  },
-  {
-    versionFolder: 'v2.2_goals_and_forecast',
     ticketId: 'TICKET-FUT-06',
     title:
       'Choose how far back the forecast looks, what counts as saving, and how much cash to keep untouched',

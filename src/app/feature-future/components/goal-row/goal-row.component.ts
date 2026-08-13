@@ -10,6 +10,7 @@ import {
   tablerTrash,
 } from '@ng-icons/tabler-icons';
 import {
+  BadgeComponent,
   ButtonComponent,
   DropdownComponent,
   FlexComponent,
@@ -33,6 +34,7 @@ import type { GoalRowVm } from '../../goal-row-vm';
     // panel, so the handle inside this template still resolves its parent through the injector.
     DragDropModule,
     NgIcon,
+    BadgeComponent,
     ButtonComponent,
     DropdownComponent,
     FlexComponent,

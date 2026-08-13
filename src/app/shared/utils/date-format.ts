@@ -42,6 +42,21 @@ export function formatMonthShort(isoDate: string): string {
   return SHORT_MONTH_FORMATTER().format(parseIsoDate(isoDate));
 }
 
+const MONTH_YEAR_FORMATTER = computed(
+  () => new Intl.DateTimeFormat(locale(), { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+);
+
+/**
+ * The month and its year — `March 2027` under `en-US`, `maart 2027` under `nl-BE`. For a projected
+ * date (TICKET-FUT-05), where naming a day would imply a precision a straight-line forecast does
+ * not have: the answer is "some time that month", so that is what it says.
+ *
+ * Locale-aware like `formatDate` above, and for the same reason.
+ */
+export function formatMonthYear(isoDate: string): string {
+  return MONTH_YEAR_FORMATTER().format(parseIsoDate(isoDate));
+}
+
 const SHORT_WEEKDAY_FORMATTER = computed(
   () => new Intl.DateTimeFormat(locale(), { weekday: 'short', timeZone: 'UTC' }),
 );

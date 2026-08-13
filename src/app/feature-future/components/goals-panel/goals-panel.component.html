@@ -14,6 +14,10 @@
     goal, or use the arrows, to change the order.
   </mm-text>
 
+  <!-- Where the whole plan lands, or why it doesn't (TICKET-FUT-05). Never blank when there are
+       goals: "we can't answer that yet, and here's what's missing" is itself an answer. -->
+  <app-forecast-notice [notice]="notice()" />
+
   @if (!goalsStore.hydrated()) {
     <mm-loading-skeleton [rows]="2" />
   } @else if (rows().length === 0) {

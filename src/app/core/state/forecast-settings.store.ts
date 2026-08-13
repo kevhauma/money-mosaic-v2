@@ -15,8 +15,6 @@ import type { SavingBasis } from '@/core/stats';
  * user acts on — a forecast that silently reset its lookback window on every reload would be worse,
  * not safer. The reversal is intentional and scoped to this one row.
  */
-// Temporary until TICKET-FUT-05/06 read it — those tickets remove this line.
-// fallow-ignore-next-line unused-export
 export const ForecastSettingsStore = signalStore(
   { providedIn: 'root' },
   withState<ForecastSettings>(DEFAULT_FORECAST_SETTINGS),

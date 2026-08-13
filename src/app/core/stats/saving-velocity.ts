@@ -129,8 +129,6 @@ const measureMonths = (
  * never disagree with the Dashboard's stat cards for the same month. Months with no transactions at
  * all are still emitted as `amount: 0` — a gap month is evidence, and dropping it inflates the mean.
  */
-// Temporary until TICKET-FUT-05 consumes it — that ticket removes this line (TICKET-FUT-01 Notes).
-// fallow-ignore-next-line unused-export
 export const computeSavingVelocity = (
   transactions: Transaction[],
   options: {

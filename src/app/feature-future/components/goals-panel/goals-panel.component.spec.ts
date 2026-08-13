@@ -1,7 +1,25 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { AppSettingsRepository, GoalsRepository, type SavingsGoal } from '@/core/data-access';
-import { AppSettingsStore, GoalsStore } from '@/core/state';
+import {
+  AccountsRepository,
+  AppSettingsRepository,
+  CategoriesRepository,
+  ForecastSettingsRepository,
+  GoalsRepository,
+  TransactionsRepository,
+  TransfersRepository,
+  type Account,
+  type SavingsGoal,
+  type Transaction,
+} from '@/core/data-access';
+import {
+  AccountsStore,
+  AppSettingsStore,
+  ForecastSettingsStore,
+  GoalsStore,
+  TransactionsStore,
+  TransfersStore,
+} from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { GoalsPanelComponent } from './goals-panel.component';
 
@@ -26,12 +44,37 @@ const appSettingsRepository = {
   setPrivacyMode: vi.fn().mockResolvedValue(1),
 };
 
+/** One checking account whose opening balance *is* the net worth when there are no transactions. */
+const account = (openingBalance: number): Account => ({
+  id: 1,
+  name: 'Checking',
+  type: 'checking',
+  currency: 'EUR',
+  openingBalance,
+  openingBalanceDate: '2020-01-01',
+  color: '#000000',
+  icon: 'bank',
+  archived: false,
+});
+
+const salary = (bookingDate: string, amount: number): Transaction => ({
+  id: Number(bookingDate.replaceAll('-', '')),
+  accountId: 1,
+  bookingDate,
+  amount,
+  currency: 'EUR',
+  rawDescription: 'Salary',
+  fingerprint: `fp-${bookingDate}-${amount}`,
+  createdAt: `${bookingDate}T00:00:00.000Z`,
+});
+
 /**
  * `GoalsStore` self-hydrates on first injection (TICKET-PERF-07), so the repository has to be faked
  * *before* the component is created — re-faking afterwards hits the cached hydration.
  */
 const createFixture = async (
   goals: SavingsGoal[] = [],
+  { accounts = [] as Account[], transactions = [] as Transaction[] } = {},
 ): Promise<ComponentFixture<GoalsPanelComponent>> => {
   goalsRepository.getAll.mockResolvedValue(goals);
   await TestBed.configureTestingModule({
@@ -39,11 +82,37 @@ const createFixture = async (
     providers: [
       { provide: GoalsRepository, useValue: goalsRepository },
       { provide: AppSettingsRepository, useValue: appSettingsRepository },
+      { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue(accounts) } },
+      {
+        provide: TransactionsRepository,
+        useValue: { getAll: vi.fn().mockResolvedValue(transactions) },
+      },
+      { provide: TransfersRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+      { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+      {
+        provide: ForecastSettingsRepository,
+        useValue: {
+          get: vi.fn().mockResolvedValue({
+            id: 1,
+            lookbackMonths: 6,
+            basis: 'net-cash-flow',
+            safetyNetAmount: 0,
+          }),
+        },
+      },
     ],
   }).compileComponents();
 
   const fixture = TestBed.createComponent(GoalsPanelComponent);
   await TestBed.inject(GoalsStore).hydrate();
+  // The forecast reads all four (TICKET-FUT-05) and gates its figures on `AccountsStore.dataReady`,
+  // which is `TransactionsStore.hydrated() && TransfersStore.hydrated()`.
+  await Promise.all([
+    TestBed.inject(AccountsStore).hydrate(),
+    TestBed.inject(TransactionsStore).hydrate(),
+    TestBed.inject(TransfersStore).hydrate(),
+    TestBed.inject(ForecastSettingsStore).hydrate(),
+  ]);
   fixture.detectChanges();
   return fixture;
 };
@@ -339,5 +408,134 @@ describe('GoalsPanelComponent: presentation (TICKET-FUT-04)', () => {
     expect(host(fixture).querySelector('mm-empty-state')).not.toBeNull();
     expect(host(fixture).textContent).toContain('Nothing planned yet');
     expect(rowNames(fixture)).toEqual([]);
+  });
+});
+
+describe('GoalsPanelComponent: the affordability readout (TICKET-FUT-05)', () => {
+  withCleanFormatSettings();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /**
+   * A fixture with a real measured rate: twelve complete months of €200 net, and an opening balance
+   * that puts a known amount on the table today. `today` is the machine's own date, so the
+   * assertions below are about *shape* — which verdict, and that a month is named — rather than
+   * about a specific month, which would rot on the first of every month.
+   */
+  const withHistory = (goals: SavingsGoal[], openingBalance: number) => {
+    const months: Transaction[] = [];
+    const now = new Date();
+    for (let back = 1; back <= 12; back++) {
+      const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 10));
+      months.push(salary(month.toISOString().slice(0, 10), 200));
+    }
+    return createFixture(goals, { accounts: [account(openingBalance)], transactions: months });
+  };
+
+  it('tells you outright when the money is already there', async () => {
+    // Opening balance 5000 + 12 months of 200 = 7400 net worth, against a 1200 goal.
+    const fixture = await withHistory([goal({ id: 1, name: 'Camera', targetAmount: 1200 })], 5000);
+
+    expect(host(fixture).textContent).toContain('You can buy this now');
+    expect(host(fixture).textContent).toContain('You can afford all 1 goal right now.');
+  });
+
+  it('names a month and a months-away count for a goal that is still ahead', async () => {
+    const fixture = await withHistory([goal({ id: 1, name: 'Camera', targetAmount: 20000 })], 0);
+    const text = host(fixture).textContent ?? '';
+
+    expect(text).toContain('≈ ');
+    expect(text).toMatch(/in \d+ months?/);
+    // Never a raw number or an invalid date.
+    expect(text).not.toContain('NaN');
+    expect(text).not.toContain('Infinity');
+  });
+
+  it('shows what the order costs cumulatively, so a goal behind another says so', async () => {
+    const fixture = await withHistory(
+      [
+        goal({ id: 1, name: 'Camera', targetAmount: 1200, sortOrder: 0 }),
+        goal({ id: 2, name: 'Holiday', targetAmount: 3000, sortOrder: 1 }),
+      ],
+      0,
+    );
+
+    expect(host(fixture).textContent).toContain('with everything above it');
+    // 1200 + 3000 for the second goal.
+    expect(host(fixture).textContent).toContain('€4,200.00');
+  });
+
+  it('says nothing has a date when the measured rate is negative, rather than going blank', async () => {
+    const spending: Transaction[] = [];
+    const now = new Date();
+    for (let back = 1; back <= 6; back++) {
+      const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 10));
+      spending.push(salary(month.toISOString().slice(0, 10), -500));
+    }
+    const fixture = await createFixture([goal({ id: 1, targetAmount: 1200 })], {
+      accounts: [account(0)],
+      transactions: spending,
+    });
+
+    expect(host(fixture).textContent).toContain('spent more than you earned');
+    expect(host(fixture).textContent).toContain('Not at this rate');
+  });
+
+  it('says what is missing when there is no complete month of history at all', async () => {
+    const fixture = await createFixture([goal({ id: 1, targetAmount: 1200 })], {
+      accounts: [account(0)],
+      transactions: [],
+    });
+
+    expect(host(fixture).textContent).toContain('Not enough complete months');
+  });
+
+  it('renders no ETA at all while the accounts data is still loading', async () => {
+    goalsRepository.getAll.mockResolvedValue([goal({ id: 1, targetAmount: 1200 })]);
+    await TestBed.configureTestingModule({
+      imports: [GoalsPanelComponent],
+      providers: [
+        { provide: GoalsRepository, useValue: goalsRepository },
+        { provide: AppSettingsRepository, useValue: appSettingsRepository },
+        { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        // Never resolves — `dataReady` stays false, which is the state under test.
+        {
+          provide: TransactionsRepository,
+          useValue: { getAll: vi.fn(() => new Promise(() => {})) },
+        },
+        { provide: TransfersRepository, useValue: { getAll: vi.fn(() => new Promise(() => {})) } },
+        { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(GoalsPanelComponent);
+    await TestBed.inject(GoalsStore).hydrate();
+    fixture.detectChanges();
+
+    expect(TestBed.inject(AccountsStore).dataReady()).toBe(false);
+    expect(host(fixture).textContent).toContain('Working out where this plan lands');
+    expect(host(fixture).textContent).not.toContain('You can buy this now');
+    expect(host(fixture).textContent).not.toContain('Not at this rate');
+  });
+
+  it('shows an on-track chip against a wanted-by date, and behind when it will not make it', async () => {
+    const nextYear = new Date(Date.UTC(new Date().getUTCFullYear() + 5, 0, 1))
+      .toISOString()
+      .slice(0, 10);
+    const lastMonth = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1))
+      .toISOString()
+      .slice(0, 10);
+    const fixture = await withHistory(
+      [
+        goal({ id: 1, name: 'Reachable', targetAmount: 3000, targetDate: nextYear, sortOrder: 0 }),
+        goal({ id: 2, name: 'Too soon', targetAmount: 9000, targetDate: lastMonth, sortOrder: 1 }),
+      ],
+      0,
+    );
+
+    expect(host(fixture).textContent).toContain('On track');
+    expect(host(fixture).textContent).toContain('Behind');
   });
 });

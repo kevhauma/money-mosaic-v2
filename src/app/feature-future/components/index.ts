@@ -1,3 +1,4 @@
+export * from './forecast-notice/forecast-notice.component';
 export * from './future-overview/future-overview.component';
 export * from './goal-form/goal-form.component';
 export * from './goal-row/goal-row.component';

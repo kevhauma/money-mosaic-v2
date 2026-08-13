@@ -13,8 +13,11 @@ import {
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { createConfirmState, formatCurrency, formatDate } from '@/shared/utils';
-import type { GoalRowVm } from '../../goal-row-vm';
+import { createConfirmState } from '@/shared/utils';
+import { ForecastStore } from '../../forecast.store';
+import { ForecastNoticeComponent } from '../forecast-notice/forecast-notice.component';
+import { buildGoalRow, type GoalRowVm } from '../../goal-row-vm';
+import { forecastNotice } from '../../forecast-notices';
 import { GoalFormComponent, type GoalFormValue } from '../goal-form/goal-form.component';
 import { GoalRowComponent } from '../goal-row/goal-row.component';
 
@@ -39,6 +42,7 @@ import { GoalRowComponent } from '../goal-row/goal-row.component';
     ConfirmDialogComponent,
     EmptyStateComponent,
     FlexComponent,
+    ForecastNoticeComponent,
     GoalFormComponent,
     GoalRowComponent,
     LoadingSkeletonComponent,
@@ -53,18 +57,34 @@ export class GoalsPanelComponent {
   protected readonly goalsStore = inject(GoalsStore);
   protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
 
+  private readonly forecastStore = inject(ForecastStore);
+
+  /** Gates every projected figure: an opening-balance-only net worth is not a forecast (FUT-05). */
+  protected readonly dataReady = this.forecastStore.dataReady;
+
   protected readonly rows = computed<GoalRowVm[]>(() => {
     const goals = this.goalsStore.activeGoals();
-    return goals.map((goal, index) => ({
-      goal,
-      amountLabel: formatCurrency(goal.targetAmount),
-      metaLabel: [goal.targetDate && `Wanted by ${formatDate(goal.targetDate)}`, goal.note]
-        .filter(Boolean)
-        .join(' · '),
-      isFirst: index === 0,
-      isLast: index === goals.length - 1,
-    }));
+    // Before the transactions and transfers are in, the goals are still worth listing — the ETAs
+    // are not, so the rows are built without them rather than with a figure that will move.
+    const byGoalId = this.dataReady() ? this.forecastStore.affordabilityByGoalId() : new Map();
+    return goals.map((goal, index) =>
+      buildGoalRow(goal, index, goals.length, byGoalId.get(goal.id!)),
+    );
   });
+
+  /**
+   * The one line above the list that says where the whole plan lands, or why it doesn't — the three
+   * honest states (not enough history, a rate that gets you nowhere, a goal with no ETA) each get
+   * their own sentence instead of a blank space.
+   */
+  protected readonly notice = computed(() =>
+    forecastNotice({
+      dataReady: this.dataReady(),
+      goalCount: this.goalsStore.activeGoals().length,
+      velocity: this.forecastStore.velocity(),
+      affordability: this.forecastStore.affordability(),
+    }),
+  );
 
   protected readonly formOpen = signal(false);
   protected readonly editingGoal = signal<SavingsGoal | null>(null);

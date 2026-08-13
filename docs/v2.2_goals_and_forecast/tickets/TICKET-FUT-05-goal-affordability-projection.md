@@ -104,39 +104,77 @@ verdict for any goal with a wanted-by date.
 
 ## Acceptance criteria
 
-- [ ] Each goal shows one of: "affordable now", a projected month plus months-away, or an explicit
-      "not at this rate" — never a raw number, an `Infinity`, or an invalid date.
-- [ ] `cumulativeTarget` is the running sum in the user's order, and reordering the goals changes
+- [x] Each goal shows one of: "affordable now", a projected month plus months-away, or an explicit
+      "not at this rate" — never a raw number, an `Infinity`, or an invalid date. (`etaLabelFor` in
+      `goal-row-vm.ts` has exactly three outputs; panel spec "names a month and a months-away count"
+      asserts the shape and that the text contains neither `NaN` nor `Infinity`.)
+- [x] `cumulativeTarget` is the running sum in the user's order, and reordering the goals changes
       the ETAs of the goals below the moved one (asserted by a spec that reorders and re-computes).
-- [ ] A goal whose cumulative target is already covered by `startingBalance − safetyNetAmount` is
-      `already-affordable` with `monthsAway: 0` and no date.
-- [ ] `perMonth ≤ 0` yields `never-at-this-rate` for every unaffordable goal and does not throw or
+      (`goal-affordability.spec.ts` → "accumulates targets in the given order" and "pushes every
+      goal below a reordered one further out": the same two goals give 12/42 months one way and
+      30/42 the other. Live: Kitchen €16.000 then Bike €1.000 shows "€17,000.00 with everything
+      above it" on the second row.)
+- [x] A goal whose cumulative target is already covered by `startingBalance − safetyNetAmount` is
+      `already-affordable` with `monthsAway: 0` and no date. (Three specs, including the exactly-
+      covered boundary and "still projects the goals below one that is already covered".)
+- [x] `perMonth ≤ 0` yields `never-at-this-rate` for every unaffordable goal and does not throw or
       divide by zero; `perMonth > 0` with an unreachable target inside `horizonMonths` also yields
-      `never-at-this-rate` rather than an absurd date.
-- [ ] `safetyNetAmount` reduces the spendable balance, and raising it can push a goal from
-      `already-affordable` to `projected` (asserted).
-- [ ] Month stepping is calendar-correct: a projection from 31 January lands on a real month-end,
-      and `monthsAway` counts whole calendar months.
-- [ ] A goal with a `targetDate` gets `onTrack: true/false` by comparing `affordableOn` to it, and
-      `null` when it has no date or no ETA.
-- [ ] The summary line reports the last goal's ETA, or says plainly that not every goal has one.
-- [ ] The three honest states (no goals, not enough history, negative velocity) each render their
-      own message rather than a blank or a zero.
-- [ ] Figures are only presented once `AccountsStore.dataReady` is true.
-- [ ] The aggregate is a pure function in `core/stats/`, clock-free (`today` is a parameter), with
+      `never-at-this-rate` rather than an absurd date. (`it.each([0, -120])`, plus the €1,000,000-at-
+      €100/month case and an explicit `horizonMonths` boundary pair (12 → projected, 11 → never).)
+- [x] `safetyNetAmount` reduces the spendable balance, and raising it can push a goal from
+      `already-affordable` to `projected` (asserted). (Spec "can push a goal from affordable-now to
+      projected".)
+- [x] Month stepping is calendar-correct: a projection from 31 January lands on a real month-end,
+      and `monthsAway` counts whole calendar months. (`monthEndAfter` steps by the calendar; specs
+      cover 31 Jan → 28 Feb, a leap year → 29 Feb, a year roll-over, and a part-month rounding up.)
+- [x] A goal with a `targetDate` gets `onTrack: true/false` by comparing `affordableOn` to it, and
+      `null` when it has no date or no ETA. (Four specs. Note: a goal that is affordable *today*
+      returns `true` rather than `null` — the money is already there, so it is on track against any
+      date; that case is asserted explicitly.)
+- [x] The summary line reports the last goal's ETA, or says plainly that not every goal has one.
+      (`forecast-notices.ts` + its 8-case spec; the unreachable count is reported rather than
+      silently dropped. Live: "All 2 goals covered by ≈ September 2026.")
+- [x] The three honest states (no goals, not enough history, negative velocity) each render their
+      own message rather than a blank or a zero. (Panel specs "says nothing has a date when the
+      measured rate is negative", "says what is missing when there is no complete month of history
+      at all", and the existing empty-state case.)
+- [x] Figures are only presented once `AccountsStore.dataReady` is true. (`GoalsPanelComponent.rows`
+      builds rows without affordability facts until `dataReady()`; spec "renders no ETA at all while
+      the accounts data is still loading" holds the transactions repository on an unresolved promise
+      and asserts the ETA phrases are absent and the loading line is present.)
+- [x] The aggregate is a pure function in `core/stats/`, clock-free (`today` is a parameter), with
       no store, repository or Dexie import; the component reads `GoalsStore`/`AccountsStore`/
-      `ForecastSettingsStore`/`TransactionsStore` from `@/core/state` only.
-- [ ] Every amount honours privacy mode; amounts use `formatCurrency()` and dates `localeDate`.
-- [ ] Unit tests cover: cumulative targets in order; reorder changing downstream ETAs; the
+      `ForecastSettingsStore`/`TransactionsStore` from `@/core/state` only. (`goal-affordability.ts`
+      imports only the `SavingsGoal` type and two date helpers. **Implementation note:** the
+      store-wiring lives in a new `feature-future/forecast.store.ts` — a pure `computed()`
+      derivation over `@/core/state`, the `StatsStore`/`RecurringSeriesStore` shape — rather than in
+      the panel, so FUT-07's chart reads the same numbers the list does instead of deriving its own.
+      The panel injects that plus `GoalsStore`/`AppSettingsStore`; no repository, no `appDb`.)
+- [x] Every amount honours privacy mode; amounts use `formatCurrency()` and dates `localeDate`.
+      (Both the target and the cumulative figure sit in `mm-privacy-blur`; the projected month goes
+      through a new `formatMonthYear()` in `shared/utils/date-format.ts` — a month and a year, never
+      a day, because a straight-line forecast does not know which Tuesday.)
+- [x] Unit tests cover: cumulative targets in order; reorder changing downstream ETAs; the
       already-affordable branch; `perMonth` of exactly 0 and negative; horizon exceeded; safety net
       flipping a verdict; calendar-correct stepping from a 31st; on-track vs behind against a
-      `targetDate`; and each of the three empty/degenerate states in the component.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
-- [ ] Verified live in the browser: with real imported data, a goal priced just under the current
-      spendable balance reads "now", and one priced just above reads a plausible month.
-      *(Ask the user first; if declined, note it here rather than ticking.)*
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      `targetDate`; and each of the three empty/degenerate states in the component. (24 aggregate
+      cases, 8 notice cases, 7 new panel cases.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Lint clean; 2844 tests / 258 files green; dev build completed,
+      `Initial total` unchanged at 2.16 MB.)
+- [x] Verified live in the browser: with real imported data, a goal priced just under the current
+      spendable balance reads "now", and one priced just above reads a plausible month. (Against a
+      real net worth of €16.898,26: "Kitchen" at €16.000 reads **You can buy this now**, and "Bike"
+      at €1.000 behind it — cumulative €17.000, just over the line — reads **≈ September 2026 · in
+      1 month**, with the summary "All 2 goals covered by ≈ September 2026." No console errors.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 introduced findings. The first run flagged five complexity findings; all
+      five were fixed rather than suppressed — `buildGoalRow` and `forecastNotice` split into named
+      single-purpose helpers, the affordability map callback's verdict logic extracted into
+      `resolveReason`/`resolveMonthsAway`, and the panel's notice moved into a presentational
+      `app-forecast-notice`. FUT-01's temporary `unused-export` suppression on
+      `computeSavingVelocity` is removed, as its Notes said it would be, along with
+      `ForecastSettingsStore`'s.)
 
 ## Notes
 
