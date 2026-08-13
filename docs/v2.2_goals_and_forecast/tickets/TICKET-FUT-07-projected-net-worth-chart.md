@@ -69,35 +69,78 @@ costs rather than just when it completes.
 
 ## Acceptance criteria
 
-- [ ] The chart's first point equals `AccountsStore.netWorth()` exactly — asserted against the
-      store, not a literal.
-- [ ] Between goal purchases the line rises by `perMonth` per month; at each goal's `affordableOn`
-      it drops by that goal's `targetAmount`.
-- [ ] Each goal is marked and labelled at its ETA; a goal with no ETA
+- [x] The chart's first point equals `AccountsStore.netWorth()` exactly — asserted against the
+      store, not a literal. (Spec "starts the series at exactly AccountsStore.netWorth()" reads the
+      store and compares, and checks the figure table's first row through `formatCurrency`. Live:
+      August 2026 reads €16.898,26 — the same figure as the Dashboard's stat card.)
+- [x] Between goal purchases the line rises by `perMonth` per month; at each goal's `affordableOn`
+      it drops by that goal's `targetAmount`. (`computeNetWorthProjection` + its 10-case spec;
+      component spec "rises by the measured rate between purchases and steps down at the goal's
+      ETA" asserts both deltas against the store's own `perMonth`.)
+- [x] Each goal is marked and labelled at its ETA; a goal with no ETA
       (`never-at-this-rate`) is not drawn on the chart, and the caption says how many were omitted.
-- [ ] The projected balance never falls below `safetyNetAmount` (asserted with a non-zero safety net).
-- [ ] A non-zero safety net draws its reference line; a zero safety net draws none.
-- [ ] The tooltip reports the month's projected balance and names the goal bought that month when
-      there is one.
-- [ ] Velocity ≤ 0 draws a declining line with an explicit caption; no goals or insufficient
-      history render the empty state instead of a chart.
-- [ ] The visually-hidden figure table lists every projected month with its balance and any goal
-      bought, per TICKET-STAT-20.
-- [ ] Every amount honours privacy mode — chart labels, tooltip and the figure table.
-- [ ] The projection is a pure, clock-free function in `core/stats/`; the component imports no
+      (Specs "labels the month a goal is bought, and nothing on the others" and "says in the caption
+      how many goals were left off, and does not plot them" — a €5.000.000 goal is absent from the
+      plotted purchases and counted in "1 goal is not drawn".)
+      **Divergence, recorded when it was made:** a goal that is affordable *today* has no
+      `affordableOn`, and the literal reading of this criterion would leave it off the line — which
+      would put the chart in contradiction with the rows above it, since FUT-05 already charges
+      goal 2's ETA for goal 1's price. Those goals are therefore drawn too, on the first plotted
+      month-end. Only `never-at-this-rate` is omitted, which is what the criterion's own parenthesis
+      says.
+- [x] The projected balance never falls below `safetyNetAmount` (asserted with a non-zero safety net).
+      (Aggregate spec "never dips below the safety net when the purchase dates come from the
+      affordability walk" and component spec "never dips below a non-zero safety net", both looping
+      every point. Live: with a €4.000 net the line bottoms out on the floor and turns back up.)
+- [x] A non-zero safety net draws its reference line; a zero safety net draws none. (Spec "draws the
+      safety net as its own dashed line only when one is set" — two series vs one. Live: the dashed
+      floor appears at €4.000 and disappears at 0.)
+- [x] The tooltip reports the month's projected balance and names the goal bought that month when
+      there is one. (Spec "reports the projected balance in the tooltip, and names the goal bought
+      that month", asserting both strings exactly.)
+- [x] Velocity ≤ 0 draws a declining line with an explicit caption; no goals or insufficient
+      history render the empty state instead of a chart. (Spec "draws a declining line with an
+      explicit caption when the rate is negative" asserts the line falls *and* the chart is still
+      rendered; an `it.each` covers the two empty states asserting `div[echarts]` is absent.)
+- [x] The visually-hidden figure table lists every projected month with its balance and any goal
+      bought, per TICKET-STAT-20. (Spec "ships the screen-reader figure table, matching the plotted
+      series month for month" — row count equals the projection's length. Live: the table reads
+      "September 2026 · €1,498.36 · Kitchen (€16,000.00), Bike (€1,000.00)".)
+- [x] Every amount honours privacy mode — chart labels, tooltip and the figure table. (Withheld
+      rather than blurred, per TICKET-STAT-29: everything here is data handed to echarts or clipped
+      into a 1px `sr-only` box, where a CSS filter paints nothing. Specs assert the label, the
+      tooltip, the y-axis formatter and every table row collapse to `HIDDEN_AMOUNT_TEXT`. Live: the
+      axis ticks read "hidden".)
+- [x] The projection is a pure, clock-free function in `core/stats/`; the component imports no
       repository or Dexie, and adds no ECharts provider of its own (FUT-03's route-level one is
-      used).
-- [ ] Unit tests cover: the first point equalling net worth; the per-month rise; the step down at an
+      used). (`net-worth-projection.ts` takes `today` as a parameter — proved by a two-`today` spec;
+      the component injects only stores, and `future.routes.ts` still holds the only
+      `provideEchartsCore`.)
+- [x] Unit tests cover: the first point equalling net worth; the per-month rise; the step down at an
       ETA; two goals stepping down on different months; the safety net floor holding; goals without an
       ETA being omitted and counted in the caption; velocity ≤ 0; the empty states; privacy masking;
-      and the figure table's contents matching the plotted series.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      and the figure table's contents matching the plotted series. (10 aggregate cases, 7 chart-option
+      cases, 10 component cases.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
       budgets untouched — ECharts stays in this feature's lazy chunk, and no new charting dependency
-      is added.
-- [ ] Verified live in the browser: with real data and two goals, the sawtooth appears, the labels
-      land on the right months, and the figures match the goal rows above.
-      *(Ask the user first; if declined, note it here rather than ticking.)*
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      is added. (Lint clean; 2891 tests / 263 files green; `--verbose` build still lists
+      `future-overview-component` under **Lazy chunk files** with `Initial total` at 2.16 MB.
+      **No new echarts modules either**: `markPoint`/`markLine` were avoided deliberately in favour
+      of a point `label` and one constant-valued series, so `echarts-setup.ts` is untouched. One
+      run showed the project's known `import-wizard` moving flake; it passed on re-run.)
+- [x] Verified live in the browser: with real data and two goals, the sawtooth appears, the labels
+      land on the right months, and the figures match the goal rows above. (Two rounds. The first
+      showed the purchase label centred on its point and hanging off the left edge of the grid, and
+      two adjacent labels overprinting each other — fixed with `align: 'left'` and
+      `labelLayout: { hideOverlap: true }`, both re-checked. Final state: the line starts at
+      €16.898,26, steps down where the goal rows say it should, and rises at €1.600,10/month
+      between. No console errors at any point.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 introduced findings. The first run flagged four complexity findings; all
+      four were fixed by extraction rather than suppressed — `groupByMonth`/`pointDate`/`totalOf`/
+      `gainAt` out of the projection loop, `toProjectedPurchase` out of the store, and `dataIndexOf`
+      out of the tooltip formatter. `ng lint` separately caught a hardcoded `Intl.NumberFormat` in
+      the new spec, which now goes through `formatCurrency` like the code it tests.)
 
 ## Notes
 

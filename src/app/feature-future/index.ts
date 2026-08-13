@@ -4,3 +4,4 @@ export * from './forecast.store';
 export * from './forecast-notices';
 export * from './forecast-controls-vm';
 export * from './goal-row-vm';
+export * from './net-worth-projection-chart-option';

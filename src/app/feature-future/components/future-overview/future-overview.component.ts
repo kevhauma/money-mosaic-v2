@@ -7,6 +7,7 @@ import {
 } from '@/shared/ui';
 import { ForecastControlsComponent } from '../forecast-controls/forecast-controls.component';
 import { GoalsPanelComponent } from '../goals-panel/goals-panel.component';
+import { NetWorthProjectionChartComponent } from '../net-worth-projection-chart/net-worth-projection-chart.component';
 
 /**
  * The `/future` page container (FR-FUT-3, TICKET-FUT-03) — the app's first forward-looking page,
@@ -27,6 +28,7 @@ import { GoalsPanelComponent } from '../goals-panel/goals-panel.component';
   imports: [
     ForecastControlsComponent,
     GoalsPanelComponent,
+    NetWorthProjectionChartComponent,
     PageHeaderComponent,
     PaperComponent,
     PrivacyToggleComponent,

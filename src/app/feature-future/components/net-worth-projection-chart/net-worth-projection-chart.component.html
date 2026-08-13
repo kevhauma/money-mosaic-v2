@@ -1,0 +1,50 @@
+<mm-paper>
+  <mm-text as="h2" variant="subheading" weight="semibold" class="mb-1">
+    Projected net worth
+  </mm-text>
+
+  @if (!hasChart()) {
+    <mm-empty-state title="Nothing to project yet" [message]="emptyMessage()">
+      <ng-icon icon name="tablerChartLine" size="40" aria-hidden="true" />
+    </mm-empty-state>
+  } @else {
+    <mm-text as="p" variant="caption" class="mb-2">{{ caption() }}</mm-text>
+    @if (decliningWarning()) {
+      <mm-text as="p" variant="caption" color="warning" class="mb-2">
+        {{ decliningWarning() }}
+      </mm-text>
+    }
+
+    <div
+      echarts
+      [options]="chartOption()"
+      class="h-80 w-full"
+      role="img"
+      aria-label="Projected net worth by month, with each goal's purchase subtracted"
+    ></div>
+
+    <!-- Screen-reader-only companion table for the chart above (TICKET-STAT-20) — not a visible
+         data table, so it skips mm-table's chrome entirely. -->
+    <table class="sr-only">
+      <caption>
+        Projected net worth by month, and the goal bought in each
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Month</th>
+          <th scope="col">Projected balance</th>
+          <th scope="col">Bought</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of accessibleRows(); track row.month) {
+          <tr>
+            <th scope="row">{{ row.month }}</th>
+            <td>{{ row.balance }}</td>
+            <td>{{ row.bought }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</mm-paper>

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
@@ -22,9 +23,13 @@ import {
   TransactionsStore,
   TransfersStore,
 } from '@/core/state';
+import { echarts } from '@/shared/echarts';
+import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { FutureOverviewComponent } from '../future-overview/future-overview.component';
 import { ForecastControlsComponent } from './forecast-controls.component';
+
+stubEchartsBrowserApis();
 
 const forecastSettingsRepository = {
   get: vi.fn().mockResolvedValue(DEFAULT_FORECAST_SETTINGS),
@@ -279,6 +284,7 @@ describe('ForecastControlsComponent: the controls move the forecast below them (
       imports: [FutureOverviewComponent],
       providers: [
         provideRouter([]),
+        provideEchartsCore({ echarts }),
         { provide: ForecastSettingsRepository, useValue: forecastSettingsRepository },
         {
           provide: AccountsRepository,

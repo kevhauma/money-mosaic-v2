@@ -1,6 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { signalStore, withComputed } from '@ngrx/signals';
-import { computeGoalAffordability, computeSavingVelocity } from '@/core/stats';
+import type { SavingsGoal } from '@/core/data-access';
+import {
+  computeGoalAffordability,
+  computeNetWorthProjection,
+  computeSavingVelocity,
+  type GoalAffordability,
+  type ProjectedPurchase,
+} from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
 import {
   AccountsStore,
@@ -11,6 +18,22 @@ import {
 } from '@/core/state';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
+/**
+ * One affordability verdict turned into a purchase the chart can draw. A goal that is affordable
+ * *today* has no `affordableOn`, so it lands on `fallbackDate` — see `plottablePurchases` below for
+ * why it has to land somewhere rather than being skipped.
+ */
+const toProjectedPurchase = (
+  entry: GoalAffordability,
+  goal: SavingsGoal,
+  fallbackDate: string,
+): ProjectedPurchase => ({
+  goalId: entry.goalId,
+  name: goal.name,
+  amount: goal.targetAmount,
+  on: entry.affordableOn ?? fallbackDate,
+});
 
 /**
  * The `/future` page's shared derivation (TICKET-FUT-05) — `StatsStore`'s shape: pure `computed()`
@@ -64,10 +87,69 @@ export const ForecastStore = signalStore(
       }),
     );
 
+    /**
+     * How far the chart looks: to the last drawable purchase plus a little headroom, so the line
+     * after the final goal is visible rather than ending on the step down. With nothing to plot it
+     * still draws a year, which is a forecast rather than an empty frame.
+     */
+    const projectionHorizonMonths = computed(() => {
+      const lastMonthsAway = affordability()
+        .filter((entry) => entry.monthsAway != null)
+        .reduce((max, entry) => Math.max(max, entry.monthsAway as number), 0);
+      return Math.max(12, lastMonthsAway + 3);
+    });
+
+    /** The month grid alone, with nothing bought — what the purchase dates below are placed on. */
+    const baseProjection = computed(() =>
+      computeNetWorthProjection({
+        today: todayIso(),
+        startingBalance: accountsStore.netWorth(),
+        perMonth: velocity().perMonth,
+        purchases: [],
+        horizonMonths: projectionHorizonMonths(),
+      }),
+    );
+
+    /**
+     * The goals the chart can actually draw a purchase for, and the ones it can't — a goal with no
+     * ETA is left off the line rather than parked at the right-hand edge, and counted so the
+     * caption can say how many were omitted.
+     */
+    const plottablePurchases = computed<ProjectedPurchase[]>(() => {
+      const goalsById = new Map(goalsStore.activeGoals().map((goal) => [goal.id!, goal]));
+      // A goal that is affordable *today* still has to come off the line, or the chart would
+      // contradict the rows above it: FUT-05 already charges goal 2's ETA for goal 1's price, so a
+      // projection that never subtracts goal 1 draws a balance nobody will ever have. It lands on
+      // the first plotted month-end rather than on month 0, which stays the untouched starting
+      // balance — "here is what you have, here is what happens once you act on this plan".
+      // Index 1 always exists: `projectionHorizonMonths` is never below 12.
+      const firstMonthEnd = baseProjection()[1].date;
+
+      // Every id came from `activeGoals()` a line above, so the lookup cannot miss.
+      return affordability()
+        .filter((entry) => entry.reason !== 'never-at-this-rate')
+        .map((entry) => toProjectedPurchase(entry, goalsById.get(entry.goalId)!, firstMonthEnd));
+    });
+
+    const projection = computed(() =>
+      computeNetWorthProjection({
+        today: todayIso(),
+        startingBalance: accountsStore.netWorth(),
+        perMonth: velocity().perMonth,
+        purchases: plottablePurchases(),
+        horizonMonths: projectionHorizonMonths(),
+      }),
+    );
+
     return {
       velocity,
       spendableBalance,
       affordability,
+      projection,
+      /** Goals the rate never reaches, so the chart's caption can account for what isn't drawn. */
+      omittedGoalCount: computed(
+        () => affordability().filter((entry) => entry.reason === 'never-at-this-rate').length,
+      ),
       affordabilityByGoalId: computed(
         () => new Map(affordability().map((entry) => [entry.goalId, entry])),
       ),

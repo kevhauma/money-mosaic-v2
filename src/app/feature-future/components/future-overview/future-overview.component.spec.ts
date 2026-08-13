@@ -1,15 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import { AppSettingsRepository, GoalsRepository } from '@/core/data-access';
 import { GoalsStore, RangeStore } from '@/core/state';
+import { echarts } from '@/shared/echarts';
+import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { FutureOverviewComponent } from './future-overview.component';
+
+stubEchartsBrowserApis();
 
 const createFixture = async (): Promise<ComponentFixture<FutureOverviewComponent>> => {
   await TestBed.configureTestingModule({
     imports: [FutureOverviewComponent],
     providers: [
       provideRouter([]),
+      provideEchartsCore({ echarts }),
       {
         provide: AppSettingsRepository,
         useValue: { get: vi.fn().mockResolvedValue({ id: 1 }), setPrivacyMode: vi.fn() },
@@ -56,6 +62,7 @@ describe('FutureOverviewComponent (TICKET-FUT-03)', () => {
       imports: [FutureOverviewComponent],
       providers: [
         provideRouter([]),
+        provideEchartsCore({ echarts }),
         {
           provide: AppSettingsRepository,
           useValue: { get: vi.fn().mockResolvedValue({ id: 1 }), setPrivacyMode: vi.fn() },
