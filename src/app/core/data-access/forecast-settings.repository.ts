@@ -35,4 +35,15 @@ export class ForecastSettingsRepository {
     const current = await this.get();
     return appDb.forecastSettings.put({ ...current, id: 1, mode });
   };
+
+  // Which accounts the forecast may consider (TICKET-FUT-08) — also non-indexed, also no schema
+  // change. An empty array is stored as `undefined`: "all accounts" has one representation.
+  setScopeAccountIds = async (scopeAccountIds: number[]): Promise<number> => {
+    const current = await this.get();
+    return appDb.forecastSettings.put({
+      ...current,
+      id: 1,
+      scopeAccountIds: scopeAccountIds.length ? scopeAccountIds : undefined,
+    });
+  };
 }

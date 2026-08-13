@@ -35,6 +35,10 @@ const accountConfig = entityConfig({
   selectId: (account) => account.id!,
 });
 
+/** A joint account's opening balance counts at my stake; every other account's counts in full. */
+const weightedOpeningBalance = (account: Account): number =>
+  account.openingBalance * (account.type === 'joint' ? (account.ownershipShare ?? 1) : 1);
+
 export const AccountsStore = signalStore(
   { providedIn: 'root' },
   withEntities(accountConfig),
@@ -108,30 +112,40 @@ export const AccountsStore = signalStore(
       return breakdowns;
     });
 
-    // Combined net worth (FR-STAT-1): non-joint accounts count their full balance; a joint
-    // account counts only my stake. Walked per-transaction (rather than summing `balancesById`/
-    // `jointAccountStakeById`) so a manual `attributionOverride` on a *non-joint* account's
-    // transaction is honoured too (TICKET-TXN-03) — `resolveContribution` falls back to the raw
-    // amount for an unaffected transaction, so a dataset with no joint accounts and no overrides
-    // still sums to the same net worth as before (byte-identical to the pre-STAT-03 behaviour).
-    const netWorth = computed(() => {
+    /**
+     * Combined net worth (FR-STAT-1), kept **per account** (TICKET-FUT-08): non-joint accounts
+     * count their full balance, a joint account only my stake. Walked per-transaction (rather than
+     * summing `balancesById`/`jointAccountStakeById`) so a manual `attributionOverride` on a
+     * *non-joint* account's transaction is honoured too (TICKET-TXN-03).
+     *
+     * Every term is attributable to one `accountId`, so keeping it per account is an extraction
+     * rather than a second model — and `netWorth` below is literally the sum of these, which is
+     * what makes a scoped forecast total incapable of drifting from the Dashboard's card.
+     *
+     * Deliberately *not* `balancesById` + `jointAccountStakeById`: those come from two different
+     * computations (real bank balance, and contributions minus a share of spending), and adding them
+     * would produce a figure that disagrees with this one — the trap TICKET-ACC-07 recorded.
+     */
+    const netWorthContributionById = computed(() => {
       const context = jointLegContext();
       const transactions = transactionsStore.transactions();
       const suppressed = reimbursedTransferLegIds(transactions, context.transfersById);
 
-      let total = entities().reduce(
-        (sum, account) =>
-          sum +
-          account.openingBalance * (account.type === 'joint' ? (account.ownershipShare ?? 1) : 1),
-        0,
+      const contributions = new Map<number, number>(
+        entities().map((account) => [account.id!, weightedOpeningBalance(account)]),
       );
       for (const transaction of transactions) {
         const account = context.accountsById.get(transaction.accountId);
         if (!account) continue;
-        total += resolveContribution(transaction, account, context, suppressed).weight;
+        const weight = resolveContribution(transaction, account, context, suppressed).weight;
+        contributions.set(account.id!, (contributions.get(account.id!) ?? 0) + weight);
       }
-      return total;
+      return contributions;
     });
+
+    const netWorth = computed(() =>
+      [...netWorthContributionById().values()].reduce((sum, value) => sum + value, 0),
+    );
 
     return {
       accounts: sortedBySortOrder(entities),
@@ -140,6 +154,7 @@ export const AccountsStore = signalStore(
       accountsById,
       balancesById,
       netWorth,
+      netWorthContributionById,
       jointAccountStakeById,
       contributorBreakdownById,
       /**

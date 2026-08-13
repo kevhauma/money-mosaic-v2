@@ -604,3 +604,98 @@ describe('AccountsStore: removeAccount cascades to entities, transactions, and t
     expect(transfersStore.transfers()).toEqual([]);
   });
 });
+
+describe('AccountsStore: per-account net-worth contributions (TICKET-FUT-08)', () => {
+  const accountsRepository = { getAll: vi.fn().mockResolvedValue([]), update: vi.fn() };
+  const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const transfersRepository = { getAll: vi.fn().mockResolvedValue([]) };
+  const categoriesRepository = { getAll: vi.fn().mockResolvedValue([]) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // `clearAllMocks` keeps implementations, so each test starts from an empty universe rather than
+    // inheriting the previous one's fixture.
+    transactionsRepository.getAll.mockResolvedValue([]);
+    transfersRepository.getAll.mockResolvedValue([]);
+    categoriesRepository.getAll.mockResolvedValue([]);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AccountsRepository, useValue: accountsRepository },
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: TransfersRepository, useValue: transfersRepository },
+        { provide: CategoriesRepository, useValue: categoriesRepository },
+      ],
+    });
+  });
+
+  /**
+   * Every branch `resolveContribution` has, in one fixture: a joint account at a 50% stake, an
+   * `attributionOverride` on a *non-joint* account, and a reimbursed transfer leg.
+   */
+  const hydrateAll = async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, type: 'checking', openingBalance: 1000 }),
+      account({ id: 2, type: 'joint', openingBalance: 4000, ownershipShare: 0.5 }),
+      account({ id: 3, type: 'savings', openingBalance: 500 }),
+    ]);
+    transactionsRepository.getAll.mockResolvedValue([
+      // Plain own-account spend.
+      transaction({ id: 1, accountId: 1, amount: -200, bookingDate: '2026-07-01' }),
+      // Joint spend, weighted to my share.
+      transaction({ id: 2, accountId: 2, amount: -400, bookingDate: '2026-07-02' }),
+      // A personal-flagged transaction on a *non-joint* account (TICKET-TXN-03).
+      transaction({
+        id: 3,
+        accountId: 1,
+        amount: -100,
+        bookingDate: '2026-07-03',
+        attributionOverride: { mode: 'shared', jointAccountId: 2 },
+      }),
+      // A reimbursed transfer pair — suppressed on the net-worth walk.
+      transaction({ id: 4, accountId: 1, amount: -50, transferId: 7, bookingDate: '2026-07-04' }),
+      transaction({ id: 5, accountId: 3, amount: 50, transferId: 7, bookingDate: '2026-07-04' }),
+    ]);
+    transfersRepository.getAll.mockResolvedValue([
+      { id: 7, fromTransactionId: 4, toTransactionId: 5 } as Transfer,
+    ]);
+
+    await TestBed.inject(TransactionsStore).hydrate();
+    await TestBed.inject(TransfersStore).hydrate();
+    await TestBed.inject(CategoriesStore).hydrate();
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+    return accountsStore;
+  };
+
+  it('sums to exactly netWorth() across every resolveContribution branch', async () => {
+    const accountsStore = await hydrateAll();
+
+    const sum = [...accountsStore.netWorthContributionById().values()].reduce(
+      (total, value) => total + value,
+      0,
+    );
+    expect(sum).toBe(accountsStore.netWorth());
+  });
+
+  it('holds one entry per account, with a joint account carrying only my stake', async () => {
+    const accountsStore = await hydrateAll();
+    const contributions = accountsStore.netWorthContributionById();
+
+    expect([...contributions.keys()].sort()).toEqual([1, 2, 3]);
+    // 4000 opening at 50% = 2000, less my half of the 400 shared spend.
+    expect(contributions.get(2)).toBe(2000 - 200);
+  });
+
+  it('gives an account with no transactions its weighted opening balance', async () => {
+    accountsRepository.getAll.mockResolvedValue([
+      account({ id: 1, type: 'checking', openingBalance: 1000 }),
+      account({ id: 2, type: 'joint', openingBalance: 4000, ownershipShare: 0.25 }),
+    ]);
+    const accountsStore = TestBed.inject(AccountsStore);
+    await accountsStore.hydrate();
+
+    expect(accountsStore.netWorthContributionById().get(1)).toBe(1000);
+    expect(accountsStore.netWorthContributionById().get(2)).toBe(1000);
+    expect(accountsStore.netWorth()).toBe(2000);
+  });
+});

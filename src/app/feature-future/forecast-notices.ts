@@ -2,6 +2,7 @@ import type { SavingsGoal } from '@/core/data-access';
 import type { GoalAffordability, RequiredSavingPlan, SavingVelocity } from '@/core/stats';
 import type { AlertStatus } from '@/shared/ui';
 import { formatCurrency, formatMonthYear } from '@/shared/utils';
+import { scopeSentence } from './forecast-chart-copy';
 
 /**
  * The one-line verdict above the goals list: where the plan lands, or — just as often — why it
@@ -123,6 +124,8 @@ export type ForecastNoticeInput = {
   requiredMode?: boolean;
   requiredPlan?: RequiredSavingPlan;
   goalsById?: Map<number, SavingsGoal>;
+  /** The active account scope's name, `''` for all accounts (TICKET-FUT-08). */
+  scopeLabel?: string;
 };
 
 const LOADING: ForecastNotice = { text: 'Working out where this plan lands…', status: 'info' };
@@ -140,11 +143,20 @@ const requiredModeNotice = (input: ForecastNoticeInput): ForecastNotice | null =
 const measuredModeNotice = (input: ForecastNoticeInput): ForecastNotice =>
   blockingNotice(input.velocity) ?? landingNotice(input.goalCount, input.affordability);
 
+/**
+ * The scope is stated wherever it changes a figure (TICKET-FUT-08), so a total that differs from
+ * the Dashboard's net-worth card reads as the setting the user chose rather than as a bug.
+ */
+const withScope = (notice: ForecastNotice, scopeLabel: string | undefined): ForecastNotice => ({
+  ...notice,
+  text: notice.text + scopeSentence(scopeLabel ?? ''),
+});
+
 export const forecastNotice = (input: ForecastNoticeInput): ForecastNotice => {
   // No goals: the empty state below already says what to do, and a second sentence saying nothing
   // is happening would just be noise.
   if (input.goalCount === 0) return NONE;
   if (!input.dataReady) return LOADING;
 
-  return requiredModeNotice(input) ?? measuredModeNotice(input);
+  return withScope(requiredModeNotice(input) ?? measuredModeNotice(input), input.scopeLabel);
 };

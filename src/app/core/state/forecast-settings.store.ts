@@ -33,6 +33,8 @@ export const ForecastSettingsStore = signalStore(
      * default once here keeps every reader from repeating a `?? 'when-affordable'`.
      */
     activeMode: computed<ForecastMode>(() => store.mode?.() ?? 'when-affordable'),
+    /** The scope, always an array. Empty means "every account", as it does on the row. */
+    activeScopeAccountIds: computed<number[]>(() => store.scopeAccountIds?.() ?? []),
   })),
   withMethods((store) => {
     const forecastSettingsRepository = inject(ForecastSettingsRepository);
@@ -74,6 +76,18 @@ export const ForecastSettingsStore = signalStore(
       setMode: async (mode: ForecastMode): Promise<void> => {
         await forecastSettingsRepository.setMode(mode);
         patchState(store, { mode });
+      },
+
+      /**
+       * Which accounts the forecast may consider (TICKET-FUT-08). An empty selection is stored as
+       * `undefined` rather than `[]` so "all accounts" has exactly one representation — unticking
+       * the last account therefore reverts to all, instead of producing an empty forecast.
+       */
+      setScopeAccountIds: async (scopeAccountIds: number[]): Promise<void> => {
+        await forecastSettingsRepository.setScopeAccountIds(scopeAccountIds);
+        patchState(store, {
+          scopeAccountIds: scopeAccountIds.length ? scopeAccountIds : undefined,
+        });
       },
     };
   }),

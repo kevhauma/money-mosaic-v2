@@ -71,7 +71,11 @@ export class NetWorthProjectionChartComponent {
   );
 
   protected readonly caption = computed(() =>
-    projectionCaption(this.mode(), this.forecastStore.omittedGoalCount()),
+    projectionCaption(
+      this.mode(),
+      this.forecastStore.omittedGoalCount(),
+      this.forecastStore.scopeLabel(),
+    ),
   );
 
   protected readonly chartAriaLabel = computed(() => projectionAriaLabel[this.mode()]);

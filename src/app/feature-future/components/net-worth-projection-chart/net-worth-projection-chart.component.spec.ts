@@ -72,6 +72,19 @@ const monthlyHistory = (count: number, amount = 200): Transaction[] => {
   });
 };
 
+/**
+ * Every fixture this file mounts, destroyed after each test. A live chart leaves a zrender paint
+ * queued on `requestAnimationFrame`; if the fixture is still mounted when the frame runs after the
+ * test ends, zrender dereferences a painter whose root has gone and throws out-of-band — which
+ * Vitest reports as an unhandled error and a non-zero exit, without failing any test.
+ */
+let mounted: ComponentFixture<NetWorthProjectionChartComponent> | null = null;
+
+afterEach(() => {
+  mounted?.destroy();
+  mounted = null;
+});
+
 const createFixture = async ({
   goals = [] as SavingsGoal[],
   transactions = [] as Transaction[],
@@ -113,6 +126,7 @@ const createFixture = async ({
     TestBed.inject(ForecastSettingsStore).hydrate(),
   ]);
   fixture.detectChanges();
+  mounted = fixture;
   return fixture;
 };
 

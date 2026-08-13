@@ -76,43 +76,77 @@ part, money crossing the boundary between a scoped and an unscoped account.
 
 ## Acceptance criteria
 
-- [ ] `netWorthContributionById` exists on `AccountsStore` and the sum of its values equals
+- [x] `netWorthContributionById` exists on `AccountsStore` and the sum of its values equals
       `netWorth()` — asserted on a fixture containing a joint account, an `attributionOverride` on a
       non-joint account, and a reimbursed transfer leg, i.e. every branch `resolveContribution` has.
-- [ ] `netWorth()` is unchanged by the refactor — the existing `AccountsStore` and dashboard specs
-      pass untouched.
-- [ ] With no scope set, the forecast's starting balance equals `AccountsStore.netWorth()` exactly.
-- [ ] With a scope set, the starting balance is the sum of the scoped accounts' contributions, and a
-      joint account in scope contributes the user's stake rather than the whole pot.
-- [ ] `computeSavingVelocity` with `scopeAccountIds` measures only scoped accounts' transactions,
+      (Spec "sums to exactly netWorth() across every resolveContribution branch", on exactly that
+      fixture; `netWorth` is now *defined* as the sum, so the two cannot drift.)
+- [x] `netWorth()` is unchanged by the refactor — the existing `AccountsStore` and dashboard specs
+      pass untouched. (The seven pre-existing `netWorth()` assertions in `accounts.store.spec.ts`
+      were not edited and still pass, including the "byte-identical to today" regression guard.)
+- [x] With no scope set, the forecast's starting balance equals `AccountsStore.netWorth()` exactly.
+      (`ForecastStore.startingBalance` returns `netWorth()` itself when the scope is empty — the
+      same value, not a re-derivation.)
+- [x] With a scope set, the starting balance is the sum of the scoped accounts' contributions, and a
+      joint account in scope contributes the user's stake rather than the whole pot. (Spec "holds one
+      entry per account, with a joint account carrying only my stake" — 4000 at 50% less my half of
+      the shared spend.)
+- [x] `computeSavingVelocity` with `scopeAccountIds` measures only scoped accounts' transactions,
       and with the parameter absent produces results identical to before this ticket (asserted
-      against the FUT-01 fixtures).
-- [ ] A transfer between two in-scope accounts nets to zero over the window, on both bases.
-- [ ] A transfer from an in-scope account to an out-of-scope account **reduces** the measured
+      against the FUT-01 fixtures). (Specs "measures only the scoped accounts' transactions" and "is
+      unchanged from FUT-01 when the parameter is absent or the scope is empty"; FUT-01's own 15
+      cases were not edited.)
+- [x] A transfer between two in-scope accounts nets to zero over the window, on both bases.
+      (`it.each` over both bases: the scoped result equals the unscoped one.)
+- [x] A transfer from an in-scope account to an out-of-scope account **reduces** the measured
       velocity, and one arriving from an out-of-scope account **increases** it — on both bases, each
-      asserted with its own case. This is the ticket's central correctness claim.
-- [ ] Selecting all accounts explicitly gives the same figures as selecting none.
-- [ ] The account multi-select renders in the forecast controls, persists across a reload, and
-      recomputes the ETAs and the chart when changed.
-- [ ] Unticking the last remaining account reverts to "All accounts" rather than yielding an empty
-      or zero forecast.
-- [ ] A `scopeAccountIds` entry for a deleted account is ignored without an error, and the remaining
-      selection still applies.
-- [ ] FUT-05's summary and FUT-07's chart caption name the active scope whenever it is not "all
-      accounts".
-- [ ] All settings writes go through `ForecastSettingsStore`; the aggregates stay pure and
-      clock-free, with no store or Dexie import.
-- [ ] Unit tests cover: the contribution map summing to net worth across every
+      asserted with its own case. This is the ticket's central correctness claim. (Four cases via
+      two `it.each` blocks, plus an exact-figure case: a €300 move to an unscoped savings account
+      takes the net-cash-flow rate from €1.000 to €850/month, where unscoped it is invisible.
+      Note on the arriving case: an inflow only registers on the *savings* basis when it comes from
+      a savings account, so that fixture is a withdrawal out of unscoped savings — the case that
+      actually exercises both bases.)
+- [x] Selecting all accounts explicitly gives the same figures as selecting none. (Spec "is
+      identical to no scope when every account is selected explicitly".)
+- [x] The account multi-select renders in the forecast controls, persists across a reload, and
+      recomputes the ETAs and the chart when changed. (Five component specs; live, scoping to
+      "Everyday Checking" recomputed the rate, the rows, the summary and the chart together.)
+- [x] Unticking the last remaining account reverts to "All accounts" rather than yielding an empty
+      or zero forecast. (Spec "reverts to all accounts when the last one is unticked"; an empty
+      array is stored as `undefined` so "all accounts" has one representation. Verified live.)
+- [x] A `scopeAccountIds` entry for a deleted account is ignored without an error, and the remaining
+      selection still applies. (Spec "ignores an id whose account has since been deleted" — the
+      store filters the selection against `accountsById` on read.)
+- [x] FUT-05's summary and FUT-07's chart caption name the active scope whenever it is not "all
+      accounts". (One shared `scopeSentence` helper used by both. Live: "Everyday Checking only —
+      not your full net worth." appeared on both, and disappeared on revert.)
+- [x] All settings writes go through `ForecastSettingsStore`; the aggregates stay pure and
+      clock-free, with no store or Dexie import. (`setScopeAccountIds` on the store/repository;
+      `computeSavingVelocity` takes the scope as a plain `ReadonlySet<number>` option.)
+- [x] Unit tests cover: the contribution map summing to net worth across every
       `resolveContribution` branch; scoped vs unscoped starting balance; the joint-account stake in
       scope; the four boundary-crossing cases (in→in, in→out, out→in, both bases); parameter-absent
       equivalence with FUT-01; the last-account revert; the stale-id case; and the caption naming
-      the scope.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
-- [ ] Verified live in the browser: scoping to a single checking account visibly lowers both the
+      the scope. (3 store cases, 8 velocity-scope cases, 5 control cases.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Lint clean; 2953 tests / 264 files green on two consecutive runs;
+      `Initial total` unchanged at 2.16 MB.)
+- [x] Verified live in the browser: scoping to a single checking account visibly lowers both the
       starting balance and the rate, and the caption explains the difference from the Dashboard's
-      net worth card. *(Ask the user first; if declined, note it here rather than ticking.)*
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      net worth card. (Scoping to "Everyday Checking" took the measured rate from **€1.600,10** to
+      **€1.297,96/month** — the boundary rule at work, since money moved to the unscoped savings
+      account now counts as having left — and flipped "Kitchen" out of *You can buy this now*, since
+      the scoped starting balance no longer covers it. Both captions named the scope; unticking it
+      restored €1.600,10 and dropped the sentence. No console errors.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 introduced findings; the single remaining complexity finding is
+      `introduced: false` (a pre-existing `app-db.ts` upgrade block). Five findings were fixed by
+      extraction on the way — `weightedOpeningBalance` out of the contribution map, and
+      `accountIdsByIban`/`legsByTransfer`/`counterpartOf`/`scopedTransactions` out of the velocity's
+      scope handling. Two of my own specs also proved flaky under full-suite load and were made
+      deterministic: the whole-page ones now poll with `vi.waitFor` under an explicit per-test
+      timeout, and the chart fixtures are destroyed after each test so zrender cannot paint into a
+      torn-down canvas.)
 
 ## Notes
 

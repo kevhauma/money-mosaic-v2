@@ -59,6 +59,20 @@ export const ForecastStore = signalStore(
     const goalsStore = inject(GoalsStore);
     const forecastSettingsStore = inject(ForecastSettingsStore);
 
+    /**
+     * The chosen accounts that still exist (TICKET-FUT-08) — a stale id left behind by a deleted
+     * account is dropped on read rather than being fatal, and an empty result means "all accounts",
+     * exactly as an unset scope does.
+     */
+    const scopeAccountIds = computed(
+      () =>
+        new Set(
+          forecastSettingsStore
+            .activeScopeAccountIds()
+            .filter((id) => accountsStore.accountsById().has(id)),
+        ),
+    );
+
     const velocity = computed(() =>
       computeSavingVelocity(transactionsStore.transactions(), {
         today: todayIso(),
@@ -67,8 +81,36 @@ export const ForecastStore = signalStore(
         ownSavingsIbans: savingsAccountIbans(accountsStore.accounts()),
         categoriesById: categoriesStore.categoriesById(),
         accountsById: accountsStore.accountsById(),
+        scopeAccountIds: scopeAccountIds(),
       }),
     );
+
+    /**
+     * What the plan starts from: the scoped accounts' own net-worth contributions, or — with no
+     * scope — `AccountsStore.netWorth()` itself. Equal by construction rather than by coincidence,
+     * since `netWorth` *is* the sum of that map.
+     */
+    const startingBalance = computed(() => {
+      const scope = scopeAccountIds();
+      if (scope.size === 0) return accountsStore.netWorth();
+
+      let total = 0;
+      for (const [accountId, contribution] of accountsStore.netWorthContributionById()) {
+        if (scope.has(accountId)) total += contribution;
+      }
+      return total;
+    });
+
+    /** "Checking + Savings only" — `''` when the forecast is looking at everything. */
+    const scopeLabel = computed(() => {
+      const scope = scopeAccountIds();
+      if (scope.size === 0) return '';
+      return accountsStore
+        .accounts()
+        .filter((account) => scope.has(account.id!))
+        .map((account) => account.name)
+        .join(' + ');
+    });
 
     /**
      * What the plan may actually spend: the Dashboard's own net-worth figure, less the floor the
@@ -76,13 +118,13 @@ export const ForecastStore = signalStore(
      * page never derives a second one.
      */
     const spendableBalance = computed(
-      () => accountsStore.netWorth() - forecastSettingsStore.safetyNetAmount(),
+      () => startingBalance() - forecastSettingsStore.safetyNetAmount(),
     );
 
     const affordability = computed(() =>
       computeGoalAffordability(goalsStore.activeGoals(), {
         today: todayIso(),
-        startingBalance: accountsStore.netWorth(),
+        startingBalance: startingBalance(),
         safetyNetAmount: forecastSettingsStore.safetyNetAmount(),
         perMonth: velocity().perMonth,
       }),
@@ -104,7 +146,7 @@ export const ForecastStore = signalStore(
     const baseProjection = computed(() =>
       computeNetWorthProjection({
         today: todayIso(),
-        startingBalance: accountsStore.netWorth(),
+        startingBalance: startingBalance(),
         perMonth: velocity().perMonth,
         purchases: [],
         horizonMonths: projectionHorizonMonths(),
@@ -136,7 +178,7 @@ export const ForecastStore = signalStore(
     const measuredProjection = computed(() =>
       computeNetWorthProjection({
         today: todayIso(),
-        startingBalance: accountsStore.netWorth(),
+        startingBalance: startingBalance(),
         perMonth: velocity().perMonth,
         purchases: plottablePurchases(),
         horizonMonths: projectionHorizonMonths(),
@@ -147,7 +189,7 @@ export const ForecastStore = signalStore(
     const requiredPlan = computed(() =>
       computeRequiredSavingRate(goalsStore.activeGoals(), {
         today: todayIso(),
-        startingBalance: accountsStore.netWorth(),
+        startingBalance: startingBalance(),
         safetyNetAmount: forecastSettingsStore.safetyNetAmount(),
         perMonth: velocity().perMonth,
       }),
@@ -179,7 +221,7 @@ export const ForecastStore = signalStore(
 
       return computeNetWorthProjection({
         today: todayIso(),
-        startingBalance: accountsStore.netWorth(),
+        startingBalance: startingBalance(),
         perMonth: requiredPlan().planRequiredPerMonth ?? velocity().perMonth,
         purchases: dated,
         horizonMonths: projectionHorizonMonths(),
@@ -192,7 +234,10 @@ export const ForecastStore = signalStore(
 
     return {
       velocity,
+      startingBalance,
       spendableBalance,
+      scopeAccountIds,
+      scopeLabel,
       affordability,
       requiredPlan,
       isRequiredRateMode,

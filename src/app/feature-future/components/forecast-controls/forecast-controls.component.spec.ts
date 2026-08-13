@@ -37,6 +37,7 @@ const forecastSettingsRepository = {
   setBasis: vi.fn().mockResolvedValue(1),
   setSafetyNetAmount: vi.fn().mockResolvedValue(1),
   setMode: vi.fn().mockResolvedValue(1),
+  setScopeAccountIds: vi.fn().mockResolvedValue(1),
 };
 
 const account: Account = {
@@ -74,13 +75,14 @@ const monthlyHistory = (count: number): Transaction[] => {
 const createFixture = async (
   settings: ForecastSettings = DEFAULT_FORECAST_SETTINGS,
   transactions: Transaction[] = [],
+  accounts: Account[] = [account],
 ): Promise<ComponentFixture<ForecastControlsComponent>> => {
   forecastSettingsRepository.get.mockResolvedValue(settings);
   await TestBed.configureTestingModule({
     imports: [ForecastControlsComponent],
     providers: [
       { provide: ForecastSettingsRepository, useValue: forecastSettingsRepository },
-      { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue([account]) } },
+      { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue(accounts) } },
       {
         provide: TransactionsRepository,
         useValue: { getAll: vi.fn().mockResolvedValue(transactions) },
@@ -289,6 +291,14 @@ describe('ForecastControlsComponent: the controls move the forecast below them (
    * change when they do, and a spec that only watched the controls would never notice if the wiring
    * between them and `ForecastStore` came loose.
    */
+  // A live chart leaves a zrender paint queued on rAF; destroying the page keeps it from firing
+  // against a torn-down painter after the test ends.
+  let mountedPage: ComponentFixture<FutureOverviewComponent> | null = null;
+  afterEach(() => {
+    mountedPage?.destroy();
+    mountedPage = null;
+  });
+
   const createPage = async (
     goals: SavingsGoal[],
     transactions: Transaction[],
@@ -320,6 +330,7 @@ describe('ForecastControlsComponent: the controls move the forecast below them (
     }).compileComponents();
 
     const fixture = TestBed.createComponent(FutureOverviewComponent);
+    mountedPage = fixture;
     await Promise.all([
       TestBed.inject(ForecastSettingsStore).hydrate(),
       TestBed.inject(AccountsStore).hydrate(),
@@ -352,12 +363,19 @@ describe('ForecastControlsComponent: the controls move the forecast below them (
     // The store awaits its repository before patching, and that promise is not something the
     // fixture can await — so poll rather than betting on a single macrotask, which is flaky when
     // the whole suite is running.
-    await vi.waitFor(() => {
-      fixture.detectChanges();
-      expect(page.textContent).not.toContain('You can buy this now');
-    });
+    // Generous, because this fixture mounts the whole page — chart included — and the store awaits
+    // its repository before patching. `waitFor` only waits as long as it actually needs to.
+    await vi.waitFor(
+      () => {
+        fixture.detectChanges();
+        expect(page.textContent).not.toContain('You can buy this now');
+      },
+      { timeout: 8_000, interval: 25 },
+    );
     expect(page.textContent).toMatch(/in \d+ months?/);
-  });
+    // Explicit per-test timeout: this fixture mounts the whole page, and Vitest's 5s default is
+    // marginal for it once the rest of the suite is competing for the worker.
+  }, 15_000);
 
   it('changing the lookback recomputes the rate and the ETAs together', async () => {
     // Six months of +200, then a much better three most recent months would change a 3-month rate.
@@ -367,12 +385,15 @@ describe('ForecastControlsComponent: the controls move the forecast below them (
 
     setValue(page.querySelector('mm-select select') as HTMLSelectElement, '3');
 
-    await vi.waitFor(() => {
-      fixture.detectChanges();
-      expect(page.textContent).toContain('3 complete months');
-    });
+    await vi.waitFor(
+      () => {
+        fixture.detectChanges();
+        expect(page.textContent).toContain('3 complete months');
+      },
+      { timeout: 8_000, interval: 25 },
+    );
     expect(forecastSettingsRepository.setLookbackMonths).toHaveBeenCalledWith(3);
-  });
+  }, 15_000);
 });
 
 describe('ForecastControlsComponent: the mode toggle (TICKET-FUT-09)', () => {
@@ -425,5 +446,82 @@ describe('ForecastControlsComponent: the mode toggle (TICKET-FUT-09)', () => {
     });
 
     expect(activeModeLabel(fixture)).toBe('When can I afford it?');
+  });
+});
+
+describe('ForecastControlsComponent: the account scope (TICKET-FUT-08)', () => {
+  withCleanFormatSettings();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const scopeCheckboxes = (fixture: ComponentFixture<ForecastControlsComponent>) =>
+    [...host(fixture).querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[];
+
+  const withTwoAccounts = (settings: ForecastSettings = DEFAULT_FORECAST_SETTINGS) => {
+    forecastSettingsRepository.get.mockResolvedValue(settings);
+    return createFixture(
+      settings,
+      [],
+      [
+        { ...account, id: 1, name: 'Checking' },
+        { ...account, id: 2, name: 'Savings', type: 'savings' as const },
+      ],
+    );
+  };
+
+  it('offers every account, unticked, and says the forecast is looking at all of them', async () => {
+    const fixture = await withTwoAccounts();
+
+    expect(scopeCheckboxes(fixture)).toHaveLength(2);
+    expect(scopeCheckboxes(fixture).every((box) => !box.checked)).toBe(true);
+    expect(host(fixture).textContent).toContain('All accounts');
+  });
+
+  it('persists a selection through the store', async () => {
+    const fixture = await withTwoAccounts();
+
+    scopeCheckboxes(fixture)[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(forecastSettingsRepository.setScopeAccountIds).toHaveBeenCalledWith([1]);
+  });
+
+  it('reflects a persisted scope and names it', async () => {
+    const fixture = await withTwoAccounts({
+      ...DEFAULT_FORECAST_SETTINGS,
+      scopeAccountIds: [2],
+    });
+
+    expect(scopeCheckboxes(fixture)[1].checked).toBe(true);
+    expect(host(fixture).textContent).toContain('Savings');
+  });
+
+  it('reverts to all accounts when the last one is unticked, rather than emptying the forecast', async () => {
+    const fixture = await withTwoAccounts({
+      ...DEFAULT_FORECAST_SETTINGS,
+      scopeAccountIds: [1],
+    });
+
+    scopeCheckboxes(fixture)[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // An empty array is stored as "all accounts" — the zero-account state is not reachable.
+    expect(forecastSettingsRepository.setScopeAccountIds).toHaveBeenCalledWith([]);
+    expect(host(fixture).textContent).toContain('All accounts');
+  });
+
+  it('ignores an id whose account has since been deleted, and keeps the rest of the selection', async () => {
+    const fixture = await withTwoAccounts({
+      ...DEFAULT_FORECAST_SETTINGS,
+      scopeAccountIds: [2, 999],
+    });
+
+    expect(host(fixture).textContent).toContain('Savings');
+    expect(host(fixture).textContent).not.toContain('All accounts');
+    expect(scopeCheckboxes(fixture)[1].checked).toBe(true);
   });
 });

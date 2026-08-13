@@ -3,6 +3,7 @@ import {
   bucketDateBoundaries,
   bucketKeysInRange,
   formatIsoDate,
+  normalizeIban,
   parseIsoDate,
 } from '@/shared/utils';
 import { computePeriodStats } from './period-stats';
@@ -81,6 +82,117 @@ const resolveWindow = (
   return { start: historyStart > requestedStart ? historyStart : requestedStart, end };
 };
 
+/**
+ * The accounts a leg's *counterpart* sits in, for every transaction that has one — the sibling leg
+ * of a linked transfer, or the own account whose IBAN a one-sided savings movement names.
+ */
+const accountIdsByIban = (accountsById: ReadonlyMap<number, Account>): Map<string, number> => {
+  const byIban = new Map<string, number>();
+  for (const account of accountsById.values()) {
+    const iban = normalizeIban(account.iban);
+    if (iban) byIban.set(iban, account.id!);
+  }
+  return byIban;
+};
+
+const legsByTransfer = (transactions: Transaction[]): Map<number, Transaction[]> => {
+  const legs = new Map<number, Transaction[]>();
+  for (const transaction of transactions) {
+    if (transaction.transferId == null) continue;
+    legs.set(transaction.transferId, [...(legs.get(transaction.transferId) ?? []), transaction]);
+  }
+  return legs;
+};
+
+/**
+ * The account on the other side of one leg. The linked sibling wins over the IBAN: a leg can carry
+ * both, and a confirmed transfer link is the stronger fact.
+ */
+const counterpartOf = (
+  transaction: Transaction,
+  legs: Map<number, Transaction[]>,
+  accountIdByIban: Map<string, number>,
+): number | undefined => {
+  const sibling = (legs.get(transaction.transferId as number) ?? []).find(
+    (leg) => leg.id !== transaction.id,
+  );
+  return sibling?.accountId ?? accountIdByIban.get(normalizeIban(transaction.counterpartyIban));
+};
+
+const counterpartAccountOf = (
+  transactions: Transaction[],
+  accountsById: ReadonlyMap<number, Account>,
+): Map<number, number> => {
+  const byIban = accountIdsByIban(accountsById);
+  const legs = legsByTransfer(transactions);
+
+  const counterpartByTransactionId = new Map<number, number>();
+  for (const transaction of transactions) {
+    const counterpart = counterpartOf(transaction, legs, byIban);
+    if (counterpart != null) counterpartByTransactionId.set(transaction.id!, counterpart);
+  }
+  return counterpartByTransactionId;
+};
+
+/**
+ * The transactions to measure when a scope is set, with the boundary rule applied
+ * (TICKET-FUT-08) — **the single most likely way this feature could be quietly wrong**.
+ *
+ * Money that leaves the scope is spent and money that arrives is income, because that is the only
+ * rule under which the projected line matches what the selected accounts' balances would actually
+ * do. Left alone, a transfer to an unscoped savings account nets to zero (`kind: 'savings'`) and a
+ * linked transfer leg is skipped outright — so scoping to a current account would project a balance
+ * that keeps growing by money that has already left it.
+ *
+ * Only the *crossing* legs are rewritten, and only in the two fields that cause the netting:
+ * `transferId` (which makes a leg skip) and a `counterpartyIban` pointing at an own savings account
+ * (which makes it net). The classification context — `accountsById`, `categoriesById`,
+ * `ownSavingsIbans` — stays the full universe, so nothing is reclassified as a side effect of the
+ * selection: a leg between two accounts that are *both* in scope still nets to zero, exactly as it
+ * does with no scope at all.
+ */
+const applyScope = (
+  transactions: Transaction[],
+  scope: ReadonlySet<number>,
+  accountsById: ReadonlyMap<number, Account>,
+  ownSavingsIbans: ReadonlySet<string>,
+): Transaction[] => {
+  const counterpartByTransactionId = counterpartAccountOf(transactions, accountsById);
+
+  return transactions
+    .filter((transaction) => scope.has(transaction.accountId))
+    .map((transaction) => {
+      const counterpart = counterpartByTransactionId.get(transaction.id!);
+      if (counterpart == null || scope.has(counterpart)) return transaction;
+
+      return {
+        ...transaction,
+        transferId: undefined,
+        counterpartyIban: ownSavingsIbans.has(normalizeIban(transaction.counterpartyIban))
+          ? undefined
+          : transaction.counterpartyIban,
+      };
+    });
+};
+
+/** The measured universe: every transaction, or the scoped subset with the boundary rule applied. */
+const scopedTransactions = (
+  transactions: Transaction[],
+  context: {
+    scopeAccountIds?: ReadonlySet<number>;
+    accountsById: ReadonlyMap<number, Account>;
+    ownSavingsIbans: ReadonlySet<string>;
+  },
+): Transaction[] =>
+  context.scopeAccountIds?.size
+    ? applyScope(
+        transactions,
+        context.scopeAccountIds,
+        context.accountsById,
+        context.ownSavingsIbans,
+      )
+    : transactions;
+
 /** One point per complete month in `[start, end]`, measured on the requested basis. */
 const measureMonths = (
   transactions: Transaction[],
@@ -138,6 +250,11 @@ export const computeSavingVelocity = (
     ownSavingsIbans?: ReadonlySet<string>;
     categoriesById?: ReadonlyMap<number, Category>;
     accountsById?: ReadonlyMap<number, Account>;
+    /**
+     * Measure only these accounts (TICKET-FUT-08). Absent or empty = every account, which is the
+     * behaviour of every caller before that ticket.
+     */
+    scopeAccountIds?: ReadonlySet<number>;
   },
 ): SavingVelocity => {
   const {
@@ -147,19 +264,26 @@ export const computeSavingVelocity = (
     ownSavingsIbans = new Set<string>(),
     categoriesById = new Map<number, Category>(),
     accountsById = new Map<number, Account>(),
+    scopeAccountIds,
   } = options;
 
-  if (lookbackMonths < 1 || transactions.length === 0) {
+  const measured = scopedTransactions(transactions, {
+    scopeAccountIds,
+    accountsById,
+    ownSavingsIbans,
+  });
+
+  if (lookbackMonths < 1 || measured.length === 0) {
     return { basis, ...EMPTY_VELOCITY };
   }
 
-  const bounds = resolveWindow(transactions, today, lookbackMonths);
+  const bounds = resolveWindow(measured, today, lookbackMonths);
   if (bounds.start > bounds.end) {
     return { basis, ...EMPTY_VELOCITY };
   }
 
   const months = measureMonths(
-    transactions,
+    measured,
     bounds,
     basis,
     ownSavingsIbans,

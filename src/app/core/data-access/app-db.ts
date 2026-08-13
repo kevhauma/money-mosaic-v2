@@ -743,6 +743,10 @@ export const DEFAULT_FORECAST_SETTINGS: ForecastSettings = {
   basis: 'net-cash-flow',
   safetyNetAmount: 0,
   mode: 'when-affordable',
+  // Declared as `undefined` rather than omitted, the `DEFAULT_APP_SETTINGS` convention: this object
+  // seeds `ForecastSettingsStore`'s `withState`, and ngrx derives its signal members from the seed's
+  // *keys* — an omitted key means no signal at all, so a later `patchState` would be unreadable.
+  scopeAccountIds: undefined,
 };
 
 class AppDb extends Dexie {

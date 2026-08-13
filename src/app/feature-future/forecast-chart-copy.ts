@@ -22,8 +22,19 @@ const OMITTED_REASON: Record<ForecastMode, (count: number) => string> = {
     `there's no monthly figure to plot for ${count === 1 ? 'it' : 'them'}`,
 };
 
-export const projectionCaption = (mode: ForecastMode, omittedGoalCount: number): string => {
-  const base = STRAIGHT_LINE[mode];
+/**
+ * Named whenever it is not "all accounts" (TICKET-FUT-08), so a starting balance that differs from
+ * the Dashboard's net-worth card reads as the setting the user chose rather than as a bug.
+ */
+export const scopeSentence = (scopeLabel: string): string =>
+  scopeLabel ? ` ${scopeLabel} only — not your full net worth.` : '';
+
+export const projectionCaption = (
+  mode: ForecastMode,
+  omittedGoalCount: number,
+  scopeLabel = '',
+): string => {
+  const base = STRAIGHT_LINE[mode] + scopeSentence(scopeLabel);
   if (omittedGoalCount === 0) return base;
 
   const goalWord = omittedGoalCount === 1 ? 'goal is' : 'goals are';

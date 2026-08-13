@@ -1,4 +1,5 @@
-import type { Transaction } from '@/core/data-access';
+import type { Account, Transaction } from '@/core/data-access';
+import type { SavingBasis } from './saving-velocity';
 import { computePeriodStats } from './period-stats';
 import { computeSavingVelocity } from './saving-velocity';
 
@@ -16,6 +17,19 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
 
 const SAVINGS_IBAN = 'BE00SAVINGS';
 const ownSavingsIbans = new Set([SAVINGS_IBAN]);
+
+const accountOf = (id: number, name: string, type: Account['type'], iban: string): Account => ({
+  id,
+  name,
+  type,
+  iban,
+  currency: 'EUR',
+  openingBalance: 0,
+  openingBalanceDate: '2020-01-01',
+  color: '#000000',
+  icon: 'bank',
+  archived: false,
+});
 
 /** One income transaction of `amount` on the 5th of each given month, ids kept unique. */
 const monthlyIncome = (byMonth: Record<string, number>): Transaction[] =>
@@ -237,5 +251,182 @@ describe('computeSavingVelocity: a negative rate is a real answer', () => {
     expect(velocity.perMonth).toBe(-200);
     expect(velocity.min).toBe(-300);
     expect(velocity.max).toBe(-100);
+  });
+});
+
+describe('computeSavingVelocity: account scope (TICKET-FUT-08)', () => {
+  const CHECKING = 1;
+  const SAVINGS = 2;
+  const OTHER = 3;
+
+  const accountsById = new Map<number, Account>([
+    [CHECKING, accountOf(CHECKING, 'Checking', 'checking', 'BE00CHECKING')],
+    [SAVINGS, accountOf(SAVINGS, 'Savings', 'savings', SAVINGS_IBAN)],
+    [OTHER, accountOf(OTHER, 'Other', 'checking', 'BE00OTHER')],
+  ]);
+  const options = {
+    today: '2026-03-09',
+    lookbackMonths: 2,
+    ownSavingsIbans,
+    accountsById,
+  } as const;
+
+  /** Salary into checking, every month of the window, so there is always a baseline rate. */
+  const salary = [
+    transaction({ id: 1, accountId: CHECKING, bookingDate: '2026-01-05', amount: 1000 }),
+    transaction({ id: 2, accountId: CHECKING, bookingDate: '2026-02-05', amount: 1000 }),
+  ];
+
+  const rateOf = (transactions: Transaction[], basis: SavingBasis, scope?: number[]): number =>
+    computeSavingVelocity(transactions, {
+      ...options,
+      basis,
+      scopeAccountIds: scope ? new Set(scope) : undefined,
+    }).perMonth;
+
+  it('measures only the scoped accounts’ transactions', () => {
+    const withOther = [
+      ...salary,
+      transaction({ id: 3, accountId: OTHER, bookingDate: '2026-01-20', amount: -400 }),
+    ];
+
+    expect(rateOf(withOther, 'net-cash-flow')).toBe(800);
+    expect(rateOf(withOther, 'net-cash-flow', [CHECKING])).toBe(1000);
+  });
+
+  it('is identical to no scope when every account is selected explicitly', () => {
+    const transactions = [
+      ...salary,
+      transaction({ id: 3, accountId: OTHER, bookingDate: '2026-01-20', amount: -400 }),
+    ];
+
+    expect(rateOf(transactions, 'net-cash-flow', [CHECKING, SAVINGS, OTHER])).toBe(
+      rateOf(transactions, 'net-cash-flow'),
+    );
+  });
+
+  it.each<[SavingBasis]>([['net-cash-flow'], ['savings-transfers']])(
+    'nets a transfer between two in-scope accounts to zero on the %s basis',
+    (basis) => {
+      const both = [
+        ...salary,
+        transaction({
+          id: 3,
+          accountId: CHECKING,
+          bookingDate: '2026-01-20',
+          amount: -300,
+          transferId: 9,
+          counterpartyIban: SAVINGS_IBAN,
+        }),
+        transaction({
+          id: 4,
+          accountId: SAVINGS,
+          bookingDate: '2026-01-20',
+          amount: 300,
+          transferId: 9,
+          counterpartyIban: 'BE00CHECKING',
+        }),
+      ];
+
+      // Both accounts in scope: the movement is internal, exactly as with no scope at all.
+      expect(rateOf(both, basis, [CHECKING, SAVINGS])).toBe(rateOf(both, basis));
+    },
+  );
+
+  it.each<[SavingBasis]>([['net-cash-flow'], ['savings-transfers']])(
+    'treats money leaving the scope as spent on the %s basis',
+    (basis) => {
+      const leaving = [
+        ...salary,
+        transaction({
+          id: 3,
+          accountId: CHECKING,
+          bookingDate: '2026-01-20',
+          amount: -300,
+          transferId: 9,
+          counterpartyIban: SAVINGS_IBAN,
+        }),
+        transaction({
+          id: 4,
+          accountId: SAVINGS,
+          bookingDate: '2026-01-20',
+          amount: 300,
+          transferId: 9,
+          counterpartyIban: 'BE00CHECKING',
+        }),
+      ];
+
+      // Scoped to checking alone, the 300 has genuinely left — so the rate must fall by 150/month
+      // over the two-month window, not keep counting money that is no longer there.
+      expect(rateOf(leaving, basis, [CHECKING])).toBeLessThan(
+        rateOf(leaving, basis, [CHECKING, SAVINGS]),
+      );
+    },
+  );
+
+  it.each<[SavingBasis]>([['net-cash-flow'], ['savings-transfers']])(
+    'treats money arriving from outside the scope as income on the %s basis',
+    (basis) => {
+      // A withdrawal out of the savings account into checking. Whole-universe, that nets savings
+      // *down* by 300 and leaves net cash flow untouched; scoped to checking alone the 300 has
+      // genuinely arrived, so both bases have to move up.
+      const arriving = [
+        ...salary,
+        transaction({
+          id: 3,
+          accountId: CHECKING,
+          bookingDate: '2026-01-20',
+          amount: 300,
+          counterpartyIban: SAVINGS_IBAN,
+        }),
+      ];
+
+      expect(rateOf(arriving, basis, [CHECKING])).toBeGreaterThan(
+        rateOf(arriving, basis, [CHECKING, SAVINGS]),
+      );
+    },
+  );
+
+  it('counts a one-sided movement to an out-of-scope savings account as an outflow', () => {
+    const toSavings = [
+      ...salary,
+      transaction({
+        id: 3,
+        accountId: CHECKING,
+        bookingDate: '2026-01-20',
+        amount: -300,
+        counterpartyIban: SAVINGS_IBAN,
+      }),
+    ];
+
+    // Unscoped it is `savings`, so net-cash-flow ignores it entirely: 1000/month.
+    expect(rateOf(toSavings, 'net-cash-flow')).toBe(1000);
+    // Scoped to checking the money has left: 300 out over two months.
+    expect(rateOf(toSavings, 'net-cash-flow', [CHECKING])).toBe(850);
+  });
+
+  it('is unchanged from FUT-01 when the parameter is absent or the scope is empty', () => {
+    const transactions = [
+      ...salary,
+      transaction({
+        id: 3,
+        accountId: CHECKING,
+        bookingDate: '2026-01-20',
+        amount: -300,
+        counterpartyIban: SAVINGS_IBAN,
+      }),
+    ];
+    const withoutParameter = computeSavingVelocity(transactions, {
+      ...options,
+      basis: 'net-cash-flow',
+    });
+
+    expect(
+      computeSavingVelocity(transactions, {
+        ...options,
+        basis: 'net-cash-flow',
+        scopeAccountIds: new Set<number>(),
+      }),
+    ).toEqual(withoutParameter);
   });
 });

@@ -100,6 +100,7 @@ export class GoalsPanelComponent {
       requiredMode: this.forecastStore.isRequiredRateMode(),
       requiredPlan: this.forecastStore.requiredPlan(),
       goalsById: new Map(this.goalsStore.activeGoals().map((goal) => [goal.id!, goal])),
+      scopeLabel: this.forecastStore.scopeLabel(),
     }),
   );
 

@@ -62,13 +62,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Dashboard',
   },
   {
-    versionFolder: 'v2.2_goals_and_forecast',
-    ticketId: 'TICKET-FUT-08',
-    title:
-      'Point the forecast at just the accounts you would actually spend from, and leave the rest out',
-    area: 'Forecast',
-  },
-  {
     versionFolder: 'v9999_ideas',
     ticketId: 'topic-chart-builder',
     title: 'Chart builder: create your own custom visualizations from your data',

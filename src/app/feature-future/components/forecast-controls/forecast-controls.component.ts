@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AppSettingsStore, ForecastSettingsStore } from '@/core/state';
+import { AccountsStore, AppSettingsStore, ForecastSettingsStore } from '@/core/state';
 import type { ForecastMode } from '@/core/data-access';
 import type { SavingBasis } from '@/core/stats';
 import {
@@ -86,6 +86,41 @@ export class ForecastControlsComponent {
   );
 
   protected readonly readout = computed(() => describeVelocity(this.forecastStore.velocity()));
+
+  private readonly accountsStore = inject(AccountsStore);
+
+  /**
+   * The accounts worth offering (TICKET-FUT-08): every active one, plus an archived one that still
+   * carries a net-worth contribution — money that is still counted has to be excludable.
+   */
+  protected readonly scopeOptions = computed(() => {
+    const contributions = this.accountsStore.netWorthContributionById();
+    const scope = this.forecastStore.scopeAccountIds();
+    return this.accountsStore
+      .accounts()
+      .filter((account) => !account.archived || contributions.get(account.id!))
+      .map((account) => ({
+        id: account.id!,
+        name: account.name,
+        checked: scope.has(account.id!),
+      }));
+  });
+
+  /** No selection means every account — said in words, since an all-unticked list looks broken. */
+  protected readonly scopeSummary = computed(
+    () => this.forecastStore.scopeLabel() || 'All accounts',
+  );
+
+  /**
+   * Unticking the last account reverts to "all accounts" rather than producing an empty forecast:
+   * the zero-account state answers no question, so it is not reachable.
+   */
+  protected toggleScopeAccount(accountId: number, checked: boolean): void {
+    const next = new Set(this.forecastStore.scopeAccountIds());
+    if (checked) next.add(accountId);
+    else next.delete(accountId);
+    void this.forecastSettingsStore.setScopeAccountIds([...next]);
+  }
 
   constructor() {
     linkControlToSetting(
