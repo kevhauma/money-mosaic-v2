@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AppSettingsStore, ForecastSettingsStore } from '@/core/state';
+import type { ForecastMode } from '@/core/data-access';
 import type { SavingBasis } from '@/core/stats';
 import {
   FieldsetComponent,
@@ -19,6 +20,8 @@ import {
   BASIS_OPTIONS,
   BASIS_TABS,
   LOOKBACK_OPTIONS,
+  MODE_OPTIONS,
+  MODE_TABS,
   describeVelocity,
 } from '../../forecast-controls-vm';
 
@@ -59,6 +62,13 @@ export class ForecastControlsComponent {
 
   protected readonly lookbackOptions = LOOKBACK_OPTIONS;
   protected readonly basisTabs = BASIS_TABS;
+  protected readonly modeTabs = MODE_TABS;
+
+  /** Which question the page is answering (TICKET-FUT-09) — page-level, so it leads the panel. */
+  protected readonly mode = this.forecastSettingsStore.activeMode;
+  protected readonly modeHint = computed(
+    () => MODE_OPTIONS.find((option) => option.value === this.mode())?.hint,
+  );
 
   /** The basis is a two-option toggle, so it reads straight off the store rather than a control. */
   protected readonly basis = this.forecastSettingsStore.basis;
@@ -88,6 +98,11 @@ export class ForecastControlsComponent {
       () => String(this.forecastSettingsStore.safetyNetAmount()),
       (value) => this.writeSafetyNet(value),
     );
+  }
+
+  protected onModeChange(value: string | undefined): void {
+    if (!value) return;
+    void this.forecastSettingsStore.setMode(value as ForecastMode);
   }
 
   protected onBasisChange(value: string | undefined): void {

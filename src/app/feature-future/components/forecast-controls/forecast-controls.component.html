@@ -1,4 +1,15 @@
 <mm-paper>
+  <!-- Which question the page is answering (TICKET-FUT-09). Page-level: it changes what every
+       figure below means, so it leads rather than sitting among the three parameters. -->
+  <mm-tabs
+    [tabs]="modeTabs"
+    [selected]="mode()"
+    (selectedChange)="onModeChange($event)"
+    variant="box"
+    class="mb-2 w-fit"
+  />
+  <mm-text as="p" variant="caption" class="mb-4">{{ modeHint() }}</mm-text>
+
   <mm-text as="h2" variant="subheading" weight="semibold" class="mb-1">Forecast settings</mm-text>
   <mm-text as="p" variant="caption" class="mb-3">
     These three decide every date on this page: how far back your saving is measured, what counts as

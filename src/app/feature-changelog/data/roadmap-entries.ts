@@ -63,13 +63,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.2_goals_and_forecast',
-    ticketId: 'TICKET-FUT-09',
-    title:
-      'Switch the forecast around: pick the date you need something by and see what it takes to save for it each month',
-    area: 'Forecast',
-  },
-  {
-    versionFolder: 'v2.2_goals_and_forecast',
     ticketId: 'TICKET-FUT-08',
     title:
       'Point the forecast at just the accounts you would actually spend from, and leave the rest out',

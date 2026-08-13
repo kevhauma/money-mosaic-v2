@@ -1,7 +1,21 @@
 import type { SavingsGoal } from '@/core/data-access';
-import type { GoalAffordability, GoalAffordabilityReason } from '@/core/stats';
+import type {
+  GoalAffordability,
+  GoalAffordabilityReason,
+  GoalRequiredSaving,
+  RequiredSavingReason,
+} from '@/core/stats';
 import type { BadgeColor } from '@/shared/ui';
 import { formatCurrency, formatDate, formatMonthYear } from '@/shared/utils';
+
+/** No answer to give yet — the row still lists the goal, just without a verdict on it. */
+const BLANK_FACTS = {
+  etaLabel: '',
+  etaColor: 'neutral' as BadgeColor,
+  cumulativeLabel: '',
+  trackLabel: '',
+  trackColor: 'error' as BadgeColor,
+};
 
 /**
  * One row of the goals list, resolved once in the component (TICKET-FUT-04/FUT-05) so the `@for`
@@ -73,15 +87,7 @@ const trackFactsFor = (entry: GoalAffordability): Pick<GoalRowVm, 'trackLabel' |
 const affordabilityFactsFor = (
   entry: GoalAffordability | undefined,
 ): Pick<GoalRowVm, 'etaLabel' | 'etaColor' | 'cumulativeLabel' | 'trackLabel' | 'trackColor'> => {
-  if (!entry) {
-    return {
-      etaLabel: '',
-      etaColor: 'neutral',
-      cumulativeLabel: '',
-      trackLabel: '',
-      trackColor: 'error',
-    };
-  }
+  if (!entry) return BLANK_FACTS;
 
   return {
     etaLabel: etaLabelFor(entry),
@@ -96,17 +102,76 @@ const metaLabelFor = (goal: SavingsGoal): string =>
     .filter(Boolean)
     .join(' · ');
 
-/** One row's full render state — the goal, its formatting, and FUT-05's answer for it. */
+const REQUIRED_COLOR: Record<RequiredSavingReason, BadgeColor> = {
+  'already-affordable': 'success',
+  required: 'info',
+  'due-now': 'error',
+  'no-target-date': 'neutral',
+};
+
+/** The gap phrase — the thing the user is actually deciding on, in either direction. */
+const gapLabelFor = (entry: GoalRequiredSaving): string => {
+  const gap = entry.gapPerMonth ?? 0;
+  if (gap <= 0) return `${formatCurrency(-gap)}/month less than you save — you're ahead of this`;
+  return `${formatCurrency(gap)}/month more than you've been saving`;
+};
+
+/** The two required-mode verdicts whose phrasing carries no figure. */
+const FIXED_REQUIRED_LABEL: Partial<Record<RequiredSavingReason, string>> = {
+  'already-affordable': 'You can buy this now',
+  'no-target-date': 'Add a wanted-by date to see what this needs',
+};
+
+/** "Save ≈ €340/month to make June 2027", or why there is no such number. */
+const requiredLabelFor = (entry: GoalRequiredSaving, goal: SavingsGoal): string => {
+  const fixed = FIXED_REQUIRED_LABEL[entry.reason];
+  if (fixed) return fixed;
+  if (entry.reason === 'due-now') {
+    return `Wanted this month — you're ${formatCurrency(entry.shortfallNow ?? 0)} short right now`;
+  }
+  // "≈" and not an exact-looking figure: `formatCurrency` rounds to cents, and a rate rounded down
+  // would under-fund the goal by that rounding error every month.
+  return `Save ≈ ${formatCurrency(entry.requiredPerMonth as number)}/month to make ${formatMonthYear(goal.targetDate as string)}`;
+};
+
+/** The required-rate reading of one row (TICKET-FUT-09) — the same row, a different question. */
+const requiredFactsFor = (
+  goal: SavingsGoal,
+  entry: GoalRequiredSaving | undefined,
+): Pick<GoalRowVm, 'etaLabel' | 'etaColor' | 'cumulativeLabel' | 'trackLabel' | 'trackColor'> => {
+  if (!entry) return BLANK_FACTS;
+
+  return {
+    etaLabel: requiredLabelFor(entry, goal),
+    etaColor: REQUIRED_COLOR[entry.reason],
+    cumulativeLabel:
+      entry.reason === 'required'
+        ? gapLabelFor(entry)
+        : `${formatCurrency(entry.cumulativeTarget)} with everything above it`,
+    trackLabel: '',
+    trackColor: 'error',
+  };
+};
+
+/**
+ * One row's full render state — the goal, its formatting, and whichever question the page is
+ * answering about it (TICKET-FUT-05 / TICKET-FUT-09). The two modes swap the readout on the *same*
+ * row rather than rendering a second list.
+ */
 export const buildGoalRow = (
   goal: SavingsGoal,
   index: number,
   count: number,
-  affordability: GoalAffordability | undefined,
+  verdict:
+    | { mode: 'when-affordable'; affordability: GoalAffordability | undefined }
+    | { mode: 'required-rate'; required: GoalRequiredSaving | undefined },
 ): GoalRowVm => ({
   goal,
   amountLabel: formatCurrency(goal.targetAmount),
   metaLabel: metaLabelFor(goal),
-  ...affordabilityFactsFor(affordability),
+  ...(verdict.mode === 'required-rate'
+    ? requiredFactsFor(goal, verdict.required)
+    : affordabilityFactsFor(verdict.affordability)),
   isFirst: index === 0,
   isLast: index === count - 1,
 });

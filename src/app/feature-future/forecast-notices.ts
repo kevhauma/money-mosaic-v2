@@ -1,6 +1,7 @@
-import type { GoalAffordability, SavingVelocity } from '@/core/stats';
+import type { SavingsGoal } from '@/core/data-access';
+import type { GoalAffordability, RequiredSavingPlan, SavingVelocity } from '@/core/stats';
 import type { AlertStatus } from '@/shared/ui';
-import { formatMonthYear } from '@/shared/utils';
+import { formatCurrency, formatMonthYear } from '@/shared/utils';
 
 /**
  * The one-line verdict above the goals list: where the plan lands, or — just as often — why it
@@ -22,9 +23,7 @@ const goalWord = (count: number): string => (count === 1 ? 'goal' : 'goals');
  * The states where there is no answer to give yet — `null` when the forecast can proceed. Each one
  * names what is missing *and* what would fix it, rather than leaving a blank where a date should be.
  */
-const blockingNotice = (dataReady: boolean, velocity: SavingVelocity): ForecastNotice | null => {
-  if (!dataReady) return { text: 'Working out where this plan lands…', status: 'info' };
-
+const blockingNotice = (velocity: SavingVelocity): ForecastNotice | null => {
   if (!velocity.hasEnoughHistory) {
     return {
       text: 'Not enough complete months of history yet to measure what you save — import more history, or shorten the window.',
@@ -79,18 +78,73 @@ const landingNotice = (goalCount: number, affordability: GoalAffordability[]): F
   };
 };
 
-export const forecastNotice = (input: {
+/**
+ * What the whole plan demands, in required-rate mode (TICKET-FUT-09) — one rate, not a sum, and the
+ * goal that sets it, because that is the one to move or to move the date of.
+ */
+const comparisonPhrase = (gap: number, perMonth: number): string => {
+  const averaged = `the ${formatCurrency(perMonth)} you've averaged`;
+  return gap > 0
+    ? `${formatCurrency(gap)}/month more than ${averaged}`
+    : `${formatCurrency(-gap)}/month less than ${averaged}`;
+};
+
+/** "Camera is the one setting the pace." — or nothing, when the goal has gone. */
+const pacePhrase = (name: string | undefined): string =>
+  name ? ` ${name} is the one setting the pace.` : '';
+
+const NO_DATES: ForecastNotice = {
+  text: 'None of your goals has a wanted-by date yet — add one and this works out what it would take each month.',
+  status: 'warning',
+};
+
+const requiredNotice = (
+  plan: RequiredSavingPlan,
+  velocity: SavingVelocity,
+  goalsById: Map<number, SavingsGoal>,
+): ForecastNotice => {
+  const required = plan.planRequiredPerMonth;
+  if (required == null) return NO_DATES;
+
+  const gap = required - velocity.perMonth;
+  const pace = pacePhrase(goalsById.get(plan.bindingGoalId as number)?.name);
+
+  return {
+    text: `To hit every date, save ≈ ${formatCurrency(required)}/month — ${comparisonPhrase(gap, velocity.perMonth)}.${pace}`,
+    status: gap > 0 ? 'warning' : 'info',
+  };
+};
+
+export type ForecastNoticeInput = {
   dataReady: boolean;
   goalCount: number;
   velocity: SavingVelocity;
   affordability: GoalAffordability[];
-}): ForecastNotice => {
+  requiredMode?: boolean;
+  requiredPlan?: RequiredSavingPlan;
+  goalsById?: Map<number, SavingsGoal>;
+};
+
+const LOADING: ForecastNotice = { text: 'Working out where this plan lands…', status: 'info' };
+
+/**
+ * `null` when the page is not being read in required-rate mode. That mode still answers on a
+ * history too thin for the other one — the measured rate is its *comparison*, not its input — so it
+ * skips the blocking states entirely.
+ */
+const requiredModeNotice = (input: ForecastNoticeInput): ForecastNotice | null =>
+  input.requiredMode && input.requiredPlan
+    ? requiredNotice(input.requiredPlan, input.velocity, input.goalsById ?? new Map())
+    : null;
+
+const measuredModeNotice = (input: ForecastNoticeInput): ForecastNotice =>
+  blockingNotice(input.velocity) ?? landingNotice(input.goalCount, input.affordability);
+
+export const forecastNotice = (input: ForecastNoticeInput): ForecastNotice => {
   // No goals: the empty state below already says what to do, and a second sentence saying nothing
   // is happening would just be noise.
   if (input.goalCount === 0) return NONE;
+  if (!input.dataReady) return LOADING;
 
-  return (
-    blockingNotice(input.dataReady, input.velocity) ??
-    landingNotice(input.goalCount, input.affordability)
-  );
+  return requiredModeNotice(input) ?? measuredModeNotice(input);
 };

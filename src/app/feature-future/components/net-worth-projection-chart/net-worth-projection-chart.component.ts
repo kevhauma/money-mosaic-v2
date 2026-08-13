@@ -6,27 +6,40 @@ import { AppSettingsStore, ForecastSettingsStore, GoalsStore } from '@/core/stat
 import { EmptyStateComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { formatCurrency, formatMonthYear, HIDDEN_AMOUNT_TEXT } from '@/shared/utils';
 import { ForecastStore } from '../../forecast.store';
+import {
+  projectionAriaLabel,
+  projectionCaption,
+  projectionEmptyMessage,
+} from '../../forecast-chart-copy';
 import { buildNetWorthProjectionChartOption } from '../../net-worth-projection-chart-option';
-
-/** One row of the chart's screen-reader companion table (TICKET-STAT-20). */
-type ProjectionAccessibleRow = { month: string; balance: string; bought: string };
+import type { ProjectionAccessibleRow } from '../../projection-accessible-row';
+import { ProjectionFigureTableComponent } from '../projection-figure-table/projection-figure-table.component';
 
 /**
- * What the balance looks like as each goal gets bought (FR-FUT-5, TICKET-FUT-07) — the projection
- * drawn as a sawtooth rather than a line that only ever rises.
+ * What the balance looks like as each goal gets bought (FR-FUT-5, TICKET-FUT-07), in whichever
+ * direction the page is being read (TICKET-FUT-09) — drawn as a sawtooth rather than a line that
+ * only ever rises.
  *
  * The step-downs are the whole point: "when can I afford it" and "what am I left with afterwards"
  * are two halves of one question, and a rising line answers the first while flattering the second.
+ * In required-rate mode the line rises at what the plan *demands* and the measured rate is drawn
+ * dashed beside it, so the gap between them is the content.
  *
- * Every simplification in FUT-05 is inherited and said out loud in the caption rather than left for
- * a smooth curve to imply: straight line, no compounding, no inflation, no interest, no known
- * upcoming bills.
+ * Every simplification is inherited from FUT-05 and said out loud in the caption
+ * (`forecast-chart-copy.ts`) rather than left for a smooth curve to imply.
  *
  * Uses FUT-03's route-level `provideEchartsCore` — no provider of its own.
  */
 @Component({
   selector: 'app-net-worth-projection-chart',
-  imports: [NgxEchartsDirective, NgIcon, EmptyStateComponent, PaperComponent, TypographyComponent],
+  imports: [
+    NgxEchartsDirective,
+    NgIcon,
+    EmptyStateComponent,
+    PaperComponent,
+    ProjectionFigureTableComponent,
+    TypographyComponent,
+  ],
   templateUrl: './net-worth-projection-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerChartLine })],
@@ -37,60 +50,59 @@ export class NetWorthProjectionChartComponent {
   private readonly forecastSettingsStore = inject(ForecastSettingsStore);
 
   protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
+  protected readonly isRequiredRateMode = this.forecastStore.isRequiredRateMode;
+
+  private readonly mode = this.forecastSettingsStore.activeMode;
+  private readonly goalCount = computed(() => this.goalsStore.activeGoals().length);
 
   /**
-   * There is a forecast worth drawing only once the data is in, a goal exists, and the history
-   * supports a rate. Otherwise the empty state says which of those is missing — the same copy the
-   * goals section uses, rather than a flat line pretending to be a projection.
+   * Required-rate mode needs no measured history — the rate it draws comes from the dates, and the
+   * measured one is only the comparison — so it draws whenever there is a dated goal.
    */
-  protected readonly hasChart = computed(
-    () =>
-      this.forecastStore.dataReady() &&
-      this.goalsStore.activeGoals().length > 0 &&
-      this.forecastStore.velocity().hasEnoughHistory,
-  );
+  protected readonly hasChart = computed(() => {
+    if (!this.forecastStore.dataReady() || this.goalCount() === 0) return false;
+    return this.isRequiredRateMode()
+      ? this.forecastStore.requiredPlan().planRequiredPerMonth != null
+      : this.forecastStore.velocity().hasEnoughHistory;
+  });
 
   protected readonly emptyMessage = computed(() =>
-    this.goalsStore.activeGoals().length === 0
-      ? 'Add a goal above and this chart shows what your balance looks like as each one gets bought.'
-      : 'Not enough complete months of history yet to project a balance — import more history, or shorten the window.',
+    projectionEmptyMessage(this.mode(), this.goalCount()),
   );
+
+  protected readonly caption = computed(() =>
+    projectionCaption(this.mode(), this.forecastStore.omittedGoalCount()),
+  );
+
+  protected readonly chartAriaLabel = computed(() => projectionAriaLabel[this.mode()]);
 
   protected readonly chartOption = computed(() =>
     buildNetWorthProjectionChartOption({
       points: this.forecastStore.projection(),
+      comparisonPoints: this.forecastStore.comparisonProjection(),
       safetyNetAmount: this.forecastSettingsStore.safetyNetAmount(),
       privacyMode: this.privacyMode(),
     }),
   );
 
-  /** The one sentence that stops a smooth line implying precision the data cannot support. */
-  protected readonly caption = computed(() => {
-    const omitted = this.forecastStore.omittedGoalCount();
-    const base =
-      'A straight line from today at your measured rate — no compounding, interest, inflation or upcoming bills.';
-    if (omitted === 0) return base;
-
-    const goalWord = omitted === 1 ? 'goal is' : 'goals are';
-    return `${base} ${omitted} ${goalWord} not drawn: your rate never reaches ${omitted === 1 ? 'it' : 'them'}.`;
-  });
-
+  /** Only meaningful in the measured-rate mode: there, a falling line needs saying out loud. */
   protected readonly decliningWarning = computed(() =>
-    this.forecastStore.velocity().perMonth < 0
+    !this.isRequiredRateMode() && this.forecastStore.velocity().perMonth < 0
       ? 'This line falls because you spent more than you earned over the measured window.'
       : '',
   );
 
-  /**
-   * The chart's figures for assistive tech (TICKET-STAT-20). Privacy mode has to **withhold** here
-   * rather than blur: `.sr-only` clips the table to a 1px box, so a CSS filter paints nothing and a
-   * screen reader would read the amount out regardless.
-   */
+  /** The chart's figures for assistive tech — withheld, not blurred, under privacy mode. */
   protected readonly accessibleRows = computed<ProjectionAccessibleRow[]>(() => {
     const privacyMode = this.privacyMode();
-    return this.forecastStore.projection().map((point) => ({
+    const comparison = this.forecastStore.comparisonProjection();
+    const amountText = (amount: number): string =>
+      privacyMode ? HIDDEN_AMOUNT_TEXT : formatCurrency(amount);
+
+    return this.forecastStore.projection().map((point, index) => ({
       month: formatMonthYear(point.date),
-      balance: privacyMode ? HIDDEN_AMOUNT_TEXT : formatCurrency(point.balance),
+      balance: amountText(point.balance),
+      comparison: comparison?.[index] ? amountText(comparison[index].balance) : '',
       bought: point.purchases
         .map((purchase) =>
           privacyMode ? purchase.name : `${purchase.name} (${formatCurrency(purchase.amount)})`,

@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import type { SavingBasis } from '@/core/stats';
-import { appDb, DEFAULT_FORECAST_SETTINGS, type ForecastSettings } from './app-db';
+import {
+  appDb,
+  DEFAULT_FORECAST_SETTINGS,
+  type ForecastMode,
+  type ForecastSettings,
+} from './app-db';
 
 @Injectable({ providedIn: 'root' })
 export class ForecastSettingsRepository {
@@ -22,5 +27,12 @@ export class ForecastSettingsRepository {
   setSafetyNetAmount = async (safetyNetAmount: number): Promise<number> => {
     const current = await this.get();
     return appDb.forecastSettings.put({ ...current, id: 1, safetyNetAmount });
+  };
+
+  // Which question the page is answering (TICKET-FUT-09). A non-indexed field on the row
+  // `.version(14)` already declared, so this needs no schema change.
+  setMode = async (mode: ForecastMode): Promise<number> => {
+    const current = await this.get();
+    return appDb.forecastSettings.put({ ...current, id: 1, mode });
   };
 }

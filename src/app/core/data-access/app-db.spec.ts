@@ -71,7 +71,8 @@ describe('goals & forecast schema (TICKET-FUT-02 .version(14))', () => {
   });
 
   // The FUT-09 mode toggle and the FUT-08 account scope are both non-indexed fields on the
-  // `forecastSettings` row, so neither ticket may add a `.version(15)`. This is the tripwire.
+  // `forecastSettings` row, so neither ticket may add a `.version(15)`. This is the tripwire —
+  // TICKET-FUT-09 shipped `mode` against it and the version stayed at 14.
   it('keeps forecastSettings’ later fields out of the index list', async () => {
     await appDb.open();
     const indexed = appDb.forecastSettings.schema.indexes.map((index) => index.name);

@@ -9,6 +9,7 @@ import {
   TransactionsRepository,
   TransfersRepository,
   type Account,
+  type ForecastMode,
   type SavingsGoal,
   type Transaction,
 } from '@/core/data-access';
@@ -74,7 +75,11 @@ const salary = (bookingDate: string, amount: number): Transaction => ({
  */
 const createFixture = async (
   goals: SavingsGoal[] = [],
-  { accounts = [] as Account[], transactions = [] as Transaction[] } = {},
+  {
+    accounts = [] as Account[],
+    transactions = [] as Transaction[],
+    mode = 'when-affordable' as ForecastMode,
+  } = {},
 ): Promise<ComponentFixture<GoalsPanelComponent>> => {
   goalsRepository.getAll.mockResolvedValue(goals);
   await TestBed.configureTestingModule({
@@ -97,6 +102,7 @@ const createFixture = async (
             lookbackMonths: 6,
             basis: 'net-cash-flow',
             safetyNetAmount: 0,
+            mode,
           }),
         },
       },
@@ -537,5 +543,76 @@ describe('GoalsPanelComponent: the affordability readout (TICKET-FUT-05)', () =>
 
     expect(host(fixture).textContent).toContain('On track');
     expect(host(fixture).textContent).toContain('Behind');
+  });
+});
+
+describe('GoalsPanelComponent: required-rate mode (TICKET-FUT-09)', () => {
+  withCleanFormatSettings();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** Six complete months of +200, and a goal dated far enough out to need a sane monthly figure. */
+  const inRequiredMode = (goals: SavingsGoal[], openingBalance = 0) => {
+    const months: Transaction[] = [];
+    const now = new Date();
+    for (let back = 1; back <= 6; back++) {
+      const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 10));
+      months.push(salary(month.toISOString().slice(0, 10), 200));
+    }
+    return createFixture(goals, {
+      accounts: [account(openingBalance)],
+      transactions: months,
+      mode: 'required-rate',
+    });
+  };
+
+  const inTwoYears = (): string =>
+    new Date(Date.UTC(new Date().getUTCFullYear() + 2, 0, 15)).toISOString().slice(0, 10);
+
+  it('swaps the row readout for a monthly figure, on the same single list of rows', async () => {
+    const fixture = await inRequiredMode([
+      goal({ id: 1, name: 'Camera', targetAmount: 4800, targetDate: inTwoYears() }),
+    ]);
+
+    expect(host(fixture).textContent).toContain('Save ≈ ');
+    expect(host(fixture).textContent).toContain('/month to make');
+    expect(host(fixture).textContent).not.toContain('in 24 months');
+    // One list, not two.
+    expect(host(fixture).querySelectorAll('app-goal-row')).toHaveLength(1);
+  });
+
+  it('reports the gap against the measured rate on the row', async () => {
+    const fixture = await inRequiredMode([
+      goal({ id: 1, name: 'Camera', targetAmount: 12000, targetDate: inTwoYears() }),
+    ]);
+
+    expect(host(fixture).textContent).toMatch(/more than you've been saving|ahead of this/);
+  });
+
+  it('prompts for a date on an undated goal instead of showing a rate', async () => {
+    const fixture = await inRequiredMode([goal({ id: 1, name: 'Camera', targetAmount: 4800 })]);
+
+    expect(host(fixture).textContent).toContain('Add a wanted-by date to see what this needs');
+  });
+
+  it('says what the whole plan demands and which goal sets the pace', async () => {
+    const fixture = await inRequiredMode([
+      goal({ id: 1, name: 'Camera', targetAmount: 12000, targetDate: inTwoYears() }),
+    ]);
+
+    expect(host(fixture).textContent).toContain('To hit every date, save ≈ ');
+    expect(host(fixture).textContent).toContain('Camera is the one setting the pace.');
+  });
+
+  it('keeps the reorder controls working — the order still drives both readings', async () => {
+    const fixture = await inRequiredMode([
+      goal({ id: 1, name: 'Camera', targetAmount: 4800, targetDate: inTwoYears(), sortOrder: 0 }),
+      goal({ id: 2, name: 'Bike', targetAmount: 1000, targetDate: inTwoYears(), sortOrder: 1 }),
+    ]);
+
+    expect(host(fixture).querySelector('button[aria-label="Move Bike up"]')).not.toBeNull();
+    expect(rowNames(fixture)).toEqual(['Camera', 'Bike']);
   });
 });

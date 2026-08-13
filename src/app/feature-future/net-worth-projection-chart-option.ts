@@ -12,6 +12,12 @@ const dataIndexOf = (params: ChartCallbackParam | ChartCallbackParam[]): number 
 
 export type ProjectionChartInput = {
   points: NetWorthProjectionPoint[];
+  /**
+   * The measured-rate walk, drawn dashed alongside the required one in `required-rate` mode
+   * (TICKET-FUT-09) — `null` in the other mode, where it *is* the main line. The divergence between
+   * "what this plan needs" and "what I actually do" is the visible content of that chart.
+   */
+  comparisonPoints?: NetWorthProjectionPoint[] | null;
   /** Drawn as a floor line when non-zero; a zero net gets no line, since every chart has a zero. */
   safetyNetAmount: number;
   privacyMode: boolean;
@@ -34,24 +40,27 @@ export type ProjectionChartInput = {
  * label string, a tooltip's text, an axis tick — not styled DOM, so a CSS filter would paint
  * nothing over it (TICKET-STAT-29's rule). The figures are replaced at build time instead.
  */
-export const buildNetWorthProjectionChartOption = ({
+/**
+ * The plotted line, plus the dashed comparison (required-rate mode) and the safety-net floor when
+ * the user set one. Split out so the option builder itself stays a flat description.
+ */
+const buildSeries = ({
   points,
+  comparisonPoints,
   safetyNetAmount,
-  privacyMode,
-}: ProjectionChartInput): EChartsCoreOption => {
-  const amountText = (amount: number): string =>
-    privacyMode ? HIDDEN_AMOUNT_TEXT : formatCurrency(amount);
-
-  /** "Camera · €1,200.00" on the months something is bought, nothing on every other month. */
-  const purchaseLabel = (index: number): string =>
-    (points[index]?.purchases ?? [])
-      .map((purchase) => `${purchase.name} · ${amountText(purchase.amount)}`)
-      .join(' + ');
-
+  purchaseLabel,
+}: {
+  points: NetWorthProjectionPoint[];
+  comparisonPoints: NetWorthProjectionPoint[] | null;
+  safetyNetAmount: number;
+  purchaseLabel: (index: number) => string;
+}): Record<string, unknown>[] => {
   const series: Record<string, unknown>[] = [
     {
       type: 'line',
-      name: 'Projected net worth',
+      // Named for the question being asked: in required-rate mode this line is the plan, and the
+      // dashed one below is what actually happens.
+      name: comparisonPoints ? 'At the rate this plan needs' : 'Projected net worth',
       data: points.map((point) => point.balance),
       smooth: false,
       symbolSize: (_value: unknown, params: ChartCallbackParam) =>
@@ -71,6 +80,16 @@ export const buildNetWorthProjectionChartOption = ({
     },
   ];
 
+  if (comparisonPoints) {
+    series.push({
+      type: 'line',
+      name: 'At the rate you actually save',
+      data: comparisonPoints.map((point) => point.balance),
+      symbol: 'none',
+      lineStyle: { type: 'dashed' },
+    });
+  }
+
   // "This is the floor I said I wouldn't cross" — drawn only when the user actually set one.
   if (safetyNetAmount) {
     series.push({
@@ -82,18 +101,41 @@ export const buildNetWorthProjectionChartOption = ({
     });
   }
 
+  return series;
+};
+
+export const buildNetWorthProjectionChartOption = ({
+  points,
+  comparisonPoints = null,
+  safetyNetAmount,
+  privacyMode,
+}: ProjectionChartInput): EChartsCoreOption => {
+  const amountText = (amount: number): string =>
+    privacyMode ? HIDDEN_AMOUNT_TEXT : formatCurrency(amount);
+
+  /** "Camera · €1,200.00" on the months something is bought, nothing on every other month. */
+  const purchaseLabel = (index: number): string =>
+    (points[index]?.purchases ?? [])
+      .map((purchase) => `${purchase.name} · ${amountText(purchase.amount)}`)
+      .join(' + ');
+
+  const series = buildSeries({ points, comparisonPoints, safetyNetAmount, purchaseLabel });
+
   return {
     ...resolveChartAnimation(),
     color: resolveChartCategoricalColors(),
     tooltip: {
       trigger: 'axis',
       formatter: (params: ChartCallbackParam | ChartCallbackParam[]) => {
-        const point = points[dataIndexOf(params)];
+        const index = dataIndexOf(params);
+        const point = points[index];
         if (!point) return '';
 
+        const comparison = comparisonPoints?.[index];
         return [
           formatMonthYear(point.date),
           `<br/>Projected: ${amountText(point.balance)}`,
+          ...(comparison ? [`<br/>At your rate: ${amountText(comparison.balance)}`] : []),
           ...point.purchases.map(
             (purchase) => `<br/>Buying ${purchase.name} · ${amountText(purchase.amount)}`,
           ),

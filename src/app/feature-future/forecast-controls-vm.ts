@@ -1,3 +1,4 @@
+import type { ForecastMode } from '@/core/data-access';
 import type { SavingBasis, SavingVelocity } from '@/core/stats';
 import type { TabDefinition } from '@/shared/ui';
 import { formatCurrency, formatMonthYear } from '@/shared/utils';
@@ -48,6 +49,32 @@ export const BASIS_OPTIONS: BasisOption[] = [
  * click, which is the wrong shape for a binary decision whose whole point is the comparison.
  */
 export const BASIS_TABS: TabDefinition[] = BASIS_OPTIONS.map(({ value, label }) => ({
+  value,
+  label,
+}));
+
+export type ModeOption = { value: ForecastMode; label: string; hint: string };
+
+/**
+ * The two questions `/future` can answer (TICKET-FUT-09). They are the same plan read in opposite
+ * directions — fix the rate and solve for the date, or fix the date and solve for the rate — so the
+ * page answers one at a time rather than putting a date the user didn't ask for next to a rate they
+ * didn't ask for on every row.
+ */
+export const MODE_OPTIONS: ModeOption[] = [
+  {
+    value: 'when-affordable',
+    label: 'When can I afford it?',
+    hint: 'Keep saving as you have been, and see when each goal comes within reach.',
+  },
+  {
+    value: 'required-rate',
+    label: 'What do I need to save?',
+    hint: 'Set a wanted-by date per goal, and see the monthly amount that would hit it.',
+  },
+];
+
+export const MODE_TABS: TabDefinition[] = MODE_OPTIONS.map(({ value, label }) => ({
   value,
   label,
 }));

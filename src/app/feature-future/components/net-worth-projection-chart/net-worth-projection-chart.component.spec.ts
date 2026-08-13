@@ -267,3 +267,131 @@ describe('NetWorthProjectionChartComponent (TICKET-FUT-07)', () => {
     expect(boughtRow?.bought).toBe('Camera');
   });
 });
+
+describe('NetWorthProjectionChartComponent: required-rate mode (TICKET-FUT-09)', () => {
+  withCleanFormatSettings();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const requiredSettings: ForecastSettings = {
+    ...DEFAULT_FORECAST_SETTINGS,
+    mode: 'required-rate',
+  };
+
+  const inTwoYears = (): string =>
+    new Date(Date.UTC(new Date().getUTCFullYear() + 2, 0, 15)).toISOString().slice(0, 10);
+
+  const seriesOf = (fixture: ComponentFixture<NetWorthProjectionChartComponent>) => {
+    const option = (
+      fixture.componentInstance as unknown as { chartOption: () => Record<string, unknown> }
+    ).chartOption();
+    return option['series'] as { name: string; data: number[] }[];
+  };
+
+  it('rises at the plan rate and draws the measured rate as a dashed comparison series', async () => {
+    const fixture = await createFixture({
+      goals: [goal({ targetAmount: 12000, targetDate: inTwoYears() })],
+      transactions: monthlyHistory(6),
+      settings: requiredSettings,
+    });
+
+    const series = seriesOf(fixture);
+    expect(series[0].name).toBe('At the rate this plan needs');
+    expect(series[1].name).toBe('At the rate you actually save');
+    // The plan needs more per month than the measured 200, so it climbs faster.
+    expect(series[0].data[1] - series[0].data[0]).toBeGreaterThan(
+      series[1].data[1] - series[1].data[0],
+    );
+  });
+
+  it('steps down on the goal’s own wanted-by date, not on a computed ETA', async () => {
+    const targetDate = inTwoYears();
+    await createFixture({
+      goals: [goal({ targetAmount: 12000, targetDate })],
+      transactions: monthlyHistory(6),
+      settings: requiredSettings,
+    });
+
+    const purchase = TestBed.inject(ForecastStore)
+      .projection()
+      .find((point) => point.purchases.length > 0);
+    expect(purchase?.bucketKey).toBe(targetDate.slice(0, 7));
+  });
+
+  it('still starts at exactly AccountsStore.netWorth() in this mode too', async () => {
+    const fixture = await createFixture({
+      goals: [goal({ targetAmount: 12000, targetDate: inTwoYears() })],
+      transactions: monthlyHistory(6),
+      openingBalance: 700,
+      settings: requiredSettings,
+    });
+
+    expect(TestBed.inject(ForecastStore).projection()[0].balance).toBe(
+      TestBed.inject(AccountsStore).netWorth(),
+    );
+    expect(accessibleRows(fixture)[0].balance).toBe(
+      formatCurrency(TestBed.inject(AccountsStore).netWorth()),
+    );
+  });
+
+  it('gives the figure table a column for the second series', async () => {
+    const fixture = await createFixture({
+      goals: [goal({ targetAmount: 12000, targetDate: inTwoYears() })],
+      transactions: monthlyHistory(6),
+      settings: requiredSettings,
+    });
+
+    const headers = [...host(fixture).querySelectorAll('table.sr-only thead th')].map((cell) =>
+      cell.textContent?.trim(),
+    );
+    expect(headers).toEqual([
+      'Month',
+      'Projected balance',
+      'At the rate you actually save',
+      'Bought',
+    ]);
+    expect(host(fixture).querySelectorAll('table.sr-only tbody tr td')).not.toHaveLength(0);
+  });
+
+  it('omits an undated goal from the line and counts it in the caption', async () => {
+    const fixture = await createFixture({
+      goals: [
+        goal({ targetAmount: 12000, targetDate: inTwoYears() }),
+        goal({ id: 2, name: 'Someday', targetAmount: 500 }),
+      ],
+      transactions: monthlyHistory(6),
+      settings: requiredSettings,
+    });
+
+    expect(host(fixture).textContent).toContain(
+      "1 goal is not drawn: there's no monthly figure to plot for it",
+    );
+    const plotted = TestBed.inject(ForecastStore)
+      .projection()
+      .flatMap((point) => point.purchases.map((purchase) => purchase.name));
+    expect(plotted).not.toContain('Someday');
+  });
+
+  it('draws even on a history too thin for the other mode — the measured rate is only the comparison', async () => {
+    const fixture = await createFixture({
+      goals: [goal({ targetAmount: 12000, targetDate: inTwoYears() })],
+      transactions: [],
+      settings: requiredSettings,
+    });
+
+    expect(host(fixture).querySelector('div[echarts]')).not.toBeNull();
+  });
+
+  it('asks for a date rather than drawing, when no goal has one', async () => {
+    const fixture = await createFixture({
+      goals: [goal({ targetAmount: 12000 })],
+      transactions: monthlyHistory(6),
+      settings: requiredSettings,
+    });
+
+    expect(host(fixture).querySelector('mm-empty-state')).not.toBeNull();
+    expect(host(fixture).textContent).toContain('Give a goal a wanted-by date');
+  });
+});

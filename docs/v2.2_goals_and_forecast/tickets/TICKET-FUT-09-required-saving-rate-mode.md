@@ -150,52 +150,99 @@ the thing you actually look at.
 
 ## Acceptance criteria
 
-- [ ] A page-level toggle switches `/future` between "When can I afford it?" and "What do I need to
-      save?"; the choice persists through `ForecastSettingsStore` and survives a reload.
-- [ ] Switching the mode changes the goal-row readout and the chart in the same tick, and does not
-      render a second copy of the goals list.
-- [ ] `requiredPerMonth` is `(cumulativeTarget − spendable) / monthsAvailable`, and `cumulativeTarget`
+- [x] A page-level toggle switches `/future` between "When can I afford it?" and "What do I need to
+      save?"; the choice persists through `ForecastSettingsStore` and survives a reload. (An
+      `mm-tabs` leading `app-forecast-controls`, above the three parameters because it changes what
+      they all mean. Specs "offers both questions, and defaults to…", "reflects a persisted mode",
+      "persists a mode change through the store"; live: switched to required-rate, reloaded, still
+      required-rate.)
+- [x] Switching the mode changes the goal-row readout and the chart in the same tick, and does not
+      render a second copy of the goals list. (`buildGoalRow` takes a discriminated `verdict` and
+      swaps the facts on the *same* row; spec "swaps the row readout for a monthly figure, on the
+      same single list of rows" asserts one `app-goal-row` and the absence of the ETA phrasing.)
+- [x] `requiredPerMonth` is `(cumulativeTarget − spendable) / monthsAvailable`, and `cumulativeTarget`
       matches `computeGoalAffordability`'s for the same goals and order — asserted against that
-      function, not against hand-copied numbers.
-- [ ] Reordering goals changes the required rates of the goals below the moved one.
-- [ ] `planRequiredPerMonth` is the **maximum** required rate across dated goals, not the sum and not
+      function, not against hand-copied numbers. (Spec "accumulates targets exactly as
+      computeGoalAffordability does" compares the two arrays directly.)
+- [x] Reordering goals changes the required rates of the goals below the moved one. (Spec "moves the
+      required rates of the goals below a reordered one".)
+- [x] `planRequiredPerMonth` is the **maximum** required rate across dated goals, not the sum and not
       the last goal's, and `bindingGoalId` names the goal it came from (asserted with a case where
-      an earlier, tighter goal binds).
-- [ ] `monthsAvailable` counts whole month-ends after today up to and including `targetDate`, and a
+      an earlier, tighter goal binds). (Specs "takes the largest required rate, not the sum" —
+      which also asserts it is *not* the sum — and "names the goal that sets the pace, even when it
+      is not the last one" (the first of two binds at €300).)
+- [x] `monthsAvailable` counts whole month-ends after today up to and including `targetDate`, and a
       round trip holds: a date FUT-05 projects for a goal yields a required rate ≤ the measured
-      `perMonth` when fed back in.
-- [ ] A `targetDate` in the current month or in the past yields `'due-now'` with `shortfallNow` and
+      `perMonth` when fed back in. (Four counting specs — including today *being* a month-end, a
+      31st across a short month, and a year boundary — plus "round-trips with FUT-05".)
+- [x] A `targetDate` in the current month or in the past yields `'due-now'` with `shortfallNow` and
       no division; a goal already covered by the spendable balance yields `'already-affordable'`; a
       goal with no `targetDate` yields `'no-target-date'`. None of the three contributes to
-      `planRequiredPerMonth`.
-- [ ] `perMonth ≤ 0` still produces required rates and a gap equal to the full requirement — this
+      `planRequiredPerMonth`. (An `it.each` over this-month/already-past, plus "excludes the undated,
+      the already-affordable and the due-now from the maximum".)
+- [x] `perMonth ≤ 0` still produces required rates and a gap equal to the full requirement — this
       mode is not disabled by a thin or negative history, and the copy says what it is comparing to.
-- [ ] `safetyNetAmount` raises every required rate, and raising it can flip a goal from
-      `'already-affordable'` to `'required'` (asserted).
-- [ ] No `Infinity`, `NaN`, negative or absurd rate reaches the template in any of the above.
-- [ ] In `'required-rate'` mode the chart rises at `planRequiredPerMonth`, steps down at each dated
+      (`it.each([0, -300])`; and `forecastNotice` skips the blocking states entirely in this mode —
+      spec "still answers on a history too thin for the other mode".)
+- [x] `safetyNetAmount` raises every required rate, and raising it can flip a goal from
+      `'already-affordable'` to `'required'` (asserted). (Two specs, the second asserting the flip.)
+- [x] No `Infinity`, `NaN`, negative or absurd rate reaches the template in any of the above.
+      (Spec "never emits an Infinity, a NaN or a negative required rate" runs all four reasons at
+      once and checks every entry.)
+- [x] In `'required-rate'` mode the chart rises at `planRequiredPerMonth`, steps down at each dated
       goal's `targetDate`, and draws the measured-rate projection as a dashed comparison series;
-      undated goals are omitted and counted in the caption.
-- [ ] The chart's first point is still exactly `AccountsStore.netWorth()` in both modes.
-- [ ] The visually-hidden figure table covers both series per TICKET-STAT-20, and every amount in
-      rows, summary, chart labels, tooltip and table honours privacy mode.
-- [ ] No Dexie version bump: `mode` is a non-indexed field on the existing `forecastSettings` row,
+      undated goals are omitted and counted in the caption. (Specs "rises at the plan rate and draws
+      the measured rate as a dashed comparison series", "steps down on the goal's own wanted-by
+      date, not on a computed ETA", "omits an undated goal from the line and counts it in the
+      caption".
+      **Correction found by the live check, not by the specs:** a goal that is *already affordable*
+      has no `targetDate` requirement and was originally neither drawn nor counted — leaving a line
+      that never subtracts a goal the user can buy today, while the rows above it charged the next
+      goal for exactly that money. Already-affordable goals are now drawn on the first plotted
+      month-end in this mode too, matching FUT-07's rule, and the caption's omission wording covers
+      what genuinely cannot be plotted: "there's no monthly figure to plot for it" — true of both an
+      undated goal and a `due-now` one.)
+- [x] The chart's first point is still exactly `AccountsStore.netWorth()` in both modes. (Spec
+      "still starts at exactly AccountsStore.netWorth() in this mode too"; live: August 2026 reads
+      €16.898,26 in both columns of the figure table.)
+- [x] The visually-hidden figure table covers both series per TICKET-STAT-20, and every amount in
+      rows, summary, chart labels, tooltip and table honours privacy mode. (The table moved into its
+      own presentational `app-projection-figure-table`, which gains the comparison column in this
+      mode; spec asserts the four headers. Privacy masking is unchanged and still asserted.)
+- [x] No Dexie version bump: `mode` is a non-indexed field on the existing `forecastSettings` row,
       written through `ForecastSettingsStore`'s read-merge-put setter, and versions 1–14 are
-      untouched.
-- [ ] The aggregate is a pure, clock-free function in `core/stats/` (`today` a parameter) with no
-      store, repository or Dexie import; components read `@/core/state` only.
-- [ ] Unit tests cover: the required-rate formula; cumulative targets agreeing with
+      untouched. (`app-db.ts` is not in this ticket's diff at all beyond a comment; the existing
+      tripwire spec "keeps forecastSettings' later fields out of the index list" still passes, and a
+      new repository spec asserts `setMode` leaves the other three settings alone.)
+- [x] The aggregate is a pure, clock-free function in `core/stats/` (`today` a parameter) with no
+      store, repository or Dexie import; components read `@/core/state` only. (`required-saving-rate.ts`
+      imports the `SavingsGoal` type and two date helpers; spec "reads no clock" asserts the same
+      goal needs a higher rate when asked four months later.)
+- [x] Unit tests cover: the required-rate formula; cumulative targets agreeing with
       `computeGoalAffordability`; reorder changing downstream rates; the maximum-not-sum plan rate
       with an earlier binding goal; the FUT-05 round trip; `monthsAvailable` from a 31st and across a
       year boundary; `'due-now'`, `'already-affordable'` and `'no-target-date'`; `perMonth` of 0 and
       negative; the safety net flipping a verdict; mode persistence; the chart's two series and its
-      step-downs on `targetDate`; the no-dated-goals empty state; and privacy masking.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched — no new component tree and no new charting dependency.
-- [ ] Verified live in the browser: with real data, a goal dated a few months out shows a plausible
+      step-downs on `targetDate`; the no-dated-goals empty state; and privacy masking. (23 aggregate
+      cases, 4 mode-toggle cases, 4 notice cases, 5 row-readout cases, 7 chart cases.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched — no new component tree and no new charting dependency. (Lint clean; 2935
+      tests / 264 files green; `Initial total` unchanged at 2.16 MB. Still no `markPoint`/`markLine`:
+      the comparison line is a third ordinary `line` series.)
+- [x] Verified live in the browser: with real data, a goal dated a few months out shows a plausible
       monthly figure and a gap against the measured rate, and moving its date visibly changes both.
-      *(Ask the user first; if declined, note it here rather than ticking.)*
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      (Against a real net worth of €16.898,26: "Bike" behind "Kitchen" costs €17.000 cumulative, so
+      €101,74 is missing. Dated June 2027 it read **Save ≈ €10,17/month**; moving the date to 31
+      October 2026 changed it to **≈ €33,91/month**, with the summary line and the chart following
+      in the same tick. The gap read "€1.566,19/month less than you save — you're ahead of this",
+      and the plan line named Bike as setting the pace. No console errors.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 introduced findings. The first run flagged eight; all eight were resolved by
+      extraction rather than suppression — the chart's copy into a pure `forecast-chart-copy.ts`,
+      its `sr-only` table into `app-projection-figure-table`, the chart option's series construction
+      into `buildSeries`, the notice's two modes into `requiredModeNotice`/`measuredModeNotice`, and
+      the plan's binding-goal search into `tightestOf`. One of my own new specs proved timing-flaky
+      under full-suite load (a fixed `setTimeout` flush) and was rewritten around `vi.waitFor`.)
 
 ## Notes
 

@@ -36,6 +36,7 @@ const forecastSettingsRepository = {
   setLookbackMonths: vi.fn().mockResolvedValue(1),
   setBasis: vi.fn().mockResolvedValue(1),
   setSafetyNetAmount: vi.fn().mockResolvedValue(1),
+  setMode: vi.fn().mockResolvedValue(1),
 };
 
 const account: Account = {
@@ -111,9 +112,23 @@ const host = (fixture: ComponentFixture<ForecastControlsComponent>): HTMLElement
 const lookbackSelect = (fixture: ComponentFixture<ForecastControlsComponent>) =>
   host(fixture).querySelector('mm-select select') as HTMLSelectElement;
 
-/** The basis toggle's two buttons — a segmented control, not a dropdown. */
+/**
+ * The basis toggle's two buttons — a segmented control, not a dropdown. Scoped to the fieldset,
+ * since TICKET-FUT-09's page-level mode toggle is an `mm-tabs` on this panel too.
+ */
 const basisTabButtons = (fixture: ComponentFixture<ForecastControlsComponent>) =>
-  [...host(fixture).querySelectorAll('mm-tabs [role="tab"]')] as HTMLButtonElement[];
+  [...host(fixture).querySelectorAll('mm-fieldset mm-tabs [role="tab"]')] as HTMLButtonElement[];
+
+/** The page-level mode toggle (TICKET-FUT-09), which sits outside any fieldset. */
+const modeTabButtons = (fixture: ComponentFixture<ForecastControlsComponent>) =>
+  [...host(fixture).querySelectorAll('mm-tabs [role="tab"]')].filter(
+    (tab) => !tab.closest('mm-fieldset'),
+  ) as HTMLButtonElement[];
+
+const activeModeLabel = (fixture: ComponentFixture<ForecastControlsComponent>) =>
+  modeTabButtons(fixture)
+    .find((tab) => tab.classList.contains('tab-active'))
+    ?.textContent?.trim();
 
 const activeBasisLabel = (fixture: ComponentFixture<ForecastControlsComponent>) =>
   basisTabButtons(fixture)
@@ -333,11 +348,14 @@ describe('ForecastControlsComponent: the controls move the forecast below them (
 
     const input = page.querySelector('mm-input input') as HTMLInputElement;
     setValue(input, '800');
-    // The store awaits its repository before patching, so let that promise chain land.
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    fixture.detectChanges();
 
-    expect(page.textContent).not.toContain('You can buy this now');
+    // The store awaits its repository before patching, and that promise is not something the
+    // fixture can await — so poll rather than betting on a single macrotask, which is flaky when
+    // the whole suite is running.
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(page.textContent).not.toContain('You can buy this now');
+    });
     expect(page.textContent).toMatch(/in \d+ months?/);
   });
 
@@ -348,10 +366,64 @@ describe('ForecastControlsComponent: the controls move the forecast below them (
     expect(page.textContent).toContain('6 complete months');
 
     setValue(page.querySelector('mm-select select') as HTMLSelectElement, '3');
-    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(page.textContent).toContain('3 complete months');
+    });
+    expect(forecastSettingsRepository.setLookbackMonths).toHaveBeenCalledWith(3);
+  });
+});
+
+describe('ForecastControlsComponent: the mode toggle (TICKET-FUT-09)', () => {
+  withCleanFormatSettings();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('offers both questions, and defaults to "when can I afford it"', async () => {
+    const fixture = await createFixture();
+
+    expect(modeTabButtons(fixture).map((tab) => tab.textContent?.trim())).toEqual([
+      'When can I afford it?',
+      'What do I need to save?',
+    ]);
+    expect(activeModeLabel(fixture)).toBe('When can I afford it?');
+  });
+
+  it('reflects a persisted mode rather than the default', async () => {
+    const fixture = await createFixture({
+      ...DEFAULT_FORECAST_SETTINGS,
+      mode: 'required-rate',
+    });
+
+    expect(activeModeLabel(fixture)).toBe('What do I need to save?');
+  });
+
+  it('persists a mode change through the store, and swaps the explanation under it', async () => {
+    const fixture = await createFixture();
+    expect(host(fixture).textContent).toContain('Keep saving as you have been');
+
+    modeTabButtons(fixture)[1].click();
+    await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(page.textContent).toContain('3 complete months');
-    expect(forecastSettingsRepository.setLookbackMonths).toHaveBeenCalledWith(3);
+    expect(forecastSettingsRepository.setMode).toHaveBeenCalledWith('required-rate');
+    expect(activeModeLabel(fixture)).toBe('What do I need to save?');
+    expect(host(fixture).textContent).toContain('Set a wanted-by date per goal');
+  });
+
+  it('falls back to "when can I afford it" for a row written before the field existed', async () => {
+    // `mode` is optional on the row (FUT-02 declared it ahead of this ticket), so a stored row can
+    // genuinely lack it — the store resolves the default rather than rendering no active tab.
+    const fixture = await createFixture({
+      id: 1,
+      lookbackMonths: 6,
+      basis: 'net-cash-flow',
+      safetyNetAmount: 0,
+    });
+
+    expect(activeModeLabel(fixture)).toBe('When can I afford it?');
   });
 });

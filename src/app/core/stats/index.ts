@@ -40,3 +40,4 @@ export * from './recurring-projection';
 export * from './saving-velocity';
 export * from './goal-affordability';
 export * from './net-worth-projection';
+export * from './required-saving-rate';

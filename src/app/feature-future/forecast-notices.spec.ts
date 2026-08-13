@@ -1,4 +1,5 @@
-import type { GoalAffordability, SavingVelocity } from '@/core/stats';
+import type { SavingsGoal } from '@/core/data-access';
+import type { GoalAffordability, RequiredSavingPlan, SavingVelocity } from '@/core/stats';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { forecastNotice } from './forecast-notices';
 
@@ -108,5 +109,71 @@ describe('forecastNotice', () => {
     });
 
     expect(notice.text).toBe('1 of your 1 goal is out of reach at this rate.');
+  });
+});
+
+describe('forecastNotice: required-rate mode (TICKET-FUT-09)', () => {
+  withCleanFormatSettings();
+
+  const plan = (overrides: Partial<RequiredSavingPlan> = {}): RequiredSavingPlan => ({
+    goals: [],
+    planRequiredPerMonth: 340,
+    bindingGoalId: 1,
+    ...overrides,
+  });
+
+  const goalsById = new Map<number, SavingsGoal>([
+    [
+      1,
+      {
+        id: 1,
+        name: 'Camera',
+        targetAmount: 1200,
+        archived: false,
+        createdAt: '2026-01-01',
+      },
+    ],
+  ]);
+
+  const required = { ...base, requiredMode: true, goalsById };
+
+  it('names the plan rate, the gap against what you save, and the goal setting the pace', () => {
+    const notice = forecastNotice({ ...required, requiredPlan: plan() });
+
+    expect(notice.text).toBe(
+      "To hit every date, save ≈ €340.00/month — €140.00/month more than the €200.00 you've averaged. Camera is the one setting the pace.",
+    );
+    expect(notice.status).toBe('warning');
+  });
+
+  it('reads the other way round when the plan needs less than you already save', () => {
+    const notice = forecastNotice({
+      ...required,
+      requiredPlan: plan({ planRequiredPerMonth: 150 }),
+    });
+
+    expect(notice.text).toContain("€50.00/month less than the €200.00 you've averaged");
+    expect(notice.status).toBe('info');
+  });
+
+  it('asks for a date when no goal has one, instead of leaving an empty panel', () => {
+    const notice = forecastNotice({
+      ...required,
+      requiredPlan: plan({ planRequiredPerMonth: null, bindingGoalId: null }),
+    });
+
+    expect(notice.text).toContain('None of your goals has a wanted-by date yet');
+    expect(notice.status).toBe('warning');
+  });
+
+  it('still answers on a history too thin for the other mode — the measured rate is only the comparison', () => {
+    const notice = forecastNotice({
+      ...required,
+      velocity: velocity({ hasEnoughHistory: false, perMonth: 0, monthsCovered: 0 }),
+      requiredPlan: plan(),
+    });
+
+    expect(notice.text).toContain('save ≈ €340.00/month');
+    expect(notice.text).not.toContain('Not enough complete months');
   });
 });

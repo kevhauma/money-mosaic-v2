@@ -20,31 +20,12 @@
       [options]="chartOption()"
       class="h-80 w-full"
       role="img"
-      aria-label="Projected net worth by month, with each goal's purchase subtracted"
+      [attr.aria-label]="chartAriaLabel()"
     ></div>
 
-    <!-- Screen-reader-only companion table for the chart above (TICKET-STAT-20) — not a visible
-         data table, so it skips mm-table's chrome entirely. -->
-    <table class="sr-only">
-      <caption>
-        Projected net worth by month, and the goal bought in each
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col">Month</th>
-          <th scope="col">Projected balance</th>
-          <th scope="col">Bought</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of accessibleRows(); track row.month) {
-          <tr>
-            <th scope="row">{{ row.month }}</th>
-            <td>{{ row.balance }}</td>
-            <td>{{ row.bought }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <app-projection-figure-table
+      [rows]="accessibleRows()"
+      [showComparison]="isRequiredRateMode()"
+    />
   }
 </mm-paper>

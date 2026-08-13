@@ -1,8 +1,16 @@
-import { inject } from '@angular/core';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import { computed, inject } from '@angular/core';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   DEFAULT_FORECAST_SETTINGS,
   ForecastSettingsRepository,
+  type ForecastMode,
   type ForecastSettings,
 } from '@/core/data-access';
 import type { SavingBasis } from '@/core/stats';
@@ -18,6 +26,14 @@ import type { SavingBasis } from '@/core/stats';
 export const ForecastSettingsStore = signalStore(
   { providedIn: 'root' },
   withState<ForecastSettings>(DEFAULT_FORECAST_SETTINGS),
+  withComputed((store) => ({
+    /**
+     * The mode, always defined. `ForecastSettings.mode` is optional on the row (FUT-02 declared it
+     * ahead of TICKET-FUT-09 needing it), which makes its state signal optional too — resolving the
+     * default once here keeps every reader from repeating a `?? 'when-affordable'`.
+     */
+    activeMode: computed<ForecastMode>(() => store.mode?.() ?? 'when-affordable'),
+  })),
   withMethods((store) => {
     const forecastSettingsRepository = inject(ForecastSettingsRepository);
     let hydration: Promise<void> | null = null;
@@ -48,6 +64,16 @@ export const ForecastSettingsStore = signalStore(
       setSafetyNetAmount: async (safetyNetAmount: number): Promise<void> => {
         await forecastSettingsRepository.setSafetyNetAmount(safetyNetAmount);
         patchState(store, { safetyNetAmount });
+      },
+
+      /**
+       * Which question `/future` is answering (TICKET-FUT-09). Persisted for the same reason the
+       * window is: it changes what every figure on the page *means*, so a silent reset to the other
+       * mode on reload would read as the app changing its answer.
+       */
+      setMode: async (mode: ForecastMode): Promise<void> => {
+        await forecastSettingsRepository.setMode(mode);
+        patchState(store, { mode });
       },
     };
   }),

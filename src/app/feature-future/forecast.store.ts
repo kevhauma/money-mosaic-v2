@@ -4,6 +4,7 @@ import type { SavingsGoal } from '@/core/data-access';
 import {
   computeGoalAffordability,
   computeNetWorthProjection,
+  computeRequiredSavingRate,
   computeSavingVelocity,
   type GoalAffordability,
   type ProjectedPurchase,
@@ -131,7 +132,8 @@ export const ForecastStore = signalStore(
         .map((entry) => toProjectedPurchase(entry, goalsById.get(entry.goalId)!, firstMonthEnd));
     });
 
-    const projection = computed(() =>
+    /** The measured-rate walk — the chart's only line in `when-affordable`, its dashed comparison in the other mode. */
+    const measuredProjection = computed(() =>
       computeNetWorthProjection({
         today: todayIso(),
         startingBalance: accountsStore.netWorth(),
@@ -141,14 +143,78 @@ export const ForecastStore = signalStore(
       }),
     );
 
+    /** FUT-05's question read backwards: fix each goal's date, solve for the rate (TICKET-FUT-09). */
+    const requiredPlan = computed(() =>
+      computeRequiredSavingRate(goalsStore.activeGoals(), {
+        today: todayIso(),
+        startingBalance: accountsStore.netWorth(),
+        safetyNetAmount: forecastSettingsStore.safetyNetAmount(),
+        perMonth: velocity().perMonth,
+      }),
+    );
+
+    /**
+     * The same walk at the rate the *plan* demands, stepping down on each goal's own wanted-by date
+     * — a second caller of `computeNetWorthProjection`, which is why FUT-07 parameterised it.
+     */
+    const requiredProjection = computed(() => {
+      const goalsById = new Map(goalsStore.activeGoals().map((goal) => [goal.id!, goal]));
+      const firstMonthEnd = baseProjection()[1].date;
+      // Same rule as the other mode: a goal already covered today still has to come off the line,
+      // or the picture shows a balance nobody will ever have. Only the ones with no monthly figure
+      // to plot — undated, or wanted too soon to save for — are left off, and those are counted.
+      const dated = requiredPlan()
+        .goals.filter(
+          (entry) => entry.reason === 'required' || entry.reason === 'already-affordable',
+        )
+        .map((entry) => {
+          const goal = goalsById.get(entry.goalId)!;
+          return {
+            goalId: entry.goalId,
+            name: goal.name,
+            amount: goal.targetAmount,
+            on: goal.targetDate && entry.reason === 'required' ? goal.targetDate : firstMonthEnd,
+          };
+        });
+
+      return computeNetWorthProjection({
+        today: todayIso(),
+        startingBalance: accountsStore.netWorth(),
+        perMonth: requiredPlan().planRequiredPerMonth ?? velocity().perMonth,
+        purchases: dated,
+        horizonMonths: projectionHorizonMonths(),
+      });
+    });
+
+    const isRequiredRateMode = computed(
+      () => forecastSettingsStore.activeMode() === 'required-rate',
+    );
+
     return {
       velocity,
       spendableBalance,
       affordability,
-      projection,
-      /** Goals the rate never reaches, so the chart's caption can account for what isn't drawn. */
-      omittedGoalCount: computed(
-        () => affordability().filter((entry) => entry.reason === 'never-at-this-rate').length,
+      requiredPlan,
+      isRequiredRateMode,
+      /** The line the chart draws, whichever question the page is answering. */
+      projection: computed(() =>
+        isRequiredRateMode() ? requiredProjection() : measuredProjection(),
+      ),
+      /** Only in required-rate mode: what actually happens at the measured rate, for contrast. */
+      comparisonProjection: computed(() => (isRequiredRateMode() ? measuredProjection() : null)),
+      requiredByGoalId: computed(
+        () => new Map(requiredPlan().goals.map((entry) => [entry.goalId, entry])),
+      ),
+      /**
+       * Goals the chart cannot draw, so its caption can account for what isn't there: in
+       * `when-affordable` the ones the rate never reaches, in `required-rate` the ones with no date.
+       */
+      omittedGoalCount: computed(() =>
+        isRequiredRateMode()
+          ? requiredPlan().goals.filter(
+              (entry) => entry.reason === 'no-target-date' || entry.reason === 'due-now',
+            ).length
+          : affordability().filter((entry) => entry.reason === 'never-at-this-rate').length,
       ),
       affordabilityByGoalId: computed(
         () => new Map(affordability().map((entry) => [entry.goalId, entry])),

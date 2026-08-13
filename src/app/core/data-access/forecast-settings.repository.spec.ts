@@ -54,6 +54,21 @@ describe('ForecastSettingsRepository', () => {
     expect((await repository.get()).safetyNetAmount).toBe(750);
   });
 
+  it('writes the mode without touching the other settings (TICKET-FUT-09)', async () => {
+    await repository.setLookbackMonths(12);
+    await repository.setBasis('savings-transfers');
+
+    await repository.setMode('required-rate');
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      lookbackMonths: 12,
+      basis: 'savings-transfers',
+      safetyNetAmount: 0,
+      mode: 'required-rate',
+    });
+  });
+
   it('preserves a field the current code has no setter for yet (FUT-08’s scopeAccountIds)', async () => {
     await appDb.forecastSettings.put({ ...DEFAULT_FORECAST_SETTINGS, scopeAccountIds: [1, 2] });
 

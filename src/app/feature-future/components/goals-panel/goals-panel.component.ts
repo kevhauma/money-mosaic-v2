@@ -64,11 +64,25 @@ export class GoalsPanelComponent {
 
   protected readonly rows = computed<GoalRowVm[]>(() => {
     const goals = this.goalsStore.activeGoals();
-    // Before the transactions and transfers are in, the goals are still worth listing — the ETAs
-    // are not, so the rows are built without them rather than with a figure that will move.
-    const byGoalId = this.dataReady() ? this.forecastStore.affordabilityByGoalId() : new Map();
+    // Before the transactions and transfers are in, the goals are still worth listing — the
+    // verdicts are not, so the rows are built without them rather than with a figure that will move.
+    const ready = this.dataReady();
+    const requiredMode = this.forecastStore.isRequiredRateMode();
+    const affordabilityById = this.forecastStore.affordabilityByGoalId();
+    const requiredById = this.forecastStore.requiredByGoalId();
+
     return goals.map((goal, index) =>
-      buildGoalRow(goal, index, goals.length, byGoalId.get(goal.id!)),
+      buildGoalRow(
+        goal,
+        index,
+        goals.length,
+        requiredMode
+          ? { mode: 'required-rate', required: ready ? requiredById.get(goal.id!) : undefined }
+          : {
+              mode: 'when-affordable',
+              affordability: ready ? affordabilityById.get(goal.id!) : undefined,
+            },
+      ),
     );
   });
 
@@ -83,6 +97,9 @@ export class GoalsPanelComponent {
       goalCount: this.goalsStore.activeGoals().length,
       velocity: this.forecastStore.velocity(),
       affordability: this.forecastStore.affordability(),
+      requiredMode: this.forecastStore.isRequiredRateMode(),
+      requiredPlan: this.forecastStore.requiredPlan(),
+      goalsById: new Map(this.goalsStore.activeGoals().map((goal) => [goal.id!, goal])),
     }),
   );
 

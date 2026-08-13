@@ -1,0 +1,27 @@
+<table class="sr-only">
+  <caption>
+    Projected net worth by month, and the goal bought in each
+  </caption>
+  <thead>
+    <tr>
+      <th scope="col">Month</th>
+      <th scope="col">Projected balance</th>
+      @if (showComparison()) {
+        <th scope="col">At the rate you actually save</th>
+      }
+      <th scope="col">Bought</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.month) {
+      <tr>
+        <th scope="row">{{ row.month }}</th>
+        <td>{{ row.balance }}</td>
+        @if (showComparison()) {
+          <td>{{ row.comparison }}</td>
+        }
+        <td>{{ row.bought }}</td>
+      </tr>
+    }
+  </tbody>
+</table>
