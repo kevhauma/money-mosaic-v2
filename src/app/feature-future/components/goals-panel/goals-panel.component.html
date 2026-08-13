@@ -1,0 +1,53 @@
+<mm-paper>
+  <mm-flex align="center" justify="between" gap="3" class="mb-1">
+    <mm-text as="h2" variant="subheading" weight="semibold">Goals</mm-text>
+    <mm-button color="primary" size="sm" (click)="openAddForm()">
+      <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
+      Add goal
+    </mm-button>
+  </mm-flex>
+
+  <!-- Said plainly, because the order changes the numbers rather than just the layout: FUT-05 funds
+       goals top-down, so dragging one up pushes every goal below it further out. -->
+  <mm-text as="p" variant="caption" class="mb-3">
+    Goals are funded top down: the first one is paid for before the second starts saving up. Drag a
+    goal, or use the arrows, to change the order.
+  </mm-text>
+
+  @if (!goalsStore.hydrated()) {
+    <mm-loading-skeleton [rows]="2" />
+  } @else if (rows().length === 0) {
+    <mm-empty-state
+      title="Nothing planned yet"
+      message="Add something you're saving for — a name and what it costs — and this page works out when you can afford it."
+    >
+      <ng-icon icon name="tablerTargetArrow" size="40" aria-hidden="true" />
+      <mm-button action color="primary" class="mt-2" (click)="openAddForm()">Add goal</mm-button>
+    </mm-empty-state>
+  } @else {
+    <mm-flex cdkDropList direction="col" gap="2" (cdkDropListDropped)="onDrop($event)">
+      @for (row of rows(); track row.goal.id) {
+        <app-goal-row
+          cdkDrag
+          class="flex items-center gap-3 rounded-box border border-base-300 bg-base-200/50 p-3"
+          [row]="row"
+          [privacyMode]="privacyMode()"
+          (move)="moveGoal(row.goal, $event)"
+          (edit)="openEditForm(row.goal)"
+          (remove)="confirmDelete(row.goal)"
+        />
+      }
+    </mm-flex>
+  }
+</mm-paper>
+
+<app-goal-form [(open)]="formOpen" [goal]="editingGoal()" (saved)="saveGoal($event)" />
+
+<mm-confirm-dialog
+  [(open)]="deleteConfirm.open"
+  title="Delete this goal?"
+  [message]="deleteMessage()"
+  confirmLabel="Delete goal"
+  [danger]="true"
+  (confirmed)="deleteConfirmed()"
+/>

@@ -29,8 +29,6 @@ const goalConfig = entityConfig({
  * shape, but the order here is load-bearing rather than cosmetic: goals are paid for top-down, so
  * moving one up pushes every goal below it further out (TICKET-FUT-05).
  */
-// Temporary until TICKET-FUT-04's goals list injects it — that ticket removes this line.
-// fallow-ignore-next-line unused-export
 export const GoalsStore = signalStore(
   { providedIn: 'root' },
   withEntities(goalConfig),
@@ -53,6 +51,18 @@ export const GoalsStore = signalStore(
         });
       }
       return hydration;
+    };
+
+    /** One bulk write, then one patch per moved row — shared by both reorder paths. */
+    const applyOrder = async (updates: { id: number; sortOrder: number }[]): Promise<void> => {
+      if (updates.length === 0) return;
+      await goalsRepository.bulkUpdateSortOrder(updates);
+      for (const update of updates) {
+        patchState(
+          store,
+          updateEntity({ id: update.id, changes: { sortOrder: update.sortOrder } }, goalConfig),
+        );
+      }
     };
 
     return {
@@ -86,14 +96,16 @@ export const GoalsStore = signalStore(
       /** Moves a goal one slot up/down the funding queue, persisted as one bulk `sortOrder` write. */
       reorder: async (id: number, direction: 'up' | 'down'): Promise<void> => {
         const updates = computeReorderUpdates(store.goals(), id, direction);
-        if (updates.length === 0) return;
-        await goalsRepository.bulkUpdateSortOrder(updates);
-        for (const update of updates) {
-          patchState(
-            store,
-            updateEntity({ id: update.id, changes: { sortOrder: update.sortOrder } }, goalConfig),
-          );
-        }
+        await applyOrder(updates);
+      },
+
+      /**
+       * Rewrites the whole queue from an explicit id order — what a drag produces, since dropping a
+       * goal three slots down is not expressible as a neighbour swap (TICKET-FUT-04). Renumbers
+       * from 0 so the stored order can't drift into ties.
+       */
+      setGoalOrder: async (orderedIds: number[]): Promise<void> => {
+        await applyOrder(orderedIds.map((id, index) => ({ id, sortOrder: index })));
       },
     };
   }),

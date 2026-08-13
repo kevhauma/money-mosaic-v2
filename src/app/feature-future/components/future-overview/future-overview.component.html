@@ -14,11 +14,7 @@
   </div>
 </mm-paper>
 
-<!-- The stage the rest of v2.2 renders into: the goals list (TICKET-FUT-04), each goal's ETA
-     (TICKET-FUT-05) and the projected net-worth chart (TICKET-FUT-07). -->
-<mm-empty-state
-  title="Nothing planned yet"
-  message="Add something you're saving for and this page works out when you can afford it."
->
-  <ng-icon icon name="tablerTargetArrow" size="40" aria-hidden="true" />
-</mm-empty-state>
+<!-- The page's sections. The goals list (TICKET-FUT-04) is first because everything below it is
+     derived from the order it sets; each goal's ETA (TICKET-FUT-05) and the projected net-worth
+     chart (TICKET-FUT-07) follow. Each section owns its own empty state. -->
+<app-goals-panel />

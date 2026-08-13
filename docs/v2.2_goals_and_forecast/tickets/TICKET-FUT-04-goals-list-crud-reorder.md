@@ -58,29 +58,70 @@ version depends on.
 
 ## Acceptance criteria
 
-- [ ] A goal can be added with a name and a target amount; it appears in the list immediately and
-      survives a reload.
-- [ ] The form rejects an empty name, a missing amount, a zero or negative amount, and a
-      non-numeric amount, with a visible message per field and no write attempted.
-- [ ] A goal can be edited (name, amount, wanted-by date, note) and the change persists.
-- [ ] A goal can be deleted, behind a confirmation, and does not come back on reload.
-- [ ] Goals can be reordered by drag, and the new order persists across a reload.
-- [ ] Goals can be reordered **without a pointer** — the keyboard path is asserted in a spec, not
-      just claimed.
-- [ ] A newly added goal appears last in the order, not first.
-- [ ] The caption stating that goals are funded top-down is present.
-- [ ] Every amount honours privacy mode; amounts use `formatCurrency()` and dates `localeDate`.
-- [ ] The empty state renders when there are no goals and explains what a goal is for.
-- [ ] All data access goes through `GoalsStore` from `@/core/state`; no repository or Dexie import
-      in the component.
-- [ ] Unit tests cover: add (happy path and each validation failure); edit; delete-with-confirm;
+- [x] A goal can be added with a name and a target amount; it appears in the list immediately and
+      survives a reload. (Spec "adds a goal with a name and a target amount, and it appears in the
+      list"; live: Camera €1.200 and Holiday €3.000 added through the dialog and still present
+      after a reload.)
+- [x] The form rejects an empty name, a missing amount, a zero or negative amount, and a
+      non-numeric amount, with a visible message per field and no write attempted. (Spec `it.each`
+      over empty name / whitespace-only name / missing amount / zero / negative, each asserting the
+      message text **and** `expect(goalsRepository.add).not.toHaveBeenCalled()`, plus a separate
+      non-numeric case. Note: `<input type="number">` will not hold `"abc"`, so a non-numeric entry
+      reaches the control as blank — the spec asserts the no-write either way rather than pretending
+      to test a state the browser cannot produce.)
+- [x] A goal can be edited (name, amount, wanted-by date, note) and the change persists. (Spec
+      "edits a goal through the store and persists the change" drives the row's Edit menu item and
+      asserts `update(1, { name: 'Camera body', targetAmount: 1500 })`.)
+- [x] A goal can be deleted, behind a confirmation, and does not come back on reload. (Spec "asks
+      for confirmation before deleting, and only deletes once confirmed" asserts no `remove` call
+      while the dialog is open, then `remove(1)` and an empty list after confirming; persistence is
+      `GoalsRepository.remove`, covered by its own repository spec.)
+- [x] Goals can be reordered by drag, and the new order persists across a reload. (Spec "persists a
+      drag as a full renumbering of the order" moves an item three slots and asserts the exact
+      `bulkUpdateSortOrder` payload. Live: Holiday dragged from bottom to top, then a full page
+      reload — the list came back `Holiday, Bike, Camera`. Driving CDK's drag from the automation
+      harness needed a synthetic pointer sequence with `buttons: 1`; without it CDK's
+      fake-mousedown-from-screen-reader guard ignores the gesture. That is a property of synthetic
+      events, not of the page.)
+- [x] Goals can be reordered **without a pointer** — the keyboard path is asserted in a spec, not
+      just claimed. (Spec "reorders from the keyboard alone" clicks the real
+      `button[aria-label="Move Holiday up"]` and asserts the resulting `sortOrder` writes; a second
+      spec asserts the buttons are disabled at each end. Live: clicking "Move Camera up" reordered
+      `Holiday, Bike, Camera` → `Holiday, Camera, Bike`.)
+- [x] A newly added goal appears last in the order, not first. (Spec "appends a new goal last in the
+      funding order rather than first" — `sortOrder: 2` behind two existing goals; live, Camera and
+      Holiday each landed at the bottom as they were added.)
+- [x] The caption stating that goals are funded top-down is present. (Spec "states that goals are
+      funded top down" asserts the sentence verbatim; visible under the section title.)
+- [x] Every amount honours privacy mode; amounts use `formatCurrency()` and dates `localeDate`.
+      (Spec "formats the amount through formatCurrency" (`€1,234.50`) and "wraps every amount in the
+      privacy blur, driven by the global setting". Live: "Hide amounts" blurs all three targets and
+      leaves the names and the wanted-by line sharp.)
+- [x] The empty state renders when there are no goals and explains what a goal is for. (Spec
+      "renders the empty state, and no rows, when there are no goals"; `mm-empty-state`, not a
+      hand-rolled block.)
+- [x] All data access goes through `GoalsStore` from `@/core/state`; no repository or Dexie import
+      in the component. (`goals-panel.component.ts` imports `GoalsStore`/`AppSettingsStore` from
+      `@/core/state` and `SavingsGoal` as a type only; no repository, no `appDb`.)
+- [x] Unit tests cover: add (happy path and each validation failure); edit; delete-with-confirm;
       drag reorder persisting the right `sortOrder` writes; keyboard reorder; new goal appended
-      last; privacy masking; and the empty state.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
-- [ ] Verified live in the browser: three goals added, dragged into a different order, reloaded,
-      and the order held. *(Ask the user first; if declined, note it here rather than ticking.)*
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      last; privacy masking; and the empty state. (18 cases in
+      `goals-panel.component.spec.ts`, driving the real DOM — dialog inputs, menu items and
+      aria-labelled buttons — rather than calling component methods, except for the two paths a
+      unit test cannot synthesise (`onDrop`, and the confirm dialog's own click).)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Lint clean; 2804 tests / 256 files green; dev build completed with
+      `Initial total` unchanged at 2.16 MB.)
+- [x] Verified live in the browser: three goals added, dragged into a different order, reloaded,
+      and the order held. (See the drag criterion above; no console errors at any point.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD` →
+      verdict `pass`, 0 introduced findings. The first run flagged three: two template-complexity
+      HIGHs and a CRAP-30 validator. All three were fixed rather than suppressed — the row moved
+      into its own presentational `app-goal-row` component, the form's per-field error text and
+      dialog labels moved out of the template onto the class (the "templates branch on state, they
+      never derive it" rule), and `positiveAmountValidator` handed the blank case back to
+      `Validators.required`. The now-stale `unused-export` suppression on `GoalsStore` was removed,
+      as FUT-02 said it would be.)
 
 ## Notes
 

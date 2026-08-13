@@ -1,17 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerTargetArrow } from '@ng-icons/tabler-icons';
 import {
-  EmptyStateComponent,
   PageHeaderComponent,
   PaperComponent,
   PrivacyToggleComponent,
   TypographyComponent,
 } from '@/shared/ui';
+import { GoalsPanelComponent } from '../goals-panel/goals-panel.component';
 
 /**
  * The `/future` page container (FR-FUT-3, TICKET-FUT-03) — the app's first forward-looking page,
  * and the stage TICKET-FUT-04's goals list, FUT-05's ETAs and FUT-07's projection render into.
+ * Each section owns its own empty state, so the page holds none of its own.
  *
  * **This page has no date range, structurally.** It injects no `RangeStore` and renders no
  * switcher, because everything here looks forward from today; the *history* window that the
@@ -25,8 +24,7 @@ import {
 @Component({
   selector: 'app-future-overview',
   imports: [
-    NgIcon,
-    EmptyStateComponent,
+    GoalsPanelComponent,
     PageHeaderComponent,
     PaperComponent,
     PrivacyToggleComponent,
@@ -34,6 +32,5 @@ import {
   ],
   templateUrl: './future-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerTargetArrow })],
 })
 export class FutureOverviewComponent {}

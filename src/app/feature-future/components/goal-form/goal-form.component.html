@@ -1,0 +1,38 @@
+<mm-modal [(open)]="open">
+  <span mm-modal-title>{{ title() }}</span>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
+    <mm-fieldset legend="What do you want?">
+      <mm-input type="text" formControlName="name" class="w-full" placeholder="e.g. Camera" />
+      @if (nameError; as message) {
+        <mm-label variant="error">{{ message }}</mm-label>
+      }
+    </mm-fieldset>
+
+    <mm-fieldset legend="What does it cost?">
+      <mm-input
+        type="number"
+        step="0.01"
+        formControlName="targetAmount"
+        class="w-full"
+        placeholder="e.g. 1200"
+      />
+      @if (amountError; as message) {
+        <mm-label variant="error">{{ message }}</mm-label>
+      }
+    </mm-fieldset>
+
+    <mm-fieldset legend="When do you want it? (optional)">
+      <mm-input type="date" formControlName="targetDate" class="w-full" />
+    </mm-fieldset>
+
+    <mm-fieldset legend="Note (optional)">
+      <mm-input type="text" formControlName="note" class="w-full" placeholder="e.g. second-hand" />
+    </mm-fieldset>
+
+    <div class="modal-action">
+      <mm-button (click)="cancel()">Cancel</mm-button>
+      <mm-button type="submit" color="primary">{{ submitLabel() }}</mm-button>
+    </div>
+  </form>
+</mm-modal>

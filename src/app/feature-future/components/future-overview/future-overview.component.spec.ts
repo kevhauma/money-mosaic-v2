@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { AppSettingsRepository } from '@/core/data-access';
-import { RangeStore } from '@/core/state';
+import { AppSettingsRepository, GoalsRepository } from '@/core/data-access';
+import { GoalsStore, RangeStore } from '@/core/state';
 import { FutureOverviewComponent } from './future-overview.component';
 
 const createFixture = async (): Promise<ComponentFixture<FutureOverviewComponent>> => {
@@ -14,10 +14,13 @@ const createFixture = async (): Promise<ComponentFixture<FutureOverviewComponent
         provide: AppSettingsRepository,
         useValue: { get: vi.fn().mockResolvedValue({ id: 1 }), setPrivacyMode: vi.fn() },
       },
+      { provide: GoalsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
     ],
   }).compileComponents();
 
   const fixture = TestBed.createComponent(FutureOverviewComponent);
+  // The goals panel renders a skeleton until its store has hydrated (TICKET-PERF-07).
+  await TestBed.inject(GoalsStore).hydrate();
   fixture.detectChanges();
   return fixture;
 };
@@ -84,11 +87,12 @@ describe('FutureOverviewComponent (TICKET-FUT-03)', () => {
     ).toBe(true);
   });
 
-  it('renders the empty state that the goals list replaces in FUT-04', async () => {
+  it('renders the goals panel as its first section (TICKET-FUT-04)', async () => {
     const fixture = await createFixture();
     const host = fixture.nativeElement as HTMLElement;
 
-    expect(host.querySelector('mm-empty-state')).not.toBeNull();
-    expect(host.textContent).toContain('Nothing planned yet');
+    expect(host.querySelector('app-goals-panel')).not.toBeNull();
+    // The section owns its own empty state; the page no longer carries one of its own.
+    expect(host.querySelector('app-goals-panel mm-empty-state')).not.toBeNull();
   });
 });

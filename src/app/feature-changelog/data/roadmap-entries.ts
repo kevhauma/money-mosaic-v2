@@ -63,13 +63,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v2.2_goals_and_forecast',
-    ticketId: 'TICKET-FUT-04',
-    title:
-      'List what you want to buy and what it costs, then drag it into the order you would buy it',
-    area: 'Goals',
-  },
-  {
-    versionFolder: 'v2.2_goals_and_forecast',
     ticketId: 'TICKET-FUT-05',
     title:
       'See the month you could afford each goal if you keep saving the way you have been, in the order you set',

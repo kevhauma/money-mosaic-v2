@@ -1,0 +1,55 @@
+<span cdkDragHandle class="cursor-grab text-base-content/50" aria-hidden="true">
+  <ng-icon name="tablerGripVertical" size="18" />
+</span>
+
+<div class="min-w-0 flex-1">
+  <mm-text weight="medium" class="block truncate">{{ row().goal.name }}</mm-text>
+  @if (row().metaLabel) {
+    <mm-text variant="caption" class="block truncate">{{ row().metaLabel }}</mm-text>
+  }
+</div>
+
+<mm-privacy-blur [blurred]="privacyMode()">
+  <mm-text weight="semibold">{{ row().amountLabel }}</mm-text>
+</mm-privacy-blur>
+
+<mm-flex align="center" gap="1">
+  <mm-button
+    variant="ghost"
+    shape="square"
+    size="xs"
+    [disabled]="row().isFirst"
+    [ariaLabel]="'Move ' + row().goal.name + ' up'"
+    (click)="move.emit('up')"
+  >
+    <ng-icon name="tablerChevronUp" size="14" aria-hidden="true" />
+  </mm-button>
+  <mm-button
+    variant="ghost"
+    shape="square"
+    size="xs"
+    [disabled]="row().isLast"
+    [ariaLabel]="'Move ' + row().goal.name + ' down'"
+    (click)="move.emit('down')"
+  >
+    <ng-icon name="tablerChevronDown" size="14" aria-hidden="true" />
+  </mm-button>
+
+  <mm-dropdown align="end" contentClass="z-10 w-40">
+    <mm-button trigger variant="ghost" shape="square" size="sm" ariaLabel="Goal actions">
+      <ng-icon name="tablerDotsVertical" size="16" aria-hidden="true" />
+    </mm-button>
+    <li>
+      <button type="button" (click)="edit.emit()">
+        <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+        Edit
+      </button>
+    </li>
+    <li>
+      <button type="button" class="text-error" (click)="remove.emit()">
+        <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+        Delete
+      </button>
+    </li>
+  </mm-dropdown>
+</mm-flex>
