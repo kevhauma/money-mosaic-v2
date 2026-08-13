@@ -5,6 +5,7 @@ import {
   PrivacyToggleComponent,
   TypographyComponent,
 } from '@/shared/ui';
+import { ForecastControlsComponent } from '../forecast-controls/forecast-controls.component';
 import { GoalsPanelComponent } from '../goals-panel/goals-panel.component';
 
 /**
@@ -24,6 +25,7 @@ import { GoalsPanelComponent } from '../goals-panel/goals-panel.component';
 @Component({
   selector: 'app-future-overview',
   imports: [
+    ForecastControlsComponent,
     GoalsPanelComponent,
     PageHeaderComponent,
     PaperComponent,

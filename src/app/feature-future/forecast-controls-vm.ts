@@ -1,0 +1,101 @@
+import type { SavingBasis, SavingVelocity } from '@/core/stats';
+import type { TabDefinition } from '@/shared/ui';
+import { formatCurrency, formatMonthYear } from '@/shared/utils';
+
+/**
+ * "All history" as a lookback (TICKET-FUT-06). A plain month count rather than a sentinel value on
+ * the persisted row: `computeSavingVelocity` already clamps a window longer than the imported
+ * history and reports what it actually measured, so a hundred years and "everything you have" are
+ * the same request as far as the aggregate is concerned — and `ForecastSettings.lookbackMonths`
+ * stays a number, with no null case for every reader to handle.
+ */
+export const ALL_HISTORY_LOOKBACK_MONTHS = 1200;
+
+export type LookbackOption = { value: number; label: string };
+
+export const LOOKBACK_OPTIONS: LookbackOption[] = [
+  { value: 3, label: 'Last 3 months' },
+  { value: 6, label: 'Last 6 months' },
+  { value: 12, label: 'Last 12 months' },
+  { value: 24, label: 'Last 24 months' },
+  { value: ALL_HISTORY_LOOKBACK_MONTHS, label: 'All history' },
+];
+
+export type BasisOption = { value: SavingBasis; label: string; hint: string };
+
+/**
+ * Both readings, each with what it actually counts. The hint is not decoration: for the same user
+ * these two can differ by an order of magnitude — someone who never moves money to a savings
+ * account measures €0/month under the strict basis — so picking between them blind is picking
+ * blind.
+ */
+export const BASIS_OPTIONS: BasisOption[] = [
+  {
+    value: 'net-cash-flow',
+    label: 'Money left over',
+    hint: 'Everything that came in, minus everything that went out.',
+  },
+  {
+    value: 'savings-transfers',
+    label: 'Money moved to savings',
+    hint: 'Only what you deliberately moved into your own savings accounts.',
+  },
+];
+
+/**
+ * The basis is a **toggle, not a dropdown**: there are exactly two readings, and both need to be
+ * visible at once for the choice to make sense — a closed dropdown hides the alternative behind a
+ * click, which is the wrong shape for a binary decision whose whole point is the comparison.
+ */
+export const BASIS_TABS: TabDefinition[] = BASIS_OPTIONS.map(({ value, label }) => ({
+  value,
+  label,
+}));
+
+/**
+ * The velocity readout (TICKET-FUT-06) — the mean the projection uses, next to the months it came
+ * from and the spread inside them.
+ *
+ * The spread is the honesty mechanism, not a nicety: a single mean invites false precision, since
+ * one holiday-pay month can carry a whole six-month window. Median, min and max cost one line and
+ * are the only thing telling the user how much to trust the date they are being given.
+ */
+export type VelocityReadout = {
+  /** `''` when there is a rate to show; otherwise why there isn't, in place of a €0/month. */
+  insufficientMessage: string;
+  /** "June 2026 – November 2026 · 6 complete months" — no amounts, so never masked. */
+  windowLabel: string;
+  /** The measured mean. Masked under privacy mode. */
+  rateLabel: string;
+  /** "typical month €180.00 · from €50.00 to €400.00". Masked under privacy mode. */
+  spreadLabel: string;
+};
+
+const EMPTY_READOUT: Omit<VelocityReadout, 'insufficientMessage'> = {
+  windowLabel: '',
+  rateLabel: '',
+  spreadLabel: '',
+};
+
+export const describeVelocity = (velocity: SavingVelocity): VelocityReadout => {
+  if (!velocity.hasEnoughHistory) {
+    return {
+      insufficientMessage:
+        'Not enough complete months in this window yet — import more history, or pick a shorter window.',
+      ...EMPTY_READOUT,
+    };
+  }
+
+  const first = velocity.months[0];
+  const last = velocity.months[velocity.months.length - 1];
+  const monthWord = velocity.monthsCovered === 1 ? 'month' : 'months';
+
+  return {
+    insufficientMessage: '',
+    // What was *measured*, which is not always what was asked for: a 24-month window over 9 months
+    // of imported history says nine, rather than quietly implying twenty-four.
+    windowLabel: `${formatMonthYear(first.from)} – ${formatMonthYear(last.to)} · ${velocity.monthsCovered} complete ${monthWord}`,
+    rateLabel: `${formatCurrency(velocity.perMonth)}/month`,
+    spreadLabel: `typical month ${formatCurrency(velocity.median)} · from ${formatCurrency(velocity.min)} to ${formatCurrency(velocity.max)}`,
+  };
+};

@@ -1,0 +1,58 @@
+<mm-paper>
+  <mm-text as="h2" variant="subheading" weight="semibold" class="mb-1">Forecast settings</mm-text>
+  <mm-text as="p" variant="caption" class="mb-3">
+    These three decide every date on this page: how far back your saving is measured, what counts as
+    saving, and how much cash you want left untouched.
+  </mm-text>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    <mm-fieldset legend="Measure my saving over">
+      <mm-select [formControl]="lookbackControl" class="w-full">
+        @for (option of lookbackOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </mm-select>
+    </mm-fieldset>
+
+    <!-- A toggle, not a dropdown: two readings that only make sense next to each other, and for the
+         same person they can differ by an order of magnitude. -->
+    <mm-fieldset legend="What counts as saving">
+      <mm-tabs
+        [tabs]="basisTabs"
+        [selected]="basis()"
+        (selectedChange)="onBasisChange($event)"
+        variant="box"
+        class="w-full"
+      />
+      <mm-label>{{ basisHint() }}</mm-label>
+    </mm-fieldset>
+
+    <mm-fieldset legend="Keep this much aside">
+      <mm-input type="number" step="0.01" [formControl]="safetyNetControl" class="w-full" />
+      @if (safetyNetError; as message) {
+        <mm-label variant="error">{{ message }}</mm-label>
+      } @else {
+        <mm-label>Goals are only funded from what's above this.</mm-label>
+      }
+    </mm-fieldset>
+  </div>
+
+  <!-- The measured rate, next to the months it came from and the spread inside them. A mean on its
+       own invites false precision — one holiday-pay month can carry a whole window. -->
+  <div class="mt-3 rounded-box bg-base-200/50 p-3">
+    @if (readout().insufficientMessage) {
+      <mm-text variant="caption">{{ readout().insufficientMessage }}</mm-text>
+    } @else {
+      <mm-flex align="baseline" gap="2" [wrap]="true">
+        <mm-text variant="caption">You saved about</mm-text>
+        <mm-privacy-blur [blurred]="privacyMode()">
+          <mm-text weight="semibold">{{ readout().rateLabel }}</mm-text>
+        </mm-privacy-blur>
+        <mm-text variant="caption">{{ readout().windowLabel }}</mm-text>
+      </mm-flex>
+      <mm-privacy-blur [blurred]="privacyMode()" class="block">
+        <mm-text variant="caption">{{ readout().spreadLabel }}</mm-text>
+      </mm-privacy-blur>
+    }
+  </div>
+</mm-paper>
