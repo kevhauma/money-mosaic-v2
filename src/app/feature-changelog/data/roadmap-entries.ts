@@ -29,13 +29,50 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Loans',
     isTopic: true,
   },
+  // The date-range-picker idea has been ticketed as docs/v1.8_extended_date_range_picker; its
+  // topic-level entry is replaced by the seven per-ticket entries below, in build order.
   {
     versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'topic-date-range-picker',
-    title:
-      'A more powerful date range picker with quick ranges, relative expressions, and recent history',
+    ticketId: 'TICKET-STAT-35',
+    title: 'Say "the last 30 days" once and have it still mean that next month',
     area: 'Date range picker',
-    isTopic: true,
+  },
+  {
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketId: 'TICKET-STAT-36',
+    title: 'A bookmarked rolling window stays rolling instead of freezing into fixed dates',
+    area: 'Date range picker',
+  },
+  {
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketId: 'TICKET-SET-09',
+    title: 'Tell the app which month your financial year starts in',
+    area: 'Settings',
+  },
+  {
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketId: 'TICKET-STAT-37',
+    title:
+      'The ranges you actually think in — last 90 days, previous quarter, this month so far, previous fiscal year',
+    area: 'Date range picker',
+  },
+  {
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketId: 'TICKET-STAT-38',
+    title: 'One control showing your current range, opening onto every range you might want',
+    area: 'Date range picker',
+  },
+  {
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketId: 'TICKET-STAT-39',
+    title: 'Type an exact window into the date fields and apply it in one go',
+    area: 'Date range picker',
+  },
+  {
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketId: 'TICKET-STAT-40',
+    title: 'The ranges you picked recently, one click away instead of retyped',
+    area: 'Date range picker',
   },
   {
     versionFolder: 'v9999_ideas',
