@@ -44,6 +44,15 @@ export const BASIS_OPTIONS: BasisOption[] = [
 ];
 
 /**
+ * What the basis becomes once specific savings accounts are selected — not a choice any more, so
+ * the toggle goes inert and this replaces the chosen option's hint. "Money moved to savings" counts
+ * transfers *into* own savings accounts, and from inside those accounts there are none, so leaving
+ * the choice live would let a steady saver read ~€0/month.
+ */
+export const SCOPED_BASIS_HINT =
+  'Fixed while savings accounts are selected: everything that came into them, minus everything that left.';
+
+/**
  * The basis is a **toggle, not a dropdown**: there are exactly two readings, and both need to be
  * visible at once for the choice to make sense — a closed dropdown hides the alternative behind a
  * click, which is the wrong shape for a binary decision whose whole point is the comparison.

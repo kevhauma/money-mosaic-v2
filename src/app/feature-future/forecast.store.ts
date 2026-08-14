@@ -8,6 +8,7 @@ import {
   computeSavingVelocity,
   type GoalAffordability,
   type ProjectedPurchase,
+  type SavingBasis,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
 import {
@@ -60,24 +61,53 @@ export const ForecastStore = signalStore(
     const forecastSettingsStore = inject(ForecastSettingsStore);
 
     /**
-     * The chosen accounts that still exist (TICKET-FUT-08) — a stale id left behind by a deleted
-     * account is dropped on read rather than being fatal, and an empty result means "all accounts",
-     * exactly as an unset scope does.
+     * The accounts the forecast may be scoped to: own **savings** accounts only, plus an archived
+     * one that still carries a net-worth contribution — money that is still counted has to be
+     * excludable.
+     *
+     * Narrowing the offer to savings accounts is what makes the scope answer a question worth
+     * asking: "how fast is the money I actually set aside growing", measured on the accounts it
+     * lands in. A checking account in the scope answers "what is left in my current account",
+     * which the Dashboard already covers and which nothing on this page projects usefully.
      */
-    const scopeAccountIds = computed(
-      () =>
-        new Set(
-          forecastSettingsStore
-            .activeScopeAccountIds()
-            .filter((id) => accountsStore.accountsById().has(id)),
-        ),
+    const scopeCandidates = computed(() => {
+      const contributions = accountsStore.netWorthContributionById();
+      return accountsStore
+        .accounts()
+        .filter((account) => account.type === 'savings')
+        .filter((account) => !account.archived || contributions.get(account.id!));
+    });
+
+    /**
+     * The chosen accounts that are still offerable (TICKET-FUT-08) — an id left behind by a deleted
+     * account, or by a scope stored before the offer narrowed to savings, is dropped on read rather
+     * than staying invisibly active, and an empty result means "all accounts", exactly as an unset
+     * scope does.
+     */
+    const scopeAccountIds = computed(() => {
+      const candidates = new Set(scopeCandidates().map((account) => account.id!));
+      return new Set(
+        forecastSettingsStore.activeScopeAccountIds().filter((id) => candidates.has(id)),
+      );
+    });
+
+    /**
+     * What the page actually measures on. The user's basis holds for an unscoped forecast, but a
+     * scope is always a set of savings accounts — and `savings-transfers` counts money moved *into*
+     * own savings accounts, which from inside those accounts is nothing at all. Reading a scoped
+     * forecast on that basis would report ~€0/month for someone saving steadily, so the scope fixes
+     * the basis at net cash flow: everything that came into the selected accounts, minus everything
+     * that left. The stored preference is untouched and returns the moment the scope is cleared.
+     */
+    const effectiveBasis = computed<SavingBasis>(() =>
+      scopeAccountIds().size ? 'net-cash-flow' : forecastSettingsStore.basis(),
     );
 
     const velocity = computed(() =>
       computeSavingVelocity(transactionsStore.transactions(), {
         today: todayIso(),
         lookbackMonths: forecastSettingsStore.lookbackMonths(),
-        basis: forecastSettingsStore.basis(),
+        basis: effectiveBasis(),
         ownSavingsIbans: savingsAccountIbans(accountsStore.accounts()),
         categoriesById: categoriesStore.categoriesById(),
         accountsById: accountsStore.accountsById(),
@@ -101,7 +131,7 @@ export const ForecastStore = signalStore(
       return total;
     });
 
-    /** "Checking + Savings only" — `''` when the forecast is looking at everything. */
+    /** "Savings + Buffer only" — `''` when the forecast is looking at everything. */
     const scopeLabel = computed(() => {
       const scope = scopeAccountIds();
       if (scope.size === 0) return '';
@@ -234,8 +264,10 @@ export const ForecastStore = signalStore(
 
     return {
       velocity,
+      effectiveBasis,
       startingBalance,
       spendableBalance,
+      scopeCandidates,
       scopeAccountIds,
       scopeLabel,
       affordability,

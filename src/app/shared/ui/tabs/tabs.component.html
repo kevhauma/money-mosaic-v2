@@ -16,6 +16,8 @@
         role="tab"
         class="tab"
         [class.tab-active]="selected() === tab.value"
+        [attr.aria-disabled]="ariaDisabled()"
+        [attr.tabindex]="tabIndex()"
         (click)="selectTab(tab.value)"
       >
         {{ tab.label }}

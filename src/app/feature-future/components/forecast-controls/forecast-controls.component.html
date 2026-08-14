@@ -26,16 +26,19 @@
     </mm-fieldset>
 
     <!-- A toggle, not a dropdown: two readings that only make sense next to each other, and for the
-         same person they can differ by an order of magnitude. -->
+         same person they can differ by an order of magnitude. Inert once savings accounts are
+         picked below — the scope answers this question on its own. -->
     <mm-fieldset legend="What counts as saving">
       <mm-tabs
         [tabs]="basisTabs"
         [selected]="basis()"
+        [disabled]="basisLocked()"
         (selectedChange)="onBasisChange($event)"
         variant="box"
         class="w-full"
       />
-      <mm-label>{{ basisHint() }}</mm-label>
+      <!-- `whitespace-normal`: daisyUI's `.label` is nowrap, and the locked hint is a full sentence. -->
+      <mm-label class="whitespace-normal">{{ basisHint() }}</mm-label>
     </mm-fieldset>
 
     <mm-fieldset legend="Keep this much aside">
@@ -49,22 +52,31 @@
   </div>
 
   <!-- Which money is in the conversation at all (TICKET-FUT-08) — a different limit from the
-       safety net above, and both can be set at once. -->
-  <mm-fieldset legend="Only count these accounts" class="mt-3">
-    <mm-flex align="center" gap="4" [wrap]="true">
-      @for (option of scopeOptions(); track option.id) {
-        <mm-label as="label" class="gap-2">
-          <input
-            type="checkbox"
-            class="checkbox checkbox-sm"
-            [checked]="option.checked"
-            (change)="toggleScopeAccount(option.id, $any($event.target).checked)"
-          />
-          <mm-text variant="caption" color="base-content">{{ option.name }}</mm-text>
-        </mm-label>
-      }
-    </mm-flex>
-    <mm-label>{{ scopeSummary() }} — untick everything to go back to all accounts.</mm-label>
+       safety net above, and both can be set at once. Savings accounts only: the rate then measures
+       what actually landed in the accounts the money is being set aside in. -->
+  <mm-fieldset legend="Only count these savings accounts" class="mt-3">
+    @if (scopeOptions().length) {
+      <mm-flex align="center" gap="4" [wrap]="true">
+        @for (option of scopeOptions(); track option.id) {
+          <mm-label as="label" class="gap-2">
+            <input
+              type="checkbox"
+              class="checkbox checkbox-sm"
+              [checked]="option.checked"
+              (change)="toggleScopeAccount(option.id, $any($event.target).checked)"
+            />
+            <mm-text variant="caption" color="base-content">{{ option.name }}</mm-text>
+          </mm-label>
+        }
+      </mm-flex>
+      <mm-label class="whitespace-normal">
+        {{ scopeSummary() }} — untick everything to go back to all accounts.
+      </mm-label>
+    } @else {
+      <mm-label class="whitespace-normal">
+        No savings accounts yet — set an account's type to savings to narrow the forecast to it.
+      </mm-label>
+    }
   </mm-fieldset>
 
   <!-- The measured rate, next to the months it came from and the spread inside them. A mean on its

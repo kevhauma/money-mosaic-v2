@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AccountsStore, AppSettingsStore, ForecastSettingsStore } from '@/core/state';
+import { AppSettingsStore, ForecastSettingsStore } from '@/core/state';
 import type { ForecastMode } from '@/core/data-access';
 import type { SavingBasis } from '@/core/stats';
 import {
@@ -22,6 +22,7 @@ import {
   LOOKBACK_OPTIONS,
   MODE_OPTIONS,
   MODE_TABS,
+  SCOPED_BASIS_HINT,
   describeVelocity,
 } from '../../forecast-controls-vm';
 
@@ -70,8 +71,15 @@ export class ForecastControlsComponent {
     () => MODE_OPTIONS.find((option) => option.value === this.mode())?.hint,
   );
 
-  /** The basis is a two-option toggle, so it reads straight off the store rather than a control. */
-  protected readonly basis = this.forecastSettingsStore.basis;
+  /**
+   * The basis is a two-option toggle, so it reads straight off the store rather than a control —
+   * and off `ForecastStore`, not the settings row, so the toggle shows the basis the figures below
+   * were actually measured on once a savings-account scope has fixed it.
+   */
+  protected readonly basis = this.forecastStore.effectiveBasis;
+
+  /** Selecting savings accounts settles the basis question; the toggle then says so and sits out. */
+  protected readonly basisLocked = computed(() => this.forecastStore.scopeAccountIds().size > 0);
 
   /** `<select>` values are strings; the store's is a number, so the coercion happens in one place. */
   protected readonly lookbackControl = new FormControl<string>('', { nonNullable: true });
@@ -80,30 +88,23 @@ export class ForecastControlsComponent {
     validators: [Validators.required, safetyNetValidator],
   });
 
-  /** The chosen basis' one-line explanation of what it counts, resolved off the current value. */
-  protected readonly basisHint = computed(
-    () => BASIS_OPTIONS.find((option) => option.value === this.forecastSettingsStore.basis())?.hint,
+  /** The effective basis' one-line explanation of what it counts, or why it is no longer a choice. */
+  protected readonly basisHint = computed(() =>
+    this.basisLocked()
+      ? SCOPED_BASIS_HINT
+      : BASIS_OPTIONS.find((option) => option.value === this.basis())?.hint,
   );
 
   protected readonly readout = computed(() => describeVelocity(this.forecastStore.velocity()));
 
-  private readonly accountsStore = inject(AccountsStore);
-
-  /**
-   * The accounts worth offering (TICKET-FUT-08): every active one, plus an archived one that still
-   * carries a net-worth contribution — money that is still counted has to be excludable.
-   */
+  /** The savings accounts the forecast can be narrowed to (TICKET-FUT-08), ticked where selected. */
   protected readonly scopeOptions = computed(() => {
-    const contributions = this.accountsStore.netWorthContributionById();
     const scope = this.forecastStore.scopeAccountIds();
-    return this.accountsStore
-      .accounts()
-      .filter((account) => !account.archived || contributions.get(account.id!))
-      .map((account) => ({
-        id: account.id!,
-        name: account.name,
-        checked: scope.has(account.id!),
-      }));
+    return this.forecastStore.scopeCandidates().map((account) => ({
+      id: account.id!,
+      name: account.name,
+      checked: scope.has(account.id!),
+    }));
   });
 
   /** No selection means every account — said in words, since an all-unticked list looks broken. */

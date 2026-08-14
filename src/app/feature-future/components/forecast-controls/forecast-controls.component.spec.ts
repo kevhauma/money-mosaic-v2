@@ -459,7 +459,11 @@ describe('ForecastControlsComponent: the account scope (TICKET-FUT-08)', () => {
   const scopeCheckboxes = (fixture: ComponentFixture<ForecastControlsComponent>) =>
     [...host(fixture).querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[];
 
-  const withTwoAccounts = (settings: ForecastSettings = DEFAULT_FORECAST_SETTINGS) => {
+  const scopeLabels = (fixture: ComponentFixture<ForecastControlsComponent>) =>
+    scopeCheckboxes(fixture).map((box) => box.closest('mm-label')?.textContent?.trim());
+
+  /** One checking account and two savings ones — only the savings pair is offerable. */
+  const withMixedAccounts = (settings: ForecastSettings = DEFAULT_FORECAST_SETTINGS) => {
     forecastSettingsRepository.get.mockResolvedValue(settings);
     return createFixture(
       settings,
@@ -467,42 +471,44 @@ describe('ForecastControlsComponent: the account scope (TICKET-FUT-08)', () => {
       [
         { ...account, id: 1, name: 'Checking' },
         { ...account, id: 2, name: 'Savings', type: 'savings' as const },
+        { ...account, id: 3, name: 'Buffer', type: 'savings' as const },
       ],
     );
   };
 
-  it('offers every account, unticked, and says the forecast is looking at all of them', async () => {
-    const fixture = await withTwoAccounts();
+  it('offers only the savings accounts, unticked, and says it is looking at all of them', async () => {
+    const fixture = await withMixedAccounts();
 
     expect(scopeCheckboxes(fixture)).toHaveLength(2);
+    expect(scopeLabels(fixture)).toEqual(['Savings', 'Buffer']);
     expect(scopeCheckboxes(fixture).every((box) => !box.checked)).toBe(true);
     expect(host(fixture).textContent).toContain('All accounts');
   });
 
   it('persists a selection through the store', async () => {
-    const fixture = await withTwoAccounts();
+    const fixture = await withMixedAccounts();
 
     scopeCheckboxes(fixture)[0].click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(forecastSettingsRepository.setScopeAccountIds).toHaveBeenCalledWith([1]);
+    expect(forecastSettingsRepository.setScopeAccountIds).toHaveBeenCalledWith([2]);
   });
 
   it('reflects a persisted scope and names it', async () => {
-    const fixture = await withTwoAccounts({
+    const fixture = await withMixedAccounts({
       ...DEFAULT_FORECAST_SETTINGS,
-      scopeAccountIds: [2],
+      scopeAccountIds: [3],
     });
 
     expect(scopeCheckboxes(fixture)[1].checked).toBe(true);
-    expect(host(fixture).textContent).toContain('Savings');
+    expect(host(fixture).textContent).toContain('Buffer');
   });
 
   it('reverts to all accounts when the last one is unticked, rather than emptying the forecast', async () => {
-    const fixture = await withTwoAccounts({
+    const fixture = await withMixedAccounts({
       ...DEFAULT_FORECAST_SETTINGS,
-      scopeAccountIds: [1],
+      scopeAccountIds: [2],
     });
 
     scopeCheckboxes(fixture)[0].click();
@@ -515,13 +521,67 @@ describe('ForecastControlsComponent: the account scope (TICKET-FUT-08)', () => {
   });
 
   it('ignores an id whose account has since been deleted, and keeps the rest of the selection', async () => {
-    const fixture = await withTwoAccounts({
+    const fixture = await withMixedAccounts({
       ...DEFAULT_FORECAST_SETTINGS,
       scopeAccountIds: [2, 999],
     });
 
     expect(host(fixture).textContent).toContain('Savings');
     expect(host(fixture).textContent).not.toContain('All accounts');
-    expect(scopeCheckboxes(fixture)[1].checked).toBe(true);
+    expect(scopeCheckboxes(fixture)[0].checked).toBe(true);
+  });
+
+  it('drops a non-savings id left behind by a scope stored before the offer narrowed', async () => {
+    const fixture = await withMixedAccounts({
+      ...DEFAULT_FORECAST_SETTINGS,
+      scopeAccountIds: [1],
+    });
+
+    // The checking account is neither offered nor silently still narrowing the forecast — a scope
+    // the user cannot see or untick is worse than none.
+    expect(scopeCheckboxes(fixture).every((box) => !box.checked)).toBe(true);
+    expect(host(fixture).textContent).toContain('All accounts');
+  });
+
+  it('says what to do instead of showing an empty picker when nothing is a savings account', async () => {
+    const fixture = await createFixture(DEFAULT_FORECAST_SETTINGS, [], [account]);
+
+    expect(scopeCheckboxes(fixture)).toHaveLength(0);
+    expect(host(fixture).textContent).toContain('No savings accounts yet');
+  });
+
+  it('fixes the basis at net cash flow while a scope is set, and hands the choice back when it is cleared', async () => {
+    const fixture = await withMixedAccounts({
+      ...DEFAULT_FORECAST_SETTINGS,
+      basis: 'savings-transfers',
+      scopeAccountIds: [2],
+    });
+
+    // "Money moved to savings" measured from inside a savings account is nothing at all, so the
+    // stored preference is overridden rather than quietly reporting €0/month.
+    // Still says *which* basis applies — `aria-disabled`, not the native attribute, since daisyUI
+    // drops the active pill on `[disabled]` and both tabs would then look identical.
+    expect(activeBasisLabel(fixture)).toBe('Money left over');
+    expect(
+      basisTabButtons(fixture).every((tab) => tab.getAttribute('aria-disabled') === 'true'),
+    ).toBe(true);
+    expect(host(fixture).textContent).toContain('Fixed while savings accounts are selected');
+
+    // A click that gets through anyway must not write the basis.
+    basisTabButtons(fixture)[1].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(forecastSettingsRepository.setBasis).not.toHaveBeenCalled();
+    expect(activeBasisLabel(fixture)).toBe('Money left over');
+
+    scopeCheckboxes(fixture)[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The preference was never written over: unscoping restores it.
+    expect(activeBasisLabel(fixture)).toBe('Money moved to savings');
+    expect(
+      basisTabButtons(fixture).every((tab) => tab.getAttribute('aria-disabled') === null),
+    ).toBe(true);
   });
 });
