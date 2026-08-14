@@ -456,9 +456,11 @@ describe('resolveTransferMatches: TICKET-TRF-03 external-contribution guard', ()
       3,
       true,
     );
-    expect(autoLink).toEqual([
-      { from: transactions[0], to: transactions[1], method: 'auto-iban', confidence: 'high' },
-    ]);
+    // The pair is what this asserts, not its orientation: since TICKET-TRF-05 the suspected
+    // contribution no longer initiates the one-sided pass, so the own-account leg is `from`.
+    expect(autoLink).toHaveLength(1);
+    expect(autoLink[0]).toMatchObject({ method: 'auto-iban', confidence: 'high' });
+    expect([autoLink[0].from.id, autoLink[0].to.id].sort((a, b) => a! - b!)).toEqual([1, 2]);
   });
 
   it('still links a genuine own-account transfer into a joint account (high confidence)', () => {
@@ -508,6 +510,118 @@ describe('resolveTransferMatches: TICKET-TRF-03 external-contribution guard', ()
         method: 'auto-amountdate',
         confidence: 'medium',
       },
+    ]);
+  });
+});
+
+describe('resolveTransferMatches: TICKET-TRF-05 mutual IBAN corroboration', () => {
+  const checking = account({ id: 1, iban: 'BE01' });
+  const joint = account({
+    id: 2,
+    type: 'joint',
+    iban: 'BE02',
+    coOwners: [{ name: 'Partner', ibans: ['BE99'] }],
+  });
+
+  /** My outflow into the joint pot: names the joint account, so it corroborates every credit on it. */
+  const myOutflow = transaction({
+    id: 1,
+    accountId: 1,
+    amount: -500,
+    bookingDate: '2026-07-05',
+    counterpartyIban: 'BE02',
+  });
+  /** My matching deposit leg — names my checking account back, so the pair is mutually corroborated. */
+  const myDepositLeg = transaction({
+    id: 2,
+    accountId: 2,
+    amount: 500,
+    bookingDate: '2026-07-05',
+    counterpartyIban: 'BE01',
+  });
+  /** A co-owner's same-amount contribution, closer in date than my own leg on purpose. */
+  const coOwnerContribution = transaction({
+    id: 3,
+    accountId: 2,
+    amount: 500,
+    bookingDate: '2026-07-04',
+    counterpartyIban: 'BE99',
+  });
+
+  const linkedPairs = (transactions: Transaction[]) =>
+    resolveTransferMatches(transactions, [checking, joint], noCategories, 5, true).autoLink.map(
+      (candidate) => [candidate.from.id, candidate.to.id].sort((a, b) => a! - b!),
+    );
+
+  it('links my own two legs and leaves a co-owner contribution unlinked, whatever the input order', () => {
+    expect(linkedPairs([myOutflow, myDepositLeg, coOwnerContribution])).toEqual([[1, 2]]);
+    // The contribution first: it used to confirm one-sidedly against my outflow and consume it.
+    expect(linkedPairs([coOwnerContribution, myOutflow, myDepositLeg])).toEqual([[1, 2]]);
+  });
+
+  it('still prefers my own leg when the contribution carries no counterparty IBAN at all', () => {
+    const anonymousContribution = transaction({
+      ...coOwnerContribution,
+      counterpartyIban: undefined,
+    });
+
+    expect(linkedPairs([myOutflow, myDepositLeg, anonymousContribution])).toEqual([[1, 2]]);
+    expect(linkedPairs([anonymousContribution, myOutflow, myDepositLeg])).toEqual([[1, 2]]);
+  });
+
+  it('excludes a neutral-tagged inflow from high-confidence matching even when its counterparty is an own account', () => {
+    const categories = [category({ id: 1, kind: 'neutral' })];
+    const taggedContribution = transaction({
+      id: 3,
+      accountId: 2,
+      amount: 500,
+      bookingDate: '2026-07-05',
+      counterpartyIban: 'BE01',
+      categoryId: 1,
+    });
+
+    const { autoLink, ambiguous } = resolveTransferMatches(
+      [myOutflow, taggedContribution],
+      [checking, joint],
+      categories,
+      5,
+      true,
+    );
+    expect(autoLink).toEqual([]);
+    expect(ambiguous).toEqual([]);
+  });
+
+  it('falls back to the closest-by-date candidate when every candidate is a suspected contribution', () => {
+    // My own leg carries no counterparty IBAN either, so the fallback heuristic flags it too and
+    // nothing distinguishes the two credits — pre-TRF-05 behaviour is deliberately kept here, and
+    // the contribution wins purely on date proximity.
+    const undocumentedOwnLeg = transaction({
+      ...myDepositLeg,
+      counterpartyIban: undefined,
+      bookingDate: '2026-07-02',
+    });
+    const sameDayContribution = transaction({ ...coOwnerContribution, bookingDate: '2026-07-05' });
+
+    expect(linkedPairs([myOutflow, undocumentedOwnLeg, sameDayContribution])).toEqual([[1, 3]]);
+  });
+
+  it('still links a lone one-sided IBAN-confirmed pair at high confidence (regression)', () => {
+    const soleCredit = transaction({
+      id: 2,
+      accountId: 2,
+      amount: 500,
+      bookingDate: '2026-07-06',
+    });
+
+    const { autoLink } = resolveTransferMatches(
+      [myOutflow, soleCredit],
+      [checking, joint],
+      noCategories,
+      5,
+      true,
+    );
+    expect(autoLink).toEqual([
+      { from: myOutflow, to: soleCredit, method: 'auto-iban', confidence: 'high' },
     ]);
   });
 });

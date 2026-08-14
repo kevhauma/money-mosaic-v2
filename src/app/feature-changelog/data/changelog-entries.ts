@@ -940,4 +940,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Goals & forecast',
   },
+  {
+    date: '2026-08-14',
+    versionFolder: 'v1.1_joint_accounts',
+    ticketIds: ['TICKET-TRF-05'],
+    title:
+      'Money you move into a shared account now links to your own deposit, not to a co-owner’s payment of the same amount',
+    area: 'Transfers',
+  },
 ];
