@@ -59,29 +59,52 @@ No UI, no state: functions and types only, mirroring how `resolvePresetRange` is
 
 ## Acceptance criteria
 
-- [ ] `parseRangeExpression` accepts `now`, `now-30d`, `now+1w`, `now-6M`, `now-2y`, `now/M`,
-      `now-1M/M`, `now/w`, `now/y`, and a bare `YYYY-MM-DD`.
-- [ ] `parseRangeExpression` rejects `now-6h`, `now-15m`, `now-30s`, `2025-07-10 15:00`, `now/h`,
+- [x] `parseRangeExpression` accepts `now`, `now-30d`, `now+1w`, `now-6M`, `now-2y`, `now/M`,
+      `now-1M/M`, `now/w`, `now/y`, and a bare `YYYY-MM-DD`. (`ACCEPTED_FORMS` parametrized spec,
+      [range-expression.spec.ts:9-20,42-45](../../../src/app/shared/utils/range-expression.spec.ts))
+- [x] `parseRangeExpression` rejects `now-6h`, `now-15m`, `now-30s`, `2025-07-10 15:00`, `now/h`,
       `now-`, `now-xd`, `tomorrow` and the empty string — each with a non-empty `reason`, and the
       time-unit rejections with a reason that names whole-day granularity specifically.
-- [ ] `resolveRangeExpression` snaps to the unit **start** for `edge: 'from'` and the unit **end**
+      (`REJECTED_FORMS` spec + the dedicated "whole days" reason spec,
+      [range-expression.spec.ts:22-32,47-64,90-96](../../../src/app/shared/utils/range-expression.spec.ts))
+- [x] `resolveRangeExpression` snaps to the unit **start** for `edge: 'from'` and the unit **end**
       for `edge: 'to'`, so `now/M … now/M` resolves to the first and last day of the current month.
-- [ ] `now-1M/M` resolves to the previous month's true boundaries at both edges, including across a
-      year boundary (December from January) and into a 28/29-day February.
-- [ ] Week snapping is Monday-start, matching `isoWeekOf`/`isoWeekStart` in `date-buckets.ts` — a
+      (`'snaps "now/M" to the month start...'` and `'resolves "now/M" … as the whole current month'`,
+      [range-expression.spec.ts:127-139](../../../src/app/shared/utils/range-expression.spec.ts))
+- [x] `now-1M/M` resolves to the previous month's true boundaries at both edges, including across a
+      year boundary (December from January) and into a 28/29-day February. (three specs covering
+      Dec/Jan, 28-day Feb 2026, and 29-day leap Feb 2028,
+      [range-expression.spec.ts:141-157](../../../src/app/shared/utils/range-expression.spec.ts))
+- [x] Week snapping is Monday-start, matching `isoWeekOf`/`isoWeekStart` in `date-buckets.ts` — a
       `now/w` from on a Sunday resolves to the Monday six days earlier, not the next day.
-- [ ] Resolution takes an injected `todayIso` and never reads `Date.now()`, matching
-      `resolvePresetRange`.
-- [ ] `formatRangeExpression(parseRangeExpression(text))` round-trips every accepted form above to
-      identical canonical text.
-- [ ] `describeRangeExpression` returns a human label for each accepted form, with no raw `now-`
-      syntax leaking into it.
-- [ ] No new dependency; `angular.json` budgets untouched.
-- [ ] Unit tests cover: every accepted form's parse and resolution; every rejected form's reason;
+      (`'snaps "now/w" to Monday-start weeks...'` on Sunday 2026-07-19 → Monday 2026-07-13,
+      [range-expression.spec.ts:159-164](../../../src/app/shared/utils/range-expression.spec.ts))
+- [x] Resolution takes an injected `todayIso` and never reads `Date.now()`, matching
+      `resolvePresetRange`. (`resolveRangeExpression`'s signature takes `todayIso` as a parameter and
+      the module contains no `Date.now()`/argless `new Date()` call,
+      [range-expression.ts](../../../src/app/shared/utils/range-expression.ts); regression spec
+      at [range-expression.spec.ts:172-175](../../../src/app/shared/utils/range-expression.spec.ts))
+- [x] `formatRangeExpression(parseRangeExpression(text))` round-trips every accepted form above to
+      identical canonical text. (`formatRangeExpression` describe block, parametrized over
+      `ACCEPTED_FORMS`, [range-expression.spec.ts:178-183](../../../src/app/shared/utils/range-expression.spec.ts))
+- [x] `describeRangeExpression` returns a human label for each accepted form, with no raw `now-`
+      syntax leaking into it. (parametrized non-empty/no-`now[-+/]` spec plus specific-label specs,
+      [range-expression.spec.ts:185-207](../../../src/app/shared/utils/range-expression.spec.ts))
+- [x] No new dependency; `angular.json` budgets untouched. (only imports from
+      `./date-buckets`; `angular.json` not touched by this change — `git diff --stat` confirms)
+- [x] Unit tests cover: every accepted form's parse and resolution; every rejected form's reason;
       both snap edges; the year-boundary and February month snaps; Monday-start week snapping;
       round-tripping; and the plain-language labels.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      ([range-expression.spec.ts](../../../src/app/shared/utils/range-expression.spec.ts), 33 tests)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (verifier subagent run:
+      lint clean, 265 spec files / 3031 tests passing, dev build succeeded)
+- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD`: 0
+      duplication, real complexity within thresholds after refactor — `parseRangeExpression`
+      cyclomatic 10/cognitive 12, `describeRangeExpression` cyclomatic 6/cognitive 5, both under the
+      20/15 thresholds; the 4 unused-export flags are the ticket's own documented intent — "ships as
+      unreferenced utility code... STAT-36 is the first consumer" — not a defect; coding-conventions
+      skill consulted for file placement, barrel export, `type` over `interface`, and the
+      `parseIsoDate`/`formatIsoDate`/`MS_PER_DAY` reuse rule)
 
 ## Notes
 

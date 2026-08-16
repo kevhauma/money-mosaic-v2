@@ -43,7 +43,7 @@ are settled here and referenced by the tickets rather than re-argued in each:
 
 ## Recommended order
 
-- [ ] [TICKET-STAT-35](./tickets/TICKET-STAT-35-relative-range-expressions.md) — Relative range
+- [x] [TICKET-STAT-35](./tickets/TICKET-STAT-35-relative-range-expressions.md) — Relative range
       expressions: parse, resolve and re-serialise `now`, `now-30d`, `now/M` (extends FR-STAT-7) —
       **first**, and pure utility code with no UI: every other ticket in this version resolves a
       range through it
