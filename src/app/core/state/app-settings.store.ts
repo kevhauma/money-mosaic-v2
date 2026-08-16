@@ -106,6 +106,12 @@ export const AppSettingsStore = signalStore(
         patchState(store, { privacyMode });
       },
 
+      /** The month (1–12) a fiscal year begins in (TICKET-SET-09); nothing reads it yet. */
+      setFiscalYearStartMonth: async (fiscalYearStartMonth: number): Promise<void> => {
+        await appSettingsRepository.setFiscalYearStartMonth(fiscalYearStartMonth);
+        patchState(store, { fiscalYearStartMonth });
+      },
+
       /** Records that a guide's first-visit intro has been shown (TICKET-PUB-08); idempotent. */
       markGuideSeen: async (slug: string): Promise<void> => {
         const seen = store.seenGuideSlugs() ?? [];

@@ -260,4 +260,33 @@ describe('AppSettingsRepository', () => {
       mainIncomeCategoryId: undefined,
     });
   });
+
+  it('setFiscalYearStartMonth writes the singleton row without one existing yet (TICKET-SET-09)', async () => {
+    await repository.setFiscalYearStartMonth(4);
+
+    expect(await repository.get()).toEqual({ id: 1, fiscalYearStartMonth: 4 });
+  });
+
+  it('setFiscalYearStartMonth preserves a locale and a currency symbol already on the row', async () => {
+    await repository.setLocale('en-GB');
+    await repository.setCurrencySymbol('£');
+
+    await repository.setFiscalYearStartMonth(4);
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      locale: 'en-GB',
+      currencySymbol: '£',
+      fiscalYearStartMonth: 4,
+    });
+    expect(await appDb.appSettings.count()).toBe(1);
+  });
+
+  it('setFiscalYearStartMonth(1) stores January explicitly rather than leaving the field unwritten', async () => {
+    await repository.setFiscalYearStartMonth(4);
+
+    await repository.setFiscalYearStartMonth(1);
+
+    expect((await repository.get()).fiscalYearStartMonth).toBe(1);
+  });
 });

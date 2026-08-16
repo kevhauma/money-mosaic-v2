@@ -133,6 +133,7 @@ describe('DataManagementRepository', () => {
         seenGuideSlugs: ['getting-started-with-the-income-page'],
         heatmapExcludedCategoryIds: [4],
         privacyMode: true,
+        fiscalYearStartMonth: 4,
       });
 
       const exported = await repository.exportAll();
@@ -148,6 +149,7 @@ describe('DataManagementRepository', () => {
       expect(restored?.seenGuideSlugs).toEqual(['getting-started-with-the-income-page']);
       expect(restored?.heatmapExcludedCategoryIds).toEqual([4]);
       expect(restored?.privacyMode).toBe(true);
+      expect(restored?.fiscalYearStartMonth).toBe(4);
     });
   });
 

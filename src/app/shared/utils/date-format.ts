@@ -57,6 +57,21 @@ export function formatMonthYear(isoDate: string): string {
   return MONTH_YEAR_FORMATTER().format(parseIsoDate(isoDate));
 }
 
+const LONG_MONTH_FORMATTER = computed(
+  () => new Intl.DateTimeFormat(locale(), { month: 'long', timeZone: 'UTC' }),
+);
+
+/**
+ * The full month name for a 1–12 month number — `April` under `en-US`, `april` under `nl-BE` —
+ * for a picker that names a month with no specific day or year (TICKET-SET-09's fiscal year
+ * start). Takes a month number rather than an ISO date since there's no real day to anchor to.
+ *
+ * Locale-aware like `formatDate` above, and for the same reason.
+ */
+export function formatMonthName(monthNumber: number): string {
+  return LONG_MONTH_FORMATTER().format(new Date(Date.UTC(2000, monthNumber - 1, 1)));
+}
+
 const SHORT_WEEKDAY_FORMATTER = computed(
   () => new Intl.DateTimeFormat(locale(), { weekday: 'short', timeZone: 'UTC' }),
 );

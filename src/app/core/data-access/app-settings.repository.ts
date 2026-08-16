@@ -74,6 +74,14 @@ export class AppSettingsRepository {
     return appDb.appSettings.put({ ...current, id: 1, privacyMode });
   };
 
+  // No `undefined` variant (TICKET-SET-09) — the section always writes a concrete 1–12, including
+  // January, so a deliberate January is recorded rather than indistinguishable from never having
+  // written the field.
+  setFiscalYearStartMonth = async (fiscalYearStartMonth: number): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, fiscalYearStartMonth });
+  };
+
   /**
    * Records that a guide's first-visit intro has been shown (TICKET-PUB-08). Idempotent — marking
    * the same slug twice leaves one entry, because both of the intro's exits call this and a user

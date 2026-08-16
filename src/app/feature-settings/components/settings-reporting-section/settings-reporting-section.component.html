@@ -1,0 +1,23 @@
+<mm-paper>
+  <mm-text variant="heading" as="h2">Reporting</mm-text>
+  <mm-text as="p" variant="caption" class="mt-1">
+    Sets when your fiscal year begins, so quick ranges like "previous fiscal quarter" mean your year
+    rather than the calendar's — it doesn't change how any existing chart or report is calculated.
+  </mm-text>
+
+  <div class="mt-4 flex flex-wrap items-end gap-6">
+    <mm-fieldset legend="Fiscal year starts in">
+      <mm-select [formControl]="monthControl" size="sm" class="w-40">
+        @for (option of monthOptions(); track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </mm-select>
+    </mm-fieldset>
+
+    <mm-fieldset legend="Your fiscal year runs">
+      <mm-text as="p" weight="semibold" class="text-lg" aria-label="Fiscal year span">
+        {{ fiscalYearSpanLabel() }}
+      </mm-text>
+    </mm-fieldset>
+  </div>
+</mm-paper>

@@ -639,6 +639,17 @@ export type AppSettings = {
    * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    */
   privacyMode: boolean | undefined;
+  /**
+   * Additive field (TICKET-SET-09) — the calendar month (1–12) a fiscal year begins in, so "previous
+   * fiscal quarter"/"previous fiscal year" mean the user's year rather than the calendar's.
+   * `undefined` means January, i.e. today's exact calendar-year behaviour — nobody's quarter/year
+   * presets change until they opt in. Nothing reads this yet; it exists so STAT-37's two fiscal
+   * quick ranges have a boundary to resolve against.
+   *
+   * Same "additive optional field, no version bump" reasoning as the fields above.
+   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   */
+  fiscalYearStartMonth: number | undefined;
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -659,6 +670,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   seenGuideSlugs: undefined,
   heatmapExcludedCategoryIds: undefined,
   privacyMode: undefined,
+  fiscalYearStartMonth: undefined,
 };
 
 /**

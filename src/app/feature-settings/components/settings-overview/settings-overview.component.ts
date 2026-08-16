@@ -5,6 +5,7 @@ import { SettingsAboutSectionComponent } from '../settings-about-section/setting
 import { SettingsCurrencyLocaleSectionComponent } from '../settings-currency-locale-section/settings-currency-locale-section.component';
 import { SettingsDataSectionComponent } from '../settings-data-section/settings-data-section.component';
 import { SettingsPrivacySectionComponent } from '../settings-privacy-section/settings-privacy-section.component';
+import { SettingsReportingSectionComponent } from '../settings-reporting-section/settings-reporting-section.component';
 import { SettingsThemeSectionComponent } from '../settings-theme-section/settings-theme-section.component';
 
 /**
@@ -22,6 +23,7 @@ import { SettingsThemeSectionComponent } from '../settings-theme-section/setting
     SettingsCurrencyLocaleSectionComponent,
     SettingsDataSectionComponent,
     SettingsPrivacySectionComponent,
+    SettingsReportingSectionComponent,
     SettingsThemeSectionComponent,
     TypographyComponent,
   ],

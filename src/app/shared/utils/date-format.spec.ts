@@ -1,4 +1,4 @@
-import { formatDate, formatMonthShort, formatWeekdayShort } from './date-format';
+import { formatDate, formatMonthName, formatMonthShort, formatWeekdayShort } from './date-format';
 import { syncFormatSettings } from './format-settings';
 import { withCleanFormatSettings } from './format-settings.testing';
 
@@ -42,6 +42,30 @@ describe('formatMonthShort', () => {
   it('falls back to the default locale when set to an empty string', () => {
     syncFormatSettings({ locale: '' });
     expect(formatMonthShort('2026-07-26')).toBe('Jul');
+  });
+});
+
+describe('formatMonthName', () => {
+  withCleanFormatSettings();
+
+  it('gives the full month name from a 1-12 number, with no day and no year', () => {
+    expect(formatMonthName(4)).toBe('April');
+    expect(formatMonthName(12)).toBe('December');
+  });
+
+  it('names January from month number 1, not December from an off-by-one', () => {
+    expect(formatMonthName(1)).toBe('January');
+  });
+
+  it('names the month in the chosen locale rather than always in English', () => {
+    syncFormatSettings({ locale: 'nl-BE' });
+
+    expect(formatMonthName(3).toLowerCase()).toContain('maart');
+  });
+
+  it('falls back to the default locale when set to an empty string', () => {
+    syncFormatSettings({ locale: '' });
+    expect(formatMonthName(7)).toBe('July');
   });
 });
 

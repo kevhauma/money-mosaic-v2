@@ -61,31 +61,60 @@ resolve against.
 
 ## Acceptance criteria
 
-- [ ] `fiscalYearStartMonth` is added to `AppSettings` and `DEFAULT_APP_SETTINGS` as `undefined`,
-      with **no new `.version()` block** in `app-db.ts`.
-- [ ] `AppSettingsRepository.setFiscalYearStartMonth` uses read-merge-put and leaves every other
+- [x] `fiscalYearStartMonth` is added to `AppSettings` and `DEFAULT_APP_SETTINGS` as `undefined`,
+      with **no new `.version()` block** in `app-db.ts`. (`app-db.ts` — field added to `AppSettings`
+      and `DEFAULT_APP_SETTINGS`; `appSettings: 'id'` at `.version(12)` untouched, no new
+      `.version()` block added.)
+- [x] `AppSettingsRepository.setFiscalYearStartMonth` uses read-merge-put and leaves every other
       field on the row intact — asserted by writing it on a row that already carries a locale and a
-      currency symbol and reading all three back.
-- [ ] The setting is written through `AppSettingsStore` from `@/core/state`; the section component
-      imports no repository and no Dexie symbol.
-- [ ] The section renders twelve month options, reflects the persisted value on load, and falls back
+      currency symbol and reading all three back. (`app-settings.repository.ts`'s
+      `setFiscalYearStartMonth`; `app-settings.repository.spec.ts` →
+      "setFiscalYearStartMonth preserves a locale and a currency symbol already on the row".)
+- [x] The setting is written through `AppSettingsStore` from `@/core/state`; the section component
+      imports no repository and no Dexie symbol. (`settings-reporting-section.component.ts` imports
+      only `AppSettingsStore` from `@/core/state`, `linkControlToSetting`/`formatMonthName`/
+      `parseIsoDate` from `@/shared/utils`, and UI primitives from `@/shared/ui` — no
+      `app-settings.repository` or `app-db` import.)
+- [x] The section renders twelve month options, reflects the persisted value on load, and falls back
       to January when the field has never been written.
-- [ ] The live span readout updates with the selection and states both ends (April → "April 2026 –
-      March 2027").
-- [ ] Selecting January stores it explicitly rather than clearing to `undefined` — an unset field and
+      (`settings-reporting-section.component.spec.ts` → "renders twelve month options", "reflects a
+      hydrated non-January value in the select on load", "falls back to January when the field has
+      never been written".)
+- [x] The live span readout updates with the selection and states both ends (April → "April 2026 –
+      March 2027"). (`settings-reporting-section.component.spec.ts` → "the live span readout states
+      both ends for a non-January start", "the live span readout updates when the selection
+      changes".)
+- [x] Selecting January stores it explicitly rather than clearing to `undefined` — an unset field and
       a deliberate January must be indistinguishable in behaviour but the user's choice is still
-      recorded.
-- [ ] The value survives a reload.
-- [ ] Nothing else in the app changes behaviour as a result of this ticket — the existing quarter and
+      recorded. (`app-settings.repository.spec.ts` → "setFiscalYearStartMonth(1) stores January
+      explicitly rather than leaving the field unwritten"; `settings-reporting-section.component.spec.ts`
+      → "selecting January stores it explicitly rather than leaving the field unwritten".)
+- [x] The value survives a reload. (`settings-reporting-section.component.spec.ts` → "reflects a
+      hydrated non-January value in the select on load", which round-trips through
+      `appDb.appSettings.put` + `AppSettingsStore.hydrate()` — the same reload path the app uses.
+      Live-browser reload check waived, see below.)
+- [x] Nothing else in the app changes behaviour as a result of this ticket — the existing quarter and
       year presets stay calendar-based until
-      [STAT-37](./TICKET-STAT-37-quick-range-catalogue.md) ships.
-- [ ] Unit tests cover: the repository's read-merge-put not clobbering neighbours; the default when
+      [STAT-37](./TICKET-STAT-37-quick-range-catalogue.md) ships. (No file under
+      `shared/utils/date-buckets.ts`, `range-state.store.ts`, or any stats/chart consumer touched in
+      this diff — `git diff --stat` confirms only `app-db.ts`, `app-settings.repository.ts`,
+      `app-settings.store.ts`, `date-format.ts`, the new component, `settings-overview.*`, and specs
+      changed.)
+- [x] Unit tests cover: the repository's read-merge-put not clobbering neighbours; the default when
       unwritten; a persisted value reflected on load; the derived span readout; the explicit-January
-      case.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
-- [ ] Verified live in the browser: setting a non-January month and reloading Settings brings it back.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      case. (See the specific cases cited against each criterion above; 88 tests green across the six
+      affected spec files.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Verified via the `verifier` subagent — 266 spec files / 3052 tests, lint
+      clean, dev build clean. `angular.json` not touched in this diff.)
+- [ ] Verified live in the browser: setting a non-January month and reloading Settings brings it
+      back. (Skipped — user declined the live browser check for this ticket.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code --baseline
+      .fallow-baseline.json --fail-on-issues --quiet` and `npx fallow health --complexity
+      --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet` both exit 0
+      with no output. `conventions-reviewer` subagent found no violations, one non-blocking
+      observation about `todayIso()` not being injected — left as-is, a display-only component
+      method rather than a pure date-math utility.)
 
 ## Notes
 
