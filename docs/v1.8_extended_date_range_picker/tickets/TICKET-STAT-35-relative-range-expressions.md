@@ -98,13 +98,16 @@ No UI, no state: functions and types only, mirroring how `resolvePresetRange` is
       ([range-expression.spec.ts](../../../src/app/shared/utils/range-expression.spec.ts), 33 tests)
 - [x] `ng lint` + `ng test` + `ng build --configuration development` all pass. (verifier subagent run:
       lint clean, 265 spec files / 3031 tests passing, dev build succeeded)
-- [x] Verified via the fallow skill and coding-conventions skill. (`fallow audit --base HEAD`: 0
-      duplication, real complexity within thresholds after refactor — `parseRangeExpression`
-      cyclomatic 10/cognitive 12, `describeRangeExpression` cyclomatic 6/cognitive 5, both under the
-      20/15 thresholds; the 4 unused-export flags are the ticket's own documented intent — "ships as
-      unreferenced utility code... STAT-36 is the first consumer" — not a defect; coding-conventions
-      skill consulted for file placement, barrel export, `type` over `interface`, and the
-      `parseIsoDate`/`formatIsoDate`/`MS_PER_DAY` reuse rule)
+- [x] Verified via the fallow skill and coding-conventions skill. Refactored `parseRangeExpression`
+      and `describeRangeExpression` to bring complexity down (cyclomatic 10/cognitive 12 and
+      cyclomatic 6/cognitive 5, both comfortably under the 20/15 thresholds). The CI gate commands
+      both exit 0: `npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet`
+      and `npx fallow health --complexity --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000
+      --fail-on-issues --quiet`. The 4 exports are intentionally unreferenced until STAT-36 — added to
+      [.fallowrc.json](../../../.fallowrc.json)'s `ignoreExports` (same convention as the existing
+      `joint-owner-lookup.ts`/`rule-matching.ts` entries), with a comment marking it for removal once
+      STAT-36 lands and imports them. coding-conventions skill consulted for file placement, barrel
+      export, `type` over `interface`, and the `parseIsoDate`/`formatIsoDate`/`MS_PER_DAY` reuse rule.
 
 ## Notes
 

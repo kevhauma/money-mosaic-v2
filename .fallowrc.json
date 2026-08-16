@@ -33,6 +33,17 @@
     {
       "file": "src/app/core/categorisation/rule-matching.ts",
       "exports": ["resolveCategoryForTransaction"]
+    },
+    // TICKET-STAT-35: ships as unreferenced utility code on purpose — TICKET-STAT-36 is the first
+    // production consumer. Remove this entry once STAT-36 lands and imports these.
+    {
+      "file": "src/app/shared/utils/range-expression.ts",
+      "exports": [
+        "parseRangeExpression",
+        "resolveRangeExpression",
+        "formatRangeExpression",
+        "describeRangeExpression"
+      ]
     }
   ]
 }

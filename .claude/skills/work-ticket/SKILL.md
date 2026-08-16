@@ -88,19 +88,35 @@ A criterion gets ticked **only when it verifiably passes** — never on hope.
 1. Run the full Definition-of-Done suite via the **`verifier` subagent**
    (`ng lint` + `ng test` + `ng build --configuration development`). Fix failures before
    ticking anything.
-2. For any criterion phrased **"Verified live in the browser: …"**, do a real live check
+2. Run the two fallow CI gate commands and require both to exit clean before finishing the
+   ticket — these are the same gates CI runs, so a ticket that fails them here would fail there:
+   ```bash
+   npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet
+   npx fallow health --complexity --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet
+   ```
+   The first fails only on **new** dead-code findings against the tracked baseline (identity-based,
+   not a raw count) — pre-existing issues elsewhere in the repo don't block this ticket. The second
+   fails on any function over the complexity ceilings. On a failure: refactor the flagged function(s)
+   (extract helpers, reduce branching) rather than raising the thresholds or suppressing the finding,
+   unless the finding is a genuine false positive — in that case use an inline
+   `// fallow-ignore-next-line <issue-type>` with a reason, not a blanket suppression. If the baseline
+   command reports new unused exports for code this ticket *deliberately* ships unreferenced (e.g. a
+   utility a later ticket in the same chain will consume), note that in the ticket's evidence rather
+   than treating it as a blocker — but still confirm the command's own verdict/exit code, don't assume.
+   Re-run both after any fix until they pass clean.
+3. For any criterion phrased **"Verified live in the browser: …"**, do a real live check
    with the `preview_*` tools (launch config `dev`, port 4210): reproduce the scenario the
    criterion describes and capture proof (snapshot/screenshot/logs).
-3. For each satisfied criterion, edit the **ticket file**, changing that line
+4. For each satisfied criterion, edit the **ticket file**, changing that line
    `- [ ]` → `- [x]` **and appending the evidence in parentheses** — the file, spec name, or
    observed behaviour that proves it. "Which file? which test? what did you observe?" must be
    answerable from the ticket alone, months later, without re-deriving anything. A tick with
    no evidence is not a tick.
-4. Do **not** tick a criterion that fails or that you couldn't verify — report it and keep
+5. Do **not** tick a criterion that fails or that you couldn't verify — report it and keep
    working. Only genuinely-met criteria get checked. If a criterion was deliberately skipped
    (the user waived a live browser check, say), leave it `- [ ]` and append **why** to the
    line — an honest open box, not a checked one.
-5. **Final AC↔diff pass before Step 6.** Re-read every `- [x]` on the ticket against the
+6. **Final AC↔diff pass before Step 6.** Re-read every `- [x]` on the ticket against the
    actual working tree — `git diff`, the file, the passing spec. Any box whose evidence you
    cannot point at right now gets unticked and either finished or recorded as a divergence.
    Run this pass even when you ticked each box carefully on the way through; the failure mode
