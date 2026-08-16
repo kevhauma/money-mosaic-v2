@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerChevronLeft, tablerChevronRight } from '@ng-icons/tabler-icons';
+import { QUICK_RANGES, quickRangeById } from '@/shared/utils';
 import { ButtonComponent } from '../button/button.component';
 import {
   DateRangeInputComponent,
@@ -8,22 +9,9 @@ import {
 } from '../date-range-input/date-range-input.component';
 import { FlexComponent } from '../flex/flex.component';
 
-export type RangeGroupingPreset =
-  | 'this-week'
-  | 'this-month'
-  | 'last-month'
-  | 'last-31-days'
-  | 'this-quarter'
-  | 'last-quarter'
-  | 'this-year'
-  | 'last-year'
-  | 'last-365-days'
-  | 'year-to-date'
-  | 'all-time'
-  | 'custom';
-
 export type RangeGroupingSwitcherValue = {
-  preset: RangeGroupingPreset;
+  /** A `QUICK_RANGES` id (TICKET-STAT-37), or `'custom'` for a hand-built range. */
+  preset: string;
   from: string;
   to: string;
 };
@@ -43,18 +31,19 @@ export type RangeGroupingSwitcherValue = {
 export class RangeGroupingSwitcherComponent {
   readonly value = input.required<RangeGroupingSwitcherValue>();
 
-  readonly presetChange = output<RangeGroupingPreset>();
+  readonly presetChange = output<string>();
   readonly customRangeChange = output<{ from: string; to: string }>();
   readonly rangeShift = output<-1 | 1>();
 
-  /** `year-to-date`/`all-time` have no fixed, repeatable length to shift by (TICKET-STAT-16). */
-  protected readonly navigationDisabled = computed(() => {
-    const preset = this.value().preset;
-    return preset === 'year-to-date' || preset === 'all-time';
-  });
+  protected readonly quickRanges = QUICK_RANGES;
+
+  /** Entries with no fixed, repeatable length ("so far" variants, `all-time`) have no target to shift to (TICKET-STAT-16), catalogue-driven via `QuickRangeEntry.steppingDisabled`. */
+  protected readonly navigationDisabled = computed(
+    () => quickRangeById(this.value().preset)?.steppingDisabled === true,
+  );
 
   protected onPresetChange(raw: string): void {
-    this.presetChange.emit(raw as RangeGroupingPreset);
+    this.presetChange.emit(raw);
   }
 
   protected onRangeChange(range: DateRangeValue): void {

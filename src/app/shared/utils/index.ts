@@ -8,6 +8,7 @@ export * from './locale-presets';
 export * from './date-buckets';
 export * from './calendar-cycles';
 export * from './range-expression';
+export * from './quick-ranges';
 export { formatPercent, formatRatio } from './number-format';
 export * from './fingerprint';
 export * from './with-archivable';

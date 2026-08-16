@@ -51,13 +51,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'TICKET-STAT-37',
-    title:
-      'The ranges you actually think in — last 90 days, previous quarter, this month so far, previous fiscal year',
-    area: 'Date range picker',
-  },
-  {
-    versionFolder: 'v1.8_extended_date_range_picker',
     ticketId: 'TICKET-STAT-38',
     title: 'One control showing your current range, opening onto every range you might want',
     area: 'Date range picker',

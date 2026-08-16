@@ -12,7 +12,7 @@ below `src/app` — which is enough to reach individual files in most feature/co
 subtrees.
 
 <!-- GENERATED:STATS:START -->
-- 390 leaf nodes, 1168 edges.
+- 391 leaf nodes, 1173 edges.
 <!-- GENERATED:STATS:END -->
 
 - `*.spec.ts` and `node_modules` are excluded.
@@ -773,19 +773,20 @@ FG["locale-presets.ts"]
 FH["number-format.ts"]
 FI["pagination.ts"]
 FJ["percentage.ts"]
-FK["range-expression.ts"]
-FL["search-params.ts"]
-FM["selection-model.ts"]
-FN["signed-amount.pipe.ts"]
-FO["sortable.ts"]
-FP["structural-filters.ts"]
-FQ["theme-hooks.ts"]
-subgraph FR["validators"]
-FS["iban.validator.ts"]
-FT["percentage.validator.ts"]
+FK["quick-ranges.ts"]
+FL["range-expression.ts"]
+FM["search-params.ts"]
+FN["selection-model.ts"]
+FO["signed-amount.pipe.ts"]
+FP["sortable.ts"]
+FQ["structural-filters.ts"]
+FR["theme-hooks.ts"]
+subgraph FS["validators"]
+FT["iban.validator.ts"]
+FU["percentage.validator.ts"]
 end
-FU["with-archivable.ts"]
-FV["with-persisted-crud.ts"]
+FV["with-archivable.ts"]
+FW["with-persisted-crud.ts"]
 end
 end
 end
@@ -936,6 +937,7 @@ Z-->Q
 20-->22
 20-->2U
 20-->FE
+21-->1T
 21-->FE
 22-->Q
 22-->3O
@@ -1149,8 +1151,8 @@ Z-->Q
 4F-->Q
 4F-->E2
 4F-->FE
-4F-->FS
 4F-->FT
+4F-->FU
 4H-->47
 4H-->49
 4H-->4F
@@ -1913,6 +1915,7 @@ EK-->1Z
 EM-->DH
 EM-->DP
 EM-->DZ
+EM-->FE
 EO-->FE
 EQ-->EI
 EQ-->EW
@@ -1953,9 +1956,12 @@ FE-->FN
 FE-->FO
 FE-->FP
 FE-->FQ
-FE-->FU
+FE-->FR
 FE-->FV
+FE-->FW
 FH-->FB
 FK-->F4
-FN-->F1
+FK-->FL
+FL-->F4
+FO-->F1
 ```

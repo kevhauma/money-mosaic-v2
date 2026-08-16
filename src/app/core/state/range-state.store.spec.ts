@@ -71,7 +71,7 @@ describe('RangeStore', () => {
 
   it('shiftRange on a rolling-window preset shifts by the current span length and flips preset to custom', () => {
     const rangeStore = TestBed.inject(RangeStore);
-    rangeStore.setPreset('dashboard', 'last-31-days');
+    rangeStore.setPreset('dashboard', 'last-30-days');
     const originalFrom = rangeStore.from('dashboard');
     const originalTo = rangeStore.to('dashboard');
     const dayMs = 24 * 60 * 60 * 1000;
@@ -104,7 +104,7 @@ describe('RangeStore', () => {
 
   it('keeps landing on clean calendar-year boundaries across repeated "previous" clicks, even across a leap year (regression)', () => {
     const rangeStore = TestBed.inject(RangeStore);
-    rangeStore.setPreset('dashboard', 'last-year');
+    rangeStore.setPreset('dashboard', 'previous-year');
     const startYear = new Date(rangeStore.from('dashboard')).getUTCFullYear();
 
     // Three clicks flips preset to 'custom' after the first one, and is guaranteed to cross a
@@ -137,15 +137,15 @@ describe('RangeStore', () => {
     );
   });
 
-  it('shiftRange is a no-op while "year-to-date" or "all-time" is selected', () => {
+  it('shiftRange is a no-op while "this-year-so-far" or "all-time" is selected', () => {
     const rangeStore = TestBed.inject(RangeStore);
-    rangeStore.setPreset('dashboard', 'year-to-date');
+    rangeStore.setPreset('dashboard', 'this-year-so-far');
     const originalFrom = rangeStore.from('dashboard');
     const originalTo = rangeStore.to('dashboard');
 
     rangeStore.shiftRange('dashboard', -1);
 
-    expect(rangeStore.preset('dashboard')).toBe('year-to-date');
+    expect(rangeStore.preset('dashboard')).toBe('this-year-so-far');
     expect(rangeStore.from('dashboard')).toBe(originalFrom);
     expect(rangeStore.to('dashboard')).toBe(originalTo);
   });
@@ -179,7 +179,7 @@ describe('RangeStore: one range per page (TICKET-UI-23)', () => {
     expect(rangeStore.preset('dashboard')).toBe('this-month');
     expect(rangeStore.from('dashboard')).toBe(dashboardFrom);
 
-    rangeStore.setPreset('dashboard', 'last-year');
+    rangeStore.setPreset('dashboard', 'previous-year');
 
     expect(rangeStore.from('explore')).toBe('2023-05-01');
     expect(rangeStore.to('explore')).toBe('2023-05-31');
@@ -190,9 +190,9 @@ describe('RangeStore: one range per page (TICKET-UI-23)', () => {
     const accountsFrom = rangeStore.from('accounts');
     const accountsTo = rangeStore.to('accounts');
 
-    rangeStore.setPreset('dashboard', 'last-year');
+    rangeStore.setPreset('dashboard', 'previous-year');
 
-    expect(rangeStore.preset('dashboard')).toBe('last-year');
+    expect(rangeStore.preset('dashboard')).toBe('previous-year');
     expect(rangeStore.preset('accounts')).toBe('this-month');
     expect(rangeStore.from('accounts')).toBe(accountsFrom);
     expect(rangeStore.to('accounts')).toBe(accountsTo);

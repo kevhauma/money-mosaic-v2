@@ -413,12 +413,12 @@ describe('DashboardOverviewComponent', () => {
       expect(switcher).not.toBeNull();
 
       const select = switcher.querySelector('select') as HTMLSelectElement;
-      select.value = 'last-year';
+      select.value = 'previous-year';
       select.dispatchEvent(new Event('change'));
       fixture.detectChanges();
 
       const rangeStore = TestBed.inject(RangeStore);
-      expect(rangeStore.preset('dashboard')).toBe('last-year');
+      expect(rangeStore.preset('dashboard')).toBe('previous-year');
       // …and only this page's range moved (TICKET-UI-23, asserted here from the Dashboard's side).
       expect(rangeStore.preset('accounts')).toBe('this-month');
     });

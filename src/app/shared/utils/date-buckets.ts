@@ -3,19 +3,6 @@ import { locale } from './format-settings';
 
 export type Granularity = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
-export type RangePreset =
-  | 'this-week'
-  | 'this-month'
-  | 'last-month'
-  | 'last-31-days'
-  | 'this-quarter'
-  | 'last-quarter'
-  | 'this-year'
-  | 'last-year'
-  | 'last-365-days'
-  | 'year-to-date'
-  | 'all-time';
-
 export const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
@@ -138,74 +125,6 @@ export const bucketKeysInRange = (from: string, to: string, granularity: Granula
   return keys;
 };
 
-/**
- * Resolves a named preset to concrete [from, to] ISO dates, relative to `todayIso` (injected, not
- * read from `Date.now()`, so it stays pure/testable). Excludes `'all-time'`: that preset's `from`
- * depends on account/transaction data, not just today's date, so `RangeStore` resolves it via
- * `computeFullHistoryRange` instead of this function (TICKET-STAT-03).
- */
-export const resolvePresetRange = (
-  preset: Exclude<RangePreset, 'all-time'>,
-  todayIso: string,
-): { from: string; to: string } => {
-  const today = parseIsoDate(todayIso);
-  const year = today.getUTCFullYear();
-  const month = today.getUTCMonth();
-
-  switch (preset) {
-    case 'this-week': {
-      const { year: weekYear, week } = isoWeekOf(today);
-      const start = isoWeekStart(weekYear, week);
-      const end = new Date(start.getTime() + 6 * MS_PER_DAY);
-      return { from: formatIsoDate(start), to: formatIsoDate(end) };
-    }
-    case 'this-month': {
-      const start = new Date(Date.UTC(year, month, 1));
-      const end = new Date(Date.UTC(year, month + 1, 0));
-      return { from: formatIsoDate(start), to: formatIsoDate(end) };
-    }
-    case 'last-month': {
-      const start = new Date(Date.UTC(year, month - 1, 1));
-      const end = new Date(Date.UTC(year, month, 0));
-      return { from: formatIsoDate(start), to: formatIsoDate(end) };
-    }
-    case 'last-31-days': {
-      const start = new Date(today.getTime() - 30 * MS_PER_DAY);
-      return { from: formatIsoDate(start), to: formatIsoDate(today) };
-    }
-    case 'this-quarter': {
-      const quarterStartMonth = Math.floor(month / 3) * 3;
-      const start = new Date(Date.UTC(year, quarterStartMonth, 1));
-      const end = new Date(Date.UTC(year, quarterStartMonth + 3, 0));
-      return { from: formatIsoDate(start), to: formatIsoDate(end) };
-    }
-    case 'last-quarter': {
-      const quarterStartMonth = Math.floor(month / 3) * 3 - 3;
-      const start = new Date(Date.UTC(year, quarterStartMonth, 1));
-      const end = new Date(Date.UTC(year, quarterStartMonth + 3, 0));
-      return { from: formatIsoDate(start), to: formatIsoDate(end) };
-    }
-    case 'this-year': {
-      const start = new Date(Date.UTC(year, 0, 1));
-      const end = new Date(Date.UTC(year, 11, 31));
-      return { from: formatIsoDate(start), to: formatIsoDate(end) };
-    }
-    case 'last-year': {
-      const start = new Date(Date.UTC(year - 1, 0, 1));
-      const end = new Date(Date.UTC(year - 1, 11, 31));
-      return { from: formatIsoDate(start), to: formatIsoDate(end) };
-    }
-    case 'last-365-days': {
-      const start = new Date(today.getTime() - 364 * MS_PER_DAY);
-      return { from: formatIsoDate(start), to: formatIsoDate(today) };
-    }
-    case 'year-to-date': {
-      const start = new Date(Date.UTC(year, 0, 1));
-      return { from: formatIsoDate(start), to: formatIsoDate(today) };
-    }
-  }
-};
-
 export type CalendarUnit = 'week' | 'month' | 'quarter' | 'year';
 
 /**
@@ -213,8 +132,8 @@ export type CalendarUnit = 'week' | 'month' | 'quarter' | 'year';
  * real boundaries at the target position rather than shifting by a fixed day-count — so a shifted
  * month is a full different-length month (e.g. 31-day March shifted to 28/29-day February), not
  * "30 days back" (TICKET-STAT-04). `count` may be negative to shift forward. Assumes `from`/`to`
- * are already that unit's true start/end (true of every calendar-aligned `RangePreset`); callers
- * with an unaligned range should use a day-count shift instead.
+ * are already that unit's true start/end (true of every calendar-aligned quick range, see
+ * `quick-ranges.ts`); callers with an unaligned range should use a day-count shift instead.
  */
 export const shiftRangeByCalendarUnit = (
   from: string,
@@ -253,8 +172,8 @@ export const shiftRangeByCalendarUnit = (
 
 /**
  * Shifts an unaligned `[from, to]` range back `count` whole spans of its own length (in days) — for
- * rolling-window presets (`last-31-days`, `last-365-days`) and `custom` ranges, which have no
- * calendar-unit alignment for `shiftRangeByCalendarUnit` to use. `count` may be negative to shift
+ * rolling-window quick ranges (`last-30-days`, `last-1-year`, ...) and hand-built ranges, which have
+ * no calendar-unit alignment for `shiftRangeByCalendarUnit` to use. `count` may be negative to shift
  * forward, matching that function's sign convention.
  */
 export const shiftRangeByDayCount = (

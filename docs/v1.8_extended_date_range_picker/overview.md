@@ -54,7 +54,7 @@ are settled here and referenced by the tickets rather than re-argued in each:
 - [ ] [TICKET-SET-09](./tickets/TICKET-SET-09-fiscal-year-start-setting.md) — Fiscal year start
       month in Settings (new capability, no existing FR covers it) — **independent of the two above**
       and shippable any time, but **needed by STAT-37**'s two fiscal quick ranges
-- [ ] [TICKET-STAT-37](./tickets/TICKET-STAT-37-quick-range-catalogue.md) — The quick-range
+- [x] [TICKET-STAT-37](./tickets/TICKET-STAT-37-quick-range-catalogue.md) — The quick-range
       catalogue: 21 grouped ranges expressed as expression pairs, six existing ids renamed (revises
       FR-STAT-7) — **needs STAT-35 and SET-09**; still data-only, consumed by the picker UI next
 - [ ] [TICKET-STAT-38](./tickets/TICKET-STAT-38-two-panel-range-picker.md) — The two-panel picker

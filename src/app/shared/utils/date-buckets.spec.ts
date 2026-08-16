@@ -4,7 +4,6 @@ import {
   bucketKeyForDate,
   bucketKeysInRange,
   formatAlignedRangeLabel,
-  resolvePresetRange,
   shiftRangeByDayCount,
 } from './date-buckets';
 import { DEFAULT_LOCALE, syncFormatSettings } from './format-settings';
@@ -121,79 +120,6 @@ describe('bucketKeysInRange', () => {
   });
 });
 
-describe('resolvePresetRange', () => {
-  it('resolves "this-month" relative to the given today', () => {
-    expect(resolvePresetRange('this-month', '2026-07-15')).toEqual({
-      from: '2026-07-01',
-      to: '2026-07-31',
-    });
-  });
-
-  it('resolves "last-month" across a year boundary', () => {
-    expect(resolvePresetRange('last-month', '2026-01-15')).toEqual({
-      from: '2025-12-01',
-      to: '2025-12-31',
-    });
-  });
-
-  it('resolves "this-quarter"', () => {
-    expect(resolvePresetRange('this-quarter', '2026-08-01')).toEqual({
-      from: '2026-07-01',
-      to: '2026-09-30',
-    });
-  });
-
-  it('resolves "this-year"', () => {
-    expect(resolvePresetRange('this-year', '2026-08-01')).toEqual({
-      from: '2026-01-01',
-      to: '2026-12-31',
-    });
-  });
-
-  it('resolves "this-week" to its Monday-start ISO week', () => {
-    // 2026-07-03 is a Friday, in ISO week 27 (Mon 2026-06-29 .. Sun 2026-07-05).
-    expect(resolvePresetRange('this-week', '2026-07-03')).toEqual({
-      from: '2026-06-29',
-      to: '2026-07-05',
-    });
-  });
-
-  it('resolves "last-31-days" as a 31-day span ending today', () => {
-    expect(resolvePresetRange('last-31-days', '2026-07-15')).toEqual({
-      from: '2026-06-15',
-      to: '2026-07-15',
-    });
-  });
-
-  it('resolves "last-quarter" across a year boundary', () => {
-    expect(resolvePresetRange('last-quarter', '2026-01-15')).toEqual({
-      from: '2025-10-01',
-      to: '2025-12-31',
-    });
-  });
-
-  it('resolves "last-year"', () => {
-    expect(resolvePresetRange('last-year', '2026-08-01')).toEqual({
-      from: '2025-01-01',
-      to: '2025-12-31',
-    });
-  });
-
-  it('resolves "last-365-days" as a 365-day span ending today', () => {
-    expect(resolvePresetRange('last-365-days', '2026-07-15')).toEqual({
-      from: '2025-07-16',
-      to: '2026-07-15',
-    });
-  });
-
-  it('resolves "year-to-date" from Jan 1 through today', () => {
-    expect(resolvePresetRange('year-to-date', '2026-04-10')).toEqual({
-      from: '2026-01-01',
-      to: '2026-04-10',
-    });
-  });
-});
-
 describe('shiftRangeByDayCount', () => {
   it('shifts a range backward by its own span length (positive count)', () => {
     expect(shiftRangeByDayCount('2026-06-15', '2026-07-15', 1)).toEqual({
@@ -223,7 +149,7 @@ describe('formatAlignedRangeLabel', () => {
   withCleanFormatSettings();
 
   it('formats a range matching a full ISO week as "W<week> <year>"', () => {
-    // Mon 2026-06-29 .. Sun 2026-07-05 is ISO week 27 of 2026 (see resolvePresetRange tests above).
+    // Mon 2026-06-29 .. Sun 2026-07-05 is ISO week 27 of 2026 (see bucketKeyForDate tests above).
     expect(formatAlignedRangeLabel('2026-06-29', '2026-07-05')).toBe('W27 2026');
   });
 

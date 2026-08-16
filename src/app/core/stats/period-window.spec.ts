@@ -1,4 +1,4 @@
-import { resolvePresetRange } from '@/shared/utils';
+import { quickRangeById, resolveQuickRange, type QuickRangeExpressionEntry } from '@/shared/utils';
 import { computeComparisonWindow } from './period-window';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -28,9 +28,9 @@ describe('computeComparisonWindow', () => {
     ]);
   });
 
-  it('reaches 1 period forward + 3 back when the selection is the immediately-preceding period (last-month)', () => {
+  it('reaches 1 period forward + 3 back when the selection is the immediately-preceding period (previous-month)', () => {
     const window = computeComparisonWindow(
-      { preset: 'last-month', from: '2026-06-01', to: '2026-06-30' },
+      { preset: 'previous-month', from: '2026-06-01', to: '2026-06-30' },
       '2026-07-12',
     );
 
@@ -68,9 +68,9 @@ describe('computeComparisonWindow', () => {
     }
   });
 
-  it('shifts a day-count preset (last-31-days) that already reaches today with no forward steps needed', () => {
+  it('shifts a day-count preset (last-30-days) that already reaches today with no forward steps needed', () => {
     const window = computeComparisonWindow(
-      { preset: 'last-31-days', from: '2026-06-12', to: '2026-07-12' },
+      { preset: 'last-30-days', from: '2026-06-12', to: '2026-07-12' },
       '2026-07-12',
     )!;
 
@@ -117,7 +117,11 @@ describe('computeComparisonWindow', () => {
 
   it('shifts a week-granularity preset by whole 7-day weeks (this-week)', () => {
     const todayIso = '2026-07-08';
-    const selected = resolvePresetRange('this-week', todayIso);
+    const selected = resolveQuickRange(
+      quickRangeById('this-week') as QuickRangeExpressionEntry,
+      todayIso,
+      1,
+    );
 
     const window = computeComparisonWindow({ preset: 'this-week', ...selected }, todayIso)!;
 
@@ -135,9 +139,9 @@ describe('computeComparisonWindow', () => {
     }
   });
 
-  it('shifts year-to-date (variable day-count) by its own exact length', () => {
+  it('shifts this-year-so-far (variable day-count) by its own exact length', () => {
     const window = computeComparisonWindow(
-      { preset: 'year-to-date', from: '2026-01-01', to: '2026-07-12' },
+      { preset: 'this-year-so-far', from: '2026-01-01', to: '2026-07-12' },
       '2026-07-12',
     )!;
 

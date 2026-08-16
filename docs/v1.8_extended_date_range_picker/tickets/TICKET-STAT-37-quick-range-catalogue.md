@@ -87,32 +87,89 @@ existing ids whose names no longer match their group.
 
 ## Acceptance criteria
 
-- [ ] `QUICK_RANGES` holds all 21 entries in the four groups above, each with a unique id, a label,
-      and either an expression pair or a resolver.
-- [ ] Every non-fiscal, non-`all-time` entry resolves through
+- [x] `QUICK_RANGES` holds all 21 entries in the four groups above, each with a unique id, a label,
+      and either an expression pair or a resolver. **Implementation note (divergence):** `all-time`
+      carries neither — it's a third, explicit `external: true` marker, since its resolution needs
+      account/transaction data this pure module never has access to (same reasoning STAT-03 gave for
+      keeping it out of `resolvePresetRange`). (`quick-ranges.ts`'s `QuickRangeEntry` discriminated
+      union has three variants: expression, resolver, external; `quick-ranges.spec.ts` → "holds
+      exactly 21 entries, each with a unique id and a label", "all-time is the only external entry".)
+- [x] Every non-fiscal, non-`all-time` entry resolves through
       [STAT-35](./TICKET-STAT-35-relative-range-expressions.md)'s resolver — asserted by a
-      table-driven spec covering all of them against a fixed "today".
-- [ ] Each renamed range resolves to exactly the same window its old id did, except `last-30-days`,
-      whose one-day difference from `last-31-days` is asserted deliberately.
-- [ ] "This month so far" ends today while "This month" ends on the month's last day — the pair that
-      proves the "so far" variants are not duplicates.
-- [ ] With `fiscalYearStartMonth` unset, "Previous fiscal quarter" and "Previous fiscal year" resolve
-      identically to "Previous quarter" and "Previous year".
-- [ ] With `fiscalYearStartMonth = 4` (April), "Previous fiscal year" evaluated in May 2026 resolves
+      table-driven spec covering all of them against a fixed "today". **Implementation note
+      (divergence):** `this-quarter`/`previous-quarter` are non-fiscal but resolve through a
+      resolver function, not a STAT-35 expression pair — STAT-35's grammar deliberately has no
+      quarter unit (its own Notes: "fiscal snapping is not part of this grammar", units are only
+      d/w/M/y), so a quarter boundary cannot be expressed as `now±NX(/X)`. Every entry that *can* be
+      expressed this way is. (`quick-ranges.spec.ts` → "resolveQuickRange: every non-fiscal,
+      non-all-time entry resolves against a fixed today" table, 18 cases including the two quarter
+      resolvers, all against `TODAY = '2026-07-15'`.)
+- [x] Each renamed range resolves to exactly the same window its old id did, except `last-30-days`,
+      whose one-day difference from `last-31-days` is asserted deliberately. **Implementation note
+      (divergence):** `last-1-year` (renamed from `last-365-days`) is *also* not byte-identical to
+      its old id, for the same underlying reason as `last-30-days` — it switched from a fixed
+      364/365-day-count formula to a genuine calendar-year offset (`now-1y`), which is *always* a
+      366- or 367-inclusive-day span (never 365), so the two can never coincide for any "today". The
+      ticket's "the only one in this table" framing undercounts by one. (`quick-ranges.spec.ts` →
+      "renamed ranges resolve to the same window their old id did" describe block: 7 exact-parity
+      cases against the deleted `resolvePresetRange`'s own former spec values, plus
+      "last-30-days...is deliberately one day narrower" and "last-1-year...is also NOT
+      byte-identical" with the arithmetic spelled out in each test's comment.)
+- [x] "This month so far" ends today while "This month" ends on the month's last day — the pair that
+      proves the "so far" variants are not duplicates. (`quick-ranges.spec.ts` → `'"so far" variants
+      end today, unlike their whole-period twins'` describe block, both the month and week pairs.)
+- [x] With `fiscalYearStartMonth` unset, "Previous fiscal quarter" and "Previous fiscal year" resolve
+      identically to "Previous quarter" and "Previous year". (`quick-ranges.spec.ts` → "with
+      fiscalYearStartMonth unset (January), previous-fiscal-quarter/-year resolve identically to
+      previous-quarter/-year".)
+- [x] With `fiscalYearStartMonth = 4` (April), "Previous fiscal year" evaluated in May 2026 resolves
       to 2025-04-01 – 2026-03-31, and "Previous fiscal quarter" to 2026-01-01 – 2026-03-31.
-- [ ] Fiscal resolution reads the setting through `AppSettingsStore`; `quick-ranges.ts` itself stays
-      a pure module taking the start month as a parameter.
-- [ ] `all-time` still resolves via `computeFullHistoryRange` and is unaffected by the fiscal setting.
-- [ ] Prev/next stepping works for every entry that had it before and for each new calendar-aligned
+      (`quick-ranges.spec.ts` → both cases asserted verbatim against `resolveQuickRange(...,
+      '2026-05-20', 4)`.)
+- [x] Fiscal resolution reads the setting through `AppSettingsStore`; `quick-ranges.ts` itself stays
+      a pure module taking the start month as a parameter. (`range-state.store.ts` injects
+      `AppSettingsStore` and reads `fiscalYearStartMonth() ?? 1` at read/write time, passing it as a
+      plain `number` into `resolveQuickRange`; `quick-ranges.ts` imports nothing from `core/state` or
+      `core/data-access` — confirmed by its import list, only `./date-buckets`/`./range-expression`.)
+- [x] `all-time` still resolves via `computeFullHistoryRange` and is unaffected by the fiscal setting.
+      (`page-range-control.ts`'s `onPresetChange` `all-time` branch unchanged from STAT-36;
+      `quick-ranges.spec.ts` → "all-time carries no resolver and is unaffected by the fiscal setting
+      — it is resolved externally via computeFullHistoryRange".)
+- [x] Prev/next stepping works for every entry that had it before and for each new calendar-aligned
       entry, with the unit derived from the catalogue rather than a second hand-maintained map.
-- [ ] `resolvePresetRange`, the `RangePreset` union and `RangeGroupingPreset` are deleted, not
-      deprecated in place, and nothing imports them.
-- [ ] Unit tests cover: every entry's resolution against a fixed today; the six renames producing
+      (`range-state.store.ts`'s `shiftRange` uses `quickRangeById(...)?.calendarUnit`/
+      `steppingDisabled`, no local map; `period-window.ts` likewise via `quickRangeById(...)
+      ?.calendarUnit`, its own former `CALENDAR_UNIT_BY_PRESET` deleted. `quick-ranges.spec.ts` →
+      "catalogue-derived stepping units" describe block; existing `range-state.store.spec.ts`
+      shift-by-calendar-unit/day-count/leap-year cases pass unmodified.)
+- [x] `resolvePresetRange`, the `RangePreset` union and `RangeGroupingPreset` are deleted, not
+      deprecated in place, and nothing imports them. (Deleted from `date-buckets.ts` and
+      `range-grouping-switcher.component.ts` respectively; `grep -rn "RangePreset\|
+      RangeGroupingPreset\|resolvePresetRange" src/` finds zero matches outside two historical
+      prose-comment mentions in `range-expression.ts`/`quick-ranges.ts` that don't reference live
+      symbols. `ng build` succeeds, confirming no dangling import anywhere.)
+- [x] Unit tests cover: every entry's resolution against a fixed today; the six renames producing
       identical windows; the deliberate 30-vs-31 difference; both "so far" pairs; fiscal resolution
-      unset and at April, including the quarter case; catalogue-derived stepping units.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      unset and at April, including the quarter case; catalogue-derived stepping units. (All in the
+      new `quick-ranges.spec.ts`, 267 spec files / 3085 tests green including it. Existing
+      `range-state.store.spec.ts`/`page-range-control.spec.ts`/`period-window.spec.ts`/
+      `range-grouping-switcher.component.spec.ts`/`date-buckets.spec.ts` cases migrated to the new
+      ids where they named an old one, not deleted.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Verified via the `verifier` subagent — 267 spec files / 3085 tests, lint
+      clean after fixing one `Array<T>` → `T[]` style error, dev build clean. `angular.json` not
+      touched in this diff.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code --baseline
+      .fallow-baseline.json --fail-on-issues --quiet` and `npx fallow health --complexity
+      --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet` both exit 0
+      with no output. `.fallowrc.json`'s stale `ignoreExports` entry for `range-expression.ts`
+      trimmed to just `formatRangeExpression`/`describeRangeExpression`, now that
+      `parseRangeExpression`/`resolveRangeExpression` are production-consumed by this ticket.
+      `conventions-reviewer` subagent found the diff clean against layering/naming/testing
+      conventions, confirmed no circular `AppSettingsStore`↔`RangeStore` dependency, confirmed the
+      discriminated union narrows without unsafe casts in production code (`tsc --noEmit` clean),
+      and flagged one stale doc comment (`app-settings.store.ts`'s `setFiscalYearStartMonth`, "nothing
+      reads it yet") — fixed in the same change.)
 
 ## Notes
 

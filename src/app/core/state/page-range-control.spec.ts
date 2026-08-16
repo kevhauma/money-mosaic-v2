@@ -3,7 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
 import { AccountsRepository, type Account, type Transaction } from '@/core/data-access';
-import { resolvePresetRange, STAT_QUERY_PARAMS } from '@/shared/utils';
+import {
+  quickRangeById,
+  resolveQuickRange,
+  STAT_QUERY_PARAMS,
+  type QuickRangeExpressionEntry,
+} from '@/shared/utils';
 import { AccountsStore } from './accounts.store';
 import { pageRangeControl } from './page-range-control';
 import { RangeStore, type RangePageKey } from './range-state.store';
@@ -41,7 +46,11 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
  */
 const defaultQueryParams = (): Record<string, string> => {
   const todayIso = new Date().toISOString().slice(0, 10);
-  const { from, to } = resolvePresetRange('this-month', todayIso);
+  const { from, to } = resolveQuickRange(
+    quickRangeById('this-month') as QuickRangeExpressionEntry,
+    todayIso,
+    1,
+  );
   return { [STAT_QUERY_PARAMS.from]: from, [STAT_QUERY_PARAMS.to]: to };
 };
 
@@ -202,10 +211,10 @@ describe('pageRangeControl (TICKET-UI-23)', () => {
     await dashboard.whenStable();
     await accounts.whenStable();
 
-    dashboard.componentInstance.range.onPresetChange('last-year');
+    dashboard.componentInstance.range.onPresetChange('previous-year');
     accounts.componentInstance.range.onCustomRangeChange({ from: '2023-05-01', to: '2023-05-31' });
 
-    expect(dashboard.componentInstance.range.value().preset).toBe('last-year');
+    expect(dashboard.componentInstance.range.value().preset).toBe('previous-year');
     expect(accounts.componentInstance.range.value()).toEqual({
       preset: 'custom',
       from: '2023-05-01',

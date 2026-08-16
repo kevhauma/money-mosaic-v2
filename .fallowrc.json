@@ -34,16 +34,14 @@
       "file": "src/app/core/categorisation/rule-matching.ts",
       "exports": ["resolveCategoryForTransaction"]
     },
-    // TICKET-STAT-35: ships as unreferenced utility code on purpose — TICKET-STAT-36 is the first
-    // production consumer. Remove this entry once STAT-36 lands and imports these.
+    // TICKET-STAT-35: `parseRangeExpression`/`resolveRangeExpression` are now consumed by
+    // TICKET-STAT-36 (range-state.store.ts) and TICKET-STAT-37 (quick-ranges.ts), so those two
+    // were removed from this entry. `formatRangeExpression`/`describeRangeExpression` still ship
+    // unreferenced on purpose — the picker UI (STAT-38/39/40) is their first consumer. Remove this
+    // entry once one of those lands and imports them.
     {
       "file": "src/app/shared/utils/range-expression.ts",
-      "exports": [
-        "parseRangeExpression",
-        "resolveRangeExpression",
-        "formatRangeExpression",
-        "describeRangeExpression"
-      ]
+      "exports": ["formatRangeExpression", "describeRangeExpression"]
     }
   ]
 }

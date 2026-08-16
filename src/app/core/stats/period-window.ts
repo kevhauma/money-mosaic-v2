@@ -1,6 +1,6 @@
-import { shiftRangeByCalendarUnit, type CalendarUnit, type RangePreset } from '@/shared/utils';
+import { ALL_TIME_QUICK_RANGE_ID, quickRangeById, shiftRangeByCalendarUnit } from '@/shared/utils';
 
-export type ComparisonWindowRange = { preset: RangePreset | 'custom'; from: string; to: string };
+export type ComparisonWindowRange = { preset: string; from: string; to: string };
 
 export type ComparisonWindowPeriod = { from: string; to: string; isSelected: boolean };
 
@@ -10,17 +10,6 @@ export const DEFAULT_COMPARISON_PERIOD_COUNT = 5;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const parseIsoDate = (isoDate: string): Date => new Date(`${isoDate}T00:00:00Z`);
 const formatIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
-
-/** Calendar-aligned presets (FR-STAT-8) shift by whole calendar units so periods land on real boundaries; every other preset — including `custom` — shifts by the exact day-count of the selected range as a rolling window. */
-const CALENDAR_UNIT_BY_PRESET: Partial<Record<RangePreset, CalendarUnit>> = {
-  'this-week': 'week',
-  'this-month': 'month',
-  'last-month': 'month',
-  'this-quarter': 'quarter',
-  'last-quarter': 'quarter',
-  'this-year': 'year',
-  'last-year': 'year',
-};
 
 const shiftRangeByDayCount = (
   from: string,
@@ -54,9 +43,9 @@ export const computeComparisonWindow = (
   todayIso: string,
   periodCount = DEFAULT_COMPARISON_PERIOD_COUNT,
 ): ComparisonWindowPeriod[] | null => {
-  if (range.preset === 'all-time') return null;
+  if (range.preset === ALL_TIME_QUICK_RANGE_ID) return null;
 
-  const unit = range.preset === 'custom' ? undefined : CALENDAR_UNIT_BY_PRESET[range.preset];
+  const unit = quickRangeById(range.preset)?.calendarUnit;
   const periodLengthDays =
     Math.round(
       (parseIsoDate(range.to).getTime() - parseIsoDate(range.from).getTime()) / MS_PER_DAY,

@@ -156,7 +156,8 @@ const snapDate = (date: Date, unit: RangeExpressionUnit, edge: 'from' | 'to'): D
 
 /**
  * Resolves a parsed expression to a concrete `YYYY-MM-DD`, relative to an injected `todayIso`
- * (never `Date.now()`, matching `resolvePresetRange`). `edge` only affects expressions carrying a
+ * (never `Date.now()`, same rule every date-resolving function in `shared/utils` follows). `edge`
+ * only affects expressions carrying a
  * snap suffix — it decides whether `now/M` means the first or last day of the current month, which
  * is what makes `now/M … now/M` mean "the whole current month" as a pair of independent calls.
  */

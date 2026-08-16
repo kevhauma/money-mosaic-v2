@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { QUICK_RANGES } from '@/shared/utils';
 import { RangeGroupingSwitcherComponent } from './range-grouping-switcher.component';
 
 describe('RangeGroupingSwitcherComponent', () => {
@@ -23,6 +23,21 @@ describe('RangeGroupingSwitcherComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('renders every QUICK_RANGES entry plus Custom, catalogue-driven (TICKET-STAT-37)', () => {
+    fixture.detectChanges();
+
+    const options: HTMLOptionElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('select option'),
+    );
+
+    expect(options).toHaveLength(QUICK_RANGES.length + 1);
+    expect(options.map((option) => option.value)).toEqual([
+      ...QUICK_RANGES.map((entry) => entry.id),
+      'custom',
+    ]);
+    expect(options[0].textContent?.trim()).toBe(QUICK_RANGES[0].label);
   });
 
   it('emits customRangeChange with the updated from date', () => {
@@ -82,9 +97,9 @@ describe('RangeGroupingSwitcherComponent', () => {
     expect(trigger.disabled).toBe(false);
   });
 
-  it('disables the previous/next buttons while "year-to-date" is selected', () => {
+  it('disables the previous/next buttons while "this-year-so-far" is selected', () => {
     fixture.componentRef.setInput('value', {
-      preset: 'year-to-date',
+      preset: 'this-year-so-far',
       from: '2026-01-01',
       to: '2026-07-14',
     });

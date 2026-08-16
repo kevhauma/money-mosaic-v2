@@ -948,4 +948,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Money you move into a shared account now links to your own deposit, not to a co-owner’s payment of the same amount',
     area: 'Transfers',
   },
+  {
+    date: '2026-08-16',
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketIds: ['TICKET-STAT-37'],
+    title:
+      'The date-range dropdown on Dashboard, Explore and Accounts now offers 21 named ranges — rolling windows, "so far" variants, and fiscal quarters/years — instead of the previous 11',
+    area: 'Date ranges',
+  },
 ];

@@ -106,7 +106,7 @@ export const AppSettingsStore = signalStore(
         patchState(store, { privacyMode });
       },
 
-      /** The month (1–12) a fiscal year begins in (TICKET-SET-09); nothing reads it yet. */
+      /** The month (1–12) a fiscal year begins in (TICKET-SET-09); read by `RangeStore` to resolve the two fiscal quick ranges (TICKET-STAT-37). */
       setFiscalYearStartMonth: async (fiscalYearStartMonth: number): Promise<void> => {
         await appSettingsRepository.setFiscalYearStartMonth(fiscalYearStartMonth);
         patchState(store, { fiscalYearStartMonth });

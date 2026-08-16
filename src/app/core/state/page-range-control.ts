@@ -1,7 +1,7 @@
 import { computed, effect, inject, type Signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { computeFullHistoryRange } from '@/core/stats';
-import { STAT_QUERY_PARAMS, type RangePreset } from '@/shared/utils';
+import { ALL_TIME_QUICK_RANGE_ID, STAT_QUERY_PARAMS } from '@/shared/utils';
 import { AccountsStore } from './accounts.store';
 import { RangeStore, type RangePageKey } from './range-state.store';
 import { TransactionsStore } from './transactions.store';
@@ -11,11 +11,13 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
 /**
  * Structurally the `mm-range-grouping-switcher`'s `value` input and its three outputs. Declared
  * here rather than imported from `shared/ui` so `core/state` doesn't depend on a presentational
- * component; the shapes are checked against each other at every call site that binds them.
+ * component; the shapes are checked against each other at every call site that binds them. `preset`
+ * is either a `QUICK_RANGES` id or `'custom'` (TICKET-STAT-37) — a plain `string`, since there's no
+ * longer a closed union of ids to type it against.
  */
 export type PageRangeControl = {
-  value: Signal<{ preset: RangePreset | 'custom'; from: string; to: string }>;
-  onPresetChange: (preset: RangePreset | 'custom') => void;
+  value: Signal<{ preset: string; from: string; to: string }>;
+  onPresetChange: (preset: string) => void;
   onCustomRangeChange: (range: { from: string; to: string }) => void;
   onRangeShift: (direction: -1 | 1) => void;
 };
@@ -85,12 +87,12 @@ export const pageRangeControl = (page: RangePageKey): PageRangeControl => {
       to: rangeStore.to(page),
     })),
 
-    onPresetChange: (preset: RangePreset | 'custom'): void => {
+    onPresetChange: (preset: string): void => {
       if (preset === 'custom') {
         rangeStore.selectCustomPreset(page);
         return;
       }
-      if (preset === 'all-time') {
+      if (preset === ALL_TIME_QUICK_RANGE_ID) {
         rangeStore.setPreset(
           page,
           preset,
