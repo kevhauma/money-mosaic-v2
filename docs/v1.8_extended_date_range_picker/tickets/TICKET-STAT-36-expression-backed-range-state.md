@@ -68,39 +68,70 @@ expression so a bookmarked relative range survives a reload as a relative range.
 
 ## Acceptance criteria
 
-- [ ] `RangeStore` stores expressions; `from(page)`/`to(page)` return resolved `YYYY-MM-DD` strings
+- [x] `RangeStore` stores expressions; `from(page)`/`to(page)` return resolved `YYYY-MM-DD` strings
       with the same signature as today, and no consumer outside `core/state` is edited to keep
-      compiling.
-- [ ] A store holding `now-30d` reports a window ending today when read on two different days —
+      compiling. (`range-state.store.ts`'s `RangeState` is now `{quickRangeId, fromExpr, toExpr}`;
+      `from`/`to` keep their `(page) => string` signature. Zero non-`core/state` files touched —
+      confirmed by the diff and by `ng build`/`ng test` passing untouched consumers in
+      `stats.store.ts`, `range-grouping-switcher`, `dashboard-overview`, etc.)
+- [x] A store holding `now-30d` reports a window ending today when read on two different days —
       asserted by resolving against two injected "today" values, not by waiting.
-- [ ] A range set from a quick range keeps its `quickRangeId`; a hand-built range has
-      `quickRangeId: null`.
-- [ ] `?from=now-30d&to=now` round-trips: entering the page adopts it as a relative range, and the
-      mirror writes the expression back rather than a resolved date.
-- [ ] `?from=2026-01-01&to=2026-06-30` still round-trips as an absolute range, and an existing
+      (`range-state.store.spec.ts` → "re-resolves a relative custom range against today on every
+      read, not just when set", using `vi.setSystemTime`.)
+- [x] A range set from a quick range keeps its `quickRangeId`; a hand-built range has
+      `quickRangeId: null`. (`range-state.store.spec.ts` `setPreset`/`setCustomRange` cases assert
+      `preset('dashboard')` — derived from `quickRangeId ?? 'custom'` — for both.)
+- [x] `?from=now-30d&to=now` round-trips: entering the page adopts it as a relative range, and the
+      mirror writes the expression back rather than a resolved date. (`page-range-control.spec.ts`
+      → "?from=now-30d&to=now round-trips as a relative range that resolves against today" and
+      "mirrors a relative custom range back into the URL as the expression, not a resolved date".)
+- [x] `?from=2026-01-01&to=2026-06-30` still round-trips as an absolute range, and an existing
       drill-down link from a stat panel lands on the same window it does today.
-- [ ] Re-entering a page (refresh, back navigation, bookmark) does not demote a relative range to a
+      (`page-range-control.spec.ts` → existing "reads ?from=&to= on entry so a drill-down link
+      lands on that range" case, unmodified and still passing.)
+- [x] Re-entering a page (refresh, back navigation, bookmark) does not demote a relative range to a
       hand-built one — the entry-side guard's regression, asserted directly.
-- [ ] The mirror does not navigate when the URL already matches, preserving today's
-      `alreadyMirrored` behaviour.
-- [ ] `shiftRange` on a relative range resolves it to absolute, clears `quickRangeId`, and produces
+      (`page-range-control.spec.ts` → "re-entering with a relative range already in the URL does
+      not resolve it into an absolute one and does not navigate (regression)".)
+- [x] The mirror does not navigate when the URL already matches, preserving today's
+      `alreadyMirrored` behaviour. (Existing `page-range-control.spec.ts` "does not navigate when
+      the URL already mirrors the page's range" case, unmodified and still passing.)
+- [x] `shiftRange` on a relative range resolves it to absolute, clears `quickRangeId`, and produces
       the same dates today's implementation produces for the equivalent preset — asserted against
       the existing calendar-unit and day-count cases so STAT-16's behaviour is provably unchanged.
-- [ ] Stepping stays disabled for `all-time` and for the year-to-date entry, as it is today.
-- [ ] Per-page isolation is unchanged: setting the Dashboard's range does not move Accounts' or
-      Explore's.
-- [ ] No Dexie change — the store stays ephemeral; persistence arrives only in
-      [STAT-40](./TICKET-STAT-40-recently-used-ranges.md), and only for recents.
-- [ ] Unit tests cover: relative re-resolution across two "today" values; quick-range id retention
+      (New `range-state.store.spec.ts` → "shiftRange on a relative custom range resolves it to
+      absolute before shifting"; existing calendar-unit/day-count/leap-year `shiftRange` cases in
+      the same file are unmodified and still passing.)
+- [x] Stepping stays disabled for `all-time` and for the year-to-date entry, as it is today.
+      (Existing `range-state.store.spec.ts` → "shiftRange is a no-op while 'year-to-date' or
+      'all-time' is selected", unmodified; `shiftRange`'s guard now checks `quickRangeId` in place
+      of `preset`, same two values.)
+- [x] Per-page isolation is unchanged: setting the Dashboard's range does not move Accounts' or
+      Explore's. (Existing "RangeStore: one range per page" describe block in
+      `range-state.store.spec.ts` and the "scopes every write to its own page" case in
+      `page-range-control.spec.ts`, both unmodified and still passing.)
+- [x] No Dexie change — the store stays ephemeral; persistence arrives only in
+      [STAT-40](./TICKET-STAT-40-recently-used-ranges.md), and only for recents. (No `src/app/core/data-access`
+      or `appDb` file touched in this diff.)
+- [x] Unit tests cover: relative re-resolution across two "today" values; quick-range id retention
       and clearing; both URL round-trips; the re-entry non-demotion guard; the no-redundant-navigate
       guard; shift-resolves-then-clears for a calendar-aligned and a rolling range; per-page
       isolation. Existing `range-state.store.spec.ts` and `page-range-control.spec.ts` cases are
-      migrated, not deleted.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
+      migrated, not deleted. (All existing cases in both spec files are untouched; 7 new cases added
+      across the two files, all passing — `ng test` run confirms 265 suites / 3038 tests green.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Verified via the `verifier` subagent twice — once after the initial
+      implementation, once after the DRY/fake-timer cleanup from the conventions review; both runs
+      green. `angular.json` not touched in this diff.)
 - [ ] Verified live in the browser: a Dashboard URL carrying `?from=now-30d` reloads as a relative
-      range whose end is today, and prev/next still steps it.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      range whose end is today, and prev/next still steps it. (Skipped — user declined the live
+      browser check for this ticket.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code
+      --baseline .fallow-baseline.json --fail-on-issues --quiet` and `npx fallow health
+      --complexity --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet`
+      both exit 0 with no output. `conventions-reviewer` subagent flagged two minor drift items —
+      duplicated preset-resolution branch, missing `vi.useFakeTimers` pairing — both fixed and
+      re-verified.)
 
 ## Notes
 

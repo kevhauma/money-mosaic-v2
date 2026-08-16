@@ -49,16 +49,20 @@ export const pageRangeControl = (page: RangePageKey): PageRangeControl => {
   // mirror below writes the page's own range into these same params, so an unguarded read would
   // demote a named preset to "Custom" every time the user came back to the page (refresh, back
   // navigation, bookmark). The guard is the entry-side twin of `alreadyMirrored` further down.
+  // Compared against the unresolved expression (TICKET-STAT-36), not the resolved date — a
+  // relative range's mirrored `now-30d` would otherwise never equal its own resolved boundary.
   const differsFromCurrent =
-    initialFrom !== rangeStore.from(page) || initialTo !== rangeStore.to(page);
+    initialFrom !== rangeStore.fromExpr(page) || initialTo !== rangeStore.toExpr(page);
   if (initialFrom && initialTo && differsFromCurrent) {
     rangeStore.setCustomRange(page, initialFrom, initialTo);
   }
 
   effect(() => {
+    // Mirrors the unresolved expression (TICKET-STAT-36), so a relative range round-trips as
+    // `now-30d` rather than freezing into the date it happened to resolve to at write time.
     const queryParams = {
-      [STAT_QUERY_PARAMS.from]: rangeStore.from(page),
-      [STAT_QUERY_PARAMS.to]: rangeStore.to(page),
+      [STAT_QUERY_PARAMS.from]: rangeStore.fromExpr(page),
+      [STAT_QUERY_PARAMS.to]: rangeStore.toExpr(page),
     };
 
     // Skip navigating when the URL already mirrors this state — otherwise the initial read-in

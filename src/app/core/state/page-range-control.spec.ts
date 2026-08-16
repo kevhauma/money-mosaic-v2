@@ -215,6 +215,52 @@ describe('pageRangeControl (TICKET-UI-23)', () => {
     expect(dashboard.componentInstance.range.value().from).not.toBe('2023-05-01');
   });
 
+  it('?from=now-30d&to=now round-trips as a relative range that resolves against today (TICKET-STAT-36)', async () => {
+    await setup({ [STAT_QUERY_PARAMS.from]: 'now-30d', [STAT_QUERY_PARAMS.to]: 'now' });
+    const fixture = TestBed.createComponent(DashboardRangeHostComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const rangeStore = TestBed.inject(RangeStore);
+    const todayIso = new Date().toISOString().slice(0, 10);
+    expect(rangeStore.preset('dashboard')).toBe('custom');
+    expect(rangeStore.to('dashboard')).toBe(todayIso);
+  });
+
+  it('re-entering with a relative range already in the URL does not resolve it into an absolute one and does not navigate (regression)', async () => {
+    await setup({ [STAT_QUERY_PARAMS.from]: 'now-30d', [STAT_QUERY_PARAMS.to]: 'now' });
+    const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+    const fixture = TestBed.createComponent(DashboardRangeHostComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('mirrors a relative custom range back into the URL as the expression, not a resolved date', async () => {
+    await setup();
+    const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+    const fixture = TestBed.createComponent(DashboardRangeHostComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    TestBed.inject(RangeStore).setCustomRange('dashboard', 'now-30d', 'now');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(navigateSpy).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({
+          [STAT_QUERY_PARAMS.from]: 'now-30d',
+          [STAT_QUERY_PARAMS.to]: 'now',
+        }),
+        replaceUrl: true,
+      }),
+    );
+  });
+
   it('covers every declared range-owning page key', () => {
     // A page added to `RangePageKey` without a default entry would read `undefined` at runtime;
     // this fails loudly instead.

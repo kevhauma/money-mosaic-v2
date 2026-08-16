@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { RangeStore } from './range-state.store';
 
 // Every case below runs against the `dashboard` page; the page argument is the only thing
@@ -231,5 +232,73 @@ describe('RangeStore: one range per page (TICKET-UI-23)', () => {
     expect(rangeStore.from('accounts')).toBe('2015-03-01');
     expect(rangeStore.preset('dashboard')).toBe('this-month');
     expect(rangeStore.from('dashboard')).not.toBe('2015-03-01');
+  });
+});
+
+describe('RangeStore: expression-backed state (TICKET-STAT-36)', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    vi.useFakeTimers({ toFake: ['Date'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('re-resolves a relative custom range against today on every read, not just when set', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+
+    vi.setSystemTime(new Date('2026-07-01T00:00:00Z'));
+    rangeStore.setCustomRange('dashboard', 'now-30d', 'now');
+    expect(rangeStore.preset('dashboard')).toBe('custom');
+    expect(rangeStore.to('dashboard')).toBe('2026-07-01');
+    expect(rangeStore.from('dashboard')).toBe('2026-06-01');
+
+    // No re-trigger in between — reading on a later "today" alone must move the window.
+    vi.setSystemTime(new Date('2026-08-15T00:00:00Z'));
+    expect(rangeStore.to('dashboard')).toBe('2026-08-15');
+    expect(rangeStore.from('dashboard')).toBe('2026-07-16');
+  });
+
+  it('a named preset also re-resolves fresh against today, fixing the stale-store bug', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+
+    vi.setSystemTime(new Date('2026-07-31T00:00:00Z'));
+    rangeStore.setPreset('dashboard', 'this-month');
+    expect(rangeStore.to('dashboard')).toBe('2026-07-31');
+
+    // Advancing past midnight with no re-trigger used to leave July's boundaries in place.
+    vi.setSystemTime(new Date('2026-08-01T00:00:00Z'));
+    expect(rangeStore.from('dashboard')).toBe('2026-08-01');
+    expect(rangeStore.to('dashboard')).toBe('2026-08-31');
+  });
+
+  it('an absolute custom range is unaffected by the injected "today"', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    rangeStore.setCustomRange('dashboard', '2026-01-01', '2026-01-15');
+
+    vi.setSystemTime(new Date('2026-09-01T00:00:00Z'));
+
+    expect(rangeStore.from('dashboard')).toBe('2026-01-01');
+    expect(rangeStore.to('dashboard')).toBe('2026-01-15');
+  });
+
+  it('shiftRange on a relative custom range resolves it to absolute before shifting', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    vi.setSystemTime(new Date('2026-07-15T00:00:00Z'));
+    rangeStore.setCustomRange('dashboard', 'now-6d', 'now');
+    expect(rangeStore.from('dashboard')).toBe('2026-07-09');
+    expect(rangeStore.to('dashboard')).toBe('2026-07-15');
+
+    rangeStore.shiftRange('dashboard', -1);
+
+    expect(rangeStore.preset('dashboard')).toBe('custom');
+    expect(rangeStore.from('dashboard')).toBe('2026-07-02');
+    expect(rangeStore.to('dashboard')).toBe('2026-07-08');
+
+    // Advancing "today" afterwards must not move the now-absolute shifted window.
+    vi.setSystemTime(new Date('2026-09-01T00:00:00Z'));
+    expect(rangeStore.from('dashboard')).toBe('2026-07-02');
+    expect(rangeStore.to('dashboard')).toBe('2026-07-08');
   });
 });
