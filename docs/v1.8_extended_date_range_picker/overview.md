@@ -68,6 +68,10 @@ are settled here and referenced by the tickets rather than re-argued in each:
 - [ ] [TICKET-STAT-40](./tickets/TICKET-STAT-40-recently-used-ranges.md) — Recently used ranges,
       persisted and global (revises FR-STAT-7) — **needs STAT-39**; last because a recent range fills
       the absolute panel's inputs, which do not exist until then
+- [ ] [TICKET-STAT-41](./tickets/TICKET-STAT-41-standalone-picker-year-navigation.md) — Quick year
+      navigation on the standalone `mm-date-range-input` calendar (extends FR-STAT-7) —
+      **independent of STAT-35..40 above**, can ship any time; closes the far-away-date gap left by
+      scope decision 4 without folding the Transactions filter into the two-panel picker
 
 ## Resolved from the sketch
 
@@ -97,7 +101,10 @@ Points [requirements.md](./requirements.md) left ambiguous, decided in the ticke
 ## Considered, not ticketed
 
 - **The Transactions filter adopting the picker** — see scope decision 4 above. Worth revisiting only
-  if the two `from`/`to` URL contracts are unified first.
+  if the two `from`/`to` URL contracts are unified first. The narrower far-away-date navigation gap
+  this left on `mm-date-range-input` is closed separately by
+  [TICKET-STAT-41](./tickets/TICKET-STAT-41-standalone-picker-year-navigation.md), which adds a
+  year-jump control without adopting the two-panel picker.
 - **A grouping-granularity control in the popover.** Granularity has been per-chart since
   [TICKET-STAT-15](../v1.3_dashboard_insights/tickets/TICKET-STAT-15-independent-trend-chart-bucket-controls.md) and
   session-held by `ChartOptionsStore`; pulling it back into a global control would reverse a decision

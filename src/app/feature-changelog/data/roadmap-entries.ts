@@ -75,6 +75,12 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Date range picker',
   },
   {
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketId: 'TICKET-STAT-41',
+    title: 'Jump the Transactions date filter by year instead of clicking "previous" a dozen times',
+    area: 'Date range picker',
+  },
+  {
     versionFolder: 'v9999_ideas',
     ticketId: 'topic-food-vouchers',
     title: 'Food voucher support as a special income/expense category',
