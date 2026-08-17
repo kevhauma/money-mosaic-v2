@@ -75,37 +75,93 @@ outside the popover.
 
 ## Acceptance criteria
 
-- [ ] `mm-range-picker` renders on Dashboard, Explore and Accounts, and
+- [x] `mm-range-picker` renders on Dashboard, Explore and Accounts, and
       `mm-range-grouping-switcher` plus its spec are deleted with no remaining imports.
-- [ ] The trigger shows the active range's label and updates when the range changes from any source,
-      including a prev/next step.
-- [ ] Prev/next still steps the range per STAT-16 and stays disabled for the entries where it is
+      (`src/app/shared/ui/range-grouping-switcher/` directory removed entirely; the three pages'
+      `.ts`/`.html` swapped to `RangePickerComponent`/`<mm-range-picker>`; `grep -rn
+      "mm-range-grouping-switcher\|RangeGroupingSwitcherComponent\|RangeGroupingSwitcherValue"
+      src/` finds only a historical mention in `range-picker.component.ts`'s own doc comment, no
+      live import. `ng build` succeeds, confirming no dangling reference.)
+- [x] The trigger shows the active range's label and updates when the range changes from any source,
+      including a prev/next step. (`range-picker.component.spec.ts` → "shows the catalogue label as
+      the trigger text", "shows a calendar-aligned label for a hand-built range, falling back to raw
+      dates otherwise" — `triggerLabel` is a `computed()` over `value()`, so it updates from any
+      source that changes the input, prev/next included.)
+- [x] Prev/next still steps the range per STAT-16 and stays disabled for the entries where it is
       disabled today — asserted against the same cases the existing switcher spec covers, which are
-      migrated rather than dropped.
-- [ ] The popover lists all 21 catalogue entries under their four group headings, with the active
-      entry marked as selected.
-- [ ] Clicking a quick range applies it immediately, closes the popover, and the page's figures
-      recompute in the same tick.
-- [ ] Typing in the search filters entries live across groups, hides emptied groups, and shows an
+      migrated rather than dropped. (`range-picker.component.spec.ts` → the three
+      disables/enables-previous/next cases and the two `rangeShift` emission cases, migrated
+      verbatim in intent from the deleted `range-grouping-switcher.component.spec.ts`, with
+      `year-to-date`/`all-time` updated to the current `this-year-so-far`/`all-time` ids.)
+- [x] The popover lists all 21 catalogue entries under their four group headings, with the active
+      entry marked as selected. (`range-picker.component.spec.ts` → "renders every QUICK_RANGES
+      entry under its group heading when opened", "marks the active entry as selected via
+      aria-current".)
+- [x] Clicking a quick range applies it immediately, closes the popover, and the page's figures
+      recompute in the same tick. (`range-picker.component.spec.ts` → "clicking a quick range emits
+      presetChange with its id and closes the popover" — `selectQuickRange` emits then closes
+      synchronously, no async boundary; `dashboard-overview.component.spec.ts` → "renders the range
+      picker in the header, and a quick-range selection re-scopes the page" exercises this through
+      the real `RangeStore`, synchronously within one `fixture.detectChanges()`.)
+- [x] Typing in the search filters entries live across groups, hides emptied groups, and shows an
       empty state when nothing matches; clearing the search restores the full list.
-- [ ] The two panels stack below `md` and sit side by side from `md` up, with the popover never
-      exceeding the viewport width.
+      (`range-picker.component.spec.ts` → "typing in the search filters entries live and hides
+      emptied groups", "shows an empty state when nothing matches, and clearing the search restores
+      the full list".)
+- [x] The two panels stack below `md` and sit side by side from `md` up, with the popover never
+      exceeding the viewport width. (`range-picker.component.spec.ts` → "the popover panel stacks
+      below md and sits side by side from md up" asserts the `flex-col md:flex-row` classes are
+      present; the panel's `max-w-[min(42rem,calc(100vw-2rem))]` caps it against the viewport —
+      visual confirmation waived, see the live-browser line below.)
 - [ ] The popover carries no hardcoded light/dark colours — it renders correctly on the default
-      light theme, the default dark theme and at least one non-default theme.
-- [ ] `Esc` and an outside click close the popover; focus enters on open and returns to the trigger
+      light theme, the default dark theme and at least one non-default theme. **Partially
+      verified:** `grep -nE "#[0-9a-fA-F]{3,6}|rgb\(|dark:"` over `range-picker.component.html`/`.ts`
+      finds nothing — every color comes from daisyUI/`mm-` semantic classes
+      (`btn-ghost`, `bg-base-content/50`, `border-base-300`, `mm-paper`'s own theme-token
+      background), the same pattern every other `shared/ui` primitive uses. Actual cross-theme
+      rendering left unticked — user declined the live browser check this ticket would need to
+      confirm it visually.
+- [x] `Esc` and an outside click close the popover; focus enters on open and returns to the trigger
       on close; the trigger exposes `aria-expanded`; the quick-range list is arrow-key navigable.
-- [ ] The Transactions filter's standalone `mm-date-range-input` is untouched and still works.
-- [ ] The picker holds no state of its own — value in, outputs out — and each page keeps wiring it
-      through `pageRangeControl`.
-- [ ] Unit tests cover: rendering the full grouped catalogue; selection marking; applying a quick
+      (`range-picker.component.spec.ts` → "the trigger exposes aria-expanded...", "Escape closes the
+      popover", "a click outside the component closes the popover", "a click inside the popover does
+      not close it", "focus moves into the popover... and returns to the trigger on close", "falls
+      back to focusing the trigger's native button when the previously-focused element is gone" —
+      the last one added after `conventions-reviewer` caught a real bug: the fallback was calling
+      `.focus()` on `<mm-button>`'s un-focusable host element instead of its inner native `<button>`,
+      fixed and the fallback branch now has dedicated coverage — and "ArrowDown/ArrowUp move focus
+      through the visible quick-range buttons".)
+- [x] The Transactions filter's standalone `mm-date-range-input` is untouched and still works.
+      (`git diff --stat` confirms `date-range-input.component.ts`/`.html`/`.spec.ts` not touched by
+      this ticket; `transaction-filters.component.ts` — the only other consumer — not touched
+      either.)
+- [x] The picker holds no state of its own — value in, outputs out — and each page keeps wiring it
+      through `pageRangeControl`. (`RangePickerComponent`'s only external contract is `value` in and
+      `presetChange`/`rangeShift` out — `isOpen`/`searchTerm` are its own ephemeral view state, not
+      range data, same as `mm-modal`'s own `open` model. All three pages still call
+      `pageRangeControl(page)` unchanged — `page-range-control.ts` itself untouched beyond doc
+      comments.)
+- [x] Unit tests cover: rendering the full grouped catalogue; selection marking; applying a quick
       range emitting the right id; search filtering, group hiding and the empty state; `Esc` and
       outside-click closing; prev/next emission and disabled states; the stacked-vs-side-by-side
-      class switch.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
+      class switch. (All in `range-picker.component.spec.ts`, 21 tests, all passing — see the
+      specific case names cited against each criterion above.)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (Verified via the `verifier` subagent across three runs — the last after
+      the focus-fallback fix — 267 spec files / 3093–3094 tests (one pre-existing, unrelated
+      import-wizard flake reproduced as green in isolation), lint clean, dev build clean.
+      `angular.json` not touched in this diff.)
 - [ ] Verified live in the browser on all three pages: opening the picker, searching, applying a
-      quick range, and stepping with prev/next.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      quick range, and stepping with prev/next. (Skipped — user declined the live browser check for
+      this ticket.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code --baseline
+      .fallow-baseline.json --fail-on-issues --quiet` and `npx fallow health --complexity
+      --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet` both exit 0
+      with no output, re-run clean after the focus-fallback fix. `conventions-reviewer` subagent
+      found the diff structurally clean and caught one real bug (the focus-fallback issue above,
+      fixed and covered) plus one worth-flagging note (this ticket deliberately drops the
+      `customRangeChange` output rather than shipping it unbound, recorded in `page-range-control.ts`'s
+      doc comment for STAT-39).)
 
 ## Notes
 

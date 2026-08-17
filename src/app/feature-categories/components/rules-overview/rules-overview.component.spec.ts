@@ -76,7 +76,7 @@ describe('RulesOverviewComponent', () => {
 
       expect(page.querySelector('mm-page-header h1')?.textContent?.trim()).toBe('Rules');
       expect(page.querySelector('mm-page-header .mm-page-title p')).toBeNull();
-      expect(page.querySelector('mm-range-grouping-switcher')).toBeNull();
+      expect(page.querySelector('mm-range-picker')).toBeNull();
     });
 
     it('renders the share bar below the header and above the filters', async () => {

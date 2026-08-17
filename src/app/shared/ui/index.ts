@@ -8,7 +8,7 @@ export * from './select/select.component';
 export * from './badge/badge.component';
 export * from './alert/alert.component';
 export * from './stat-card/stat-card.component';
-export * from './range-grouping-switcher/range-grouping-switcher.component';
+export * from './range-picker/range-picker.component';
 export * from './granularity-picker/granularity-picker.component';
 export * from './cycle-picker/cycle-picker.component';
 export * from './paginator/paginator.component';

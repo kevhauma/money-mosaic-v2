@@ -138,7 +138,7 @@ describe('TransactionsOverviewComponent', () => {
     fixture.detectChanges();
     const page: HTMLElement = fixture.nativeElement;
 
-    expect(page.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(page.querySelector('mm-range-picker')).toBeNull();
   });
 
   it('applies the filters emitted by the filter bar to filteredTransactions', async () => {

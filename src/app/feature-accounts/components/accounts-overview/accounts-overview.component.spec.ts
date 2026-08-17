@@ -62,11 +62,11 @@ describe('AccountsOverviewComponent', () => {
     const headerControls = (): string[] =>
       Array.from(
         fixture.nativeElement.querySelectorAll(
-          'mm-page-header input[type="checkbox"], mm-page-header mm-range-grouping-switcher, mm-page-header button',
+          'mm-page-header input[type="checkbox"], mm-page-header mm-range-picker, mm-page-header button',
         ) as NodeListOf<HTMLElement>,
       )
-        // The switcher brings its own prev/next buttons; only the header's own controls count.
-        .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-grouping-switcher'))
+        // The picker brings its own prev/next buttons; only the header's own controls count.
+        .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-picker'))
         .map((el) =>
           el.tagName === 'BUTTON' ? `button[${el.textContent?.trim()}]` : el.tagName.toLowerCase(),
         );
@@ -75,11 +75,7 @@ describe('AccountsOverviewComponent', () => {
       await setup();
       fixture.detectChanges();
 
-      expect(headerControls()).toEqual([
-        'mm-range-grouping-switcher',
-        'input',
-        'button[Add account]',
-      ]);
+      expect(headerControls()).toEqual(['mm-range-picker', 'input', 'button[Add account]']);
     });
 
     it('puts the range in the start group beside the title and the two actions in the end group (TICKET-UI-24)', async () => {
@@ -89,7 +85,7 @@ describe('AccountsOverviewComponent', () => {
       const startGroup = header.querySelector('.mm-page-actions-start');
       const endGroup = header.querySelector('.mm-page-actions');
 
-      const range = header.querySelector('mm-range-grouping-switcher');
+      const range = header.querySelector('mm-range-picker');
       const toggle = header.querySelector('input[type="checkbox"]');
       const addButton = Array.from(header.querySelectorAll('button')).find(
         (b) => b.textContent?.trim() === 'Add account',
@@ -109,7 +105,7 @@ describe('AccountsOverviewComponent', () => {
       const header = page.querySelector('mm-page-header');
 
       const strays = Array.from(
-        page.querySelectorAll('mm-range-grouping-switcher') as NodeListOf<HTMLElement>,
+        page.querySelectorAll('mm-range-picker') as NodeListOf<HTMLElement>,
       ).filter((el) => !header?.contains(el));
 
       expect(strays).toEqual([]);

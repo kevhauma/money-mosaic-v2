@@ -9,11 +9,13 @@ import { TransactionsStore } from './transactions.store';
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 /**
- * Structurally the `mm-range-grouping-switcher`'s `value` input and its three outputs. Declared
- * here rather than imported from `shared/ui` so `core/state` doesn't depend on a presentational
- * component; the shapes are checked against each other at every call site that binds them. `preset`
- * is either a `QUICK_RANGES` id or `'custom'` (TICKET-STAT-37) — a plain `string`, since there's no
- * longer a closed union of ids to type it against.
+ * Structurally the `mm-range-picker`'s `value` input and two of its outputs. Declared here rather
+ * than imported from `shared/ui` so `core/state` doesn't depend on a presentational component; the
+ * shapes are checked against each other at every call site that binds them. `preset` is either a
+ * `QUICK_RANGES` id or `'custom'` (TICKET-STAT-37) — a plain `string`, since there's no longer a
+ * closed union of ids to type it against. `onCustomRangeChange` isn't wired to any UI yet
+ * (TICKET-STAT-38's picker ships its absolute panel empty) — it exists for
+ * `pageRangeControl.spec.ts`'s direct coverage and for STAT-39 to bind once the panel is built.
  */
 export type PageRangeControl = {
   value: Signal<{ preset: string; from: string; to: string }>;
@@ -23,9 +25,8 @@ export type PageRangeControl = {
 };
 
 /**
- * Everything a range-owning page needs to render its own `mm-range-grouping-switcher`
- * (TICKET-UI-23): the bound value, the three output handlers, and the URL mirroring that used to
- * live in the app shell.
+ * Everything a range-owning page needs to render its own `mm-range-picker` (TICKET-UI-23): the
+ * bound value, the output handlers, and the URL mirroring that used to live in the app shell.
  *
  * Lives here, not duplicated per page, because `all-time` resolution needs the account/transaction
  * stores (`RangeStore` can't reach them) and the query-param round trip has a skip-if-already-

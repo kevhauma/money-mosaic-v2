@@ -53,7 +53,7 @@ describe('FutureOverviewComponent (TICKET-FUT-03)', () => {
     const fixture = await createFixture();
     const host = fixture.nativeElement as HTMLElement;
 
-    expect(host.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(host.querySelector('mm-range-picker')).toBeNull();
     expect(host.querySelector('mm-date-range-input')).toBeNull();
   });
 

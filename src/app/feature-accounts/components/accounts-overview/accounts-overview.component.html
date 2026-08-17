@@ -1,11 +1,10 @@
 <!-- Header sections (TICKET-UI-24): the range scopes what the page shows, so it sits beside the
      title; the toggle and "Add account" act on what is shown, so they stay right. -->
 <mm-page-header title="Accounts">
-  <mm-range-grouping-switcher
+  <mm-range-picker
     actions-start
     [value]="range.value()"
     (presetChange)="range.onPresetChange($event)"
-    (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
   <mm-flex actions-end align="center" gap="3">

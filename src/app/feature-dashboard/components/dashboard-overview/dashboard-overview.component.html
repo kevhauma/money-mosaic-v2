@@ -2,11 +2,10 @@
      date range ‖ Dashboard settings. The range scopes what the page shows, so it sits beside the
      title; net worth left the header entirely and is now the first card of the stats row. -->
 <mm-page-header title="Dashboard">
-  <mm-range-grouping-switcher
+  <mm-range-picker
     actions-start
     [value]="range.value()"
     (presetChange)="range.onPresetChange($event)"
-    (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
   <!-- Privacy toggle stays reachable even in the empty state (TICKET-PRIV-01): it writes a global

@@ -56,7 +56,7 @@ describe('AppShellComponent', () => {
 
     const shell = fixture.nativeElement as HTMLElement;
 
-    expect(shell.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(shell.querySelector('mm-range-picker')).toBeNull();
     expect(shell.querySelector('mm-date-range-input')).toBeNull();
   });
 });

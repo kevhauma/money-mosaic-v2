@@ -101,7 +101,7 @@ describe('CategoriesOverviewComponent', () => {
 
     expect(page.querySelector('mm-page-header h1')?.textContent?.trim()).toBe('Categories');
     expect(page.querySelector('mm-page-header .mm-page-title p')).toBeNull();
-    expect(page.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(page.querySelector('mm-range-picker')).toBeNull();
   });
 
   it('shows a loading skeleton, not the "no categories yet" empty state, before CategoriesStore hydrates (TICKET-PERF-07)', async () => {

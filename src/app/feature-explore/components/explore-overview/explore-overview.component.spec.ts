@@ -95,12 +95,12 @@ describe('ExploreOverviewComponent (TICKET-EXP-01)', () => {
     expect(host.querySelector('app-bills-calendar')).toBeNull();
   });
 
-  it('renders the page header with the Explore range switcher bound to it', async () => {
+  it('renders the page header with the Explore range picker bound to it', async () => {
     const fixture = await createFixture([transaction()]);
     const host = fixture.nativeElement as HTMLElement;
 
     expect(host.querySelector('mm-page-header')?.textContent).toContain('Explore');
-    expect(host.querySelector('mm-range-grouping-switcher')).not.toBeNull();
+    expect(host.querySelector('mm-range-picker')).not.toBeNull();
   });
 
   it('carries the shared privacy toggle in the header’s end slot (TICKET-PRIV-02)', async () => {

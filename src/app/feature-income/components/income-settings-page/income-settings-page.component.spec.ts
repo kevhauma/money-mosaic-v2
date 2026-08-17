@@ -120,7 +120,7 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
     expect(
       fixture.nativeElement.querySelector('mm-page-header a[href="/income"]')?.textContent,
     ).toContain('Back to income');
-    expect(fixture.nativeElement.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(fixture.nativeElement.querySelector('mm-range-picker')).toBeNull();
   });
 
   it('hosts every settings section on one page', async () => {

@@ -422,7 +422,7 @@ describe('IncomeOverviewComponent', () => {
   it('renders no date-range control anywhere — /income scopes itself to the career start (TICKET-UI-23)', async () => {
     await setup([salary]);
 
-    expect(fixture.nativeElement.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(fixture.nativeElement.querySelector('mm-range-picker')).toBeNull();
   });
 
   it('keeps the header action row wrapping at 375px (TICKET-INC-21)', async () => {

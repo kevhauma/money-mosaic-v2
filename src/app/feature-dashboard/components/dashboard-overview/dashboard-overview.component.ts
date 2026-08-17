@@ -17,7 +17,7 @@ import {
   PageHeaderComponent,
   PaperComponent,
   PrivacyToggleComponent,
-  RangeGroupingSwitcherComponent,
+  RangePickerComponent,
   StatCardComponent,
 } from '@/shared/ui';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
@@ -43,7 +43,7 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
     PageHeaderComponent,
     PaperComponent,
     PrivacyToggleComponent,
-    RangeGroupingSwitcherComponent,
+    RangePickerComponent,
     StatCardComponent,
     CategoryBreakdownPanelComponent,
     CategoryComparisonPanelComponent,

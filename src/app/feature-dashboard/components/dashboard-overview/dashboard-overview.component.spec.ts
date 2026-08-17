@@ -403,18 +403,23 @@ describe('DashboardOverviewComponent', () => {
       expect(header.textContent).not.toContain('Net worth');
     });
 
-    it('renders the range switcher in the header, and a preset change re-scopes the page', () => {
+    it('renders the range picker in the header, and a quick-range selection re-scopes the page', () => {
       seedOneTransaction();
       fixture.detectChanges();
 
-      const switcher = fixture.nativeElement.querySelector(
-        'mm-page-header mm-range-grouping-switcher',
-      );
-      expect(switcher).not.toBeNull();
+      const picker = fixture.nativeElement.querySelector(
+        'mm-page-header mm-range-picker',
+      ) as HTMLElement;
+      expect(picker).not.toBeNull();
 
-      const select = switcher.querySelector('select') as HTMLSelectElement;
-      select.value = 'previous-year';
-      select.dispatchEvent(new Event('change'));
+      const trigger = picker.querySelector('button[aria-expanded]') as HTMLButtonElement;
+      trigger.click();
+      fixture.detectChanges();
+
+      const previousYearButton = Array.from(
+        picker.querySelectorAll<HTMLButtonElement>('button[data-quick-range-id="previous-year"]'),
+      )[0];
+      previousYearButton.click();
       fixture.detectChanges();
 
       const rangeStore = TestBed.inject(RangeStore);
@@ -432,15 +437,13 @@ describe('DashboardOverviewComponent', () => {
 
       const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
       const order = Array.from(
-        header.querySelectorAll(
-          'h1, mm-range-grouping-switcher, button',
-        ) as NodeListOf<HTMLElement>,
+        header.querySelectorAll('h1, mm-range-picker, button') as NodeListOf<HTMLElement>,
       )
-        // The switcher has its own buttons; only the header's direct action buttons count.
-        .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-grouping-switcher'))
+        // The picker has its own buttons; only the header's direct action buttons count.
+        .filter((el) => el.tagName !== 'BUTTON' || !el.closest('mm-range-picker'))
         .map((el) => el.tagName.toLowerCase());
 
-      expect(order).toEqual(['h1', 'mm-range-grouping-switcher', 'button', 'button']);
+      expect(order).toEqual(['h1', 'mm-range-picker', 'button', 'button']);
     });
 
     it('puts the range in the start group and settings in the end group (TICKET-UI-24)', () => {
@@ -450,7 +453,7 @@ describe('DashboardOverviewComponent', () => {
       const header = fixture.nativeElement.querySelector('mm-page-header') as HTMLElement;
       const startGroup = header.querySelector('.mm-page-actions-start');
       const endGroup = header.querySelector('.mm-page-actions');
-      const range = header.querySelector('mm-range-grouping-switcher');
+      const range = header.querySelector('mm-range-picker');
 
       expect(startGroup?.contains(range as Node)).toBe(true);
       expect(endGroup?.contains(range as Node)).toBe(false);

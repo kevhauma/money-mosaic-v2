@@ -78,7 +78,7 @@ describe('RecurringOverviewComponent', () => {
     const host = fixture.nativeElement as HTMLElement;
 
     expect(host.querySelector('mm-page-header')?.textContent).toContain('Recurring');
-    expect(host.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(host.querySelector('mm-range-picker')).toBeNull();
     expect(host.textContent).toContain('Detected across your whole transaction history');
   });
 

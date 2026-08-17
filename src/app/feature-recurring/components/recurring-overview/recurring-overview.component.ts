@@ -20,7 +20,7 @@ import { RecurringPaymentsPanelComponent } from '../recurring-payments-panel/rec
  * Both used to sit at the bottom of `/explore`, where they never fitted: that page owns a date
  * range (`pageRangeControl('explore')`) and both of these deliberately ignore it, so each had to
  * caption its own disobedience. Given their own route they simply have no range to disobey — which
- * is why this page has **no `mm-range-grouping-switcher` and no `RangePageKey` of its own**, and why
+ * is why this page has **no `mm-range-picker` and no `RangePageKey` of its own**, and why
  * `RECURRING_ROUTES` provides no echarts (neither section is a chart).
  *
  * **No page-level store beyond the shared derivation.** `RecurringSeriesStore` moved here with the

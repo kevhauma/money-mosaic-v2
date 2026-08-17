@@ -10,7 +10,7 @@ import {
   LabelComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
-  RangeGroupingSwitcherComponent,
+  RangePickerComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { createConfirmState } from '@/shared/utils';
@@ -39,7 +39,7 @@ import { AccountBalanceHistoryChartComponent } from '../account-balance-history-
     LoadingSkeletonComponent,
     NgIcon,
     PageHeaderComponent,
-    RangeGroupingSwitcherComponent,
+    RangePickerComponent,
     TypographyComponent,
   ],
   templateUrl: './accounts-overview.component.html',

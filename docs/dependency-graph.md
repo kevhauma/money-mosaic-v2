@@ -12,7 +12,7 @@ below `src/app` — which is enough to reach individual files in most feature/co
 subtrees.
 
 <!-- GENERATED:STATS:START -->
-- 391 leaf nodes, 1173 edges.
+- 391 leaf nodes, 1174 edges.
 <!-- GENERATED:STATS:END -->
 
 - `*.spec.ts` and `node_modules` are excluded.
@@ -731,8 +731,8 @@ end
 subgraph EJ["privacy-toggle"]
 EK["privacy-toggle.component.ts"]
 end
-subgraph EL["range-grouping-switcher"]
-EM["range-grouping-switcher.component.ts"]
+subgraph EL["range-picker"]
+EM["range-picker.component.ts"]
 end
 subgraph EN["select"]
 EO["select.component.ts"]
@@ -1913,8 +1913,9 @@ EI-->FE
 EK-->DH
 EK-->1Z
 EM-->DH
-EM-->DP
 EM-->DZ
+EM-->EG
+EM-->EW
 EM-->FE
 EO-->FE
 EQ-->EI

@@ -8,7 +8,7 @@ import {
   PageHeaderComponent,
   PaperComponent,
   PrivacyToggleComponent,
-  RangeGroupingSwitcherComponent,
+  RangePickerComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { MoneyFlowPanelComponent } from '../money-flow-panel/money-flow-panel.component';
@@ -40,7 +40,7 @@ import { SpendingMosaicPanelComponent } from '../spending-mosaic-panel/spending-
     PageHeaderComponent,
     PaperComponent,
     PrivacyToggleComponent,
-    RangeGroupingSwitcherComponent,
+    RangePickerComponent,
     SpendingMosaicPanelComponent,
     TypographyComponent,
   ],

@@ -95,7 +95,7 @@ describe('SalaryDetailsPageComponent (FR-INC-10, TICKET-INC-18)', () => {
     // Each section on this page explains its own control (TICKET-INC-18), so a header caption was
     // doubly redundant.
     expect(fixture.nativeElement.querySelector('mm-page-header .mm-page-title p')).toBeNull();
-    expect(fixture.nativeElement.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(fixture.nativeElement.querySelector('mm-range-picker')).toBeNull();
   });
 
   it('mounts the full table, unfiltered and with every month in range', async () => {

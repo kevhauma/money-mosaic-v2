@@ -68,7 +68,7 @@ describe('AccountsDetailComponent', () => {
     expect(page.querySelector('mm-page-header h1')?.textContent?.trim()).toBe('Everyday Checking');
     // The account type used to be the header's subtitle; it reads off the balance block now.
     expect(page.querySelector('mm-page-header .mm-page-title p')).toBeNull();
-    expect(page.querySelector('mm-range-grouping-switcher')).toBeNull();
+    expect(page.querySelector('mm-range-picker')).toBeNull();
   });
 
   afterEach(async () => {

@@ -3,11 +3,10 @@
      the end slot). The Sankey has masked its figures since TICKET-PRIV-01 — TICKET-PRIV-02 is what
      finally lets you say so from here instead of walking to the Dashboard first. -->
 <mm-page-header title="Explore">
-  <mm-range-grouping-switcher
+  <mm-range-picker
     actions-start
     [value]="range.value()"
     (presetChange)="range.onPresetChange($event)"
-    (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
   <mm-privacy-toggle actions-end />
