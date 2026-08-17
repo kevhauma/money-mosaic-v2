@@ -9,16 +9,16 @@ import { TransactionsStore } from './transactions.store';
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
 /**
- * Structurally the `mm-range-picker`'s `value` input and two of its outputs. Declared here rather
- * than imported from `shared/ui` so `core/state` doesn't depend on a presentational component; the
+ * Structurally the `mm-range-picker`'s `value` input and its outputs. Declared here rather than
+ * imported from `shared/ui` so `core/state` doesn't depend on a presentational component; the
  * shapes are checked against each other at every call site that binds them. `preset` is either a
  * `QUICK_RANGES` id or `'custom'` (TICKET-STAT-37) — a plain `string`, since there's no longer a
- * closed union of ids to type it against. `onCustomRangeChange` isn't wired to any UI yet
- * (TICKET-STAT-38's picker ships its absolute panel empty) — it exists for
- * `pageRangeControl.spec.ts`'s direct coverage and for STAT-39 to bind once the panel is built.
+ * closed union of ids to type it against. `fromExpr`/`toExpr` are the unresolved `range-expression`
+ * text behind `from`/`to` (TICKET-STAT-39) — what the absolute panel's fields seed from, so a
+ * relative custom range ("now-30d") reopens as typed text rather than the date it resolved to.
  */
 export type PageRangeControl = {
-  value: Signal<{ preset: string; from: string; to: string }>;
+  value: Signal<{ preset: string; from: string; to: string; fromExpr: string; toExpr: string }>;
   onPresetChange: (preset: string) => void;
   onCustomRangeChange: (range: { from: string; to: string }) => void;
   onRangeShift: (direction: -1 | 1) => void;
@@ -86,6 +86,8 @@ export const pageRangeControl = (page: RangePageKey): PageRangeControl => {
       preset: rangeStore.preset(page),
       from: rangeStore.from(page),
       to: rangeStore.to(page),
+      fromExpr: rangeStore.fromExpr(page),
+      toExpr: rangeStore.toExpr(page),
     })),
 
     onPresetChange: (preset: string): void => {

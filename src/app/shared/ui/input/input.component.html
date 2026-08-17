@@ -8,6 +8,7 @@
   [attr.maxlength]="maxlength()"
   [attr.aria-invalid]="ariaInvalid() || null"
   [attr.aria-label]="ariaLabel()"
+  [attr.aria-describedby]="ariaDescribedBy()"
   [disabled]="isDisabled()"
   [value]="displayValue()"
   (input)="handleInput($any($event.target).value)"

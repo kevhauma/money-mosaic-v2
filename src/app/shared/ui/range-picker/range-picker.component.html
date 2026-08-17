@@ -30,10 +30,15 @@
       >
         <div data-testid="range-picker-panels" class="flex max-h-[28rem] flex-col md:flex-row">
           <div
-            class="flex flex-col gap-2 overflow-y-auto p-3 md:w-56 md:border-r md:border-base-300"
+            class="flex flex-col gap-2 overflow-y-auto p-3 md:w-72 md:border-r md:border-base-300"
           >
             <mm-text variant="label">Absolute time range</mm-text>
-            <!-- Scaffolded here; filled in by TICKET-STAT-39. -->
+            <mm-absolute-range-panel
+              [fromExpr]="value().fromExpr"
+              [toExpr]="value().toExpr"
+              [unappliedEditsFlagged]="unappliedEditsWarningActive()"
+              (apply)="onAbsoluteApply($event)"
+            />
           </div>
 
           <div class="flex min-w-64 flex-col overflow-hidden p-3 md:w-72">

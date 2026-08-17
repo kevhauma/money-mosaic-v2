@@ -1,0 +1,103 @@
+<div class="flex flex-col gap-3">
+  <mm-fieldset legend="From">
+    <div class="flex items-center gap-1">
+      <mm-input
+        [formControl]="fromControl"
+        [ariaInvalid]="!!fromError()"
+        [ariaDescribedBy]="fromHintId"
+        ariaLabel="From"
+        size="sm"
+        class="flex-1"
+      />
+      <div class="relative">
+        <mm-button
+          variant="ghost"
+          size="sm"
+          shape="square"
+          ariaLabel="Pick a from date"
+          (click)="openFromPicker()"
+        >
+          <ng-icon name="tablerCalendar" size="16" aria-hidden="true" />
+        </mm-button>
+        <input
+          #fromDateInput
+          type="date"
+          tabindex="-1"
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-0 opacity-0"
+          [attr.value]="fromResolvedIso()"
+          (change)="onCalendarChange('from', $event)"
+        />
+      </div>
+    </div>
+    <div [id]="fromHintId" class="mt-1">
+      @if (fromError(); as error) {
+        <mm-text as="p" variant="caption" color="error">{{ error }}</mm-text>
+      } @else if (fromPreview(); as preview) {
+        <mm-text as="p" variant="caption">→ {{ preview }}</mm-text>
+      }
+    </div>
+  </mm-fieldset>
+
+  <mm-fieldset legend="To">
+    <div class="flex items-center gap-1">
+      <mm-input
+        [formControl]="toControl"
+        [ariaInvalid]="!!toError()"
+        [ariaDescribedBy]="toHintId"
+        ariaLabel="To"
+        size="sm"
+        class="flex-1"
+      />
+      <div class="relative">
+        <mm-button
+          variant="ghost"
+          size="sm"
+          shape="square"
+          ariaLabel="Pick a to date"
+          (click)="openToPicker()"
+        >
+          <ng-icon name="tablerCalendar" size="16" aria-hidden="true" />
+        </mm-button>
+        <input
+          #toDateInput
+          type="date"
+          tabindex="-1"
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-0 opacity-0"
+          [attr.value]="toResolvedIso()"
+          (change)="onCalendarChange('to', $event)"
+        />
+      </div>
+    </div>
+    <div [id]="toHintId" class="mt-1">
+      @if (toError(); as error) {
+        <mm-text as="p" variant="caption" color="error">{{ error }}</mm-text>
+      } @else if (toPreview(); as preview) {
+        <mm-text as="p" variant="caption">→ {{ preview }}</mm-text>
+      }
+    </div>
+  </mm-fieldset>
+
+  @if (pairError(); as error) {
+    <mm-text as="p" variant="caption" color="error" role="alert">{{ error }}</mm-text>
+  }
+
+  <mm-button
+    #applyButton
+    variant="solid"
+    color="primary"
+    size="sm"
+    [class]="unappliedEditsFlagged() ? 'ring-2 ring-warning' : ''"
+    [disabled]="!canApply()"
+    (click)="onApplyClick()"
+  >
+    Apply time range
+  </mm-button>
+
+  @if (unappliedEditsFlagged()) {
+    <mm-text as="p" variant="caption" color="warning" role="alert">
+      You have unapplied changes.
+    </mm-text>
+  }
+</div>

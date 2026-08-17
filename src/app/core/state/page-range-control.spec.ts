@@ -219,6 +219,8 @@ describe('pageRangeControl (TICKET-UI-23)', () => {
       preset: 'custom',
       from: '2023-05-01',
       to: '2023-05-31',
+      fromExpr: '2023-05-01',
+      toExpr: '2023-05-31',
     });
     // …and the Dashboard's own window survived the Accounts write.
     expect(dashboard.componentInstance.range.value().from).not.toBe('2023-05-01');

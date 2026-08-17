@@ -7,6 +7,7 @@
     actions-start
     [value]="range.value()"
     (presetChange)="range.onPresetChange($event)"
+    (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
   <mm-privacy-toggle actions-end />

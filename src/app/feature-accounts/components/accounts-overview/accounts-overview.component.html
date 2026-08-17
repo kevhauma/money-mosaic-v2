@@ -5,6 +5,7 @@
     actions-start
     [value]="range.value()"
     (presetChange)="range.onPresetChange($event)"
+    (customRangeChange)="range.onCustomRangeChange($event)"
     (rangeShift)="range.onRangeShift($event)"
   />
   <mm-flex actions-end align="center" gap="3">

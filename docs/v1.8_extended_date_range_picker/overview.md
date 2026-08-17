@@ -57,11 +57,11 @@ are settled here and referenced by the tickets rather than re-argued in each:
 - [x] [TICKET-STAT-37](./tickets/TICKET-STAT-37-quick-range-catalogue.md) — The quick-range
       catalogue: 21 grouped ranges expressed as expression pairs, six existing ids renamed (revises
       FR-STAT-7) — **needs STAT-35 and SET-09**; still data-only, consumed by the picker UI next
-- [ ] [TICKET-STAT-38](./tickets/TICKET-STAT-38-two-panel-range-picker.md) — The two-panel picker
+- [x] [TICKET-STAT-38](./tickets/TICKET-STAT-38-two-panel-range-picker.md) — The two-panel picker
       popover: trigger, searchable quick-range panel, prev/next preserved (revises FR-STAT-7) —
       **needs STAT-36 and STAT-37**; this is the ticket that retires
       `mm-range-grouping-switcher` on all three pages
-- [ ] [TICKET-STAT-39](./tickets/TICKET-STAT-39-absolute-panel-apply-staging.md) — The absolute
+- [x] [TICKET-STAT-39](./tickets/TICKET-STAT-39-absolute-panel-apply-staging.md) — The absolute
       panel: typed expressions, a calendar that doesn't clobber the text, and Apply-staged edits
       (revises FR-STAT-7) — **needs STAT-38** for the panel to live in, and STAT-35 to validate what
       is typed

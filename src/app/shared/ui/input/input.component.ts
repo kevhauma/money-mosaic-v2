@@ -40,6 +40,8 @@ export class InputComponent implements ControlValueAccessor {
   readonly ariaInvalid = input(false);
   /** Accessible name for an input with no visible `<label>` of its own — e.g. a cell in an editable table, whose column header alone doesn't say which row it belongs to. */
   readonly ariaLabel = input<string>();
+  /** Id of an element describing this field's current state (a validation reason, a live preview) — for a screen reader to announce alongside the field, not just its label (TICKET-STAT-39). */
+  readonly ariaDescribedBy = input<string>();
   readonly class = input('', { alias: 'class' });
 
   /**

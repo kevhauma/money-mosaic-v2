@@ -45,24 +45,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'TICKET-SET-09',
-    title: 'Tell the app which month your financial year starts in',
-    area: 'Settings',
-  },
-  {
-    versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'TICKET-STAT-38',
-    title: 'One control showing your current range, opening onto every range you might want',
-    area: 'Date range picker',
-  },
-  {
-    versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'TICKET-STAT-39',
-    title: 'Type an exact window into the date fields and apply it in one go',
-    area: 'Date range picker',
-  },
-  {
-    versionFolder: 'v1.8_extended_date_range_picker',
     ticketId: 'TICKET-STAT-40',
     title: 'The ranges you picked recently, one click away instead of retyped',
     area: 'Date range picker',

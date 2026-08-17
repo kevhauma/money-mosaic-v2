@@ -956,4 +956,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The date-range dropdown on Dashboard, Explore and Accounts now offers 21 named ranges — rolling windows, "so far" variants, and fiscal quarters/years — instead of the previous 11',
     area: 'Date ranges',
   },
+  {
+    date: '2026-08-17',
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketIds: ['TICKET-STAT-39'],
+    title:
+      'You can now type an exact date range, like "90 days ago" or a specific date, straight into the date-range picker, preview what it resolves to, and press Apply once — instead of only clicking through a calendar',
+    area: 'Date ranges',
+  },
 ];

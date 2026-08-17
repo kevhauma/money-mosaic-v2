@@ -1,7 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { QUICK_RANGES } from '@/shared/utils';
-import { RangePickerComponent } from './range-picker.component';
+import { RangePickerComponent, type RangePickerValue } from './range-picker.component';
+
+// `fromExpr`/`toExpr` default to `from`/`to` — every case below is either a catalogue preset
+// (which never reads them) or a plain absolute custom range, where the expression is just the ISO
+// date itself.
+const value = (overrides: Partial<RangePickerValue> = {}): RangePickerValue => ({
+  preset: 'this-month',
+  from: '2026-07-01',
+  to: '2026-07-31',
+  fromExpr: overrides.from ?? '2026-07-01',
+  toExpr: overrides.to ?? '2026-07-31',
+  ...overrides,
+});
 
 describe('RangePickerComponent', () => {
   let component: RangePickerComponent;
@@ -14,11 +26,7 @@ describe('RangePickerComponent', () => {
 
     fixture = TestBed.createComponent(RangePickerComponent);
     component = fixture.componentInstance;
-    fixture.componentRef.setInput('value', {
-      preset: 'this-month',
-      from: '2026-07-01',
-      to: '2026-07-31',
-    });
+    fixture.componentRef.setInput('value', value());
     fixture.detectChanges();
   });
 
@@ -28,11 +36,29 @@ describe('RangePickerComponent', () => {
   const openPopover = async (): Promise<void> => {
     trigger().click();
     fixture.detectChanges();
+    // `open()` queues one microtask that both focuses the search input and calls the mounted
+    // `mm-absolute-range-panel`'s `reset()` (TICKET-STAT-39) — a single `await Promise.resolve()`
+    // is enough to flush it, since it was queued strictly before this awaited continuation.
     await Promise.resolve();
+    fixture.detectChanges();
   };
 
   const quickRangeButtons = (): HTMLButtonElement[] =>
     Array.from(fixture.nativeElement.querySelectorAll('button[data-quick-range-id]'));
+
+  const absoluteFromInput = (): HTMLInputElement =>
+    fixture.nativeElement.querySelector('mm-absolute-range-panel input[aria-label="From"]');
+  const absoluteApplyButton = (): HTMLButtonElement =>
+    Array.from(
+      fixture.nativeElement.querySelectorAll(
+        'mm-absolute-range-panel button',
+      ) as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent?.includes('Apply time range'))!;
+  const typeInto = (input: HTMLInputElement, text: string): void => {
+    input.value = text;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  };
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -43,22 +69,36 @@ describe('RangePickerComponent', () => {
   });
 
   it('shows a calendar-aligned label for a hand-built range, falling back to raw dates otherwise', () => {
-    fixture.componentRef.setInput('value', {
-      preset: 'custom',
-      from: '2026-07-01',
-      to: '2026-07-31',
-    });
+    fixture.componentRef.setInput(
+      'value',
+      value({ preset: 'custom', from: '2026-07-01', to: '2026-07-31' }),
+    );
     fixture.detectChanges();
     expect(trigger().textContent).toContain('July 2026');
 
-    fixture.componentRef.setInput('value', {
-      preset: 'custom',
-      from: '2026-07-05',
-      to: '2026-07-19',
-    });
+    fixture.componentRef.setInput(
+      'value',
+      value({ preset: 'custom', from: '2026-07-05', to: '2026-07-19' }),
+    );
     fixture.detectChanges();
     expect(trigger().textContent).toContain('07/05/2026');
     expect(trigger().textContent).toContain('07/19/2026');
+  });
+
+  it('describes a relative hand-built range via describeRangeExpression rather than raw dates', () => {
+    fixture.componentRef.setInput(
+      'value',
+      value({
+        preset: 'custom',
+        from: '2026-06-16',
+        to: '2026-07-15',
+        fromExpr: 'now-29d',
+        toExpr: 'now',
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(trigger().textContent).toContain('Last 29 days');
   });
 
   it('the trigger exposes aria-expanded, false when closed and true once open', async () => {
@@ -232,11 +272,10 @@ describe('RangePickerComponent', () => {
   });
 
   it('disables the previous/next buttons while a steppingDisabled entry ("this-year-so-far") is selected', () => {
-    fixture.componentRef.setInput('value', {
-      preset: 'this-year-so-far',
-      from: '2026-01-01',
-      to: '2026-07-14',
-    });
+    fixture.componentRef.setInput(
+      'value',
+      value({ preset: 'this-year-so-far', from: '2026-01-01', to: '2026-07-14' }),
+    );
     fixture.detectChanges();
 
     const buttons: HTMLButtonElement[] = Array.from(
@@ -247,11 +286,10 @@ describe('RangePickerComponent', () => {
   });
 
   it('disables the previous/next buttons while "all-time" is selected', () => {
-    fixture.componentRef.setInput('value', {
-      preset: 'all-time',
-      from: '2015-01-01',
-      to: '2026-07-14',
-    });
+    fixture.componentRef.setInput(
+      'value',
+      value({ preset: 'all-time', from: '2015-01-01', to: '2026-07-14' }),
+    );
     fixture.detectChanges();
 
     const buttons: HTMLButtonElement[] = Array.from(
@@ -291,5 +329,106 @@ describe('RangePickerComponent', () => {
     buttons[buttons.length - 1].click();
 
     expect(emitSpy).toHaveBeenCalledWith(1);
+  });
+
+  describe('the absolute panel and Apply staging (TICKET-STAT-39)', () => {
+    beforeEach(() => {
+      // The panel seeds from the page's real `fromExpr`/`toExpr` (TICKET-STAT-39) — these tests
+      // assume a relative-expression seed, so override the outer `beforeEach`'s fixed-date default.
+      fixture.componentRef.setInput(
+        'value',
+        value({ preset: 'custom', fromExpr: 'now-30d', toExpr: 'now' }),
+      );
+      fixture.detectChanges();
+    });
+
+    it('applying commits both edges, closes the popover, and updates the trigger label', async () => {
+      const applySpy = vi.fn();
+      component.customRangeChange.subscribe(applySpy);
+      await openPopover();
+
+      typeInto(absoluteFromInput(), 'now-7d');
+      absoluteApplyButton().click();
+      fixture.detectChanges();
+
+      expect(applySpy).toHaveBeenCalledExactlyOnceWith({ from: 'now-7d', to: 'now' });
+      expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('Esc with unapplied edits keeps the popover open, shows the message, and focuses Apply', async () => {
+      await openPopover();
+      typeInto(absoluteFromInput(), 'now-7d');
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+
+      expect(trigger().getAttribute('aria-expanded')).toBe('true');
+      expect(fixture.nativeElement.textContent).toContain('unapplied changes');
+      expect(document.activeElement).toBe(absoluteApplyButton());
+    });
+
+    it('a second Esc discards the staged edits and closes', async () => {
+      await openPopover();
+      typeInto(absoluteFromInput(), 'now-7d');
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+
+      expect(trigger().getAttribute('aria-expanded')).toBe('false');
+      // The applied range was never touched.
+      expect(component.value().from).toBe('2026-07-01');
+    });
+
+    it('an outside click with unapplied edits keeps the popover open and shows the message (does not discard)', async () => {
+      await openPopover();
+      typeInto(absoluteFromInput(), 'now-7d');
+
+      const outside = document.createElement('div');
+      document.body.appendChild(outside);
+      outside.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      fixture.detectChanges();
+      outside.remove();
+
+      expect(trigger().getAttribute('aria-expanded')).toBe('true');
+      expect(fixture.nativeElement.textContent).toContain('unapplied changes');
+      // Still there to be applied or discarded — an outside click never itself discards.
+      expect(absoluteFromInput().value).toBe('now-7d');
+    });
+
+    it('Esc or an outside click with no unapplied edits still closes immediately (STAT-38 behaviour unchanged)', async () => {
+      await openPopover();
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+
+      expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('picking a quick range while edits are staged discards them, applies the quick range, and closes', async () => {
+      const presetSpy = vi.fn();
+      component.presetChange.subscribe(presetSpy);
+      await openPopover();
+      typeInto(absoluteFromInput(), 'now-7d');
+
+      const previousYear = quickRangeButtons().find(
+        (button) => button.getAttribute('data-quick-range-id') === 'previous-year',
+      )!;
+      previousYear.click();
+      fixture.detectChanges();
+
+      expect(presetSpy).toHaveBeenCalledExactlyOnceWith('previous-year');
+      expect(trigger().getAttribute('aria-expanded')).toBe('false');
+
+      // Reopening re-seeds from whatever the page's range is now — no leftover staged text.
+      fixture.componentRef.setInput(
+        'value',
+        value({ preset: 'previous-year', from: '2025-01-01', to: '2025-12-31' }),
+      );
+      fixture.detectChanges();
+      await openPopover();
+      expect(absoluteFromInput().value).toBe('2025-01-01');
+    });
   });
 });

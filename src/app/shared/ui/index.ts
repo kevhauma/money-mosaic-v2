@@ -9,6 +9,7 @@ export * from './badge/badge.component';
 export * from './alert/alert.component';
 export * from './stat-card/stat-card.component';
 export * from './range-picker/range-picker.component';
+export * from './absolute-range-panel/absolute-range-panel.component';
 export * from './granularity-picker/granularity-picker.component';
 export * from './cycle-picker/cycle-picker.component';
 export * from './paginator/paginator.component';

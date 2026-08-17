@@ -71,37 +71,83 @@ entry is invalid, and an Apply button that is the only thing that commits the ed
 
 ## Acceptance criteria
 
-- [ ] Both fields render, seeded with the active range's canonical expression text, and are editable
-      without first selecting a "Custom" mode — the two-step act is gone.
-- [ ] A valid expression (`now-90d`, `now/M`, `now-1M/M`) and a valid absolute date are both accepted
+- [x] Both fields render, seeded with the active range's canonical expression text, and are editable
+      without first selecting a "Custom" mode — the two-step act is gone. (`mm-absolute-range-panel`
+      mounts unconditionally in the picker's left panel, no mode gate;
+      `absolute-range-panel.component.spec.ts`'s "seeds both fields from a relative/absolute applied
+      range on reset()".)
+- [x] A valid expression (`now-90d`, `now/M`, `now-1M/M`) and a valid absolute date are both accepted
       in either field, with the resolved date previewed beneath it.
-- [ ] An invalid entry (`now-6h`, `now-xd`, `15 July`, empty) shows the parser's reason inline,
+      (`absolute-range-panel.component.spec.ts`: "accepts a relative expression and an absolute date
+      in either field, previewing the resolved date".)
+- [x] An invalid entry (`now-6h`, `now-xd`, `15 July`, empty) shows the parser's reason inline,
       disables Apply, and leaves the page's current range untouched.
-- [ ] A From later than its To is reported as a pair-level error and disables Apply.
-- [ ] The calendar button writes an ISO date into the text field and leaves the field editable
-      afterwards; the picked value flows through the same parse-and-preview path.
-- [ ] Nothing on the page changes until Apply is pressed — asserted by editing both fields and
+      (`absolute-range-panel.component.spec.ts`'s `it.each` "shows the parser's reason inline for an
+      invalid entry" + "does not clear, blank, or revert the field on an invalid entry"; nothing emits
+      until Apply per "emits nothing until Apply is clicked".)
+- [x] A From later than its To is reported as a pair-level error and disables Apply.
+      (`absolute-range-panel.component.spec.ts`: "reports a From later than its To as a pair-level
+      error and disables Apply".)
+- [x] The calendar button writes an ISO date into the text field and leaves the field editable
+      afterwards; the picked value flows through the same parse-and-preview path. **Implementation
+      note:** built with Cally's `<calendar-date>` (the codebase's existing pattern, per
+      `date-range-input.component.ts`) but that combination crashed a vitest worker process when
+      nested two Angular component levels deep (`RangePickerComponent` → `AbsoluteRangePanelComponent`
+      → `mm-dropdown` → `calendar-date`) — reproducible, isolated via binary search, not a hang but a
+      forked-process crash. Swapped to a hidden native `<input type="date">` opened via `.showPicker()`
+      from the calendar icon-button; same field-writing contract, no custom-element/jsdom risk.
+      (`absolute-range-panel.component.spec.ts`: "the calendar button writes an ISO date into the
+      field, which stays editable afterwards".)
+- [x] Nothing on the page changes until Apply is pressed — asserted by editing both fields and
       checking the page's figures are unmoved, then pressing Apply and checking they move.
-- [ ] Apply is disabled when either field is invalid and when nothing has changed since the panel
-      was opened.
-- [ ] Applying commits both edges, closes the popover, and updates the trigger label.
-- [ ] Picking a quick range while edits are staged discards them and re-seeds both fields from the
-      applied range.
-- [ ] `Esc` or an outside click with unapplied edits keeps the popover open, shows the unapplied-
+      Mechanism verified at the unit level (`absolute-range-panel.component.spec.ts`: "emits nothing
+      until Apply is clicked"; `range-picker.component.spec.ts`: "applying commits both edges, closes
+      the popover, and updates the trigger label" — `customRangeChange` only fires from `onApplyClick`,
+      wired through to all three consumer pages' `onCustomRangeChange`). The live "figures move"
+      observation is the separate browser-verification criterion below.
+- [x] Apply is disabled when either field is invalid and when nothing has changed since the panel
+      was opened. (`absolute-range-panel.component.spec.ts`: "Apply is disabled while either field is
+      invalid" + "Apply is disabled when nothing has changed since the panel opened".)
+- [x] Applying commits both edges, closes the popover, and updates the trigger label.
+      (`range-picker.component.spec.ts`: "applying commits both edges, closes the popover, and updates
+      the trigger label".)
+- [x] Picking a quick range while edits are staged discards them and re-seeds both fields from the
+      applied range. (`range-picker.component.spec.ts`: "picking a quick range while edits are staged
+      discards them, applies the quick range, and closes".)
+- [x] `Esc` or an outside click with unapplied edits keeps the popover open, shows the unapplied-
       changes message and focuses Apply; a second `Esc` discards and closes.
-- [ ] `Esc` or an outside click with **no** unapplied edits closes immediately, as STAT-38 built it.
-- [ ] Every field is labelled, errors are associated with their field for screen readers, and the
-      panel is fully keyboard-operable.
-- [ ] Unit tests cover: seeding from a relative and an absolute range; accepting both grammars;
+      (`range-picker.component.spec.ts`: "Esc with unapplied edits keeps the popover open...", "an
+      outside click with unapplied edits keeps the popover open...", "a second Esc discards the staged
+      edits and closes".)
+- [x] `Esc` or an outside click with **no** unapplied edits closes immediately, as STAT-38 built it.
+      (`range-picker.component.spec.ts`: "Esc or an outside click with no unapplied edits still closes
+      immediately (STAT-38 behaviour unchanged)".)
+- [x] Every field is labelled, errors are associated with their field for screen readers, and the
+      panel is fully keyboard-operable. `mm-input`s carry `ariaLabel`/`ariaInvalid`/`ariaDescribedBy`
+      pointing at each field's hint `<div>` (error or preview text); calendar buttons are labelled
+      (`ariaLabel="Pick a from/to date"`); the hidden native date inputs are `tabindex="-1"` +
+      `aria-hidden="true"` so they're excluded from both tab order and the a11y tree — the calendar
+      icon-button and text field are the only reachable affordances for that edge; Apply is a real
+      `<button>`. Reviewed by the `conventions-reviewer` subagent, which confirmed the hidden-input
+      pattern introduces no accessibility regression.
+- [x] Unit tests cover: seeding from a relative and an absolute range; accepting both grammars;
       each invalid class showing a reason and disabling Apply; the From-after-To pair error; the
       calendar writing into the field; no-commit-before-Apply; Apply's two disabled conditions;
       quick-range-discards-staged-edits; both `Esc` paths (blocked then discarding); the
-      no-edits close.
-- [ ] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
-      budgets untouched.
+      no-edits close. (All present across `absolute-range-panel.component.spec.ts` (19 tests) and
+      `range-picker.component.spec.ts`'s "the absolute panel and Apply staging (TICKET-STAT-39)"
+      describe block (6 tests).)
+- [x] `ng lint` + `ng test` + `ng build --configuration development` all pass; `angular.json`
+      budgets untouched. (`verifier` subagent, final pass: lint clean, 268 test files / 3120 tests
+      green, dev build clean; `angular.json` not touched — see `git diff`.)
 - [ ] Verified live in the browser: typing `now-90d` into From, previewing, applying, and seeing the
-      Dashboard's figures move; and an invalid entry leaving the page's figures alone.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+      Dashboard's figures move; and an invalid entry leaving the page's figures alone. (Skipped —
+      user declined the live-browser check for this ticket.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code` and
+      `npx fallow health --complexity` both clean; `conventions-reviewer` subagent found one real
+      issue — inline `'…' + instanceId` string assembly in template bindings — fixed by hoisting to
+      `fromHintId`/`toHintId` class fields; also added the missing `shared/ui/index.ts` barrel export
+      for `AbsoluteRangePanelComponent`, matching every other `shared/ui` primitive.)
 
 ## Notes
 

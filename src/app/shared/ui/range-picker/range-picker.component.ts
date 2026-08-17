@@ -18,13 +18,19 @@ import {
   tablerSearch,
 } from '@ng-icons/tabler-icons';
 import {
+  describeRangeExpression,
   formatAlignedRangeLabel,
   formatDate,
+  parseRangeExpression,
   QUICK_RANGES,
   quickRangeById,
   type QuickRangeEntry,
   type QuickRangeGroup,
 } from '@/shared/utils';
+import {
+  AbsoluteRangePanelComponent,
+  type AbsoluteRangeApplied,
+} from '../absolute-range-panel/absolute-range-panel.component';
 import { ButtonComponent } from '../button/button.component';
 import { FlexComponent } from '../flex/flex.component';
 import { PaperComponent } from '../paper/paper.component';
@@ -35,6 +41,9 @@ export type RangePickerValue = {
   preset: string;
   from: string;
   to: string;
+  /** Unresolved `range-expression` text behind `from`/`to` (TICKET-STAT-39) — what the absolute panel seeds from. */
+  fromExpr: string;
+  toExpr: string;
 };
 
 type QuickRangeGroupVm = { group: QuickRangeGroup; label: string; entries: QuickRangeEntry[] };
@@ -56,18 +65,27 @@ const GROUP_ORDER: QuickRangeGroup[] = [
 
 /**
  * The two-panel date-range picker (TICKET-STAT-38): a trigger button flanked by prev/next chevrons,
- * opening a popover with an absolute panel (scaffolded empty here, filled by STAT-39) and a
- * searchable, grouped quick-range list. Replaces `mm-range-grouping-switcher` — same presentational
- * contract (value in, outputs out), so `pageRangeControl` needs no change.
+ * opening a popover with an absolute panel (`mm-absolute-range-panel`, TICKET-STAT-39's typed
+ * expression fields + Apply staging) and a searchable, grouped quick-range list. Replaces
+ * `mm-range-grouping-switcher` — same presentational contract (value in, outputs out), so
+ * `pageRangeControl` needs no change.
  *
  * No CDK Overlay/`a11y` — `mm-dropdown`'s pure-CSS focus/blur mechanism can't give Esc-to-close,
  * outside-click-close, or a reliable focus return, so this manages its own `isOpen` signal and
  * native DOM listeners, the same manual-focus-management style `mm-modal` already uses (there it's
- * a native `<dialog>`; here it's an anchored popover, so the plumbing is bespoke instead).
+ * a native `<dialog>`; here it's an anchored popover, so the plumbing is bespoke instead). Closing
+ * is additionally gated on the absolute panel's staged edits (TICKET-STAT-39) — see `attemptClose`.
  */
 @Component({
   selector: 'mm-range-picker',
-  imports: [ButtonComponent, FlexComponent, NgIcon, PaperComponent, TypographyComponent],
+  imports: [
+    AbsoluteRangePanelComponent,
+    ButtonComponent,
+    FlexComponent,
+    NgIcon,
+    PaperComponent,
+    TypographyComponent,
+  ],
   templateUrl: './range-picker.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -80,17 +98,22 @@ export class RangePickerComponent {
   readonly value = input.required<RangePickerValue>();
 
   readonly presetChange = output<string>();
+  readonly customRangeChange = output<AbsoluteRangeApplied>();
   readonly rangeShift = output<-1 | 1>();
 
   protected readonly isOpen = signal(false);
   protected readonly searchTerm = signal('');
 
+  /** Set after a blocked close attempt (`Esc`/outside click/re-clicking the trigger while the absolute panel has unapplied edits) — flags Apply and unlocks the "second `Esc` discards" behaviour. */
+  protected readonly unappliedEditsWarningActive = signal(false);
+
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
   // `mm-button`'s template ref is a component instance by default — `read: ElementRef` gets its
   // host `<mm-button>` element instead, which is itself un-focusable (no tabindex); the focus
-  // fallback in `close()` below has to reach one level deeper, into the native `<button>` it renders.
+  // fallback in `forceClose()` below has to reach one level deeper, into the native `<button>` it renders.
   private readonly triggerButton = viewChild('triggerButton', { read: ElementRef<HTMLElement> });
   private readonly quickRangeList = viewChild<ElementRef<HTMLElement>>('quickRangeList');
+  private readonly absolutePanel = viewChild(AbsoluteRangePanelComponent);
 
   private elementFocusedBeforeOpen: HTMLElement | null = null;
 
@@ -100,17 +123,20 @@ export class RangePickerComponent {
   );
 
   /**
-   * The catalogue label for a named quick range; for a hand-built (`'custom'`) range, the same
-   * calendar-alignment label `mm-date-range-input` already shows ("July 2026"), falling back to
-   * the raw dates. Deliberately not STAT-35's `describeRangeExpression` yet — describing a
-   * relative hand-built range needs its raw expression text, which isn't part of this value today
-   * (there's no UI to type one until STAT-39, which is the more natural place to wire it through).
+   * The catalogue label for a named quick range; for a hand-built (`'custom'`) range with a
+   * relative `fromExpr` ("now-30d"), STAT-35's `describeRangeExpression` — its own doc comment
+   * names exactly this trigger as the intended use. Otherwise the same calendar-alignment label
+   * `mm-date-range-input` already shows ("July 2026"), falling back to the raw dates.
    */
   protected readonly triggerLabel = computed(() => {
-    const { preset, from, to } = this.value();
+    const { preset, from, to, fromExpr } = this.value();
     const catalogueLabel = quickRangeById(preset)?.label;
     if (catalogueLabel) {
       return catalogueLabel;
+    }
+    const parsedFrom = parseRangeExpression(fromExpr);
+    if (parsedFrom.ok && parsedFrom.value.kind === 'relative') {
+      return describeRangeExpression(parsedFrom.value);
     }
     return formatAlignedRangeLabel(from, to) ?? `${formatDate(from)} – ${formatDate(to)}`;
   });
@@ -130,7 +156,7 @@ export class RangePickerComponent {
 
   protected toggle(): void {
     if (this.isOpen()) {
-      this.close();
+      this.attemptClose();
     } else {
       this.open();
     }
@@ -139,16 +165,41 @@ export class RangePickerComponent {
   private open(): void {
     this.elementFocusedBeforeOpen = document.activeElement as HTMLElement | null;
     this.isOpen.set(true);
-    // Deferred a tick: the search input doesn't exist in the DOM until the `@if` below renders it.
-    queueMicrotask(() => this.searchInput()?.nativeElement.focus());
+    // Deferred a tick: neither exists in the DOM until the `@if` below renders them.
+    queueMicrotask(() => {
+      this.searchInput()?.nativeElement.focus();
+      this.absolutePanel()?.reset();
+    });
   }
 
-  protected close(): void {
+  /**
+   * The gated close path (TICKET-STAT-39) — `Esc`, an outside click, and re-clicking the trigger
+   * all funnel through here. A first blocked attempt while the absolute panel has unapplied edits
+   * doesn't close: it flags Apply and focuses it instead, so the user sees exactly what's stopping
+   * them. `Esc` alone gets a second, explicit way through (`onEscape` below) — an outside click or
+   * re-clicking the trigger keeps re-blocking rather than discarding, since "click away" is too
+   * easy to trigger by accident to double as "I meant to lose my edits".
+   */
+  private attemptClose(): void {
+    if (!this.isOpen()) {
+      return;
+    }
+    if (this.absolutePanel()?.hasUnappliedEdits()) {
+      this.unappliedEditsWarningActive.set(true);
+      this.absolutePanel()?.focusApply();
+      return;
+    }
+    this.forceClose();
+  }
+
+  /** Closes unconditionally — used once a close has already been decided (Apply, a discarded edit, a quick-range pick), never as the first response to an `Esc`/outside click. */
+  private forceClose(): void {
     if (!this.isOpen()) {
       return;
     }
     this.isOpen.set(false);
     this.searchTerm.set('');
+    this.unappliedEditsWarningActive.set(false);
 
     const previouslyFocused = this.elementFocusedBeforeOpen;
     this.elementFocusedBeforeOpen = null;
@@ -163,9 +214,17 @@ export class RangePickerComponent {
 
   @HostListener('document:keydown.escape')
   protected onEscape(): void {
-    if (this.isOpen()) {
-      this.close();
+    if (!this.isOpen()) {
+      return;
     }
+    // The "second Esc discards" escape hatch: a blocked attempt already flagged the warning, so
+    // this Esc is the deliberate follow-up rather than the first ask.
+    if (this.unappliedEditsWarningActive() && this.absolutePanel()?.hasUnappliedEdits()) {
+      this.absolutePanel()?.discard();
+      this.forceClose();
+      return;
+    }
+    this.attemptClose();
   }
 
   @HostListener('document:click', ['$event'])
@@ -174,7 +233,7 @@ export class RangePickerComponent {
       return;
     }
     if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-      this.close();
+      this.attemptClose();
     }
   }
 
@@ -184,7 +243,18 @@ export class RangePickerComponent {
 
   protected selectQuickRange(id: string): void {
     this.presetChange.emit(id);
-    this.close();
+    // A quick range always wins over staged edits (STAT-39's Description: "the two commit models
+    // coexist; the collision resolves in favour of the more recent, more explicit action") — so
+    // this closes unconditionally rather than routing through `attemptClose`'s guard. `forceClose`
+    // unmounts `mm-absolute-range-panel` (it lives inside the `@if (isOpen())` block below), which
+    // is what actually discards any staged edits; the next open reseeds a fresh instance from
+    // `fromExpr`/`toExpr`, which by then reflect the range just picked.
+    this.forceClose();
+  }
+
+  protected onAbsoluteApply(range: AbsoluteRangeApplied): void {
+    this.customRangeChange.emit(range);
+    this.forceClose();
   }
 
   /** Roving keyboard navigation across the flattened, currently-visible quick-range buttons — the panel re-filters on every keystroke, so the button set is read fresh rather than cached. */
