@@ -29,20 +29,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Loans',
     isTopic: true,
   },
-  // The date-range-picker idea has been ticketed as docs/v1.8_extended_date_range_picker; its
-  // topic-level entry is replaced by the seven per-ticket entries below, in build order.
-  {
-    versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'TICKET-STAT-35',
-    title: 'Say "the last 30 days" once and have it still mean that next month',
-    area: 'Date range picker',
-  },
-  {
-    versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'TICKET-STAT-41',
-    title: 'Jump the Transactions date filter by year instead of clicking "previous" a dozen times',
-    area: 'Date range picker',
-  },
   {
     versionFolder: 'v9999_ideas',
     ticketId: 'topic-food-vouchers',

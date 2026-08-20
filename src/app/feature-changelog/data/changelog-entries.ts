@@ -972,4 +972,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The date-range picker now remembers your last 10 applied ranges — shared across Dashboard, Explore and Accounts — so a window you built once is one click away instead of retyped',
     area: 'Date ranges',
   },
+  {
+    date: '2026-08-20',
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketIds: ['TICKET-STAT-41'],
+    title:
+      'The Transactions date-range calendar now has "previous year"/"next year" buttons, so picking a date from years back takes a handful of clicks instead of paging through every month in between',
+    area: 'Date ranges',
+  },
 ];

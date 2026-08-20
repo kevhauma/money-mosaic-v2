@@ -2,7 +2,32 @@
   <button trigger type="button" tabindex="0" [class]="triggerClasses()" [disabled]="disabled()">
     {{ displayLabel() }}
   </button>
-  <calendar-range [attr.value]="calendarValue()" (change)="onCalendarChange($event)">
+  <div class="mb-1 flex items-center justify-between">
+    <mm-button
+      variant="ghost"
+      size="xs"
+      shape="square"
+      ariaLabel="Previous year"
+      (click)="shiftFocusedYear(-1)"
+    >
+      <ng-icon name="tablerChevronsLeft" size="16" aria-hidden="true" />
+    </mm-button>
+    <mm-button
+      variant="ghost"
+      size="xs"
+      shape="square"
+      ariaLabel="Next year"
+      (click)="shiftFocusedYear(1)"
+    >
+      <ng-icon name="tablerChevronsRight" size="16" aria-hidden="true" />
+    </mm-button>
+  </div>
+  <calendar-range
+    #calendarRange
+    [attr.value]="calendarValue()"
+    [focusedDate]="focusedDate()"
+    (change)="onCalendarChange($event)"
+  >
     <calendar-month></calendar-month>
   </calendar-range>
 </mm-dropdown>

@@ -68,7 +68,7 @@ are settled here and referenced by the tickets rather than re-argued in each:
 - [x] [TICKET-STAT-40](./tickets/TICKET-STAT-40-recently-used-ranges.md) — Recently used ranges,
       persisted and global (revises FR-STAT-7) — **needs STAT-39**; last because a recent range fills
       the absolute panel's inputs, which do not exist until then
-- [ ] [TICKET-STAT-41](./tickets/TICKET-STAT-41-standalone-picker-year-navigation.md) — Quick year
+- [x] [TICKET-STAT-41](./tickets/TICKET-STAT-41-standalone-picker-year-navigation.md) — Quick year
       navigation on the standalone `mm-date-range-input` calendar (extends FR-STAT-7) —
       **independent of STAT-35..40 above**, can ship any time; closes the far-away-date gap left by
       scope decision 4 without folding the Transactions filter into the two-panel picker

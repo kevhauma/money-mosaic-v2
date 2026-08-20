@@ -54,21 +54,49 @@ expressions.
 
 ## Acceptance criteria
 
-- [ ] `mm-date-range-input` renders a "previous year"/"next year" control in its popover, visually
-      distinct from Cally's month-stepping chevrons.
-- [ ] Clicking it shifts the calendar's displayed month by exactly 12 months (via `focusedDate`)
-      without changing the component's `value`.
-- [ ] The control is reachable by keyboard (`tabindex`, `Enter`/`Space` activation) and carries an
-      accessible name (e.g. `aria-label="Previous year"` / `"Next year"`).
-- [ ] Clicking previous/next year while one end of a range is already picked (mid-selection) does
-      not clear or alter that in-progress pick.
-- [ ] Unit tests cover: `date-range-input.component.spec.ts` — clicking previous/next year updates
+- [x] `mm-date-range-input` renders a "previous year"/"next year" control in its popover, visually
+      distinct from Cally's month-stepping chevrons. Two `mm-button` icon buttons
+      (`tablerChevronsLeft`/`tablerChevronsRight` — double chevrons, distinct from Cally's own
+      single-chevron month steppers) sit above the calendar. (`date-range-input.component.spec.ts`:
+      "renders previous/next year controls with accessible names, distinct from the trigger"; live
+      browser check below.)
+- [x] Clicking it shifts the calendar's displayed month by exactly 12 months (via `focusedDate`)
+      without changing the component's `value`. (`date-range-input.component.spec.ts`: "clicking
+      'next/previous year' moves the calendar forward/back by exactly one year..." and "does not
+      change value or emit valueChange".)
+- [x] The control is reachable by keyboard (`tabindex`, `Enter`/`Space` activation) and carries an
+      accessible name (e.g. `aria-label="Previous year"` / `"Next year"`). `mm-button` renders a
+      real native `<button>` — natively focusable and Enter/Space-activatable with no `tabindex`
+      override, the same primitive every other icon button in this codebase already relies on for
+      keyboard access. `ariaLabel="Previous year"`/`"Next year"` set explicitly.
+      (`date-range-input.component.spec.ts`: "renders previous/next year controls with accessible
+      names..."; confirmed live via the browser accessibility tree — `read_page` reported
+      `button "Previous year"` / `button "Next year"`.)
+- [x] Clicking previous/next year while one end of a range is already picked (mid-selection) does
+      not clear or alter that in-progress pick. `shiftFocusedYear` only ever writes the
+      `focusedDate` signal — it has no code path that touches `value`/`valueChange`, so this holds
+      by construction. (`date-range-input.component.spec.ts`: "does not clear or alter an
+      in-progress mid-selection pick".)
+- [x] Unit tests cover: `date-range-input.component.spec.ts` — clicking previous/next year updates
       the calendar's focused month by one year in each direction, and leaves an existing `value`
-      untouched.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: opening the Transactions page's date-range filter, clicking
+      untouched. (8 new tests in the "year navigation (TICKET-STAT-41)" describe block: rendering +
+      accessible names, forward shift, back shift, accumulation across repeated clicks, no
+      value/valueChange mutation, mid-selection survival, fallback-to-today with no value set; one
+      pre-existing test updated — `button[trigger]` instead of any `<button>`, since the popover now
+      has 3 buttons instead of 1.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code` and
+      `npx fallow health --complexity` both clean; `conventions-reviewer` subagent found one
+      Prettier formatting issue, fixed via `npx prettier --write`; everything else — property vs.
+      attribute binding for `focusedDate`, icon/button conventions, state discipline, test
+      quality — confirmed clean.)
+- [x] Verified live in the browser: opening the Transactions page's date-range filter, clicking
       "previous year" repeatedly reaches a date roughly three years back in a handful of clicks
-      instead of ~36 month-clicks, with the from/to selection behaving normally afterward.
+      instead of ~36 month-clicks, with the from/to selection behaving normally afterward. Opened
+      the Transactions filter's date-range popover (August 2026), clicked "Previous year" three
+      times — landed on August 2023, exactly 3 years back in 3 clicks. Picked 8/9/2023 – 8/18/2023
+      immediately afterward: both dates selected normally, the filter's trigger showed
+      "08/09/2023 – 08/18/2023", and the transaction list filtered correctly (no rows in that
+      period, as expected for the seed data).
 
 ## Notes
 

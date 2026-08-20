@@ -24,10 +24,12 @@ describe('DateRangeInputComponent', () => {
   it('renders a single trigger button showing the formatted from/to label', () => {
     fixture.detectChanges();
 
-    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
-    expect(buttons.length).toBe(1);
-    expect(buttons[0].textContent?.trim()).not.toBe('');
-    expect(buttons[0].textContent).not.toContain('Select date range');
+    // `trigger` distinguishes it from the popover's own year-navigation buttons (TICKET-STAT-41).
+    const triggers: NodeListOf<HTMLButtonElement> =
+      fixture.nativeElement.querySelectorAll('button[trigger]');
+    expect(triggers.length).toBe(1);
+    expect(triggers[0].textContent?.trim()).not.toBe('');
+    expect(triggers[0].textContent).not.toContain('Select date range');
   });
 
   it('shows a compact "<Month> <year>" label when the range is a full calendar month', () => {
@@ -123,5 +125,86 @@ describe('DateRangeInputComponent', () => {
 
     const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
     expect(button.disabled).toBe(true);
+  });
+
+  describe('year navigation (TICKET-STAT-41)', () => {
+    const calendarRange = (): HTMLElement & { focusedDate?: string } =>
+      fixture.nativeElement.querySelector('calendar-range');
+    const yearButton = (label: string): HTMLButtonElement =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll(
+          `button[aria-label="${label}"]`,
+        ) as NodeListOf<HTMLButtonElement>,
+      )[0];
+
+    it('renders previous/next year controls with accessible names, distinct from the trigger', () => {
+      fixture.detectChanges();
+
+      expect(yearButton('Previous year')).toBeTruthy();
+      expect(yearButton('Next year')).toBeTruthy();
+    });
+
+    it('clicking "next year" moves the calendar forward by exactly one year from the current value', () => {
+      fixture.detectChanges();
+
+      yearButton('Next year').click();
+      fixture.detectChanges();
+
+      expect(calendarRange().focusedDate).toBe('2027-07-01');
+    });
+
+    it('clicking "previous year" moves the calendar back by exactly one year from the current value', () => {
+      fixture.detectChanges();
+
+      yearButton('Previous year').click();
+      fixture.detectChanges();
+
+      expect(calendarRange().focusedDate).toBe('2025-07-01');
+    });
+
+    it('repeated clicks accumulate from the last navigated position, not from the original value each time', () => {
+      fixture.detectChanges();
+
+      yearButton('Next year').click();
+      yearButton('Next year').click();
+      fixture.detectChanges();
+
+      expect(calendarRange().focusedDate).toBe('2028-07-01');
+    });
+
+    it('does not change value or emit valueChange', () => {
+      const emitSpy = vi.fn();
+      component.valueChange.subscribe(emitSpy);
+      fixture.detectChanges();
+
+      yearButton('Next year').click();
+      fixture.detectChanges();
+
+      expect(emitSpy).not.toHaveBeenCalled();
+      expect(calendarRange().getAttribute('value')).toBe('2026-07-01/2026-07-31');
+    });
+
+    it('does not clear or alter an in-progress mid-selection pick', () => {
+      fixture.detectChanges();
+      // One end picked, the other not yet — Cally reports this as a single date, not a full range.
+      (calendarRange() as unknown as { value: string }).value = '2026-08-10';
+
+      yearButton('Previous year').click();
+      fixture.detectChanges();
+
+      expect((calendarRange() as unknown as { value: string }).value).toBe('2026-08-10');
+    });
+
+    it('falls back to today when no value is set yet', () => {
+      fixture.componentRef.setInput('value', { from: '', to: '' });
+      fixture.detectChanges();
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const nextYear = String(Number(todayIso.slice(0, 4)) + 1) + todayIso.slice(4);
+
+      yearButton('Next year').click();
+      fixture.detectChanges();
+
+      expect(calendarRange().focusedDate).toBe(nextYear);
+    });
   });
 });
