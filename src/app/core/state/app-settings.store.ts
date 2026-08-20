@@ -7,7 +7,12 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import { AppSettingsRepository, DEFAULT_APP_SETTINGS, type AppSettings } from '@/core/data-access';
+import {
+  AppSettingsRepository,
+  DEFAULT_APP_SETTINGS,
+  type AppSettings,
+  type RecentRange,
+} from '@/core/data-access';
 import {
   accentColorById,
   DEFAULT_THEME_STYLE_IDS,
@@ -118,6 +123,24 @@ export const AppSettingsStore = signalStore(
         if (seen.includes(slug)) return;
         await appSettingsRepository.markGuideSeen(slug);
         patchState(store, { seenGuideSlugs: [...seen, slug] });
+      },
+
+      /**
+       * Records an applied range (TICKET-STAT-40) — most-recent-first, deduped by its expression
+       * pair (re-applying a listed range moves it to the top rather than adding a second row), and
+       * capped at 10. Global across pages: one list, not one per page, because a range is worth
+       * remembering for having been built, not for where the user was standing.
+       */
+      recordRecentRange: async (fromExpr: string, toExpr: string): Promise<void> => {
+        const withoutDuplicate = (store.recentRanges() ?? []).filter(
+          (range) => range.fromExpr !== fromExpr || range.toExpr !== toExpr,
+        );
+        const recentRanges: RecentRange[] = [{ fromExpr, toExpr }, ...withoutDuplicate].slice(
+          0,
+          10,
+        );
+        await appSettingsRepository.setRecentRanges(recentRanges);
+        patchState(store, { recentRanges });
       },
     };
   }),

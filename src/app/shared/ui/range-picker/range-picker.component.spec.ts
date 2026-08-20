@@ -12,6 +12,7 @@ const value = (overrides: Partial<RangePickerValue> = {}): RangePickerValue => (
   to: '2026-07-31',
   fromExpr: overrides.from ?? '2026-07-01',
   toExpr: overrides.to ?? '2026-07-31',
+  recentRanges: [],
   ...overrides,
 });
 
@@ -36,9 +37,10 @@ describe('RangePickerComponent', () => {
   const openPopover = async (): Promise<void> => {
     trigger().click();
     fixture.detectChanges();
-    // `open()` queues one microtask that both focuses the search input and calls the mounted
-    // `mm-absolute-range-panel`'s `reset()` (TICKET-STAT-39) — a single `await Promise.resolve()`
-    // is enough to flush it, since it was queued strictly before this awaited continuation.
+    // `open()` queues one microtask that focuses the search input (TICKET-STAT-39) — a single
+    // `await Promise.resolve()` is enough to flush it, since it was queued strictly before this
+    // awaited continuation. `mm-absolute-range-panel` seeds itself on its own `ngOnInit`
+    // (TICKET-STAT-40), synchronously during the `detectChanges()` call above.
     await Promise.resolve();
     fixture.detectChanges();
   };

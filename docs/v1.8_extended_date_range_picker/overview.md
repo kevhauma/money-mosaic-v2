@@ -65,7 +65,7 @@ are settled here and referenced by the tickets rather than re-argued in each:
       panel: typed expressions, a calendar that doesn't clobber the text, and Apply-staged edits
       (revises FR-STAT-7) — **needs STAT-38** for the panel to live in, and STAT-35 to validate what
       is typed
-- [ ] [TICKET-STAT-40](./tickets/TICKET-STAT-40-recently-used-ranges.md) — Recently used ranges,
+- [x] [TICKET-STAT-40](./tickets/TICKET-STAT-40-recently-used-ranges.md) — Recently used ranges,
       persisted and global (revises FR-STAT-7) — **needs STAT-39**; last because a recent range fills
       the absolute panel's inputs, which do not exist until then
 - [ ] [TICKET-STAT-41](./tickets/TICKET-STAT-41-standalone-picker-year-navigation.md) — Quick year

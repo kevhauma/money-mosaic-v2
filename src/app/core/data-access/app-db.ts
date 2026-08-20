@@ -650,7 +650,22 @@ export type AppSettings = {
    * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    */
   fiscalYearStartMonth: number | undefined;
+  /**
+   * Additive field (TICKET-STAT-40) — the last ten date ranges applied to any picker (Apply in the
+   * absolute panel, or a quick range clicked; prev/next stepping never records), most-recent-first,
+   * global rather than per page. Holds canonical `range-expression` text (STAT-35) — an ISO date, or
+   * `now-30d`-style relative text where the applied range came from one — **not** resolved dates, so
+   * a saved `now-30d` still means "the last 30 days" on read rather than freezing into the window it
+   * happened to resolve to when saved. `undefined`/empty = nothing applied yet.
+   *
+   * Same "additive optional field, no version bump" reasoning as the fields above.
+   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   */
+  recentRanges: RecentRange[] | undefined;
 };
+
+/** One entry in `AppSettings.recentRanges` (TICKET-STAT-40) — see that field's doc comment. */
+export type RecentRange = { fromExpr: string; toExpr: string };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   id: 1,
@@ -671,6 +686,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   heatmapExcludedCategoryIds: undefined,
   privacyMode: undefined,
   fiscalYearStartMonth: undefined,
+  recentRanges: undefined,
 };
 
 /**

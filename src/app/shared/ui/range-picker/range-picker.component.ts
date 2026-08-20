@@ -17,6 +17,7 @@ import {
   tablerClock,
   tablerSearch,
 } from '@ng-icons/tabler-icons';
+import type { RecentRange } from '@/core/data-access';
 import {
   describeRangeExpression,
   formatAlignedRangeLabel,
@@ -44,6 +45,8 @@ export type RangePickerValue = {
   /** Unresolved `range-expression` text behind `from`/`to` (TICKET-STAT-39) — what the absolute panel seeds from. */
   fromExpr: string;
   toExpr: string;
+  /** The last ten applied ranges, global and most-recent-first (TICKET-STAT-40). */
+  recentRanges: RecentRange[];
 };
 
 type QuickRangeGroupVm = { group: QuickRangeGroup; label: string; entries: QuickRangeEntry[] };
@@ -165,10 +168,13 @@ export class RangePickerComponent {
   private open(): void {
     this.elementFocusedBeforeOpen = document.activeElement as HTMLElement | null;
     this.isOpen.set(true);
-    // Deferred a tick: neither exists in the DOM until the `@if` below renders them.
+    // Deferred a tick: the search input doesn't exist in the DOM until the `@if` below renders
+    // it. `mm-absolute-range-panel` seeds itself from `fromExpr`/`toExpr` on its own `ngOnInit` —
+    // no reset() call needed here (a `queueMicrotask`-timed one used to live in this block, but
+    // its ordering assumption against Angular's own change-detection scheduling didn't hold in a
+    // real zoneless app; see that component's doc comment).
     queueMicrotask(() => {
       this.searchInput()?.nativeElement.focus();
-      this.absolutePanel()?.reset();
     });
   }
 

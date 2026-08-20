@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
-import { AccountsRepository, type Account, type Transaction } from '@/core/data-access';
+import { AccountsRepository, appDb, type Account, type Transaction } from '@/core/data-access';
 import {
   quickRangeById,
   resolveQuickRange,
@@ -10,6 +10,7 @@ import {
   type QuickRangeExpressionEntry,
 } from '@/shared/utils';
 import { AccountsStore } from './accounts.store';
+import { AppSettingsStore } from './app-settings.store';
 import { pageRangeControl } from './page-range-control';
 import { RangeStore, type RangePageKey } from './range-state.store';
 import { TransactionsStore } from './transactions.store';
@@ -73,6 +74,17 @@ class AccountsRangeHostComponent {
 }
 
 describe('pageRangeControl (TICKET-UI-23)', () => {
+  // `AppSettingsStore` (TICKET-STAT-40's recording) reads/writes the real, module-singleton
+  // `appDb` (Vitest `isolate: false`) — clear on both sides so a row left behind by one test, or
+  // by another spec file in this worker, never leaks in.
+  beforeEach(async () => {
+    await appDb.appSettings.clear();
+  });
+
+  afterEach(async () => {
+    await appDb.appSettings.clear();
+  });
+
   const setup = async (queryParams: Record<string, string> = defaultQueryParams()) => {
     await TestBed.configureTestingModule({
       imports: [DashboardRangeHostComponent, AccountsRangeHostComponent],
@@ -221,6 +233,7 @@ describe('pageRangeControl (TICKET-UI-23)', () => {
       to: '2023-05-31',
       fromExpr: '2023-05-01',
       toExpr: '2023-05-31',
+      recentRanges: [],
     });
     // …and the Dashboard's own window survived the Accounts write.
     expect(dashboard.componentInstance.range.value().from).not.toBe('2023-05-01');
@@ -281,5 +294,93 @@ describe('pageRangeControl (TICKET-UI-23)', () => {
     for (const page of pages) {
       expect(rangeStore.preset(page)).toBe('this-month');
     }
+  });
+
+  describe('recording recently used ranges (TICKET-STAT-40)', () => {
+    it('records the applied range when Apply is used in the absolute panel, storing the expression as typed', async () => {
+      await setup();
+      const fixture = TestBed.createComponent(DashboardRangeHostComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const recordSpy = vi.spyOn(TestBed.inject(AppSettingsStore), 'recordRecentRange');
+
+      fixture.componentInstance.range.onCustomRangeChange({ from: 'now-7d', to: 'now' });
+
+      expect(recordSpy).toHaveBeenCalledExactlyOnceWith('now-7d', 'now');
+    });
+
+    it('records the applied range when a quick range is clicked, using its own relative expression', async () => {
+      await setup();
+      const fixture = TestBed.createComponent(DashboardRangeHostComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const recordSpy = vi.spyOn(TestBed.inject(AppSettingsStore), 'recordRecentRange');
+
+      fixture.componentInstance.range.onPresetChange('last-30-days');
+
+      expect(recordSpy).toHaveBeenCalledExactlyOnceWith('now-29d', 'now');
+    });
+
+    it('falls back to the resolved boundary for a quick range with no expression grammar (a fiscal quarter/year, or all-time)', async () => {
+      await setup();
+      const fixture = TestBed.createComponent(DashboardRangeHostComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const recordSpy = vi.spyOn(TestBed.inject(AppSettingsStore), 'recordRecentRange');
+
+      fixture.componentInstance.range.onPresetChange('previous-quarter');
+
+      const rangeStore = TestBed.inject(RangeStore);
+      expect(recordSpy).toHaveBeenCalledExactlyOnceWith(
+        rangeStore.fromExpr('dashboard'),
+        rangeStore.toExpr('dashboard'),
+      );
+    });
+
+    it('selecting "custom" records nothing — it only flips the preset, it does not apply anything', async () => {
+      await setup();
+      const fixture = TestBed.createComponent(DashboardRangeHostComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const recordSpy = vi.spyOn(TestBed.inject(AppSettingsStore), 'recordRecentRange');
+
+      fixture.componentInstance.range.onPresetChange('custom');
+
+      expect(recordSpy).not.toHaveBeenCalled();
+    });
+
+    it('records nothing on prev/next stepping, however many times it is pressed', async () => {
+      await setup();
+      const fixture = TestBed.createComponent(DashboardRangeHostComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const recordSpy = vi.spyOn(TestBed.inject(AppSettingsStore), 'recordRecentRange');
+
+      fixture.componentInstance.range.onRangeShift(1);
+      fixture.componentInstance.range.onRangeShift(-1);
+      fixture.componentInstance.range.onRangeShift(1);
+
+      expect(recordSpy).not.toHaveBeenCalled();
+    });
+
+    it("a range applied on one page is visible in another page's control (global, not per page)", async () => {
+      await setup();
+      const dashboard = TestBed.createComponent(DashboardRangeHostComponent);
+      const accounts = TestBed.createComponent(AccountsRangeHostComponent);
+      dashboard.detectChanges();
+      accounts.detectChanges();
+      await dashboard.whenStable();
+      await accounts.whenStable();
+
+      dashboard.componentInstance.range.onCustomRangeChange({ from: 'now-7d', to: 'now' });
+
+      await vi.waitFor(() => {
+        dashboard.detectChanges();
+        accounts.detectChanges();
+        expect(accounts.componentInstance.range.value().recentRanges).toEqual([
+          { fromExpr: 'now-7d', toExpr: 'now' },
+        ]);
+      });
+    });
   });
 });

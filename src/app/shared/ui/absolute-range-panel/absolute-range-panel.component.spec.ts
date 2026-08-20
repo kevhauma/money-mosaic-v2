@@ -33,6 +33,14 @@ describe('AbsoluteRangePanelComponent', () => {
     input.dispatchEvent(new Event('input'));
     fixture.detectChanges();
   };
+  const setRecentRanges = (recentRanges: { fromExpr: string; toExpr: string }[]): void => {
+    fixture.componentRef.setInput('recentRanges', recentRanges);
+    fixture.detectChanges();
+  };
+  const findButton = (textFragment: string): HTMLButtonElement =>
+    Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent?.includes(textFragment))!;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -205,5 +213,81 @@ describe('AbsoluteRangePanelComponent', () => {
 
     expect(applyButton().className).toContain('ring-warning');
     expect(fixture.nativeElement.textContent).toContain('unapplied changes');
+  });
+
+  it('shows the empty state when there are no recent ranges (TICKET-STAT-40)', () => {
+    setup('now-30d', 'now');
+
+    expect(fixture.nativeElement.textContent).toContain('No recent ranges');
+  });
+
+  it('the empty state disappears once a recent range exists', () => {
+    setup('now-30d', 'now');
+    setRecentRanges([{ fromExpr: 'now-6d', toExpr: 'now' }]);
+
+    expect(fixture.nativeElement.textContent).not.toContain('No recent ranges');
+  });
+
+  it('renders each recent range with its plain-language label and its currently-resolved dates', () => {
+    setup('now-30d', 'now');
+    setRecentRanges([{ fromExpr: 'now-6d', toExpr: 'now' }]);
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Last 6 days');
+    expect(text).toMatch(/\d{2}\/\d{2}\/\d{4}\s*–\s*\d{2}\/\d{2}\/\d{4}/);
+  });
+
+  it('clicking a recent range fills both fields and stages the edit without applying', () => {
+    setup('now-30d', 'now');
+    setRecentRanges([{ fromExpr: 'now-90d', toExpr: 'now-1d' }]);
+    const applySpy = vi.fn();
+    component.apply.subscribe(applySpy);
+
+    findButton('Last 90 days').click();
+    fixture.detectChanges();
+
+    expect(fromInput().value).toBe('now-90d');
+    expect(toInput().value).toBe('now-1d');
+    expect(applySpy).not.toHaveBeenCalled();
+    expect(component.hasUnappliedEdits()).toBe(true);
+  });
+});
+
+describe('AbsoluteRangePanelComponent: recent ranges resolve against today, not a frozen date (TICKET-STAT-40)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // A `RecentRange` persists only the expression (`now-30d`), never a resolved date — reading the
+  // same stored pair on a later "today" (a reload days later, say) must resolve against *that* day,
+  // not the day it was saved. Two separate mounts stand in for "saved then read later", since a
+  // `computed()`'s cache — unlike `RangeStore`'s plain resolver methods — only invalidates on a
+  // signal write, not on the wall clock moving underneath an already-rendered instance.
+  it('the same stored expression resolves to different dates when read on a later day', () => {
+    vi.setSystemTime(new Date('2026-07-01T00:00:00Z'));
+    const first = TestBed.createComponent(AbsoluteRangePanelComponent);
+    first.componentRef.setInput('fromExpr', 'now');
+    first.componentRef.setInput('toExpr', 'now');
+    first.componentRef.setInput('recentRanges', [{ fromExpr: 'now-30d', toExpr: 'now' }]);
+    first.detectChanges();
+    const firstText = first.nativeElement.textContent as string;
+
+    vi.setSystemTime(new Date('2026-08-15T00:00:00Z'));
+    const second = TestBed.createComponent(AbsoluteRangePanelComponent);
+    second.componentRef.setInput('fromExpr', 'now');
+    second.componentRef.setInput('toExpr', 'now');
+    second.componentRef.setInput('recentRanges', [{ fromExpr: 'now-30d', toExpr: 'now' }]);
+    second.detectChanges();
+    const secondText = second.nativeElement.textContent as string;
+
+    expect(firstText).toContain('06/01/2026 – 07/01/2026');
+    expect(secondText).toContain('07/16/2026 – 08/15/2026');
+    // Both still describe it the same way — only the resolved-dates line moved.
+    expect(firstText).toContain('Last 30 days');
+    expect(secondText).toContain('Last 30 days');
   });
 });

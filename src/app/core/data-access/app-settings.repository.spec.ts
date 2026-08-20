@@ -289,4 +289,28 @@ describe('AppSettingsRepository', () => {
 
     expect((await repository.get()).fiscalYearStartMonth).toBe(1);
   });
+
+  it('setRecentRanges writes the singleton row without one existing yet (TICKET-STAT-40)', async () => {
+    await repository.setRecentRanges([{ fromExpr: 'now-30d', toExpr: 'now' }]);
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      recentRanges: [{ fromExpr: 'now-30d', toExpr: 'now' }],
+    });
+  });
+
+  it('setRecentRanges preserves a locale and a currency symbol already on the row', async () => {
+    await repository.setLocale('en-GB');
+    await repository.setCurrencySymbol('£');
+
+    await repository.setRecentRanges([{ fromExpr: '2026-01-01', toExpr: '2026-01-31' }]);
+
+    expect(await repository.get()).toEqual({
+      id: 1,
+      locale: 'en-GB',
+      currencySymbol: '£',
+      recentRanges: [{ fromExpr: '2026-01-01', toExpr: '2026-01-31' }],
+    });
+    expect(await appDb.appSettings.count()).toBe(1);
+  });
 });

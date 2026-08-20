@@ -85,6 +85,7 @@ Two features have a standing shape for the work most likely to land in them next
 - Single quotes — enforced by Prettier and pre-commit hook
 - **Cross-feature imports go through `index.ts`** — when importing from a different feature, import from its `index.ts`, never a component file directly (e.g. `@/feature-accounts`, not `@/feature-accounts/components/account-edit.component`)
 - **Prefer arrow function class fields / `const` functions** over the `function` keyword where the codebase already does so; component/service class methods stay as class methods
+- **A component that's always freshly created (mounted via `@if`, never reused across re-opens) seeds itself from its own `input.required<T>()`s in `ngOnInit`** — not a `queueMicrotask`/`setTimeout` called from the parent right after setting `isOpen`. A parent-side timed callback assumes the *parent's* change detection has already created the child's view by the time it fires; that held in tests only because `fixture.detectChanges()` runs synchronously, and broke silently in a real zoneless app once Angular's own async CD scheduling ran *after* the queued callback (`viewChild()` still `undefined`, seeding a no-op) — see [`AbsoluteRangePanelComponent`](../../../src/app/shared/ui/absolute-range-panel/absolute-range-panel.component.ts)'s doc comment (TICKET-STAT-40). `ngOnInit` runs once, guaranteed after required inputs resolve, with no ordering assumption to get wrong.
 
 ## SOLID Principles
 

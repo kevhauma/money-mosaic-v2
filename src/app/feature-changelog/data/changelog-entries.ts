@@ -964,4 +964,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'You can now type an exact date range, like "90 days ago" or a specific date, straight into the date-range picker, preview what it resolves to, and press Apply once — instead of only clicking through a calendar',
     area: 'Date ranges',
   },
+  {
+    date: '2026-08-20',
+    versionFolder: 'v1.8_extended_date_range_picker',
+    ticketIds: ['TICKET-STAT-40'],
+    title:
+      'The date-range picker now remembers your last 10 applied ranges — shared across Dashboard, Explore and Accounts — so a window you built once is one click away instead of retyped',
+    area: 'Date ranges',
+  },
 ];

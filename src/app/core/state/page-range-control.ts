@@ -1,8 +1,10 @@
 import { computed, effect, inject, type Signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import type { RecentRange } from '@/core/data-access';
 import { computeFullHistoryRange } from '@/core/stats';
-import { ALL_TIME_QUICK_RANGE_ID, STAT_QUERY_PARAMS } from '@/shared/utils';
+import { ALL_TIME_QUICK_RANGE_ID, quickRangeById, STAT_QUERY_PARAMS } from '@/shared/utils';
 import { AccountsStore } from './accounts.store';
+import { AppSettingsStore } from './app-settings.store';
 import { RangeStore, type RangePageKey } from './range-state.store';
 import { TransactionsStore } from './transactions.store';
 
@@ -16,9 +18,18 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
  * closed union of ids to type it against. `fromExpr`/`toExpr` are the unresolved `range-expression`
  * text behind `from`/`to` (TICKET-STAT-39) — what the absolute panel's fields seed from, so a
  * relative custom range ("now-30d") reopens as typed text rather than the date it resolved to.
+ * `recentRanges` is the last ten ranges applied anywhere (TICKET-STAT-40) — global, not scoped to
+ * this page.
  */
 export type PageRangeControl = {
-  value: Signal<{ preset: string; from: string; to: string; fromExpr: string; toExpr: string }>;
+  value: Signal<{
+    preset: string;
+    from: string;
+    to: string;
+    fromExpr: string;
+    toExpr: string;
+    recentRanges: RecentRange[];
+  }>;
   onPresetChange: (preset: string) => void;
   onCustomRangeChange: (range: { from: string; to: string }) => void;
   onRangeShift: (direction: -1 | 1) => void;
@@ -42,8 +53,26 @@ export const pageRangeControl = (page: RangePageKey): PageRangeControl => {
   const rangeStore = inject(RangeStore);
   const accountsStore = inject(AccountsStore);
   const transactionsStore = inject(TransactionsStore);
+  const appSettingsStore = inject(AppSettingsStore);
   const route = inject(ActivatedRoute);
   const router = inject(Router);
+
+  /**
+   * The recording half of TICKET-STAT-40 — called from both commit paths below, never from
+   * `onRangeShift`. Prefers the catalogue's own `fromExpr`/`toExpr` for a named quick range (most
+   * of them) so relativity survives; falls back to `RangeStore`'s already-resolved boundary for the
+   * few entries with no expression grammar (quarters, the two fiscal entries, `all-time` —
+   * STAT-35's own deliberate no-quarter-grammar scope decision), and to the caller's raw
+   * from/to for a hand-built range, which are already expression text as typed.
+   */
+  const recordAppliedQuickRange = (id: string): void => {
+    const entry = quickRangeById(id);
+    if (entry && 'fromExpr' in entry) {
+      void appSettingsStore.recordRecentRange(entry.fromExpr, entry.toExpr);
+      return;
+    }
+    void appSettingsStore.recordRecentRange(rangeStore.fromExpr(page), rangeStore.toExpr(page));
+  };
 
   const initialParams = route.snapshot.queryParamMap;
   const initialFrom = initialParams.get(STAT_QUERY_PARAMS.from);
@@ -88,6 +117,7 @@ export const pageRangeControl = (page: RangePageKey): PageRangeControl => {
       to: rangeStore.to(page),
       fromExpr: rangeStore.fromExpr(page),
       toExpr: rangeStore.toExpr(page),
+      recentRanges: appSettingsStore.recentRanges() ?? [],
     })),
 
     onPresetChange: (preset: string): void => {
@@ -105,13 +135,16 @@ export const pageRangeControl = (page: RangePageKey): PageRangeControl => {
             todayIso(),
           ),
         );
+        recordAppliedQuickRange(preset);
         return;
       }
       rangeStore.setPreset(page, preset);
+      recordAppliedQuickRange(preset);
     },
 
     onCustomRangeChange: ({ from, to }: { from: string; to: string }): void => {
       rangeStore.setCustomRange(page, from, to);
+      void appSettingsStore.recordRecentRange(from, to);
     },
 
     onRangeShift: (direction: -1 | 1): void => {

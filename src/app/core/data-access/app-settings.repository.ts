@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { AccentColorId } from '@/core/theme';
 import type { CurrencySymbolPosition } from '@/shared/utils';
-import { appDb, DEFAULT_APP_SETTINGS, type AppSettings } from './app-db';
+import { appDb, DEFAULT_APP_SETTINGS, type AppSettings, type RecentRange } from './app-db';
 
 @Injectable({ providedIn: 'root' })
 export class AppSettingsRepository {
@@ -92,5 +92,12 @@ export class AppSettingsRepository {
     const seenGuideSlugs = current.seenGuideSlugs ?? [];
     if (seenGuideSlugs.includes(slug)) return 1;
     return appDb.appSettings.put({ ...current, id: 1, seenGuideSlugs: [...seenGuideSlugs, slug] });
+  };
+
+  // Read-merge-put like every setter here; the dedup/cap/move-to-top logic lives one layer up in
+  // `AppSettingsStore.recordRecentRange` (TICKET-STAT-40) — this just persists whatever list it's given.
+  setRecentRanges = async (recentRanges: RecentRange[]): Promise<number> => {
+    const current = await this.get();
+    return appDb.appSettings.put({ ...current, id: 1, recentRanges });
   };
 }

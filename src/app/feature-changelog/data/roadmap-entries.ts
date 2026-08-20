@@ -39,18 +39,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'TICKET-STAT-36',
-    title: 'A bookmarked rolling window stays rolling instead of freezing into fixed dates',
-    area: 'Date range picker',
-  },
-  {
-    versionFolder: 'v1.8_extended_date_range_picker',
-    ticketId: 'TICKET-STAT-40',
-    title: 'The ranges you picked recently, one click away instead of retyped',
-    area: 'Date range picker',
-  },
-  {
-    versionFolder: 'v1.8_extended_date_range_picker',
     ticketId: 'TICKET-STAT-41',
     title: 'Jump the Transactions date filter by year instead of clicking "previous" a dozen times',
     area: 'Date range picker',

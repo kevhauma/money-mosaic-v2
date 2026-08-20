@@ -134,6 +134,7 @@ describe('DataManagementRepository', () => {
         heatmapExcludedCategoryIds: [4],
         privacyMode: true,
         fiscalYearStartMonth: 4,
+        recentRanges: [{ fromExpr: 'now-30d', toExpr: 'now' }],
       });
 
       const exported = await repository.exportAll();
@@ -150,6 +151,7 @@ describe('DataManagementRepository', () => {
       expect(restored?.heatmapExcludedCategoryIds).toEqual([4]);
       expect(restored?.privacyMode).toBe(true);
       expect(restored?.fiscalYearStartMonth).toBe(4);
+      expect(restored?.recentRanges).toEqual([{ fromExpr: 'now-30d', toExpr: 'now' }]);
     });
   });
 

@@ -20,6 +20,7 @@ describe('AppSettingsStore', () => {
     setCurrencySymbolPosition: vi.fn(),
     setLocale: vi.fn(),
     setExcludedIncomeCategoryIds: vi.fn(),
+    setRecentRanges: vi.fn(),
   };
 
   beforeEach(() => {
@@ -30,6 +31,7 @@ describe('AppSettingsStore', () => {
     repository.setCurrencySymbolPosition.mockResolvedValue(1);
     repository.setLocale.mockResolvedValue(1);
     repository.setExcludedIncomeCategoryIds.mockResolvedValue(1);
+    repository.setRecentRanges.mockResolvedValue(1);
 
     TestBed.configureTestingModule({
       providers: [{ provide: AppSettingsRepository, useValue: repository }],
@@ -159,6 +161,68 @@ describe('AppSettingsStore', () => {
     const store = TestBed.inject(AppSettingsStore);
 
     expect(store.excludedIncomeCategoryIds()).toBeUndefined();
+  });
+
+  it('recordRecentRange persists through the repository and updates local state (TICKET-STAT-40)', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+
+    await store.recordRecentRange('now-30d', 'now');
+
+    expect(repository.setRecentRanges).toHaveBeenCalledExactlyOnceWith([
+      { fromExpr: 'now-30d', toExpr: 'now' },
+    ]);
+    expect(store.recentRanges()).toEqual([{ fromExpr: 'now-30d', toExpr: 'now' }]);
+  });
+
+  it('recordRecentRange adds new ranges most-recent-first', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+
+    await store.recordRecentRange('now-30d', 'now');
+    await store.recordRecentRange('2026-01-01', '2026-01-31');
+
+    expect(store.recentRanges()).toEqual([
+      { fromExpr: '2026-01-01', toExpr: '2026-01-31' },
+      { fromExpr: 'now-30d', toExpr: 'now' },
+    ]);
+  });
+
+  it('recordRecentRange moves an already-listed relative pair to the top instead of duplicating it', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+    await store.recordRecentRange('now-30d', 'now');
+    await store.recordRecentRange('2026-01-01', '2026-01-31');
+
+    await store.recordRecentRange('now-30d', 'now');
+
+    expect(store.recentRanges()).toEqual([
+      { fromExpr: 'now-30d', toExpr: 'now' },
+      { fromExpr: '2026-01-01', toExpr: '2026-01-31' },
+    ]);
+  });
+
+  it('recordRecentRange moves an already-listed absolute pair to the top instead of duplicating it', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+    await store.recordRecentRange('2026-01-01', '2026-01-31');
+    await store.recordRecentRange('now-30d', 'now');
+
+    await store.recordRecentRange('2026-01-01', '2026-01-31');
+
+    expect(store.recentRanges()).toEqual([
+      { fromExpr: '2026-01-01', toExpr: '2026-01-31' },
+      { fromExpr: 'now-30d', toExpr: 'now' },
+    ]);
+  });
+
+  it('recordRecentRange caps the list at 10, dropping the oldest', async () => {
+    const store = TestBed.inject(AppSettingsStore);
+    for (let day = 1; day <= 10; day++) {
+      await store.recordRecentRange(`2026-01-${String(day).padStart(2, '0')}`, 'now');
+    }
+
+    await store.recordRecentRange('2026-02-01', 'now');
+
+    expect(store.recentRanges()).toHaveLength(10);
+    expect(store.recentRanges()?.[0]).toEqual({ fromExpr: '2026-02-01', toExpr: 'now' });
+    expect(store.recentRanges()?.some((range) => range.fromExpr === '2026-01-01')).toBe(false);
   });
 });
 

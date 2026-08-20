@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  type OnInit,
   computed,
   signal,
   viewChild,
@@ -12,8 +13,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerCalendar } from '@ng-icons/tabler-icons';
-import { formatDate, parseRangeExpression, resolveRangeExpression } from '@/shared/utils';
+import type { RecentRange } from '@/core/data-access';
+import {
+  describeRangeExpression,
+  formatDate,
+  parseRangeExpression,
+  resolveRangeExpression,
+} from '@/shared/utils';
 import { ButtonComponent } from '../button/button.component';
+import { EmptyStateComponent } from '../empty-state/empty-state.component';
 import { FieldsetComponent } from '../fieldset/fieldset.component';
 import { InputComponent } from '../input/input.component';
 import { TypographyComponent } from '../typography/typography.component';
@@ -35,14 +43,28 @@ type FieldState = {
   preview: string | null;
 };
 
+/** One "Recently used ranges" row's view model (TICKET-STAT-40) — `range` is what clicking the row fills the fields with. */
+type RecentRangeRow = { range: RecentRange; label: string; resolvedLine: string };
+
 /**
  * The picker's left panel (TICKET-STAT-39): two expression fields (`now-90d`, or a bare ISO date),
  * each with a calendar button that writes into the field rather than replacing it, and an
  * Apply-staged commit — nothing here reaches the page until `apply` fires. Split out from
  * `mm-range-picker` itself so the parsing/validation/staging logic has its own mountable, testable
- * surface; the parent calls `reset()` right after mounting it (popover open) and owns the rest:
- * `discard()`/`focusApply()` (the two `Esc` paths) and the public `hasUnappliedEdits` signal (to
- * gate closing at all).
+ * surface; a fresh instance is created every time the popover opens (mounted via `@if`, never
+ * reused across opens), so `ngOnInit` seeds the fields once from `fromExpr`/`toExpr` — required
+ * inputs are guaranteed resolved by then, unlike in the constructor. `reset()` stays a public
+ * method (not folded into `ngOnInit` directly) so a test can reseed an already-constructed
+ * instance without recreating it. The parent otherwise owns `discard()`/`focusApply()` (the two
+ * `Esc` paths) and reads the public `hasUnappliedEdits` signal (to gate closing at all).
+ *
+ * A previous version seeded via a `queueMicrotask` called from the parent's `open()`, timed to run
+ * after this component's view was created — that ordering held in tests (`fixture.detectChanges()`
+ * runs synchronously) but not in a real zoneless app, where Angular's own change-detection
+ * scheduling can run *after* an already-queued microtask, leaving `reset()` called against a
+ * `viewChild` that hadn't resolved yet and silently no-op-ing (`?.reset()`) — the fields opened
+ * blank. Caught only via a live browser check (TICKET-STAT-40), since STAT-38/39 both skipped
+ * theirs.
  *
  * `[formControl]`, not `[ngModel]` — the established pattern for every other CVA-backed `mm-*`
  * field in this codebase (`mm-select`/`mm-input` elsewhere always bind via `ReactiveFormsModule`).
@@ -55,6 +77,7 @@ type FieldState = {
   selector: 'mm-absolute-range-panel',
   imports: [
     ButtonComponent,
+    EmptyStateComponent,
     FieldsetComponent,
     InputComponent,
     NgIcon,
@@ -65,12 +88,14 @@ type FieldState = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ tablerCalendar })],
 })
-export class AbsoluteRangePanelComponent {
+export class AbsoluteRangePanelComponent implements OnInit {
   /** The currently-applied range's canonical expression text — what `reset()` seeds the fields from. */
   readonly fromExpr = input.required<string>();
   readonly toExpr = input.required<string>();
   /** Set by the parent after a blocked close attempt (`Esc`/outside click while edits are unapplied) — visibly flags Apply. */
   readonly unappliedEditsFlagged = input(false);
+  /** The last ten applied ranges, global and most-recent-first (TICKET-STAT-40). */
+  readonly recentRanges = input<RecentRange[]>([]);
 
   readonly apply = output<AbsoluteRangeApplied>();
 
@@ -95,6 +120,10 @@ export class AbsoluteRangePanelComponent {
   private readonly applyButton = viewChild('applyButton', { read: ElementRef<HTMLElement> });
   private readonly fromDateInput = viewChild<ElementRef<HTMLInputElement>>('fromDateInput');
   private readonly toDateInput = viewChild<ElementRef<HTMLInputElement>>('toDateInput');
+
+  ngOnInit(): void {
+    this.reset();
+  }
 
   /**
    * Seeds both fields from the currently-applied `fromExpr`/`toExpr` — called imperatively by the
@@ -193,6 +222,38 @@ export class AbsoluteRangePanelComponent {
       return;
     }
     (edge === 'from' ? this.fromControl : this.toControl).setValue(value);
+  }
+
+  /**
+   * View model for the "Recently used ranges" list (TICKET-STAT-40): each row's plain-language
+   * label (`describeRangeExpression` for a relative `from`, the formatted dates otherwise — same
+   * fallback `mm-range-picker`'s own trigger label uses) plus its currently-resolved dates on a
+   * second line, so a relative entry shows both what it means and what it means *today*.
+   */
+  protected readonly recentRangeRows = computed<RecentRangeRow[]>(() =>
+    this.recentRanges().map((range) => {
+      const today = todayIso();
+      const parsedFrom = parseRangeExpression(range.fromExpr);
+      const parsedTo = parseRangeExpression(range.toExpr);
+      const resolvedFrom = parsedFrom.ok
+        ? resolveRangeExpression(parsedFrom.value, today, 'from')
+        : range.fromExpr;
+      const resolvedTo = parsedTo.ok
+        ? resolveRangeExpression(parsedTo.value, today, 'to')
+        : range.toExpr;
+      const resolvedLine = `${formatDate(resolvedFrom)} – ${formatDate(resolvedTo)}`;
+      const label =
+        parsedFrom.ok && parsedFrom.value.kind === 'relative'
+          ? describeRangeExpression(parsedFrom.value)
+          : resolvedLine;
+      return { range, label, resolvedLine };
+    }),
+  );
+
+  /** Fills both fields and stages the edit — does not apply, so every path through this panel still ends at Apply. */
+  protected onRecentRangeClick(range: RecentRange): void {
+    this.fromControl.setValue(range.fromExpr);
+    this.toControl.setValue(range.toExpr);
   }
 
   protected onApplyClick(): void {
