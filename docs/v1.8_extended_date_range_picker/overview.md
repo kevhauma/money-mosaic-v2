@@ -47,11 +47,11 @@ are settled here and referenced by the tickets rather than re-argued in each:
       expressions: parse, resolve and re-serialise `now`, `now-30d`, `now/M` (extends FR-STAT-7) —
       **first**, and pure utility code with no UI: every other ticket in this version resolves a
       range through it
-- [ ] [TICKET-STAT-36](./tickets/TICKET-STAT-36-expression-backed-range-state.md) — `RangeStore`
+- [x] [TICKET-STAT-36](./tickets/TICKET-STAT-36-expression-backed-range-state.md) — `RangeStore`
       holds expressions and re-resolves them on read, including in the URL (revises FR-STAT-7) —
       **needs STAT-35**; the one structural change in this version, and the reason a bookmarked
       relative range stays relative
-- [ ] [TICKET-SET-09](./tickets/TICKET-SET-09-fiscal-year-start-setting.md) — Fiscal year start
+- [x] [TICKET-SET-09](./tickets/TICKET-SET-09-fiscal-year-start-setting.md) — Fiscal year start
       month in Settings (new capability, no existing FR covers it) — **independent of the two above**
       and shippable any time, but **needed by STAT-37**'s two fiscal quick ranges
 - [x] [TICKET-STAT-37](./tickets/TICKET-STAT-37-quick-range-catalogue.md) — The quick-range
