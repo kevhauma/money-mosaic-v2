@@ -1,8 +1,37 @@
-<mm-page-header [title]="loan()?.name ?? 'Loan'" />
+@if (loan(); as loan) {
+  <!-- Back-to-parent is a scope control by the TICKET-UI-24 rule — it changes what you are looking
+       at — so it sits beside the title; everything that acts on this loan stays right. -->
+  <mm-page-header [title]="loan.name">
+    <mm-button actions-start variant="ghost" size="sm" link="/loans">Back to loans</mm-button>
+    <mm-flex actions-end align="center" gap="2">
+      <mm-button size="sm" (click)="toggleArchive()">
+        <ng-icon [name]="archiveToggle().icon" size="14" aria-hidden="true" />
+        {{ archiveToggle().label }}
+      </mm-button>
+      <mm-button variant="outline" color="error" size="sm" (click)="deleteConfirmOpen.set(true)">
+        <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+        Delete
+      </mm-button>
+    </mm-flex>
+  </mm-page-header>
 
-<mm-empty-state
-  title="More detail is on its way"
-  message="A balance-over-time chart, amortization schedule, linked payments, and an ahead/behind indicator for this loan will appear here."
->
-  <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
-</mm-empty-state>
+  <mm-empty-state
+    title="More detail is on its way"
+    message="A balance-over-time chart, amortization schedule, linked payments, and an ahead/behind indicator for this loan will appear here."
+  >
+    <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
+  </mm-empty-state>
+
+  <mm-confirm-dialog
+    [(open)]="deleteConfirmOpen"
+    title="Delete this loan?"
+    message="This removes the loan and its tracked progress. It does not delete the linked category or any transactions. This cannot be undone."
+    confirmLabel="Delete loan"
+    [danger]="true"
+    (confirmed)="deleteConfirmed()"
+  />
+} @else {
+  <mm-empty-state title="Loan not found" message="It may have been deleted or archived away.">
+    <mm-button action color="primary" class="mt-2" link="/loans">Back to loans</mm-button>
+  </mm-empty-state>
+}

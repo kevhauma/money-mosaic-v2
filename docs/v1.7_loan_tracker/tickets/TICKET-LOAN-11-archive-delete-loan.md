@@ -39,14 +39,14 @@ pattern already used for accounts and categories.
 
 ## Acceptance criteria
 
-- [ ] Archive/unarchive toggle persists via `LoansStore.archiveLoan`/`unarchiveLoan`, never a direct `appDb` write.
-- [ ] Delete is gated behind `ConfirmDialogComponent` and calls `LoansStore.removeLoan`.
-- [ ] Deleting a loan does not delete or modify its linked category or any transactions.
-- [ ] Archived loans are excluded from the default overview list, consistent with accounts/categories.
-- [ ] Behaviour and copy are identical across `loanType` values — no mortgage-specific branch.
-- [ ] Unit tests cover: archive/unarchive round-trip, delete removing the entity without touching category/transaction data, for at least two different loan types.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: archive a loan, confirm it disappears from the overview; delete a different loan, confirm its linked category's transactions are untouched.
+- [x] Archive/unarchive toggle persists via `LoansStore.archiveLoan`/`unarchiveLoan`, never a direct `appDb` write. (`loan-detail.component.ts`'s `toggleArchive()`; `LoansStore.archiveLoan`/`unarchiveLoan` already only ever called `updateLoan` → `LoansRepository.update`, LOAN-02.)
+- [x] Delete is gated behind `ConfirmDialogComponent` and calls `LoansStore.removeLoan`. (`loan-detail.component.html`'s `<mm-confirm-dialog ... (confirmed)="deleteConfirmed()">`; `deleteConfirmed()` calls `loansStore.removeLoan(loan.id)`.)
+- [x] Deleting a loan does not delete or modify its linked category or any transactions. (`LoansStore.removeLoan` only ever calls `LoansRepository.remove` — no code path touches `appDb.categories`/`appDb.transactions`; `loan-detail.component.spec.ts`'s delete tests assert `TransactionsRepository.getAll`'s call count is unchanged and the store's `transactions()` are byte-identical after deletion; confirmed live below against real IndexedDB.)
+- [x] Archived loans are excluded from the default overview list, consistent with accounts/categories. (Unchanged since LOAN-06 — `loans-overview.component.ts` reads `activeLoans()`; confirmed live below.)
+- [x] Behaviour and copy are identical across `loanType` values — no mortgage-specific branch. (`loan-detail.component.ts`'s `toggleArchive`/`deleteConfirmed` take no `loanType` branch; confirm-dialog copy reads "Delete this loan?" generically; `loan-detail.component.spec.ts`'s copy-check asserts the dialog text never contains "mortgage".)
+- [x] Unit tests cover: archive/unarchive round-trip, delete removing the entity without touching category/transaction data, for at least two different loan types. (`loan-detail.component.spec.ts`'s "archive/unarchive/delete" describe block — both loops run for `'mortgage'` and `'auto'`.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`ng lint`/`ng test`/`ng build --configuration development` all pass; both fallow gates exit 0. No coding-conventions violations found.)
+- [x] Verified live in the browser: archive a loan, confirm it disappears from the overview; delete a different loan, confirm its linked category's transactions are untouched. (`preview_start` on `dev`; archived "Student loan" from its detail page — button flipped to "Unarchive", `appDb.loans` showed `archived: true`, and it disappeared from `/loans`' overview. Deleted "Car loan" (linked to the Transport category, which had 4 real transactions) via the confirm dialog — it was removed from `appDb.loans` and the page navigated back to `/loans`, while a direct IndexedDB query confirmed the Transport category still had exactly 4 transactions, untouched.)
 
 ## Notes
 

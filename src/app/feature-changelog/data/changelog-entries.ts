@@ -1001,4 +1001,11 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ],
     area: 'Loans',
   },
+  {
+    date: '2026-08-21',
+    versionFolder: 'v1.7_loan_tracker',
+    ticketIds: ['TICKET-LOAN-11'],
+    title: 'You can now archive a paid-off loan or delete one you added by mistake',
+    area: 'Loans',
+  },
 ];
