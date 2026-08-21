@@ -56,8 +56,14 @@ export const LoansStore = signalStore(
     return {
       hydrate,
 
-      /** Appends the loan to the end of the display order, same convention as `GoalsStore.addGoal`. */
-      addLoan: async (loan: Loan): Promise<Loan> => {
+      /**
+       * Appends the loan to the end of the display order, same convention as `GoalsStore.addGoal`.
+       * Takes `sortOrder` out of the caller's hands entirely (unlike `addGoal`, which accepts a full
+       * `SavingsGoal` because `sortOrder` is optional there) — `Loan.sortOrder` is a required field,
+       * and this method always overwrites whatever value it's given, so callers (the create form)
+       * never need to invent a placeholder just to satisfy the type.
+       */
+      addLoan: async (loan: Omit<Loan, 'sortOrder'>): Promise<Loan> => {
         const highest = store
           .loans()
           .reduce((max, existing) => Math.max(max, existing.sortOrder), -1);

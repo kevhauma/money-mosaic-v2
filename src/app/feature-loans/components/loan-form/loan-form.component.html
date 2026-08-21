@@ -1,0 +1,98 @@
+<mm-modal [(open)]="open" class="max-w-2xl">
+  <span mm-modal-title>{{ title() }}</span>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
+    <mm-fieldset legend="Name">
+      <mm-input
+        type="text"
+        formControlName="name"
+        class="w-full"
+        placeholder="e.g. Home mortgage"
+      />
+      @if (nameError; as message) {
+        <mm-label variant="error">{{ message }}</mm-label>
+      }
+    </mm-fieldset>
+
+    <mm-fieldset legend="Loan type">
+      <mm-select formControlName="loanType" class="w-full">
+        <option value="" disabled>Choose a loan type</option>
+        @for (option of loanTypeOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </mm-select>
+      @if (loanTypeError; as message) {
+        <mm-label variant="error">{{ message }}</mm-label>
+      }
+    </mm-fieldset>
+
+    <div class="grid grid-cols-2 gap-3">
+      <mm-fieldset legend="Original principal">
+        <mm-input
+          type="number"
+          step="0.01"
+          formControlName="principal"
+          class="w-full"
+          placeholder="e.g. 250000"
+        />
+        @if (principalError; as message) {
+          <mm-label variant="error">{{ message }}</mm-label>
+        }
+      </mm-fieldset>
+      <mm-fieldset legend="Annual interest rate (%)">
+        <mm-input
+          type="number"
+          step="0.01"
+          formControlName="interestRate"
+          class="w-full"
+          placeholder="e.g. 3.5"
+        />
+        @if (interestRateError; as message) {
+          <mm-label variant="error">{{ message }}</mm-label>
+        }
+      </mm-fieldset>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <mm-fieldset legend="Term (months)">
+        <mm-input
+          type="number"
+          step="1"
+          formControlName="termMonths"
+          class="w-full"
+          placeholder="e.g. 240"
+        />
+        @if (termMonthsError; as message) {
+          <mm-label variant="error">{{ message }}</mm-label>
+        }
+      </mm-fieldset>
+      <mm-fieldset legend="Start date">
+        <mm-input type="date" formControlName="startDate" class="w-full" />
+      </mm-fieldset>
+    </div>
+
+    <mm-fieldset legend="Linked category">
+      <mm-select formControlName="categoryId" class="w-full">
+        <option value="" disabled>Choose a category</option>
+        @for (option of categoryOptions(); track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </mm-select>
+      @if (categoryError; as message) {
+        <mm-label variant="error">{{ message }}</mm-label>
+      }
+      @if (duplicateCategoryError; as message) {
+        <mm-label variant="error">{{ message }}</mm-label>
+      }
+      <mm-label class="text-xs text-base-content/60">
+        Any transaction in this category counts toward this loan's payoff — it should be principal +
+        interest only, not escrow, property tax, or bundled insurance.
+      </mm-label>
+    </mm-fieldset>
+
+    <div class="modal-action">
+      <mm-button (click)="cancel()">Cancel</mm-button>
+      <mm-button type="submit" color="primary">{{ submitLabel() }}</mm-button>
+    </div>
+  </form>
+</mm-modal>

@@ -1,23 +1,45 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerReceipt2 } from '@ng-icons/tabler-icons';
-import { EmptyStateComponent, PageHeaderComponent } from '@/shared/ui';
+import { tablerPlus, tablerReceipt2 } from '@ng-icons/tabler-icons';
+import type { Loan } from '@/core/data-access';
+import { ButtonComponent, EmptyStateComponent, PageHeaderComponent } from '@/shared/ui';
+import { LoanFormComponent, type LoanFormValue } from '../loan-form/loan-form.component';
 import { LoansStore } from '../../loans.store';
 
 /**
- * The `/loans` page container (TICKET-LOAN-02). Page-shell only for now — LOAN-03 through LOAN-11
- * each add their own panel onto this component; until then it's a placeholder so the route, nav
- * item, and store hydration wiring all have somewhere real to land.
+ * The `/loans` page container (TICKET-LOAN-02/03). Still page-shell-ish — LOAN-06 replaces the
+ * placeholder empty state with real overview cards, which will also open `LoanFormComponent` in
+ * edit mode (passing an existing `Loan` as `[loan]`); nothing here calls that path yet.
  */
 @Component({
   selector: 'app-loans-overview',
-  imports: [EmptyStateComponent, NgIcon, PageHeaderComponent],
+  imports: [ButtonComponent, EmptyStateComponent, LoanFormComponent, NgIcon, PageHeaderComponent],
   templateUrl: './loans-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerReceipt2 })],
+  viewProviders: [provideIcons({ tablerPlus, tablerReceipt2 })],
 })
 export class LoansOverviewComponent {
-  // Unused otherwise — injecting it is the point: `LoansStore` hydrates itself on first injection
-  // (`withHooks({ onInit })`, TICKET-PERF-07), and visiting this page is what should kick that off.
+  // Also unused otherwise beyond `activeLoans`/`addLoan` below — injecting it is what kicks off
+  // hydration on first visit (`withHooks({ onInit })`, TICKET-PERF-07).
   protected readonly loansStore = inject(LoansStore);
+
+  protected readonly formOpen = signal(false);
+  protected readonly editingLoan = signal<Loan | null>(null);
+
+  protected openAddForm(): void {
+    this.editingLoan.set(null);
+    this.formOpen.set(true);
+  }
+
+  // `openEditForm(loan)` (the `editingLoan.set(loan)` counterpart above) lands with LOAN-06's
+  // cards — the only thing that would call it. Nothing on this page needs edit mode yet.
+
+  protected async saveLoan(value: LoanFormValue): Promise<void> {
+    const editing = this.editingLoan();
+    if (editing?.id != null) {
+      await this.loansStore.updateLoan(editing.id, value);
+      return;
+    }
+    await this.loansStore.addLoan({ ...value, archived: false });
+  }
 }

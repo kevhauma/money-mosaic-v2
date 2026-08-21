@@ -1,8 +1,31 @@
-<mm-page-header title="Loans" />
+<mm-page-header title="Loans">
+  <mm-button actions-end color="primary" size="sm" (click)="openAddForm()">
+    <ng-icon name="tablerPlus" size="16" aria-hidden="true" />
+    Add loan
+  </mm-button>
+</mm-page-header>
 
-<mm-empty-state
-  title="Loan tracking is on its way"
-  message="Payoff progress, amortization schedules, and balance charts for every loan you track will appear here."
->
-  <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
-</mm-empty-state>
+@if (loansStore.activeLoans().length === 0) {
+  <mm-empty-state
+    title="Loan tracking is on its way"
+    message="Payoff progress, amortization schedules, and balance charts for every loan you track will appear here. Add your first loan to get started."
+  >
+    <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
+  </mm-empty-state>
+} @else {
+  <!-- LOAN-06 replaces this with real overview cards; until then, added loans exist (and can be
+       found again by editing the linked category or re-adding) but have no card of their own yet. -->
+  <mm-empty-state
+    title="Loan cards are coming soon"
+    message="Your loans are saved — dedicated payoff cards for each one land in a later update."
+  >
+    <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
+  </mm-empty-state>
+}
+
+<app-loan-form
+  [(open)]="formOpen"
+  [loan]="editingLoan()"
+  [existingLoans]="loansStore.activeLoans()"
+  (saved)="saveLoan($event)"
+/>

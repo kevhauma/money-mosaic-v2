@@ -46,13 +46,13 @@ edits a `Loan`, reusing the existing form component shapes from `feature-account
 
 ## Acceptance criteria
 
-- [ ] Form validates all required fields, including a `loanType` selection, and rejects a `categoryId` already linked to another active loan (of any type), with a readable error naming the conflicting loan.
-- [ ] Submitting calls `LoansStore.addLoan`/`updateLoan`, never `appDb` directly.
-- [ ] Category picker only lists active, `kind: 'expense'` categories.
-- [ ] `sortOrder` is assigned consistently with how `accounts`/`categories` assign it on creation (append to end).
-- [ ] Unit tests cover: valid submission for at least two different `loanType` values, missing-required-field rejection, duplicate-active-category rejection across different loan types, and that editing a loan excludes itself from the duplicate check.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: create a mortgage-type loan and a separate auto-type loan on different categories, then attempt a third loan reusing one of those categories and confirm the inline error names the correct existing loan.
+- [x] Form validates all required fields, including a `loanType` selection, and rejects a `categoryId` already linked to another active loan (of any type), with a readable error naming the conflicting loan. (`loan-form.component.ts` — `duplicateCategoryValidator` (form-level) + per-field validators; `loan-form.component.spec.ts` covers both; confirmed live in the browser below.)
+- [x] Submitting calls `LoansStore.addLoan`/`updateLoan`, never `appDb` directly. (`loans-overview.component.ts`'s `saveLoan`; `loans-overview.component.spec.ts`'s "delegates a new loan to LoansStore.addLoan" test asserts on the mocked `LoansRepository.add`, never `appDb`.)
+- [x] Category picker only lists active, `kind: 'expense'` categories. (`loan-form.component.ts`'s `categoryOptions` computed — `activeCategories().filter(c => c.kind === 'expense')`; confirmed live — the picker showed only the seeded expense categories, e.g. no "Salary"/"Other Income".)
+- [x] `sortOrder` is assigned consistently with how `accounts`/`categories` assign it on creation (append to end). (`loans.store.ts`'s `addLoan` — highest existing `sortOrder` + 1, the `GoalsStore.addGoal` convention; confirmed live — the mortgage got `sortOrder: 0`, the car loan `sortOrder: 1`, read directly from IndexedDB.)
+- [x] Unit tests cover: valid submission for at least two different `loanType` values, missing-required-field rejection, duplicate-active-category rejection across different loan types, and that editing a loan excludes itself from the duplicate check. (`loan-form.component.spec.ts` — mortgage + auto submissions, a missing-all-fields rejection, a mortgage/auto cross-type duplicate rejection, and an editing-excludes-itself case plus a still-flags-a-genuine-conflict-while-editing case.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`ng lint`/`ng test`/`ng build --configuration development` all pass; `npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet` and `npx fallow health --complexity --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet` both exit 0. No coding-conventions violations found.)
+- [x] Verified live in the browser: create a mortgage-type loan and a separate auto-type loan on different categories, then attempt a third loan reusing one of those categories and confirm the inline error names the correct existing loan. (`preview_start` on `dev`; added "Home mortgage" (mortgage, Housing category) and "Car loan" (auto, Transport category) — both persisted to IndexedDB's `loans` table with `sortOrder` 0/1; a third "Personal loan" (personal type) reusing the Housing category was rejected inline with exactly "This category is already linked to Home mortgage." and the dialog stayed open — no submission reached the repository.)
 
 ## Notes
 
