@@ -14,14 +14,16 @@ import {
   FlexComponent,
   PageHeaderComponent,
 } from '@/shared/ui';
+import { TransactionsStore } from '@/core/state';
+import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-chart.component';
 import { LoansStore } from '../../loans.store';
 
 /**
- * The `/loans/:id` detail route (TICKET-LOAN-06). Placeholder body — LOAN-07 (balance chart)
- * through LOAN-10 (ahead/behind indicator) each add a section — but the header's archive/delete
- * actions (TICKET-LOAN-11) are real: the `AccountsDetailComponent` shape, with every message
- * reading "this loan," never "this mortgage," since a mortgage, a car loan, and a personal loan
- * are archived/deleted identically.
+ * The `/loans/:id` detail route (TICKET-LOAN-06). LOAN-07 fills in the first real panel — the
+ * balance-over-time chart; LOAN-08 through LOAN-10 each add another below it. The header's
+ * archive/delete actions (TICKET-LOAN-11) are real: the `AccountsDetailComponent` shape, with every
+ * message reading "this loan," never "this mortgage," since a mortgage, a car loan, and a personal
+ * loan are archived/deleted identically.
  */
 @Component({
   selector: 'app-loan-detail',
@@ -30,6 +32,7 @@ import { LoansStore } from '../../loans.store';
     ConfirmDialogComponent,
     EmptyStateComponent,
     FlexComponent,
+    LoanBalanceChartComponent,
     NgIcon,
     PageHeaderComponent,
   ],
@@ -42,10 +45,20 @@ export class LoanDetailComponent {
 
   private readonly router = inject(Router);
   private readonly loansStore = inject(LoansStore);
+  private readonly transactionsStore = inject(TransactionsStore);
 
   protected readonly loan = computed(
     () => this.loansStore.loans().find((loan) => String(loan.id) === this.id()) ?? null,
   );
+
+  /** This loan's linked-category transactions, the only filtering `core/loans`' pure functions expect done for them (TICKET-LOAN-05's Notes). */
+  protected readonly payments = computed(() => {
+    const loan = this.loan();
+    if (!loan) return [];
+    return this.transactionsStore
+      .transactions()
+      .filter((transaction) => transaction.categoryId === loan.categoryId);
+  });
 
   protected readonly archiveToggle = computed(() =>
     this.loan()?.archived

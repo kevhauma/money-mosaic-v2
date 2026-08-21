@@ -41,13 +41,13 @@ from LOAN-04, actual balance reconstructed month-by-month from LOAN-05's logic) 
 
 ## Acceptance criteria
 
-- [ ] `computeActualBalanceSeries` returns one point per payment, chronologically ordered, ending at the loan's current actual balance.
-- [ ] `computeLoanProgress` (LOAN-05) and `computeActualBalanceSeries` share the accrual logic (no duplicated interest-accrual math between them).
-- [ ] Chart renders both series with a legend distinguishing scheduled vs. actual, for any `loanType`.
-- [ ] Chart handles a loan with zero payments (actual series is a single point at the start balance, no crash).
-- [ ] Unit tests cover: the pure `buildLoanBalanceChartOption`-style option builder, and `computeActualBalanceSeries` against known payment sequences.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: a loan with several categorized payments shows both lines diverging when a payment doesn't match the scheduled amount.
+- [x] `computeActualBalanceSeries` returns one point per payment, chronologically ordered, ending at the loan's current actual balance. (`loan-progress.ts` — maps `accrueLoanPayments`'s steps 1:1; `loan-progress.spec.ts`'s "returns one point per payment, chronologically ordered, ending at the current actual balance" test.)
+- [x] `computeLoanProgress` (LOAN-05) and `computeActualBalanceSeries` share the accrual logic (no duplicated interest-accrual math between them). (`loan-progress.ts` — both are implemented in terms of the private `accrueLoanPayments` helper; `loan-progress.spec.ts`'s "shares its accrual with computeLoanProgress" test asserts the two agree exactly.)
+- [x] Chart renders both series with a legend distinguishing scheduled vs. actual, for any `loanType`. (`loan-balance-chart.component.ts`'s `buildLoanBalanceChartOption` uses `legendOption(['Scheduled', 'Actual'], 'top')`; `loan-balance-chart.component.spec.ts`'s "draws both a Scheduled and an Actual series" test loops both `'mortgage'` and `'auto'` and also asserts the chart's own JSON never mentions the loan type.)
+- [x] Chart handles a loan with zero payments (actual series is a single point at the start balance, no crash). (`computeActualBalanceSeries` returns `[{date: loan.startDate, balance: loan.principal}]` for an empty payments list; `loan-progress.spec.ts`'s zero-payments test; `loan-balance-chart.component.spec.ts`'s "anchors both series at the loan principal" test calls the builder with `[]`.)
+- [x] Unit tests cover: the pure `buildLoanBalanceChartOption`-style option builder, and `computeActualBalanceSeries` against known payment sequences. (`loan-balance-chart.component.spec.ts`'s `describe('buildLoanBalanceChartOption', ...)` block; `loan-progress.spec.ts`'s `describe('computeActualBalanceSeries', ...)` block.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`ng lint`/`ng test`/`ng build --configuration development` all pass; both fallow gates exit 0. No coding-conventions violations found. Note: mounting the real `NgxEchartsDirective` chart inside `loan-detail.component.spec.ts` and then triggering a post-mount option update via an archive/unarchive click hit a genuine jsdom-canvas-context crash in zrender's animation ticker — unrelated to correctness, a test-environment limitation — so that spec now stubs `LoanBalanceChartComponent` via `TestBed.overrideComponent`, since none of its own tests are about the chart.)
+- [x] Verified live in the browser: a loan with several categorized payments shows both lines diverging when a payment doesn't match the scheduled amount. (`preview_start` on `dev`; opened `/loans/1` (Home mortgage) — chart rendered with a real canvas, no console errors. Read the mounted component's actual `chartOption()` via `ng.getComponent`: both series correctly anchor at the loan's principal on its start date. Added a real €3,000 payment (vs. the ~€1,199 scheduled amount) dated 2026-09-21 directly to IndexedDB, reloaded, and confirmed the two series diverge at that exact date — Scheduled €249,279.27 vs. Actual €243,888.96 — then removed the test transaction.)
 
 ## Notes
 

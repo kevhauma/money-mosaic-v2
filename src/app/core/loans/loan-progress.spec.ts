@@ -1,6 +1,6 @@
 import type { Loan, Transaction } from '@/core/data-access';
 import { computeAmortizationSchedule } from './amortization';
-import { computeLoanProgress } from './loan-progress';
+import { computeActualBalanceSeries, computeLoanProgress } from './loan-progress';
 
 const loan = (overrides: Partial<Loan> = {}): Loan => ({
   id: 1,
@@ -180,5 +180,55 @@ describe('computeLoanProgress (TICKET-LOAN-05)', () => {
 
     expect(progressReversed.actualBalance).toBe(progressInOrder.actualBalance);
     expect(progressReversed.lastPaymentDate).toBe(progressInOrder.lastPaymentDate);
+  });
+});
+
+describe('computeActualBalanceSeries (TICKET-LOAN-07)', () => {
+  it('returns a single point at the start balance when there are no payments yet, without crashing', () => {
+    const testLoan = loan({ principal: 12000, startDate: '2024-01-01' });
+
+    const series = computeActualBalanceSeries(testLoan, []);
+
+    expect(series).toEqual([{ date: '2024-01-01', balance: 12000 }]);
+  });
+
+  it('returns one point per payment, chronologically ordered, ending at the current actual balance', () => {
+    const testLoan = loan({ principal: 12000, interestRate: 6, termMonths: 12 });
+    const schedule = computeAmortizationSchedule(
+      testLoan.principal,
+      testLoan.interestRate,
+      testLoan.termMonths,
+      testLoan.startDate,
+    );
+    const payments = [
+      payment(2, schedule[1].date, schedule[1].payment),
+      payment(1, schedule[0].date, schedule[0].payment),
+      payment(3, schedule[2].date, schedule[2].payment),
+    ];
+
+    const series = computeActualBalanceSeries(testLoan, payments);
+
+    expect(series.map((point) => point.date)).toEqual([
+      schedule[0].date,
+      schedule[1].date,
+      schedule[2].date,
+    ]);
+    const progress = computeLoanProgress(testLoan, payments);
+    expect(series.at(-1)?.balance).toBe(progress.actualBalance);
+  });
+
+  it('shares its accrual with computeLoanProgress — the last point always matches actualBalance exactly', () => {
+    const testLoan = loan({ principal: 5000, interestRate: 4, termMonths: 12 });
+    const payments = [
+      payment(1, '2024-02-01', 3000),
+      payment(2, '2024-03-01', 3000),
+      payment(3, '2024-04-01', 3000),
+    ];
+
+    const series = computeActualBalanceSeries(testLoan, payments);
+    const progress = computeLoanProgress(testLoan, payments);
+
+    expect(series.at(-1)?.balance).toBe(progress.actualBalance);
+    expect(series.at(-1)?.date).toBe(progress.lastPaymentDate);
   });
 });

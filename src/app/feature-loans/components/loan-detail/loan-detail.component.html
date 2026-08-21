@@ -15,9 +15,11 @@
     </mm-flex>
   </mm-page-header>
 
+  <app-loan-balance-chart [loan]="loan" [payments]="payments()" class="mb-4 block" />
+
   <mm-empty-state
     title="More detail is on its way"
-    message="A balance-over-time chart, amortization schedule, linked payments, and an ahead/behind indicator for this loan will appear here."
+    message="An amortization schedule, linked payments, and an ahead/behind indicator for this loan will appear here."
   >
     <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
   </mm-empty-state>

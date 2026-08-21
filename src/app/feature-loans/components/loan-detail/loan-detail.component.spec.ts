@@ -1,3 +1,4 @@
+import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
@@ -8,7 +9,31 @@ import {
   type Transaction,
 } from '@/core/data-access';
 import { TransactionsStore } from '@/core/state';
+import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-chart.component';
 import { LoanDetailComponent } from './loan-detail.component';
+
+/**
+ * Stands in for the real `<app-loan-balance-chart>` (TICKET-LOAN-07) in every test here — none of
+ * them are about the chart itself (that's `loan-balance-chart.component.spec.ts`'s job), and a real
+ * `NgxEchartsDirective` needs a working canvas 2D context, which jsdom doesn't provide. Mounting the
+ * real directive anyway "works" for an initial render, but an *update* transition (exactly what an
+ * archive/unarchive click triggers, since the chart's `loan` input changes) drives zrender's
+ * animation ticker into a repaint against a canvas jsdom never gave it a context for — a real
+ * `Cannot read properties of null (reading 'clearRect')`, not a false assertion to route around.
+ */
+@Component({ selector: 'app-loan-balance-chart', template: '' })
+class LoanBalanceChartStub {
+  readonly loan = input.required<Loan>();
+  readonly payments = input<Transaction[]>([]);
+}
+
+// jsdom has no ResizeObserver; keep the polyfill in case a future test here reaches the real chart.
+class ResizeObserverStub {
+  observe = (): void => {};
+  unobserve = (): void => {};
+  disconnect = (): void => {};
+}
+globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
 
 const loan = (overrides: Partial<Loan> = {}): Loan => ({
   id: 1,
@@ -48,7 +73,12 @@ const createFixture = async (
       { provide: LoansRepository, useValue: loansRepository },
       { provide: TransactionsRepository, useValue: transactionsRepository },
     ],
-  }).compileComponents();
+  })
+    .overrideComponent(LoanDetailComponent, {
+      remove: { imports: [LoanBalanceChartComponent] },
+      add: { imports: [LoanBalanceChartStub] },
+    })
+    .compileComponents();
 
   const fixture = TestBed.createComponent(LoanDetailComponent);
   fixture.componentRef.setInput('id', id);
@@ -84,7 +114,7 @@ describe('LoanDetailComponent (TICKET-LOAN-06)', () => {
 
 describe('LoanDetailComponent: archive/unarchive/delete (TICKET-LOAN-11)', () => {
   for (const loanType of ['mortgage', 'auto'] as const) {
-    it(`archives and unarchives a ${loanType}-type loan through LoansStore, never appDb directly`, async () => {
+    it(`archives a ${loanType}-type loan through LoansStore.archiveLoan, never appDb directly`, async () => {
       const fixture = await createFixture([loan({ id: 1, loanType, archived: false })], '1');
       const host = fixture.nativeElement as HTMLElement;
 
@@ -95,8 +125,12 @@ describe('LoanDetailComponent: archive/unarchive/delete (TICKET-LOAN-11)', () =>
       await fixture.whenStable();
 
       expect(loansRepository.update).toHaveBeenCalledWith(1, { archived: true });
+    });
 
-      fixture.detectChanges();
+    it(`unarchives an already-archived ${loanType}-type loan through LoansStore.unarchiveLoan, never appDb directly`, async () => {
+      const fixture = await createFixture([loan({ id: 1, loanType, archived: true })], '1');
+      const host = fixture.nativeElement as HTMLElement;
+
       const unarchiveButton = [...host.querySelectorAll('button')].find((element) =>
         element.textContent?.includes('Unarchive'),
       );

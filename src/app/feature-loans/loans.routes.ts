@@ -1,10 +1,7 @@
 import type { Routes } from '@angular/router';
+import { provideEchartsCore } from 'ngx-echarts';
+import { echarts } from '@/shared/echarts';
 
-/**
- * No `provideEchartsCore` yet, unlike `ACCOUNTS_ROUTES`/`INCOME_ROUTES` — this page has no chart
- * until LOAN-07's balance-over-time chart lands. Add the provider (as a component-less grouping
- * route, the shape the other chart-bearing features use) at that point, not preemptively here.
- */
 export const LOANS_ROUTES: Routes = [
   {
     path: '',
@@ -15,6 +12,11 @@ export const LOANS_ROUTES: Routes = [
   },
   {
     path: ':id',
+    // Only the detail route needs echarts (TICKET-LOAN-07's balance chart) — kept off the overview
+    // route's own providers so its chunk stays free of echarts, same reasoning as the accounts
+    // detail route sharing `ACCOUNTS_ROUTES`' grouping-route provider, just scoped one level tighter
+    // here since the overview genuinely never renders a chart.
+    providers: [provideEchartsCore({ echarts })],
     loadComponent: () =>
       import('./components/loan-detail/loan-detail.component').then((m) => m.LoanDetailComponent),
   },
