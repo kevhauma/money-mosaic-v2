@@ -56,13 +56,13 @@ UI in this ticket.
 
 ## Acceptance criteria
 
-- [ ] `LoanType` and `Loan` types defined in `app-db.ts` with the fields above; the table, file, and type names use "loan"/"Loan", never "mortgage"/"Mortgage".
-- [ ] New `.version(n)` block is additive — no edits to any existing `.version()` block — and repeats the full table map per the project's Dexie rule.
-- [ ] `loans` table indexed on `++id, categoryId, loanType, archived`.
-- [ ] `LoansRepository` implements `getAll`/`add`/`update`/`remove`, following the async, repository-per-entity convention; no component or store touches `appDb.loans` directly.
-- [ ] Both are exported through `core/data-access/index.ts`.
-- [ ] Unit tests cover: repository CRUD round-trips against a real (fake-indexeddb-backed) `appDb` instance, matching how `categories.repository.spec.ts`-style tests are structured, including at least one non-mortgage `loanType`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] `LoanType` and `Loan` types defined in `app-db.ts` with the fields above; the table, file, and type names use "loan"/"Loan", never "mortgage"/"Mortgage". (`app-db.ts` — `LoanType`/`Loan` types added just before the `AppDb` class; `'mortgage'` appears only as the one union literal value.)
+- [x] ~~New `.version(n)` block is additive — no edits to any existing `.version()` block — and repeats the full table map per the project's Dexie rule.~~ **Implementation note (diverges from wording above):** additive and no edits to any existing block — true — but does **not** repeat the full table map. `app-db.ts` documents (just above `.version(11)`) that versions 1-10 are the last to repeat the full map; from v11 onward the convention is to declare only new/changed tables, since Dexie carries forward every omitted table's schema. `.version(15)` follows that current convention (`loans: '++id, categoryId, loanType, archived'` only), matching `.version(12)`/`.version(13)`/`.version(14)` immediately above it. The ticket text predates/overlooked that convention; this ticket follows the code's actual, current rule rather than the older full-repeat pattern shown in versions 1-10.
+- [x] `loans` table indexed on `++id, categoryId, loanType, archived`. (`app-db.ts` `.version(15)` block; asserted in `app-db.spec.ts`'s new "loans schema (TICKET-LOAN-01 .version(15))" describe block.)
+- [x] `LoansRepository` implements `getAll`/`add`/`update`/`remove`, following the async, repository-per-entity convention; no component or store touches `appDb.loans` directly. (`loans.repository.ts`, mirrors `GoalsRepository`/`CategoriesRepository`; repo-wide grep confirms no other file references `appDb.loans`.)
+- [x] Both are exported through `core/data-access/index.ts`. (`index.ts` — `export * from './loans.repository';`; `Loan`/`LoanType` already re-exported via the existing `export * from './app-db';`.)
+- [x] Unit tests cover: repository CRUD round-trips against a real (fake-indexeddb-backed) `appDb` instance, matching how `categories.repository.spec.ts`-style tests are structured, including at least one non-mortgage `loanType`. (`loans.repository.spec.ts` — add/getAll, a `loanType: 'student'` case, update, remove; all pass under `ng test`.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`ng lint`/`ng test`/`ng build --configuration development` all pass; `npx fallow health --complexity ...` exits clean. `LoansRepository` has no consumer yet — expected per this ticket's own Notes, since LOAN-02/03/05 are what consume it — so `.fallow-baseline.json` was regenerated via `npx fallow dead-code --save-baseline` to record that one finding as known rather than suppressing it; `npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet` now exits 0. No coding-conventions violations found.)
 
 ## Notes
 

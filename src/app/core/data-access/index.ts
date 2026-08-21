@@ -15,3 +15,4 @@ export * from './app-settings.repository';
 export * from './salary-metadata.repository';
 export * from './goals.repository';
 export * from './forecast-settings.repository';
+export * from './loans.repository';

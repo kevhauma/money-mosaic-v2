@@ -777,6 +777,37 @@ export const DEFAULT_FORECAST_SETTINGS: ForecastSettings = {
   scopeAccountIds: undefined,
 };
 
+/**
+ * Display label only (TICKET-LOAN-01) — a mortgage, a car loan, and a personal loan are amortized
+ * identically (principal, fixed annual rate, term); `loanType` must never branch the amortization
+ * or progress math in `core/loans/`. `'mortgage'` is simply the first/most common option in the
+ * create/edit form's dropdown, not a special case.
+ */
+export type LoanType = 'mortgage' | 'auto' | 'personal' | 'student' | 'other';
+
+/**
+ * One tracked loan (TICKET-LOAN-01, FR-LOAN-1) — a mortgage, a car loan, a personal loan, or
+ * anything else amortized on a fixed principal/rate/term. `categoryId` links it to the one expense
+ * category whose transactions count as payments; enforcing "one active loan per category" is a
+ * form-level invariant (LOAN-03), not a schema constraint, since Dexie has no FK constraints.
+ */
+export type Loan = {
+  id?: number;
+  name: string;
+  loanType: LoanType;
+  /** Original loan amount. */
+  principal: number;
+  /** Annual rate, percent (e.g. 3.5 for 3.5%). */
+  interestRate: number;
+  termMonths: number;
+  /** ISO `yyyy-mm-dd`. */
+  startDate: string;
+  /** FK -> `Category.id`; the expense category whose transactions count as payments. */
+  categoryId: number;
+  archived: boolean;
+  sortOrder: number;
+};
+
 class AppDb extends Dexie {
   accounts!: Table<Account, number>;
   transactions!: Table<Transaction, number>;
@@ -794,6 +825,7 @@ class AppDb extends Dexie {
   salaryMetadata!: Table<SalaryMetadata, number>;
   savingsGoals!: Table<SavingsGoal, number>;
   forecastSettings!: Table<ForecastSettings, number>;
+  loans!: Table<Loan, number>;
 
   constructor() {
     super('money-mosaic');
@@ -1052,6 +1084,14 @@ class AppDb extends Dexie {
     this.version(14).stores({
       savingsGoals: '++id, sortOrder',
       forecastSettings: 'id',
+    });
+
+    // Adds the `loans` table for v1.7's loan tracker (TICKET-LOAN-01) — indexed on `categoryId`
+    // (linked-category lookups), `loanType` (badge/filter display), and `archived` (active/archived
+    // split), mirroring `savingsGoals`. Purely additive — a brand-new, empty table — so no
+    // `.upgrade()` is needed, same as `savingsGoals`/`forecastSettings` at v14.
+    this.version(15).stores({
+      loans: '++id, categoryId, loanType, archived',
     });
 
     this.on('populate', () => {

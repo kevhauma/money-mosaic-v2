@@ -25,10 +25,10 @@ describe('needsPartnerContributionSeed (TICKET-CAT-02 .version(6) upgrade idempo
 });
 
 describe('goals & forecast schema (TICKET-FUT-02 .version(14))', () => {
-  it('is at version 14', async () => {
+  it('is at version 15', async () => {
     await appDb.open();
 
-    expect(appDb.verno).toBe(14);
+    expect(appDb.verno).toBe(15);
   });
 
   it('declares savingsGoals as an auto-incrementing entity table indexed on sortOrder', async () => {
@@ -60,6 +60,7 @@ describe('goals & forecast schema (TICKET-FUT-02 .version(14))', () => {
       'dashboardLayoutSettings',
       'forecastSettings',
       'importBatches',
+      'loans',
       'mappingProfiles',
       'rules',
       'salaryMetadata',
@@ -79,6 +80,19 @@ describe('goals & forecast schema (TICKET-FUT-02 .version(14))', () => {
 
     expect(indexed).not.toContain('mode');
     expect(indexed).not.toContain('scopeAccountIds');
+  });
+});
+
+describe('loans schema (TICKET-LOAN-01 .version(15))', () => {
+  it('declares loans as an auto-incrementing entity table indexed on categoryId, loanType, archived', async () => {
+    await appDb.open();
+
+    expect(appDb.loans.schema.primKey.auto).toBe(true);
+    expect(appDb.loans.schema.indexes.map((index) => index.name)).toEqual([
+      'categoryId',
+      'loanType',
+      'archived',
+    ]);
   });
 });
 
