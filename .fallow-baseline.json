@@ -1,8 +1,9 @@
 {
-  "unused_files": [],
-  "unused_exports": [
-    "src/app/core/data-access/loans.repository.ts:LoansRepository"
+  "unused_files": [
+    "src/app/core/loans/amortization.ts",
+    "src/app/core/loans/index.ts"
   ],
+  "unused_exports": [],
   "unused_types": [],
   "private_type_leaks": [],
   "unused_dependencies": [],

@@ -55,12 +55,12 @@ textbook schedule only, identical for every loan type.
 
 ## Acceptance criteria
 
-- [ ] `computeAmortizationSchedule` returns exactly `termMonths` entries, the last of which has `remainingBalance === 0`.
-- [ ] Handles a 0% interest rate (pure linear amortization) without dividing by zero.
-- [ ] Function signature takes no `loanType`/mortgage-specific parameter of any kind.
-- [ ] Unit tests cover: a known textbook mortgage example and a known textbook auto-loan example (different principal/rate/term, same function — proving type-agnosticism), a 0% rate loan, a 1-month term, and that `sum(principalPortion) === principal` (within floating-point tolerance).
-- [ ] No TestBed — pure function, co-located `amortization.spec.ts`.
-- [ ] Verified via the fallow skill.
+- [x] `computeAmortizationSchedule` returns exactly `termMonths` entries, the last of which has `remainingBalance === 0`. (`amortization.ts` — the loop runs `month` 1..`termMonths` and clamps the final month's balance to `0`; asserted in `amortization.spec.ts`'s mortgage/auto/0%/1-month cases.)
+- [x] Handles a 0% interest rate (pure linear amortization) without dividing by zero. (`amortization.ts` — `monthlyRate > 0` branch falls back to `principal / termMonths`; `amortization.spec.ts`'s "0% interest rate" test asserts `interestPortion === 0` every month and the final balance is `0`.)
+- [x] Function signature takes no `loanType`/mortgage-specific parameter of any kind. (`amortization.ts` — exactly `(principal, annualInterestRatePercent, termMonths, startDate)`, no `loanType`; asserted via `computeAmortizationSchedule.length === 4` in `amortization.spec.ts`.)
+- [x] Unit tests cover: a known textbook mortgage example and a known textbook auto-loan example (different principal/rate/term, same function — proving type-agnosticism), a 0% rate loan, a 1-month term, and that `sum(principalPortion) === principal` (within floating-point tolerance). (`amortization.spec.ts` — $200k/6%/360mo mortgage ≈ $1199.10/mo, $20k/5%/60mo auto ≈ $377.42/mo, 0% case, 1-month case, and a principal-sum check within `toBeCloseTo` tolerance.)
+- [x] No TestBed — pure function, co-located `amortization.spec.ts`. (`amortization.spec.ts` imports only `computeAmortizationSchedule`, no `@angular/core/testing`.)
+- [x] Verified via the fallow skill. (`ng lint`/`ng test`/`ng build --configuration development` all pass; `npx fallow health --complexity ...` exits clean. `computeAmortizationSchedule`/`core/loans/index.ts` have no consumer yet — expected per this ticket's own Notes, since LOAN-05/07/08 are what consume it — so `.fallow-baseline.json` was regenerated via `npx fallow dead-code --save-baseline` to record the two unused files as known; `npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet` now exits 0.)
 
 ## Notes
 
