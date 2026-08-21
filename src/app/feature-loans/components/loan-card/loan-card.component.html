@@ -1,0 +1,25 @@
+<mm-paper elevation="flat" bodyClass="card-body gap-3">
+  <mm-flex align="start" justify="between">
+    <a [routerLink]="['/loans', vm().loan.id]" class="card-title text-base hover:underline">
+      {{ vm().loan.name }}
+    </a>
+    <mm-badge variant="outline" size="sm" class="w-fit">{{ vm().typeLabel }}</mm-badge>
+  </mm-flex>
+
+  <progress
+    class="progress progress-primary w-full"
+    [value]="vm().percentPaidOff"
+    max="100"
+    [attr.aria-label]="vm().loan.name + ' payoff progress'"
+  ></progress>
+  <mm-text as="p" variant="caption">{{ vm().percentPaidOff }}% paid off</mm-text>
+
+  <mm-flex justify="between" align="baseline">
+    <mm-text as="p" variant="display">{{ vm().balanceLabel }}</mm-text>
+    <mm-text as="p" variant="caption" class="text-base-content/60">remaining</mm-text>
+  </mm-flex>
+
+  <mm-text as="p" variant="caption" class="text-base-content/60">
+    Projected payoff: {{ vm().projectedPayoffDateLabel }}
+  </mm-text>
+</mm-paper>

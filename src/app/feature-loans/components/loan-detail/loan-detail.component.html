@@ -1,0 +1,8 @@
+<mm-page-header [title]="loan()?.name ?? 'Loan'" />
+
+<mm-empty-state
+  title="More detail is on its way"
+  message="A balance-over-time chart, amortization schedule, linked payments, and an ahead/behind indicator for this loan will appear here."
+>
+  <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
+</mm-empty-state>

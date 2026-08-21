@@ -980,4 +980,25 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The Transactions date-range calendar now has "previous year"/"next year" buttons, so picking a date from years back takes a handful of clicks instead of paging through every month in between',
     area: 'Date ranges',
   },
+  {
+    date: '2026-08-21',
+    versionFolder: 'v1.7_loan_tracker',
+    ticketIds: [
+      'TICKET-LOAN-01',
+      'TICKET-LOAN-02',
+      'TICKET-LOAN-03',
+      'TICKET-LOAN-04',
+      'TICKET-LOAN-05',
+      'TICKET-LOAN-06',
+    ],
+    title: 'Added a Loans page for tracking any loan’s real payoff progress',
+    details: [
+      'A new "Loans" page in the sidebar, for a mortgage, a car loan, a personal loan, a student loan, or anything else you’re paying off',
+      'Add a loan with its principal, interest rate, and term, and pick which expense category tracks its payments — any transaction already landing in that category counts, no separate tagging needed',
+      'A card per loan shows its type, a payoff progress bar, the remaining balance, and a projected payoff date',
+      'Progress reflects what you actually paid — including any extra payments — reconciled against the loan’s stated terms, not just a textbook schedule',
+      'A loan’s category can’t be reused by another active loan, so two loans never silently share one payment stream',
+    ],
+    area: 'Loans',
+  },
 ];

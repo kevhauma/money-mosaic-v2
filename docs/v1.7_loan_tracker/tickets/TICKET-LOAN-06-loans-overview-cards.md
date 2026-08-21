@@ -49,15 +49,15 @@ page (LOAN-07 onward).
 
 ## Acceptance criteria
 
-- [ ] Overview lists every active loan as a card with a type badge, progress bar, remaining balance, and projected payoff date.
-- [ ] `LoansStore.progressById` is a computed (no manual subscription/effect wiring) that recomputes when transactions or loans change.
-- [ ] Archived loans are excluded from the overview (consistent with `activeAccounts`/`activeCategories`).
-- [ ] A mortgage-type and a non-mortgage-type loan render with identical layout/styling apart from the badge text.
-- [ ] Empty state shown with zero loans.
-- [ ] Clicking a card navigates to `/loans/:id`.
-- [ ] Unit tests cover: `progressById` computed with 0/1/2 loans (mixed types) and transactions spanning multiple categories.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: create a mortgage-type and an auto-type loan linked to different categories, add categorized transactions to one, confirm its progress bar and balance update while the other stays at 0%, and both badges render correctly.
+- [x] Overview lists every active loan as a card with a type badge, progress bar, remaining balance, and projected payoff date. (`loans-overview.component.html`'s `loanCards()` grid of `<app-loan-card>`; `loan-card.component.html`; confirmed live below.)
+- [x] `LoansStore.progressById` is a computed (no manual subscription/effect wiring) that recomputes when transactions or loans change. (`loans.store.ts` — a `withComputed` block, plain `computed()` over `store.loans()` + `TransactionsStore.transactions()`; `loans.store.spec.ts`'s "recomputes when a new loan is added, with no manual subscription wiring" test.)
+- [x] Archived loans are excluded from the overview (consistent with `activeAccounts`/`activeCategories`). (`loans-overview.component.ts`'s `loanCards` reads `activeLoans()`, not `loans()`; `loans-overview.component.spec.ts`'s "renders one card per active loan, excluding archived ones".)
+- [x] A mortgage-type and a non-mortgage-type loan render with identical layout/styling apart from the badge text. (`loan-card.component.spec.ts`'s "renders identical layout for a mortgage and a non-mortgage loanType" — innerHTML diffed with type/name words stripped.)
+- [x] Empty state shown with zero loans. (`loans-overview.component.html` — `@if (loanCards().length === 0)`; unchanged from LOAN-02/03's placeholder branch, still covered by `loans-overview.component.spec.ts`.)
+- [x] Clicking a card navigates to `/loans/:id`. (`loan-card.component.html` — `[routerLink]="['/loans', vm().loan.id]"`; `loan-card.component.spec.ts`'s href check; confirmed live below via a real DOM click.)
+- [x] Unit tests cover: `progressById` computed with 0/1/2 loans (mixed types) and transactions spanning multiple categories. (`loans.store.spec.ts`'s "LoansStore: progressById" block — empty map, single loan, two loans with mixed `loanType`s matched to their own `categoryId` plus an unrelated-category transaction, and the recompute-on-add case.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`ng lint`/`ng test`/`ng build --configuration development` all pass; `npx fallow health --complexity ...` exits clean; `npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet` exits 0 — `amortization.ts`/`loan-progress.ts`/`LoansRepository` now have real consumers, so no baseline update was even needed this time. No coding-conventions violations found.)
+- [x] Verified live in the browser: create a mortgage-type and an auto-type loan linked to different categories, add categorized transactions to one, confirm its progress bar and balance update while the other stays at 0%, and both badges render correctly. (`preview_start` on `dev`; the "Home mortgage"/"Car loan" test loans from LOAN-03 already had real dev-seed transactions in their linked categories and showed 2%/1% paid off with real balances; added a third "Student loan" on the untouched Health category, which rendered at exactly 0% paid off / €10,000.00 remaining while the other two kept their real progress — all three badges (Mortgage/Auto/Student) rendered correctly; clicking "Home mortgage" navigated to `/loans/1`, which resolved the LOAN-07 placeholder shell showing "Home mortgage" in its header, no console errors.)
 
 ## Notes
 

@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import {
   patchState,
   signalStore,
@@ -17,6 +17,8 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { LoansRepository, type Loan } from '@/core/data-access';
+import { computeLoanProgress, type LoanProgress } from '@/core/loans';
+import { TransactionsStore } from '@/core/state';
 import { sortedBySortOrder, withArchivable } from '@/shared/utils';
 
 const loanConfig = entityConfig({
@@ -28,6 +30,8 @@ const loanConfig = entityConfig({
  * Every tracked loan (TICKET-LOAN-02, FR-LOAN-2) — a mortgage, a car loan, a personal loan, or
  * anything else amortized on a fixed principal/rate/term. `CategoriesStore`'s shape: entities +
  * `withArchivable`, sorted by manual `sortOrder` for display, same as `Account`/`Category`.
+ * `progressById` (TICKET-LOAN-06) adds each loan's real payoff position, derived from
+ * `TransactionsStore` alongside it.
  */
 export const LoansStore = signalStore(
   { providedIn: 'root' },
@@ -38,6 +42,31 @@ export const LoansStore = signalStore(
     activeLoans: sortedBySortOrder(activeEntities),
     archivedLoans: archivedEntities,
   })),
+  withComputed((store) => {
+    const transactionsStore = inject(TransactionsStore);
+
+    return {
+      /**
+       * Every loan's real payoff position (TICKET-LOAN-06, FR-LOAN-6) — a plain `computed()`, so it
+       * recomputes automatically whenever either `loans()` or `TransactionsStore.transactions()`
+       * changes, with no manual subscription/effect wiring. Filtering transactions down to each
+       * loan's own `categoryId` is this store's job, not `computeLoanProgress`'s (TICKET-LOAN-05's
+       * Notes) — the function itself stays pure over an already-scoped payment list.
+       */
+      progressById: computed(() => {
+        const transactions = transactionsStore.transactions();
+        const map = new Map<number, LoanProgress>();
+        for (const loan of store.loans()) {
+          if (loan.id == null) continue;
+          const payments = transactions.filter(
+            (transaction) => transaction.categoryId === loan.categoryId,
+          );
+          map.set(loan.id, computeLoanProgress(loan, payments));
+        }
+        return map;
+      }),
+    };
+  }),
   withState({ hydrated: false }),
   withMethods((store) => {
     const loansRepository = inject(LoansRepository);
