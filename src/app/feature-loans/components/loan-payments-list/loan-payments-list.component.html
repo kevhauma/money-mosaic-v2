@@ -1,0 +1,29 @@
+<mm-paper elevation="flat">
+  <p class="card-title text-base">Linked payments</p>
+
+  @if (rows().length > 0) {
+    <ul class="mt-2 flex flex-col gap-2">
+      @for (row of rows(); track row.id) {
+        <li>
+          <a
+            [routerLink]="['/transactions']"
+            [queryParams]="row.queryParams"
+            class="flex items-center justify-between gap-3 rounded-field py-2 pl-3 transition hover:bg-base-200"
+          >
+            <span class="min-w-0">
+              <span class="block truncate">{{ row.description }}</span>
+              <mm-text class="text-xs text-base-content/60">{{ row.bookingDate }}</mm-text>
+            </span>
+            <mm-text weight="medium" class="shrink-0 text-sm">
+              <mm-privacy-blur [blurred]="privacyMode()">{{ row.formattedAmount }}</mm-privacy-blur>
+            </mm-text>
+          </a>
+        </li>
+      }
+    </ul>
+  } @else {
+    <mm-text as="p" align="center" class="py-6 text-sm text-base-content/60">
+      No transactions in this loan's linked category yet.
+    </mm-text>
+  }
+</mm-paper>

@@ -1024,4 +1024,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'A loan’s detail page now has a full month-by-month schedule — payment, principal, interest, and remaining balance for every month of the term',
     area: 'Loans',
   },
+  {
+    date: '2026-08-21',
+    versionFolder: 'v1.7_loan_tracker',
+    ticketIds: ['TICKET-LOAN-09'],
+    title:
+      'A loan’s detail page now lists every transaction that counted toward its payoff, most recent first, each linking straight to that transaction',
+    area: 'Loans',
+  },
 ];

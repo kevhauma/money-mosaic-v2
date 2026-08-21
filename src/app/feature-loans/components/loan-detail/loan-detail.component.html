@@ -19,9 +19,11 @@
 
   <app-loan-amortization-table [loan]="loan" class="mb-4 block" />
 
+  <app-loan-payments-list [loan]="loan" class="mb-4 block" />
+
   <mm-empty-state
     title="More detail is on its way"
-    message="Linked payments and an ahead/behind indicator for this loan will appear here."
+    message="An ahead/behind indicator for this loan will appear here."
   >
     <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
   </mm-empty-state>

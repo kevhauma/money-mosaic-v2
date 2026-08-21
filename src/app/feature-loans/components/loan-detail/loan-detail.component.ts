@@ -17,11 +17,12 @@ import {
 import { TransactionsStore } from '@/core/state';
 import { LoanAmortizationTableComponent } from '../loan-amortization-table/loan-amortization-table.component';
 import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-chart.component';
+import { LoanPaymentsListComponent } from '../loan-payments-list/loan-payments-list.component';
 import { LoansStore } from '../../loans.store';
 
 /**
- * The `/loans/:id` detail route (TICKET-LOAN-06). LOAN-07 (balance chart) and LOAN-08
- * (amortization table) fill in the first two panels; LOAN-09/LOAN-10 each add another below them.
+ * The `/loans/:id` detail route (TICKET-LOAN-06). LOAN-07 (balance chart), LOAN-08 (amortization
+ * table), and LOAN-09 (linked payments) fill in the first three panels; LOAN-10 adds the last one.
  * The header's archive/delete actions (TICKET-LOAN-11) are real: the `AccountsDetailComponent`
  * shape, with every message reading "this loan," never "this mortgage," since a mortgage, a car
  * loan, and a personal loan are archived/deleted identically.
@@ -35,6 +36,7 @@ import { LoansStore } from '../../loans.store';
     FlexComponent,
     LoanAmortizationTableComponent,
     LoanBalanceChartComponent,
+    LoanPaymentsListComponent,
     NgIcon,
     PageHeaderComponent,
   ],
