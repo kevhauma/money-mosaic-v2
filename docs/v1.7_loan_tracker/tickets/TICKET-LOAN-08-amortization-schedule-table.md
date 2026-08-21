@@ -34,13 +34,13 @@ row per month with payment, principal portion, interest portion, and remaining b
 
 ## Acceptance criteria
 
-- [ ] Table renders all `termMonths` rows via `PaginatorComponent`, not an unpaginated full dump.
-- [ ] Columns match the `AmortizationEntry` fields, currency-formatted.
-- [ ] Re-renders correctly if the loan's terms are edited (LOAN-03's edit path) — the computed schedule updates, no stale cached table.
-- [ ] Behaviour is identical regardless of `loanType` — no type-specific column or formatting.
-- [ ] Unit tests cover: the component's computed schedule wiring (pagination slicing, not the math itself — that's LOAN-04's test surface).
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: open a loan's detail page, page through the schedule table, confirm the last row's remaining balance is 0.
+- [x] Table renders all `termMonths` rows via `PaginatorComponent`, not an unpaginated full dump. (`loan-amortization-table.component.ts` — `createPagination({ items: rows, pageSize: 12 })`; `loan-amortization-table.component.spec.ts`'s pagination-math test asserts `rows()` holds all 30 rows while `pagedItems()` holds only 12.)
+- [x] Columns match the `AmortizationEntry` fields, currency-formatted. (Month/Date/Payment/Principal/Interest/Remaining balance, each `formatCurrency()`/`formatDate()`d; `loan-amortization-table.component.spec.ts`'s exact-match test against `computeAmortizationSchedule`'s own output.)
+- [x] Re-renders correctly if the loan's terms are edited (LOAN-03's edit path) — the computed schedule updates, no stale cached table. (`rows` is a `computed()` over `loan()` alone; `loan-amortization-table.component.spec.ts`'s "recomputes the schedule (and clamps the page) when the loan input changes" test — shrinks `termMonths` from 30 to 6 while on page 3, confirms both the row count and the clamped `currentPage` update.)
+- [x] Behaviour is identical regardless of `loanType` — no type-specific column or formatting. (`loan-amortization-table.component.spec.ts`'s "renders identical columns/behaviour for a mortgage and a non-mortgage loanType" test compares the rendered `<thead>` text byte-for-byte.)
+- [x] Unit tests cover: the component's computed schedule wiring (pagination slicing, not the math itself — that's LOAN-04's test surface). (`loan-amortization-table.component.spec.ts` — pagination math, last-page/last-row content, edit-triggered recompute+clamp, mortgage/auto parity, and the formatted-column exact-match check; none re-test `computeAmortizationSchedule`'s own math.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`ng lint`/`ng test`/`ng build --configuration development` all pass; both fallow gates exit 0. No coding-conventions violations found.)
+- [x] Verified live in the browser: open a loan's detail page, page through the schedule table, confirm the last row's remaining balance is 0. (`preview_start` on `dev`; opened `/loans/1`, expanded the collapsed "Amortization schedule" panel — page 1 showed months 1–12 with real formatted currency/date values; jumped to page 20 of 20 and confirmed month 240 (the final row) shows exactly €0.00 remaining balance.)
 
 ## Notes
 

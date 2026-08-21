@@ -15,15 +15,16 @@ import {
   PageHeaderComponent,
 } from '@/shared/ui';
 import { TransactionsStore } from '@/core/state';
+import { LoanAmortizationTableComponent } from '../loan-amortization-table/loan-amortization-table.component';
 import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-chart.component';
 import { LoansStore } from '../../loans.store';
 
 /**
- * The `/loans/:id` detail route (TICKET-LOAN-06). LOAN-07 fills in the first real panel — the
- * balance-over-time chart; LOAN-08 through LOAN-10 each add another below it. The header's
- * archive/delete actions (TICKET-LOAN-11) are real: the `AccountsDetailComponent` shape, with every
- * message reading "this loan," never "this mortgage," since a mortgage, a car loan, and a personal
- * loan are archived/deleted identically.
+ * The `/loans/:id` detail route (TICKET-LOAN-06). LOAN-07 (balance chart) and LOAN-08
+ * (amortization table) fill in the first two panels; LOAN-09/LOAN-10 each add another below them.
+ * The header's archive/delete actions (TICKET-LOAN-11) are real: the `AccountsDetailComponent`
+ * shape, with every message reading "this loan," never "this mortgage," since a mortgage, a car
+ * loan, and a personal loan are archived/deleted identically.
  */
 @Component({
   selector: 'app-loan-detail',
@@ -32,6 +33,7 @@ import { LoansStore } from '../../loans.store';
     ConfirmDialogComponent,
     EmptyStateComponent,
     FlexComponent,
+    LoanAmortizationTableComponent,
     LoanBalanceChartComponent,
     NgIcon,
     PageHeaderComponent,

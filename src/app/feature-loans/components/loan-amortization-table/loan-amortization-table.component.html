@@ -1,0 +1,36 @@
+<mm-collapse [open]="open()" (openChange)="open.set($event)">
+  <span mm-collapse-title>Amortization schedule</span>
+
+  <mm-table class="bg-base-100">
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th>Date</th>
+        <th class="text-right">Payment</th>
+        <th class="text-right">Principal</th>
+        <th class="text-right">Interest</th>
+        <th class="text-right">Remaining balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of pagination.pagedItems(); track row.month) {
+        <tr>
+          <td>{{ row.month }}</td>
+          <td class="whitespace-nowrap">{{ row.dateLabel }}</td>
+          <td class="text-right">{{ row.paymentLabel }}</td>
+          <td class="text-right">{{ row.principalLabel }}</td>
+          <td class="text-right">{{ row.interestLabel }}</td>
+          <td class="text-right">{{ row.remainingBalanceLabel }}</td>
+        </tr>
+      }
+    </tbody>
+  </mm-table>
+
+  <mm-paginator
+    class="mt-3 block"
+    [currentPage]="pagination.currentPage()"
+    [totalPages]="pagination.totalPages()"
+    [pageRange]="pagination.pageRange()"
+    (pageChange)="pagination.setPage($event)"
+  />
+</mm-collapse>

@@ -1016,4 +1016,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'A loan’s detail page now charts its balance dropping over time — the textbook schedule next to what you actually paid — so you can see at a glance whether you’re ahead or behind',
     area: 'Loans',
   },
+  {
+    date: '2026-08-21',
+    versionFolder: 'v1.7_loan_tracker',
+    ticketIds: ['TICKET-LOAN-08'],
+    title:
+      'A loan’s detail page now has a full month-by-month schedule — payment, principal, interest, and remaining balance for every month of the term',
+    area: 'Loans',
+  },
 ];
