@@ -119,11 +119,12 @@ describe('AppShellComponent: grouped sidebar navigation (TICKET-UI-26)', () => {
     expect(link.querySelector('ng-icon')).not.toBeNull();
   });
 
-  it('puts Accounts, Transactions, Categories, Learning and Import in Data — and nothing else', async () => {
+  it('puts Accounts, Loans, Transactions, Categories, Learning and Import in Data — and nothing else', async () => {
     const shell = await renderShell();
 
     expect(hrefsIn(groupFor(shell, 'Data'))).toEqual([
       '/accounts',
+      '/loans',
       '/transactions',
       '/categories',
       '/learning',

@@ -48,7 +48,7 @@ This introduces a new requirement family, **FR-LOAN**. Like v1.6's set, these ti
 independent, so the list below is ordered by dependency, not by FR number:
 
 - [x] [TICKET-LOAN-01](./tickets/TICKET-LOAN-01-loan-entity-and-repository.md) — `Loan` entity (with `loanType`), `loans` table, and repository (adds FR-LOAN-1) — prerequisite for every other ticket
-- [ ] [TICKET-LOAN-02](./tickets/TICKET-LOAN-02-loans-page-scaffold.md) — Dedicated Loans page (route, store, nav) (adds FR-LOAN-2) — needs LOAN-01
+- [x] [TICKET-LOAN-02](./tickets/TICKET-LOAN-02-loans-page-scaffold.md) — Dedicated Loans page (route, store, nav) (adds FR-LOAN-2) — needs LOAN-01
 - [ ] [TICKET-LOAN-03](./tickets/TICKET-LOAN-03-create-edit-loan-form.md) — Create/edit loan form, with type + linked-category assignment (adds FR-LOAN-3) — needs LOAN-01, LOAN-02
 - [ ] [TICKET-LOAN-04](./tickets/TICKET-LOAN-04-scheduled-amortization-calculation.md) — Scheduled amortization calculation (adds FR-LOAN-4) — pure function, type-agnostic, only needs LOAN-01's types; can be built in parallel with LOAN-02/03
 - [ ] [TICKET-LOAN-05](./tickets/TICKET-LOAN-05-actual-payoff-progress.md) — Actual payoff progress from linked transactions (adds FR-LOAN-5) — needs LOAN-04's schedule shape and LOAN-03 to have a real loan + category to compute against

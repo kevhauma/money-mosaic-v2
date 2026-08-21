@@ -48,6 +48,10 @@ export const routes: Routes = [
         loadChildren: () => import('@/feature-accounts').then((m) => m.ACCOUNTS_ROUTES),
       },
       {
+        path: 'loans',
+        loadChildren: () => import('@/feature-loans').then((m) => m.LOANS_ROUTES),
+      },
+      {
         // Imported directly (not via the @/feature-transactions barrel). TICKET-SOLID-05 moved the
         // entity stores that used to create a cycle here (AccountsStore/TransactionsStore) into
         // core/state, so the barrel itself is cycle-free now — but this deep import is a deliberate,
