@@ -14,6 +14,13 @@ export type AmortizationEntry = {
 };
 
 /**
+ * The monthly rate a loan's stated annual percentage compounds at — shared with `loan-progress.ts`
+ * (TICKET-LOAN-05) so the two stay in lockstep; both derive it from `Loan.interestRate` the same way.
+ */
+export const monthlyRateOf = (annualInterestRatePercent: number): number =>
+  annualInterestRatePercent / 100 / 12;
+
+/**
  * `startDate` advanced by `month` calendar months, same day-of-month where the target month has
  * one — a day past a shorter month's end rolls forward (native `Date` day-overflow behaviour),
  * same as `net-worth-projection.ts`'s `pointDate` uses `Date.UTC` for its own month stepping.
@@ -37,7 +44,7 @@ export function computeAmortizationSchedule(
   termMonths: number,
   startDate: string,
 ): AmortizationEntry[] {
-  const monthlyRate = annualInterestRatePercent / 100 / 12;
+  const monthlyRate = monthlyRateOf(annualInterestRatePercent);
   const payment =
     monthlyRate > 0
       ? (principal * monthlyRate) / (1 - (1 + monthlyRate) ** -termMonths)
