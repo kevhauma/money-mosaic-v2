@@ -1,35 +1,35 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
+import { tablerArchive, tablerArchiveOff, tablerTrash } from '@ng-icons/tabler-icons';
 import {
-  tablerArchive,
-  tablerArchiveOff,
-  tablerReceipt2,
-  tablerTrash,
-} from '@ng-icons/tabler-icons';
-import {
+  BadgeComponent,
   ButtonComponent,
   ConfirmDialogComponent,
   EmptyStateComponent,
   FlexComponent,
   PageHeaderComponent,
+  TypographyComponent,
 } from '@/shared/ui';
 import { TransactionsStore } from '@/core/state';
+import { computeAmortizationSchedule, computeScheduleComparison } from '@/core/loans';
 import { LoanAmortizationTableComponent } from '../loan-amortization-table/loan-amortization-table.component';
 import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-chart.component';
 import { LoanPaymentsListComponent } from '../loan-payments-list/loan-payments-list.component';
+import { loanScheduleStatusFor } from '../../loan-schedule-status';
 import { LoansStore } from '../../loans.store';
 
 /**
  * The `/loans/:id` detail route (TICKET-LOAN-06). LOAN-07 (balance chart), LOAN-08 (amortization
- * table), and LOAN-09 (linked payments) fill in the first three panels; LOAN-10 adds the last one.
- * The header's archive/delete actions (TICKET-LOAN-11) are real: the `AccountsDetailComponent`
- * shape, with every message reading "this loan," never "this mortgage," since a mortgage, a car
- * loan, and a personal loan are archived/deleted identically.
+ * table), LOAN-09 (linked payments), and LOAN-10 (ahead/behind indicator) fill in every panel. The
+ * header's archive/delete actions (TICKET-LOAN-11) are real: the `AccountsDetailComponent` shape,
+ * with every message reading "this loan," never "this mortgage," since a mortgage, a car loan, and
+ * a personal loan are archived/deleted identically.
  */
 @Component({
   selector: 'app-loan-detail',
   imports: [
+    BadgeComponent,
     ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
@@ -39,10 +39,11 @@ import { LoansStore } from '../../loans.store';
     LoanPaymentsListComponent,
     NgIcon,
     PageHeaderComponent,
+    TypographyComponent,
   ],
   templateUrl: './loan-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ tablerArchive, tablerArchiveOff, tablerReceipt2, tablerTrash })],
+  viewProviders: [provideIcons({ tablerArchive, tablerArchiveOff, tablerTrash })],
 })
 export class LoanDetailComponent {
   readonly id = input.required<string>();
@@ -62,6 +63,22 @@ export class LoanDetailComponent {
     return this.transactionsStore
       .transactions()
       .filter((transaction) => transaction.categoryId === loan.categoryId);
+  });
+
+  /** The same ahead/behind-schedule + interest-saved badge the overview cards show (TICKET-LOAN-10) — one shared builder, so the two can't phrase the same figure two different ways. */
+  protected readonly scheduleStatus = computed(() => {
+    const loan = this.loan();
+    if (loan?.id == null) return null;
+    const progress = this.loansStore.progressById().get(loan.id);
+    if (!progress) return null;
+
+    const schedule = computeAmortizationSchedule(
+      loan.principal,
+      loan.interestRate,
+      loan.termMonths,
+      loan.startDate,
+    );
+    return loanScheduleStatusFor(computeScheduleComparison(loan, schedule, progress));
   });
 
   protected readonly archiveToggle = computed(() =>

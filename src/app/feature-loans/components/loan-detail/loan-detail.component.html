@@ -15,18 +15,20 @@
     </mm-flex>
   </mm-page-header>
 
+  @if (scheduleStatus(); as status) {
+    <mm-flex align="center" gap="2" class="mb-4 flex-wrap">
+      <mm-badge [color]="status.color" size="sm">{{ status.label }}</mm-badge>
+      <mm-text as="p" variant="caption" class="text-base-content/60">{{
+        status.interestLabel
+      }}</mm-text>
+    </mm-flex>
+  }
+
   <app-loan-balance-chart [loan]="loan" [payments]="payments()" class="mb-4 block" />
 
   <app-loan-amortization-table [loan]="loan" class="mb-4 block" />
 
   <app-loan-payments-list [loan]="loan" class="mb-4 block" />
-
-  <mm-empty-state
-    title="More detail is on its way"
-    message="An ahead/behind indicator for this loan will appear here."
-  >
-    <ng-icon icon name="tablerReceipt2" size="40" aria-hidden="true" />
-  </mm-empty-state>
 
   <mm-confirm-dialog
     [(open)]="deleteConfirmOpen"

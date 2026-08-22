@@ -1,6 +1,10 @@
 import type { Loan, Transaction } from '@/core/data-access';
 import { computeAmortizationSchedule } from './amortization';
-import { computeActualBalanceSeries, computeLoanProgress } from './loan-progress';
+import {
+  computeActualBalanceSeries,
+  computeLoanProgress,
+  computeScheduleComparison,
+} from './loan-progress';
 
 const loan = (overrides: Partial<Loan> = {}): Loan => ({
   id: 1,
@@ -230,5 +234,128 @@ describe('computeActualBalanceSeries (TICKET-LOAN-07)', () => {
 
     expect(series.at(-1)?.balance).toBe(progress.actualBalance);
     expect(series.at(-1)?.date).toBe(progress.lastPaymentDate);
+  });
+});
+
+describe('computeScheduleComparison (TICKET-LOAN-10)', () => {
+  it('reads as exactly on schedule with nothing saved when there are no payments yet', () => {
+    const testLoan = loan();
+    const schedule = computeAmortizationSchedule(
+      testLoan.principal,
+      testLoan.interestRate,
+      testLoan.termMonths,
+      testLoan.startDate,
+    );
+    const progress = computeLoanProgress(testLoan, []);
+
+    const comparison = computeScheduleComparison(testLoan, schedule, progress);
+
+    expect(comparison.monthsAheadOfSchedule).toBe(0);
+    expect(comparison.interestSavedEstimate).toBe(0);
+    expect(comparison.projectedPayoffDate).toBe(schedule.at(-1)?.date);
+  });
+
+  for (const loanType of ['mortgage', 'auto'] as const) {
+    it(`on-schedule payments produce monthsAheadOfSchedule 0 and interestSavedEstimate near 0, for a ${loanType}-type loan`, () => {
+      const testLoan = loan({ loanType, principal: 12000, interestRate: 6, termMonths: 12 });
+      const schedule = computeAmortizationSchedule(
+        testLoan.principal,
+        testLoan.interestRate,
+        testLoan.termMonths,
+        testLoan.startDate,
+      );
+      const payments = schedule
+        .slice(0, 6)
+        .map((entry, index) => payment(index + 1, entry.date, entry.payment));
+      const progress = computeLoanProgress(testLoan, payments);
+
+      const comparison = computeScheduleComparison(testLoan, schedule, progress);
+
+      // Not exactly 0 in every case: `monthsAheadOfSchedule` is quantized to whole scheduled
+      // months by construction (this ticket's own algorithm), and the day-based accrual
+      // (TICKET-LOAN-05) tracks the schedule closely but not bit-for-bit — real calendar months
+      // vary 28-31 days against the schedule's flat monthly-rate assumption, so a real month
+      // containing e.g. a 29-day February can land a hair on either side of an adjacent scheduled
+      // month's balance and flip the whole-month match by one. ±1 is "on schedule" in practice;
+      // a multi-month drift would be the real bug this test guards against.
+      expect(Math.abs(comparison.monthsAheadOfSchedule)).toBeLessThanOrEqual(1);
+      // Small relative to the ~€65 total interest this loan accrues in 6 months.
+      expect(Math.abs(comparison.interestSavedEstimate)).toBeLessThan(5);
+    });
+
+    it(`consistent overpayments produce a positive monthsAheadOfSchedule and interestSavedEstimate, for a ${loanType}-type loan`, () => {
+      const testLoan = loan({ loanType, principal: 12000, interestRate: 6, termMonths: 12 });
+      const schedule = computeAmortizationSchedule(
+        testLoan.principal,
+        testLoan.interestRate,
+        testLoan.termMonths,
+        testLoan.startDate,
+      );
+      // Double payment for the first three scheduled months.
+      const payments = schedule
+        .slice(0, 3)
+        .map((entry, index) => payment(index + 1, entry.date, entry.payment * 2));
+      const progress = computeLoanProgress(testLoan, payments);
+
+      const comparison = computeScheduleComparison(testLoan, schedule, progress);
+
+      expect(comparison.monthsAheadOfSchedule).toBeGreaterThan(0);
+      expect(comparison.interestSavedEstimate).toBeGreaterThan(0);
+      // Payoff pulled earlier by exactly the months-ahead figure.
+      const expectedPayoff = new Date(schedule.at(-1)!.date);
+      expectedPayoff.setUTCMonth(expectedPayoff.getUTCMonth() - comparison.monthsAheadOfSchedule);
+      expect(comparison.projectedPayoffDate).toBe(expectedPayoff.toISOString().slice(0, 10));
+    });
+
+    it(`missed/underpaid periods produce a negative monthsAheadOfSchedule and a later payoff, for a ${loanType}-type loan`, () => {
+      const testLoan = loan({ loanType, principal: 12000, interestRate: 6, termMonths: 12 });
+      const schedule = computeAmortizationSchedule(
+        testLoan.principal,
+        testLoan.interestRate,
+        testLoan.termMonths,
+        testLoan.startDate,
+      );
+      // A fraction of the scheduled payment for the first six months.
+      const payments = schedule
+        .slice(0, 6)
+        .map((entry, index) => payment(index + 1, entry.date, entry.payment * 0.3));
+      const progress = computeLoanProgress(testLoan, payments);
+
+      const comparison = computeScheduleComparison(testLoan, schedule, progress);
+
+      expect(comparison.monthsAheadOfSchedule).toBeLessThan(0);
+      expect(comparison.interestSavedEstimate).toBeLessThan(0);
+      const scheduledFinal = new Date(schedule.at(-1)!.date);
+      expect(new Date(comparison.projectedPayoffDate).getTime()).toBeGreaterThan(
+        scheduledFinal.getTime(),
+      );
+    });
+  }
+
+  it('produces identical figures for two loanTypes given the same underlying numbers — no type-specific branch', () => {
+    const mortgage = loan({
+      loanType: 'mortgage',
+      principal: 12000,
+      interestRate: 6,
+      termMonths: 12,
+    });
+    const auto = loan({ loanType: 'auto', principal: 12000, interestRate: 6, termMonths: 12 });
+    const schedule = computeAmortizationSchedule(12000, 6, 12, '2024-01-01');
+    const payments = schedule
+      .slice(0, 3)
+      .map((entry, index) => payment(index + 1, entry.date, entry.payment * 2));
+
+    const mortgageComparison = computeScheduleComparison(
+      mortgage,
+      schedule,
+      computeLoanProgress(mortgage, payments),
+    );
+    const autoComparison = computeScheduleComparison(
+      auto,
+      schedule,
+      computeLoanProgress(auto, payments),
+    );
+
+    expect(autoComparison).toEqual(mortgageComparison);
   });
 });

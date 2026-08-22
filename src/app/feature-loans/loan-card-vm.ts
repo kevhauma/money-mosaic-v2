@@ -1,17 +1,28 @@
 import type { Loan } from '@/core/data-access';
-import { computeAmortizationSchedule, type LoanProgress } from '@/core/loans';
+import {
+  computeAmortizationSchedule,
+  computeScheduleComparison,
+  type LoanProgress,
+} from '@/core/loans';
+import type { BadgeColor } from '@/shared/ui';
 import { formatCurrency, formatDate } from '@/shared/utils';
+import { loanScheduleStatusFor } from './loan-schedule-status';
 import { LOAN_TYPE_OPTIONS } from './loan-types';
 
-/** One loan's overview-card row (TICKET-LOAN-06) — every display fact already resolved, so the card is purely presentational. */
+/** One loan's overview-card row (TICKET-LOAN-06/10) — every display fact already resolved, so the card is purely presentational. */
 export type LoanCardVm = {
   loan: Loan;
   typeLabel: string;
   /** `0`-`100`, for the daisyUI `progress` bar's `value`. */
   percentPaidOff: number;
   balanceLabel: string;
-  /** LOAN-04's scheduled final payoff date, `formatDate()`d — LOAN-10 later adds the ahead/behind delta on top. */
+  /** The schedule's final date shifted by the ahead/behind delta (TICKET-LOAN-10), `formatDate()`d. */
   projectedPayoffDateLabel: string;
+  /** "8 months ahead of schedule" / "3 months behind schedule" / "On schedule". */
+  scheduleStatusLabel: string;
+  scheduleStatusColor: BadgeColor;
+  /** "~€1,240 interest saved so far", or the inverse phrasing when behind. */
+  interestLabel: string;
 };
 
 const typeLabelFor = (loanType: Loan['loanType']): string =>
@@ -24,13 +35,17 @@ export const loanCardVmFor = (loan: Loan, progress: LoanProgress): LoanCardVm =>
     loan.termMonths,
     loan.startDate,
   );
-  const projectedPayoffDate = schedule.at(-1)?.date;
+  const comparison = computeScheduleComparison(loan, schedule, progress);
+  const status = loanScheduleStatusFor(comparison);
 
   return {
     loan,
     typeLabel: typeLabelFor(loan.loanType),
     percentPaidOff: Math.round(progress.percentPaidOff * 100),
     balanceLabel: formatCurrency(progress.actualBalance),
-    projectedPayoffDateLabel: projectedPayoffDate ? formatDate(projectedPayoffDate) : '—',
+    projectedPayoffDateLabel: formatDate(comparison.projectedPayoffDate),
+    scheduleStatusLabel: status.label,
+    scheduleStatusColor: status.color,
+    interestLabel: status.interestLabel,
   };
 };

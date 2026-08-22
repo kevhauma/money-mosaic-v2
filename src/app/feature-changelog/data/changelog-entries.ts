@@ -1032,4 +1032,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'A loan’s detail page now lists every transaction that counted toward its payoff, most recent first, each linking straight to that transaction',
     area: 'Loans',
   },
+  {
+    date: '2026-08-22',
+    versionFolder: 'v1.7_loan_tracker',
+    ticketIds: ['TICKET-LOAN-10'],
+    title:
+      'Every loan now shows whether you’re ahead of or behind its original schedule, and roughly how much interest your extra payments have saved',
+    area: 'Loans',
+  },
 ];

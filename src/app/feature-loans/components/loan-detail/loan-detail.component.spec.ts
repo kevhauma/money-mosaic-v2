@@ -103,12 +103,13 @@ describe('LoanDetailComponent (TICKET-LOAN-06)', () => {
     expect(host.textContent).toContain('Loan not found');
   });
 
-  it('renders a placeholder empty state — LOAN-10 fills this page in', async () => {
+  it('renders the ahead/behind-schedule badge and interest-saved caption (TICKET-LOAN-10)', async () => {
     const fixture = await createFixture([loan({ id: 1 })], '1');
     const host = fixture.nativeElement as HTMLElement;
 
-    expect(host.querySelector('mm-empty-state')).not.toBeNull();
-    expect(host.textContent).toContain('More detail is on its way');
+    expect(host.querySelector('mm-badge')).not.toBeNull();
+    expect(host.textContent).toMatch(/ahead of schedule|behind schedule|On schedule/);
+    expect(host.textContent).toMatch(/interest saved so far|extra interest so far/);
   });
 
   it('renders the amortization schedule table (TICKET-LOAN-08)', async () => {

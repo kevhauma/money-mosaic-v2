@@ -82,4 +82,14 @@ describe('LoanCardComponent (TICKET-LOAN-06)', () => {
     const progress = host.querySelector('progress') as HTMLProgressElement | null;
     expect(progress?.value).toBe(1);
   });
+
+  it('renders the ahead/behind-schedule badge and interest-saved caption (TICKET-LOAN-10)', async () => {
+    const fixture = await createFixture(loan());
+    const host = fixture.nativeElement as HTMLElement;
+
+    const badges = host.querySelectorAll('mm-badge');
+    expect(badges.length).toBe(2); // type badge + schedule-status badge
+    expect(host.textContent).toMatch(/ahead of schedule|behind schedule|On schedule/);
+    expect(host.textContent).toMatch(/interest saved so far|extra interest so far/);
+  });
 });

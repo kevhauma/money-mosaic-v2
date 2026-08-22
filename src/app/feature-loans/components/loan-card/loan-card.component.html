@@ -22,4 +22,11 @@
   <mm-text as="p" variant="caption" class="text-base-content/60">
     Projected payoff: {{ vm().projectedPayoffDateLabel }}
   </mm-text>
+
+  <mm-flex align="center" gap="2" class="flex-wrap">
+    <mm-badge [color]="vm().scheduleStatusColor" size="sm">{{ vm().scheduleStatusLabel }}</mm-badge>
+    <mm-text as="p" variant="caption" class="text-base-content/60">{{
+      vm().interestLabel
+    }}</mm-text>
+  </mm-flex>
 </mm-paper>

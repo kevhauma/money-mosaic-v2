@@ -57,7 +57,7 @@ independent, so the list below is ordered by dependency, not by FR number:
 - [x] [TICKET-LOAN-07](./tickets/TICKET-LOAN-07-balance-over-time-chart.md) — Balance-over-time chart, scheduled vs. actual (adds FR-LOAN-7) — needs LOAN-04 + LOAN-05
 - [x] [TICKET-LOAN-08](./tickets/TICKET-LOAN-08-amortization-schedule-table.md) — Amortization schedule table (adds FR-LOAN-8) — needs LOAN-04 only; independent of LOAN-07, can run in parallel
 - [x] [TICKET-LOAN-09](./tickets/TICKET-LOAN-09-linked-payments-list.md) — Linked payments list on loan detail (adds FR-LOAN-9) — needs LOAN-01 + `TransactionsStore`; fairly independent, can slot in any time after LOAN-02
-- [ ] [TICKET-LOAN-10](./tickets/TICKET-LOAN-10-ahead-behind-schedule-indicator.md) — Ahead/behind-schedule + interest-saved indicator (adds FR-LOAN-10) — needs LOAN-05, last since it's the most derived figure
+- [x] [TICKET-LOAN-10](./tickets/TICKET-LOAN-10-ahead-behind-schedule-indicator.md) — Ahead/behind-schedule + interest-saved indicator (adds FR-LOAN-10) — needs LOAN-05, last since it's the most derived figure
 
 ## Considered, not ticketed yet
 
