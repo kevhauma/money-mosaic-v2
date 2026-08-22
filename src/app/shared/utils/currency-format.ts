@@ -21,6 +21,15 @@ const SIGNED_DECIMAL_FORMATTER = computed(
       signDisplay: 'always',
     }),
 );
+/** Cents dropped entirely (`{ whole: true }`) — for a figure read at a glance rather than reconciled, e.g. a chart tooltip. */
+const WHOLE_FORMATTER = computed(
+  () =>
+    new Intl.NumberFormat(locale(), {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }),
+);
 
 /** Splits a formatted number into its sign (`+`/`-`/``) and unsigned magnitude, so the currency symbol can be spliced in on either side of the number without ever landing between the sign and the digits. */
 function signAndMagnitude(
@@ -39,6 +48,14 @@ function signAndMagnitude(
   return { sign, magnitude };
 }
 
+export type CurrencyFormatOptions = { signed?: boolean; whole?: boolean };
+
+/** `whole` wins over `signed`: there is no signed-whole formatter, and rounding is the stronger request of the two. */
+const formatterFor = ({ signed = false, whole = false }: CurrencyFormatOptions = {}) => {
+  if (whole) return WHOLE_FORMATTER();
+  return signed ? SIGNED_DECIMAL_FORMATTER() : DECIMAL_FORMATTER();
+};
+
 /**
  * Single source of currency-rounding truth (2 decimals, settings-driven grouping) — reused by
  * SignedAmountPipe, dashboard formatters, and chart tooltip formatters (TICKET-STAT-12) so none
@@ -46,12 +63,13 @@ function signAndMagnitude(
  * module-level signals, kept in sync with `AppSettingsStore` by one effect
  * (TICKET-SET-03/TICKET-SET-04/TICKET-NG-10), so wrapping `computed()`s/templates/impure pipes
  * re-run automatically when any of the three change.
+ *
+ * `whole` rounds the cents away rather than showing `.00`; it is for a figure that is *read*, not
+ * reconciled (the loan composition chart's tooltip). It has no `signed` counterpart because nothing
+ * yet needs one — add the formatter when something does, rather than a matrix of unused variants.
  */
-export function formatCurrency(amount: number, options?: { signed?: boolean }): string {
-  const { sign, magnitude } = signAndMagnitude(
-    options?.signed ? SIGNED_DECIMAL_FORMATTER() : DECIMAL_FORMATTER(),
-    amount,
-  );
+export function formatCurrency(amount: number, options?: CurrencyFormatOptions): string {
+  const { sign, magnitude } = signAndMagnitude(formatterFor(options), amount);
   const symbol = currencySymbol();
   return currencySymbolPosition() === 'after'
     ? `${sign}${magnitude}${symbol}`

@@ -3,13 +3,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import {
+  CategoriesRepository,
   LoansRepository,
   TransactionsRepository,
   type Loan,
   type Transaction,
 } from '@/core/data-access';
 import { TransactionsStore } from '@/core/state';
+import { LoanAmortizationTableComponent } from '../loan-amortization-table/loan-amortization-table.component';
 import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-chart.component';
+import { LoanCompositionChartComponent } from '../loan-composition-chart/loan-composition-chart.component';
 import { LoanDetailComponent } from './loan-detail.component';
 
 /**
@@ -25,6 +28,16 @@ import { LoanDetailComponent } from './loan-detail.component';
 class LoanBalanceChartStub {
   readonly loan = input.required<Loan>();
   readonly payments = input<Transaction[]>([]);
+}
+
+/**
+ * The same treatment for the schedule panel's composition chart, which is a *grandchild* here — the
+ * page mounts the real `<app-loan-amortization-table>` (the tests below assert on it), so the stub
+ * has to be swapped into that child's own `imports`, not this page's.
+ */
+@Component({ selector: 'app-loan-composition-chart', template: '' })
+class LoanCompositionChartStub {
+  readonly loan = input.required<Loan>();
 }
 
 // jsdom has no ResizeObserver; keep the polyfill in case a future test here reaches the real chart.
@@ -56,6 +69,7 @@ const loansRepository = {
   remove: vi.fn().mockResolvedValue(undefined),
 };
 const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+const categoriesRepository = { getAll: vi.fn().mockResolvedValue([]) };
 
 const createFixture = async (
   loans: Loan[],
@@ -72,11 +86,17 @@ const createFixture = async (
       provideRouter([{ path: 'loans', children: [] }]),
       { provide: LoansRepository, useValue: loansRepository },
       { provide: TransactionsRepository, useValue: transactionsRepository },
+      // The header's edit dialog mounts `app-loan-form`, whose category picker reads CategoriesStore.
+      { provide: CategoriesRepository, useValue: categoriesRepository },
     ],
   })
     .overrideComponent(LoanDetailComponent, {
       remove: { imports: [LoanBalanceChartComponent] },
       add: { imports: [LoanBalanceChartStub] },
+    })
+    .overrideComponent(LoanAmortizationTableComponent, {
+      remove: { imports: [LoanCompositionChartComponent] },
+      add: { imports: [LoanCompositionChartStub] },
     })
     .compileComponents();
 
@@ -126,6 +146,70 @@ describe('LoanDetailComponent (TICKET-LOAN-06)', () => {
 
     expect(host.querySelector('app-loan-payments-list')).not.toBeNull();
     expect(host.textContent).toContain('Linked payments');
+  });
+
+  it('opens with the schedule expanded and the linked payments collapsed (loan feedback)', async () => {
+    const fixture = await createFixture([loan({ id: 1 })], '1');
+    const host = fixture.nativeElement as HTMLElement;
+
+    const scheduleCollapse = host.querySelector('app-loan-amortization-table .collapse');
+    const paymentsCollapse = host.querySelector('app-loan-payments-list .collapse');
+
+    expect(scheduleCollapse?.classList).toContain('collapse-open');
+    expect(paymentsCollapse?.classList).not.toContain('collapse-open');
+  });
+});
+
+describe('LoanDetailComponent: edit (loan feedback)', () => {
+  const editButtonOf = (host: HTMLElement): HTMLButtonElement | undefined =>
+    [...host.querySelectorAll('button')].find(
+      (element) => element.textContent?.trim() === 'Edit',
+    ) as HTMLButtonElement | undefined;
+
+  it('offers an Edit action beside Archive and Delete, closed until clicked', async () => {
+    const fixture = await createFixture([loan({ id: 1 })], '1');
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(editButtonOf(host)).toBeDefined();
+    expect(fixture.componentInstance['editFormOpen']()).toBe(false);
+  });
+
+  it('opens the loan form pre-filled with this loan when Edit is clicked', async () => {
+    const fixture = await createFixture([loan({ id: 1, name: 'Home mortgage' })], '1');
+    const host = fixture.nativeElement as HTMLElement;
+
+    editButtonOf(host)?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['editFormOpen']()).toBe(true);
+    const form = host.querySelector('app-loan-form');
+    // "Edit loan"/"Save changes", not the add-mode copy — the form got a `loan`, not `null`.
+    expect(form?.textContent).toContain('Edit loan');
+    expect(form?.textContent).toContain('Save changes');
+  });
+
+  it('persists an edit through LoansStore.updateLoan, never appDb directly', async () => {
+    const fixture = await createFixture([loan({ id: 1 })], '1');
+
+    await fixture.componentInstance['saveEdit']({
+      name: 'Refinanced mortgage',
+      loanType: 'mortgage',
+      principal: 180000,
+      interestRate: 3.5,
+      termMonths: 300,
+      startDate: '2024-01-01',
+      categoryId: 1,
+    });
+
+    expect(loansRepository.update).toHaveBeenCalledWith(1, {
+      name: 'Refinanced mortgage',
+      loanType: 'mortgage',
+      principal: 180000,
+      interestRate: 3.5,
+      termMonths: 300,
+      startDate: '2024-01-01',
+      categoryId: 1,
+    });
   });
 });
 

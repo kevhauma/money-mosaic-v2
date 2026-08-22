@@ -58,6 +58,9 @@ independent, so the list below is ordered by dependency, not by FR number:
 - [x] [TICKET-LOAN-08](./tickets/TICKET-LOAN-08-amortization-schedule-table.md) — Amortization schedule table (adds FR-LOAN-8) — needs LOAN-04 only; independent of LOAN-07, can run in parallel
 - [x] [TICKET-LOAN-09](./tickets/TICKET-LOAN-09-linked-payments-list.md) — Linked payments list on loan detail (adds FR-LOAN-9) — needs LOAN-01 + `TransactionsStore`; fairly independent, can slot in any time after LOAN-02
 - [x] [TICKET-LOAN-10](./tickets/TICKET-LOAN-10-ahead-behind-schedule-indicator.md) — Ahead/behind-schedule + interest-saved indicator (adds FR-LOAN-10) — needs LOAN-05, last since it's the most derived figure
+- [ ] [TICKET-LOAN-12](./tickets/TICKET-LOAN-12-what-if-projection-engine.md) — Forward-looking what-if projection engine (adds FR-LOAN-12) — pure function; needs LOAN-04 + LOAN-05 only, so it can start immediately
+- [ ] [TICKET-LOAN-13](./tickets/TICKET-LOAN-13-what-if-tab-recurring-overpayment.md) — "What-if" tab on loan detail, with a recurring-overpayment simulator (adds FR-LOAN-13) — needs LOAN-12; also migrates the detail page to tabs
+- [ ] [TICKET-LOAN-14](./tickets/TICKET-LOAN-14-lump-sum-scenario-with-early-repayment-fee.md) — Lump-sum what-if scenarios with an estimated early-repayment fee (adds FR-LOAN-14) — needs LOAN-12 + LOAN-13, last since it is the most derived figure
 
 ## Considered, not ticketed yet
 
@@ -72,10 +75,11 @@ independent, so the list below is ordered by dependency, not by FR number:
 - **Non-monthly payment frequency** (biweekly/quarterly) — monthly only for v1.7, matching how loans are
   near-universally billed. Would need `amortization.ts` and `loan-progress.ts` both parameterised by
   frequency, plus a UI control; not worth the complexity until a real user asks for it.
-- **Forward-looking overpayment "what-if" simulator** ("if I pay €200 extra per month, when do I pay this
-  off?") — FR-LOAN-5/FR-LOAN-10 already reconcile *real* overpayments retroactively, but a hypothetical
-  forward projection is a distinct feature and a natural v1.7-adjacent follow-up once the actual-progress
-  math has shipped and been trusted.
+- **Forward-looking overpayment "what-if" simulator** — **now ticketed** as LOAN-12/13/14 above. The
+  actual-progress math (FR-LOAN-5/FR-LOAN-10) has shipped and been trusted, so the hypothetical forward
+  projection it always warranted is now its own three-ticket slice: a pure projection engine, a What-if tab
+  on the loan detail page driven by a recurring extra monthly payment, and one-off lump sums priced with an
+  estimated early-repayment fee.
 - **Refinancing** (replacing one loan with a new rate/term, carrying forward the remaining balance) — out
   of scope; a user can archive the old loan (LOAN-11) and create a new one with the refinanced terms,
   accepting that the two show up as separate cards rather than one continuous history.

@@ -4,6 +4,10 @@
   <mm-page-header [title]="loan.name">
     <mm-button actions-start variant="ghost" size="sm" link="/loans">Back to loans</mm-button>
     <mm-flex actions-end align="center" gap="2">
+      <mm-button size="sm" (click)="editFormOpen.set(true)">
+        <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+        Edit
+      </mm-button>
       <mm-button size="sm" (click)="toggleArchive()">
         <ng-icon [name]="archiveToggle().icon" size="14" aria-hidden="true" />
         {{ archiveToggle().label }}
@@ -29,6 +33,13 @@
   <app-loan-amortization-table [loan]="loan" class="mb-4 block" />
 
   <app-loan-payments-list [loan]="loan" class="mb-4 block" />
+
+  <app-loan-form
+    [(open)]="editFormOpen"
+    [loan]="loan"
+    [existingLoans]="loansStore.activeLoans()"
+    (saved)="saveEdit($event)"
+  />
 
   <mm-confirm-dialog
     [(open)]="deleteConfirmOpen"

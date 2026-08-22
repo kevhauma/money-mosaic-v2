@@ -1,8 +1,8 @@
-<mm-paper elevation="flat">
-  <p class="card-title text-base">Linked payments</p>
+<mm-collapse [open]="open()" (openChange)="open.set($event)">
+  <span mm-collapse-title>Linked payments</span>
 
   @if (rows().length > 0) {
-    <ul class="mt-2 flex flex-col gap-2">
+    <ul class="flex flex-col gap-2">
       @for (row of rows(); track row.id) {
         <li>
           <a
@@ -26,4 +26,4 @@
       No transactions in this loan's linked category yet.
     </mm-text>
   }
-</mm-paper>
+</mm-collapse>

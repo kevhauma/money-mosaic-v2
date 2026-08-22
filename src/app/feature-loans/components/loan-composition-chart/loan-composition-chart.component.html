@@ -1,0 +1,14 @@
+<mm-flex align="center" justify="between" gap="2" class="flex-wrap">
+  <p class="text-base font-semibold">Principal vs. interest</p>
+  <mm-tabs
+    variant="box"
+    class="tabs-sm"
+    [tabs]="basisTabs"
+    [selected]="basis()"
+    (selectedChange)="setBasis($event)"
+  />
+</mm-flex>
+
+<mm-text as="p" variant="caption" class="mt-1 text-base-content/60">{{ caption() }}</mm-text>
+
+<div echarts [options]="chartOption()" class="mt-2 h-64 w-full"></div>

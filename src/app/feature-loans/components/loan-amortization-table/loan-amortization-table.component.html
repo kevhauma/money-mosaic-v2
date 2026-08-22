@@ -1,6 +1,9 @@
 <mm-collapse [open]="open()" (openChange)="open.set($event)">
   <span mm-collapse-title>Amortization schedule</span>
 
+  <!-- The whole term's shape first, then the month-by-month figures it's drawn from. -->
+  <app-loan-composition-chart [loan]="loan()" class="mb-4 block" />
+
   <mm-table class="bg-base-100">
     <thead>
       <tr>

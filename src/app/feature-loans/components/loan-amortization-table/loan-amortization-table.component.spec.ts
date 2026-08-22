@@ -1,9 +1,22 @@
+import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import type { Loan } from '@/core/data-access';
 import { computeAmortizationSchedule } from '@/core/loans';
 import { formatCurrency, formatDate } from '@/shared/utils';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
+import { LoanCompositionChartComponent } from '../loan-composition-chart/loan-composition-chart.component';
 import { LoanAmortizationTableComponent } from './loan-amortization-table.component';
+
+/**
+ * Stands in for the real `<app-loan-composition-chart>` — every test here is about the table, and a
+ * real `NgxEchartsDirective` needs a canvas 2D context jsdom doesn't provide (the
+ * `loan-detail.component.spec.ts` precedent, TICKET-LOAN-07). The "loan input changes" test below is
+ * exactly the update transition that crashes zrender's ticker against a null context.
+ */
+@Component({ selector: 'app-loan-composition-chart', template: '' })
+class LoanCompositionChartStub {
+  readonly loan = input.required<Loan>();
+}
 
 const loan = (overrides: Partial<Loan> = {}): Loan => ({
   id: 1,
@@ -28,7 +41,12 @@ const createFixture = async (
   TestBed.resetTestingModule();
   await TestBed.configureTestingModule({
     imports: [LoanAmortizationTableComponent],
-  }).compileComponents();
+  })
+    .overrideComponent(LoanAmortizationTableComponent, {
+      remove: { imports: [LoanCompositionChartComponent] },
+      add: { imports: [LoanCompositionChartStub] },
+    })
+    .compileComponents();
 
   const fixture = TestBed.createComponent(LoanAmortizationTableComponent);
   fixture.componentRef.setInput('loan', testLoan);
@@ -38,6 +56,27 @@ const createFixture = async (
 
 describe('LoanAmortizationTableComponent (TICKET-LOAN-08)', () => {
   withCleanFormatSettings();
+
+  it('opens expanded — the schedule is the panel you land on, not one you have to find (loan feedback)', async () => {
+    const fixture = await createFixture(loan());
+
+    expect(fixture.componentInstance['open']()).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.collapse')?.classList).toContain(
+      'collapse-open',
+    );
+  });
+
+  it('renders the principal-vs-interest composition chart above the table (loan feedback)', async () => {
+    const fixture = await createFixture(loan());
+    const host = fixture.nativeElement as HTMLElement;
+
+    const chart = host.querySelector('app-loan-composition-chart');
+    expect(chart).not.toBeNull();
+    // Above, not below: the shape of the whole term reads first, the month rows are the detail.
+    expect(chart!.compareDocumentPosition(host.querySelector('mm-table')!)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
 
   it('paginates the schedule at 12 rows per page rather than dumping all termMonths at once', async () => {
     const testLoan = loan({ termMonths: 30 });

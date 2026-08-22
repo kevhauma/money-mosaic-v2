@@ -21,6 +21,21 @@ describe('formatCurrency', () => {
     expect(formatCurrency(0, { signed: true })).toBe('+€0.00');
   });
 
+  it('the whole variant drops the cents rather than showing .00', () => {
+    expect(formatCurrency(1234.56, { whole: true })).toBe('€1,235');
+    expect(formatCurrency(1234.4, { whole: true })).toBe('€1,234');
+    expect(formatCurrency(-1234.56, { whole: true })).toBe('-€1,235');
+  });
+
+  it('the whole variant wins over signed — there is no signed-whole formatter to fall back to', () => {
+    expect(formatCurrency(500, { whole: true, signed: true })).toBe('€500');
+  });
+
+  it('the whole variant honours a changed symbol/position/locale like every other variant', () => {
+    syncFormatSettings({ locale: 'en-BE', currencySymbol: 'kr', currencySymbolPosition: 'after' });
+    expect(formatCurrency(1234.56, { whole: true })).toBe('1.235kr');
+  });
+
   it('reflects a changed currency symbol', () => {
     syncFormatSettings({ currencySymbol: '$' });
     expect(formatCurrency(1234.56)).toBe('$1,234.56');

@@ -21,13 +21,27 @@ export type RoadmapEntry = {
  * entry convention.
  */
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
+  // The Loan tracker itself has shipped (see CHANGELOG_ENTRIES), so its topic-level row is gone; the
+  // three what-if simulator tickets are what is still open under this version.
   {
     versionFolder: 'v1.7_loan_tracker',
-    ticketId: 'topic-loan-tracker',
-    title:
-      'A Loan tracker: payoff progress, amortization schedule, and ahead/behind-schedule tracking for any loan type',
+    ticketId: 'TICKET-LOAN-12',
+    title: 'Work out what happens to a loan if you change how you pay it from here on',
     area: 'Loans',
-    isTopic: true,
+  },
+  {
+    versionFolder: 'v1.7_loan_tracker',
+    ticketId: 'TICKET-LOAN-13',
+    title:
+      'Ask "what if I paid €200 extra a month?" on any loan and see the new payoff date and interest saved',
+    area: 'Loans',
+  },
+  {
+    versionFolder: 'v1.7_loan_tracker',
+    ticketId: 'TICKET-LOAN-14',
+    title:
+      'Try a one-off lump sum in a future year, with the estimated early-repayment fee taken off the saving',
+    area: 'Loans',
   },
   {
     versionFolder: 'v9999_ideas',

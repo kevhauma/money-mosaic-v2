@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { Loan } from '@/core/data-access';
 import { AppSettingsStore, TransactionsStore } from '@/core/state';
-import { PaperComponent, PrivacyBlurComponent, TypographyComponent } from '@/shared/ui';
+import { CollapseComponent, PrivacyBlurComponent, TypographyComponent } from '@/shared/ui';
 import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
 
 /** One row of the list — every display fact already resolved, the `TopTransactionsPanelComponent` shape. */
@@ -22,15 +22,21 @@ type LoanPaymentRowVm = {
  * filter, same as `TopTransactionsPanelComponent`). Filters `TransactionsStore.transactions()` by
  * `loan().categoryId` itself, so it stays reactive to newly-categorized transactions with no query
  * of its own to keep in sync, and works identically for any `loanType`.
+ *
+ * `<mm-collapse>`-wrapped and **closed by default** (loan feedback, 2026-08-22): it's the audit
+ * trail you open when a figure above looks wrong, and on a loan with years of payments it otherwise
+ * pushed the schedule off the page. The amortization table above took the expanded slot instead.
  */
 @Component({
   selector: 'app-loan-payments-list',
-  imports: [RouterLink, PaperComponent, PrivacyBlurComponent, TypographyComponent],
+  imports: [RouterLink, CollapseComponent, PrivacyBlurComponent, TypographyComponent],
   templateUrl: './loan-payments-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoanPaymentsListComponent {
   readonly loan = input.required<Loan>();
+
+  protected readonly open = signal(false);
 
   private readonly transactionsStore = inject(TransactionsStore);
 

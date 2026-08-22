@@ -3,6 +3,7 @@ import type { Loan } from '@/core/data-access';
 import { computeAmortizationSchedule } from '@/core/loans';
 import { CollapseComponent, PaginatorComponent, TableComponent } from '@/shared/ui';
 import { createPagination, formatCurrency, formatDate } from '@/shared/utils';
+import { LoanCompositionChartComponent } from '../loan-composition-chart/loan-composition-chart.component';
 
 /** One row of the rendered table — every figure already `formatCurrency()`d/`formatDate()`d, purely presentational. */
 type AmortizationRow = {
@@ -18,21 +19,23 @@ type AmortizationRow = {
 const PAGE_SIZE = 12;
 
 /**
- * The Loan detail page's amortization schedule (TICKET-LOAN-08) — reference detail, not the
- * at-a-glance view, so it opens collapsed below the balance chart (LOAN-07). Recomputes from
- * `loan()` alone (no `loanType` branch, no transaction data), so editing a loan's terms (LOAN-03)
- * updates this table the same render cycle, never a stale cached schedule.
+ * The Loan detail page's amortization schedule (TICKET-LOAN-08) — the balance chart above says
+ * *where* the loan stands, this panel says *why*, so it opens **expanded** (loan feedback,
+ * 2026-08-22, reversing LOAN-08's collapsed default); the linked-payments list below it took the
+ * collapsed slot instead. Recomputes from `loan()` alone (no `loanType` branch, no transaction
+ * data), so editing a loan's terms updates both the composition chart and the table the same render
+ * cycle, never a stale cached schedule.
  */
 @Component({
   selector: 'app-loan-amortization-table',
-  imports: [CollapseComponent, PaginatorComponent, TableComponent],
+  imports: [CollapseComponent, LoanCompositionChartComponent, PaginatorComponent, TableComponent],
   templateUrl: './loan-amortization-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoanAmortizationTableComponent {
   readonly loan = input.required<Loan>();
 
-  protected readonly open = signal(false);
+  protected readonly open = signal(true);
 
   protected readonly rows = computed<AmortizationRow[]>(() => {
     const loan = this.loan();
