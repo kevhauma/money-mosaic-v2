@@ -97,15 +97,17 @@ describe('AppShellComponent: grouped sidebar navigation (TICKET-UI-26)', () => {
     expect(headings).toEqual(['Insights', 'Data']);
   });
 
-  it('puts Dashboard, Income, Recurring, Explore and Future in Insights — and nothing else', async () => {
+  it('puts Dashboard, Income, Recurring, Loans, Explore and Future in Insights — and nothing else', async () => {
     const shell = await renderShell();
 
     // Future sits last in Insights, i.e. between Explore and the Data group's Accounts
-    // (TICKET-FUT-03).
+    // (TICKET-FUT-03). Loans sits after Recurring: it reads as a forward-looking view of a
+    // liability rather than a store of records, so it moved out of Data (2026-08-22).
     expect(hrefsIn(groupFor(shell, 'Insights'))).toEqual([
       '/dashboard',
       '/income',
       '/recurring',
+      '/loans',
       '/explore',
       '/future',
     ]);
@@ -119,12 +121,11 @@ describe('AppShellComponent: grouped sidebar navigation (TICKET-UI-26)', () => {
     expect(link.querySelector('ng-icon')).not.toBeNull();
   });
 
-  it('puts Accounts, Loans, Transactions, Categories, Learning and Import in Data — and nothing else', async () => {
+  it('puts Accounts, Transactions, Categories, Learning and Import in Data — and nothing else', async () => {
     const shell = await renderShell();
 
     expect(hrefsIn(groupFor(shell, 'Data'))).toEqual([
       '/accounts',
-      '/loans',
       '/transactions',
       '/categories',
       '/learning',
