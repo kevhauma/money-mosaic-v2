@@ -21,15 +21,6 @@ export type RoadmapEntry = {
  * entry convention.
  */
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
-  // The Loan tracker itself has shipped (see CHANGELOG_ENTRIES), so its topic-level row is gone; the
-  // remaining what-if simulator tickets are what is still open under this version.
-  {
-    versionFolder: 'v1.7_loan_tracker',
-    ticketId: 'TICKET-LOAN-14',
-    title:
-      'Try a one-off lump sum in a future year, with the estimated early-repayment fee taken off the saving',
-    area: 'Loans',
-  },
   {
     versionFolder: 'v9999_ideas',
     ticketId: 'topic-food-vouchers',

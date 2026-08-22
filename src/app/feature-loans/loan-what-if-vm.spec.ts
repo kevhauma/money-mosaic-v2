@@ -1,5 +1,10 @@
 import type { Loan } from '@/core/data-access';
-import { projectLoanWhatIf, type LoanProgress, type WhatIfScenario } from '@/core/loans';
+import {
+  projectLoanWhatIf,
+  type EarlyRepaymentFeeModel,
+  type LoanProgress,
+  type WhatIfScenario,
+} from '@/core/loans';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { buildLoanWhatIfHeadline, describeMonthSpan } from './loan-what-if-vm';
 
@@ -24,13 +29,18 @@ const progressOf = (actualBalance: number): LoanProgress => ({
   lastPaymentDate: '2026-08-01',
 });
 
-const headlineFor = (actualBalance: number, scenario: Partial<WhatIfScenario> = {}) =>
+const headlineFor = (
+  actualBalance: number,
+  scenario: Partial<WhatIfScenario> = {},
+  feeModel: EarlyRepaymentFeeModel = { kind: 'none' },
+) =>
   buildLoanWhatIfHeadline(
     projectLoanWhatIf(
       LOAN,
       progressOf(actualBalance),
       { extraMonthlyPayment: 0, lumpSums: [], ...scenario },
       '2026-08-22',
+      feeModel,
     ),
   );
 
@@ -87,5 +97,60 @@ describe('buildLoanWhatIfHeadline (TICKET-LOAN-13)', () => {
 
     expect(asAuto).toEqual(headlineFor(180000, scenario));
     expect(JSON.stringify(asAuto)).not.toMatch(/mortgage|auto/i);
+  });
+});
+
+describe('buildLoanWhatIfHeadline fee lines (TICKET-LOAN-14)', () => {
+  withCleanFormatSettings();
+
+  it('leaves the fee and net labels off entirely when nothing is charged', () => {
+    const headline = headlineFor(180000, { extraMonthlyPayment: 200 });
+
+    expect(headline.feeLabel).toBeNull();
+    expect(headline.netSavedLabel).toBeNull();
+    expect(headline.netIsNegative).toBe(false);
+  });
+
+  it('says gross, fee, and net as three separate labels once a lump sum is charged', () => {
+    const headline = headlineFor(
+      180000,
+      { lumpSums: [{ date: '2028-06-15', amount: 20000 }] },
+      { kind: 'monthsOfInterest', months: 3 },
+    );
+
+    expect(headline.interestSavedLabel).toMatch(/^~€[\d,.]+$/);
+    expect(headline.feeLabel).toMatch(/^~€[\d,.]+$/);
+    expect(headline.netSavedLabel).toMatch(/^~€[\d,.]+$/);
+    expect(headline.netSavedLabel).not.toBe(headline.interestSavedLabel);
+    expect(headline.netIsNegative).toBe(false);
+  });
+
+  it('flags a net that came out negative rather than clamping or hiding it', () => {
+    const headline = buildLoanWhatIfHeadline(
+      projectLoanWhatIf(
+        { ...LOAN, principal: 120000, interestRate: 0, termMonths: 120 },
+        { ...progressOf(180000), actualBalance: 100000 },
+        { extraMonthlyPayment: 0, lumpSums: [{ date: '2027-03-15', amount: 10000 }] },
+        '2026-08-22',
+        { kind: 'percentOfAmount', percent: 1 },
+      ),
+    );
+
+    expect(headline.netIsNegative).toBe(true);
+    expect(headline.netSavedLabel).toContain('-');
+  });
+
+  it('still reports a charged scenario as improved, not "no change", when the fee bought nothing', () => {
+    const headline = buildLoanWhatIfHeadline(
+      projectLoanWhatIf(
+        { ...LOAN, principal: 120000, interestRate: 0, termMonths: 120 },
+        { ...progressOf(180000), actualBalance: 100000 },
+        { extraMonthlyPayment: 0, lumpSums: [{ date: '2027-03-15', amount: 10000 }] },
+        '2026-08-22',
+        { kind: 'percentOfAmount', percent: 1 },
+      ),
+    );
+
+    expect(headline.kind).toBe('improved');
   });
 });

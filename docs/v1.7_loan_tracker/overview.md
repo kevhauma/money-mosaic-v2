@@ -60,7 +60,7 @@ independent, so the list below is ordered by dependency, not by FR number:
 - [x] [TICKET-LOAN-10](./tickets/TICKET-LOAN-10-ahead-behind-schedule-indicator.md) — Ahead/behind-schedule + interest-saved indicator (adds FR-LOAN-10) — needs LOAN-05, last since it's the most derived figure
 - [x] [TICKET-LOAN-12](./tickets/TICKET-LOAN-12-what-if-projection-engine.md) — Forward-looking what-if projection engine (adds FR-LOAN-12) — pure function; needs LOAN-04 + LOAN-05 only, so it can start immediately
 - [x] [TICKET-LOAN-13](./tickets/TICKET-LOAN-13-what-if-tab-recurring-overpayment.md) — "What-if" tab on loan detail, with a recurring-overpayment simulator (adds FR-LOAN-13) — needs LOAN-12; also migrates the detail page to tabs
-- [ ] [TICKET-LOAN-14](./tickets/TICKET-LOAN-14-lump-sum-scenario-with-early-repayment-fee.md) — Lump-sum what-if scenarios with an estimated early-repayment fee (adds FR-LOAN-14) — needs LOAN-12 + LOAN-13, last since it is the most derived figure
+- [x] [TICKET-LOAN-14](./tickets/TICKET-LOAN-14-lump-sum-scenario-with-early-repayment-fee.md) — Lump-sum what-if scenarios with an estimated early-repayment fee (adds FR-LOAN-14) — needs LOAN-12 + LOAN-13, last since it is the most derived figure
 
 ## Considered, not ticketed yet
 

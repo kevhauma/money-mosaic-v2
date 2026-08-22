@@ -13,7 +13,8 @@ import { daisyClasses } from '@/shared/utils';
 export type InputColor =
   'neutral' | 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
 export type InputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-export type InputType = 'text' | 'number' | 'date' | 'email';
+/** `month` renders the browser's `yyyy-mm` picker — a lump sum lands in a month, not on a day (TICKET-LOAN-14). */
+export type InputType = 'text' | 'number' | 'date' | 'email' | 'month';
 
 @Component({
   selector: 'mm-input',

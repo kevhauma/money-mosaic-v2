@@ -1040,4 +1040,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Every loan now shows whether you’re ahead of or behind its original schedule, and roughly how much interest your extra payments have saved',
     area: 'Loans',
   },
+  {
+    date: '2026-08-22',
+    versionFolder: 'v1.7_loan_tracker',
+    ticketIds: ['TICKET-LOAN-12', 'TICKET-LOAN-13', 'TICKET-LOAN-14'],
+    title:
+      'Every loan now has a What-if tab: ask what an extra payment or a one-off lump sum would do, and see the new payoff date and what it really saves',
+    area: 'Loans',
+    details: [
+      'A What-if tab on the loan detail page, beside the existing Overview — type an extra amount per month and see when the loan would be paid off, how much sooner that is, and how much interest it saves.',
+      'One-off lump sums: add as many as you like, each with its own amount and the month it lands in, on their own or on top of a monthly extra.',
+      'An estimated early-repayment fee is taken off the saving, so a big lump sum reports what it is actually worth. If the fee costs more than it saves, the tab says so plainly.',
+      'Nothing you try is saved — it is a question about the loan, never a change to it.',
+    ],
+  },
 ];

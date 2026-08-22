@@ -144,7 +144,7 @@ describe('LoanWhatIfComponent (TICKET-LOAN-13)', () => {
   it('renders a loan with no payments yet without error', async () => {
     await setUp(LOAN, []);
 
-    expect(text()).toContain('What if I paid more each month?');
+    expect(text()).toContain('What if I paid more?');
   });
 
   it('renders an already-paid-off loan as nothing left to simulate', async () => {
@@ -160,5 +160,139 @@ describe('LoanWhatIfComponent (TICKET-LOAN-13)', () => {
     await setUp(LOAN, [payoff]);
 
     expect(text()).toContain('already paid off');
+  });
+});
+
+describe('LoanWhatIfComponent lump sums and fees (TICKET-LOAN-14)', () => {
+  withCleanFormatSettings();
+
+  let fixture: ComponentFixture<LoanWhatIfComponent>;
+
+  const setUp = async (): Promise<void> => {
+    await TestBed.configureTestingModule({ imports: [LoanWhatIfComponent] })
+      .overrideComponent(LoanWhatIfComponent, {
+        remove: { imports: [NgxEchartsDirective] },
+        add: { imports: [EchartsStubDirective] },
+      })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(LoanWhatIfComponent);
+    fixture.componentRef.setInput('loan', LOAN);
+    fixture.componentRef.setInput('payments', []);
+    await fixture.whenStable();
+  };
+
+  const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const text = (): string => host().textContent as string;
+
+  const buttonLabelled = (label: string): HTMLElement =>
+    [...host().querySelectorAll('mm-button')].find(
+      (element) => (element.textContent ?? '').trim() === label,
+    ) as HTMLElement;
+
+  const setValue = async (element: Element, value: string): Promise<void> => {
+    const field = element as HTMLInputElement | HTMLSelectElement;
+    field.value = value;
+    field.dispatchEvent(new Event(field.tagName === 'SELECT' ? 'change' : 'input'));
+    await fixture.whenStable();
+  };
+
+  /** Fills row `index` with an amount and a month, the way a user would. */
+  const fillLumpSum = async (index: number, amount: string, month: string): Promise<void> => {
+    const rows = [...host().querySelectorAll('mm-fieldset')].find((set) =>
+      (set.textContent ?? '').includes('One-off lump sums'),
+    ) as HTMLElement;
+    const amounts = rows.querySelectorAll('input[type="number"]');
+    const months = rows.querySelectorAll('input[type="month"]');
+    await setValue(amounts[index], amount);
+    await setValue(months[index], month);
+  };
+
+  const addRow = async (): Promise<void> => {
+    buttonLabelled('Add a lump sum').click();
+    await fixture.whenStable();
+  };
+
+  it('starts with no lump-sum rows at all', async () => {
+    await setUp();
+
+    expect(host().querySelectorAll('input[type="month"]')).toHaveLength(0);
+    expect(text()).toContain('No change');
+  });
+
+  it('reports gross, fee, and net as three figures for a lump sum in a future year', async () => {
+    await setUp();
+    await addRow();
+    await fillLumpSum(0, '20000', '2028-06');
+
+    expect(text()).toContain('saved in interest');
+    expect(text()).toContain('early-repayment fee');
+    expect(text()).toContain('Net:');
+  });
+
+  it('ignores a row until it has both an amount and a month', async () => {
+    await setUp();
+    await addRow();
+    await fillLumpSum(0, '20000', '');
+
+    expect(text()).toContain('No change');
+    expect(text()).not.toContain('early-repayment fee');
+  });
+
+  it('supports several rows at once', async () => {
+    await setUp();
+    await addRow();
+    await addRow();
+    await fillLumpSum(0, '10000', '2027-03');
+    await fillLumpSum(1, '20000', '2028-06');
+
+    expect(host().querySelectorAll('input[type="month"]')).toHaveLength(2);
+    expect(text()).toContain('early-repayment fee');
+  });
+
+  it('re-derives immediately on removing a row, returning to recurring-only behaviour', async () => {
+    await setUp();
+    await addRow();
+    await fillLumpSum(0, '20000', '2028-06');
+    expect(text()).toContain('early-repayment fee');
+
+    buttonLabelled('Remove').click();
+    await fixture.whenStable();
+
+    expect(host().querySelectorAll('input[type="month"]')).toHaveLength(0);
+    expect(text()).not.toContain('early-repayment fee');
+  });
+
+  it('combines a lump sum with a recurring extra in one projection', async () => {
+    await setUp();
+    const extra = host().querySelector('input[type="number"]') as HTMLInputElement;
+    await setValue(extra, '200');
+    await addRow();
+    await fillLumpSum(0, '20000', '2028-06');
+
+    expect(text()).toContain('earlier');
+    expect(text()).toContain('early-repayment fee');
+  });
+
+  it('drops the fee entirely on the "No fee" model, leaving only the gross saving', async () => {
+    await setUp();
+    await addRow();
+    await fillLumpSum(0, '20000', '2028-06');
+    await setValue(host().querySelector('select') as HTMLSelectElement, 'none');
+
+    expect(text()).toContain('saved in interest');
+    expect(text()).not.toContain('early-repayment fee');
+  });
+
+  it("re-seeds the fee's number when the model changes, so 3 months doesn't become 3%", async () => {
+    await setUp();
+    const feeField = (): HTMLInputElement =>
+      [...host().querySelectorAll('input[type="number"]')].at(-1) as HTMLInputElement;
+
+    expect(feeField().value).toBe('3');
+    await setValue(host().querySelector('select') as HTMLSelectElement, 'percentOfAmount');
+
+    expect(feeField().value).toBe('1');
+    expect(text()).toContain('Percent of the amount');
   });
 });

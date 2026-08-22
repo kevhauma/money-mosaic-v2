@@ -17,6 +17,12 @@ export type LoanWhatIfHeadline = {
   deltaLabel: string | null;
   /** Gross interest saved, e.g. `~€8,120` — `null` when nothing changes. Monetary: blur it. */
   interestSavedLabel: string | null;
+  /** The estimated early-repayment fee, e.g. `~€1,020` — `null` when no lump sum is charged one (TICKET-LOAN-14). Monetary: blur it. */
+  feeLabel: string | null;
+  /** Gross minus the fee, e.g. `~€13,280` or `-~€900` — `null` when there is no fee, since net would just restate gross. Monetary: blur it. */
+  netSavedLabel: string | null;
+  /** The fee costs more than the scenario saves. Shown as a warning, never suppressed or clamped (TICKET-LOAN-14). */
+  netIsNegative: boolean;
 };
 
 /**
@@ -50,22 +56,44 @@ export function describeMonthSpan(months: number): string {
  *
  * Every saving carries a `~`: the projection is flat-monthly (LOAN-12's Notes), so the first month
  * can differ from a lender's own quote by a few euro.
+ *
+ * With a lump sum charged an early-repayment fee (TICKET-LOAN-14), the gross saving, the fee, and
+ * the net are three separate labels — never one pre-netted number. A gross figure alone is exactly
+ * the misleading reading this feature exists to prevent, and a net that comes out negative is
+ * reported as negative rather than hidden or clamped.
  */
 export function buildLoanWhatIfHeadline(projection: WhatIfProjection): LoanWhatIfHeadline {
   const payoffLabel = formatMonthYear(projection.scenario.payoffDate);
 
+  const nothing = {
+    deltaLabel: null,
+    interestSavedLabel: null,
+    feeLabel: null,
+    netSavedLabel: null,
+    netIsNegative: false,
+  };
+
   if (projection.baseline.monthsRemaining === 0) {
-    return { kind: 'paid-off', payoffLabel, deltaLabel: null, interestSavedLabel: null };
+    return { kind: 'paid-off', payoffLabel, ...nothing };
   }
-  if (projection.monthsSaved <= 0 && projection.interestSaved <= 0) {
-    return { kind: 'unchanged', payoffLabel, deltaLabel: null, interestSavedLabel: null };
+  // A scenario with a fee but no interest saving still has something to say — repaying early cost
+  // money and bought nothing — so `feesTotal` counts as a change, not "no change".
+  if (projection.monthsSaved <= 0 && projection.interestSaved <= 0 && projection.feesTotal <= 0) {
+    return { kind: 'unchanged', payoffLabel, ...nothing };
   }
 
+  const charged = projection.feesTotal > 0;
   return {
     kind: 'improved',
     payoffLabel,
     deltaLabel:
       projection.monthsSaved > 0 ? `${describeMonthSpan(projection.monthsSaved)} earlier` : null,
     interestSavedLabel: `~${formatCurrency(projection.interestSaved, { whole: true })}`,
+    // Only shown when a lump sum was actually charged: with no fee, a net line would restate gross.
+    feeLabel: charged ? `~${formatCurrency(projection.feesTotal, { whole: true })}` : null,
+    netSavedLabel: charged
+      ? `~${formatCurrency(projection.netInterestSaved, { whole: true })}`
+      : null,
+    netIsNegative: projection.netInterestSaved < 0,
   };
 }

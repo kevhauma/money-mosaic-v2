@@ -1,6 +1,6 @@
 <mm-paper elevation="flat" class="mb-4 block">
   <mm-text as="h2" variant="subheading" weight="semibold" class="mb-1">
-    What if I paid more each month?
+    What if I paid more?
   </mm-text>
   <mm-text as="p" variant="caption" class="mb-3">
     Nothing here is saved — it's a question, not a change to the loan. Every figure is an estimate
@@ -28,9 +28,78 @@
       <mm-label variant="error">{{ message }}</mm-label>
     } @else {
       <mm-label class="whitespace-normal">
-        On top of what you already pay, every month from here on.
+        On top of what you already pay, every month from here on. Not charged a fee — most contracts
+        allow a modest yearly overpayment for free.
       </mm-label>
     }
+  </mm-fieldset>
+
+  <!-- A block of its own per scenario input, not one flat row (TICKET-LOAN-13's Notes), so lump
+       sums had somewhere to land. -->
+  <mm-fieldset legend="One-off lump sums" class="mt-3">
+    @for (row of lumpSumRows.controls; track $index) {
+      <mm-flex align="center" gap="2" class="mb-2" [wrap]="true" [formGroup]="row">
+        <mm-input
+          type="number"
+          min="0"
+          step="0.01"
+          formControlName="amount"
+          [ariaInvalid]="row.controls.amount.invalid"
+          ariaLabel="Lump sum amount"
+          class="w-40"
+          placeholder="e.g. 20000"
+        />
+        <mm-input
+          type="month"
+          formControlName="month"
+          [ariaInvalid]="row.controls.month.invalid"
+          ariaLabel="Month the lump sum lands in"
+          class="w-44"
+        />
+        <mm-button
+          type="button"
+          variant="outline"
+          color="error"
+          size="sm"
+          (click)="removeLumpSum($index)"
+        >
+          Remove
+        </mm-button>
+      </mm-flex>
+    }
+    <mm-button type="button" variant="outline" size="sm" (click)="addLumpSum()">
+      Add a lump sum
+    </mm-button>
+    <mm-label class="whitespace-normal">
+      A row is only counted once it has both an amount and a month. One dated after the loan is
+      already paid off is ignored, and charged no fee.
+    </mm-label>
+  </mm-fieldset>
+
+  <mm-fieldset legend="Early-repayment fee" class="mt-3">
+    <mm-flex align="center" gap="2" [wrap]="true">
+      <mm-select [formControl]="feeKindControl" class="w-64">
+        @for (option of feeKindOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </mm-select>
+      @if (feeTakesValue()) {
+        <mm-input
+          type="number"
+          min="0"
+          step="0.01"
+          [formControl]="feeValueControl"
+          [ariaInvalid]="feeValueControl.invalid"
+          [ariaLabel]="feeValueLegend()"
+          class="w-28"
+        />
+        <mm-text variant="caption">{{ feeValueLegend() }}</mm-text>
+      }
+    </mm-flex>
+    <mm-label class="whitespace-normal">
+      An estimate only — the real figure comes from your loan contract. Charged on lump sums, not on
+      the monthly extra.
+    </mm-label>
   </mm-fieldset>
 
   <!-- The answer, as a headline figure with its deltas under it rather than one run-on sentence:
@@ -58,6 +127,37 @@
             <mm-text variant="caption">saved in interest</mm-text>
           }
         </mm-flex>
+
+        <!-- Gross, fee, and net as three figures. A net that comes out negative says so plainly —
+             a big lump sum is exactly where the penalty bites hardest (TICKET-LOAN-14). -->
+        @if (headline().feeLabel; as fee) {
+          <mm-flex align="baseline" gap="2" [wrap]="true" class="mt-1">
+            <mm-text variant="caption">minus an estimated</mm-text>
+            <mm-privacy-blur [blurred]="privacyMode()">
+              <mm-text variant="caption" weight="semibold">{{ fee }}</mm-text>
+            </mm-privacy-blur>
+            <mm-text variant="caption">early-repayment fee</mm-text>
+          </mm-flex>
+          <mm-flex align="baseline" gap="2" [wrap]="true">
+            @if (headline().netIsNegative) {
+              <mm-text variant="caption" color="warning" weight="semibold">
+                Costs more than it saves:
+              </mm-text>
+            } @else {
+              <mm-text variant="caption">Net:</mm-text>
+            }
+            <mm-privacy-blur [blurred]="privacyMode()">
+              <mm-text
+                variant="caption"
+                weight="semibold"
+                [color]="headline().netIsNegative ? 'warning' : 'base-content'"
+              >
+                {{ headline().netSavedLabel }}
+              </mm-text>
+            </mm-privacy-blur>
+          </mm-flex>
+        }
+
         <mm-text as="p" variant="caption" class="mt-1">
           An estimate: interest is projected a month at a time, so your lender's own quote can
           differ slightly.
