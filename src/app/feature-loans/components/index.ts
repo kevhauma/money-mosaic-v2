@@ -6,3 +6,4 @@ export * from './loan-balance-chart/loan-balance-chart.component';
 export * from './loan-amortization-table/loan-amortization-table.component';
 export * from './loan-composition-chart/loan-composition-chart.component';
 export * from './loan-payments-list/loan-payments-list.component';
+export * from './loan-what-if/loan-what-if.component';

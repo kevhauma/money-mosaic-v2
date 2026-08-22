@@ -9,7 +9,9 @@ import {
   EmptyStateComponent,
   FlexComponent,
   PageHeaderComponent,
+  TabsComponent,
   TypographyComponent,
+  type TabDefinition,
 } from '@/shared/ui';
 import { TransactionsStore } from '@/core/state';
 import { computeAmortizationSchedule, computeScheduleComparison } from '@/core/loans';
@@ -17,8 +19,17 @@ import { LoanAmortizationTableComponent } from '../loan-amortization-table/loan-
 import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-chart.component';
 import { LoanFormComponent, type LoanFormValue } from '../loan-form/loan-form.component';
 import { LoanPaymentsListComponent } from '../loan-payments-list/loan-payments-list.component';
+import { LoanWhatIfComponent } from '../loan-what-if/loan-what-if.component';
 import { loanScheduleStatusFor } from '../../loan-schedule-status';
 import { LoansStore } from '../../loans.store';
+
+/** The two views of a loan (TICKET-LOAN-13) — everything the page showed before, plus the simulator. */
+type LoanDetailTab = 'overview' | 'what-if';
+
+const DETAIL_TABS: TabDefinition[] = [
+  { label: 'Overview', value: 'overview' },
+  { label: 'What-if', value: 'what-if' },
+];
 
 /**
  * The `/loans/:id` detail route (TICKET-LOAN-06). LOAN-07 (balance chart), LOAN-08 (amortization
@@ -45,8 +56,10 @@ import { LoansStore } from '../../loans.store';
     LoanBalanceChartComponent,
     LoanFormComponent,
     LoanPaymentsListComponent,
+    LoanWhatIfComponent,
     NgIcon,
     PageHeaderComponent,
+    TabsComponent,
     TypographyComponent,
   ],
   templateUrl: './loan-detail.component.html',
@@ -95,6 +108,15 @@ export class LoanDetailComponent {
       : { label: 'Archive', icon: 'tablerArchive' },
   );
 
+  protected readonly detailTabs = DETAIL_TABS;
+
+  /**
+   * Which view of this loan is open (TICKET-LOAN-13). A plain `signal`, not a route param or
+   * `ChartOptionsStore`: the Overview/What-if split is a reading choice with nothing worth
+   * deep-linking and nothing echarts owns, so it lives and dies with the page.
+   */
+  protected readonly activeTab = signal<LoanDetailTab>('overview');
+
   protected readonly deleteConfirmOpen = signal(false);
   protected readonly editFormOpen = signal(false);
 
@@ -120,6 +142,13 @@ export class LoanDetailComponent {
     void (loan.archived
       ? this.loansStore.unarchiveLoan(loan.id)
       : this.loansStore.archiveLoan(loan.id));
+  }
+
+  /** `mm-tabs` emits the raw `string | undefined` its `TabDefinition[]` carries; narrow it rather than casting, as `loan-composition-chart` does for its basis. */
+  protected selectTab(value: string | undefined): void {
+    if (value === 'overview' || value === 'what-if') {
+      this.activeTab.set(value);
+    }
   }
 
   protected async deleteConfirmed(): Promise<void> {

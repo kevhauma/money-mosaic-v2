@@ -13,6 +13,7 @@ import { TransactionsStore } from '@/core/state';
 import { LoanAmortizationTableComponent } from '../loan-amortization-table/loan-amortization-table.component';
 import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-chart.component';
 import { LoanCompositionChartComponent } from '../loan-composition-chart/loan-composition-chart.component';
+import { LoanWhatIfComponent } from '../loan-what-if/loan-what-if.component';
 import { LoanDetailComponent } from './loan-detail.component';
 
 /**
@@ -38,6 +39,17 @@ class LoanBalanceChartStub {
 @Component({ selector: 'app-loan-composition-chart', template: '' })
 class LoanCompositionChartStub {
   readonly loan = input.required<Loan>();
+}
+
+/**
+ * And the same for the What-if tab (TICKET-LOAN-13), which carries a chart of its own. The tests
+ * here only ask *which* panel a tab shows; what the simulator computes is
+ * `loan-what-if.component.spec.ts`'s job.
+ */
+@Component({ selector: 'app-loan-what-if', template: 'what-if panel' })
+class LoanWhatIfStub {
+  readonly loan = input.required<Loan>();
+  readonly payments = input<Transaction[]>([]);
 }
 
 // jsdom has no ResizeObserver; keep the polyfill in case a future test here reaches the real chart.
@@ -91,8 +103,8 @@ const createFixture = async (
     ],
   })
     .overrideComponent(LoanDetailComponent, {
-      remove: { imports: [LoanBalanceChartComponent] },
-      add: { imports: [LoanBalanceChartStub] },
+      remove: { imports: [LoanBalanceChartComponent, LoanWhatIfComponent] },
+      add: { imports: [LoanBalanceChartStub, LoanWhatIfStub] },
     })
     .overrideComponent(LoanAmortizationTableComponent, {
       remove: { imports: [LoanCompositionChartComponent] },
@@ -285,4 +297,75 @@ describe('LoanDetailComponent: archive/unarchive/delete (TICKET-LOAN-11)', () =>
       expect(TestBed.inject(TransactionsStore).transactions()).toEqual([linkedTransaction]);
     });
   }
+});
+
+describe('LoanDetailComponent tabs (TICKET-LOAN-13)', () => {
+  const tabLabels = (host: HTMLElement): string[] =>
+    [...host.querySelectorAll('mm-tabs [role="tab"], mm-tabs a, mm-tabs button')].map((tab) =>
+      (tab.textContent ?? '').trim(),
+    );
+
+  const clickTab = async (
+    fixture: ComponentFixture<LoanDetailComponent>,
+    label: string,
+  ): Promise<void> => {
+    const host = fixture.nativeElement as HTMLElement;
+    const tab = [...host.querySelectorAll('mm-tabs *')].find(
+      (element) => (element.textContent ?? '').trim() === label && element.children.length === 0,
+    );
+    (tab as HTMLElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  it('renders an Overview and a What-if tab, opening on Overview', async () => {
+    const fixture = await createFixture([loan({ id: 1 })], '1');
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(tabLabels(host)).toEqual(expect.arrayContaining(['Overview', 'What-if']));
+    expect(host.querySelector('app-loan-balance-chart')).not.toBeNull();
+    expect(host.querySelector('app-loan-what-if')).toBeNull();
+  });
+
+  it("keeps the Overview tab's panels in their pre-tab order, none dropped", async () => {
+    const fixture = await createFixture([loan({ id: 1 })], '1');
+    const host = fixture.nativeElement as HTMLElement;
+
+    const panels = [
+      ...host.querySelectorAll(
+        'app-loan-balance-chart, app-loan-amortization-table, app-loan-payments-list',
+      ),
+    ].map((element) => element.tagName.toLowerCase());
+    expect(panels).toEqual([
+      'app-loan-balance-chart',
+      'app-loan-amortization-table',
+      'app-loan-payments-list',
+    ]);
+  });
+
+  it('swaps to the What-if panel on click, without navigating, keeping the header and badge', async () => {
+    const fixture = await createFixture([loan({ id: 1 })], '1');
+    const host = fixture.nativeElement as HTMLElement;
+
+    await clickTab(fixture, 'What-if');
+
+    expect(host.querySelector('app-loan-what-if')).not.toBeNull();
+    expect(host.querySelector('app-loan-balance-chart')).toBeNull();
+    expect(host.querySelector('app-loan-amortization-table')).toBeNull();
+    // The loan's own header and schedule badge describe the loan, not one view of it.
+    expect(host.querySelector('mm-page-header')?.textContent).toContain('Home mortgage');
+    expect(host.querySelector('mm-badge')).not.toBeNull();
+  });
+
+  it('returns to the Overview panels on switching back', async () => {
+    const fixture = await createFixture([loan({ id: 1 })], '1');
+    const host = fixture.nativeElement as HTMLElement;
+
+    await clickTab(fixture, 'What-if');
+    await clickTab(fixture, 'Overview');
+
+    expect(host.querySelector('app-loan-what-if')).toBeNull();
+    expect(host.querySelector('app-loan-balance-chart')).not.toBeNull();
+    expect(host.querySelector('app-loan-payments-list')).not.toBeNull();
+  });
 });

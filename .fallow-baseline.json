@@ -1,8 +1,6 @@
 {
   "unused_files": [],
-  "unused_exports": [
-    "src/app/core/loans/what-if.ts:projectLoanWhatIf"
-  ],
+  "unused_exports": [],
   "unused_types": [],
   "private_type_leaks": [],
   "unused_dependencies": [],

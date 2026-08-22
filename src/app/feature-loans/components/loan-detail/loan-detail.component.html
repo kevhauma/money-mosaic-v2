@@ -28,11 +28,26 @@
     </mm-flex>
   }
 
-  <app-loan-balance-chart [loan]="loan" [payments]="payments()" class="mb-4 block" />
+  <!-- The header, its actions, and the schedule badge stay above the bar: they describe the loan
+       itself, not one view of it. Which tab is open is component state, not a route param — a tab
+       here isn't worth deep-linking (TICKET-LOAN-13). -->
+  <mm-tabs
+    [tabs]="detailTabs"
+    [selected]="activeTab()"
+    (selectedChange)="selectTab($event)"
+    variant="lift"
+    class="mb-4 w-fit"
+  />
 
-  <app-loan-amortization-table [loan]="loan" class="mb-4 block" />
+  @if (activeTab() === 'what-if') {
+    <app-loan-what-if [loan]="loan" [payments]="payments()" />
+  } @else {
+    <app-loan-balance-chart [loan]="loan" [payments]="payments()" class="mb-4 block" />
 
-  <app-loan-payments-list [loan]="loan" class="mb-4 block" />
+    <app-loan-amortization-table [loan]="loan" class="mb-4 block" />
+
+    <app-loan-payments-list [loan]="loan" class="mb-4 block" />
+  }
 
   <app-loan-form
     [(open)]="editFormOpen"

@@ -25,13 +25,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // remaining what-if simulator tickets are what is still open under this version.
   {
     versionFolder: 'v1.7_loan_tracker',
-    ticketId: 'TICKET-LOAN-13',
-    title:
-      'Ask "what if I paid €200 extra a month?" on any loan and see the new payoff date and interest saved',
-    area: 'Loans',
-  },
-  {
-    versionFolder: 'v1.7_loan_tracker',
     ticketId: 'TICKET-LOAN-14',
     title:
       'Try a one-off lump sum in a future year, with the estimated early-repayment fee taken off the saving',

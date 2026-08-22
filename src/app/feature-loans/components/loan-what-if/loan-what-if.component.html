@@ -1,0 +1,73 @@
+<mm-paper elevation="flat" class="mb-4 block">
+  <mm-text as="h2" variant="subheading" weight="semibold" class="mb-1">
+    What if I paid more each month?
+  </mm-text>
+  <mm-text as="p" variant="caption" class="mb-3">
+    Nothing here is saved — it's a question, not a change to the loan. Every figure is an estimate
+    from your current balance at this loan's own rate.
+  </mm-text>
+
+  <mm-fieldset legend="Extra payment per month">
+    <mm-flex align="center" gap="2" [wrap]="true">
+      <mm-input
+        type="number"
+        min="0"
+        step="0.01"
+        [formControl]="extraControl"
+        [ariaInvalid]="extraControl.invalid"
+        class="w-40"
+        placeholder="e.g. 200"
+      />
+      @for (amount of presetAmounts; track amount) {
+        <mm-button type="button" variant="outline" size="sm" (click)="applyPreset(amount)">
+          +{{ amount }}
+        </mm-button>
+      }
+    </mm-flex>
+    @if (extraError; as message) {
+      <mm-label variant="error">{{ message }}</mm-label>
+    } @else {
+      <mm-label class="whitespace-normal">
+        On top of what you already pay, every month from here on.
+      </mm-label>
+    }
+  </mm-fieldset>
+
+  <!-- The answer, as a headline figure with its deltas under it rather than one run-on sentence:
+       the money then sits in its own element, so `mm-privacy-blur` wraps exactly the amount and
+       nothing else — the `forecast-controls` readout shape. -->
+  <div class="mt-4 rounded-box bg-base-200/50 p-3">
+    @switch (headline().kind) {
+      @case ('paid-off') {
+        <mm-text as="p">This loan is already paid off — there's nothing left to simulate.</mm-text>
+      }
+      @case ('unchanged') {
+        <mm-text as="p" weight="semibold">Paid off in {{ headline().payoffLabel }}</mm-text>
+        <mm-text as="p" variant="caption">No change — this is your current schedule.</mm-text>
+      }
+      @default {
+        <mm-text as="p" weight="semibold">Paid off in {{ headline().payoffLabel }}</mm-text>
+        <mm-flex align="baseline" gap="2" [wrap]="true">
+          @if (headline().deltaLabel; as delta) {
+            <mm-text variant="caption" color="success">{{ delta }}</mm-text>
+          }
+          @if (headline().interestSavedLabel; as saved) {
+            <mm-privacy-blur [blurred]="privacyMode()">
+              <mm-text variant="caption" weight="semibold">{{ saved }}</mm-text>
+            </mm-privacy-blur>
+            <mm-text variant="caption">saved in interest</mm-text>
+          }
+        </mm-flex>
+        <mm-text as="p" variant="caption" class="mt-1">
+          An estimate: interest is projected a month at a time, so your lender's own quote can
+          differ slightly.
+        </mm-text>
+      }
+    }
+  </div>
+</mm-paper>
+
+<mm-paper elevation="flat" class="block">
+  <p class="card-title text-base">Balance from here on</p>
+  <div echarts [options]="chartOption()" class="h-72 w-full"></div>
+</mm-paper>
