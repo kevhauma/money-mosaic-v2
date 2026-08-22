@@ -1,4 +1,4 @@
-import { computeAmortizationSchedule } from './amortization';
+import { computeAmortizationSchedule, scheduledMonthlyPayment } from './amortization';
 
 describe('computeAmortizationSchedule (TICKET-LOAN-04)', () => {
   it('computes a known textbook mortgage schedule (200000 principal, 6% annual, 360 months)', () => {
@@ -56,5 +56,18 @@ describe('computeAmortizationSchedule (TICKET-LOAN-04)', () => {
   it('takes no loanType or mortgage-specific parameter — same call shape for every loan type', () => {
     // Type-level assertion: the function has exactly four parameters, none of them loanType.
     expect(computeAmortizationSchedule.length).toBe(4);
+  });
+});
+
+describe('scheduledMonthlyPayment (TICKET-LOAN-12)', () => {
+  it('is the exact payment computeAmortizationSchedule bills every non-final month', () => {
+    const schedule = computeAmortizationSchedule(200000, 6, 360, '2024-01-01');
+
+    expect(scheduledMonthlyPayment(200000, 6, 360)).toBe(schedule[0].payment);
+    expect(scheduledMonthlyPayment(200000, 6, 360)).toBeCloseTo(1199.1, 1);
+  });
+
+  it('falls back to linear repayment at a 0% rate, without dividing by zero', () => {
+    expect(scheduledMonthlyPayment(1200, 0, 12)).toBeCloseTo(100, 6);
   });
 });

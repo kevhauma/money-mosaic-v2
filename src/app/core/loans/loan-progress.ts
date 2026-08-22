@@ -1,6 +1,11 @@
 import type { Loan, Transaction } from '@/core/data-access';
-import { formatIsoDate, parseIsoDate } from '@/shared/utils';
-import { computeAmortizationSchedule, monthlyRateOf, type AmortizationEntry } from './amortization';
+import { parseIsoDate } from '@/shared/utils';
+import {
+  addMonths,
+  computeAmortizationSchedule,
+  monthlyRateOf,
+  type AmortizationEntry,
+} from './amortization';
 
 /** A loan's real payoff position, reconciled against its actual linked-category payments (TICKET-LOAN-05). */
 export type LoanProgress = {
@@ -127,14 +132,6 @@ const monthsBetween = (fromDate: string, toDate: string): number => {
   return Math.max(0, months);
 };
 
-/** `date` advanced (or, with a negative `months`, moved back) by whole calendar months. */
-const shiftByMonths = (date: string, months: number): string => {
-  const parsed = parseIsoDate(date);
-  return formatIsoDate(
-    new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth() + months, parsed.getUTCDate())),
-  );
-};
-
 /**
  * Compares the actual balance/pace (`computeLoanProgress`) against the original schedule
  * (`computeAmortizationSchedule`) at the same point in real time (TICKET-LOAN-10, FR-LOAN-10) — the
@@ -188,6 +185,6 @@ export function computeScheduleComparison(
   return {
     monthsAheadOfSchedule,
     interestSavedEstimate: scheduleTotalInterest - projectedTotalInterest,
-    projectedPayoffDate: shiftByMonths(finalEntry.date, -monthsAheadOfSchedule),
+    projectedPayoffDate: addMonths(finalEntry.date, -monthsAheadOfSchedule),
   };
 }

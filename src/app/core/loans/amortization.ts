@@ -21,16 +21,38 @@ export const monthlyRateOf = (annualInterestRatePercent: number): number =>
   annualInterestRatePercent / 100 / 12;
 
 /**
- * `startDate` advanced by `month` calendar months, same day-of-month where the target month has
- * one — a day past a shorter month's end rolls forward (native `Date` day-overflow behaviour),
- * same as `net-worth-projection.ts`'s `pointDate` uses `Date.UTC` for its own month stepping.
+ * `date` advanced (or, with a negative `months`, moved back) by whole calendar months, same
+ * day-of-month where the target month has one — a day past a shorter month's end rolls forward
+ * (native `Date` day-overflow behaviour), same as `net-worth-projection.ts`'s `pointDate` uses
+ * `Date.UTC` for its own month stepping. Every forward walk in `core/loans` steps months through
+ * this one helper (TICKET-LOAN-12), so a schedule, a payoff projection, and a what-if series can
+ * never disagree about which day a month lands on.
  */
-const entryDate = (startDate: string, month: number): string => {
-  const start = parseIsoDate(startDate);
+export const addMonths = (date: string, months: number): string => {
+  const parsed = parseIsoDate(date);
   return formatIsoDate(
-    new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + month, start.getUTCDate())),
+    new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth() + months, parsed.getUTCDate())),
   );
 };
+
+/**
+ * The fixed monthly payment a loan's stated terms imply — the standard annuity formula, with the
+ * zero-rate case falling back to plain linear repayment so a 0% loan never divides by zero.
+ *
+ * Exported (TICKET-LOAN-12) because the what-if engine projects forward at the *same* payment this
+ * schedule is built from: one formula, two callers, no drift — the same reason `monthlyRateOf` is
+ * shared rather than re-derived.
+ */
+export function scheduledMonthlyPayment(
+  principal: number,
+  annualInterestRatePercent: number,
+  termMonths: number,
+): number {
+  const monthlyRate = monthlyRateOf(annualInterestRatePercent);
+  return monthlyRate > 0
+    ? (principal * monthlyRate) / (1 - (1 + monthlyRate) ** -termMonths)
+    : principal / termMonths;
+}
 
 /**
  * The theoretical monthly payment schedule for a loan's stated terms (TICKET-LOAN-04, FR-LOAN-4) —
@@ -45,10 +67,7 @@ export function computeAmortizationSchedule(
   startDate: string,
 ): AmortizationEntry[] {
   const monthlyRate = monthlyRateOf(annualInterestRatePercent);
-  const payment =
-    monthlyRate > 0
-      ? (principal * monthlyRate) / (1 - (1 + monthlyRate) ** -termMonths)
-      : principal / termMonths;
+  const payment = scheduledMonthlyPayment(principal, annualInterestRatePercent, termMonths);
 
   const entries: AmortizationEntry[] = [];
   let remainingBalance = principal;
@@ -64,7 +83,7 @@ export function computeAmortizationSchedule(
 
     entries.push({
       month,
-      date: entryDate(startDate, month),
+      date: addMonths(startDate, month),
       payment: isFinalMonth ? interestPortion + principalPortion : payment,
       principalPortion,
       interestPortion,

@@ -1,11 +1,7 @@
 {
-  "unused_files": [
-    "src/app/core/loans/amortization.ts",
-    "src/app/core/loans/index.ts",
-    "src/app/core/loans/loan-progress.ts"
-  ],
+  "unused_files": [],
   "unused_exports": [
-    "src/app/core/loans/amortization.ts:computeAmortizationSchedule"
+    "src/app/core/loans/what-if.ts:projectLoanWhatIf"
   ],
   "unused_types": [],
   "private_type_leaks": [],

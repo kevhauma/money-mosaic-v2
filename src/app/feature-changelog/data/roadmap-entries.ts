@@ -22,13 +22,7 @@ export type RoadmapEntry = {
  */
 export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // The Loan tracker itself has shipped (see CHANGELOG_ENTRIES), so its topic-level row is gone; the
-  // three what-if simulator tickets are what is still open under this version.
-  {
-    versionFolder: 'v1.7_loan_tracker',
-    ticketId: 'TICKET-LOAN-12',
-    title: 'Work out what happens to a loan if you change how you pay it from here on',
-    area: 'Loans',
-  },
+  // remaining what-if simulator tickets are what is still open under this version.
   {
     versionFolder: 'v1.7_loan_tracker',
     ticketId: 'TICKET-LOAN-13',
