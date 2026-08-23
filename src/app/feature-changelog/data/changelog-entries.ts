@@ -1062,4 +1062,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Dates and amounts now come out the way you read them — 23/08/2026 and €1.234,56 — without a trip to Settings',
     area: 'Settings',
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-TXN-11'],
+    title:
+      'The transaction filter controls each sit in their own space again, at every window width',
+    area: 'Transactions',
+  },
 ];

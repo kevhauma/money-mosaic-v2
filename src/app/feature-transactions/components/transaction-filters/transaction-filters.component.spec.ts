@@ -205,6 +205,48 @@ describe('TransactionFiltersComponent', () => {
       expect(directionOf()).toBe('all');
     });
 
+    /**
+     * jsdom has no layout, so the overlap this ticket fixed can only be *measured* in a browser
+     * (recorded on TICKET-TXN-11). What a spec can hold is the class contract the fix rests on:
+     * four `lg` tracks, and spans that make the two rows fill exactly — change any of these and
+     * the wide controls are back in a track too narrow for them.
+     */
+    it('lays the lg grid out in four tracks, with spans that fill both rows (TICKET-TXN-11)', async () => {
+      await setup();
+      fixture.detectChanges();
+      const form = fixture.nativeElement.querySelector('form') as HTMLElement;
+      const spanOf = (selector: string): string =>
+        Array.from((form.querySelector(selector) as HTMLElement).classList)
+          .filter((token) => token.includes('col-span'))
+          .sort()
+          .join(' ');
+
+      expect(form.classList).toContain('lg:grid-cols-4');
+      // Row 1: Account + Date range + Category + Search, one track each.
+      expect(spanOf('mm-fieldset[legend="Search"]')).toBe('col-span-2 lg:col-span-1 sm:col-span-3');
+      // Row 2: the amount group over three tracks, the button pair in the fourth.
+      expect(spanOf('[data-testid="amount-group"]')).toBe('col-span-2 lg:col-span-3 sm:col-span-3');
+      expect(spanOf('[data-testid="filter-actions"]')).toBe(
+        'col-span-2 lg:col-span-1 sm:col-span-3',
+      );
+    });
+
+    it('stacks the action buttons once they share one lg track (TICKET-TXN-11)', async () => {
+      await setup();
+      fixture.detectChanges();
+      const actions = fixture.nativeElement.querySelector(
+        '[data-testid="filter-actions"]',
+      ) as HTMLElement;
+
+      // Side by side while the pair owns a whole row; one per line at `lg`, where the track is
+      // ~187px and "Make rule from filter" alone needs 139px on one line.
+      expect(actions.classList).toContain('grid-cols-2');
+      expect(actions.classList).toContain('lg:grid-cols-1');
+      // The tip opens leftwards because this cell sits on the form's right edge; centred, its
+      // pseudo-element pushed the form's scrollWidth past its clientWidth.
+      expect(actions.querySelector('.tooltip')?.classList).toContain('tooltip-left');
+    });
+
     it('renders the direction with Min and Max in one group, not merely adjacent in the grid', async () => {
       await setup();
       fixture.detectChanges();
