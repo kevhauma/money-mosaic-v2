@@ -1169,4 +1169,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Each line now sits at that account’s real balance, the figure you can check against your bank statement. A “Combined total” button brings the stacked view back when you want the whole picture, and the caption says so while it is on.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-UI-27'],
+    title: 'A positive amount stops being drawn in the same red as a loss',
+    area: 'UI',
+    details: [
+      'The two default themes set the brand colour and the loss colour five hue degrees apart, so the Net worth tile — which used the brand colour — rendered a healthy +€16,898.26 in the red reserved for losses, right next to a green “Net cash flow”.',
+      'Money now has its own pair of colours, separate from the brand and from the alert palette, and the Net worth tile is coloured by whether the figure is positive or negative.',
+      'The loss red in both default themes and in Retro-Futurism moved clear of each theme’s brand colour, and a check now fails the build if any theme puts the two back within reach of each other.',
+    ],
+  },
 ];

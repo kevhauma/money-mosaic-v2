@@ -5,10 +5,11 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { tablerInfoCircle } from '@ng-icons/tabler-icons';
 import { daisyClasses, MM_SQUISH_CLASS } from '@/shared/utils';
 import { PrivacyBlurComponent } from '../privacy-blur/privacy-blur.component';
-import { TypographyComponent } from '../typography/typography.component';
+import { TypographyComponent, type TextColor } from '../typography/typography.component';
 
-export type StatCardColor =
-  'neutral' | 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
+/** `TextColor` minus `base-content` (the default) — including the money hooks, since a stat card is
+ * where the app's largest money figures live (TICKET-UI-27). */
+export type StatCardColor = Exclude<TextColor, 'base-content'>;
 
 /**
  * A stat card is no longer a daisyUI `.stats`-joined segment; each one is its own free-standing

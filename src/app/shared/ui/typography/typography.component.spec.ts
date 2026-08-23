@@ -135,6 +135,28 @@ describe('TypographyComponent', () => {
     ]);
   });
 
+  it('resolves the money colors to their hook classes, not to a text-* utility (TICKET-UI-27)', () => {
+    fixture.componentRef.setInput('variant', 'body');
+    fixture.componentRef.setInput('color', 'money-positive');
+    fixture.detectChanges();
+    // `text-money-positive` is not a Tailwind utility and never will be: `.mm-money-positive` is an
+    // un-layered rule reading this theme's `--mm-money-positive`, so it also beats utilities without
+    // `!important`.
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-base',
+      'leading-[1.6]',
+      'mm-money-positive',
+    ]);
+
+    fixture.componentRef.setInput('color', 'money-negative');
+    fixture.detectChanges();
+    expectClasses(fixture.nativeElement.querySelector('span'), [
+      'text-base',
+      'leading-[1.6]',
+      'mm-money-negative',
+    ]);
+  });
+
   it('applies the align input as a text-alignment utility', () => {
     fixture.componentRef.setInput('variant', 'body');
     fixture.componentRef.setInput('align', 'center');

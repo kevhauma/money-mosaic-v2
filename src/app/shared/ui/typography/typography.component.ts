@@ -4,6 +4,17 @@ import { daisyClasses } from '@/shared/utils';
 
 export type TextVariant = 'display' | 'heading' | 'subheading' | 'body' | 'caption' | 'label';
 export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+/**
+ * `money-positive`/`money-negative` are NOT daisyUI palette names (TICKET-UI-27): they resolve to
+ * the `.mm-money-*` hook classes in `styles.css`, which read each theme's own `--mm-money-*` tokens.
+ * A money figure must never be coloured `primary` or `error` directly — the two default themes had
+ * their brand red and their loss red five hue degrees apart, so the Net worth tile's `primary`
+ * rendered a positive figure as a loss. `src/themes/theme-palette.spec.ts` holds the palettes apart;
+ * these two names are what keeps the *markup* from reaching for the alert vocabulary in the first
+ * place.
+ */
+export type MoneyTextColor = 'money-positive' | 'money-negative';
+
 export type TextColor =
   | 'base-content'
   | 'neutral'
@@ -13,9 +24,18 @@ export type TextColor =
   | 'info'
   | 'success'
   | 'warning'
-  | 'error';
+  | 'error'
+  | MoneyTextColor;
+
 export type TextAlign = 'left' | 'center' | 'right';
 export type TextTag = 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4';
+
+/** The money hooks are plain classes, not `text-*` utilities — see `MoneyTextColor`. Every other
+ * colour is absent here and falls through to `text-<name>`. */
+const HOOK_COLOR_CLASSES: Partial<Record<TextColor, string>> = {
+  'money-positive': 'mm-money-positive',
+  'money-negative': 'mm-money-negative',
+};
 
 const WEIGHT_CLASSES: Record<TextWeight, string> = {
   normal: 'font-normal',
@@ -84,7 +104,7 @@ const VARIANT_OPACITY: Partial<Record<TextVariant, string>> = {
 
 /** An explicit `color` always wins; otherwise falls back to the variant's own default (with its baked-in opacity), if it has one. */
 function resolveColorClass(variant: TextVariant, color: TextColor | undefined): string | undefined {
-  if (color) return `text-${color}`;
+  if (color) return HOOK_COLOR_CLASSES[color] ?? `text-${color}`;
   const defaultColor = VARIANTS[variant].color;
   return defaultColor && `text-${defaultColor}${VARIANT_OPACITY[variant] ?? ''}`;
 }

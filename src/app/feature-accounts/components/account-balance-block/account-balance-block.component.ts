@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import {
+  negativeMoneyColor,
   TypographyComponent,
   type TextColor,
   type TextVariant,
@@ -64,7 +65,9 @@ export class AccountBalanceBlockComponent {
   readonly size = input<AccountBalanceBlockSize>('md');
 
   protected readonly spec = computed(() => SIZE_SPECS[this.size()]);
+  /** Only losses are marked, per `negativeMoneyColor` — a green tint on every positive balance would
+   * colour most of the accounts list (TICKET-UI-27). */
   protected readonly balanceColor = computed<TextColor | undefined>(() =>
-    this.balance() < 0 ? 'error' : undefined,
+    negativeMoneyColor(this.balance()),
   );
 }

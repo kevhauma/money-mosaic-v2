@@ -39,7 +39,7 @@
               >
                 <span class="whitespace-nowrap">{{ transaction.bookingDate }}</span>
                 <span class="flex-1 truncate">{{ transaction.rawDescription }}</span>
-                <mm-text [color]="transaction.amount < 0 ? 'error' : undefined">
+                <mm-text [color]="transaction.amount < 0 ? 'money-negative' : undefined">
                   {{ transaction.amount | signedAmount }}
                 </mm-text>
               </mm-text>

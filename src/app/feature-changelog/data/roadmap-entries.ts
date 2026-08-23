@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-UI-27',
-    title: 'Positive amounts stop being rendered in the same red as losses',
-    area: 'UI',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-UI-28',
     title: 'Every sidebar item is reachable, or visibly scrollable',
     area: 'UI',

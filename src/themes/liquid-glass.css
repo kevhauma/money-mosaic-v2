@@ -48,6 +48,10 @@
   --color-warning-content: oklch(18% 0.04 80);
   --color-error: oklch(70% 0.19 22);
   --color-error-content: oklch(14% 0.04 22);
+  /* Money's own vocabulary (TICKET-UI-27) — see the `.mm-money-*` hooks in styles.css. Aliased to
+   * this theme's alert colours, which `src/themes/theme-palette.spec.ts` holds clear of `--color-primary`. */
+  --mm-money-positive: var(--color-success);
+  --mm-money-negative: var(--color-error);
 
   --radius-selector: 2rem;
   --radius-field: 1rem;

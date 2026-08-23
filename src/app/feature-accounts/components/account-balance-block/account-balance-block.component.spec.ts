@@ -42,16 +42,20 @@ describe('AccountBalanceBlockComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('1');
   });
 
-  it('colors a negative balance as error', async () => {
+  it("colors a negative balance with money's own loss token, not the alert palette", async () => {
     await setup({ balance: -50 });
 
-    expect(fixture.nativeElement.querySelector('p.text-error')).not.toBeNull();
+    // Was `p.text-error` (TICKET-UI-27): in both default themes `--color-error` sat five hue degrees
+    // from the brand `--color-primary`, so the alert palette was not a safe place for money to read
+    // its colours from. `.mm-money-negative` resolves this theme's own `--mm-money-negative`.
+    expect(fixture.nativeElement.querySelector('p.mm-money-negative')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('p.text-error')).toBeNull();
   });
 
   it('leaves a non-negative balance uncolored', async () => {
     await setup({ balance: 50 });
 
-    expect(fixture.nativeElement.querySelector('p.text-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('p.mm-money-negative')).toBeNull();
   });
 
   it('hides the "Your share" line when hasShare is false', async () => {

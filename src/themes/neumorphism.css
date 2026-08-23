@@ -60,6 +60,10 @@
   --color-warning-content: oklch(22% 0.04 85);
   --color-error: oklch(58% 0.17 25);
   --color-error-content: oklch(97% 0.01 25);
+  /* Money's own vocabulary (TICKET-UI-27) — see the `.mm-money-*` hooks in styles.css. Aliased to
+   * this theme's alert colours, which `src/themes/theme-palette.spec.ts` holds clear of `--color-primary`. */
+  --mm-money-positive: var(--color-success);
+  --mm-money-negative: var(--color-error);
 
   --radius-selector: 2rem;
   --radius-field: 1rem;
@@ -127,6 +131,10 @@
   --color-warning-content: oklch(18% 0.04 85);
   --color-error: oklch(66% 0.15 25);
   --color-error-content: oklch(14% 0.03 25);
+  /* Money's own vocabulary (TICKET-UI-27) — see the `.mm-money-*` hooks in styles.css. Aliased to
+   * this theme's alert colours, which `src/themes/theme-palette.spec.ts` holds clear of `--color-primary`. */
+  --mm-money-positive: var(--color-success);
+  --mm-money-negative: var(--color-error);
 
   --radius-selector: 2rem;
   --radius-field: 1rem;

@@ -33,7 +33,7 @@
       (categoryChange)="categoryChanged.emit($event)"
     />
   </td>
-  <td class="text-right" [class.text-error]="row().transaction.amount < 0">
+  <td class="text-right" [class.mm-money-negative]="row().transaction.amount < 0">
     {{ row().transaction.amount | signedAmount }}
   </td>
   <td>

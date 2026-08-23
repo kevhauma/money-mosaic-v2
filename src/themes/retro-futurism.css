@@ -33,8 +33,16 @@
   --color-success-content: oklch(97% 0.015 150);
   --color-warning: oklch(76% 0.15 75);
   --color-warning-content: oklch(28% 0.05 60);
-  --color-error: oklch(56% 0.19 28);
-  --color-error-content: oklch(97% 0.015 28);
+  /* Was `oklch(56% 0.19 28)` — fourteen hue degrees from the amber `--color-primary` at 42, the
+   * closest existing case in the app and below the floor `src/themes/theme-palette.spec.ts` sets
+   * (TICKET-UI-27). Re-hued to a true red, which reads as an alert against amber rather than as a
+   * darker shade of it. */
+  --color-error: oklch(54% 0.21 15);
+  --color-error-content: oklch(97% 0.015 15);
+  /* Money's own vocabulary (TICKET-UI-27) — see the `.mm-money-*` hooks in styles.css. Aliased to
+   * this theme's alert colours, which `src/themes/theme-palette.spec.ts` holds clear of `--color-primary`. */
+  --mm-money-positive: var(--color-success);
+  --mm-money-negative: var(--color-error);
 
   --radius-selector: 2rem;
   --radius-field: 1rem;

@@ -39,6 +39,10 @@
   --color-warning-content: oklch(16% 0.02 75);
   --color-error: oklch(65% 0.2 25);
   --color-error-content: oklch(15% 0.02 25);
+  /* Money's own vocabulary (TICKET-UI-27) — see the `.mm-money-*` hooks in styles.css. Aliased to
+   * this theme's alert colours, which `src/themes/theme-palette.spec.ts` holds clear of `--color-primary`. */
+  --mm-money-positive: var(--color-success);
+  --mm-money-negative: var(--color-error);
 
   /* Rounded hardware corners — enough radius to read as a machined/tooled edge. */
   --radius-selector: 0.75rem;

@@ -14,6 +14,7 @@ import {
   ButtonComponent,
   EmptyStateComponent,
   LoadingSkeletonComponent,
+  moneyColor,
   PageHeaderComponent,
   PaperComponent,
   PrivacyToggleComponent,
@@ -132,9 +133,16 @@ export class DashboardOverviewComponent {
 
   protected readonly netValue = computed(() => formatCurrency(this.statsStore.periodStats().net));
 
-  protected readonly netColor = computed<'success' | 'error'>(() =>
-    this.statsStore.periodStats().net >= 0 ? 'success' : 'error',
-  );
+  /** Money's own tokens, never `success`/`error` (TICKET-UI-27) — see `moneyColor`. */
+  protected readonly netColor = computed(() => moneyColor(this.statsStore.periodStats().net));
+
+  /**
+   * The hero tile was `color="primary"`, which in both default themes is a coral five hue degrees
+   * from the loss red — so a positive net worth read as an alarm (TICKET-UI-27). It is sign-coloured
+   * now; the `mm-net-worth` plate, wash and label hooks are untouched, since those come from the
+   * class, not from this input.
+   */
+  protected readonly netWorthColor = computed(() => moneyColor(this.accountsStore.netWorth()));
 
   protected readonly incomeSubLabel = computed(() =>
     this.periodizedSubLabel(this.statsStore.periodStats().income),
@@ -156,13 +164,13 @@ export class DashboardOverviewComponent {
   protected readonly savingsRateDefinition =
     'The share of income you actually moved into a savings account. Money left sitting in a current account does not count here — Net cash flow is the measure that counts it.';
 
-  /** `net / income`, worded by sign, distinct from savings rate (TICKET-STAT-21) — reuses `netColor`'s success/error split. */
+  /** `net / income`, worded by sign, distinct from savings rate (TICKET-STAT-21) — reuses `netColor`'s positive/negative split. */
   protected readonly netMarginSubLabel = computed(() => {
     const { net, income } = this.statsStore.periodStats();
     const margin = computeNetMargin(net, income);
     if (margin == null) return undefined;
     const formatted = formatPercent(Math.abs(margin));
-    return this.netColor() === 'success'
+    return this.netColor() === 'money-positive'
       ? `${formatted} of income kept, after all spending`
       : `${formatted} of income overspent`;
   });

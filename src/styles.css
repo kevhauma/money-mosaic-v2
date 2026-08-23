@@ -98,6 +98,27 @@
   box-shadow: var(--mm-glow-shadow, none);
 }
 /**
+ * Money figures are coloured by sign through their OWN tokens, never by borrowing the alert palette
+ * (TICKET-UI-27).
+ *
+ * The bug this fixes: `--color-primary` and `--color-error` sat five hue degrees apart in both
+ * default themes, so the Net worth tile's `color="primary"` painted a **positive** €16,898.26 in the
+ * loss red, right beside a green "Net cash flow". Two positive numbers, adjacent, opposite
+ * semantics.
+ *
+ * Each theme aliases these to its own success/error below, so the two vocabularies still agree by
+ * default — but they are now separable, and `src/themes/theme-palette.spec.ts` fails the build if any
+ * theme's error hue drifts back within `MIN_BRAND_ERROR_HUE_DISTANCE` of its primary. Un-layered like
+ * the hooks above so they beat Tailwind's `text-*` utilities without `!important`; the fallbacks are
+ * a safety net for a theme that forgets the tokens, not the real values.
+ */
+.mm-money-positive {
+  color: var(--mm-money-positive, var(--color-success));
+}
+.mm-money-negative {
+  color: var(--mm-money-negative, var(--color-error));
+}
+/**
  * Privacy mode's blurred figures (TICKET-PRIV-01). Unlike the two hooks above this one is NOT
  * inert — a theme that supplies no `--mm-*` still has to hide the number, so the fallback is a real
  * blur. `--mm-privacy-blur` only lets a theme dial the radius or swap the treatment.
@@ -281,8 +302,16 @@ table.sr-only {
   --color-success-content: oklch(20% 0.03 145);
   --color-warning: oklch(82% 0.17 85);
   --color-warning-content: oklch(20% 0.03 85);
-  --color-error: oklch(64% 0.21 20);
-  --color-error-content: oklch(98% 0.01 20);
+  /* Raspberry, not the coral at hue 25 the brand owns (TICKET-UI-27) — this was `oklch(64% 0.21 20)`,
+   * five degrees off `--color-primary`, which is how a positive Net worth came to render as a loss.
+   * `src/themes/theme-palette.spec.ts` now holds the two apart. */
+  --color-error: oklch(62% 0.22 0);
+  --color-error-content: oklch(98% 0.01 0);
+
+  /* Money's own vocabulary, aliased to this theme's alert colours (TICKET-UI-27) — see the
+   * `.mm-money-*` hooks in the un-layered block above. */
+  --mm-money-positive: var(--color-success);
+  --mm-money-negative: var(--color-error);
 
   /* Soft-material shape language: moderate uniform corners, big rounded boxes, no sharp corners —
    * TICKET-UI-21 moved fields off a full 9999px pill onto a calmer, still-soft radius. */
@@ -361,8 +390,12 @@ table.sr-only {
   --color-success-content: oklch(18% 0.03 145);
   --color-warning: oklch(84% 0.16 85);
   --color-warning-content: oklch(18% 0.03 85);
-  --color-error: oklch(70% 0.19 20);
-  --color-error-content: oklch(18% 0.03 20);
+  /* Raspberry rather than the brand coral, same re-hue as the light theme (TICKET-UI-27). */
+  --color-error: oklch(68% 0.2 0);
+  --color-error-content: oklch(18% 0.03 0);
+
+  --mm-money-positive: var(--color-success);
+  --mm-money-negative: var(--color-error);
 
   --radius-selector: 1.75rem;
   --radius-field: 0.875rem;
