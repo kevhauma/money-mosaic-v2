@@ -53,6 +53,29 @@ describe('LoanCardComponent (TICKET-LOAN-06)', () => {
     expect(host.querySelector('mm-badge')).not.toBeNull();
   });
 
+  /**
+   * jsdom has no layout engine, so "does the caption escape the card" can only be *measured* in a
+   * browser — those numbers live on TICKET-LOAN-15. What a spec can hold is the class contract
+   * that produced them: the row wraps, it has a gap, and the amount is allowed to give way. The
+   * bug was precisely the absence of all three.
+   */
+  it('lets the balance row wrap, gap and shrink rather than overflow the card (TICKET-LOAN-15)', async () => {
+    const fixture = await createFixture(loan({ principal: 1248392.1 }));
+    const host = fixture.nativeElement as HTMLElement;
+    const amount = Array.from(host.querySelectorAll('mm-text')).find(
+      (text) => text.getAttribute('variant') === 'display',
+    ) as HTMLElement;
+    const row = amount.closest('mm-flex') as HTMLElement;
+
+    // `flex-wrap`, so "remaining" drops to its own line instead of being pushed out of the card…
+    expect(row.querySelector('div')?.classList).toContain('flex-wrap');
+    // …a gap, so the two never touch when they do share a line…
+    expect(row.querySelector('div')?.classList).toContain('gap-2');
+    // …and an amount that can give way, so even a seven-figure balance stays inside a narrow card.
+    expect(amount.classList).toContain('min-w-0');
+    expect(amount.classList).toContain('break-words');
+  });
+
   it('renders identical layout for a mortgage and a non-mortgage loanType — only the badge text differs', async () => {
     const mortgage = await createFixture(loan({ loanType: 'mortgage' }));
     const auto = await createFixture(loan({ loanType: 'auto', name: 'Car loan' }));

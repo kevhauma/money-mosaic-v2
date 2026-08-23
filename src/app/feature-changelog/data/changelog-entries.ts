@@ -1070,4 +1070,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The transaction filter controls each sit in their own space again, at every window width',
     area: 'Transactions',
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-LOAN-15'],
+    title:
+      'A loan’s remaining balance and its caption both stay inside the card, at any size of balance',
+    area: 'Loans',
+  },
 ];

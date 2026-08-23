@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-LOAN-15',
-    title: 'A loan’s balance and its caption both stay inside the card',
-    area: 'Loans',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-PUB-10',
     title: 'Help guides stop showing stray asterisks in their text',
     area: 'Help',

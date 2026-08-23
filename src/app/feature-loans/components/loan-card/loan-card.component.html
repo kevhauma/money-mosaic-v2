@@ -14,8 +14,13 @@
   ></progress>
   <mm-text as="p" variant="caption">{{ vm().percentPaidOff }}% paid off</mm-text>
 
-  <mm-flex justify="between" align="baseline">
-    <mm-text as="p" variant="display">{{ vm().balanceLabel }}</mm-text>
+  <!-- Wraps, with a gap, and lets the amount shrink (TICKET-LOAN-15): a bare `justify-between` row
+       had the two touching with no space between them from about €1,250 up, and pushed "remaining"
+       outside the card's right border from five figures — the normal case for a mortgage. Above
+       roughly €250,000 the caption now drops to its own line rather than sharing a cramped one, and
+       `break-words` keeps even a seven-figure amount inside the card instead of past the viewport. -->
+  <mm-flex justify="between" align="baseline" gap="2" [wrap]="true">
+    <mm-text as="p" variant="display" class="min-w-0 break-words">{{ vm().balanceLabel }}</mm-text>
     <mm-text as="p" variant="caption" class="text-base-content/60">remaining</mm-text>
   </mm-flex>
 
