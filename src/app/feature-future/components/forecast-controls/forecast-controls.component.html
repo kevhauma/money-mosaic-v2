@@ -90,6 +90,10 @@
         <mm-privacy-blur [blurred]="privacyMode()">
           <mm-text weight="semibold">{{ readout().rateLabel }}</mm-text>
         </mm-privacy-blur>
+        <!-- Which of the two measures this figure is (TICKET-STAT-42). The basis has always been a
+             choice above; the number it produced never said which choice it came from, so it read
+             as a third unlabelled answer to the question the Dashboard answers twice. -->
+        <mm-text variant="caption">{{ readout().basisLabel }}</mm-text>
         <mm-text variant="caption">{{ readout().windowLabel }}</mm-text>
       </mm-flex>
       <mm-privacy-blur [blurred]="privacyMode()" class="block">

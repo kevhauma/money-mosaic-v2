@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-STAT-42',
-    title: 'Each savings figure says what it actually counts',
-    area: 'Dashboard',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-ACC-12',
     title: 'Balance history shows each account’s own balance, not a running total',
     area: 'Accounts',

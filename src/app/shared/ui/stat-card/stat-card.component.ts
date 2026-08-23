@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { tablerInfoCircle } from '@ng-icons/tabler-icons';
 import { daisyClasses, MM_SQUISH_CLASS } from '@/shared/utils';
 import { PrivacyBlurComponent } from '../privacy-blur/privacy-blur.component';
 import { TypographyComponent } from '../typography/typography.component';
@@ -27,9 +29,10 @@ const STAT_SURFACE_CLASSES =
 
 @Component({
   selector: 'mm-stat-card',
-  imports: [RouterLink, NgTemplateOutlet, PrivacyBlurComponent, TypographyComponent],
+  imports: [RouterLink, NgTemplateOutlet, NgIcon, PrivacyBlurComponent, TypographyComponent],
   templateUrl: './stat-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ tablerInfoCircle })],
 })
 export class StatCardComponent {
   readonly label = input.required<string>();
@@ -37,6 +40,17 @@ export class StatCardComponent {
   readonly subLabel = input<string>();
   /** Hover text (daisyUI `tooltip`) shown over `subLabel`, e.g. the figures behind a "+12% vs. last year" delta. `\n`-separated lines each render on their own line. */
   readonly tooltip = input<string>();
+  /**
+   * One sentence saying what this card's figure actually counts (TICKET-STAT-42), reachable from an
+   * info affordance beside the label. Distinct from `tooltip` in both what it holds and how it
+   * behaves: `tooltip` carries the *figures* behind the sub-label and is blurred under privacy mode,
+   * while a definition is prose about the measure and stays legible — hiding "what this counts"
+   * along with "how much" would make the card less private, not more. The affordance is a real
+   * `<button>` so it is reachable by keyboard (daisyUI's `.tooltip` opens on `:has(:focus-visible)`
+   * as well as `:hover`), and it carries the sentence as its accessible name so a screen reader
+   * gets the definition rather than "more info".
+   */
+  readonly definition = input<string>();
   readonly color = input<StatCardColor>();
   readonly link = input<string>();
   readonly queryParams = input<Record<string, string>>();

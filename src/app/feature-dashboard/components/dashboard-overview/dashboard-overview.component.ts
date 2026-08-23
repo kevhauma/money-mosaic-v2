@@ -144,6 +144,18 @@ export class DashboardOverviewComponent {
     this.periodizedSubLabel(this.statsStore.periodStats().expense),
   );
 
+  /**
+   * What each of the two savings measures counts, in one sentence (TICKET-STAT-42). Lifted from the
+   * header comments on `net-margin.ts` and `PeriodStats.savingsRate`, which are where these
+   * definitions already lived — out of the user's reach, which is the whole defect: two adjacent
+   * tiles answered "how much do I save?" with 57.1% and 10.7% and neither said why.
+   */
+  protected readonly netCashFlowDefinition =
+    'Income minus everything you spent, whether what is left stayed put or moved on. The sub-label is that as a share of income.';
+
+  protected readonly savingsRateDefinition =
+    'The share of income you actually moved into a savings account. Money left sitting in a current account does not count here — Net cash flow is the measure that counts it.';
+
   /** `net / income`, worded by sign, distinct from savings rate (TICKET-STAT-21) — reuses `netColor`'s success/error split. */
   protected readonly netMarginSubLabel = computed(() => {
     const { net, income } = this.statsStore.periodStats();
@@ -151,7 +163,7 @@ export class DashboardOverviewComponent {
     if (margin == null) return undefined;
     const formatted = formatPercent(Math.abs(margin));
     return this.netColor() === 'success'
-      ? `${formatted} of income kept`
+      ? `${formatted} of income kept, after all spending`
       : `${formatted} of income overspent`;
   });
 

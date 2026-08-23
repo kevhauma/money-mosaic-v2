@@ -86,6 +86,34 @@ describe('describeVelocity', () => {
     expect(readout.spreadLabel).toBe('');
   });
 
+  // TICKET-STAT-42 — "You saved about €1,600.10/month" was a third unlabelled answer to the same
+  // question the Dashboard already answers twice. The basis was always a choice; the readout never
+  // said which choice produced the number.
+  it('names which of the two measures the rate is', () => {
+    expect(describeVelocity(velocity({ basis: 'net-cash-flow' })).basisLabel).toBe(
+      'counting money left over',
+    );
+    expect(describeVelocity(velocity({ basis: 'savings-transfers' })).basisLabel).toBe(
+      'counting money moved to savings',
+    );
+  });
+
+  it('takes that wording from BASIS_OPTIONS, so the toggle and the readout cannot drift apart', () => {
+    for (const option of BASIS_OPTIONS) {
+      expect(describeVelocity(velocity({ basis: option.value })).basisLabel).toBe(
+        `counting ${option.label.toLowerCase()}`,
+      );
+    }
+  });
+
+  it('names no basis when there is no rate to name one for', () => {
+    const readout = describeVelocity(
+      velocity({ hasEnoughHistory: false, monthsCovered: 0, months: [], perMonth: 0 }),
+    );
+
+    expect(readout.basisLabel).toBe('');
+  });
+
   it('keeps a negative rate visible rather than hiding it', () => {
     const readout = describeVelocity(
       velocity({ perMonth: -150, median: -150, min: -200, max: -100 }),

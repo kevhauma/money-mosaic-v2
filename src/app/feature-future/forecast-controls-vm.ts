@@ -103,6 +103,13 @@ export type VelocityReadout = {
   windowLabel: string;
   /** The measured mean. Masked under privacy mode. */
   rateLabel: string;
+  /**
+   * Which of the two measures the rate above *is* (TICKET-STAT-42) — "money moved to savings" or
+   * "money left over". The page has always let the user pick a basis; the readout never said which
+   * one it had been given, so "You saved about €1,600.10/month" was a third unlabelled answer to
+   * the same question the Dashboard already answers twice. No amounts, so never masked.
+   */
+  basisLabel: string;
   /** "typical month €180.00 · from €50.00 to €400.00". Masked under privacy mode. */
   spreadLabel: string;
 };
@@ -110,7 +117,14 @@ export type VelocityReadout = {
 const EMPTY_READOUT: Omit<VelocityReadout, 'insufficientMessage'> = {
   windowLabel: '',
   rateLabel: '',
+  basisLabel: '',
   spreadLabel: '',
+};
+
+/** The chosen basis in the readout's own voice, off `BASIS_OPTIONS` so the two can't drift apart. */
+const basisLabelFor = (basis: SavingBasis): string => {
+  const option = BASIS_OPTIONS.find((candidate) => candidate.value === basis);
+  return option ? `counting ${option.label.toLowerCase()}` : '';
 };
 
 export const describeVelocity = (velocity: SavingVelocity): VelocityReadout => {
@@ -132,6 +146,7 @@ export const describeVelocity = (velocity: SavingVelocity): VelocityReadout => {
     // of imported history says nine, rather than quietly implying twenty-four.
     windowLabel: `${formatMonthYear(first.from)} – ${formatMonthYear(last.to)} · ${velocity.monthsCovered} complete ${monthWord}`,
     rateLabel: `${formatCurrency(velocity.perMonth)}/month`,
+    basisLabel: basisLabelFor(velocity.basis),
     spreadLabel: `typical month ${formatCurrency(velocity.median)} · from ${formatCurrency(velocity.min)} to ${formatCurrency(velocity.max)}`,
   };
 };

@@ -9,6 +9,27 @@
   </div>
 </ng-template>
 
+<!-- Beside the label rather than over the sub-label: it defines the *measure*, which is what the
+     label names, and the sub-label slot is already spoken for on both cards that use this
+     (TICKET-STAT-42). `normal-case font-normal` because `.stat-title` uppercases and tracks out its
+     text, which is right for a two-word label and wrong for a sentence. -->
+<ng-template #labelContent>
+  <div class="stat-title flex items-center gap-1">
+    <span>{{ label() }}</span>
+    @if (definition(); as definition) {
+      <!-- `data-tip`, not a `.tooltip-content` child: the sentence must not land inside
+           `.stat-title`, or every reading of the card's label picks it up too. Assistive tech gets
+           it from the button's accessible name instead, which is also the only route that works
+           without a pointer. -->
+      <span class="tooltip tooltip-bottom font-normal normal-case" [attr.data-tip]="definition">
+        <button type="button" class="flex cursor-help items-center" [attr.aria-label]="definition">
+          <ng-icon name="tablerInfoCircle" size="14" aria-hidden="true" />
+        </button>
+      </span>
+    }
+  </div>
+</ng-template>
+
 <ng-template #subLabelContent>
   @if (subLabel(); as subLabel) {
     @if (tooltip()) {
@@ -34,13 +55,13 @@
 
 @if (link(); as href) {
   <a [routerLink]="href" [queryParams]="queryParams()" [class]="linkClasses()">
-    <div class="stat-title">{{ label() }}</div>
+    <ng-container [ngTemplateOutlet]="labelContent" />
     <ng-container [ngTemplateOutlet]="valueContent" />
     <ng-container [ngTemplateOutlet]="subLabelContent" />
   </a>
 } @else {
   <div [class]="classes()">
-    <div class="stat-title">{{ label() }}</div>
+    <ng-container [ngTemplateOutlet]="labelContent" />
     <ng-container [ngTemplateOutlet]="valueContent" />
     <ng-container [ngTemplateOutlet]="subLabelContent" />
   </div>

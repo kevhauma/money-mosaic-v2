@@ -1145,4 +1145,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'A category that costs the same every period now says so once, instead of repeating that figure as Avg, High and Low next to a 0%.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-STAT-42'],
+    title: 'Each savings figure says what it actually counts',
+    area: 'Dashboard',
+    details: [
+      'Two tiles side by side answered “how much do I save?” with 57.1% and 10.7%, and neither said why they differ.',
+      '“Savings rate” is now “Moved to savings”, and Net cash flow says it is what is left after all spending. Both carry a one-sentence definition you can hover or tab to.',
+      'On Future, “You saved about €…/month” now names which of the two measures it came from.',
+      'No figure changed — all three were right, they just never said what they were.',
+    ],
+  },
 ];

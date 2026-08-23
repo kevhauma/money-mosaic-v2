@@ -93,10 +93,15 @@
                 tilt="b"
                 [blurred]="privacyMode()"
               />
+              <!-- These two answer the same question — "how much do I save?" — with numbers that
+                   differ five-fold, so each names what it counts (TICKET-STAT-42). The definitions
+                   are the ones already written in `period-stats.ts` and `net-margin.ts`, quoted
+                   rather than reinvented so the code and the UI can't drift apart again. -->
               <mm-stat-card
                 label="Net cash flow"
                 [value]="netValue()"
                 [subLabel]="netMarginSubLabel()"
+                [definition]="netCashFlowDefinition"
                 [color]="netColor()"
                 link="/transactions"
                 [queryParams]="drilldownParams()"
@@ -104,9 +109,10 @@
                 [blurred]="privacyMode()"
               />
               <mm-stat-card
-                label="Savings rate"
+                label="Moved to savings"
                 [value]="savingsRateValue()"
                 [subLabel]="savingsSubLabel()"
+                [definition]="savingsRateDefinition"
                 tilt="b"
                 [blurred]="privacyMode()"
               />

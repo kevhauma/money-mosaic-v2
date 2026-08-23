@@ -170,7 +170,10 @@ describe('DashboardOverviewComponent', () => {
       });
     };
 
-    it('leads the stats row: net worth · Income · Expense · Net cash flow · Savings rate', () => {
+    // "Savings rate" became "Moved to savings" (TICKET-STAT-42): it and Net cash flow sat side by
+    // side answering "how much do I save?" with numbers five-fold apart, neither saying what it
+    // counted.
+    it('leads the stats row: net worth · Income · Expense · Net cash flow · Moved to savings', () => {
       seedOneTransaction();
       fixture.detectChanges();
 
@@ -179,7 +182,7 @@ describe('DashboardOverviewComponent', () => {
         'Income',
         'Expense',
         'Net cash flow',
-        'Savings rate',
+        'Moved to savings',
       ]);
     });
 
@@ -263,7 +266,7 @@ describe('DashboardOverviewComponent', () => {
       const labels = Array.from(
         fresh.nativeElement.querySelectorAll('mm-stat-card') as NodeListOf<HTMLElement>,
       ).map((card) => card.querySelector('.stat-title')?.textContent?.trim());
-      expect(labels).toEqual(['Income', 'Expense', 'Net cash flow', 'Savings rate']);
+      expect(labels).toEqual(['Income', 'Expense', 'Net cash flow', 'Moved to savings']);
       expect(fresh.nativeElement.querySelector('mm-loading-skeleton')).not.toBeNull();
     });
   });
@@ -316,7 +319,7 @@ describe('DashboardOverviewComponent', () => {
       ]);
       fixture.detectChanges();
 
-      expect(subLabelFor('Net cash flow')).toBe('30% of income kept');
+      expect(subLabelFor('Net cash flow')).toBe('30% of income kept, after all spending');
     });
 
     it('renders an "overspent" net margin sub-label when net is negative', () => {
@@ -346,7 +349,7 @@ describe('DashboardOverviewComponent', () => {
       ]);
       fixture.detectChanges();
 
-      expect(subLabelFor('Net cash flow')).toBe('0% of income kept');
+      expect(subLabelFor('Net cash flow')).toBe('0% of income kept, after all spending');
     });
 
     it('no longer renders a "Spending rate" stat card', () => {
@@ -356,6 +359,72 @@ describe('DashboardOverviewComponent', () => {
         fixture.nativeElement.querySelectorAll('.stat-title') as NodeListOf<HTMLElement>,
       ).map((el) => el.textContent?.trim());
       expect(titles).not.toContain('Spending rate');
+    });
+  });
+
+  // TICKET-STAT-42 — three surfaces answered "how much do I save?" with three different numbers and
+  // none of them said what it counted. Labelling only: the arithmetic is covered by
+  // `period-stats.spec.ts` and `net-margin.spec.ts`, which are untouched.
+  describe('naming the savings measures (TICKET-STAT-42)', () => {
+    const cardFor = (label: string): HTMLElement | null =>
+      (Array.from(fixture.nativeElement.querySelectorAll('.stat')) as HTMLElement[]).find(
+        (card) => card.querySelector('.stat-title')?.textContent?.trim() === label,
+      ) ?? null;
+
+    const seedPopulatedPeriod = (): void => {
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
+      TestBed.inject(TransactionsStore).addMany([
+        transaction({ id: 1, amount: 1000 }),
+        transaction({ id: 2, amount: -700 }),
+      ]);
+      fixture.detectChanges();
+    };
+
+    it('names the savings-transfer measure in the label itself', () => {
+      seedPopulatedPeriod();
+
+      expect(cardFor('Moved to savings')).not.toBeNull();
+      expect(cardFor('Savings rate')).toBeNull();
+    });
+
+    it('says the net tile counts income minus all spending', () => {
+      seedPopulatedPeriod();
+
+      expect(cardFor('Net cash flow')?.querySelector('.stat-desc')?.textContent?.trim()).toBe(
+        '30% of income kept, after all spending',
+      );
+    });
+
+    it('puts a one-sentence definition on both tiles, reachable without leaving the dashboard', () => {
+      seedPopulatedPeriod();
+
+      const definitionOf = (label: string): string | null | undefined =>
+        cardFor(label)?.querySelector('.stat-title button')?.getAttribute('aria-label');
+
+      // Sourced from the header comments on net-margin.ts / PeriodStats.savingsRate — the place
+      // these definitions already lived, out of the user's reach.
+      expect(definitionOf('Moved to savings')).toContain('moved into a savings account');
+      expect(definitionOf('Net cash flow')).toContain('Income minus everything you spent');
+      // Hoverable *and* focusable: daisyUI's `.tooltip` opens on `:has(:focus-visible)` too, so a
+      // real `<button>` is what makes this reachable without a pointer.
+      expect(cardFor('Moved to savings')?.querySelector('.tooltip')?.getAttribute('data-tip')).toBe(
+        definitionOf('Moved to savings'),
+      );
+    });
+
+    it('still renders the zero-income guard rather than a label over a missing number', () => {
+      TestBed.inject(RangeStore).setCustomRange('dashboard', '2026-07-01', '2026-07-31');
+      TestBed.inject(TransactionsStore).addMany([transaction({ id: 1, amount: -100 })]);
+      fixture.detectChanges();
+
+      // savingsRate is null with no income, so the value stays the em-dash and the net tile's
+      // margin sub-label stays absent — the rename must not have papered over either.
+      expect(cardFor('Moved to savings')?.querySelector('.stat-value')?.textContent?.trim()).toBe(
+        '—',
+      );
+      expect(cardFor('Net cash flow')?.querySelector('.stat-desc')).toBeNull();
+      // …and the definition is still there, because it describes the measure, not the figure.
+      expect(cardFor('Moved to savings')?.querySelector('.stat-title button')).not.toBeNull();
     });
   });
 
