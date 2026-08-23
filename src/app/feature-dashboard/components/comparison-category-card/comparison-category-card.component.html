@@ -38,24 +38,24 @@
     </mm-flex>
   </div>
 
-  <mm-text as="p" class="mt-2 flex justify-between text-xs text-base-content/60">
-    <span
-      >Avg
-      <mm-privacy-blur [blurred]="blurred()">{{
-        category().formattedAverage
-      }}</mm-privacy-blur></span
-    >
-    <span
-      >High
-      <mm-privacy-blur [blurred]="blurred()">{{
-        category().formattedHighest
-      }}</mm-privacy-blur></span
-    >
-    <span
-      >Low
-      <mm-privacy-blur [blurred]="blurred()">{{
-        category().formattedLowest
-      }}</mm-privacy-blur></span
-    >
-  </mm-text>
+  <!-- Avg/High/Low only where they are three different readings. On a fixed cost they collapse
+       onto one figure printed three times next to a 0% delta, which reads as a card that failed to
+       compute rather than as a bill that never changes (TICKET-STAT-44). -->
+  @if (category().formattedFigures; as figures) {
+    <mm-text as="p" class="mt-2 flex justify-between text-xs text-base-content/60">
+      <span
+        >Avg <mm-privacy-blur [blurred]="blurred()">{{ figures.average }}</mm-privacy-blur></span
+      >
+      <span
+        >High <mm-privacy-blur [blurred]="blurred()">{{ figures.highest }}</mm-privacy-blur></span
+      >
+      <span
+        >Low <mm-privacy-blur [blurred]="blurred()">{{ figures.lowest }}</mm-privacy-blur></span
+      >
+    </mm-text>
+  } @else {
+    <mm-text as="p" class="mt-2 text-xs text-base-content/60">
+      <mm-privacy-blur [blurred]="blurred()">{{ category().unchangedNote }}</mm-privacy-blur>
+    </mm-text>
+  }
 </mm-paper>

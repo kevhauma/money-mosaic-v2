@@ -8,9 +8,8 @@ const baseVm = (overrides: Partial<CategoryComparisonVm> = {}): CategoryComparis
   name: 'Groceries',
   color: '#ff0000',
   bars: [],
-  formattedAverage: '€100.00',
-  formattedHighest: '€150.00',
-  formattedLowest: '€50.00',
+  formattedFigures: { average: '€100.00', highest: '€150.00', lowest: '€50.00' },
+  unchangedNote: null,
   deltaLabel: null,
   deltaColor: undefined,
   deltaIcon: undefined,
@@ -42,6 +41,20 @@ describe('ComparisonCategoryCardComponent', () => {
     expect(text).toContain('Avg €100.00');
     expect(text).toContain('High €150.00');
     expect(text).toContain('Low €50.00');
+  });
+
+  // TICKET-STAT-44 — a fixed cost collapses Avg/High/Low onto one figure over a flat 0% delta,
+  // which reads as a card that failed to compute rather than as a bill that never changes.
+  it('states the one figure once when it never moved, instead of printing it three times', async () => {
+    await setup(
+      baseVm({ formattedFigures: null, unchangedNote: '€950.00 every period — unchanged.' }),
+    );
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('€950.00 every period — unchanged.');
+    expect(text).not.toContain('Avg');
+    expect(text).not.toContain('High');
+    expect(text).not.toContain('Low');
   });
 
   it('renders no delta badge when deltaLabel is null', async () => {

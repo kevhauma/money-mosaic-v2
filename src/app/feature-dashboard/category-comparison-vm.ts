@@ -17,9 +17,18 @@ export type CategoryComparisonVm = {
   name: string;
   color: string;
   bars: ComparisonBarVm[];
-  formattedAverage: string;
-  formattedHighest: string;
-  formattedLowest: string;
+  /**
+   * `null` when every contributing period spent exactly the same on this category (TICKET-STAT-44):
+   * Avg, High and Low are then one figure printed three times over a flat 0% delta, which reads as
+   * a broken comparison rather than as a fixed cost. The card renders `unchangedNote` instead.
+   */
+  formattedFigures: {
+    average: string;
+    highest: string;
+    lowest: string;
+  } | null;
+  /** The one figure and the fact that it never moved, when `formattedFigures` is `null`; `null` otherwise. */
+  unchangedNote: string | null;
   deltaLabel: string | null;
   deltaColor: 'warning' | 'success' | undefined;
   deltaIcon: 'tablerTriangleFill' | 'tablerTriangleInvertedFill' | undefined;

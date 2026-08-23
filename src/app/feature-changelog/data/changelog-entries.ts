@@ -1132,4 +1132,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'None of the figures changed — the mosaic’s tiles were right all along.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-STAT-44'],
+    title: 'The category breakdown stops drawing a donut for a single category',
+    area: 'Dashboard',
+    details: [
+      'With one category there is no proportion to draw, so the panel now shows the figure itself where the full ring used to be.',
+      'Slice labels are gone from the donut — they collided and cut off mid-word. Every row in the list beside it carries its slice’s colour instead.',
+      '“Show more” only appears when it is hiding at least three rows; below that the column just lists them.',
+      'A category that costs the same every period now says so once, instead of repeating that figure as Avg, High and Low next to a 0%.',
+    ],
+  },
 ];

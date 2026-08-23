@@ -101,6 +101,84 @@ describe('CategoryComparisonPanelComponent', () => {
     expect(link).toBeTruthy();
   });
 
+  // TICKET-STAT-44 — the UX review read "Avg €950 / High €950 / Low €950, 0%" as a placeholder.
+  // It is not: it is a fixed monthly cost, correctly measured. The defect is that saying it three
+  // times over a flat delta reads as a card that failed to compute.
+  it('states a fixed cost once rather than as three identical statistics', async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-06-10',
+        amount: -950,
+        currency: 'EUR',
+        rawDescription: 'Rent',
+        fingerprint: 'fp-1',
+        createdAt: '2026-06-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+      {
+        id: 2,
+        accountId: 1,
+        bookingDate: '2026-07-10',
+        amount: -950,
+        currency: 'EUR',
+        rawDescription: 'Rent',
+        fingerprint: 'fp-2',
+        createdAt: '2026-07-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+    ]);
+
+    fixture.detectChanges();
+
+    const vm = fixture.componentInstance['categories']()[0];
+    expect(vm.formattedFigures).toBeNull();
+    expect(vm.unchangedNote).toContain('every period — unchanged.');
+    // …and no "0%" badge restating it as a percentage — that is the figure the review read as
+    // broken.
+    expect(vm.deltaLabel).toBeNull();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).not.toContain('Avg');
+    expect(text).not.toContain('0%');
+  });
+
+  it('keeps Avg/High/Low as soon as the figure actually moves between periods', async () => {
+    await TestBed.inject(CategoriesStore).addCategory(groceries);
+    TestBed.inject(TransactionsStore).addMany([
+      {
+        id: 1,
+        accountId: 1,
+        bookingDate: '2026-06-10',
+        amount: -40,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-1',
+        createdAt: '2026-06-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+      {
+        id: 2,
+        accountId: 1,
+        bookingDate: '2026-07-10',
+        amount: -60,
+        currency: 'EUR',
+        rawDescription: 'Supermarket',
+        fingerprint: 'fp-2',
+        createdAt: '2026-07-10T00:00:00.000Z',
+        categoryId: 1,
+      },
+    ]);
+
+    fixture.detectChanges();
+
+    const vm = fixture.componentInstance['categories']()[0];
+    expect(vm.formattedFigures).not.toBeNull();
+    expect(vm.unchangedNote).toBeNull();
+    expect(fixture.nativeElement.textContent as string).toContain('Avg');
+  });
+
   describe('delta color/icon (TICKET-STAT-23 — VM carries the resolved display facts directly)', () => {
     const readCategories = (): {
       deltaColor: 'warning' | 'success' | undefined;

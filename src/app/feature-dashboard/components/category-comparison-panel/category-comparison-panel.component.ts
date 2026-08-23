@@ -80,17 +80,32 @@ export class CategoryComparisonPanelComponent {
       // separate tone/direction pair.
       const isOverAverage = entry.deltaVsAveragePct != null && entry.deltaVsAveragePct > 0;
       const hasDelta = entry.deltaVsAveragePct != null && entry.deltaVsAveragePct !== 0;
+      // A fixed cost spends the same every period, so Avg, High and Low collapse onto one figure
+      // and the delta onto 0% — correct arithmetic that reads as a card failing to compute
+      // (TICKET-STAT-44: the dev seed's €950 housing rendered exactly this, three times over).
+      // Say the one figure once, and say that it never moved.
+      const isUnchanged = entry.highest === entry.lowest;
 
       return {
         categoryId: entry.categoryId,
         name: entry.name,
         color: entry.color,
         bars,
-        formattedAverage: formatCurrency(entry.average),
-        formattedHighest: formatCurrency(entry.highest),
-        formattedLowest: formatCurrency(entry.lowest),
+        formattedFigures: isUnchanged
+          ? null
+          : {
+              average: formatCurrency(entry.average),
+              highest: formatCurrency(entry.highest),
+              lowest: formatCurrency(entry.lowest),
+            },
+        unchangedNote: isUnchanged
+          ? `${formatCurrency(entry.average)} every period — unchanged.`
+          : null,
+        // Suppressed when unchanged: a category whose contributing periods are all equal has a
+        // delta of exactly 0 by construction, so the badge would restate `unchangedNote` as a
+        // percentage — which is the "0%" the UX review read as a broken figure (TICKET-STAT-44).
         deltaLabel:
-          entry.deltaVsAveragePct == null
+          isUnchanged || entry.deltaVsAveragePct == null
             ? null
             : formatPercent(entry.deltaVsAveragePct, 'sign-by-icon'),
         deltaColor: !hasDelta ? undefined : isOverAverage ? 'warning' : 'success',

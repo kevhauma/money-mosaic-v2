@@ -10,7 +10,20 @@
           <mm-text variant="subheading" as="h3">{{ column.label }}</mm-text>
 
           @if (column.entries.length > 0) {
-            <div echarts [options]="column.chartOption" class="h-56 w-full"></div>
+            <!-- One entry means a 100% slice — a complete ring drawn as a proportion of itself,
+                 half a card wide, saying one number the list under it already says. The figure
+                 takes the chart's place instead (TICKET-STAT-44). -->
+            @if (column.soleEntry; as sole) {
+              <div class="flex h-56 flex-col items-center justify-center gap-1 text-center">
+                <mm-privacy-blur [blurred]="privacyMode()">
+                  <mm-text variant="heading" weight="bold">{{ sole.formattedTotal }}</mm-text>
+                </mm-privacy-blur>
+                <mm-text weight="medium">{{ sole.name }}</mm-text>
+                <mm-text variant="caption">{{ sole.note }}</mm-text>
+              </div>
+            } @else {
+              <div echarts [options]="column.chartOption" class="h-56 w-full"></div>
+            }
 
             <ul class="mt-2 divide-y divide-base-300">
               @for (entry of column.visibleEntries; track entry.categoryId) {
@@ -18,10 +31,20 @@
                   <a
                     [routerLink]="['/transactions']"
                     [queryParams]="drilldownParams(entry.categoryId)"
-                    class="flex items-center justify-between py-2 transition hover:bg-base-200"
+                    class="flex items-center justify-between gap-2 py-2 transition hover:bg-base-200"
                   >
-                    <span>{{ entry.name }}</span>
-                    <mm-text variant="caption">
+                    <!-- The swatch is what connects a slice to its row now that the donut carries no
+                         labels of its own (TICKET-STAT-44); `aria-hidden` because the colour is
+                         decoration — the row already names the category. -->
+                    <span class="flex min-w-0 items-center gap-2">
+                      <span
+                        class="size-2.5 flex-none rounded-full"
+                        [style.background-color]="entry.color"
+                        aria-hidden="true"
+                      ></span>
+                      <span class="truncate">{{ entry.name }}</span>
+                    </span>
+                    <mm-text variant="caption" class="flex-none">
                       <mm-privacy-blur [blurred]="privacyMode()">
                         {{ entry.formattedTotal }} · {{ entry.formattedShare }}
                       </mm-privacy-blur>
@@ -37,7 +60,7 @@
               </mm-button>
             }
 
-            @if (column.kind === 'expense' && uncategorisedCallout(); as callout) {
+            @if (column.uncategorisedCallout; as callout) {
               <mm-alert status="warning" variant="soft" class="mt-2">
                 <a
                   [routerLink]="['/transactions']"
@@ -50,9 +73,7 @@
                   uncategorised (<mm-privacy-blur [blurred]="privacyMode()">{{
                     callout.formattedShare
                   }}</mm-privacy-blur>
-                  of expense, {{ callout.transactionCount }} transaction{{
-                    callout.transactionCount === 1 ? '' : 's'
-                  }})
+                  of expense, {{ callout.countLabel }})
                 </a>
               </mm-alert>
             }

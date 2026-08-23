@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
-import { CategoriesRepository, type Category } from '@/core/data-access';
+import { CategoriesRepository, type Category, type Transaction } from '@/core/data-access';
 import { echarts } from '@/shared/echarts';
 import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { CategoryBreakdownPanelComponent } from './category-breakdown-panel.component';
@@ -170,8 +170,10 @@ describe('CategoryBreakdownPanelComponent', () => {
       expect(fixture.nativeElement.textContent).not.toContain('No income data for this range.');
     });
 
+    // Nine categories, not seven: at seven the two hidden rows are below the disclosure threshold
+    // (TICKET-STAT-44) and the column lists everything instead of offering a "Show more (2)".
     it('defaults each column to top-5 with a remaining-count toggle label, and expanding one column does not affect the other', async () => {
-      const categories = buildExpenseCategories(7);
+      const categories = buildExpenseCategories(9);
       for (const category of categories) {
         await TestBed.inject(CategoriesStore).addCategory(category);
       }
@@ -204,8 +206,8 @@ describe('CategoryBreakdownPanelComponent', () => {
 
       let [incomeColumn, expenseColumn] = fixture.componentInstance['columns']();
       expect(expenseColumn.visibleEntries.length).toBe(5);
-      expect(expenseColumn.remainingCount).toBe(2);
-      expect(expenseColumn.toggleLabel).toBe('Show more (2)');
+      expect(expenseColumn.remainingCount).toBe(4);
+      expect(expenseColumn.toggleLabel).toBe('Show more (4)');
       expect(incomeColumn.visibleEntries.length).toBe(1);
 
       // `columns` is a plain computed signal — toggling recomputes it on next read, no
@@ -213,7 +215,7 @@ describe('CategoryBreakdownPanelComponent', () => {
       fixture.componentInstance['toggleColumn']('expense');
 
       [incomeColumn, expenseColumn] = fixture.componentInstance['columns']();
-      expect(expenseColumn.visibleEntries.length).toBe(7);
+      expect(expenseColumn.visibleEntries.length).toBe(9);
       expect(expenseColumn.expanded).toBe(true);
       expect(expenseColumn.toggleLabel).toBe('Show less');
       // Expanding expense must not expand or otherwise change income's row count.
@@ -222,7 +224,7 @@ describe('CategoryBreakdownPanelComponent', () => {
     });
 
     it('collapses expanded columns back to top-5 when the selected range changes', async () => {
-      const categories = buildExpenseCategories(7);
+      const categories = buildExpenseCategories(9);
       for (const category of categories) {
         await TestBed.inject(CategoriesStore).addCategory(category);
       }
@@ -252,6 +254,106 @@ describe('CategoryBreakdownPanelComponent', () => {
       expect(fixture.componentInstance['columns']()[1].visibleEntries.length).toBeLessThanOrEqual(
         5,
       );
+    });
+  });
+
+  describe('presentation defects (TICKET-STAT-44)', () => {
+    const expenseIn = (categoryId: number, amount: number, id: number): Transaction => ({
+      id,
+      accountId: 1,
+      bookingDate: '2026-07-05',
+      amount: -amount,
+      currency: 'EUR',
+      rawDescription: `Purchase ${id}`,
+      fingerprint: `fp-${id}`,
+      createdAt: '2026-07-05T00:00:00.000Z',
+      categoryId,
+    });
+
+    const seed = async (count: number): Promise<void> => {
+      const categories = buildExpenseCategories(count);
+      for (const category of categories) {
+        await TestBed.inject(CategoriesStore).addCategory(category);
+      }
+      TestBed.inject(TransactionsStore).addMany(
+        categories.map((category, i) => expenseIn(category.id as number, 100 + i, i + 1)),
+      );
+      fixture.detectChanges();
+    };
+
+    const expenseColumn = () =>
+      fixture.componentInstance['columns']().find((column) => column.kind === 'expense')!;
+
+    it('replaces the donut with the figure itself when there is exactly one category', async () => {
+      await seed(1);
+
+      expect(expenseColumn().soleEntry).toEqual({
+        name: 'Category 1',
+        formattedTotal: '€100,00',
+        note: 'All of this range’s spending, in one category — nothing to split.',
+      });
+      // The chart element is gone; the figure is on screen in its place.
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelectorAll('[echarts]').length).toBe(0);
+      expect(host.textContent).toContain('nothing to split');
+      expect(host.textContent).toContain('€100,00');
+    });
+
+    it('draws the chart again as soon as there are two categories', async () => {
+      await seed(2);
+
+      expect(expenseColumn().soleEntry).toBeNull();
+      expect((fixture.nativeElement as HTMLElement).querySelector('[echarts]')).not.toBeNull();
+    });
+
+    it('keeps the accompanying list correct in the one-category case', async () => {
+      await seed(1);
+
+      // The list is what makes this panel readable without the canvas, so it stays whatever the
+      // chart does — one row, its own name, its full total, 100%.
+      expect(
+        expenseColumn().visibleEntries.map((entry) => [
+          entry.name,
+          entry.formattedTotal,
+          entry.formattedShare,
+        ]),
+      ).toEqual([['Category 1', '€100,00', '100%']]);
+    });
+
+    it('paints no slice labels, so nothing can collide or truncate at any category count', async () => {
+      await seed(8);
+
+      const series = expenseColumn().chartOption['series'] as { label: { show: boolean } }[];
+      expect(series[0].label).toEqual({ show: false });
+    });
+
+    it('gives every list row its slice colour, which is where the labels went', async () => {
+      await seed(3);
+
+      const swatches = [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+          'li a span[aria-hidden="true"]',
+        ),
+      ];
+      expect(swatches.length).toBeGreaterThanOrEqual(3);
+      expect(swatches[0].style.backgroundColor).not.toBe('');
+    });
+
+    it('offers no disclosure when it would hide fewer than three rows', async () => {
+      await seed(7);
+
+      // Two hidden rows are cheaper to show than to put behind a click.
+      expect(expenseColumn().remainingCount).toBe(0);
+      expect(expenseColumn().visibleEntries.length).toBe(7);
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Show more');
+    });
+
+    it('offers the disclosure once it hides three rows or more', async () => {
+      await seed(8);
+
+      expect(expenseColumn().remainingCount).toBe(3);
+      expect(expenseColumn().visibleEntries.length).toBe(5);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Show more (3)');
     });
   });
 
