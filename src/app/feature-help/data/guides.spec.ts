@@ -1,3 +1,5 @@
+import { findUnrenderedMarkup } from '@/shared/utils/unrendered-markup.testing';
+import { FAQ_ENTRIES } from './faq';
 import { GUIDES } from './guides';
 
 const guideBySlug = (slug: string) => {
@@ -133,5 +135,48 @@ describe('GUIDES: copy carries no user-settable value (TICKET-PUB-07)', () => {
     ['a theme colour name', /\b(amber|violet|teal|lime|rose|sky)\b/i],
   ])('contains no %s', (_label, pattern) => {
     expect(allText()).not.toMatch(pattern);
+  });
+});
+
+/**
+ * The guard TICKET-PUB-10 asked for. `/help` and `/help/faq` interpolate these strings straight
+ * into a template, so any markdown an author reaches for is shown, not rendered — one guide summary
+ * read "the money coming *in*" on the live page for the whole life of TICKET-PUB-02.
+ *
+ * One assertion per dataset rather than one per string: the offenders array names every string and
+ * the exact fragment found in it, which is what a failure needs to say, without adding hundreds of
+ * cases to the suite for content that is almost always clean.
+ */
+describe('help content renders as written (TICKET-PUB-10)', () => {
+  const offendersIn = (labelled: readonly (readonly [string, string])[]): string[] =>
+    labelled
+      .map(([where, text]) => [where, findUnrenderedMarkup(text)] as const)
+      .filter(([, found]) => found.length > 0)
+      .map(([where, found]) => `${where}: ${found.join(', ')}`);
+
+  it('leaves no unrendered markup in any guide', () => {
+    expect(
+      offendersIn(
+        GUIDES.flatMap((guide) => [
+          [`${guide.slug} · title`, guide.title] as const,
+          [`${guide.slug} · summary`, guide.summary] as const,
+          ...guide.steps.flatMap((step, index) => [
+            [`${guide.slug} · step ${index + 1} title`, step.title] as const,
+            [`${guide.slug} · step ${index + 1} description`, step.description] as const,
+          ]),
+        ]),
+      ),
+    ).toEqual([]);
+  });
+
+  it('leaves no unrendered markup in any FAQ entry', () => {
+    expect(
+      offendersIn(
+        FAQ_ENTRIES.flatMap((entry, index) => [
+          [`FAQ ${index + 1} · question`, entry.question] as const,
+          [`FAQ ${index + 1} · answer`, entry.answer] as const,
+        ]),
+      ),
+    ).toEqual([]);
   });
 });

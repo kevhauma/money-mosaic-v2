@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-PUB-10',
-    title: 'Help guides stop showing stray asterisks in their text',
-    area: 'Help',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-UI-32',
     title: '“Learning” is renamed to say what it actually opens',
     area: 'Navigation',

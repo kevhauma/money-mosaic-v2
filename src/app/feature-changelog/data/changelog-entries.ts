@@ -704,7 +704,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ticketIds: ['TICKET-REC-04'],
     title: 'Recurring payments now tell you when one gets dearer, runs late, or stops',
     details: [
-      'A subscription that settles at a new price is flagged with both figures — “Price ↑ €9.99 → €12.99” — instead of quietly nudging its average, and a price *cut* is flagged the same way',
+      'A subscription that settles at a new price is flagged with both figures — “Price ↑ €9.99 → €12.99” — instead of quietly nudging its average, and a price cut is flagged the same way, not only a rise',
       'A payment that has not arrived by a week after it was expected is marked overdue, in the list and on its day in the calendar',
       'A payment that has been silent for two of its own intervals is marked stopped and moved to its own group at the bottom, rather than vanishing from the list — something you cancelled and forgot is exactly what you want to be told about',
       'Stopped payments no longer count toward your monthly total, and no longer appear on the upcoming-bills calendar',
@@ -1077,5 +1077,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     title:
       'A loan’s remaining balance and its caption both stay inside the card, at any size of balance',
     area: 'Loans',
+  },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-PUB-10'],
+    title: 'Help guides and changelog entries read as written, with no stray asterisks in the text',
+    area: 'Help',
   },
 ];

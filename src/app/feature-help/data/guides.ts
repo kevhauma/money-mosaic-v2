@@ -147,7 +147,7 @@ export const GUIDES: readonly Guide[] = [
     slug: 'getting-started-with-the-income-page',
     title: 'Getting started with the Income page',
     summary:
-      'The Income page takes the money coming *in* and turns it into a trend you can trust: is it growing, shrinking, or just noisy. It reads your existing transactions — there is nothing to log by hand — but it needs three things set up first.',
+      'The Income page takes the money coming in — not what goes out — and turns it into a trend you can trust: is it growing, shrinking, or just noisy. It reads your existing transactions — there is nothing to log by hand — but it needs three things set up first.',
     // The first three steps are the quick-setup path, in the order they must be done, and are what
     // TICKET-PUB-08's first-visit surface renders (`steps.slice(0, 3)`). Reordering them changes
     // what a first-time user is shown, so `guides.spec.ts` pins the count and the order.

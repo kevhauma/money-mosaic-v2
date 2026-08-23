@@ -12,7 +12,7 @@ below `src/app` — which is enough to reach individual files in most feature/co
 subtrees.
 
 <!-- GENERATED:STATS:START -->
-- 414 leaf nodes, 1281 edges.
+- 415 leaf nodes, 1281 edges.
 <!-- GENERATED:STATS:END -->
 
 - `*.spec.ts` and `node_modules` are excluded.
@@ -830,12 +830,13 @@ GO["signed-amount.pipe.ts"]
 GP["sortable.ts"]
 GQ["structural-filters.ts"]
 GR["theme-hooks.ts"]
-subgraph GS["validators"]
-GT["iban.validator.ts"]
-GU["percentage.validator.ts"]
+GS["unrendered-markup.testing.ts"]
+subgraph GT["validators"]
+GU["iban.validator.ts"]
+GV["percentage.validator.ts"]
 end
-GV["with-archivable.ts"]
-GW["with-persisted-crud.ts"]
+GW["with-archivable.ts"]
+GX["with-persisted-crud.ts"]
 end
 end
 end
@@ -1214,8 +1215,8 @@ Z-->GE
 4L-->Q
 4L-->F2
 4L-->GE
-4L-->GT
 4L-->GU
+4L-->GV
 4N-->4D
 4N-->4F
 4N-->4L
@@ -1828,7 +1829,7 @@ BX-->C7
 BX-->Q
 BX-->25
 BX-->F2
-BX-->GU
+BX-->GV
 BZ-->Q
 BZ-->25
 BZ-->F2
@@ -2114,8 +2115,8 @@ GE-->GO
 GE-->GP
 GE-->GQ
 GE-->GR
-GE-->GV
 GE-->GW
+GE-->GX
 GH-->GB
 GK-->G4
 GK-->GL
