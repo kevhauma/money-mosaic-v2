@@ -1181,4 +1181,15 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The loss red in both default themes and in Retro-Futurism moved clear of each theme’s brand colour, and a check now fails the build if any theme puts the two back within reach of each other.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-UI-28'],
+    title: 'Settings and Changelog stay in the sidebar, whatever the height of your window',
+    area: 'Navigation',
+    details: [
+      'The sidebar was laid out back when it held nine links. At fifteen, on a 700px-tall window, Changelog and Settings sat below the fold of a scroll region with nothing marking it as one — the menu simply looked like it ended at FAQ.',
+      'How-to’s, FAQ, Changelog and Settings are now pinned to the foot of the sidebar and always on screen. Only the Insights and Data groups above them scroll, inside their own frame.',
+    ],
+  },
 ];

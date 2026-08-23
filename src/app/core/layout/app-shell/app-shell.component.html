@@ -66,9 +66,9 @@
       id="app-nav"
       tabindex="-1"
       aria-label="Main"
-      class="menu min-h-full w-64 border-r border-base-300 bg-base-100 p-4"
+      class="menu h-full w-64 flex-nowrap overflow-hidden border-r border-base-300 bg-base-100 p-4"
     >
-      <span class="mm-brand font-display hidden px-2 pb-4 lg:block">
+      <span class="mm-brand font-display hidden shrink-0 px-2 pb-4 lg:block">
         <span class="flex items-center gap-1.5 text-lg font-semibold">
           <span class="mm-brand-icon" aria-hidden="true"></span>
           <span>Money<span class="mm-brand-sep" aria-hidden="true"></span>Mosaic</span>
@@ -77,14 +77,27 @@
       </span>
       <!-- Two labelled groups, both permanently expanded (TICKET-UI-26): the pages you go to in
            order to look at something, and the pages you go to in order to feed or shape the data.
-           Deliberately headings + nested lists, never `<details>` — with nine items the sidebar has
-           no height problem to solve, so collapsing would cost a second click and an open/closed
-           state to persist for no gain. `aria-labelledby` is what makes each heading the group's
-           accessible name; the heading order matches the reading order the flat list already had.
-           `text-base-content/60` overrides daisyUI's own `.menu-title` colour, which is `/40` and
-           measured 3.49:1 against this sidebar — below the 4.5:1 AA floor. `/60` is the app's own
-           label tier (`typography.component.ts`) and clears it. -->
-      <ul class="menu-vertical gap-1">
+           `aria-labelledby` is what makes each heading the group's accessible name; the heading
+           order matches the reading order the flat list already had. `text-base-content/60`
+           overrides daisyUI's own `.menu-title` colour, which is `/40` and measured 3.49:1 against
+           this sidebar — below the 4.5:1 AA floor. `/60` is the app's own label tier
+           (`typography.component.ts`) and clears it.
+
+           TICKET-UI-26 argued against `<details>` on the grounds that "with nine items the sidebar
+           has no height problem to solve". That premise expired: the nav now renders 15 links, and
+           at a 700px viewport Changelog and Settings sat below the fold of a scroll region with no
+           visible affordance, so the nav simply appeared to end at FAQ (TICKET-UI-28).
+
+           Re-decided, and `<details>` still loses — but for a different reason. The two group
+           headings ARE the scannable index a collapse would give you, and collapsing costs a click
+           plus a piece of state, on the *feature* groups, which are the ones you use constantly.
+           What actually failed was that the four utility links rode the overflow. So: this nav is a
+           fixed-height flex column that never scrolls as a whole, the feature groups below scroll
+           inside their own frame, and the utility list is pinned to the foot where it is always
+           visible. The last item on screen is now always Settings, so nothing reads as the end of
+           the list, and a feature group clipped mid-item is its own affordance. Revisit collapsing
+           only if the *feature* groups alone outgrow a short viewport. -->
+      <ul class="menu-vertical min-h-0 flex-1 gap-1 overflow-y-auto overscroll-contain">
         <li>
           <h2 class="menu-title text-base-content/60" id="nav-group-insights">Insights</h2>
           <ul aria-labelledby="nav-group-insights">
@@ -169,8 +182,13 @@
           </ul>
         </li>
       </ul>
-      <!-- Pinned to the very bottom of the sidebar (`.menu` is a flex column; mt-auto absorbs the slack). -->
-      <ul class="menu-vertical mt-auto gap-1 pt-4">
+      <!-- Pinned to the foot of the sidebar and never part of the scroll region above it
+           (TICKET-UI-28) — these four are the links a user goes looking for, and they are what fell
+           below the fold when the feature groups grew. `shrink-0` is what holds them there; the
+           border is the seam between the scrolling frame and the pinned foot. `mt-auto` above is now
+           inert — `flex-1` on the frame is `flex: 1 1 0%`, so it always takes the free space — and
+           is kept only because three specs select this list by it. -->
+      <ul class="menu-vertical mt-auto shrink-0 gap-1 border-t border-base-300 pt-4">
         <li>
           <a
             routerLink="/help"
