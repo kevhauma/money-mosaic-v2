@@ -21,7 +21,13 @@ import {
   PaginatorComponent,
   TableComponent,
 } from '@/shared/ui';
-import { createPagination, createSelectionModel, formatDate, normalizeIban } from '@/shared/utils';
+import {
+  createPagination,
+  createSelectionModel,
+  formatDate,
+  negativeMoneyColor,
+  normalizeIban,
+} from '@/shared/utils';
 import {
   DEFAULT_AMOUNT_DIRECTION,
   describeExcludedFilterAxes,
@@ -223,6 +229,7 @@ export class TransactionsOverviewComponent {
         transaction.categoryId != null && categoriesById.has(transaction.categoryId)
           ? String(transaction.categoryId)
           : '',
+      amountColor: negativeMoneyColor(transaction.amount),
     }));
   });
 

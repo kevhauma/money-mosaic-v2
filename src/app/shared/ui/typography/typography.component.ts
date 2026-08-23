@@ -1,20 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { daisyClasses } from '@/shared/utils';
+import {
+  daisyClasses,
+  MM_MONEY_NEGATIVE_CLASS,
+  MM_MONEY_POSITIVE_CLASS,
+  type MoneyTextColor,
+} from '@/shared/utils';
 
 export type TextVariant = 'display' | 'heading' | 'subheading' | 'body' | 'caption' | 'label';
 export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
-/**
- * `money-positive`/`money-negative` are NOT daisyUI palette names (TICKET-UI-27): they resolve to
- * the `.mm-money-*` hook classes in `styles.css`, which read each theme's own `--mm-money-*` tokens.
- * A money figure must never be coloured `primary` or `error` directly — the two default themes had
- * their brand red and their loss red five hue degrees apart, so the Net worth tile's `primary`
- * rendered a positive figure as a loss. `src/themes/theme-palette.spec.ts` holds the palettes apart;
- * these two names are what keeps the *markup* from reaching for the alert vocabulary in the first
- * place.
- */
-export type MoneyTextColor = 'money-positive' | 'money-negative';
-
+/** Money's own two colours (TICKET-UI-27) join the palette names here, but are not palette names —
+ * see `shared/utils/money-color.ts`, which owns the union and the helpers that pick between them. */
 export type TextColor =
   | 'base-content'
   | 'neutral'
@@ -33,8 +29,8 @@ export type TextTag = 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4';
 /** The money hooks are plain classes, not `text-*` utilities — see `MoneyTextColor`. Every other
  * colour is absent here and falls through to `text-<name>`. */
 const HOOK_COLOR_CLASSES: Partial<Record<TextColor, string>> = {
-  'money-positive': 'mm-money-positive',
-  'money-negative': 'mm-money-negative',
+  'money-positive': MM_MONEY_POSITIVE_CLASS,
+  'money-negative': MM_MONEY_NEGATIVE_CLASS,
 };
 
 const WEIGHT_CLASSES: Record<TextWeight, string> = {

@@ -9,19 +9,23 @@
     </tr>
   </thead>
   <tbody>
-    @for (row of previewRows(); track $index) {
+    @for (previewRow of previewRows(); track $index) {
       <tr>
-        @if (row.valid) {
-          <td class="whitespace-nowrap"><mm-badge color="success" size="sm">valid</mm-badge></td>
-          <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
-          <td class="whitespace-nowrap" [class.mm-money-negative]="row.transaction.amount < 0">
-            {{ row.transaction.amount | signedAmount }}
-          </td>
-          <td class="whitespace-nowrap">{{ row.transaction.rawDescription }}</td>
-          <td class="whitespace-nowrap">{{ row.transaction.counterpartyName }}</td>
-        } @else {
-          <td class="whitespace-nowrap"><mm-badge color="error" size="sm">invalid</mm-badge></td>
-          <td colspan="4" class="whitespace-nowrap text-error">{{ row.errors.join(', ') }}</td>
+        @if (previewRow.row; as row) {
+          @if (row.valid) {
+            <td class="whitespace-nowrap"><mm-badge color="success" size="sm">valid</mm-badge></td>
+            <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
+            <td class="whitespace-nowrap">
+              <mm-text [color]="previewRow.amountColor" [numeric]="true">
+                {{ row.transaction.amount | signedAmount }}
+              </mm-text>
+            </td>
+            <td class="whitespace-nowrap">{{ row.transaction.rawDescription }}</td>
+            <td class="whitespace-nowrap">{{ row.transaction.counterpartyName }}</td>
+          } @else {
+            <td class="whitespace-nowrap"><mm-badge color="error" size="sm">invalid</mm-badge></td>
+            <td colspan="4" class="whitespace-nowrap text-error">{{ row.errors.join(', ') }}</td>
+          }
         }
       </tr>
     }

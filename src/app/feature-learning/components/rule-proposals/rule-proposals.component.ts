@@ -12,7 +12,7 @@ import {
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { SignedAmountPipe } from '@/shared/utils';
+import { negativeMoneyColor, SignedAmountPipe } from '@/shared/utils';
 
 /** Rule-proposal inbox on the Auto-categoriser page (FR-ML-9) — a thin UI consumer of `CategoryModelStore` (ML-07). */
 @Component({
@@ -32,6 +32,12 @@ import { SignedAmountPipe } from '@/shared/utils';
 })
 export class RuleProposalsComponent {
   protected readonly categoryModelStore = inject(CategoryModelStore);
+
+  /** The one money-colour rule, bound rather than restated per amount (TICKET-UI-27). These two lists
+   * are built by a template-called method, not a view-model, so the helper is exposed here instead of
+   * being joined onto a row field the way the transactions and suggestions tables do it. */
+  protected readonly amountColor = negativeMoneyColor;
+
   private readonly categoriesStore = inject(CategoriesStore);
   private readonly transactionsStore = inject(TransactionsStore);
 

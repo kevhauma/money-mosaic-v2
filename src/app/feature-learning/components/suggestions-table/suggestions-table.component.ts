@@ -12,7 +12,13 @@ import {
   TableComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { confidenceToColor, createPagination, SignedAmountPipe } from '@/shared/utils';
+import {
+  confidenceToColor,
+  createPagination,
+  negativeMoneyColor,
+  SignedAmountPipe,
+  type MoneyTextColor,
+} from '@/shared/utils';
 
 /** Rows rendered per page — same size as the transactions table (CR-2.1). */
 const PAGE_SIZE = 50;
@@ -25,6 +31,8 @@ type SuggestionRow = {
   suggestedCategoryName: string;
   suggestedCategoryColor: string;
   confidence: number;
+  /** Losses only, like the transactions table — see `TransactionRowVm.amountColor` (TICKET-UI-27). */
+  amountColor: MoneyTextColor | undefined;
 };
 
 /** Dedicated suggestions table on the Auto-categoriser page (FR-ML-13) — supersedes the transactions-table ghost chip. */
@@ -76,6 +84,7 @@ export class SuggestionsTableComponent {
           suggestedCategoryName: suggestedCategory.name,
           suggestedCategoryColor: suggestedCategory.color,
           confidence: suggestion.confidence,
+          amountColor: negativeMoneyColor(transaction.amount),
         };
       })
       .filter((row): row is SuggestionRow => row !== undefined);

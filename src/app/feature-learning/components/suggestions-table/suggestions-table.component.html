@@ -29,8 +29,10 @@
             }
           </td>
           <td>{{ row.accountName }}</td>
-          <td class="text-right" [class.mm-money-negative]="row.transaction.amount < 0">
-            {{ row.transaction.amount | signedAmount }}
+          <td class="text-right">
+            <mm-text [color]="row.amountColor" [numeric]="true">
+              {{ row.transaction.amount | signedAmount }}
+            </mm-text>
           </td>
 
           <td>

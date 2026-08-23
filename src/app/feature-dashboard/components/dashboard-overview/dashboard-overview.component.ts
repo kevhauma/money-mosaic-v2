@@ -9,12 +9,16 @@ import {
   RangeStore,
   TransactionsStore,
 } from '@/core/state';
-import { buildTransactionDrilldownParams, formatCurrency, formatPercent } from '@/shared/utils';
+import {
+  buildTransactionDrilldownParams,
+  formatCurrency,
+  formatPercent,
+  moneyColor,
+} from '@/shared/utils';
 import {
   ButtonComponent,
   EmptyStateComponent,
   LoadingSkeletonComponent,
-  moneyColor,
   PageHeaderComponent,
   PaperComponent,
   PrivacyToggleComponent,

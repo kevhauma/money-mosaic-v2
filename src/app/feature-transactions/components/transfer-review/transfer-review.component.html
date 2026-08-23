@@ -71,7 +71,7 @@
                   candidate.to.rawDescription
                 }}</mm-text>
               </div>
-              <mm-text [color]="candidate.from.amount < 0 ? 'money-negative' : undefined">
+              <mm-text [color]="amountColor(candidate.from.amount)" [numeric]="true">
                 {{ candidate.from.amount | signedAmount }}
               </mm-text>
             </mm-flex>

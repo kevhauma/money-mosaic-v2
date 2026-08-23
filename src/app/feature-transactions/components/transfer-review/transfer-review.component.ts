@@ -19,7 +19,7 @@ import {
   PaperComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { LocaleDatePipe, SignedAmountPipe } from '@/shared/utils';
+import { LocaleDatePipe, negativeMoneyColor, SignedAmountPipe } from '@/shared/utils';
 
 @Component({
   selector: 'app-transfer-review',
@@ -41,6 +41,10 @@ import { LocaleDatePipe, SignedAmountPipe } from '@/shared/utils';
   viewProviders: [provideIcons({ tablerRefresh })],
 })
 export class TransferReviewComponent {
+  /** The one money-colour rule, bound rather than restated per amount (TICKET-UI-27). These two lists
+   * are built by a template-called method, not a view-model, so the helper is exposed here instead of
+   * being joined onto a row field the way the transactions and suggestions tables do it. */
+  protected readonly amountColor = negativeMoneyColor;
   protected readonly transactionsStore = inject(TransactionsStore);
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly categoriesStore = inject(CategoriesStore);

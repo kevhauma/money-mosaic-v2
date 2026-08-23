@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import {
-  negativeMoneyColor,
   TypographyComponent,
   type TextColor,
   type TextVariant,
   type TextWeight,
 } from '@/shared/ui';
-import { SignedAmountPipe } from '@/shared/utils';
+import { negativeMoneyColor, SignedAmountPipe } from '@/shared/utils';
 
 export type AccountBalanceBlockSize = 'md' | 'lg';
 

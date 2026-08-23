@@ -1,4 +1,5 @@
 import type { Transaction } from '@/core/data-access';
+import type { MoneyTextColor } from '@/shared/utils';
 
 /**
  * One transactions-table row's full render state (TICKET-TXN-09, CR4-1 §5 Option A), joined once
@@ -28,4 +29,11 @@ export type TransactionRowVm = {
    * the store doesn't know collapses to `''`, matching the pre-extraction `row.category` lookup.
    */
   categoryId: string;
+  /**
+   * `undefined` for a non-negative amount (TICKET-UI-27): this table marks losses only and leaves
+   * income in the body ink — a green tint on every positive row would colour most of a long page.
+   * Resolved here with `negativeMoneyColor` so the cell binds a field rather than re-deriving the
+   * sign in markup.
+   */
+  amountColor: MoneyTextColor | undefined;
 };

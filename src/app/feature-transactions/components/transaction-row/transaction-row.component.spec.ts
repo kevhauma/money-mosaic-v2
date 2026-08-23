@@ -31,6 +31,8 @@ const rowVm = (overrides: Partial<TransactionRowVm> = {}): TransactionRowVm => (
   selected: false,
   ariaLabel: 'Select transaction 06/01/2026 CARREFOUR MARKET',
   categoryId: '',
+  // The default transaction is an expense, so the default row is one the table marks (TICKET-UI-27).
+  amountColor: 'money-negative',
   ...overrides,
 });
 

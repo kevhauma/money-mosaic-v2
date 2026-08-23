@@ -50,7 +50,7 @@ money figures, and `warning` was never one of the two colours in collision.
 - [x] A guard fails when a theme's primary and error hues are within a stated minimum distance — an automated check, not a review convention. Applies to all ten themes; `retro-futurism` (14°) is the closest existing case and must either pass or be adjusted. (`src/themes/theme-palette.spec.ts` parses the real `styles.css` and `src/themes/*.css` off disk — not a fixture copy — and fails any theme under `MIN_BRAND_ERROR_HUE_DISTANCE = 20`. It also asserts the exact set of ten theme names, so a theme that stops parsing fails loudly rather than skipping its own guard, and that every theme block states its own `--mm-money-*` pair. `retro-futurism` was adjusted: error hue 28 → 15, now 27° from its amber primary.)
 - [x] Unit tests cover: a positive amount resolves the positive token; a negative amount resolves the negative token; the hue-distance guard fails a deliberately-colliding fixture theme. (`money-color.spec.ts` — positive, negative, zero-is-positive, and "never returns a daisyUI palette name". `typography.component.spec.ts` — the money colours resolve to `.mm-money-*` hook classes, not `text-*` utilities. `theme-palette.spec.ts` — a fixture theme carrying the exact `primary 25 / error 20` pair the defaults shipped with is reported as colliding at 5°. 3393 tests green.)
 - [ ] Verified live in the browser across the default light theme, the default dark theme, and at least `retro-futurism` and `memphis`. — **deferred, not skipped**: the user chose a single browser pass over the whole v2.3 batch rather than one per ticket; tick this when that pass runs.
-- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code --baseline … --fail-on-issues` and `npx fallow health --complexity …` both exit 0; `conventions-reviewer` run on the diff.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code --baseline … --fail-on-issues` and `npx fallow health --complexity …` both exit 0. `conventions-reviewer` raised six items; four were applied in a follow-up: `MoneyTextColor` and both helpers moved to `shared/utils/money-color.ts` — the convention is that formatting helpers live in `shared/utils`, and the cycle argument for keeping them in `shared/ui` did not hold since a `type` import is erased; `MM_MONEY_POSITIVE_CLASS`/`MM_MONEY_NEGATIVE_CLASS` joined `theme-hooks.ts` beside the other hook constants; the three raw `[class.mm-money-negative]` bindings became `mm-text [color]`; and the five inline `amount < 0 ? … : …` ternaries moved onto row view-models (`TransactionRowVm.amountColor`, `SuggestionRow.amountColor`, `previewRows`) or onto a bound `amountColor` field. Its two remaining points are notes, recorded below.)
 
 ## Notes
 
@@ -66,6 +66,14 @@ money figures, and `warning` was never one of the two colours in collision.
   `memphis` at 35° is the closest theme that was already fine and `retro-futurism` at 14° is the one
   that had to move, so 20 sits in the gap between the two. Raising it re-opens several palettes;
   lowering it puts the original bug back in reach.
-- **`money-color.ts` lives in `shared/ui/typography/`, not `shared/utils/`.** It returns a `TextColor`
-  member, and `shared/ui` already depends on `shared/utils` — putting it the other way round would
-  close a barrel cycle.
+- **`money-color.ts` lives in `shared/utils/` and owns `MoneyTextColor`.** It was first written into
+  `shared/ui/typography/` on the theory that returning a `TextColor` member would close a barrel
+  cycle the other way round; the conventions review pointed out that the import is type-only and so
+  erased at compile time, and that formatting helpers belong in `shared/utils` regardless.
+  `typography.component.ts` now imports the union rather than declaring it, which also stops
+  `money-color.ts` importing a type through a component file.
+- **Two figures deliberately left on the alert palette**, both checked and both out of scope by the
+  implementation note above: `loan-what-if`'s "net saved" reads `warning` when negative (a warning,
+  not a loss), and `anti-polish` pins the Net worth figure to its plate ink at specificity 0,4,0,
+  which outranks `.mm-money-*` — that is the hero treatment AC 3 protects, so it stays, and it is on
+  the list for the deferred browser pass.
