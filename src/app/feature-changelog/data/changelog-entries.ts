@@ -1108,4 +1108,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'That made the edit-transaction modal’s two independent toggles look like a choose-one pair. They are both rounded squares now, and radio buttons stay round.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-UI-31'],
+    title: 'Two skip links jump you straight to the page or straight to the menu',
+    area: 'Accessibility',
+    details: [
+      'Press Tab on any page and the first two things you reach are “Skip to content” and “Skip to navigation”. They stay out of sight until you focus one.',
+      'The second one is the useful one here: reaching the sidebar used to mean tabbing past everything on the page — 32 stops on Settings.',
+      'The page and the sidebar are now proper landmarks too, so a screen reader can jump between them directly.',
+    ],
+  },
 ];

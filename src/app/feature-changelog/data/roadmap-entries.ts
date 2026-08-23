@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-UI-31',
-    title: 'A skip link jumps you straight to the page content',
-    area: 'Accessibility',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-EXP-09',
     title: 'The spending mosaic’s table adds up to 100%',
     area: 'Explore',

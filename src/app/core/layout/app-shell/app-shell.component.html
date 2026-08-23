@@ -8,6 +8,26 @@
   />
 
   <div class="drawer-content flex min-h-screen flex-col bg-base-200">
+    <!-- The first two focusable elements in the document (TICKET-UI-31). `.drawer-toggle` above is
+         `display: none`, so nothing precedes them. Two links rather than the usual one because
+         daisyUI's drawer puts `.drawer-content` *before* `.drawer-side` in the DOM — the sidebar
+         only looks left-hand because the drawer is a grid — so "skip to navigation" is the one that
+         actually saves a keyboard user a traversal here, while "skip to content" is what a screen
+         reader user reaches for by convention and is what earns its keep on mobile, where the navbar
+         sits ahead of the page.
+
+         Plain `href` fragments kept for link semantics (Enter fires `click` on an `<a>`), but
+         `skipTo` takes over: the router isn't configured with `withInMemoryScrolling`, so letting
+         the browser handle the hash would leave a stray `#main-content` on the URL and still not
+         move focus — a fragment jump scrolls, it doesn't focus. `tabindex="-1"` on each target is
+         what makes it focusable at all without adding it to the tab order. -->
+    <a href="#main-content" [class]="skipLinkClass" (click)="skipTo('content', $event)"
+      >Skip to content</a
+    >
+    <a href="#app-nav" [class]="skipLinkClass" (click)="skipTo('nav', $event)"
+      >Skip to navigation</a
+    >
+
     <!-- Mobile chrome only, since TICKET-UI-23 moved the range switcher into the pages that own a
          range. On `lg:` the sidebar is permanent and the brand sits at its top, so the whole bar
          would otherwise be an empty bordered strip above every page's header. -->
@@ -28,14 +48,26 @@
       </div>
     </div>
 
-    <main class="flex-1 p-4 lg:p-6">
+    <main
+      #mainRegion
+      id="main-content"
+      tabindex="-1"
+      aria-label="Page content"
+      class="flex-1 p-4 lg:p-6"
+    >
       <router-outlet />
     </main>
   </div>
 
   <div class="drawer-side z-20">
     <label for="app-drawer" aria-label="Close menu" class="drawer-overlay"></label>
-    <div class="menu min-h-full w-64 border-r border-base-300 bg-base-100 p-4">
+    <nav
+      #navRegion
+      id="app-nav"
+      tabindex="-1"
+      aria-label="Main"
+      class="menu min-h-full w-64 border-r border-base-300 bg-base-100 p-4"
+    >
       <span class="mm-brand font-display hidden px-2 pb-4 lg:block">
         <span class="flex items-center gap-1.5 text-lg font-semibold">
           <span class="mm-brand-icon" aria-hidden="true"></span>
@@ -169,6 +201,6 @@
           </a>
         </li>
       </ul>
-    </div>
+    </nav>
   </div>
 </div>

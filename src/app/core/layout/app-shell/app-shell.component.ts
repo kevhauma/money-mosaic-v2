@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -30,6 +37,16 @@ import { TypographyComponent } from '@/shared/ui/typography/typography.component
 /** Sidebar nav item — default look is Deformable UI's soft rounded (not full-pill — TICKET-UI-21) primary tint on `.menu-active` (docs/v1.9_deformable_ui_redesign/design-language.md §7); the `mm-nav-item` marker is a theme-style hook other themes' scoped CSS restyles (every other theme sets its own `.mm-nav-item` radius, so this base class only governs the default theme). Defined once and bound identically to every nav `<a>` rather than repeating the same utility string per item. */
 const NAV_ITEM_CLASS =
   'mm-nav-item rounded-field text-base-content/70 transition-colors [&.menu-active]:bg-primary/15 [&.menu-active]:text-primary [&.menu-active]:font-semibold';
+
+/**
+ * Skip links (TICKET-UI-31) — off-screen until focused, then a real button pinned to the top-left
+ * of the viewport. `sr-only` rather than `opacity: 0` or a negative offset, so the link is reachable
+ * by tab but absent from the accessible tree's reading order; `focus:not-sr-only` undoes every part
+ * of that in one variant. `fixed` (not `absolute`) because `.drawer-content` is a scrolling flex
+ * column — an absolutely-positioned link would ride the scroll off the top of a long page.
+ */
+const SKIP_LINK_CLASS =
+  'sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-field focus:bg-primary focus:px-4 focus:py-2 focus:font-semibold focus:text-primary-content focus:shadow-lg';
 
 /**
  * The authenticated-app shell (drawer/sidebar nav) wrapping every routed feature page. It owns no
@@ -87,6 +104,25 @@ export class AppShellComponent {
   protected readonly drawerOpen = signal(false);
 
   protected readonly navItemClass = NAV_ITEM_CLASS;
+
+  protected readonly skipLinkClass = SKIP_LINK_CLASS;
+
+  private readonly mainRegion = viewChild.required<ElementRef<HTMLElement>>('mainRegion');
+  private readonly navRegion = viewChild.required<ElementRef<HTMLElement>>('navRegion');
+
+  /**
+   * Moves focus (not just the scroll position) into `main`/`nav`, so the next Tab continues *inside*
+   * the region rather than resuming where the skip link sat — a bare fragment jump scrolls without
+   * moving focus, which is exactly the half that matters here. Both targets live in this persistent
+   * shell rather than in the routed page, so this survives client-side navigation without re-binding
+   * anything: the `<main>` element is the same one across every route, only its content changes.
+   */
+  protected skipTo(region: 'content' | 'nav', event: Event): void {
+    event.preventDefault();
+    // `focus()` scrolls the element into view on its own (that is its default, short of
+    // `preventScroll`), so there is no separate scroll call to keep in step with it.
+    (region === 'content' ? this.mainRegion() : this.navRegion()).nativeElement.focus();
+  }
 
   protected onDrawerCheckboxChange(event: Event): void {
     this.drawerOpen.set((event.target as HTMLInputElement).checked);

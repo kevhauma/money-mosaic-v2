@@ -61,6 +61,82 @@ describe('AppShellComponent', () => {
   });
 });
 
+// TICKET-UI-31 — the skip links have to be the *first* focusable elements in the document, which is
+// a DOM-order fact rather than a styling one, so it is asserted against the rendered tree rather
+// than by eye. `.drawer-toggle` sits above them in the markup but is `display: none`, so it does not
+// take focus; jsdom applies no stylesheet, hence the explicit exclusion below.
+describe('AppShellComponent: skip links (TICKET-UI-31)', () => {
+  const FOCUSABLE = 'a[href], button, input:not(.drawer-toggle), select, textarea, [tabindex="0"]';
+
+  const renderShell = (): HTMLElement => {
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  it('renders both skip links ahead of every other focusable element', () => {
+    const shell = renderShell();
+
+    const focusable = [...shell.querySelectorAll<HTMLElement>(FOCUSABLE)];
+
+    expect(focusable.slice(0, 2).map((element) => element.textContent?.trim())).toEqual([
+      'Skip to content',
+      'Skip to navigation',
+    ]);
+  });
+
+  it('hides each link until it takes focus', () => {
+    const shell = renderShell();
+
+    const links = [...shell.querySelectorAll<HTMLElement>('a[href^="#"]')];
+
+    for (const link of links) {
+      expect(link.className).toContain('sr-only');
+      expect(link.className).toContain('focus:not-sr-only');
+    }
+  });
+
+  it('gives the two regions a landmark and an accessible name', () => {
+    const shell = renderShell();
+
+    const main = shell.querySelector('main');
+    const nav = shell.querySelector('nav');
+
+    expect(main?.getAttribute('aria-label')).toBe('Page content');
+    expect(main?.getAttribute('tabindex')).toBe('-1');
+    expect(nav?.getAttribute('aria-label')).toBe('Main');
+    expect(nav?.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('moves focus into the main region, so the next Tab continues inside the page', () => {
+    const shell = renderShell();
+    const skipToContent = shell.querySelector<HTMLAnchorElement>('a[href="#main-content"]');
+
+    skipToContent?.click();
+
+    expect(document.activeElement).toBe(shell.querySelector('main'));
+  });
+
+  it('moves focus into the nav region, so the next Tab lands on the first nav link', () => {
+    const shell = renderShell();
+    const skipToNav = shell.querySelector<HTMLAnchorElement>('a[href="#app-nav"]');
+
+    skipToNav?.click();
+
+    expect(document.activeElement).toBe(shell.querySelector('nav'));
+  });
+
+  it('leaves the URL alone rather than letting the browser follow the fragment', () => {
+    const shell = renderShell();
+    const skipToContent = shell.querySelector<HTMLAnchorElement>('a[href="#main-content"]');
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+
+    skipToContent?.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+  });
+});
+
 // TICKET-UI-26 — the eight feature links are two labelled, always-expanded groups. The meta list at
 // the foot of the sidebar (How-to's, FAQ, Changelog, Settings) is deliberately not one of them: its
 // position is already the grouping signal, so it has no heading and is excluded from these queries.
