@@ -15,8 +15,8 @@ const DATE_FORMATTER = computed(
 );
 
 /**
- * Locale-aware display for an ISO (`YYYY-MM-DD`) date string — e.g. `07/26/2026` under the
- * `en-US` default vs `26/07/2026` under `en-BE`. Reads the current locale from
+ * Locale-aware display for an ISO (`YYYY-MM-DD`) date string — e.g. `26/07/2026` under the
+ * `en-BE` default (TICKET-SET-10) vs `07/26/2026` under `en-US`. Reads the current locale from
  * `format-settings.ts`'s module-level signal, kept in sync with `AppSettingsStore.locale` by one
  * effect (TICKET-SET-04/TICKET-NG-10), so every call site reformats automatically when the
  * setting changes.

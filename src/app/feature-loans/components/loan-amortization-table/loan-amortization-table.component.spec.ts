@@ -101,7 +101,7 @@ describe('LoanAmortizationTableComponent (TICKET-LOAN-08)', () => {
       cell.textContent?.trim(),
     );
     expect(lastRowCells?.at(0)).toBe('30');
-    expect(lastRowCells?.at(-1)).toContain('0.00');
+    expect(lastRowCells?.at(-1)).toContain('0,00');
   });
 
   it('recomputes the schedule (and clamps the page) when the loan input changes, never a stale table', async () => {

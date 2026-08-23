@@ -141,7 +141,7 @@ describe('forecastNotice: required-rate mode (TICKET-FUT-09)', () => {
     const notice = forecastNotice({ ...required, requiredPlan: plan() });
 
     expect(notice.text).toBe(
-      "To hit every date, save ≈ €340.00/month — €140.00/month more than the €200.00 you've averaged. Camera is the one setting the pace.",
+      "To hit every date, save ≈ €340,00/month — €140,00/month more than the €200,00 you've averaged. Camera is the one setting the pace.",
     );
     expect(notice.status).toBe('warning');
   });
@@ -152,7 +152,7 @@ describe('forecastNotice: required-rate mode (TICKET-FUT-09)', () => {
       requiredPlan: plan({ planRequiredPerMonth: 150 }),
     });
 
-    expect(notice.text).toContain("€50.00/month less than the €200.00 you've averaged");
+    expect(notice.text).toContain("€50,00/month less than the €200,00 you've averaged");
     expect(notice.status).toBe('info');
   });
 
@@ -173,7 +173,7 @@ describe('forecastNotice: required-rate mode (TICKET-FUT-09)', () => {
       requiredPlan: plan(),
     });
 
-    expect(notice.text).toContain('save ≈ €340.00/month');
+    expect(notice.text).toContain('save ≈ €340,00/month');
     expect(notice.text).not.toContain('Not enough complete months');
   });
 });

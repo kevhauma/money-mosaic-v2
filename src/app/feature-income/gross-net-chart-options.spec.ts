@@ -118,8 +118,8 @@ describe('buildTakeHomeChartOption (FR-INC-11, TICKET-INC-11/TICKET-INC-14)', ()
   it('spells out both figures behind a point in its tooltip', () => {
     const tooltip = build([point()]).tooltip.formatter([{ dataIndex: 0 }]);
 
-    expect(tooltip).toContain('2,160');
-    expect(tooltip).toContain('3,000');
+    expect(tooltip).toContain('2.160');
+    expect(tooltip).toContain('3.000');
     expect(tooltip).toContain('72%');
   });
 
@@ -166,7 +166,7 @@ describe('buildGrossNetGrowthChartOption (FR-INC-13, TICKET-INC-16)', () => {
     expect(option.series.map((entry) => entry.name)).toEqual(['Net', 'Gross']);
     expect(option.series[0].data).toEqual([2160, 2300, 2300]);
     expect(option.series[1].data).toEqual([3000, 3300, null]);
-    expect(option.yAxis.axisLabel.formatter(3000)).toBe('€3,000.00');
+    expect(option.yAxis.axisLabel.formatter(3000)).toBe('€3.000,00');
   });
 
   it('plots the distance travelled on the from-start chart, with a currency axis', () => {
@@ -174,7 +174,7 @@ describe('buildGrossNetGrowthChartOption (FR-INC-13, TICKET-INC-16)', () => {
 
     expect(option.series[0].data).toEqual([0, 140, 140]);
     expect(option.series[1].data).toEqual([0, 300, null]);
-    expect(option.yAxis.axisLabel.formatter(300)).toBe('€300.00');
+    expect(option.yAxis.axisLabel.formatter(300)).toBe('€300,00');
   });
 
   it('plots the same distance as a percentage on the percent chart, with a percent axis', () => {
@@ -207,8 +207,8 @@ describe('buildGrossNetGrowthChartOption (FR-INC-13, TICKET-INC-16)', () => {
   it('names both figures in the tooltip, and says which one is missing', () => {
     const option = build(THREE_MONTHS, 'absolute');
 
-    expect(option.tooltip.formatter([{ dataIndex: 1 }])).toContain('€3,300.00');
-    expect(option.tooltip.formatter([{ dataIndex: 1 }])).toContain('€2,300.00');
+    expect(option.tooltip.formatter([{ dataIndex: 1 }])).toContain('€3.300,00');
+    expect(option.tooltip.formatter([{ dataIndex: 1 }])).toContain('€2.300,00');
     expect(option.tooltip.formatter([{ dataIndex: 2 }])).toContain('no wage entered');
   });
 });

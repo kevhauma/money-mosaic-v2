@@ -263,7 +263,7 @@ describe('NetWorthProjectionChartComponent (TICKET-FUT-07)', () => {
     expect(rows).toHaveLength(projection.length);
     const boughtRow = rows.find((row) => row.bought);
     expect(boughtRow?.bought).toContain('Camera');
-    expect(boughtRow?.bought).toContain('€3,000.00');
+    expect(boughtRow?.bought).toContain('€3.000,00');
   });
 
   it('withholds the figures in that table under privacy mode, rather than blurring a clipped box', async () => {

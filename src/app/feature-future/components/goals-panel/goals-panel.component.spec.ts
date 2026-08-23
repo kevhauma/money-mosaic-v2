@@ -390,7 +390,7 @@ describe('GoalsPanelComponent: presentation (TICKET-FUT-04)', () => {
       goal({ id: 1, name: 'Camera', targetAmount: 1234.5, targetDate: '2027-06-01' }),
     ]);
 
-    expect(host(fixture).textContent).toContain('€1,234.50');
+    expect(host(fixture).textContent).toContain('€1.234,50');
     expect(host(fixture).textContent).toContain('Wanted by');
   });
 
@@ -470,7 +470,7 @@ describe('GoalsPanelComponent: the affordability readout (TICKET-FUT-05)', () =>
 
     expect(host(fixture).textContent).toContain('with everything above it');
     // 1200 + 3000 for the second goal.
-    expect(host(fixture).textContent).toContain('€4,200.00');
+    expect(host(fixture).textContent).toContain('€4.200,00');
   });
 
   it('says nothing has a date when the measured rate is negative, rather than going blank', async () => {

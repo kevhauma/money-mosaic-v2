@@ -41,7 +41,7 @@ describe('TransactionRowComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TransactionRowComponent],
       // The row's `localeDate`/`signedAmount` pipes read the shared, settings-driven locale
-      // (TICKET-NG-10); a deterministic repository keeps the default (en-US/EUR) formatting.
+      // (TICKET-NG-10); a deterministic repository keeps the default (en-BE/EUR) formatting.
       providers: [
         { provide: AppSettingsRepository, useValue: { get: vi.fn().mockResolvedValue({ id: 1 }) } },
       ],

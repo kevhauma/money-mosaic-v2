@@ -55,8 +55,8 @@ describe('WeekdayWeekendSplitPanelComponent', () => {
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('€10.00/day'); // 60 / 6 weekdays
-    expect(text).toContain('€30.00/day'); // 90 / 3 weekend days
+    expect(text).toContain('€10,00/day'); // 60 / 6 weekdays
+    expect(text).toContain('€30,00/day'); // 90 / 3 weekend days
     expect(text).toContain('more per day on weekends');
   });
 });

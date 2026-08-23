@@ -284,8 +284,8 @@ describe('AbsoluteRangePanelComponent: recent ranges resolve against today, not 
     second.detectChanges();
     const secondText = second.nativeElement.textContent as string;
 
-    expect(firstText).toContain('06/01/2026 – 07/01/2026');
-    expect(secondText).toContain('07/16/2026 – 08/15/2026');
+    expect(firstText).toContain('01/06/2026 – 01/07/2026');
+    expect(secondText).toContain('16/07/2026 – 15/08/2026');
     // Both still describe it the same way — only the resolved-dates line moved.
     expect(firstText).toContain('Last 30 days');
     expect(secondText).toContain('Last 30 days');

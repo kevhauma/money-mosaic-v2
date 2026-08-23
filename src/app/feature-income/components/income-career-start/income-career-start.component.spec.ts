@@ -127,11 +127,11 @@ describe('IncomeCareerStartComponent (FR-INC-12, TICKET-INC-12)', () => {
   it('shows the stored date through localeDate rather than only in the native field', async () => {
     await setup('2024-09-01');
 
-    // Day-first under `en-BE` vs. the `en-US` default the field itself renders in — the setting
+    // Day-first under `en-BE` vs. the ISO value the field itself renders — the setting
     // (TICKET-SET-04) reaches this caption, which is the only place on the control where the app's
     // own locale can show: a native date input always paints in the *browser's* locale.
     expect(dateInput().value).toBe('2024-09-01');
-    expect(visibleText()).toContain('Income shown from 09/01/2024');
+    expect(visibleText()).toContain('Income shown from 01/09/2024');
 
     syncFormatSettings({
       currencySymbol: DEFAULT_CURRENCY_SYMBOL,

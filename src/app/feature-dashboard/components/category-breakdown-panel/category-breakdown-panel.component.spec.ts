@@ -117,7 +117,7 @@ describe('CategoryBreakdownPanelComponent', () => {
     });
 
     expect(result).toBe(`●Groceries: ${groceriesSlice.formattedTotal}`);
-    expect(groceriesSlice.formattedTotal).toBe('€1,234.56');
+    expect(groceriesSlice.formattedTotal).toBe('€1.234,56');
   });
 
   describe('side-by-side columns (TICKET-STAT-13)', () => {
@@ -285,7 +285,7 @@ describe('CategoryBreakdownPanelComponent', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain(
-        '€25.00 uncategorised (25% of expense, 1 transaction)',
+        '€25,00 uncategorised (25% of expense, 1 transaction)',
       );
     });
 

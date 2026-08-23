@@ -1054,4 +1054,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Nothing you try is saved — it is a question about the loan, never a change to it.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-SET-10'],
+    title:
+      'Dates and amounts now come out the way you read them — 23/08/2026 and €1.234,56 — without a trip to Settings',
+    area: 'Settings',
+  },
 ];

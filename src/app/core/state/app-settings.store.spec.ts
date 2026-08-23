@@ -97,7 +97,7 @@ describe('AppSettingsStore', () => {
 
     expect(repository.setCurrencySymbol).toHaveBeenCalledExactlyOnceWith('$');
     expect(store.currencySymbol()).toBe('$');
-    expect(formatCurrency(10)).toBe('$10.00');
+    expect(formatCurrency(10)).toBe('$10,00');
   });
 
   it('setCurrencySymbolPosition persists through the repository, updates local state, and reformats formatCurrency', async () => {
@@ -108,7 +108,7 @@ describe('AppSettingsStore', () => {
 
     expect(repository.setCurrencySymbolPosition).toHaveBeenCalledExactlyOnceWith('after');
     expect(store.currencySymbolPosition()).toBe('after');
-    expect(formatCurrency(10)).toBe('10.00€');
+    expect(formatCurrency(10)).toBe('10,00€');
   });
 
   it('hydrating a stored symbol/position syncs formatCurrency without an explicit setter call', async () => {
@@ -122,7 +122,7 @@ describe('AppSettingsStore', () => {
     await store.hydrate();
     TestBed.tick();
 
-    expect(formatCurrency(10)).toBe('10.00£');
+    expect(formatCurrency(10)).toBe('10,00£');
   });
 
   it('setLocale persists through the repository, updates local state, and reformats both formatCurrency and formatDate', async () => {

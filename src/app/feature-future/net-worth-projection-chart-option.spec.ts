@@ -47,7 +47,7 @@ describe('buildNetWorthProjectionChartOption', () => {
     });
     const formatter = seriesOf(option)[0].label!.formatter;
 
-    expect(formatter({ dataIndex: 1 })).toBe('Camera · €500.00');
+    expect(formatter({ dataIndex: 1 })).toBe('Camera · €500,00');
     expect(formatter({ dataIndex: 0 })).toBe('');
     expect(formatter({ dataIndex: 2 })).toBe('');
   });
@@ -77,9 +77,9 @@ describe('buildNetWorthProjectionChartOption', () => {
     });
     const formatter = tooltipOf(option);
 
-    expect(formatter([{ dataIndex: 0 }])).toBe('August 2026<br/>Projected: €1,000.00');
+    expect(formatter([{ dataIndex: 0 }])).toBe('August 2026<br/>Projected: €1.000,00');
     expect(formatter([{ dataIndex: 1 }])).toBe(
-      'September 2026<br/>Projected: €1,200.00<br/>Buying Camera · €500.00',
+      'September 2026<br/>Projected: €1.200,00<br/>Buying Camera · €500,00',
     );
   });
 

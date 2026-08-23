@@ -185,7 +185,7 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
       cell.textContent?.includes('Streamly'),
     );
     expect(twelfth?.textContent).toContain('12');
-    expect(twelfth?.textContent).toContain('€12.99');
+    expect(twelfth?.textContent).toContain('€12,99');
     expect(host.textContent).toContain('expected this month');
   });
 
@@ -241,7 +241,7 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
 
     const mirror = host.querySelector('table.sr-only');
     expect(mirror?.textContent).toContain('Streamly');
-    expect(mirror?.textContent).toContain('€12.99');
+    expect(mirror?.textContent).toContain('€12,99');
 
     showView(fixture, 'list');
     expect(host.querySelector('table.sr-only')).toBeNull();

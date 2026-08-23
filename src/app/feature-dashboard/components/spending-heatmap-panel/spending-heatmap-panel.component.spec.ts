@@ -124,9 +124,9 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
     // The "All" band leads the table (TICKET-STAT-33); the category rows follow it.
     const rowText = table.querySelectorAll('tbody tr')[1]?.textContent ?? '';
     expect(rowText).toContain('Groceries');
-    expect(rowText).toContain('€40.00'); // Monday
-    expect(rowText).toContain('€10.00'); // Saturday
-    expect(rowText).toContain('€0.00'); // an empty day is still a cell
+    expect(rowText).toContain('€40,00'); // Monday
+    expect(rowText).toContain('€10,00'); // Saturday
+    expect(rowText).toContain('€0,00'); // an empty day is still a cell
   });
 
   it('plots one heatmap cell per row and column, with the heaviest category on top of the y-axis', async () => {
@@ -186,7 +186,7 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
 
   it('withholds every figure with privacy mode on, keeping the cells', async () => {
     await seedGroceries(transaction({ id: 1, amount: -40 }));
-    expect(fixture.nativeElement.querySelector('table.sr-only')?.textContent).toContain('€40.00');
+    expect(fixture.nativeElement.querySelector('table.sr-only')?.textContent).toContain('€40,00');
 
     await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
     fixture.detectChanges();
@@ -230,7 +230,7 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
     const option = fixture.componentInstance['chartOption']();
     const tooltipFormatter = (option['tooltip'] as { formatter: (p: unknown) => string }).formatter;
 
-    expect(tooltipFormatter({ seriesIndex: 1, value: [0, 0, 40] })).toContain('€40.00');
+    expect(tooltipFormatter({ seriesIndex: 1, value: [0, 0, 40] })).toContain('€40,00');
   });
 
   describe('cycles restricted to the range (TICKET-STAT-31)', () => {
@@ -375,8 +375,8 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
 
       const rows = tableRows();
       expect(rows[0].header).toBe('All');
-      expect(rows[0].cells[0]).toBe('€940.00'); // Monday: 900 + 40
-      expect(rows[0].cells[5]).toBe('€25.00'); // Saturday
+      expect(rows[0].cells[0]).toBe('€940,00'); // Monday: 900 + 40
+      expect(rows[0].cells[5]).toBe('€25,00'); // Saturday
       expect(rows.map((row) => row.header)).toEqual(['All', 'Rent', 'Groceries']);
       expect(fixture.nativeElement.querySelector('table.sr-only caption')?.textContent).toContain(
         'in total and per category',
@@ -410,13 +410,13 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
 
     it('follows the totals when a category is excluded (TICKET-STAT-32)', async () => {
       await seedTwoDays();
-      expect(tableRows()[0].cells[0]).toBe('€940.00');
+      expect(tableRows()[0].cells[0]).toBe('€940,00');
 
       await TestBed.inject(AppSettingsStore).setHeatmapExcludedCategoryIds([2]); // Rent
       fixture.detectChanges();
 
       // Rent's 900 leaves the band, not just the grid.
-      expect(tableRows()[0].cells[0]).toBe('€40.00');
+      expect(tableRows()[0].cells[0]).toBe('€40,00');
       expect(tableRows().map((row) => row.header)).toEqual(['All', 'Groceries']);
     });
 
@@ -429,7 +429,7 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
       const bandRow = tableRows()[0];
       expect(bandRow.header).toBe('All');
       expect(bandRow.cells).toHaveLength(12);
-      expect(bandRow.cells[6]).toBe('€965.00'); // all of it lands in July
+      expect(bandRow.cells[6]).toBe('€965,00'); // all of it lands in July
     });
 
     it('still renders nothing at all when there is no spend', () => {
@@ -721,7 +721,7 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
         });
 
       expect(shown(buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], LIGHT, false))).toBe(
-        'All · Mon<br/>€925.00',
+        'All · Mon<br/>€925,00',
       );
       expect(shown(buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], LIGHT, true))).toBe(
         'All · Mon',

@@ -39,7 +39,7 @@ describe('SettingsCurrencyLocaleSectionComponent', () => {
   it('renders the default symbol/position preview', () => {
     const preview = render().querySelector('[aria-label="Currency preview"]');
 
-    expect(preview?.textContent?.trim()).toBe('€1,234.56');
+    expect(preview?.textContent?.trim()).toBe('€1.234,56');
   });
 
   it('selecting a preset symbol calls AppSettingsStore.setCurrencySymbol', () => {

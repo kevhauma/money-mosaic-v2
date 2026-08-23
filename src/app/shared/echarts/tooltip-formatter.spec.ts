@@ -10,7 +10,7 @@ describe('formatAxisTooltip', () => {
       { axisValueLabel: '2026-01', marker: '●', seriesName: 'Savings', value: -50 },
     ]);
 
-    expect(result).toBe('2026-01<br/>●Checking: €1,234.56<br/>●Savings: -€50.00');
+    expect(result).toBe('2026-01<br/>●Checking: €1.234,56<br/>●Savings: -€50,00');
   });
 
   it('formats a single-series axis trigger the same way, without wrapping it in an array first', () => {
@@ -21,7 +21,7 @@ describe('formatAxisTooltip', () => {
       value: 1000,
     });
 
-    expect(result).toBe('2026-02<br/>●Checking: €1,000.00');
+    expect(result).toBe('2026-02<br/>●Checking: €1.000,00');
   });
 
   it('skips a series with no point at the hovered category instead of printing NaN', () => {
@@ -30,7 +30,7 @@ describe('formatAxisTooltip', () => {
       { axisValueLabel: '2026-03-14', marker: '●', seriesName: 'Actual', value: 9800 },
     ]);
 
-    expect(result).toBe('2026-03-14<br/>●Actual: €9,800.00');
+    expect(result).toBe('2026-03-14<br/>●Actual: €9.800,00');
   });
 
   it('keeps the bucket header when every series is empty at the hovered category', () => {
@@ -46,6 +46,6 @@ describe('formatAxisTooltip', () => {
       { axisValueLabel: '2026-04', marker: '●', seriesName: 'Scheduled', value: 0 },
     ]);
 
-    expect(result).toBe('2026-04<br/>●Scheduled: €0.00');
+    expect(result).toBe('2026-04<br/>●Scheduled: €0,00');
   });
 });

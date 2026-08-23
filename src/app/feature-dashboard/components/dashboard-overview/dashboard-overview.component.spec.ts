@@ -294,8 +294,8 @@ describe('DashboardOverviewComponent', () => {
       ]);
       fixture.detectChanges();
 
-      expect(subLabelFor('Income')).toBe('€465.00/month · €93.00/week · €15.00/day');
-      expect(subLabelFor('Expense')).toBe('€310.00/month · €62.00/week · €10.00/day');
+      expect(subLabelFor('Income')).toBe('€465,00/month · €93,00/week · €15,00/day');
+      expect(subLabelFor('Expense')).toBe('€310,00/month · €62,00/week · €10,00/day');
     });
 
     it('drops the week/month parts for a single-day range, keeping only €X/day', () => {
@@ -305,7 +305,7 @@ describe('DashboardOverviewComponent', () => {
       ]);
       fixture.detectChanges();
 
-      expect(subLabelFor('Income')).toBe('€60.00/day');
+      expect(subLabelFor('Income')).toBe('€60,00/day');
     });
 
     it('renders a "kept" net margin sub-label when net is non-negative', () => {

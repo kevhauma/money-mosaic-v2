@@ -533,9 +533,11 @@ export type AppSettings = {
   /**
    * Additive field (TICKET-SET-04) — a BCP 47 tag (e.g. `'en-BE'`, `'en-US'`) driving both
    * `formatCurrency`'s number grouping/decimal separator and the shared date-formatting helper.
-   * `undefined` falls back to `DEFAULT_LOCALE` (`'en-US'`, in `shared/utils/format-settings.ts`) —
-   * today's exact hardcoded decimal-grouping behavior — so nobody's formatting changes until they
-   * opt in. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as
+   * `undefined` falls back to `DEFAULT_LOCALE` in `shared/utils/format-settings.ts` — `'en-US'`
+   * originally (SET-04's "keep today's formatting" argument), `'en-BE'` since TICKET-SET-10, which
+   * re-made that call for the app's one documented Belgian user. A *stored* value always wins over
+   * the default, so SET-10 changed nobody's opted-in formatting.
+   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as
    * `primaryColor`/`currencySymbol` above.
    */
   locale: string | undefined;

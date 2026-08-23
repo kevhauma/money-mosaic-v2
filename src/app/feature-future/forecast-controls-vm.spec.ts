@@ -55,9 +55,9 @@ describe('describeVelocity', () => {
     const readout = describeVelocity(velocity());
 
     expect(readout.insufficientMessage).toBe('');
-    expect(readout.rateLabel).toBe('€200.00/month');
+    expect(readout.rateLabel).toBe('€200,00/month');
     expect(readout.windowLabel).toBe('June 2026 – July 2026 · 2 complete months');
-    expect(readout.spreadLabel).toBe('typical month €200.00 · from €100.00 to €300.00');
+    expect(readout.spreadLabel).toBe('typical month €200,00 · from €100,00 to €300,00');
   });
 
   it('reports the months actually measured, not the months requested', () => {
@@ -91,6 +91,6 @@ describe('describeVelocity', () => {
       velocity({ perMonth: -150, median: -150, min: -200, max: -100 }),
     );
 
-    expect(readout.rateLabel).toBe('-€150.00/month');
+    expect(readout.rateLabel).toBe('-€150,00/month');
   });
 });

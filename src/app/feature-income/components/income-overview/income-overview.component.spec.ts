@@ -575,8 +575,10 @@ describe('IncomeOverviewComponent', () => {
         smoothedBonusCategoryIds: [2],
       });
 
+      // Parsed in the app default's number format (TICKET-SET-10): `.` groups thousands and
+      // `,` is the decimal separator, so the grouping is dropped and the comma made a point.
       const total = monthlyTotals().reduce(
-        (sum, text) => sum + Number(text.replace(/[^0-9.-]/g, '')),
+        (sum, text) => sum + Number(text.replace(/[^0-9,-]/g, '').replace(',', '.')),
         0,
       );
 

@@ -149,7 +149,7 @@ describe('CategoriesOverviewComponent', () => {
     it('marks a category whose window has closed, with the date in words', async () => {
       const host = await renderWith([category({ activeUntil: '2023-06-30' })]);
 
-      expect(endedBadges(host)).toEqual(['Ended 06/30/2023']);
+      expect(endedBadges(host)).toEqual(['Ended 30/06/2023']);
     });
 
     it('marks nothing for an end date still in the future', async () => {
@@ -173,7 +173,7 @@ describe('CategoriesOverviewComponent', () => {
       (host.querySelector('mm-page-header input[type="checkbox"]') as HTMLInputElement).click();
       fixture.detectChanges();
 
-      expect(endedBadges(host)).toEqual(['Ended 06/30/2023']);
+      expect(endedBadges(host)).toEqual(['Ended 30/06/2023']);
     });
   });
 });

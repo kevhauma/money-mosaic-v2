@@ -83,8 +83,8 @@ describe('RangePickerComponent', () => {
       value({ preset: 'custom', from: '2026-07-05', to: '2026-07-19' }),
     );
     fixture.detectChanges();
-    expect(trigger().textContent).toContain('07/05/2026');
-    expect(trigger().textContent).toContain('07/19/2026');
+    expect(trigger().textContent).toContain('05/07/2026');
+    expect(trigger().textContent).toContain('19/07/2026');
   });
 
   it('describes a relative hand-built range via describeRangeExpression rather than raw dates', () => {

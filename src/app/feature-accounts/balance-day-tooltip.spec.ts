@@ -61,8 +61,8 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
     // Not the raw `2026-03-10` bucket key (TICKET-SET-04), and not a raw float.
     expect(html).toContain(formatDate('2026-03-10'));
     expect(html).not.toContain('2026-03-10<');
-    expect(html).toContain('●Checking: €3,000.00');
-    expect(html).toContain('Acme Payroll: €2,800.00');
+    expect(html).toContain('●Checking: €3.000,00');
+    expect(html).toContain('Acme Payroll: €2.800,00');
   });
 
   it('never restates the day’s net — the lines and the balance already say it', () => {
@@ -99,8 +99,8 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
 
     expect(html).toContain('<i data-account="checking"></i>Checking');
     expect(html).toContain('<i data-account="savings"></i>Savings');
-    expect(html).toContain('FreshMarket: -€58.40');
-    expect(html).toContain('Standing order: €500.00');
+    expect(html).toContain('FreshMarket: -€58,40');
+    expect(html).toContain('Standing order: €500,00');
   });
 
   it('puts each account’s balance for that day next to its name', () => {
@@ -120,8 +120,8 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
     );
 
     // The band's own plotted point, not a re-derivation — so the row cannot disagree with the chart.
-    expect(html).toContain('Checking: €1,241.60');
-    expect(html).toContain('Savings: €8,000.00');
+    expect(html).toContain('Checking: €1.241,60');
+    expect(html).toContain('Savings: €8.000,00');
   });
 
   it('names a band echarts sent no value for, rather than printing a bogus balance', () => {
@@ -145,7 +145,7 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
 
     const html = buildBalanceDayTooltip(index, { showAccountNames: false })(hover('2026-03-10'));
 
-    expect(html).toContain('SEPA DIRECT DEBIT MANDATE 0293841 TERMIN…: -€20.00');
+    expect(html).toContain('SEPA DIRECT DEBIT MANDATE 0293841 TERMIN…: -€20,00');
     expect(html).not.toContain(rawDescription);
   });
 
@@ -155,7 +155,7 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
 
     const html = buildBalanceDayTooltip(index, { showAccountNames: false })(hover('2026-03-10'));
 
-    expect(html).toContain(`${rawDescription}: -€20.00`);
+    expect(html).toContain(`${rawDescription}: -€20,00`);
     expect(html).not.toContain('…');
   });
 
@@ -174,8 +174,8 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
 
     // Driven by the bands, not by the day's movements: a tooltip listing fewer accounts than the
     // stack it sits on would read as if the missing ones were worth nothing.
-    expect(html).toContain('Checking: €1,200.00');
-    expect(html).toContain('Savings: €8,000.00');
+    expect(html).toContain('Checking: €1.200,00');
+    expect(html).toContain('Savings: €8.000,00');
   });
 
   it('says "No transactions" outright on a quiet day, under the balances that still hold', () => {
@@ -189,7 +189,7 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
     );
 
     expect(html).toContain(formatDate('2026-03-11'));
-    expect(html).toContain('Checking: €1,200.00');
+    expect(html).toContain('Checking: €1.200,00');
     expect(html).toContain('No transactions');
   });
 
@@ -221,9 +221,9 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
     // The page is already this account — naming it above its own transactions labels nothing.
     expect(html).not.toContain('Checking');
     expect(html).toContain(formatDate('2026-03-10'));
-    expect(html).toContain('Balance: €2,741.60');
-    expect(html).toContain('Acme Payroll: €2,800.00');
-    expect(html).toContain('FreshMarket: -€58.40');
+    expect(html).toContain('Balance: €2.741,60');
+    expect(html).toContain('Acme Payroll: €2.800,00');
+    expect(html).toContain('FreshMarket: -€58,40');
   });
 
   const paydayOf = (count: number, accountId = 1): Transaction[] =>
@@ -238,7 +238,7 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
       hover('2026-03-10', [{ name: 'Checking' }]),
     );
 
-    expect(html).toContain('Shop 5: -€10.00');
+    expect(html).toContain('Shop 5: -€10,00');
     expect(html).not.toContain('more');
   });
 
@@ -249,7 +249,7 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
       hover('2026-03-10', [{ name: 'Checking' }]),
     );
 
-    expect(html).toContain('Shop 5: -€10.00');
+    expect(html).toContain('Shop 5: -€10,00');
     expect(html).not.toContain('Shop 6');
     expect(html).toContain('+1 more');
   });
@@ -261,7 +261,7 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
       hover('2026-03-10', [{ name: '', value: -300 }]),
     );
 
-    expect(html).toContain('Balance: -€300.00');
+    expect(html).toContain('Balance: -€300,00');
     expect(html).toContain('+25 more');
   });
 
@@ -282,9 +282,9 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
 
     // 5 + 5 exhausts the 10-line budget, so the third account folds all five of its lines away —
     // but its balance is still there, which is the part the budget must never eat.
-    expect(html).toContain('Checking: €100.00');
-    expect(html).toContain('Savings: €200.00');
-    expect(html).toContain('Credit line: €300.00');
+    expect(html).toContain('Checking: €100,00');
+    expect(html).toContain('Savings: €200,00');
+    expect(html).toContain('Credit line: €300,00');
     expect(html).toContain('+5 more');
   });
 
@@ -307,8 +307,8 @@ describe('buildBalanceDayTooltip (TICKET-ACC-11)', () => {
 
     // Every account keeps its balance row; only the transaction lines are budgeted, so seven moving
     // accounts still fit — the last ones show a "+N more" instead of their lines.
-    expect(html).toContain('Account 1: €100.00');
-    expect(html).toContain('Account 7: €700.00');
+    expect(html).toContain('Account 1: €100,00');
+    expect(html).toContain('Account 7: €700,00');
     expect(rows.length).toBeLessThanOrEqual(24);
   });
 });

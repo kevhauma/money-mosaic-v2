@@ -91,7 +91,7 @@ describe('TransactionsOverviewComponent', () => {
   // Deterministic, not the real repository — this component's `formatDate` reads the shared,
   // settings-driven locale (TICKET-NG-10), and the real AppSettingsStore hydrates from the shared
   // fake-indexeddb singleton (Vitest isolate:false), which can carry a non-default locale left
-  // behind by whatever spec ran last. Row-label assertions below assume the default (en-US) locale.
+  // behind by whatever spec ran last. Row-label assertions below assume the default (en-BE) locale.
   const appSettingsRepository = { get: vi.fn().mockResolvedValue({ id: 1 }) };
 
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {
@@ -315,8 +315,8 @@ describe('TransactionsOverviewComponent', () => {
     const labels = Array.from(checkboxes).map((checkbox) => checkbox.getAttribute('aria-label'));
 
     expect(labels).toEqual([
-      'Select transaction 06/01/2026 Row 1',
-      'Select transaction 06/01/2026 Row 2',
+      'Select transaction 01/06/2026 Row 1',
+      'Select transaction 01/06/2026 Row 2',
     ]);
     expect(labels[0]).not.toBe(labels[1]);
   });
@@ -352,13 +352,13 @@ describe('TransactionsOverviewComponent', () => {
         { ...transaction(1), counterpartyName: 'Carrefour', rawDescription: 'CARD PAYMENT' },
       ]);
 
-      expect(component.rows()[0].ariaLabel).toBe('Select transaction 06/01/2026 Carrefour');
+      expect(component.rows()[0].ariaLabel).toBe('Select transaction 01/06/2026 Carrefour');
     });
 
     it('falls back to the raw description when the row has no counterparty', async () => {
       const component = await setupWith([transaction(1)]);
 
-      expect(component.rows()[0].ariaLabel).toBe('Select transaction 06/01/2026 Row 1');
+      expect(component.rows()[0].ariaLabel).toBe('Select transaction 01/06/2026 Row 1');
     });
 
     it("derives categoryId as the option's string value for a known category", async () => {

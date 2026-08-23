@@ -248,8 +248,8 @@ describe('buildAccountBalanceChartOption', () => {
     ]);
 
     // Was `formatAxisTooltip`: one unlabelled balance figure, i.e. the number the line already draws.
-    expect(result).toContain('Balance: €1,234.56');
-    expect(result).toContain('Acme Refunds: €1,234.56');
+    expect(result).toContain('Balance: €1.234,56');
+    expect(result).toContain('Acme Refunds: €1.234,56');
     expect(result).not.toContain('Checking');
   });
 });

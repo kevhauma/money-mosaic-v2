@@ -37,8 +37,8 @@ describe('buildIncomeGrowthCard (FR-INC-5, TICKET-INC-05)', () => {
     );
 
     expect(card.value).toBe('+10%');
-    expect(card.subLabel).toContain('2,000');
-    expect(card.subLabel).toContain('2,200');
+    expect(card.subLabel).toContain('2.000');
+    expect(card.subLabel).toContain('2.200');
   });
 
   it('colours a rise as growth and a decline as a loss', () => {
@@ -251,19 +251,19 @@ describe('IncomeGrowthPanelComponent', () => {
 
     const first = fixture.nativeElement.querySelector('mm-stat-card') as HTMLElement;
 
-    expect(first.querySelector('.stat-desc')?.textContent).toContain('€2,500.00');
-    expect(first.querySelector('.stat-desc')?.textContent).toContain('€3,000.00');
+    expect(first.querySelector('.stat-desc')?.textContent).toContain('€2.500,00');
+    expect(first.querySelector('.stat-desc')?.textContent).toContain('€3.000,00');
     // The tooltip names the baseline month, so "+20%" says what it is 20% of.
     expect(first.querySelector('.tooltip-content')?.textContent).toContain('01/01/2026');
-    expect(first.querySelector('.tooltip-content')?.textContent).toContain('€2,500.00');
+    expect(first.querySelector('.tooltip-content')?.textContent).toContain('€2.500,00');
   });
 
   it('names the month it compared, so the two deltas are unambiguous', async () => {
     await setup([payslip(1, '2026-06-15', 2500), payslip(2, '2026-07-15', 3000)]);
 
     // August is in progress on the pinned clock, so July is the month under comparison.
-    expect(fixture.nativeElement.textContent).toContain('07/01/2026');
-    expect(fixture.nativeElement.textContent).toContain('07/31/2026');
+    expect(fixture.nativeElement.textContent).toContain('01/07/2026');
+    expect(fixture.nativeElement.textContent).toContain('31/07/2026');
     expect(fixture.nativeElement.textContent).toContain('last complete month');
   });
 

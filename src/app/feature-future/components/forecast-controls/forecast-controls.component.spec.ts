@@ -255,10 +255,10 @@ describe('ForecastControlsComponent (TICKET-FUT-06)', () => {
     const text = host(fixture).textContent ?? '';
 
     expect(text).toContain('You saved about');
-    expect(text).toContain('€200.00/month');
+    expect(text).toContain('€200,00/month');
     expect(text).toContain('6 complete months');
-    expect(text).toContain('typical month €200.00');
-    expect(text).toContain('from €200.00 to €200.00');
+    expect(text).toContain('typical month €200,00');
+    expect(text).toContain('from €200,00 to €200,00');
   });
 
   it('clamps a window longer than the history and says how many months it really measured', async () => {

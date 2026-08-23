@@ -171,7 +171,7 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       ]);
 
       expect(yearHeadings()).toEqual(['2026', '2025']);
-      expect(events()[0]).toContain('Bonus of €1,800.00');
+      expect(events()[0]).toContain('Bonus of €1.800,00');
       expect(events()[1]).toContain('Salary increased');
     });
 
@@ -181,8 +181,8 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       expect(events()[0]).toContain('Salary');
       expect(events()[0]).toContain('increased');
       expect(events()[0]).toContain('16%');
-      expect(events()[0]).toContain('€2,500.00');
-      expect(events()[0]).toContain('€2,900.00');
+      expect(events()[0]).toContain('€2.500,00');
+      expect(events()[0]).toContain('€2.900,00');
       // Month only — the year sits in the section heading above these rows.
       expect(events()[0]).toContain('Jul');
     });
@@ -279,7 +279,7 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       // Uppercased by CSS, not in the data, so a screen reader still announces "Jul".
       expect(move).toContain('Jul');
       expect(monthCellOf(move!).className).toContain('uppercase');
-      expect(move).toContain('Net: +€400.00 → €2,900.00');
+      expect(move).toContain('Net: +€400,00 → €2.900,00');
       expect(move).toContain('16%');
     });
 
@@ -297,7 +297,7 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
       // Net is flat all year; only gross moved, which is a rising deduction rate worth seeing.
       expect(events().some((text) => text.includes('Net:'))).toBe(false);
       const move = events().find((text) => text.includes('Gross:'));
-      expect(move).toContain('Gross: +€300.00 → €3,300.00');
+      expect(move).toContain('Gross: +€300,00 → €3.300,00');
       expect(move).toContain('10%');
     });
 
@@ -306,7 +306,7 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
 
       const move = events().find((text) => text.includes('Net:'));
 
-      expect(move).toContain('Net: -€400.00 → €2,500.00');
+      expect(move).toContain('Net: -€400,00 → €2.500,00');
       // Rounded to whole percent and unsigned, exactly as the dashboard's card renders a delta —
       // the downward triangle beside it says which way.
       expect(move).toContain('14%');
@@ -431,8 +431,8 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
         (item as HTMLElement).textContent?.includes('Net:'),
       ) as HTMLElement;
 
-      expect(blurredTexts()).toContain('+€400.00');
-      expect(blurredTexts()).toContain('€2,900.00');
+      expect(blurredTexts()).toContain('+€400,00');
+      expect(blurredTexts()).toContain('€2.900,00');
       expect(blurredTexts()).toContain('16%');
       // What moved, which way and when all stay readable.
       expect(row.textContent).toContain('Net:');
@@ -446,7 +446,7 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
         { id: 1, yearMonth: '2026-01', grossWage: 4000, bonus: 1800 } as SalaryMetadata,
       ]);
 
-      expect(blurredTexts().some((text) => text.includes('Bonus of €1,800.00'))).toBe(true);
+      expect(blurredTexts().some((text) => text.includes('Bonus of €1.800,00'))).toBe(true);
       // The year heading and the panel title are labels and stay sharp.
       expect(yearHeadings()).toEqual(['2026', '2025']);
       expect(fixture.nativeElement.querySelector('h2')?.closest('.mm-privacy-blurred')).toBeNull();

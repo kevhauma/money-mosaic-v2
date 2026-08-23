@@ -307,7 +307,7 @@ describe('TrendChartPanelComponent', () => {
 
       expect(rows.map((row) => row.bucketKey)).toEqual(bucketKeys);
       const januaryRow = rows.find((row) => row.bucketKey === '2026-01');
-      expect(januaryRow?.income).toContain('3,000');
+      expect(januaryRow?.income).toContain('3.000');
       expect(januaryRow?.expense).toContain('50');
     });
 

@@ -177,10 +177,10 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     expect(row[0]).toContain('Streamly');
     expect(row[1]).toContain('Subscriptions');
     expect(row[2]).toBe('Monthly');
-    expect(row[3]).toBe('€12.99');
-    expect(row[4]).toBe('05/09/2026'); // last paid
-    expect(row[5]).toBe('06/08/2026'); // next expected: last + the 30-day median gap
-    expect(row[6]).toBe('€12.99');
+    expect(row[3]).toBe('€12,99');
+    expect(row[4]).toBe('09/05/2026'); // last paid
+    expect(row[5]).toBe('08/06/2026'); // next expected: last + the 30-day median gap
+    expect(row[6]).toBe('€12,99');
   });
 
   it('names an every-two-weeks rhythm "Fortnightly" in the cadence column (TICKET-REC-07)', async () => {
@@ -188,8 +188,8 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     const [row] = cellsOf(fixture.nativeElement as HTMLElement);
 
     expect(row[2]).toBe('Fortnightly');
-    expect(row[3]).toBe('€7.00');
-    expect(row[6]).toBe('€15.22'); // 7 × 365.25 / 14 / 12
+    expect(row[3]).toBe('€7,00');
+    expect(row[6]).toBe('€15,22'); // 7 × 365.25 / 14 / 12
   });
 
   it('sorts the series by monthly equivalent, most expensive first', async () => {
@@ -211,7 +211,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('2 recurring payments');
-    expect(text).toContain('€17.99'); // 12.99 + 5.00
+    expect(text).toContain('€17,99'); // 12.99 + 5.00
   });
 
   it('expands a series to its individual occurrences, and collapses again', async () => {
@@ -229,8 +229,8 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       (item) => item.textContent?.replace(/\s+/g, '').trim() ?? '',
     );
     expect(occurrences).toHaveLength(4);
-    expect(occurrences[0]).toBe('02/09/2026€12.99');
-    expect(occurrences[3]).toBe('05/09/2026€12.99');
+    expect(occurrences[0]).toBe('09/02/2026€12,99');
+    expect(occurrences[3]).toBe('09/05/2026€12,99');
     expect(host.querySelector('tbody button')?.getAttribute('aria-expanded')).toBe('true');
 
     (host.querySelector('tbody button') as HTMLButtonElement).click();
@@ -356,7 +356,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
         'Per month',
       ]);
       // Detection is untouched: the two price levels still folded into one series at the new one.
-      expect(cellsOf(host)[0][3]).toBe('€12.99');
+      expect(cellsOf(host)[0][3]).toBe('€12,99');
     });
   });
 
@@ -463,7 +463,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       const textOf = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
 
       expect(textOf()).toContain('1 recurring payment ≈');
-      expect(textOf()).toContain('€12.99');
+      expect(textOf()).toContain('€12,99');
 
       openStoppedGroup(fixture);
 

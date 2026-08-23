@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-SET-10',
-    title: 'Dates render in the order you read them, without a trip to Settings',
-    area: 'Settings',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-TXN-11',
     title: 'The transaction filter controls stop overlapping each other',
     area: 'Transactions',

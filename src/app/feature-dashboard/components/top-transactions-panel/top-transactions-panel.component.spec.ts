@@ -85,7 +85,7 @@ describe('TopTransactionsPanelComponent', () => {
 
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Appliance store');
-    expect(text).toContain('€800.00');
+    expect(text).toContain('€800,00');
     expect(text).toContain('Supermarket');
     expect(text).toContain('Groceries');
 

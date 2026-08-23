@@ -217,8 +217,8 @@ describe('buildMoneyFlowChartOption (TICKET-EXP-02)', () => {
   it('renders the display name as the label, so ids never reach the canvas', () => {
     const label = labelFormatterOf(optionFor());
 
-    expect(label({ name: 'category:20' })).toBe('Groceries · €500.00');
-    expect(label({ name: 'existing-balance' })).toBe('Existing balance · €100.00');
+    expect(label({ name: 'category:20' })).toBe('Groceries · €500,00');
+    expect(label({ name: 'existing-balance' })).toBe('Existing balance · €100,00');
     // A node the graph doesn't carry degrades to its own key rather than to an empty label.
     expect(label({ name: 'account:99' })).toBe('account:99');
   });
@@ -232,19 +232,19 @@ describe('money flow tooltips (TICKET-EXP-04)', () => {
 
     // Main account's whole outflow is 500 + 100 + 1500 = 2100; 500 of that is ~23.8%.
     expect(formatMoneyFlowLinkTooltip(link, totals, false)).toBe(
-      "Main account → Groceries<br/>€500.00<br/>23.8% of Main account's outflow",
+      "Main account → Groceries<br/>€500,00<br/>23,8% of Main account's outflow",
     );
   });
 
   it('states an account node as both directions, and a source node as its outflow', () => {
     expect(formatMoneyFlowNodeTooltip('account:1', totals, false)).toBe(
-      'Main account<br/>In: €2,100.00<br/>Out: €2,100.00<br/>100% of all money in',
+      'Main account<br/>In: €2.100,00<br/>Out: €2.100,00<br/>100% of all money in',
     );
     expect(formatMoneyFlowNodeTooltip('income:10', totals, false)).toBe(
-      'Salary<br/>Out: €2,000.00<br/>95.2% of all money in',
+      'Salary<br/>Out: €2.000,00<br/>95,2% of all money in',
     );
     expect(formatMoneyFlowNodeTooltip('category:20', totals, false)).toBe(
-      'Groceries<br/>In: €500.00<br/>23.8% of all money in',
+      'Groceries<br/>In: €500,00<br/>23,8% of all money in',
     );
   });
 
@@ -252,7 +252,7 @@ describe('money flow tooltips (TICKET-EXP-04)', () => {
     const link = { source: 'account:1', target: 'category:20', value: 500 };
 
     expect(formatMoneyFlowLinkTooltip(link, totals, true)).toBe(
-      "Main account → Groceries<br/>23.8% of Main account's outflow",
+      "Main account → Groceries<br/>23,8% of Main account's outflow",
     );
     expect(formatMoneyFlowNodeTooltip('account:1', totals, true)).toBe(
       'Main account<br/>100% of all money in',
@@ -281,7 +281,7 @@ describe('money flow tooltips (TICKET-EXP-04)', () => {
   });
 
   it('drops the amount suffix from node labels under privacy mode', () => {
-    expect(labelFormatterOf(optionFor(false))({ name: 'category:20' })).toBe('Groceries · €500.00');
+    expect(labelFormatterOf(optionFor(false))({ name: 'category:20' })).toBe('Groceries · €500,00');
     expect(labelFormatterOf(optionFor(true))({ name: 'category:20' })).toBe('Groceries');
   });
 });
@@ -488,9 +488,9 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
       [...row.children].map((cell) => cell.textContent?.trim()),
     );
     expect(rows).toEqual([
-      ['Salary', 'Main account', '€2,000.00'],
-      ['Main account', 'Left over', '€1,500.00'],
-      ['Main account', 'Groceries', '€500.00'],
+      ['Salary', 'Main account', '€2.000,00'],
+      ['Main account', 'Left over', '€1.500,00'],
+      ['Main account', 'Groceries', '€500,00'],
     ]);
   });
 
@@ -633,7 +633,7 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
 
     it('withholds every amount with privacy mode on, keeping the ribbons and the links', async () => {
       const fixture = await createFixture(flow);
-      expect(tableOf(fixture).textContent).toContain('€2,000.00');
+      expect(tableOf(fixture).textContent).toContain('€2.000,00');
 
       await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
       fixture.detectChanges();
@@ -695,10 +695,10 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
 
       // Grouping on: the €500 reaches Groceries via Living, as two ribbons of the same value.
       expect(rowsNow()).toEqual([
-        ['Salary', 'Main account', '€2,000.00'],
-        ['Main account', 'Left over', '€1,500.00'],
-        ['Main account', 'Living', '€500.00'],
-        ['Living', 'Groceries', '€500.00'],
+        ['Salary', 'Main account', '€2.000,00'],
+        ['Main account', 'Left over', '€1.500,00'],
+        ['Main account', 'Living', '€500,00'],
+        ['Living', 'Groceries', '€500,00'],
       ]);
 
       toggleOf(fixture)!.click();
@@ -706,9 +706,9 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
 
       // Off: one direct ribbon again, and every figure unchanged.
       expect(rowsNow()).toEqual([
-        ['Salary', 'Main account', '€2,000.00'],
-        ['Main account', 'Left over', '€1,500.00'],
-        ['Main account', 'Groceries', '€500.00'],
+        ['Salary', 'Main account', '€2.000,00'],
+        ['Main account', 'Left over', '€1.500,00'],
+        ['Main account', 'Groceries', '€500,00'],
       ]);
     });
 

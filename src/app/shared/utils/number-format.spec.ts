@@ -7,7 +7,7 @@ describe('formatPercent', () => {
 
   describe('default variant', () => {
     it('formats with 1 fraction digit and a sign under the default locale', () => {
-      expect(formatPercent(0.4321)).toBe('43.2%');
+      expect(formatPercent(0.4321)).toBe('43,2%');
       expect(formatPercent(-0.05)).toBe('-5%');
     });
 
@@ -31,7 +31,7 @@ describe('formatPercent', () => {
 
   describe('signed variant', () => {
     it('shows an explicit + on a rise, a - on a drop, and neither on no change', () => {
-      expect(formatPercent(0.082, 'signed')).toBe('+8.2%');
+      expect(formatPercent(0.082, 'signed')).toBe('+8,2%');
       expect(formatPercent(-0.25, 'signed')).toBe('-25%');
       expect(formatPercent(0, 'signed')).toBe('0%');
     });
@@ -64,7 +64,7 @@ describe('formatRatio', () => {
 
   it('rounds to 1 fraction digit under the default locale', () => {
     expect(formatRatio(1.048)).toBe('1');
-    expect(formatRatio(2.34)).toBe('2.3');
+    expect(formatRatio(2.34)).toBe('2,3');
   });
 
   it('reflects a changed locale (en-BE grouping)', () => {

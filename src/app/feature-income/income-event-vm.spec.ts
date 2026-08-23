@@ -75,8 +75,8 @@ describe('buildIncomeEventVm (TICKET-INC-17)', () => {
     expect(vm.message).toContain('Salary');
     expect(vm.message).toContain('increased');
     expect(vm.message).toContain('12%');
-    expect(vm.message).toContain('€2,500.00');
-    expect(vm.message).toContain('€2,800.00');
+    expect(vm.message).toContain('€2.500,00');
+    expect(vm.message).toContain('€2.800,00');
     // Month only: the rail groups by year, so the year is already in the heading above the row.
     expect(vm.when).toBe('Mar');
   });
@@ -85,11 +85,11 @@ describe('buildIncomeEventVm (TICKET-INC-17)', () => {
     const vm = buildIncomeEventVm(PAY_CUT, categoriesById);
 
     expect(vm.message).toContain('dropped');
-    expect(vm.message).toContain('14.3%');
+    expect(vm.message).toContain('14,3%');
   });
 
   it('reports a bonus with its amount', () => {
-    expect(buildIncomeEventVm(BONUS, categoriesById).message).toContain('€1,800.00');
+    expect(buildIncomeEventVm(BONUS, categoriesById).message).toContain('€1.800,00');
   });
 
   it('gives a wage rise columns rather than a sentence, with the dashboard’s delta chip', () => {
@@ -97,8 +97,8 @@ describe('buildIncomeEventVm (TICKET-INC-17)', () => {
 
     expect(vm.wageChange).toEqual({
       label: 'Net',
-      delta: '+€100.00',
-      to: '€2,100.00',
+      delta: '+€100,00',
+      to: '€2.100,00',
       deltaLabel: '5%',
       deltaIcon: 'tablerTriangleFill',
       deltaColor: 'success',

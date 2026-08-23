@@ -236,7 +236,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
         [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
       );
 
-      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€2,160.00', '€3,000.00', '72%']);
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€2.160,00', '€3.000,00', '72%']);
     });
 
     it('leaves a month with no gross wage as a gap, not a zero', async () => {
@@ -245,7 +245,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
         [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
       );
 
-      expect(rowsOf(TAKE_HOME)[1]).toEqual(['2026-02', '€2,160.00', '—', '—']);
+      expect(rowsOf(TAKE_HOME)[1]).toEqual(['2026-02', '€2.160,00', '—', '—']);
       expect(optionOf('takeHomeOption').series[0].data[1]).toBeNull();
     });
 
@@ -257,7 +257,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
         [{ id: 1, yearMonth: '2026-02', grossWage: 3000, bonus: 2000 }],
       );
 
-      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-02', '€2,160.00', '€3,000.00', '72%']);
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-02', '€2.160,00', '€3.000,00', '72%']);
     });
 
     it('drops a deselected category from net (FR-INC-3)', async () => {
@@ -268,7 +268,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       );
 
       // The 500 side income is out of the selection, so it never reaches `net`.
-      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€2,160.00', '€3,000.00', '72%']);
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€2.160,00', '€3.000,00', '72%']);
     });
 
     it('keeps a lump sum in its real month rather than the smoothed average (FR-INC-4)', async () => {
@@ -278,7 +278,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       );
 
       // Smoothed, February would be the year's average; raw, it is the 12,000 that actually landed.
-      expect(rowsOf(TAKE_HOME)[1][1]).toBe('€12,000.00');
+      expect(rowsOf(TAKE_HOME)[1][1]).toBe('€12.000,00');
     });
 
     it('leaves an annual lump-sum category out of the take-home basis entirely (TICKET-INC-14)', async () => {
@@ -290,7 +290,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       );
 
       // Without the exclusion February's 14,160 against a 3,000 gross would read as 472%.
-      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-02', '€2,160.00', '€3,000.00', '72%']);
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-02', '€2.160,00', '€3.000,00', '72%']);
     });
 
     it('prints the true, unclipped rate in the companion table even when the band clips', async () => {
@@ -299,7 +299,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
         [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
       );
 
-      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€3,120.00', '€3,000.00', '104%']);
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€3.120,00', '€3.000,00', '104%']);
       expect(optionOf('takeHomeOption').series[0].data[0]).toBe(1);
     });
   });
@@ -319,14 +319,14 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
     it('plots both levels on the absolute cell', async () => {
       await A_RAISE();
 
-      expect(rowsOf(ABSOLUTE)[0]).toEqual(['2026-01', '€2,160.00', '€3,000.00']);
-      expect(rowsOf(ABSOLUTE)[1]).toEqual(['2026-02', '€2,300.00', '€3,300.00']);
+      expect(rowsOf(ABSOLUTE)[0]).toEqual(['2026-01', '€2.160,00', '€3.000,00']);
+      expect(rowsOf(ABSOLUTE)[1]).toEqual(['2026-02', '€2.300,00', '€3.300,00']);
     });
 
     it('starts both from-start cells at zero on the shared baseline month', async () => {
       await A_RAISE();
 
-      expect(rowsOf(FROM_START)[0]).toEqual(['2026-01', '€0.00', '€0.00']);
+      expect(rowsOf(FROM_START)[0]).toEqual(['2026-01', '€0,00', '€0,00']);
       expect(rowsOf(PCT_FROM_START)[0]).toEqual(['2026-01', '0%', '0%']);
     });
 
@@ -334,8 +334,8 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       await A_RAISE();
 
       // Gross +10%, net +6.5% — the raise did not pass through intact.
-      expect(rowsOf(PCT_FROM_START)[1]).toEqual(['2026-02', '6.5%', '10%']);
-      expect(rowsOf(FROM_START)[1]).toEqual(['2026-02', '€140.00', '€300.00']);
+      expect(rowsOf(PCT_FROM_START)[1]).toEqual(['2026-02', '6,5%', '10%']);
+      expect(rowsOf(FROM_START)[1]).toEqual(['2026-02', '€140,00', '€300,00']);
     });
 
     it('breaks only the gross line over a month with no wage entered', async () => {
@@ -344,7 +344,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
         [{ id: 1, yearMonth: '2026-01', grossWage: 3000 }],
       );
 
-      expect(rowsOf(ABSOLUTE)[1]).toEqual(['2026-02', '€2,300.00', '—']);
+      expect(rowsOf(ABSOLUTE)[1]).toEqual(['2026-02', '€2.300,00', '—']);
       const option = optionOf('absoluteOption');
       expect(option.series[1].data[1]).toBeNull();
       expect(option.series[0].data[1]).toBe(2300);
@@ -403,7 +403,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
       );
 
       expect(rowsOf(ABSOLUTE).map((row) => row[0])).toEqual(['2026-01', '2026-02']);
-      expect(rowsOf(ABSOLUTE)[1]).toEqual(['2026-02', '€2,300.00', '—']);
+      expect(rowsOf(ABSOLUTE)[1]).toEqual(['2026-02', '€2.300,00', '—']);
     });
 
     it('measures growth from the first *shown* month, so a skipped one cannot be the baseline', async () => {
@@ -474,7 +474,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
     it('reads the real figures back with privacy mode off', async () => {
       await withGross();
 
-      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€2,160.00', '€3,000.00', '72%']);
+      expect(rowsOf(TAKE_HOME)[0]).toEqual(['2026-01', '€2.160,00', '€3.000,00', '72%']);
     });
   });
 });

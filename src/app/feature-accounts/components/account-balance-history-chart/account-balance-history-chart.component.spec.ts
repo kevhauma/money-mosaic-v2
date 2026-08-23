@@ -438,8 +438,8 @@ describe('buildAccountBalanceHistoryChartOption', () => {
 
     // Was `formatAxisTooltip`, which restated each band's own value — the number the stack draws.
     expect(result).toContain('●Checking');
-    expect(result).toContain('Acme Payroll: €2,800.00');
+    expect(result).toContain('Acme Payroll: €2.800,00');
     expect(result).toContain('◆Credit line');
-    expect(result).toContain('Annual fee: -€50.00');
+    expect(result).toContain('Annual fee: -€50,00');
   });
 });

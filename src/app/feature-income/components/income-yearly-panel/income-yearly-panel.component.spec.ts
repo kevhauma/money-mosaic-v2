@@ -52,7 +52,7 @@ const entry = (overrides: Partial<YearlyIncomeEntry> = {}): YearlyIncomeEntry =>
 
 describe('formatYearOverYearChange (FR-INC-6, TICKET-INC-06)', () => {
   it('renders a rise with an explicit +, so a standalone bar label reads as a change', () => {
-    expect(formatYearOverYearChange(0.082)).toBe('+8.2%');
+    expect(formatYearOverYearChange(0.082)).toBe('+8,2%');
   });
 
   it('renders a drop with a -', () => {
@@ -382,8 +382,8 @@ describe('IncomeYearlyPanelComponent', () => {
 
     // Every year's total, not its change label — the last row is the in-progress year, which is
     // suppressed for its own reason and would pass a change-label assertion for free.
-    expect(accessibleRows().every((row) => row[1].includes('0.00'))).toBe(true);
-    expect(accessibleRows().every((row) => !row[1].includes('20,000'))).toBe(true);
+    expect(accessibleRows().every((row) => row[1].includes('0,00'))).toBe(true);
+    expect(accessibleRows().every((row) => !row[1].includes('20.000'))).toBe(true);
   });
 
   it('renders the chart host with an accessible label pointing at the table', async () => {
@@ -522,7 +522,7 @@ describe('IncomeYearlyPanelComponent', () => {
       await setup(twoYears);
 
       expect(fixture.nativeElement.querySelector('.mm-privacy-blurred')).toBeNull();
-      expect(accessibleRows()[0][1]).toContain('20,000');
+      expect(accessibleRows()[0][1]).toContain('20.000');
     });
 
     it('never blurs the chart itself — the shape stays readable, the figures do not', async () => {

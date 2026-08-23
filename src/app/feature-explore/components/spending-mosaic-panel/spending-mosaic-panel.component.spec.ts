@@ -189,7 +189,7 @@ describe('buildSpendingMosaicOption (TICKET-EXP-07)', () => {
   it('states the amount and the share in a tooltip, and drops only the amount under privacy mode', () => {
     expect(
       tooltipOf(buildSpendingMosaicOption(mosaic, false))({ data: { id: 'group:Living' } }),
-    ).toBe('Living<br/>€750.00<br/>75% of all spending');
+    ).toBe('Living<br/>€750,00<br/>75% of all spending');
     expect(
       tooltipOf(buildSpendingMosaicOption(mosaic, true))({ data: { id: 'group:Living' } }),
     ).toBe('Living<br/>75% of all spending');
@@ -207,7 +207,7 @@ describe('buildSpendingMosaicOption (TICKET-EXP-07)', () => {
         },
         false,
       ),
-    ).toBe('FreshMarket · 07/15/2026<br/>€58.40<br/>5% of all spending');
+    ).toBe('FreshMarket · 15/07/2026<br/>€58,40<br/>5% of all spending');
     // An empty click on the canvas carries no tile, and gets no tooltip rather than an empty box.
     expect(tooltipOf(buildSpendingMosaicOption(mosaic, false))({ data: undefined })).toBe('');
   });
@@ -222,12 +222,12 @@ describe('spendingMosaicRows (TICKET-STAT-20)', () => {
         id: 'group:Living:total',
         inside: 'Ungrouped',
         tile: 'All Living',
-        amount: '€750.00',
+        amount: '€750,00',
         share: '75%',
       },
-      { id: 'category:21', inside: 'Living', tile: 'Rent', amount: '€500.00', share: '50%' },
-      { id: 'category:20', inside: 'Living', tile: 'Groceries', amount: '€250.00', share: '25%' },
-      { id: 'category:22', inside: 'Ungrouped', tile: 'Cinema', amount: '€250.00', share: '25%' },
+      { id: 'category:21', inside: 'Living', tile: 'Rent', amount: '€500,00', share: '50%' },
+      { id: 'category:20', inside: 'Living', tile: 'Groceries', amount: '€250,00', share: '25%' },
+      { id: 'category:22', inside: 'Ungrouped', tile: 'Cinema', amount: '€250,00', share: '25%' },
     ]);
     // Every row keys on the namespaced id, never on display text: two categories may share a name,
     // and a duplicate `@for` track key is an NG0955 at runtime.
@@ -264,11 +264,11 @@ describe('spendingMosaicRows (TICKET-STAT-20)', () => {
         id: 'category:22:total',
         inside: 'Ungrouped',
         tile: 'All Cinema',
-        amount: '€250.00',
+        amount: '€250,00',
         share: '25%',
       },
-      { id: 'txn:7', inside: 'Cinema', tile: 'Corner shop', amount: '€150.00', share: '15%' },
-      { id: 'txn:8', inside: 'Cinema', tile: 'Corner shop', amount: '€100.00', share: '10%' },
+      { id: 'txn:7', inside: 'Cinema', tile: 'Corner shop', amount: '€150,00', share: '15%' },
+      { id: 'txn:8', inside: 'Cinema', tile: 'Corner shop', amount: '€100,00', share: '10%' },
     ]);
     // Two payments to the same shop share a name and must not share a track key.
     expect(new Set(spendingMosaicRows(withPayments, false).map((row) => row.id)).size).toBe(3);
@@ -344,10 +344,10 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
     expect(rowsOf(fixture)).toEqual([
       // The first column is what a tile sits *inside*, so a top-level group sits inside nothing
       // (TICKET-EXP-08 generalised it from "Group" once payments made it three levels deep).
-      ['Ungrouped', 'All Living', '€750.00', '75%'],
-      ['Living', 'Rent', '€500.00', '50%'],
-      ['Living', 'Groceries', '€250.00', '25%'],
-      ['Ungrouped', 'Cinema', '€250.00', '25%'],
+      ['Ungrouped', 'All Living', '€750,00', '75%'],
+      ['Living', 'Rent', '€500,00', '50%'],
+      ['Living', 'Groceries', '€250,00', '25%'],
+      ['Ungrouped', 'Cinema', '€250,00', '25%'],
     ]);
     expect(host.textContent).not.toContain('Salary');
   });
@@ -389,10 +389,10 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
       ['Popcorn stand', 20],
     ]);
     // …and each one is readable in the figure table without drilling into the chart.
-    expect(rowsOf(fixture)).toContainEqual(['Cinema', 'Cinema City', '€30.00', '2.9%']);
+    expect(rowsOf(fixture)).toContainEqual(['Cinema', 'Cinema City', '€30,00', '2,9%']);
     // Rent and Groceries have one payment each, so they stay leaves rather than gaining a row that
     // repeats them.
-    expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€500.00', '47.6%']);
+    expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€500,00', '47,6%']);
   });
 
   it('says what refunds took out, rather than showing tiles that outweigh their category', async () => {
@@ -402,7 +402,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
     ]);
 
     const note = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(note).toContain('€40.00');
+    expect(note).toContain('€40,00');
     expect(note).toContain('in refunds is already netted out');
   });
 
@@ -417,7 +417,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
 
     // Visible DOM, so it blurs — the `sr-only` table is the surface that has to *withhold* instead.
     const blur = (fixture.nativeElement as HTMLElement).querySelector('mm-privacy-blur');
-    expect(blur?.textContent).toContain('€40.00');
+    expect(blur?.textContent).toContain('€40,00');
     expect(fixture.componentInstance['privacyMode']()).toBe(true);
   });
 
@@ -434,7 +434,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
       const fixture = await createFixture(jointSpend, undefined, [checking, jointAccount]);
 
       // Half the €500 household rent is the user's, so the mosaic opens agreeing with the pie.
-      expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€250.00', '50%']);
+      expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€250,00', '50%']);
       expect(toggleOf(fixture)?.checked).toBe(true);
       expect((fixture.nativeElement as HTMLElement).textContent).toContain(
         'Joint accounts count at your own share',
@@ -449,7 +449,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
 
       // The whole €500 left the account now, so Rent both grows and takes a bigger share of a
       // bigger total — and the caption and the chart's own label both name the mode.
-      expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€500.00', '66.7%']);
+      expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€500,00', '66,7%']);
       const host = fixture.nativeElement as HTMLElement;
       expect(host.textContent).toContain('Joint accounts count in full');
       expect(host.querySelector('[echarts]')?.getAttribute('aria-label')).toContain(
@@ -469,9 +469,9 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
 
       const rows = rowsOf(fixture);
       // €600 of rent, drawn as €500 + €100 — not €600 of tile holding €300 of payments.
-      expect(rows).toContainEqual(['Living', 'All Rent', '€600.00', '70.6%']);
-      expect(rows).toContainEqual(['Rent', 'Something', '€500.00', '58.8%']);
-      expect(rows).toContainEqual(['Rent', 'Something', '€100.00', '11.8%']);
+      expect(rows).toContainEqual(['Living', 'All Rent', '€600,00', '70,6%']);
+      expect(rows).toContainEqual(['Rent', 'Something', '€500,00', '58,8%']);
+      expect(rows).toContainEqual(['Rent', 'Something', '€100,00', '11,8%']);
     });
 
     it('offers no switch when nothing in range could be attributed differently', async () => {
@@ -486,7 +486,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
 
   it('withholds every amount with privacy mode on, keeping the shares and the tiles', async () => {
     const fixture = await createFixture(spend);
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('€750.00');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('€750,00');
 
     await TestBed.inject(AppSettingsStore).setPrivacyMode(true);
     fixture.detectChanges();

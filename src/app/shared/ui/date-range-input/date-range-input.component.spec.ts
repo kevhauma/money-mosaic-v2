@@ -69,8 +69,11 @@ describe('DateRangeInputComponent', () => {
     fixture.detectChanges();
 
     const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
-    // en-US default (TICKET-SET-04) — MM/DD/YYYY, not the previously-hardcoded en-GB DD/MM/YYYY.
-    expect(button.textContent?.trim()).toBe('07/05/2026 – 07/20/2026');
+    // Day-first, from the `en-BE` app default (TICKET-SET-10). This line is a guard: it read
+    // `07/05/2026 – 07/20/2026` for as long as the default was `en-US` (TICKET-SET-04), which is
+    // how a spec came to pin the very ordering a Belgian user cannot read. If it ever fails with a
+    // month-first value, fix the default — not this line.
+    expect(button.textContent?.trim()).toBe('05/07/2026 – 20/07/2026');
   });
 
   it('shows a placeholder label when no range is set', () => {
