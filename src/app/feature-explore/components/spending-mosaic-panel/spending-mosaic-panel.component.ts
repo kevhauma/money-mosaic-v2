@@ -58,8 +58,19 @@ export type SpendingMosaicRow = {
    * template branch (templates state facts, they don't derive them).
    */
   amount: string;
+  /**
+   * The tile's share of all spending. A parent's own row says so in the cell itself (TICKET-EXP-09)
+   * rather than relying on a visual cue: this table is read aloud, where indentation and italics
+   * carry nothing, and a parent's share **already contains its children's** (see `MosaicNode.share`).
+   * Listed flat and unqualified, the column added up past 100% — a UX review measured 110.6%.
+   */
   share: string;
+  /** True on a parent's own total row, whose share repeats what the rows inside it add up to. */
+  isSubtotal: boolean;
 };
+
+/** What a subtotal row's share cell says after the percentage, so adding the column up stays possible by ear. */
+const SUBTOTAL_NOTE = ' — subtotal of the rows inside it';
 
 const rowFor = (
   node: MosaicNode,
@@ -67,12 +78,14 @@ const rowFor = (
   inside: string,
   tile: string,
   privacyMode: boolean,
+  isSubtotal = false,
 ): SpendingMosaicRow => ({
   id,
   inside,
   tile,
   amount: privacyMode ? HIDDEN_AMOUNT_TEXT : formatCurrency(node.value),
-  share: formatPercent(node.share),
+  share: `${formatPercent(node.share)}${isSubtotal ? SUBTOTAL_NOTE : ''}`,
+  isSubtotal,
 });
 
 /**
@@ -81,6 +94,13 @@ const rowFor = (
  * (TICKET-EXP-08) are readable here without drilling. A parent is listed with its own total ahead of
  * its children, which is the one figure the drill-down makes visible on screen and would otherwise
  * be invisible to a reader of the table.
+ *
+ * Those parent rows are flagged `isSubtotal` and say so in their share cell (TICKET-EXP-09). The
+ * arithmetic in `spending-mosaic.ts` is right and untouched — a group tile visually *contains* its
+ * children, so its share being their sum is what makes the treemap area-true. The defect was only
+ * that this table flattens the hierarchy, so the same money appeared twice with nothing saying so.
+ * Leaves partition the whole (every parent's share is exactly its children's sum, at any depth), so
+ * the unqualified rows still add up to 100% however deep the tree goes.
  */
 export const spendingMosaicRows = (
   nodes: readonly MosaicNode[],
@@ -90,7 +110,7 @@ export const spendingMosaicRows = (
   nodes.flatMap((node) =>
     node.children
       ? [
-          rowFor(node, `${node.id}:total`, inside, `All ${node.name}`, privacyMode),
+          rowFor(node, `${node.id}:total`, inside, `All ${node.name}`, privacyMode, true),
           ...spendingMosaicRows(node.children, privacyMode, node.name),
         ]
       : [rowFor(node, node.id, inside, node.name, privacyMode)],

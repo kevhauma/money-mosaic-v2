@@ -32,13 +32,13 @@ The table is otherwise a genuine strength — every chart in this app ships one,
 
 ## Acceptance criteria
 
-- [ ] The mosaic's data table's independent rows' Share values sum to 100% (within rounding) for any populated range.
-- [ ] Group subtotals, if shown, are visually distinct from leaf rows so they cannot be misread as additional entries.
-- [ ] No change to `spending-mosaic.ts` share arithmetic — the treemap's tiles are correct as-is and must not regress.
-- [ ] Rows sharing a display name remain individually identifiable.
-- [ ] Unit tests cover: a group with two children sums to the group's share, not double; a flat set of leaves sums to 100%; the empty-range case renders no table rather than a 0% list.
-- [ ] Verified live in the browser on `/explore` with a populated range.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] The mosaic's data table's independent rows' Share values sum to 100% (within rounding) for any populated range. (Live on `/explore` with the dev seed: the flat column still reads **110.9%** — the reported defect, reproduced — while the rows not marked as subtotals sum to **100.0%**. Specs: *sums every independent row to 100% across the whole tree*, *still sums to 100% three levels deep*, *leaves a flat set of leaves entirely unmarked* in [spending-mosaic-panel.component.spec.ts](../../../src/app/feature-explore/components/spending-mosaic-panel/spending-mosaic-panel.component.spec.ts).)
+- [x] Group subtotals, if shown, are visually distinct from leaf rows so they cannot be misread as additional entries. (Said in the cell rather than shown, because this table is `sr-only` and read aloud, where indentation and italics carry nothing: a parent's share cell reads `10,9% — subtotal of the rows inside it`, and the caption states the rule. Row VMs carry `isSubtotal` so the distinction is data, not styling. Observed live: `['Ungrouped', 'All Groceries', '€131,55', '10,9% — subtotal of the rows inside it']`.)
+- [x] No change to `spending-mosaic.ts` share arithmetic — the treemap's tiles are correct as-is and must not regress. (`git diff` touches only the panel component, its template and its spec; `src/app/core/stats/spending-mosaic.ts` is untouched. Every pre-existing tile/tooltip/option spec passes unmodified.)
+- [x] Rows sharing a display name remain individually identifiable. (Unchanged: rows key on the namespaced `id`, never on display text. Live on `/explore` the two colliding categories render as `['Groceries', 'FreshMarket', '€73,15', '6,1%']` and `['Groceries', 'FreshMarket', '€58,40', '4,9%']` — same name, different figures. Spec: *keeps two categories sharing a display name individually identifiable*, which also asserts the `@for` track keys stay unique. **Note:** they are told apart by amount, not by name — giving a colliding category a disambiguating label is a separate job this ticket does not take on.)
+- [x] Unit tests cover: a group with two children sums to the group's share, not double; a flat set of leaves sums to 100%; the empty-range case renders no table rather than a 0% list. (Six specs under `describe('spendingMosaicRows share column adds up (TICKET-EXP-09)')`, plus the pre-existing component spec *renders nothing at all when the range holds no expenses* which covers the empty range end to end — the whole `mm-paper` is absent, so there is no table to list 0% rows in. `ng test`: 287 files / 3355 tests, up from 3349.)
+- [x] Verified live in the browser on `/explore` with a populated range. (Dev server on `localhost:4210`, 8 rows: flat sum 110.9%, independent sum 100.0%, caption as written. Read out of the live DOM rather than screenshotted — the Browser pane was not displayed this session, so no frames were composited; this table is `sr-only` and invisible on screen anyway.)
+- [x] Verified via the fallow skill and coding-conventions skill. (Both fallow CI gates exit `0`. Conventions: the qualifier is joined onto the row view-model in the class, so the template still only iterates and states facts — no ternary in a binding.)
 
 ## Notes
 

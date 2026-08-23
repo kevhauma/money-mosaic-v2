@@ -1120,4 +1120,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The page and the sidebar are now proper landmarks too, so a screen reader can jump between them directly.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-EXP-09'],
+    title: 'The spending mosaic’s figure table adds up to 100% again',
+    area: 'Explore',
+    details: [
+      'The table behind the mosaic lists a group’s own total as well as the categories inside it. Added up flat, that counted the same money twice — the Share column came to 110.9%.',
+      'A group or category’s own row now says it is a subtotal of the rows inside it, so the rows that are actually independent add up to 100%.',
+      'None of the figures changed — the mosaic’s tiles were right all along.',
+    ],
+  },
 ];

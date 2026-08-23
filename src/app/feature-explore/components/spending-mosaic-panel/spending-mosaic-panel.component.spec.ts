@@ -26,6 +26,7 @@ import {
   formatSpendingMosaicTooltip,
   SpendingMosaicPanelComponent,
   spendingMosaicRows,
+  type SpendingMosaicRow,
 } from './spending-mosaic-panel.component';
 
 stubEchartsBrowserApis();
@@ -223,11 +224,33 @@ describe('spendingMosaicRows (TICKET-STAT-20)', () => {
         inside: 'Ungrouped',
         tile: 'All Living',
         amount: '€750,00',
-        share: '75%',
+        share: '75% — subtotal of the rows inside it',
+        isSubtotal: true,
       },
-      { id: 'category:21', inside: 'Living', tile: 'Rent', amount: '€500,00', share: '50%' },
-      { id: 'category:20', inside: 'Living', tile: 'Groceries', amount: '€250,00', share: '25%' },
-      { id: 'category:22', inside: 'Ungrouped', tile: 'Cinema', amount: '€250,00', share: '25%' },
+      {
+        id: 'category:21',
+        inside: 'Living',
+        tile: 'Rent',
+        amount: '€500,00',
+        share: '50%',
+        isSubtotal: false,
+      },
+      {
+        id: 'category:20',
+        inside: 'Living',
+        tile: 'Groceries',
+        amount: '€250,00',
+        share: '25%',
+        isSubtotal: false,
+      },
+      {
+        id: 'category:22',
+        inside: 'Ungrouped',
+        tile: 'Cinema',
+        amount: '€250,00',
+        share: '25%',
+        isSubtotal: false,
+      },
     ]);
     // Every row keys on the namespaced id, never on display text: two categories may share a name,
     // and a duplicate `@for` track key is an NG0955 at runtime.
@@ -239,7 +262,12 @@ describe('spendingMosaicRows (TICKET-STAT-20)', () => {
 
     // Withheld, not blurred, and substituted here rather than in a template branch.
     expect(rows.every((row) => row.amount === 'hidden')).toBe(true);
-    expect(rows.map((row) => row.share)).toEqual(['75%', '50%', '25%', '25%']);
+    expect(rows.map((row) => row.share)).toEqual([
+      '75% — subtotal of the rows inside it',
+      '50%',
+      '25%',
+      '25%',
+    ]);
   });
 
   it('descends into a category payments, naming what each one sits inside (TICKET-EXP-08)', () => {
@@ -265,13 +293,133 @@ describe('spendingMosaicRows (TICKET-STAT-20)', () => {
         inside: 'Ungrouped',
         tile: 'All Cinema',
         amount: '€250,00',
-        share: '25%',
+        share: '25% — subtotal of the rows inside it',
+        isSubtotal: true,
       },
-      { id: 'txn:7', inside: 'Cinema', tile: 'Corner shop', amount: '€150,00', share: '15%' },
-      { id: 'txn:8', inside: 'Cinema', tile: 'Corner shop', amount: '€100,00', share: '10%' },
+      {
+        id: 'txn:7',
+        inside: 'Cinema',
+        tile: 'Corner shop',
+        amount: '€150,00',
+        share: '15%',
+        isSubtotal: false,
+      },
+      {
+        id: 'txn:8',
+        inside: 'Cinema',
+        tile: 'Corner shop',
+        amount: '€100,00',
+        share: '10%',
+        isSubtotal: false,
+      },
     ]);
     // Two payments to the same shop share a name and must not share a track key.
     expect(new Set(spendingMosaicRows(withPayments, false).map((row) => row.id)).size).toBe(3);
+  });
+});
+
+// TICKET-EXP-09 — a parent's share is its children's sum (that is what makes the treemap
+// area-true), so listing parents and children flat counted the same money twice: a UX review
+// measured the column at 110.6%. The arithmetic is untouched; the parent rows now say what they are.
+describe('spendingMosaicRows share column adds up (TICKET-EXP-09)', () => {
+  withCleanFormatSettings();
+
+  /** The shares a reader would actually add up: the rows that aren't flagged as somebody's subtotal. */
+  const independentShares = (rows: SpendingMosaicRow[]): number[] =>
+    rows
+      .filter((row) => !row.isSubtotal)
+      .map((row) => Number.parseFloat(row.share.replace(',', '.')));
+
+  const sum = (values: number[]): number => values.reduce((total, value) => total + value, 0);
+
+  it('sums a group and its two children to the group share, not to double it', () => {
+    const rows = spendingMosaicRows(mosaic, false);
+
+    const living = rows.filter((row) => row.inside === 'Living');
+    expect(sum(independentShares(living))).toBeCloseTo(75, 5);
+    // …and the group's own row is the same 75%, marked so it can't be added on top of them.
+    expect(rows[0]).toMatchObject({ tile: 'All Living', isSubtotal: true });
+    expect(rows[0].share).toContain('subtotal');
+  });
+
+  it('sums every independent row to 100% across the whole tree', () => {
+    expect(sum(independentShares(spendingMosaicRows(mosaic, false)))).toBeCloseTo(100, 5);
+  });
+
+  it('still sums to 100% three levels deep, once a category subdivides into payments', () => {
+    const threeDeep: MosaicNode[] = [
+      {
+        ...mosaic[0],
+        children: [
+          mosaic[0].children![0],
+          {
+            ...mosaic[0].children![1],
+            children: [
+              { id: 'txn:7', name: 'FreshMarket', value: 150, share: 0.15, color: '#0000ff' },
+              { id: 'txn:8', name: 'FreshMarket', value: 100, share: 0.1, color: '#0000ff' },
+            ],
+          },
+        ],
+      },
+      mosaic[1],
+    ];
+
+    const rows = spendingMosaicRows(threeDeep, false);
+
+    // Three subtotal rows (the group, plus Groceries' own total), leaves add to 100 regardless.
+    expect(rows.filter((row) => row.isSubtotal).map((row) => row.tile)).toEqual([
+      'All Living',
+      'All Groceries',
+    ]);
+    expect(sum(independentShares(rows))).toBeCloseTo(100, 5);
+  });
+
+  it('leaves a flat set of leaves entirely unmarked — nothing to subtotal', () => {
+    const flat: MosaicNode[] = [mosaic[0].children![0], mosaic[0].children![1], mosaic[1]];
+
+    const rows = spendingMosaicRows(flat, false);
+
+    expect(rows.some((row) => row.isSubtotal)).toBe(false);
+    expect(sum(independentShares(rows))).toBeCloseTo(100, 5);
+  });
+
+  it('renders no rows at all for an empty range, rather than a list of 0%', () => {
+    expect(spendingMosaicRows([], false)).toEqual([]);
+  });
+
+  it('keeps two categories sharing a display name individually identifiable', () => {
+    const collision: MosaicNode[] = [
+      {
+        ...mosaic[0],
+        children: [
+          {
+            ...mosaic[0].children![1],
+            id: 'category:20',
+            name: 'FreshMarket',
+            value: 500,
+            share: 0.5,
+          },
+          {
+            ...mosaic[0].children![0],
+            id: 'category:21',
+            name: 'FreshMarket',
+            value: 250,
+            share: 0.25,
+          },
+        ],
+      },
+      mosaic[1],
+    ];
+
+    const rows = spendingMosaicRows(collision, false);
+
+    // Same `inside` and same `tile`, so the id (the `@for` track key) and the amount are what
+    // separate them — a duplicate track key would be an NG0955 at runtime.
+    expect(new Set(rows.map((row) => row.id)).size).toBe(rows.length);
+    expect(rows.filter((row) => row.tile === 'FreshMarket').map((row) => row.amount)).toEqual([
+      '€500,00',
+      '€250,00',
+    ]);
   });
 });
 
@@ -344,11 +492,16 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
     expect(rowsOf(fixture)).toEqual([
       // The first column is what a tile sits *inside*, so a top-level group sits inside nothing
       // (TICKET-EXP-08 generalised it from "Group" once payments made it three levels deep).
-      ['Ungrouped', 'All Living', '€750,00', '75%'],
+      // The group's own row names itself a subtotal (TICKET-EXP-09), so the three rows below it —
+      // 50 + 25 + 25 — are the ones that add up to 100%.
+      ['Ungrouped', 'All Living', '€750,00', '75% — subtotal of the rows inside it'],
       ['Living', 'Rent', '€500,00', '50%'],
       ['Living', 'Groceries', '€250,00', '25%'],
       ['Ungrouped', 'Cinema', '€250,00', '25%'],
     ]);
+    expect(host.querySelector('table.sr-only caption')?.textContent).toContain(
+      'only the unmarked rows are independent — those add up to 100%',
+    );
     expect(host.textContent).not.toContain('Salary');
   });
 
@@ -390,6 +543,13 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
     ]);
     // …and each one is readable in the figure table without drilling into the chart.
     expect(rowsOf(fixture)).toContainEqual(['Cinema', 'Cinema City', '€30,00', '2,9%']);
+    // Cinema is now a parent, so its own row is a subtotal rather than a fourth entry to add on.
+    expect(rowsOf(fixture)).toContainEqual([
+      'Ungrouped',
+      'All Cinema',
+      '€300,00',
+      '28,6% — subtotal of the rows inside it',
+    ]);
     // Rent and Groceries have one payment each, so they stay leaves rather than gaining a row that
     // repeats them.
     expect(rowsOf(fixture)).toContainEqual(['Living', 'Rent', '€500,00', '47,6%']);
@@ -469,7 +629,12 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
 
       const rows = rowsOf(fixture);
       // €600 of rent, drawn as €500 + €100 — not €600 of tile holding €300 of payments.
-      expect(rows).toContainEqual(['Living', 'All Rent', '€600,00', '70,6%']);
+      expect(rows).toContainEqual([
+        'Living',
+        'All Rent',
+        '€600,00',
+        '70,6% — subtotal of the rows inside it',
+      ]);
       expect(rows).toContainEqual(['Rent', 'Something', '€500,00', '58,8%']);
       expect(rows).toContainEqual(['Rent', 'Something', '€100,00', '11,8%']);
     });
