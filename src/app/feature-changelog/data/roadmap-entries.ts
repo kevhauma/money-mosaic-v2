@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-UI-29',
-    title: 'Checkboxes look like checkboxes again, not radio buttons',
-    area: 'UI',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-UI-31',
     title: 'A skip link jumps you straight to the page content',
     area: 'Accessibility',

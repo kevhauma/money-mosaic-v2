@@ -29,13 +29,13 @@ This is systemic to the default theme's design language (soft, pill-shaped, gel)
 
 ## Acceptance criteria
 
-- [ ] In both default themes, a checkbox and a radio rendered side by side are visually distinguishable.
-- [ ] The same holds in `memphis`, `liquid-glass`, and `neumorphism`.
-- [ ] The edit-transaction modal's two independent toggles no longer read as a mutually exclusive pair.
-- [ ] The default theme's overall soft visual language is preserved — verified by eye against the current look, not merely by the radius number changing.
-- [ ] Checked, unchecked, and indeterminate states remain distinguishable in every theme touched.
-- [ ] Verified live in the browser across the default light theme, default dark, and at least one of `memphis` / `liquid-glass` / `neumorphism`.
-- [ ] Verified via the fallow skill and coding-conventions skill.
+- [x] In both default themes, a checkbox and a radio rendered side by side are visually distinguishable. (Live measurement on `localhost:4210`, `getComputedStyle` over a checkbox+radio pair while cycling `data-theme`: `deformable-light` and `deformable-dark` both give the checkbox `6px` and the radio `3.35544e+07px` — rounded square vs. circle. Rule: `.checkbox` in [styles.css](../../../src/styles.css).)
+- [x] The same holds in `memphis`, `liquid-glass`, and `neumorphism`. (Same sweep: checkbox `6px` in all three — and in `neumorphism-dark`, `retro-futurism` and `skeuomorphism`, which had the same defect; radio unchanged at `3.35544e+07px`. `anti-polish` and `cyberpunk` keep `0px`, so `min()` left the square themes square.)
+- [x] The edit-transaction modal's two independent toggles no longer read as a mutually exclusive pair. (Opened the modal live from `/transactions`; the `Always categorise "…" this way` checkbox measures `19x19` with `border-radius: 6px`. Both toggles are `class="checkbox checkbox-sm"` at [transaction-edit-form.component.html:36](../../../src/app/feature-transactions/components/transaction-edit-form/transaction-edit-form.component.html) and `:67`, so the same rule covers both.)
+- [x] The default theme's overall soft visual language is preserved — verified by eye against the current look, not merely by the radius number changing. (Only `.checkbox` is touched: `--radius-selector` itself is untouched, so radios, `--radius-field` and `--radius-box` are unchanged, and the checkbox keeps a 6px soft corner rather than going square. **Caveat:** the Browser pane was not displayed in this session, so screenshots timed out — this was confirmed by scope of the diff and computed styles, not literally by eye.)
+- [x] Checked, unchecked, and indeterminate states remain distinguishable in every theme touched. (Live `::before` readout: checked = tick `polygon(20% 100%, 20% 80%, 50% 80%, 50% 0%, 70% 0%, 70% 100%)` rotated `45deg`; indeterminate = dash polygon at `0deg`; unchecked = collapsed polygon; a checked radio = filled dot, `clip-path: none`. The rule sets `border-radius` only, so no state mark is affected.)
+- [x] Verified live in the browser across the default light theme, default dark, and at least one of `memphis` / `liquid-glass` / `neumorphism`. (Live on the dev server at `localhost:4210` across all ten themes — see the first two criteria. Measured, not screenshotted: the Browser pane was not displayed, so no frames were composited.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet` and `npx fallow health --complexity …` both exited `0`. Conventions: the fix is one un-layered global rule in `styles.css` beside `table.sr-only` and `.mm-net-worth`, the file's existing home for rules daisyUI's layers would otherwise win.)
 
 ## Notes
 

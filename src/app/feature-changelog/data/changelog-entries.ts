@@ -1097,4 +1097,15 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The status line under the badge no longer repeats it — where it said “Not trained” above “Not trained yet”, it now says what training would actually do for you.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-UI-29'],
+    title: 'Checkboxes look like checkboxes again, not radio buttons',
+    area: 'UI',
+    details: [
+      'Every theme drew a checkbox with a corner radius bigger than the box itself, so it came out a perfect circle — identical to a radio button.',
+      'That made the edit-transaction modal’s two independent toggles look like a choose-one pair. They are both rounded squares now, and radio buttons stay round.',
+    ],
+  },
 ];

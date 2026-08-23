@@ -126,6 +126,25 @@ table.sr-only {
   position: fixed;
 }
 
+/**
+ * Checkboxes must never read as radio buttons (TICKET-UI-29). daisyUI applies one token,
+ * `--radius-selector`, to `.checkbox` and `.radio` alike, and every soft theme sets it far larger
+ * than the control itself — 1.75rem on both defaults, 2rem on liquid-glass/neumorphism/retro-
+ * futurism, 999px on memphis — so a 20px checkbox came out a perfect circle, identical to a radio.
+ * The edit-transaction modal's two *independent* toggles ("Exclude from income/expense" and "Always
+ * categorise ... this way") therefore read as a mutually exclusive pair.
+ *
+ * A cap rather than a fixed value, and un-layered so it outranks daisyUI's own layered rule: `min()`
+ * leaves the square themes square (anti-polish and cyberpunk both set `0`) and only pulls the soft
+ * ones back to a rounded square, so the shape distinction holds in every theme that exists today
+ * *and* in any future one — a new theme has to opt out on purpose, not remember to opt in. Radios
+ * keep `--radius-selector` untouched and stay round, which is the whole distinction.
+ * `--mm-checkbox-radius-cap` is the opt-out for a theme that genuinely wants a softer box.
+ */
+.checkbox {
+  border-radius: min(var(--radius-selector), var(--mm-checkbox-radius-cap, 0.375rem));
+}
+
 .mm-elev-flat {
   box-shadow: var(--mm-elev-flat-shadow, none);
 }
