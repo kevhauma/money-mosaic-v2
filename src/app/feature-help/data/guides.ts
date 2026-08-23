@@ -112,12 +112,12 @@ export const GUIDES: readonly Guide[] = [
     slug: 'using-the-auto-categoriser',
     title: 'Using the auto-categoriser',
     summary:
-      'Train an on-device model on your own categorised history, then accept its category suggestions and mined rules from the Learning page.',
+      'Train an on-device model on your own categorised history, then accept its category suggestions and mined rules from the Auto-categoriser page.',
     steps: [
       {
         title: 'Check the model status',
         description:
-          'The Learning page shows the model as "not enough data" (fewer than 25 categorised transactions, or fewer than 2 active categories), "training", "ready", or "stale". It needs enough of your own history to learn from before it can suggest anything.',
+          'The Auto-categoriser page shows the model as "not enough data" (fewer than 25 categorised transactions, or fewer than 2 active categories), "training", "ready", or "stale". It needs enough of your own history to learn from before it can suggest anything.',
       },
       {
         title: 'Pick a training window and train',
@@ -140,8 +140,8 @@ export const GUIDES: readonly Guide[] = [
           'Adding, renaming, or removing a category flips the model to "stale" since its old categories no longer match — retrain any time from the same page to bring it back up to date.',
       },
     ],
-    tryItLabel: 'Try it — go to Learning',
-    tryItRoute: '/learning',
+    tryItLabel: 'Try it — go to the Auto-categoriser',
+    tryItRoute: '/auto-categoriser',
   },
   {
     slug: 'getting-started-with-the-income-page',

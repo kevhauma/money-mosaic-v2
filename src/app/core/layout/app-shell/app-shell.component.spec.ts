@@ -121,14 +121,16 @@ describe('AppShellComponent: grouped sidebar navigation (TICKET-UI-26)', () => {
     expect(link.querySelector('ng-icon')).not.toBeNull();
   });
 
-  it('puts Accounts, Transactions, Categories, Learning and Import in Data — and nothing else', async () => {
+  it('puts Accounts, Transactions, Categories, Auto-categoriser and Import in Data — and nothing else', async () => {
     const shell = await renderShell();
 
     expect(hrefsIn(groupFor(shell, 'Data'))).toEqual([
       '/accounts',
       '/transactions',
       '/categories',
-      '/learning',
+      // Not `/learning` — renamed by TICKET-UI-32, which also keeps the old path
+      // alive as a redirect (`app.routes.spec.ts`).
+      '/auto-categoriser',
       '/import',
     ]);
   });

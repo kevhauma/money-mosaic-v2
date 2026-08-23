@@ -21,7 +21,7 @@ const allText = (): string => textOf(GUIDES);
 
 /**
  * Only the two Income guides. The stale-surface checks below are scoped to them because the words
- * they ban are still perfectly real elsewhere — the Learning guide's suggestions table genuinely
+ * they ban are still perfectly real elsewhere — the Auto-categoriser guide's suggestions table genuinely
  * has a Dismiss button.
  */
 const incomeText = (): string => textOf(GUIDES.filter((guide) => guide.tryItRoute === '/income'));

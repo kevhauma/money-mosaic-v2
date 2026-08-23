@@ -39,7 +39,12 @@ describe('model-status-display', () => {
     for (const status of ALL_STATUSES) {
       expect(statusCopyFor(status).length).toBeGreaterThan(0);
     }
-    expect(statusCopyFor('untrained')).toBe('Not trained yet.');
+    // Deliberately not 'Not trained yet.' — that restated the 'Not trained' badge directly
+    // above it (TICKET-UI-32). The sentence answers what to do about the state instead.
+    expect(statusCopyFor('untrained')).toBe(
+      'Train it on the transactions you have already categorised, and it will suggest a category for the ones you have not.',
+    );
+    expect(statusCopyFor('untrained')).not.toContain(statusLabelFor('untrained'));
     expect(statusCopyFor('stale')).toBe(
       'Categories changed since training — retrain to refresh suggestions.',
     );

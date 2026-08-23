@@ -14,7 +14,7 @@ import {
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
 
-/** Rule-proposal inbox on the Learning page (FR-ML-9) — a thin UI consumer of `CategoryModelStore` (ML-07). */
+/** Rule-proposal inbox on the Auto-categoriser page (FR-ML-9) — a thin UI consumer of `CategoryModelStore` (ML-07). */
 @Component({
   selector: 'app-rule-proposals',
   imports: [

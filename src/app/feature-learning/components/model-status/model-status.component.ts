@@ -21,7 +21,7 @@ const TRAINING_WINDOW_OPTIONS: { years: number | null; label: string }[] = [
   { years: null, label: 'All time' },
 ];
 
-/** Model status chip + diagnostic detail + Train/Retrain control (FR-ML-10, expanded by FR-ML-12), mounted on the Learning page. */
+/** Model status chip + diagnostic detail + Train/Retrain control (FR-ML-10, expanded by FR-ML-12), mounted on the Auto-categoriser page. */
 @Component({
   selector: 'app-model-status',
   imports: [

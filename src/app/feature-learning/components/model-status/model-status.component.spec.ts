@@ -96,7 +96,10 @@ describe('ModelStatusComponent', () => {
     const component = internals();
 
     expect(component.alertStatus()).toBeUndefined();
-    expect(component.statusCopy()).toBe('Not trained yet.');
+    // Says what training would do, not what the badge above it already says (TICKET-UI-32).
+    expect(component.statusCopy()).toBe(
+      'Train it on the transactions you have already categorised, and it will suggest a category for the ones you have not.',
+    );
     expect(component.buttonLabel()).toBe('Train');
     expect(component.trainDisabled()).toBe(false);
   });

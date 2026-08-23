@@ -5,7 +5,7 @@ import type { AlertStatus, BadgeColor } from '@/shared/ui';
  * The one place the auto-categoriser's status turns into something a user can read (TICKET-ML-18).
  *
  * Lives in the feature root rather than on `ModelStatusComponent` because two surfaces now render
- * the same verdict: the Learning page's header badge and the status panel's alert in the body. A
+ * the same verdict: the Auto-categoriser page's header badge and the status panel's alert in the body. A
  * second copy of these maps would drift the first time a status is added — which is exactly what
  * this module exists to prevent, so read from here rather than re-deriving at a call site.
  */
@@ -20,8 +20,15 @@ const STATUS_LABEL: Record<CategoryModelStatus, string> = {
   error: 'Error',
 };
 
+/**
+ * The sentence *under* the badge, so it must never restate it (TICKET-UI-32): `untrained` read
+ * "Not trained yet." directly beneath a badge reading "Not trained", which spent a whole line
+ * saying nothing the badge had not. Each entry here answers "so what do I do about it?" — the
+ * question the label alone leaves open — rather than naming the state a second time.
+ */
 const STATUS_COPY: Record<CategoryModelStatus, string> = {
-  untrained: 'Not trained yet.',
+  untrained:
+    'Train it on the transactions you have already categorised, and it will suggest a category for the ones you have not.',
   'not-enough-data':
     'Categorise a few more transactions across at least two categories before training.',
   training: 'Training…',

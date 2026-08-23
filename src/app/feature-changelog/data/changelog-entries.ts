@@ -864,7 +864,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ticketIds: ['TICKET-UI-26'],
     title: 'The sidebar now sorts your pages into “Insights” and “Data”',
     details: [
-      'Insights holds the pages you open to look at something — Dashboard, Income and Explore. Data holds the ones you open to put money in or shape it — Accounts, Transactions, Categories, Learning and Import',
+      'Insights holds the pages you open to look at something — Dashboard, Income and Explore. Data holds the ones you open to put money in or shape it — Accounts, Transactions, Categories, Auto-categoriser and Import',
       'Both groups are always open. Nothing folds away, so every page is still one click from wherever you are',
       'Nothing moved: the order, names, icons and the counter on Transactions are all exactly where they were — they just have headings over them now',
       'How-to’s, FAQ, Changelog and Settings stay together at the foot of the sidebar, as before',
@@ -1084,5 +1084,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     ticketIds: ['TICKET-PUB-10'],
     title: 'Help guides and changelog entries read as written, with no stray asterisks in the text',
     area: 'Help',
+  },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-UI-32'],
+    title: 'The sidebar’s “Learning” is now “Auto-categoriser”, which is what the page actually is',
+    area: 'Navigation',
+    details: [
+      'Sitting two items above How-to’s and FAQ, “Learning” read as a third help page, then opened a model-training console. The item, the page heading and the address all say Auto-categoriser now.',
+      'Old links still work: /learning takes you to /auto-categoriser rather than nowhere.',
+      'The status line under the badge no longer repeats it — where it said “Not trained” above “Not trained yet”, it now says what training would actually do for you.',
+    ],
   },
 ];

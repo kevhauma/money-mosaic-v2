@@ -5,7 +5,7 @@ import { BadgeComponent, FlexComponent } from '@/shared/ui';
 import { badgeColorFor, statusLabelFor } from '../../model-status-display';
 
 /**
- * The auto-categoriser's verdict, small enough for the Learning page's header (TICKET-ML-18) — the
+ * The auto-categoriser's verdict, small enough for the Auto-categoriser page's header (TICKET-ML-18) — the
  * page's single most important fact used to arrive third row down, inside `app-model-status`.
  *
  * Label and colour come from `model-status-display`, the same derivation the body's alert reads;

@@ -69,8 +69,18 @@ export const routes: Routes = [
         loadChildren: () => import('@/feature-categories').then((m) => m.CATEGORIES_ROUTES),
       },
       {
-        path: 'learning',
+        // Named for what the page is, not for what the model does to get there (TICKET-UI-32) —
+        // "Learning" sat two items above "How-to's" and "FAQ" and read as a third of them.
+        path: 'auto-categoriser',
         loadChildren: () => import('@/feature-learning').then((m) => m.LEARNING_ROUTES),
+      },
+      {
+        // The old path stays alive rather than 404-ing: it shipped in TICKET-ML-06 and is the URL
+        // in any bookmark or note written since. The feature *folder* keeps its `learning` name —
+        // renaming that is churn with no user-visible payoff.
+        path: 'learning',
+        pathMatch: 'full',
+        redirectTo: 'auto-categoriser',
       },
       {
         path: 'help',

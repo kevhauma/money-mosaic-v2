@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-UI-32',
-    title: '“Learning” is renamed to say what it actually opens',
-    area: 'Navigation',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-UI-29',
     title: 'Checkboxes look like checkboxes again, not radio buttons',
     area: 'UI',

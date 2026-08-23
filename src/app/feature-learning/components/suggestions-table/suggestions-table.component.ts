@@ -27,7 +27,7 @@ type SuggestionRow = {
   confidence: number;
 };
 
-/** Dedicated suggestions table on the Learning page (FR-ML-13) — supersedes the transactions-table ghost chip. */
+/** Dedicated suggestions table on the Auto-categoriser page (FR-ML-13) — supersedes the transactions-table ghost chip. */
 @Component({
   selector: 'app-suggestions-table',
   imports: [

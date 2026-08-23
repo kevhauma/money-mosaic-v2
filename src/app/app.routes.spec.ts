@@ -79,4 +79,30 @@ describe('app routes: unmatched URLs', () => {
     },
     ROUTE_RESOLUTION_TIMEOUT_MS,
   );
+
+  it(
+    'resolves /auto-categoriser, the renamed home of the model training console (TICKET-UI-32)',
+    async () => {
+      const { resolved } = await navigate('/auto-categoriser');
+
+      expect(resolved).toBe(true);
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
+
+  it(
+    'still resolves the old /learning URL, landing on /auto-categoriser (TICKET-UI-32)',
+    async () => {
+      // The rename must not break a bookmark or a note written while the page was called
+      // Learning — this is the only reason the old path is still in the table.
+      TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+      const router = TestBed.inject(Router);
+
+      const resolved = await router.navigateByUrl('/learning');
+
+      expect(resolved).toBe(true);
+      expect(router.url).toBe('/auto-categoriser');
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
 });

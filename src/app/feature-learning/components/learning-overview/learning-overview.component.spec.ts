@@ -48,11 +48,13 @@ describe('LearningOverviewComponent', () => {
     expect(page.querySelector('mm-page-header app-model-status')).toBeNull();
   });
 
-  it('renders no subtitle on /learning (TICKET-UI-22)', () => {
+  it('heads the page with the nav label, and no subtitle (TICKET-UI-22, TICKET-UI-32)', () => {
     fixture.detectChanges();
     const page: HTMLElement = fixture.nativeElement;
 
-    expect(page.querySelector('mm-page-header h1')?.textContent?.trim()).toBe('Learning');
+    // Matches the sidebar item exactly (TICKET-UI-32) — the two disagreeing is what let
+    // "Learning" read as a third help page while opening a model-training console.
+    expect(page.querySelector('mm-page-header h1')?.textContent?.trim()).toBe('Auto-categoriser');
     expect(page.querySelector('mm-page-header .mm-page-title p')).toBeNull();
   });
 });
