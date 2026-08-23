@@ -1158,4 +1158,15 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'No figure changed — all three were right, they just never said what they were.',
     ],
   },
+  {
+    date: '2026-08-23',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-ACC-12'],
+    title: 'The balance history chart shows each account’s own balance, not a running total',
+    area: 'Accounts',
+    details: [
+      'The lines were stacked, so an account was drawn at the sum of itself and everything below it — a savings account whose card read €9,206 sat at about €17,000 on the chart.',
+      'Each line now sits at that account’s real balance, the figure you can check against your bank statement. A “Combined total” button brings the stacked view back when you want the whole picture, and the caption says so while it is on.',
+    ],
+  },
 ];

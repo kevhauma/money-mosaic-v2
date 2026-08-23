@@ -58,8 +58,9 @@ export class AccountsOverviewComponent {
   protected readonly showArchived = signal(false);
 
   /**
-   * One stacked column in the chart's own band order, top to bottom (TICKET-ACC-09) — reading from
-   * a band straight down to its card, rather than hunting a three-column grid for the name.
+   * One column in the chart's own series order, top to bottom (TICKET-ACC-09) — reading from a line
+   * straight down to its card, rather than hunting a three-column grid for the name. TICKET-ACC-12
+   * unstacked that chart by default; see `account-list-order.ts` for why the order is kept as-is.
    */
   protected readonly visibleAccounts = computed(() =>
     accountDisplayOrder(

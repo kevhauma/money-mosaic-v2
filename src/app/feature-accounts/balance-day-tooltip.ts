@@ -9,7 +9,7 @@ import { formatCurrency, formatDate } from '@/shared/utils';
  * without caps the tooltip grows taller than the viewport and hides the chart it is explaining.
  * Only the *transaction* lines are budgeted: every band keeps its balance row, because that row is
  * the answer the hover is asked for, and folding some accounts away would leave the tooltip listing
- * fewer accounts than the stack it is sitting on.
+ * fewer accounts than the chart it is sitting on.
  */
 const MAX_LINES_PER_ACCOUNT = 5;
 const MAX_LINES_TOTAL = 10;
@@ -53,9 +53,8 @@ const toBand = (param: AxisTooltipParam): Band => ({
 });
 
 /**
- * The bands echarts actually drew at the hovered day, in its own stacking order — so every row's dot
- * is the swatch of that band and every balance is the very point it plotted, with no re-derivation
- * here. A band echarts didn't hand over (an account hidden from the legend) is absent from the
+ * The series echarts actually drew at the hovered day, in its own order — so every row's dot is the
+ * swatch of that line and every balance is the very point it plotted, with no re-derivation here. A band echarts didn't hand over (an account hidden from the legend) is absent from the
  * tooltip too, which is what keeps the two in agreement.
  *
  * Account detail has a single, unnamed series, so there is nothing to key on: its one param *is* the
@@ -109,7 +108,7 @@ const accountBlock = (
   ].filter(Boolean);
 };
 
-/** Walks the bands in the chart's own stacking order, spending the shared transaction-line budget as it goes. */
+/** Walks the bands in the chart's own series order, spending the shared transaction-line budget as it goes. */
 const renderBands = (
   bands: readonly Band[],
   movements: readonly AccountDayMovement[],

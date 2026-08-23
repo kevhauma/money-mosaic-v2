@@ -132,6 +132,27 @@ describe('AccountBalanceHistoryChartComponent', () => {
     expect(selectedOf(fixture.componentInstance)['Checking']).toBe(false);
   });
 
+  it('opens per account and only stacks once the user asks for the combined view (TICKET-ACC-12)', () => {
+    fixture.detectChanges();
+    const stackOf = (): unknown =>
+      (
+        (fixture.componentInstance['chartOption']() as Record<string, unknown>)['series'] as {
+          stack?: string;
+        }[]
+      )[0]?.stack;
+
+    expect(fixture.componentInstance['stacked']()).toBe(false);
+    expect(stackOf()).toBeUndefined();
+    expect(fixture.nativeElement.textContent).toContain("Each line is that account's own balance");
+
+    fixture.componentInstance['setStacked'](true);
+    fixture.detectChanges();
+
+    expect(stackOf()).toBe('account-balance');
+    // The mode has to say what it is — a stacked top edge is a total no account holds.
+    expect(fixture.nativeElement.textContent).toContain('the top edge is the combined total');
+  });
+
   it('restores the hidden accounts on a remount (TICKET-STAT-27)', async () => {
     fixture.componentInstance['onLegendSelectChanged']({ selected: { Checking: false } });
     TestBed.tick();
@@ -255,7 +276,7 @@ describe('buildAccountBalanceHistoryChartOption', () => {
     ...overrides,
   });
 
-  it('names and colours each band after its account, including a negative-balance account', () => {
+  it('names and colours each line after its account, including a negative-balance account', () => {
     const series = [
       { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1100 }] },
       { accountId: 2, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: -200 }] },
@@ -266,20 +287,23 @@ describe('buildAccountBalanceHistoryChartOption', () => {
       endValue: 0,
     });
 
+    // Was `stack: 'account-balance', areaStyle: {}` on every series, asserted here — which is why
+    // the suite stayed green while an account's plotted y-value was the running total of itself and
+    // everything below it (TICKET-ACC-12). Unstacked is now the default and the fill is translucent
+    // so overlapping lines stay readable. Do not reintroduce `stack` here as a "fix": stacking is
+    // the opt-in `stacked` argument, covered by its own case below.
     expect(option['series']).toEqual([
       {
         name: 'Checking',
         type: 'line',
-        stack: 'account-balance',
-        areaStyle: {},
+        areaStyle: { opacity: 0.12 },
         color: '#3366ff',
         data: [1100],
       },
       {
         name: 'Credit line',
         type: 'line',
-        stack: 'account-balance',
-        areaStyle: {},
+        areaStyle: { opacity: 0.12 },
         color: '#ff3366',
         data: [-200],
       },
@@ -291,6 +315,66 @@ describe('buildAccountBalanceHistoryChartOption', () => {
       // Stated rather than left to echarts, so the notMerge rebuild restores it (TICKET-STAT-27).
       selected: { Checking: true, 'Credit line': true },
     });
+  });
+
+  it('plots two accounts at their own balances, not at a running total (TICKET-ACC-12)', () => {
+    const series = [
+      { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 7691 }] },
+      { accountId: 2, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 9206 }] },
+    ];
+
+    const option = buildAccountBalanceHistoryChartOption(accounts, series, {
+      startValue: 0,
+      endValue: 0,
+    });
+    const plotted = option['series'] as { stack?: string; data: number[] }[];
+
+    // The reported symptom: stacked, the second line drew at 7691 + 9206 = 16,897 while its own
+    // card read 9,206 — the number the user is reconciling against a bank statement.
+    expect(plotted.map((line) => line.data[0])).toEqual([7691, 9206]);
+    expect(plotted.every((line) => line.stack === undefined)).toBe(true);
+  });
+
+  it('leaves the single-account case as it always was — one line at its own balance (TICKET-ACC-12)', () => {
+    const series = [
+      { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 1100 }] },
+    ];
+
+    const option = buildAccountBalanceHistoryChartOption([accounts[0]], series, {
+      startValue: 0,
+      endValue: 0,
+    });
+    const plotted = option['series'] as { data: number[] }[];
+
+    // With nothing below it to stack onto, the old chart already drew this correctly — the fix must
+    // not move it.
+    expect(plotted).toHaveLength(1);
+    expect(plotted[0].data).toEqual([1100]);
+  });
+
+  it('stacks into a combined total only when the opt-in flag is set (TICKET-ACC-12)', () => {
+    const series = [
+      { accountId: 1, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 7691 }] },
+      { accountId: 2, points: [{ bucketKey: '2026-01', bucketEnd: '2026-01-31', balance: 9206 }] },
+    ];
+
+    const option = buildAccountBalanceHistoryChartOption(
+      accounts,
+      series,
+      { startValue: 0, endValue: 0 },
+      [],
+      new Map(),
+      { stacked: true },
+    );
+    const plotted = option['series'] as { stack?: string; areaStyle: unknown; data: number[] }[];
+
+    expect(plotted.every((line) => line.stack === 'account-balance')).toBe(true);
+    // Solid fills come back with the stack: the bands are meant to read as one mass here.
+    expect(plotted.map((line) => line.areaStyle)).toEqual([{}, {}]);
+    // echarts sums the bands itself, so the *data* stays per-account — the top edge echarts draws
+    // is the sum, which is what the caption in the template names as a total.
+    expect(plotted.map((line) => line.data[0])).toEqual([7691, 9206]);
+    expect(plotted.reduce((sum, line) => sum + line.data[0], 0)).toBe(16897);
   });
 
   it('draws the legend in a top strip with the grid grown to clear it (TICKET-STAT-26)', () => {
@@ -351,7 +435,7 @@ describe('buildAccountBalanceHistoryChartOption', () => {
     expect(option['series']).toHaveLength(2);
   });
 
-  it("the stacked bands' per-bucket sum is total real balance — no longer combined net worth (TICKET-ACC-07)", () => {
+  it("the lines' per-bucket sum is total real balance — no longer combined net worth (TICKET-ACC-07)", () => {
     const jointAccounts = [
       account({ id: 1, name: 'Joint', type: 'joint', openingBalance: 1000, ownershipShare: 0.5 }),
       accounts[1],
@@ -372,12 +456,12 @@ describe('buildAccountBalanceHistoryChartOption', () => {
       startValue: 0,
       endValue: 0,
     });
-    const bandData = (option['series'] as { data: number[] }[]).map((s) => s.data);
-    const stackedTotal = bandData.reduce((sum, data) => sum + data[0], 0);
+    const lineData = (option['series'] as { data: number[] }[]).map((s) => s.data);
+    const combinedTotal = lineData.reduce((sum, data) => sum + data[0], 0);
 
-    // Each band is that account's real balance: joint 1000 - 200 = 800, credit line -200 - 50 = -250.
-    expect(bandData.map((data) => data[0])).toEqual([800, -250]);
-    expect(stackedTotal).toBe(550);
+    // Each line is that account's real balance: joint 1000 - 200 = 800, credit line -200 - 50 = -250.
+    expect(lineData.map((data) => data[0])).toEqual([800, -250]);
+    expect(combinedTotal).toBe(550);
     // Combined net worth halved the joint spend and the joint opening balance, so it differed by
     // design (it came to €150). `computeNetWorthTrend`, which produced that figure, was retired
     // from production by TICKET-ACC-07 and deleted; the bands' own sum is what this chart draws.

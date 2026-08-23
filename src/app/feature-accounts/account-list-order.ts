@@ -13,6 +13,12 @@ import type { Account } from '@/core/data-access';
  * with, so a clean break at the bottom beats interleaving them into an order they don't take part
  * in. They are reversed among themselves too — not for alignment, but so `storeDirectionFor` below
  * holds for *every* card in the list rather than for some of them.
+ *
+ * **TICKET-ACC-12 unstacked that chart by default**, so there is no longer a literal band order to
+ * line up with unless the user switches to the combined view. The reversal is kept as-is rather than
+ * undone: it is still the chart's series order read the way the legend and the combined stack read
+ * it, and flipping the card list back would be its own re-decision (and would silently invert every
+ * arrow via `storeDirectionFor`), not a rider on unstacking.
  */
 export const accountDisplayOrder = (
   activeAccounts: readonly Account[],

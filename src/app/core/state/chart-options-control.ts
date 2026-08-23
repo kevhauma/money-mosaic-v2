@@ -176,6 +176,32 @@ export const chartBillsView = (
   };
 };
 
+export type ChartStackedControl = {
+  value: Signal<boolean>;
+  set: (stacked: boolean) => void;
+};
+
+/**
+ * Whether a multi-series balance chart stacks its bands into a running total, held for the session
+ * (TICKET-ACC-12) — same shape and reasoning as the controls above: a `computed()` read over the
+ * store plus an explicit setter.
+ *
+ * Like `chartJointMode` this one changes what a plotted y-value *means* rather than how it looks, so
+ * a chart that offers it has to say which mode it is in — the stacked view is the one that needs the
+ * caption, because its top edge is a total no single account holds.
+ *
+ * Must be called from an injection context — a component field initializer.
+ */
+export const chartStacked = (chart: ChartOptionsKey, seed: () => boolean): ChartStackedControl => {
+  const chartOptions = inject(ChartOptionsStore);
+  const initial = untracked(seed);
+
+  return {
+    value: computed(() => chartOptions.stacked(chart) ?? initial),
+    set: (stacked: boolean): void => chartOptions.setStacked(chart, stacked),
+  };
+};
+
 /** Structurally echarts' `legendselectchanged` payload — the map of every legend entry to whether it is currently shown. */
 export type LegendSelectChangedEvent = { selected?: Record<string, boolean> };
 

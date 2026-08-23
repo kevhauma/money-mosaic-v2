@@ -52,7 +52,7 @@ export type BalanceTrendSignals = {
 export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSignals => {
   const transactionsStore = inject(TransactionsStore);
   // Always the `accounts` range (TICKET-UI-23): both callers are Accounts routes — the overview's
-  // stacked chart and the account-detail chart — and the detail route deliberately has no range
+  // all-accounts chart and the account-detail chart — and the detail route deliberately has no range
   // control of its own, so it scrubs from whatever the overview's header was left on.
   const rangeStore = inject(RangeStore);
 
@@ -82,7 +82,7 @@ export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSi
   );
 
   // Scoped to the same accounts the chart draws, so an archived account is as absent from the
-  // tooltip as it is from the stack — and so account detail's one-account list is the same call.
+  // tooltip as it is from the plot — and so account detail's one-account list is the same call.
   const dayIndex = computed(() =>
     buildDayTransactionIndex(transactionsStore.transactions(), accounts()),
   );

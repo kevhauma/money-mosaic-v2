@@ -4,7 +4,7 @@ import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { Account } from '@/core/data-access';
 import type { AccountBalanceSeries, DayTransactionIndex } from '@/core/stats';
-import { AccountsStore, chartSeriesFilter, chartZoomControl } from '@/core/state';
+import { AccountsStore, chartSeriesFilter, chartStacked, chartZoomControl } from '@/core/state';
 import {
   bucketedZoomAxisOption,
   resolveChartAnimation,
@@ -12,7 +12,7 @@ import {
   resolveChartCategoricalColors,
   type ChartZoomBounds,
 } from '@/shared/echarts';
-import { FlexComponent, PaperComponent } from '@/shared/ui';
+import { FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { buildBalanceDayTooltip } from '../../balance-day-tooltip';
 import { balanceTrendSignals } from '../../balance-trend-signals';
 
@@ -23,6 +23,14 @@ export const buildAccountBalanceHistoryChartOption = (
   zoomWindow: ChartZoomBounds,
   hiddenSeries: readonly string[] = [],
   dayIndex: DayTransactionIndex = new Map(),
+  /**
+   * `stacked` is the opt-in combined view (TICKET-ACC-12), off by default. Stacked, a line sits at
+   * the sum of itself and every line below it, so the y-value read off an account is not that
+   * account's balance — callers that turn this on are responsible for saying so on screen. An
+   * options object rather than a sixth positional flag, the shape `buildBalanceDayTooltip` beside
+   * this one already uses.
+   */
+  { stacked = false }: { stacked?: boolean } = {},
 ): EChartsCoreOption => {
   const accountsById = new Map(accounts.map((account) => [account.id, account]));
   const bucketKeys = series[0]?.points.map((point) => point.bucketKey) ?? [];
@@ -39,8 +47,8 @@ export const buildAccountBalanceHistoryChartOption = (
   return {
     ...resolveChartAnimation(),
     color: resolveChartCategoricalColors(),
-    // Not the shared `formatAxisTooltip` (TICKET-ACC-11): on a balance chart, restating each band's
-    // value repeats what the stack already draws. What the hover is actually asking is what moved.
+    // Not the shared `formatAxisTooltip` (TICKET-ACC-11): on a balance chart, restating each line's
+    // value repeats what the chart already draws. What the hover is actually asking is what moved.
     tooltip: {
       trigger: 'axis',
       formatter: buildBalanceDayTooltip(dayIndex, { showAccountNames: true }),
@@ -52,8 +60,11 @@ export const buildAccountBalanceHistoryChartOption = (
       return {
         name: account?.name ?? '',
         type: 'line',
-        stack: 'account-balance',
-        areaStyle: {},
+        // Unstacked lines overlap, so an opaque fill would hide whichever account is drawn under it
+        // — the combined view keeps the solid bands it needs to read as one mass.
+        ...(stacked
+          ? { stack: 'account-balance', areaStyle: {} }
+          : { areaStyle: { opacity: 0.12 } }),
         color: account?.color,
         data: points.map((point) => point.balance),
       };
@@ -62,11 +73,17 @@ export const buildAccountBalanceHistoryChartOption = (
 };
 
 /**
- * Stacked-area balance-history chart (TICKET-STAT-02): one band per active account (archived
- * accounts never appear, consistent with `activeAccounts`), stacked so the top edge is the total
- * real balance held across every active account. Each band is that account's actual balance —
+ * Balance-history chart (TICKET-STAT-02): one line per active account (archived accounts never
+ * appear, consistent with `activeAccounts`). Each line plots that account's actual balance —
  * matching its card's headline figure — not the net-worth stake this chart plotted until
- * TICKET-ACC-07, so for a joint account the stack no longer sums to the Dashboard's net worth.
+ * TICKET-ACC-07, so for a joint account it no longer follows the Dashboard's net worth.
+ *
+ * **Per account by default, combined only on request (TICKET-ACC-12).** This shipped as a stacked
+ * area chart, which meant an account's plotted y-value was the sum of itself and every account below
+ * it: with €7,691 and €9,206 in the app, the savings line sat at ~€17,000 while its own card read
+ * €9,206.42. Reconciling against a bank statement is the page's whole job, so stacking is now the
+ * opt-in "Combined total" mode, and the caption says the top edge is a total when it is on.
+ *
  * Always a daily series with no bucket picker (TICKET-ACC-10 — see `BALANCE_GRANULARITY`), and the
  * Accounts page's date range scrubs the initial zoom window (via `dataZoom`) rather than shrinking
  * the series data (TICKET-STAT-03), so zooming out is always available without a manual preset
@@ -76,7 +93,7 @@ export const buildAccountBalanceHistoryChartOption = (
  */
 @Component({
   selector: 'app-account-balance-history-chart',
-  imports: [NgxEchartsDirective, FlexComponent, PaperComponent],
+  imports: [NgxEchartsDirective, FlexComponent, PaperComponent, TypographyComponent],
   templateUrl: './account-balance-history-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -98,6 +115,17 @@ export class AccountBalanceHistoryChartComponent {
   private readonly zoomControl = chartZoomControl('accounts-balance-history');
   protected readonly onDataZoom = this.zoomControl.onDataZoom;
 
+  /** Per account unless the user asks for the combined view — see the class comment (TICKET-ACC-12). */
+  private readonly stackedControl = chartStacked('accounts-balance-history', () => false);
+  protected readonly stacked = this.stackedControl.value;
+  protected readonly setStacked = this.stackedControl.set;
+
+  /** Labels and pressed state resolved here, not per-button in the template — the `spanOptions()` shape. */
+  protected readonly viewOptions = computed(() => [
+    { stacked: false, label: 'Per account', selected: !this.stacked() },
+    { stacked: true, label: 'Combined total', selected: this.stacked() },
+  ]);
+
   /** A window the user dragged wins over the range-scrubbed default (TICKET-STAT-27) — re-scrubbing it on the next range or bucket change is exactly the reset this fixed. */
   private readonly zoom = computed<ChartZoomBounds>(
     () => this.zoomControl.manual() ?? this.trend.zoomWindow(),
@@ -110,6 +138,7 @@ export class AccountBalanceHistoryChartComponent {
       this.zoom(),
       this.seriesFilter.hidden(),
       this.trend.dayIndex(),
+      { stacked: this.stacked() },
     ),
   );
 

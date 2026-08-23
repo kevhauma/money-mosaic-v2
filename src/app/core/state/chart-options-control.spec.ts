@@ -6,6 +6,7 @@ import {
   chartGroupCategories,
   chartGranularity,
   chartSeriesFilter,
+  chartStacked,
   chartVisibleMonth,
   chartZoomControl,
   hiddenSeriesFromEvent,
@@ -393,5 +394,65 @@ describe('chartGroupCategories (TICKET-EXP-03)', () => {
 
     expect(grouping.value()).toBe(true);
     expect(TestBed.inject(ChartOptionsStore).groupCategories('explore-money-flow')).toBeUndefined();
+  });
+});
+
+describe('chartStacked (TICKET-ACC-12)', () => {
+  let injector: Injector;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    injector = TestBed.inject(Injector);
+  });
+
+  it('seeds from the caller when the session holds nothing for that chart', () => {
+    const stacked = runInInjectionContext(injector, () =>
+      chartStacked('accounts-balance-history', () => false),
+    );
+
+    expect(stacked.value()).toBe(false);
+  });
+
+  it("adopts the session's value instead of re-seeding, so a remount keeps the combined view", () => {
+    TestBed.inject(ChartOptionsStore).setStacked('accounts-balance-history', true);
+
+    const stacked = runInInjectionContext(injector, () =>
+      chartStacked('accounts-balance-history', () => false),
+    );
+
+    expect(stacked.value()).toBe(true);
+  });
+
+  it('writes straight to the store, which is what a later mount reads back', () => {
+    const stacked = runInInjectionContext(injector, () =>
+      chartStacked('accounts-balance-history', () => false),
+    );
+
+    stacked.set(true);
+
+    expect(TestBed.inject(ChartOptionsStore).stacked('accounts-balance-history')).toBe(true);
+    expect(stacked.value()).toBe(true);
+  });
+
+  it('never records the seed as a choice', () => {
+    const stacked = runInInjectionContext(injector, () =>
+      chartStacked('accounts-balance-history', () => false),
+    );
+
+    expect(stacked.value()).toBe(false);
+    expect(TestBed.inject(ChartOptionsStore).stacked('accounts-balance-history')).toBeUndefined();
+  });
+
+  it("leaves the same chart id's hidden series alone — two choices, one entry", () => {
+    const store = TestBed.inject(ChartOptionsStore);
+    store.setHiddenSeries('accounts-balance-history', ['Savings']);
+
+    const stacked = runInInjectionContext(injector, () =>
+      chartStacked('accounts-balance-history', () => false),
+    );
+    stacked.set(true);
+
+    expect(store.hiddenSeries('accounts-balance-history')).toEqual(['Savings']);
+    expect(stacked.value()).toBe(true);
   });
 });

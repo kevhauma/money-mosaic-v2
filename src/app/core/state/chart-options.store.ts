@@ -51,6 +51,13 @@ type ChartOptionsEntry = {
   visibleMonth?: string;
   /** Grid or date-ordered list, for a section that draws the same projected occurrences both ways (TICKET-REC-03). */
   billsView?: BillsView;
+  /**
+   * Whether a multi-series balance chart stacks its bands into a running total instead of drawing
+   * each series at its own value (TICKET-ACC-12). Off is the default everywhere: a stacked band's
+   * y-value is the sum of itself and everything below it, which is the wrong number to read against
+   * a bank statement.
+   */
+  stacked?: boolean;
 };
 
 type ChartOptionsStoreState = {
@@ -131,6 +138,13 @@ export const ChartOptionsStore = signalStore(
 
       setBillsView: (chart: ChartOptionsKey, billsView: BillsView): void => {
         patchChart(chart, { billsView });
+      },
+
+      /** `undefined` until the user switches — the caller then falls back to the chart's own default (TICKET-ACC-12). */
+      stacked: (chart: ChartOptionsKey): boolean | undefined => entryFor(chart).stacked,
+
+      setStacked: (chart: ChartOptionsKey, stacked: boolean): void => {
+        patchChart(chart, { stacked });
       },
 
       hiddenSeries: (chart: ChartOptionsKey): readonly string[] => entryFor(chart).hiddenSeries,

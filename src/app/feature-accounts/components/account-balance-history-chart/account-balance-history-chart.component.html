@@ -1,10 +1,33 @@
 @if (accounts().length > 0) {
   <mm-paper elevation="flat">
     <!-- Kept as a flex row with the title alone (TICKET-ACC-10 removed the bucket picker), so this
-         chart's own controls have somewhere to go when one is added. -->
+         chart's own controls have somewhere to go when one is added. TICKET-ACC-12 added the first. -->
     <mm-flex align="center" justify="between" gap="2">
       <p class="card-title text-base">Balance history</p>
+      <div class="join" role="group" aria-label="Balance view">
+        @for (option of viewOptions(); track option.label) {
+          <button
+            type="button"
+            class="btn btn-sm join-item"
+            [class.btn-active]="option.selected"
+            [attr.aria-pressed]="option.selected"
+            (click)="setStacked(option.stacked)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
     </mm-flex>
+    <!-- The combined view is the one that has to announce itself (TICKET-ACC-12): its top edge is a
+         total no single account holds, which is exactly the misreading this chart shipped with. -->
+    <mm-text as="p" variant="caption">
+      @if (stacked()) {
+        Lines are stacked — the top edge is the combined total across every account, not any one
+        account's balance.
+      } @else {
+        Each line is that account's own balance, as shown on its card.
+      }
+    </mm-text>
     <div
       echarts
       [options]="chartOption()"
