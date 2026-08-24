@@ -1,12 +1,11 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { from, of, startWith, switchMap, timer, map as rxMap, type Observable } from 'rxjs';
-import { AccountsStore } from '@/core/state';
+import { AccountsStore, ImportBatchesStore } from '@/core/state';
 import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
 import { ICON_BY_ACCOUNT_TYPE } from '@/feature-accounts';
 import { MappingProfilesStore } from './mapping-profiles.store';
-import { ImportBatchesStore } from './import-batches.store';
 import type { PendingAccountDraft, QueuedImportFile } from './import-queue';
 import type { ImportMappingResult } from './column-mapping';
 

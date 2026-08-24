@@ -2,9 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { vi, type Mock } from 'vitest';
 import type { CommitImportResult, ParsedRowResult } from '@/core/import';
 import { CsvImportService } from '@/core/import';
-import { AccountsStore } from '@/core/state';
+import { AccountsStore, ImportBatchesStore } from '@/core/state';
 import { MappingProfilesStore } from './mapping-profiles.store';
-import { ImportBatchesStore } from './import-batches.store';
 import { ImportWizardSession } from './import-wizard-session';
 
 const csvFile = (name: string): File => new File(['Date;Desc\n01/01/2026;x'], name);

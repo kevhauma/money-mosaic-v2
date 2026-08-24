@@ -73,4 +73,17 @@
   @if (vm().ibanTail; as ibanTail) {
     <mm-text as="p" class="text-xs text-base-content/60">···· {{ ibanTail }}</mm-text>
   }
+
+  <!-- How current this balance is (TICKET-ACC-13). Marked, not merely stated, when the account has
+       never been imported into or has gone past the staleness threshold — the whole point is that
+       one stale account among three current ones is *noticed*, not looked up. -->
+  @if (vm().lastImport; as lastImport) {
+    @if (lastImport.needsAttention) {
+      <mm-badge variant="outline" color="warning" size="sm" class="w-fit">
+        {{ lastImport.label }}
+      </mm-badge>
+    } @else {
+      <mm-text as="p" variant="caption">{{ lastImport.label }}</mm-text>
+    }
+  }
 </mm-paper>

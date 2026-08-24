@@ -16,8 +16,9 @@ import {
 import { createConfirmState } from '@/shared/utils';
 import { ACCOUNT_ICON_SET, accountIconName } from '../../account-icons';
 import { accountDisplayOrder, storeDirectionFor } from '../../account-list-order';
-import { AccountsStore, pageRangeControl } from '@/core/state';
+import { AccountsStore, ImportBatchesStore, pageRangeControl } from '@/core/state';
 import type { AccountCardVm } from '../../account-card-vm';
+import { lastImportStatus } from '../../last-import-status';
 import {
   AccountFormComponent,
   type AccountFormValue,
@@ -48,6 +49,8 @@ import { AccountBalanceHistoryChartComponent } from '../account-balance-history-
 })
 export class AccountsOverviewComponent {
   protected readonly accountsStore = inject(AccountsStore);
+  /** For each card's "last import" line (TICKET-ACC-13) — injecting it is also what hydrates it. */
+  private readonly importBatchesStore = inject(ImportBatchesStore);
 
   /** This page's own date range and its switcher wiring (TICKET-UI-23) — no longer the shell's. */
   protected readonly range = pageRangeControl('accounts');
@@ -76,6 +79,11 @@ export class AccountsOverviewComponent {
     const accounts = this.visibleAccounts();
     const balancesById = this.accountsStore.balancesById();
     const jointStakeById = this.accountsStore.jointAccountStakeById();
+    const importsLoaded = this.importBatchesStore.hydrated();
+    const lastImportedAtByAccountId = this.importBatchesStore.lastImportedAtByAccountId();
+    // One clock reading for the whole list, so two cards can never land on different sides of the
+    // staleness threshold within a single render.
+    const now = new Date().toISOString();
 
     return accounts.map((account, index) => ({
       account,
@@ -92,6 +100,12 @@ export class AccountsOverviewComponent {
       isLast: index === accounts.length - 1,
       iconName: accountIconName(account.icon),
       ibanTail: account.iban ? account.iban.slice(-4) : null,
+      lastImport: importsLoaded
+        ? lastImportStatus(
+            account.id != null ? lastImportedAtByAccountId.get(account.id) : undefined,
+            now,
+          )
+        : null,
     }));
   });
 

@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-ACC-13',
-    title: 'Each account shows when it was last imported, so you know what to trust',
-    area: 'Accounts',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-IMP-14',
     title: 'The importer tells you how many rows are duplicates before you commit',
     area: 'Import',

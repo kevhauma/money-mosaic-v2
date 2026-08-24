@@ -10,6 +10,7 @@ import {
   tablerTrash,
 } from '@ng-icons/tabler-icons';
 import {
+  BadgeComponent,
   ButtonComponent,
   ConfirmDialogComponent,
   EmptyStateComponent,
@@ -19,13 +20,14 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
-import { AccountsStore } from '@/core/state';
+import { AccountsStore, ImportBatchesStore } from '@/core/state';
 import { AccountBalanceBlockComponent } from '../account-balance-block/account-balance-block.component';
 import { AccountBalanceChartComponent } from '../account-balance-chart/account-balance-chart.component';
 import {
   AccountFormComponent,
   type AccountFormValue,
 } from '../account-form/account-form.component';
+import { lastImportStatus } from '../../last-import-status';
 
 @Component({
   selector: 'app-accounts-detail',
@@ -36,6 +38,7 @@ import {
     AccountFormComponent,
     AccountBalanceBlockComponent,
     AccountBalanceChartComponent,
+    BadgeComponent,
     ButtonComponent,
     ConfirmDialogComponent,
     EmptyStateComponent,
@@ -55,6 +58,8 @@ export class AccountsDetailComponent {
 
   private readonly router = inject(Router);
   protected readonly accountsStore = inject(AccountsStore);
+  /** For the "last import" line under the balance (TICKET-ACC-13); injecting it hydrates it. */
+  private readonly importBatchesStore = inject(ImportBatchesStore);
 
   protected readonly account = computed(
     () => this.accountsStore.accounts().find((account) => String(account.id) === this.id()) ?? null,
@@ -78,6 +83,27 @@ export class AccountsDetailComponent {
   /** Flag + non-nullable number split, same rationale as `AccountCardVm.hasShare`/`shareDisplay`. */
   protected readonly hasShare = computed(() => this.share() !== null);
   protected readonly shareDisplay = computed(() => this.share() ?? 0);
+
+  /**
+   * The same line the account cards carry (TICKET-ACC-13), from the same helper, so the two can
+   * never word it differently. It sits with the balance rather than in `mm-page-header` — the
+   * header takes no subtitle by design (TICKET-UI-22), and "how current is this" belongs next to
+   * the number it qualifies anyway.
+   *
+   * `null` until the batches have loaded, for the reason on `AccountCardVm.lastImport`: an
+   * un-hydrated store would otherwise render "Never imported" over a perfectly current account.
+   */
+  protected readonly lastImport = computed(() => {
+    const account = this.account();
+    if (!this.importBatchesStore.hydrated()) return null;
+
+    return lastImportStatus(
+      account?.id != null
+        ? this.importBatchesStore.lastImportedAtByAccountId().get(account.id)
+        : undefined,
+      new Date().toISOString(),
+    );
+  });
 
   protected readonly archiveToggle = computed(() =>
     this.account()?.archived

@@ -2,8 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import type { Account } from '@/core/data-access';
+import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import type { AccountCardVm } from '../../account-card-vm';
+import { lastImportStatus } from '../../last-import-status';
 import { AccountCardComponent } from './account-card.component';
+
+/** Fixed instant, so "today" and "40 days ago" are arithmetic rather than a frozen clock. */
+const NOW = '2026-08-24T12:00:00.000Z';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -27,6 +32,9 @@ const baseVm = (overrides: Partial<AccountCardVm> = {}): AccountCardVm => ({
   isLast: false,
   iconName: 'accountWallet',
   ibanTail: null,
+  // Imported today by default, so the card's "last import" line is the unmarked one and the
+  // existing cases below stay about what they were about (TICKET-ACC-13).
+  lastImport: lastImportStatus(NOW, NOW),
   ...overrides,
 });
 
@@ -110,5 +118,54 @@ describe('AccountCardComponent', () => {
   it('shows "Unarchive" for an already-archived account', async () => {
     await setup(baseVm({ account: account({ archived: true }) }));
     expect(fixture.nativeElement.textContent).toContain('Unarchive');
+  });
+});
+
+/** TICKET-ACC-13 — how current the balance is, stated on the card and marked when it is not. */
+describe('AccountCardComponent: last import line (TICKET-ACC-13)', () => {
+  withCleanFormatSettings();
+
+  const render = async (vm: AccountCardVm): Promise<HTMLElement> => {
+    await TestBed.configureTestingModule({
+      imports: [AccountCardComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(AccountCardComponent);
+    fixture.componentRef.setInput('vm', vm);
+    fixture.componentRef.setInput('dataReady', true);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  it('states the date plainly for a recently imported account', async () => {
+    const card = await render(baseVm({ lastImport: lastImportStatus(NOW, NOW) }));
+
+    expect(card.textContent).toContain('Last import 24/08/2026');
+    expect(card.querySelector('mm-badge[color="warning"]')).toBeNull();
+  });
+
+  it('marks an account that has never been imported into', async () => {
+    const card = await render(baseVm({ lastImport: lastImportStatus(undefined, NOW) }));
+
+    expect(card.textContent).toContain('Never imported');
+    expect(card.querySelector('mm-badge[color="warning"]')).not.toBeNull();
+  });
+
+  it('says nothing at all while the batches are still loading', async () => {
+    const card = await render(baseVm({ lastImport: null }));
+
+    // Not "Never imported": an un-hydrated store and an account with no imports look identical
+    // from here, and only one of them is a fact (TICKET-TRF-06's lesson, applied up front).
+    expect(card.textContent).not.toContain('Never imported');
+    expect(card.textContent).not.toContain('Last import');
+    expect(card.querySelector('mm-badge[color="warning"]')).toBeNull();
+  });
+
+  it('marks a stale account, so one behind three current ones is visible', async () => {
+    const staleAt = new Date(Date.parse(NOW) - 45 * 24 * 60 * 60 * 1000).toISOString();
+    const card = await render(baseVm({ lastImport: lastImportStatus(staleAt, NOW) }));
+
+    expect(card.textContent).toContain('45 days ago');
+    expect(card.querySelector('mm-badge[color="warning"]')).not.toBeNull();
   });
 });

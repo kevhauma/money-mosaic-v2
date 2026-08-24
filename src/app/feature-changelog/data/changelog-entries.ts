@@ -1241,4 +1241,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Nothing changes on a laptop: at tablet width and above you get exactly the table you had.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-ACC-13'],
+    title: 'Every account says when it was last imported',
+    area: 'Accounts',
+    details: [
+      'Nothing in the app said how current an account was, so three accounts imported weeks apart all presented their balances with the same confidence.',
+      'Each account card, and the account page itself, now carries the date of that account’s newest import — or “Never imported” when there has not been one.',
+      'Anything older than 30 days is flagged, so an account you have stopped feeding stands out instead of having to be looked up. Thirty days because bank statements come monthly: past that, one has certainly been published and not loaded.',
+      'The date comes from the import records themselves, so undoing an import moves it back to the one before it.',
+    ],
+  },
 ];

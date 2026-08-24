@@ -42,6 +42,18 @@
         >IBAN ···· {{ account.iban.slice(-4) }}</mm-text
       >
     }
+
+    <!-- Same line, same helper and same type style as the account cards (TICKET-ACC-13), marked
+         the same way, and absent until the batches have loaded. -->
+    @if (lastImport(); as lastImport) {
+      @if (lastImport.needsAttention) {
+        <mm-badge variant="outline" color="warning" size="sm" class="mt-2 w-fit">
+          {{ lastImport.label }}
+        </mm-badge>
+      } @else {
+        <mm-text as="p" variant="caption" class="mt-2">{{ lastImport.label }}</mm-text>
+      }
+    }
   </mm-paper>
 
   @if (contributorBreakdown(); as breakdown) {

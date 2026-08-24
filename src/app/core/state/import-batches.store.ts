@@ -1,5 +1,13 @@
-import { inject } from '@angular/core';
-import { patchState, signalStore, type, withComputed, withHooks, withMethods } from '@ngrx/signals';
+import { computed, inject } from '@angular/core';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntity,
   entityConfig,
@@ -8,7 +16,8 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { ImportBatchesRepository, type ImportBatch, type Transaction } from '@/core/data-access';
-import { TransactionsStore, TransfersStore } from '@/core/state';
+import { TransactionsStore } from './transactions.store';
+import { TransfersStore } from './transfers.store';
 import { ImportService, type CommitImportInput, type CommitImportResult } from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
 
@@ -33,7 +42,37 @@ const importBatchConfig = entityConfig({
 export const ImportBatchesStore = signalStore(
   { providedIn: 'root' },
   withEntities(importBatchConfig),
-  withComputed(({ entities }) => ({ batches: entities })),
+  /**
+   * Whether the repository read has landed (TICKET-ACC-13), the same flag `TransactionsStore` keeps.
+   * An empty batch list and a not-yet-loaded one look identical, and the first thing built on this
+   * store says "Never imported" about the difference — TICKET-TRF-06 shipped exactly that bug on
+   * the transfers panel, so the flag goes in with the first consumer rather than after it.
+   */
+  withState({ hydrated: false }),
+  withComputed(({ entities }) => ({
+    batches: entities,
+    /**
+     * When each account last received imported rows (TICKET-ACC-13) — the newest `importedAt`
+     * among that account's batches, absent from the map when it has none.
+     *
+     * Derived here rather than stored on the account: the batches already are the record, and a
+     * mirrored `lastImportedAt` column would need maintaining on undo too, where the correct value
+     * is "whatever the batch before it was" rather than anything the undo knows. Undo removes the
+     * entity, so this recomputes to exactly that for free.
+     *
+     * ISO timestamps, so `localeCompare` orders them and no `Date` is constructed per batch.
+     */
+    lastImportedAtByAccountId: computed(() => {
+      const lastByAccountId = new Map<number, string>();
+      for (const batch of entities()) {
+        const current = lastByAccountId.get(batch.accountId);
+        if (current === undefined || batch.importedAt.localeCompare(current) > 0) {
+          lastByAccountId.set(batch.accountId, batch.importedAt);
+        }
+      }
+      return lastByAccountId;
+    }),
+  })),
   withMethods((store) => {
     const importBatchesRepository = inject(ImportBatchesRepository);
     const transactionsStore = inject(TransactionsStore);
@@ -48,7 +87,7 @@ export const ImportBatchesStore = signalStore(
       hydrate: (): Promise<void> => {
         if (!hydration) {
           hydration = importBatchesRepository.getAll().then((batches) => {
-            patchState(store, setAllEntities(batches, importBatchConfig));
+            patchState(store, setAllEntities(batches, importBatchConfig), { hydrated: true });
           });
         }
         return hydration;

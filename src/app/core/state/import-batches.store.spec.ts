@@ -3,7 +3,8 @@ import { vi } from 'vitest';
 import { ImportBatchesRepository, type ImportBatch, type Transaction } from '@/core/data-access';
 import { ImportService, type CommitImportInput } from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
-import { TransactionsStore, TransfersStore } from '@/core/state';
+import { TransactionsStore } from './transactions.store';
+import { TransfersStore } from './transfers.store';
 import { ImportBatchesStore } from './import-batches.store';
 
 const importBatch = (overrides: Partial<ImportBatch> = {}): ImportBatch => ({
@@ -258,5 +259,135 @@ describe('ImportBatchesStore: on-injection hydration (TICKET-PERF-07)', () => {
     await store.hydrate();
 
     expect(importBatchesRepository.getAll).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * TICKET-ACC-13 — the "last import" line every account card and the account detail header show is
+ * derived from the batches, not from a mirrored column, so this is where its correctness lives.
+ */
+describe('ImportBatchesStore: lastImportedAtByAccountId (TICKET-ACC-13)', () => {
+  const importBatchesRepository = { getAll: vi.fn() };
+  const importService = { commitImport: vi.fn(), undoImport: vi.fn() };
+  const rulesEngineService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const coOwnerContributionService = { runAndPersist: vi.fn().mockResolvedValue([]) };
+  const transactionsStore = {
+    transactions: vi.fn().mockReturnValue([]),
+    hydrate: vi.fn().mockResolvedValue(undefined),
+    addMany: vi.fn(),
+    removeMany: vi.fn(),
+    patchMany: vi.fn(),
+  };
+  const transfersStore = {
+    hydrate: vi.fn().mockResolvedValue(undefined),
+    runAutoLink: vi.fn().mockResolvedValue(0),
+    removeLocal: vi.fn(),
+  };
+
+  const storeWith = async (batches: ImportBatch[]) => {
+    vi.clearAllMocks();
+    importBatchesRepository.getAll.mockResolvedValue(batches);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
+        { provide: ImportService, useValue: importService },
+        { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: CoOwnerContributionService, useValue: coOwnerContributionService },
+        { provide: TransactionsStore, useValue: transactionsStore },
+        { provide: TransfersStore, useValue: transfersStore },
+      ],
+    });
+    const store = TestBed.inject(ImportBatchesStore);
+    await store.hydrate();
+    return store;
+  };
+
+  it('reports the most recent batch for an account that has several', async () => {
+    const store = await storeWith([
+      importBatch({ id: 1, accountId: 7, importedAt: '2026-06-01T00:00:00.000Z' }),
+      importBatch({ id: 2, accountId: 7, importedAt: '2026-08-14T09:30:00.000Z' }),
+      importBatch({ id: 3, accountId: 7, importedAt: '2026-07-02T00:00:00.000Z' }),
+    ]);
+
+    expect(store.lastImportedAtByAccountId().get(7)).toBe('2026-08-14T09:30:00.000Z');
+  });
+
+  it('keeps each account on its own newest batch', async () => {
+    const store = await storeWith([
+      importBatch({ id: 1, accountId: 7, importedAt: '2026-08-14T00:00:00.000Z' }),
+      importBatch({ id: 2, accountId: 9, importedAt: '2026-06-30T00:00:00.000Z' }),
+    ]);
+
+    expect([...store.lastImportedAtByAccountId()]).toEqual([
+      [7, '2026-08-14T00:00:00.000Z'],
+      [9, '2026-06-30T00:00:00.000Z'],
+    ]);
+  });
+
+  it('reports itself un-hydrated until the repository read lands (TICKET-TRF-06’s lesson)', async () => {
+    vi.clearAllMocks();
+    let resolveRead: (batches: ImportBatch[]) => void = () => undefined;
+    importBatchesRepository.getAll.mockReturnValue(
+      new Promise<ImportBatch[]>((resolve) => {
+        resolveRead = resolve;
+      }),
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
+        { provide: ImportService, useValue: importService },
+        { provide: RulesEngineService, useValue: rulesEngineService },
+        { provide: CoOwnerContributionService, useValue: coOwnerContributionService },
+        { provide: TransactionsStore, useValue: transactionsStore },
+        { provide: TransfersStore, useValue: transfersStore },
+      ],
+    });
+    const store = TestBed.inject(ImportBatchesStore);
+
+    // Mid-flight, the map is empty for the same reason it is empty for an account with no batches
+    // — which is exactly why the flag exists and consumers must read it.
+    expect(store.hydrated()).toBe(false);
+    expect(store.lastImportedAtByAccountId().size).toBe(0);
+
+    resolveRead([importBatch({ id: 1, accountId: 7 })]);
+    await store.hydrate();
+
+    expect(store.hydrated()).toBe(true);
+    expect(store.lastImportedAtByAccountId().has(7)).toBe(true);
+  });
+
+  it('leaves an account with no batches out of the map, which is the "never" state', async () => {
+    const store = await storeWith([importBatch({ id: 1, accountId: 7 })]);
+
+    expect(store.lastImportedAtByAccountId().has(9)).toBe(false);
+  });
+
+  it('falls back to the previous batch when the newest one is undone', async () => {
+    const store = await storeWith([
+      importBatch({ id: 1, accountId: 7, importedAt: '2026-06-01T00:00:00.000Z' }),
+      importBatch({ id: 2, accountId: 7, importedAt: '2026-08-14T00:00:00.000Z' }),
+    ]);
+    importService.undoImport.mockResolvedValue({
+      unlinkedTransferIds: [],
+      clearedTransferTransactionIds: [],
+    });
+
+    await store.undoImport(importBatch({ id: 2, accountId: 7 }));
+
+    expect(store.lastImportedAtByAccountId().get(7)).toBe('2026-06-01T00:00:00.000Z');
+  });
+
+  it('drops the account entirely once its only batch is undone', async () => {
+    const store = await storeWith([
+      importBatch({ id: 1, accountId: 7, importedAt: '2026-08-14T00:00:00.000Z' }),
+    ]);
+    importService.undoImport.mockResolvedValue({
+      unlinkedTransferIds: [],
+      clearedTransferTransactionIds: [],
+    });
+
+    await store.undoImport(importBatch({ id: 1, accountId: 7 }));
+
+    expect(store.lastImportedAtByAccountId().has(7)).toBe(false);
   });
 });

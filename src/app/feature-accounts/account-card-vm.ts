@@ -1,4 +1,5 @@
 import type { Account } from '@/core/data-access';
+import type { LastImportStatus } from './last-import-status';
 
 /** One account card's full render state (TICKET-ACC-05), joined once so the `@for` loop over
  * accounts never calls a component method per row — `balanceFor`/`shareFor`/`isFirst`/`isLast`/
@@ -18,4 +19,11 @@ export type AccountCardVm = {
   iconName: string;
   /** Last 4 characters of the account's IBAN, or `null` when it has none. */
   ibanTail: string | null;
+  /**
+   * How current this account's data is (TICKET-ACC-13) — label and marking already resolved.
+   * `null` until `ImportBatchesStore` has hydrated: an un-hydrated store is indistinguishable from
+   * an account that was never imported into, and saying "Never imported" about a freshly-loaded
+   * page is the bug TICKET-TRF-06 fixed on the transfers panel.
+   */
+  lastImport: LastImportStatus | null;
 };
