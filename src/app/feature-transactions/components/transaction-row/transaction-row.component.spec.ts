@@ -33,6 +33,8 @@ const rowVm = (overrides: Partial<TransactionRowVm> = {}): TransactionRowVm => (
   categoryId: '',
   // The default transaction is an expense, so the default row is one the table marks (TICKET-UI-27).
   amountColor: 'money-negative',
+  // Unlinked by default, so the default row renders its category picker (TICKET-TRF-06).
+  transferLabel: undefined,
   ...overrides,
 });
 
@@ -154,5 +156,54 @@ describe('TransactionRowComponent', () => {
     (element.querySelector('[aria-label="Edit transaction"]') as HTMLElement).click();
 
     expect(edits).toBe(1);
+  });
+});
+
+/**
+ * TICKET-TRF-06 — a linked transfer has no category by design (TICKET-TRF-01), but the cell rendered
+ * that as "Uncategorised", i.e. as the one thing the user is trained to go and fix. The presentation
+ * changes; the data rule does not.
+ */
+describe('TransactionRowComponent: a linked transfer reads as linked (TICKET-TRF-06)', () => {
+  const render = async (vm: TransactionRowVm): Promise<HTMLElement> => {
+    await TestBed.configureTestingModule({
+      imports: [TransactionRowComponent],
+      providers: [
+        { provide: AppSettingsRepository, useValue: { get: vi.fn().mockResolvedValue({ id: 1 }) } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(TransactionRowComponent);
+    fixture.componentRef.setInput('row', vm);
+    fixture.componentRef.setInput('categoryOptions', []);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  it('replaces the category picker with the transfer and its counterpart account', async () => {
+    const row = await render(rowVm({ transferId: 7, transferLabel: 'Transfer · Savings' }));
+
+    expect(row.textContent).toContain('Transfer · Savings');
+    expect(row.textContent).not.toContain('Uncategorised');
+    // The picker is gone, not merely relabelled — there is no category to set on a linked leg.
+    expect(row.querySelector('app-category-select-cell')).toBeNull();
+  });
+
+  it('states the linked status in text, separately from the unlink action label', async () => {
+    const row = await render(rowVm({ transferId: 7, transferLabel: 'Transfer · Savings' }));
+
+    // The chain button's "Unlink transfer" is an action label and was doing double duty as the
+    // state label — an icon whose accessible name describes undoing the thing it indicates.
+    const unlink = row.querySelector('[aria-label="Unlink transfer"]');
+    expect(unlink).not.toBeNull();
+    expect(unlink?.textContent).not.toContain('Transfer · Savings');
+  });
+
+  it('leaves an unlinked uncategorised row exactly as it was', async () => {
+    const row = await render(rowVm({ transferId: undefined, transferLabel: undefined }));
+
+    expect(row.querySelector('app-category-select-cell')).not.toBeNull();
+    expect(row.textContent).toContain('Uncategorised');
   });
 });

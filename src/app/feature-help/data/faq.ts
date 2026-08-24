@@ -29,7 +29,7 @@ export const FAQ_ENTRIES: readonly FaqEntry[] = [
     question:
       "Why were two transactions linked as a transfer automatically — and how do I undo it if it's wrong?",
     answer:
-      'Money moving between your own accounts is detected automatically so it doesn\'t get double-counted as both an expense and income. A same-IBAN match links instantly; a less certain match waits in the Transactions page\'s "Review possible transfers" panel for you to confirm. If a pairing is wrong, use the "Unlink transfer" action on that transaction\'s row — both sides go back to being ordinary, unlinked transactions.',
+      'Money moving between your own accounts is detected automatically so it doesn\'t get double-counted as both an expense and income. A same-IBAN match links instantly; a less certain match waits in the Transactions page\'s "Review possible transfers" panel, whose button says how many pairs are waiting, for you to confirm. A linked row\'s Category column reads "Transfer" and names the account at the other end instead of showing a category — that is what a correctly linked transfer looks like. If a pairing is wrong, use the "Unlink transfer" action on that transaction\'s row — both sides go back to being ordinary, unlinked transactions.',
   },
   {
     question: "I set a transaction's category manually — why didn't a new rule change it?",

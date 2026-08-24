@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { tablerPencil, tablerUnlink } from '@ng-icons/tabler-icons';
+import { tablerArrowsExchange, tablerPencil, tablerUnlink } from '@ng-icons/tabler-icons';
 import { BadgeComponent, ButtonComponent, FlexComponent, TypographyComponent } from '@/shared/ui';
 import { LocaleDatePipe, SignedAmountPipe } from '@/shared/utils';
 import type { CategorySelectOption } from '../../category-picker';
@@ -38,7 +38,7 @@ import { CategorySelectCellComponent } from '../category-select-cell/category-se
       }
     `,
   ],
-  viewProviders: [provideIcons({ tablerPencil, tablerUnlink })],
+  viewProviders: [provideIcons({ tablerArrowsExchange, tablerPencil, tablerUnlink })],
 })
 export class TransactionRowComponent {
   readonly row = input.required<TransactionRowVm>();

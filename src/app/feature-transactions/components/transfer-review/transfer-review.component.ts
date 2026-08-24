@@ -58,19 +58,53 @@ export class TransferReviewComponent {
     autoLinkMediumConfidence: [this.settingsStore.autoLinkMediumConfidence()],
   });
 
-  /** Gates the expensive match scan: while collapsed the computed short-circuits, so editing a transaction never triggers a full re-match (CR-2.2). */
   protected readonly reviewExpanded = signal(false);
 
-  /** Unique-but-disabled and genuinely ambiguous candidates, surfaced for one-click confirmation (FR-TRF-3). Only computed while the review section is expanded. */
-  protected readonly ambiguousCandidates = computed<TransferCandidate[]>(() => {
-    if (!this.reviewExpanded()) return [];
-    return resolveTransferMatches(
-      this.transactionsStore.transactions(),
-      this.accountsStore.accounts(),
-      this.categoriesStore.categories(),
-      this.settingsStore.matchWindowDays(),
-      this.settingsStore.autoLinkMediumConfidence(),
-    ).ambiguous;
+  /**
+   * Unique-but-disabled and genuinely ambiguous candidates, surfaced for one-click confirmation
+   * (FR-TRF-3).
+   *
+   * **No longer gated on `reviewExpanded`** (TICKET-TRF-06, re-deciding CR-2.2). The gate made the
+   * scan free while collapsed, but it also meant the collapsed trigger could not say how many pairs
+   * were waiting — and a review step that cannot tell you whether it is done, pending or empty is a
+   * step users never learn to perform. The count is the whole point of the trigger, so it has to be
+   * true whether or not the panel is open.
+   *
+   * The cost is bounded: this is a `computed`, so it runs once per change to the underlying data
+   * rather than per change-detection pass, it only ever considers *unlinked* transactions, and the
+   * panel exists on `/transactions` alone. If it does become a problem, move the scan behind a
+   * worker rather than putting the gate back — the gate is what hid the step.
+   */
+  protected readonly ambiguousCandidates = computed<TransferCandidate[]>(
+    () =>
+      resolveTransferMatches(
+        this.transactionsStore.transactions(),
+        this.accountsStore.accounts(),
+        this.categoriesStore.categories(),
+        this.settingsStore.matchWindowDays(),
+        this.settingsStore.autoLinkMediumConfidence(),
+      ).ambiguous,
+  );
+
+  /** How many pairs are waiting on the user — the figure the trigger states (TICKET-TRF-06). */
+  protected readonly pendingCount = computed(() => this.ambiguousCandidates().length);
+
+  /** How many pairs are already linked, so "nothing to review" reads as *resolved* rather than as *empty*. */
+  protected readonly linkedCount = computed(() => this.transfersStore.transfers().length);
+
+  /**
+   * The trigger's own status line (TICKET-TRF-06). Three states, deliberately worded apart: pairs
+   * waiting, everything linked and nothing waiting, and no transfers at all — an app with no linked
+   * pairs and no candidates has not "finished reviewing", it has nothing to review yet.
+   */
+  protected readonly reviewStatus = computed(() => {
+    const pending = this.pendingCount();
+    const linked = this.linkedCount();
+
+    if (pending > 0)
+      return `${pending} pair${pending === 1 ? '' : 's'} need${pending === 1 ? 's' : ''} review`;
+    if (linked > 0) return `${linked} pair${linked === 1 ? '' : 's'} linked, none to review`;
+    return 'No transfers found yet';
   });
 
   protected readonly lastRunCount = signal<number | null>(null);

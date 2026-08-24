@@ -15,6 +15,16 @@ export type TransactionRowVm = {
   /** Id of the transfer this row is linked to, `undefined` when it isn't — the only field the row
    * needs off the transfer, so the unlink button binds it without a `!` assertion. */
   transferId: number | undefined;
+  /**
+   * What a linked row's Category cell says instead of "Uncategorised" (TICKET-TRF-06), naming the
+   * account at the other end — `Transfer · Savings`, or just `Transfer` when the counterpart leg
+   * cannot be resolved. `undefined` for every unlinked row, which keeps its category picker.
+   *
+   * Linking clears the category on purpose (TICKET-TRF-01) and this ticket does not touch that rule:
+   * a correctly-linked transfer was simply being *presented* as the one thing the user is trained to
+   * go and fix.
+   */
+  transferLabel: string | undefined;
   likelyTransfer: boolean;
   selected: boolean;
   /**

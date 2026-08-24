@@ -27,11 +27,23 @@
   </td>
   <td>{{ row().accountName }}</td>
   <td>
-    <app-category-select-cell
-      [options]="categoryOptions()"
-      [selectedId]="row().categoryId"
-      (categoryChange)="categoryChanged.emit($event)"
-    />
+    <!-- A linked transfer has no category on purpose (TICKET-TRF-01), but rendering it as
+         "Uncategorised" presented a finished row as the one thing the user is trained to go and fix
+         (TICKET-TRF-06). It says what it is instead, and names the account at the other end. The
+         text is the state; the chain button's "Unlink transfer" is an action label and cannot do
+         double duty as one. -->
+    @if (row().transferLabel; as transferLabel) {
+      <mm-badge variant="outline" color="info" size="sm">
+        <ng-icon name="tablerArrowsExchange" size="12" aria-hidden="true" />
+        {{ transferLabel }}
+      </mm-badge>
+    } @else {
+      <app-category-select-cell
+        [options]="categoryOptions()"
+        [selectedId]="row().categoryId"
+        (categoryChange)="categoryChanged.emit($event)"
+      />
+    }
   </td>
   <td class="text-right">
     <mm-text [color]="row().amountColor" [numeric]="true">

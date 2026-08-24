@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-TRF-06',
-    title: 'Linked transfers say so, and the review step shows how much is left to check',
-    area: 'Transfers',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-STAT-43',
     title: 'One colour means one amount across the whole spending heatmap',
     area: 'Dashboard',

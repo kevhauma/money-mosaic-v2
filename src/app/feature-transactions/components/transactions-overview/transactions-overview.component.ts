@@ -37,6 +37,7 @@ import {
   type TransactionFilters,
 } from '../../transaction-filters';
 import type { TransactionRowVm } from '../../transaction-row-vm';
+import { transferLabelFor } from '../../transfer-label';
 import { bookingDateSpan, type CategorySelectOption } from '../../category-picker';
 import { TransactionBulkBarComponent } from '../transaction-bulk-bar/transaction-bulk-bar.component';
 import {
@@ -212,6 +213,9 @@ export class TransactionsOverviewComponent {
     const accountsById = this.accountsStore.accountsById();
     const categoriesById = this.categoriesStore.categoriesById();
     const transferByTransactionId = this.transfersStore.transferByTransactionId();
+    // The counterpart leg is looked up by id, so a transfer whose other half has been deleted
+    // degrades to a bare "Transfer" rather than naming an account that isn't there.
+    const transactionsById = this.transactionsStore.transactionsById();
     const likelyTransferIds = this.likelyTransferIds();
     const selectedIds = this.selection.selectedIds();
 
@@ -230,6 +234,12 @@ export class TransactionsOverviewComponent {
           ? String(transaction.categoryId)
           : '',
       amountColor: negativeMoneyColor(transaction.amount),
+      transferLabel: transferLabelFor(
+        transaction,
+        transferByTransactionId.get(transaction.id!),
+        transactionsById,
+        accountsById,
+      ),
     }));
   });
 

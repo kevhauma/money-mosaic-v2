@@ -29,8 +29,15 @@
           Linked {{ lastRunCount() }} pair{{ lastRunCount() === 1 ? '' : 's' }}.
         </mm-text>
       }
+      <!-- The trigger carried no count at all (TICKET-TRF-06), so nothing on this page said whether
+           the third step of import → categorise → review → read was done, pending or empty. The
+           status sits on the button itself rather than beside it, so it is part of what the button
+           announces to a screen reader too. -->
       <mm-button size="sm" variant="ghost" (click)="toggleReview()">
         {{ reviewExpanded() ? 'Hide' : 'Review' }} possible transfers
+        @if (pendingCount() > 0) {
+          <span class="badge badge-warning badge-sm">{{ pendingCount() }}</span>
+        }
       </mm-button>
       <mm-button size="sm" (click)="runAutoLink()">
         <ng-icon name="tablerRefresh" size="16" aria-hidden="true" />
@@ -38,6 +45,8 @@
       </mm-button>
     </mm-flex>
   </mm-flex>
+
+  <mm-text as="p" variant="caption" class="mt-1 block text-right">{{ reviewStatus() }}</mm-text>
 
   @if (reviewExpanded()) {
     @if (ambiguousCandidates().length > 0) {
@@ -82,9 +91,9 @@
         }
       </div>
     } @else {
-      <mm-text as="p" class="mt-4 text-sm text-base-content/60"
-        >No possible transfers awaiting confirmation.</mm-text
-      >
+      <!-- Reads as *resolved*, not merely empty (TICKET-TRF-06) — "no possible transfers awaiting
+           confirmation" left the user unable to tell a finished review from one that never ran. -->
+      <mm-text as="p" class="mt-4 text-sm text-base-content/60">{{ reviewStatus() }}.</mm-text>
     }
   }
 </mm-paper>

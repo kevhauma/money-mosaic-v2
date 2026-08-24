@@ -1204,4 +1204,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The confirmation also names the date and the amount, not just the description: “Supermarket” alone matched eight different rows.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-TRF-06'],
+    title: 'Transfer review says how much is left to check, and linked rows say they are linked',
+    area: 'Transfers',
+    details: [
+      'The “Review possible transfers” button carried no count, so nothing told you whether that step was done, pending, or empty. It now says how many pairs need review — and “none to review” once they are all dealt with, which is different from having no transfers at all.',
+      'A transaction linked as a transfer used to show “Uncategorised” in its Category column, which is exactly what you are trained to go and fix. It now reads “Transfer” and names the account at the other end.',
+      'Nothing about the linking itself changed: a linked transfer still has no category, and still counts toward net worth without counting as income or expense.',
+    ],
+  },
 ];

@@ -92,12 +92,12 @@ export const GUIDES: readonly Guide[] = [
       {
         title: 'Review ambiguous matches',
         description:
-          'On the Transactions page, open "Review possible transfers" to see pairs that were close but not certain enough to link automatically. Confirm a pair to link it, or leave it if it isn\'t really a transfer.',
+          'On the Transactions page, the "Review possible transfers" button says how many pairs are waiting, and reads "none to review" once they are all dealt with — so you can tell a finished review from one you never ran. Open it to see pairs that were close but not certain enough to link automatically, then confirm a pair to link it, or leave it if it isn\'t really a transfer.',
       },
       {
         title: 'Undo a match that got it wrong',
         description:
-          'A linked transaction shows an "Unlink transfer" action on its row — use it to break an incorrect pairing; both sides go back to being counted as normal transactions.',
+          'A linked transaction\'s Category column reads "Transfer" followed by the account at the other end, rather than a category — that is how a linked row is meant to look, not something to go and fix. To break an incorrect pairing, use the "Unlink transfer" action on that row; both sides go back to being counted as normal transactions.',
       },
       {
         title: 'Tune the matching settings',

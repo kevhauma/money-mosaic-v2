@@ -53,6 +53,15 @@ export const TransactionsStore = signalStore(
     );
     return {
       transactions: entities,
+      /**
+       * By Dexie id, for resolving one transaction from another's reference — the counterpart leg of
+       * a `Transfer`, say (TICKET-TRF-06). Memoized here rather than rebuilt per consumer: a caller
+       * that builds it inside a view-model computed rebuilds the whole map every time the *page* or
+       * the *selection* changes, not just when the data does.
+       */
+      transactionsById: computed(
+        () => new Map(entities().map((transaction) => [transaction.id!, transaction])),
+      ),
       uncategorisedTransactions,
       uncategorisedCount: computed(() => uncategorisedTransactions().length),
     };
