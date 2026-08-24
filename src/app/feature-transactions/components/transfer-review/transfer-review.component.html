@@ -31,12 +31,15 @@
       }
       <!-- The trigger carried no count at all (TICKET-TRF-06), so nothing on this page said whether
            the third step of import → categorise → review → read was done, pending or empty. The
-           status sits on the button itself rather than beside it, so it is part of what the button
-           announces to a screen reader too. -->
+           badge is the count at a glance; the `sr-only` sentence beside it is what carries the same
+           thing into the button's accessible name, since a naked "3" announces as a naked "3". -->
       <mm-button size="sm" variant="ghost" (click)="toggleReview()">
         {{ reviewExpanded() ? 'Hide' : 'Review' }} possible transfers
         @if (pendingCount() > 0) {
-          <span class="badge badge-warning badge-sm">{{ pendingCount() }}</span>
+          <mm-badge color="warning" size="sm" aria-hidden="true">{{ pendingCount() }}</mm-badge>
+        }
+        @if (reviewStatus(); as status) {
+          <span class="sr-only">— {{ status }}</span>
         }
       </mm-button>
       <mm-button size="sm" (click)="runAutoLink()">
@@ -46,7 +49,9 @@
     </mm-flex>
   </mm-flex>
 
-  <mm-text as="p" variant="caption" class="mt-1 block text-right">{{ reviewStatus() }}</mm-text>
+  @if (reviewStatus(); as status) {
+    <mm-text as="p" variant="caption" class="mt-1 block text-right">{{ status }}</mm-text>
+  }
 
   @if (reviewExpanded()) {
     @if (ambiguousCandidates().length > 0) {
@@ -91,9 +96,12 @@
         }
       </div>
     } @else {
-      <!-- Reads as *resolved*, not merely empty (TICKET-TRF-06) — "no possible transfers awaiting
-           confirmation" left the user unable to tell a finished review from one that never ran. -->
-      <mm-text as="p" class="mt-4 text-sm text-base-content/60">{{ reviewStatus() }}.</mm-text>
+      <!-- Panel-specific, and deliberately NOT a second copy of `reviewStatus()` — the trigger above
+           already carries the resolved-vs-never-ran distinction (TICKET-TRF-06), and repeating the
+           same sentence two lines apart reads as a rendering bug. -->
+      <mm-text as="p" class="mt-4 text-sm text-base-content/60">
+        No pairs are waiting on you.
+      </mm-text>
     }
   }
 </mm-paper>

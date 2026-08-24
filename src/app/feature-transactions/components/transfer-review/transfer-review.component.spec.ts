@@ -153,7 +153,34 @@ describe('TransferReviewComponent: the review trigger states its status (TICKET-
     const internals = fixture.componentInstance as unknown as { pendingCount: () => number };
 
     expect(internals.pendingCount()).toBe(0);
-    expect(element.textContent).toContain('1 pair linked, none to review');
+    expect(element.textContent).toContain('1 pair linked, none to review.');
+  });
+
+  it('says nothing at all until the stores have hydrated', async () => {
+    // An un-hydrated store looks exactly like "no transfers exist", and claiming that mid-load is
+    // the same class of lie the three states above exist to avoid.
+    await TestBed.configureTestingModule({
+      imports: [TransferReviewComponent],
+      providers: [
+        provideRouter([]),
+        { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        { provide: TransfersRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        {
+          provide: AccountsRepository,
+          useValue: { getAll: vi.fn().mockResolvedValue([]), update: vi.fn().mockResolvedValue(1) },
+        },
+        { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+      ],
+    }).compileComponents();
+
+    // Deliberately not hydrated — no `hydrate({ force: true })` before the first render.
+    const fixture = TestBed.createComponent(TransferReviewComponent);
+    fixture.detectChanges();
+    const internals = fixture.componentInstance as unknown as { reviewStatus: () => string };
+
+    expect(TestBed.inject(AccountsStore).dataReady()).toBe(false);
+    expect(internals.reviewStatus()).toBe('');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('No transfers found');
   });
 
   it('distinguishes "nothing to review yet" from a finished review', async () => {
@@ -161,7 +188,7 @@ describe('TransferReviewComponent: the review trigger states its status (TICKET-
 
     // An app with no linked pairs and no candidates has not finished reviewing — it has nothing to
     // review yet, and saying "none to review" there would claim a step was done that never ran.
-    expect(element.textContent).toContain('No transfers found yet');
+    expect(element.textContent).toContain('No transfers found yet.');
     expect(element.textContent).not.toContain('none to review');
   });
 });

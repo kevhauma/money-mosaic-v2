@@ -11,6 +11,7 @@ import {
 } from '@/core/state';
 import { resolveTransferMatches, type TransferCandidate } from '@/core/transfers';
 import {
+  BadgeComponent,
   ButtonComponent,
   FieldsetComponent,
   FlexComponent,
@@ -28,6 +29,7 @@ import { LocaleDatePipe, negativeMoneyColor, SignedAmountPipe } from '@/shared/u
     NgIcon,
     LocaleDatePipe,
     SignedAmountPipe,
+    BadgeComponent,
     ButtonComponent,
     FieldsetComponent,
     FlexComponent,
@@ -96,15 +98,22 @@ export class TransferReviewComponent {
    * The trigger's own status line (TICKET-TRF-06). Three states, deliberately worded apart: pairs
    * waiting, everything linked and nothing waiting, and no transfers at all — an app with no linked
    * pairs and no candidates has not "finished reviewing", it has nothing to review yet.
+   *
+   * Empty until the stores have hydrated, and the caption is not rendered at all while it is. An
+   * un-hydrated store looks exactly like "no transfers exist", and claiming that during a load is
+   * the same class of lie this ticket exists to remove — `dataReady` is the app's established gate
+   * for it (`AccountsStore`, = transactions hydrated && transfers hydrated).
    */
   protected readonly reviewStatus = computed(() => {
+    if (!this.accountsStore.dataReady()) return '';
+
     const pending = this.pendingCount();
     const linked = this.linkedCount();
 
     if (pending > 0)
-      return `${pending} pair${pending === 1 ? '' : 's'} need${pending === 1 ? 's' : ''} review`;
-    if (linked > 0) return `${linked} pair${linked === 1 ? '' : 's'} linked, none to review`;
-    return 'No transfers found yet';
+      return `${pending} pair${pending === 1 ? '' : 's'} need${pending === 1 ? 's' : ''} review.`;
+    if (linked > 0) return `${linked} pair${linked === 1 ? '' : 's'} linked, none to review.`;
+    return 'No transfers found yet.';
   });
 
   protected readonly lastRunCount = signal<number | null>(null);
