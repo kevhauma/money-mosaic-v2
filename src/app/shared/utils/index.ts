@@ -29,3 +29,4 @@ export * from './theme-hooks';
 export * from './money-color';
 export * from './hidden-amount';
 export * from './link-control-to-setting';
+export * from './compact-viewport';

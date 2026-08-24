@@ -586,4 +586,113 @@ describe('TransactionsOverviewComponent', () => {
       expect(component.selectedDateSpan()).toEqual({ from: '2026-06-01', to: '2026-06-01' });
     });
   });
+
+  /**
+   * TICKET-TXN-12 — the page renders *one* of its two row presentations, chosen by viewport width.
+   * What matters here is the swap and that nothing is dropped in it; whether each card is readable
+   * is `transaction-card.component.spec.ts`'s business.
+   */
+  describe('compact layout below the table breakpoint (TICKET-TXN-12)', () => {
+    const groceries: Category = {
+      id: 7,
+      name: 'Groceries',
+      kind: 'expense',
+      color: '#7F77DD',
+      icon: 'tag',
+      archived: false,
+      isSystem: false,
+      sortOrder: 7,
+    };
+
+    /** jsdom evaluates no media query, so the width the page thinks it has is stubbed. */
+    const stubViewport = (compact: boolean): void => {
+      vi.stubGlobal(
+        'matchMedia',
+        vi.fn(() => ({
+          matches: compact,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+        })),
+      );
+    };
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('renders the table, and no cards, at desktop width', async () => {
+      stubViewport(false);
+      await setup();
+      TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2)]);
+      fixture.detectChanges();
+      const page: HTMLElement = fixture.nativeElement;
+
+      expect(page.querySelectorAll('app-transaction-row')).toHaveLength(2);
+      expect(page.querySelectorAll('app-transaction-card')).toHaveLength(0);
+      expect(page.querySelector('mm-table')).not.toBeNull();
+    });
+
+    it('renders a card per row, and no table, on a phone', async () => {
+      stubViewport(true);
+      await setup();
+      TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2)]);
+      fixture.detectChanges();
+      const page: HTMLElement = fixture.nativeElement;
+
+      expect(page.querySelectorAll('app-transaction-card')).toHaveLength(2);
+      expect(page.querySelectorAll('app-transaction-row')).toHaveLength(0);
+      expect(page.querySelector('mm-table')).toBeNull();
+    });
+
+    it('keeps select-all reachable without the table header it used to hang off', async () => {
+      stubViewport(true);
+      await setup();
+      TestBed.inject(TransactionsStore).addMany([transaction(1), transaction(2)]);
+      fixture.detectChanges();
+      const page: HTMLElement = fixture.nativeElement;
+
+      const selectAll = page.querySelector(
+        'input[aria-label="Select all filtered transactions"]',
+      ) as HTMLInputElement;
+      expect(selectAll).not.toBeNull();
+
+      selectAll.click();
+
+      expect(internals().selection.count()).toBe(2);
+    });
+
+    /**
+     * The two branches carry the same six bindings on different elements, so the failure mode is an
+     * output wired in one and forgotten in the other. This drives every one of them through the
+     * card and asserts it lands where the table row's does — the card's own spec checks what is
+     * *rendered*, which would not catch a dropped `(editRequested)`.
+     */
+    it('routes a card’s actions to the same handlers the table rows use', async () => {
+      stubViewport(true);
+      transactionsRepository.getAll.mockResolvedValue([transaction(1), transaction(2)]);
+      categoriesRepository.getAll.mockResolvedValue([groceries]);
+      await setup();
+      await TestBed.inject(TransactionsStore).hydrate();
+      await TestBed.inject(CategoriesStore).hydrate();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const page: HTMLElement = fixture.nativeElement;
+      const firstCard = page.querySelector('app-transaction-card') as HTMLElement;
+
+      (firstCard.querySelector('input[type="checkbox"]') as HTMLInputElement).click();
+      expect(internals().selection.count()).toBe(1);
+
+      (firstCard.querySelector('[aria-label="Edit transaction"]') as HTMLElement).click();
+      expect((fixture.componentInstance as unknown as { formOpen: () => boolean }).formOpen()).toBe(
+        true,
+      );
+
+      const select = firstCard.querySelector('select') as HTMLSelectElement;
+      select.value = '7';
+      select.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(transactionsRepository.update).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.objectContaining({ categoryId: 7, categoryManual: true }),
+      );
+    });
+  });
 });

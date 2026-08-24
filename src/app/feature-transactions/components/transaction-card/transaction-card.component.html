@@ -1,0 +1,101 @@
+<!-- `mm-paper`, not a hand-rolled bordered box: the desktop branch's surface comes from `mm-table`'s
+     `.mm-table-wrap`, which five themes restyle, so a re-authored `rounded-box border bg-base-100`
+     would leave the phone layout flat on exactly those themes while the same page is themed on a
+     laptop. `raised` is the tier a list surface takes; `bodyClass` swaps daisyUI's roomy card
+     padding for the compact one a row needs. -->
+<li>
+  <mm-paper elevation="raised" bodyClass="p-3">
+    <mm-flex align="start" gap="2">
+      <!-- The checkbox keeps its 20px look and gets a 44px hit area from the label around it: the
+           label is the target, so growing it costs no visual weight (TICKET-TXN-12). -->
+      <label class="-m-1 flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
+        <input
+          type="checkbox"
+          class="checkbox checkbox-sm"
+          [attr.aria-label]="row().ariaLabel"
+          [checked]="row().selected"
+          (change)="selectionToggled.emit()"
+        />
+      </label>
+
+      <div class="min-w-0 flex-1">
+        <mm-flex align="start" justify="between" gap="2">
+          <mm-text variant="caption" class="whitespace-nowrap">
+            {{ row().transaction.bookingDate | localeDate }}
+          </mm-text>
+          <!-- The column the review found people scrolling sideways for, so it leads the card
+               alongside the date rather than trailing the row (TICKET-TXN-12). -->
+          <mm-text
+            [color]="row().amountColor"
+            [numeric]="true"
+            weight="medium"
+            class="whitespace-nowrap"
+          >
+            {{ row().transaction.amount | signedAmount }}
+          </mm-text>
+        </mm-flex>
+
+        <mm-text as="p" class="mt-1 break-words">{{ row().transaction.rawDescription }}</mm-text>
+
+        @if (row().transaction.counterpartyName) {
+          <mm-text as="p" variant="caption" class="break-words">
+            {{ row().transaction.counterpartyName }}
+          </mm-text>
+        }
+
+        <mm-flex align="center" gap="1" [wrap]="true" class="mt-1">
+          <mm-text variant="caption">{{ row().accountName }}</mm-text>
+          @if (row().likelyTransfer) {
+            <mm-badge variant="outline" size="sm">Likely transfer</mm-badge>
+          }
+          @if (row().transaction.nullified) {
+            <mm-badge variant="outline" color="warning" size="sm">Nullified</mm-badge>
+          }
+        </mm-flex>
+      </div>
+    </mm-flex>
+
+    <mm-flex align="center" justify="between" gap="2" class="mt-2">
+      <div class="min-w-0 flex-1">
+        <!-- Same rule as the table cell (TICKET-TRF-06): a linked transfer says what it is instead
+             of offering a picker it has no business having. -->
+        @if (row().transferLabel; as transferLabel) {
+          <mm-badge variant="outline" color="info" size="sm">
+            <ng-icon name="tablerArrowsExchange" size="12" aria-hidden="true" />
+            {{ transferLabel }}
+          </mm-badge>
+        } @else {
+          <app-category-select-cell
+            density="card"
+            [options]="categoryOptions()"
+            [selectedId]="row().categoryId"
+            (categoryChange)="categoryChanged.emit($event)"
+          />
+        }
+      </div>
+
+      <mm-flex align="center" justify="end" gap="1" class="shrink-0">
+        @if (row().transferId; as transferId) {
+          <mm-button
+            variant="ghost"
+            shape="square"
+            class="min-h-11 min-w-11"
+            ariaLabel="Unlink transfer"
+            (click)="unlinkRequested.emit(transferId)"
+          >
+            <ng-icon name="tablerUnlink" size="18" aria-hidden="true" />
+          </mm-button>
+        }
+        <mm-button
+          variant="ghost"
+          shape="square"
+          class="min-h-11 min-w-11"
+          ariaLabel="Edit transaction"
+          (click)="editRequested.emit()"
+        >
+          <ng-icon name="tablerPencil" size="18" aria-hidden="true" />
+        </mm-button>
+      </mm-flex>
+    </mm-flex>
+  </mm-paper>
+</li>

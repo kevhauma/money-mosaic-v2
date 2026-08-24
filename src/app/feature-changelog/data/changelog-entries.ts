@@ -1228,4 +1228,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'That has not been true since the grid moved to a single shared scale and the All total moved out into its own strip above it. The caption now states the rule that actually holds: within a colour, deeper means more spend, and the same depth means the same amount in any row.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-TXN-12'],
+    title: 'Transactions is readable on a phone',
+    area: 'Transactions',
+    details: [
+      'On a narrow screen the transactions table was 750px wide inside a 375px window, so the Amount column and both row buttons sat off-screen and you had to scroll sideways to reach them.',
+      'Below tablet width the same rows now render as cards: date and amount on the top line, then the description, the counterparty and the account, with the category picker and the edit and unlink buttons on the last line.',
+      'Every one of those is at least 44px to tap — the checkboxes and icon buttons were 20px and 24px. Select all is still there, on its own control now that there is no table header to hang it off.',
+      'Nothing changes on a laptop: at tablet width and above you get exactly the table you had.',
+    ],
+  },
 ];

@@ -16,15 +16,18 @@ import {
   AlertComponent,
   ButtonComponent,
   EmptyStateComponent,
+  FlexComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
   PaginatorComponent,
   TableComponent,
+  TypographyComponent,
 } from '@/shared/ui';
 import {
   createPagination,
   createSelectionModel,
   formatDate,
+  isCompactViewport,
   negativeMoneyColor,
   normalizeIban,
 } from '@/shared/utils';
@@ -40,6 +43,7 @@ import type { TransactionRowVm } from '../../transaction-row-vm';
 import { transferLabelFor } from '../../transfer-label';
 import { bookingDateSpan, type CategorySelectOption } from '../../category-picker';
 import { TransactionBulkBarComponent } from '../transaction-bulk-bar/transaction-bulk-bar.component';
+import { TransactionCardComponent } from '../transaction-card/transaction-card.component';
 import {
   TransactionEditFormComponent,
   type TransactionEditResult,
@@ -70,16 +74,19 @@ const EMPTY_FILTERS: TransactionFilters = {
     AlertComponent,
     ButtonComponent,
     EmptyStateComponent,
+    FlexComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
     PaginatorComponent,
     RuleFormComponent,
     TableComponent,
     TransactionBulkBarComponent,
+    TransactionCardComponent,
     TransactionEditFormComponent,
     TransactionFiltersComponent,
     TransactionRowComponent,
     TransferReviewComponent,
+    TypographyComponent,
   ],
   templateUrl: './transactions-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -98,6 +105,14 @@ export class TransactionsOverviewComponent {
   readonly categoryId = input<string>();
 
   private readonly filterBar = viewChild.required(TransactionFiltersComponent);
+
+  /**
+   * Which of the two row presentations to render (TICKET-TXN-12). The table measures ~750px, so
+   * below `md` it was read through a horizontal scrollbar with the Amount column and both row
+   * actions off-screen; under this signal the same rows render as cards instead. Desktop is
+   * untouched — the signal is `false` at every width the table already fitted.
+   */
+  protected readonly compactLayout = isCompactViewport();
 
   /** Current filter set, owned by `app-transaction-filters` and pushed up on any settled change. */
   protected readonly filters = signal<TransactionFilters>(EMPTY_FILTERS);

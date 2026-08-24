@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-TXN-12',
-    title: 'Transactions become readable and tappable on a phone',
-    area: 'Transactions',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-ACC-13',
     title: 'Each account shows when it was last imported, so you know what to trust',
     area: 'Accounts',
