@@ -26,8 +26,10 @@
       [attr.aria-label]="chartAriaLabel()"
     ></div>
 
-    <!-- Replaces the amount scale the single ramp used to draw under the chart (TICKET-STAT-34):
-         each row has its own scale now, so no one colour maps to one amount. -->
+    <!-- Replaces the amount scale the single ramp used to draw under the chart (TICKET-STAT-34).
+         The grid is on one pooled scale, so ramp *depth* maps to one spend across every category
+         row — the hue is still the category's — and the caption states that rather than disclaiming
+         that a row is exempt (TICKET-STAT-43). -->
     <mm-text as="p" variant="caption">{{ shadingCaption }}</mm-text>
 
     @if (partialCycleNote(); as note) {

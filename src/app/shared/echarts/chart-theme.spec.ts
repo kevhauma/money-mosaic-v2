@@ -298,10 +298,10 @@ describe('resolveHeatmapCellColor (TICKET-STAT-34)', () => {
       setDataTheme(theme);
       const mode = resolveChartPlotMode();
       for (const anchor of anchors) {
-        for (const rowScale of scales) {
-          for (const amount of [0, rowScale.average, rowScale.max, 999]) {
+        for (const amountScale of scales) {
+          for (const amount of [0, amountScale.average, amountScale.max, 999]) {
             expect(
-              resolveHeatmapCellColor(anchor, rowScale, amount, mode),
+              resolveHeatmapCellColor(anchor, amountScale, amount, mode),
               `${theme} ${anchor}`,
             ).toMatch(HEX);
           }

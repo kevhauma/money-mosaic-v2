@@ -151,7 +151,7 @@ export function resolveHeatmapTotalsColor(): string {
 }
 
 /** One heatmap row's own extent, the scale a cell in it is read against (TICKET-STAT-34). */
-export type HeatmapRowScale = { min: number; average: number; max: number };
+export type HeatmapAmountScale = { min: number; average: number; max: number };
 
 /**
  * How far the quietest cell in a row fades into the plot background. High, because a below-average
@@ -196,28 +196,32 @@ const normalizeHex = (hex: string): string =>
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
 
 /**
- * One heatmap cell's colour, on its own row's scale (TICKET-STAT-34) — replacing TICKET-STAT-29's
- * single grid-wide ramp, under which one heavy category flattened every other row to two
- * indistinguishable pale shades.
+ * One heatmap cell's colour, against whatever `scale` the caller pools it on (TICKET-STAT-34) —
+ * replacing TICKET-STAT-29's amount-labelled `visualMap`, which gave the whole chart one ramp and
+ * one legend. **Which** amounts make up the scale is the caller's decision, not this function's:
+ * the spending heatmap pools every category cell into one and puts its `All` strip on a second
+ * (TICKET-STAT-43), so "row" appears nowhere in the contract below.
  *
- * The row's **average** is the anchor: a cell there draws in the category's configured colour
- * exactly, so the colour most of the row's cells sit near is the one on the category's dot
- * everywhere else in the app. Below it the colour moves toward the plot background, above it away
- * from it — stated once as *heavier spend always stands out more*, which on a dark theme means
- * lighter and on a light theme darker, rather than two palettes to keep in sync.
+ * The scale's **average** is the anchor: a cell there draws in the category's configured colour
+ * exactly, so the colour most cells sit near is the one on the category's dot everywhere else in
+ * the app. Below it the colour moves toward the plot background, above it away from it — stated
+ * once as *heavier spend always stands out more*, which on a dark theme means lighter and on a
+ * light theme darker, rather than two palettes to keep in sync.
  *
- * The average, not the range's midpoint: a row with one huge Friday and four quiet days has an
- * average far below its midpoint, and it is "what this category usually costs on a day like this"
- * that a cell is read against.
+ * The average, not the range's midpoint: a grid with one huge Friday and four quiet days has an
+ * average far below its midpoint, and it is "what this usually costs on a day like this" that a
+ * cell is read against.
  *
  * Only lightness moves — mixing toward pure white or pure black scales every channel difference
- * uniformly, so the hue survives untouched and the row stays recognisably *that* category's at
- * every intensity. A row with no spread (every cell equal, all-zero included) draws flat in the
- * category colour instead of dividing by an empty range.
+ * uniformly, so the hue survives untouched and a cell stays recognisably *that* category's at
+ * every intensity. This is also why depth, not shade, is what compares across categories: two
+ * equal amounts in differently-coloured rows land at the same ramp position in their own hues.
+ * A scale with no spread (every amount equal, all-zero included) draws flat in the category colour
+ * instead of dividing by an empty range.
  */
 export function resolveHeatmapCellColor(
   categoryColor: string,
-  scale: HeatmapRowScale,
+  scale: HeatmapAmountScale,
   amount: number,
   mode: ChartPlotMode,
 ): string {
@@ -225,8 +229,8 @@ export function resolveHeatmapCellColor(
   const { min, average, max } = scale;
   const above = amount >= average;
 
-  // The row's own reach on the side the cell falls. Zero on a row with no spread — including the
-  // all-equal and all-zero cases — which draws flat rather than dividing by it.
+  // The scale's own reach on the side the cell falls. Zero on a scale with no spread — including
+  // the all-equal and all-zero cases — which draws flat rather than dividing by it.
   const span = above ? max - average : average - min;
   if (span <= 0) return anchor;
 

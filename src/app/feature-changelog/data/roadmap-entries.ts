@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-STAT-43',
-    title: 'One colour means one amount across the whole spending heatmap',
-    area: 'Dashboard',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-TXN-12',
     title: 'Transactions become readable and tappable on a phone',
     area: 'Transactions',

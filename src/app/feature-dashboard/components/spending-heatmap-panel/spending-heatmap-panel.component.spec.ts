@@ -21,7 +21,7 @@ import {
 
 stubEchartsBrowserApis();
 
-/** What one cell looks like once its colour is resolved per row (TICKET-STAT-34) rather than by a `visualMap`. */
+/** What one cell looks like once its colour is resolved per cell (TICKET-STAT-34) rather than by a `visualMap`. */
 type HeatmapCellItem = { value: [number, number, number]; itemStyle: { color: string } };
 
 const groceries: Category = {
@@ -214,9 +214,12 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
   it('states what the shading is relative to, in place of the removed amount scale (TICKET-STAT-34)', async () => {
     await seedGroceries(transaction({ id: 1, amount: -40 }));
 
+    // The caption states the grid's rule; it no longer disclaims that a row is exempt from it
+    // (TICKET-STAT-43) — that wording outlived the per-row scale it described.
     expect(fixture.nativeElement.textContent).toContain(
-      'Shading is relative to your average across these categories',
+      'one scale for the whole grid — within a colour, deeper means more spend',
     );
+    expect(fixture.nativeElement.textContent).not.toContain('The All row has its own scale');
     // What remains is a hidden, label-less visualMap that only exists because echarts refuses to
     // draw a cartesian heatmap without one — not a scale the reader can see.
     expect(fixture.componentInstance['chartOption']()['visualMap']).toEqual(

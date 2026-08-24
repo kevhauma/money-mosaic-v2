@@ -1216,4 +1216,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Nothing about the linking itself changed: a linked transfer still has no category, and still counts toward net worth without counting as income or expense.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-STAT-43'],
+    title:
+      'The spending heatmap says what its colours mean, instead of warning you not to trust them',
+    area: 'Dashboard',
+    details: [
+      'The caption under the heatmap still told you “the All row has its own scale” — wording left over from an older version where every row was shaded on its own, so no two cells could be compared.',
+      'That has not been true since the grid moved to a single shared scale and the All total moved out into its own strip above it. The caption now states the rule that actually holds: within a colour, deeper means more spend, and the same depth means the same amount in any row.',
+    ],
+  },
 ];

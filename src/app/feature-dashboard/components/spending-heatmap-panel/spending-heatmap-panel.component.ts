@@ -24,7 +24,7 @@ import {
   resolveHeatmapCellColor,
   resolveHeatmapTotalsColor,
   type ChartPlotMode,
-  type HeatmapRowScale,
+  type HeatmapAmountScale,
 } from '@/shared/echarts';
 import {
   CyclePickerComponent,
@@ -61,11 +61,17 @@ const CYCLE_AXIS_NOUNS: Record<CycleKey, string> = {
 
 /**
  * What the shading means, in place of the amount scale the panel used to draw (TICKET-STAT-34).
- * Two scales, so no one colour maps to one amount across the whole chart: the categories share
- * theirs, and the `All` band is on its own.
+ *
+ * States the grid's rule at exactly the level it is true (TICKET-STAT-43). Every category row is
+ * read against one pooled scale, so *depth* is comparable across rows — but the anchor colour is
+ * still the category's own, so the sentence says "how deep", not "which shade": a pale-yellow cell
+ * and a dark-blue one at the same ramp position are the same amount, and claiming they look alike
+ * would mislead in the other direction. The `All` strip is named as what it is — a column summary
+ * above the grid — rather than as a row exempt from the grid's scale, which is how the caption read
+ * while the panel still coloured each row on its own extent.
  */
 const HEATMAP_SHADING_CAPTION =
-  'Shading is relative to your average across these categories — heavier spend stands out more. The All row has its own scale.';
+  'Every category is read against one scale for the whole grid — within a colour, deeper means more spend, and the same depth means the same amount in any row. The All strip above totals each column, on its own scale.';
 
 /**
  * One row's amounts, left to right. `cells` is dense and row-major (`buildGrid` fills every
@@ -79,8 +85,8 @@ const rowAmounts = (
 ): number[] =>
   cells.slice(rowIndex * columnCount, (rowIndex + 1) * columnCount).map((cell) => cell.amount);
 
-/** A row's own extent, the scale its cells are coloured against (TICKET-STAT-34). */
-const rowScale = (amounts: readonly number[]): HeatmapRowScale => ({
+/** The extent a set of amounts is coloured against — the pooled grid, or the band alone (TICKET-STAT-34). */
+const amountScale = (amounts: readonly number[]): HeatmapAmountScale => ({
   min: Math.min(...amounts),
   max: Math.max(...amounts),
   average: amounts.reduce((sum, amount) => sum + amount, 0) / amounts.length,
@@ -165,8 +171,8 @@ export const buildHeatmapChartOption = (
   const lastRowIndex = rows.length - 1;
 
   // One scale for every category row, pooled over the whole grid; the band gets its own.
-  const categoryScale = rowScale(cells.map((cell) => cell.amount));
-  const bandScale = rowScale(totalsRow);
+  const categoryScale = amountScale(cells.map((cell) => cell.amount));
+  const bandScale = amountScale(totalsRow);
 
   const axisLabel = { width: AXIS_LABEL_WIDTH - 12, overflow: 'truncate' as const };
   const categoriesTop = 8 + BAND_HEIGHT + BAND_MARGIN;
@@ -376,7 +382,7 @@ export class SpendingHeatmapPanelComponent {
    */
   protected readonly columnLabels = computed(() => cycleColumnLabels(this.cycle()));
 
-  /** What the colours mean, in place of the amount scale a per-row ramp can no longer draw (TICKET-STAT-34). */
+  /** What the colours mean, in place of the amount scale this panel stopped drawing (TICKET-STAT-34, TICKET-STAT-43). */
   protected readonly shadingCaption = HEATMAP_SHADING_CAPTION;
 
   protected readonly chartOption = computed<EChartsCoreOption>(() =>
