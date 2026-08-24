@@ -16,7 +16,7 @@
 
     @if (showAttribution()) {
       <app-attribution-override-fieldset
-        [open]="open()"
+        [open]="editSessionOpen()"
         [transaction]="transaction()"
         [jointAccounts]="jointAccounts()"
       />
@@ -83,11 +83,16 @@
   </form>
 </mm-modal>
 
+<!-- Split binding rather than `[(open)]` (TICKET-UI-30): the handler has to tell a Cancel/Escape
+     from a Confirm, since the dialog closes itself on both, and reopen the edit dialog only for the
+     first. The edit dialog above is already closed by the time this one opens — one modal at a
+     time, so there is one focus trap and one Escape target. -->
 <mm-confirm-dialog
-  [(open)]="deleteConfirmOpen"
+  [open]="deleteConfirmOpen()"
+  (openChange)="onDeleteConfirmOpenChange($event)"
   title="Delete this transaction?"
   [message]="deleteMessage()"
   confirmLabel="Delete permanently"
   [danger]="true"
-  (confirmed)="deleteConfirmed()"
+  (confirmed)="onDeleteConfirmed()"
 />

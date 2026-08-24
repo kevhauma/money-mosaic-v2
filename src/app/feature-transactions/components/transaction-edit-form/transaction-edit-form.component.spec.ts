@@ -12,6 +12,7 @@ import {
   type Transaction,
 } from '@/core/data-access';
 import { AccountsStore, CategoriesStore } from '@/core/state';
+import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import type { AttributionOverrideFieldsetComponent } from '../attribution-override-fieldset/attribution-override-fieldset.component';
 import { TransactionEditFormComponent } from './transaction-edit-form.component';
 
@@ -49,6 +50,10 @@ type Internals = {
     alwaysCategorise: FormControl<boolean>;
   }>;
   attributionFieldset: () => AttributionOverrideFieldsetComponent | undefined;
+  /** The delete confirm's own open model (TICKET-UI-30) — the edit dialog's is the public `open`. */
+  deleteConfirmOpen: () => boolean;
+  /** Spans the detour through the delete confirm; what seeds both forms (TICKET-UI-30). */
+  editSessionOpen: () => boolean;
 };
 
 describe('TransactionEditFormComponent: original CSV row (TICKET-TXN-06)', () => {
@@ -277,8 +282,44 @@ describe('TransactionEditFormComponent: nullify toggle (TICKET-TXN-04)', () => {
   });
 });
 
+/**
+ * TICKET-UI-30 rewrote this flow: the confirm used to open *on top of* a still-live edit dialog,
+ * whose un-dimmed "Save changes" stayed clickable behind it. The edit dialog now closes first, so
+ * exactly one `showModal()` dialog is open at a time — which is what gives the focus trap, the
+ * backdrop and Escape a single owner — and Cancel or Escape brings the edit dialog back with the
+ * form untouched.
+ */
 describe('TransactionEditFormComponent: delete', () => {
+  // The confirm now quotes the row's date and amount, which are locale-formatted.
+  withCleanFormatSettings();
+
   let fixture: ComponentFixture<TransactionEditFormComponent>;
+
+  /** The rendered button carrying exactly this label, or `undefined` when it isn't on screen. */
+  const buttonLabelled = (label: string): HTMLButtonElement | undefined =>
+    [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
+      (button) => button.textContent?.trim() === label,
+    );
+
+  const openForm = async (overrides: Partial<Transaction> = {}): Promise<void> => {
+    fixture.componentRef.setInput('transaction', transaction(overrides));
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  /** Both dialogs' open models at once — the invariant is that they are never both `true`. */
+  const openStates = (): { edit: boolean; confirm: boolean } => ({
+    edit: fixture.componentInstance.open(),
+    confirm: (fixture.componentInstance as unknown as Internals).deleteConfirmOpen(),
+  });
+
+  const openDeleteConfirm = async (): Promise<void> => {
+    buttonLabelled('Delete')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -293,48 +334,123 @@ describe('TransactionEditFormComponent: delete', () => {
     fixture = TestBed.createComponent(TransactionEditFormComponent);
   });
 
-  it('requires confirmation before emitting deleteRequested and closing the popup', async () => {
-    fixture.componentRef.setInput('transaction', transaction());
-    fixture.componentRef.setInput('open', true);
-    await fixture.whenStable();
-    fixture.detectChanges();
+  it('requires confirmation before emitting deleteRequested', async () => {
+    await openForm();
 
     let deleteCount = 0;
     fixture.componentInstance.deleteRequested.subscribe(() => deleteCount++);
 
-    const nativeElement = fixture.nativeElement as HTMLElement;
-    [...nativeElement.querySelectorAll('button')]
-      .find((b) => b.textContent?.trim() === 'Delete')
-      ?.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await openDeleteConfirm();
 
     // Clicking the popup's own Delete button only opens the confirm dialog — nothing emitted yet.
     expect(deleteCount).toBe(0);
-    expect(fixture.componentInstance.open()).toBe(true);
-    expect(nativeElement.textContent).toContain('permanently deletes this transaction');
+    expect(fixture.nativeElement.textContent).toContain('permanently deletes this transaction');
 
-    [...nativeElement.querySelectorAll('button')]
-      .find((b) => b.textContent?.trim() === 'Delete permanently')
-      ?.click();
+    buttonLabelled('Delete permanently')?.click();
+    fixture.detectChanges();
 
     expect(deleteCount).toBe(1);
     expect(fixture.componentInstance.open()).toBe(false);
   });
 
-  it('warns that the linked transfer will also be removed for a transfer leg', async () => {
-    fixture.componentRef.setInput('transaction', transaction({ transferId: 42 }));
-    fixture.componentRef.setInput('open', true);
+  it('never has both dialogs open at once, so the edit actions go inert (TICKET-UI-30)', async () => {
+    await openForm();
+    const [editDialog, confirmDialog] = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('dialog'),
+    ];
+    expect(editDialog.contains(buttonLabelled('Save changes') ?? null)).toBe(true);
+    expect(openStates()).toEqual({ edit: true, confirm: false });
+
+    await openDeleteConfirm();
+
+    // The defect was both being open together: the un-dimmed "Save changes" stayed clickable
+    // behind the confirm, two competing primary actions on screen, and no telling which dialog
+    // Escape or a click would reach. `mm-modal` leaves its `<dialog>` in the DOM and calls
+    // `close()`, so it is the closed dialog — not a removed subtree — that makes the button
+    // unreachable to click and to Tab, which is why this asserts open-state rather than presence.
+    // jsdom implements neither `showModal()` nor top-layer inertness, so the component's own two
+    // open models are as far as this can be taken here; the live check covers the rest.
+    expect(confirmDialog.contains(buttonLabelled('Delete permanently') ?? null)).toBe(true);
+    expect(openStates()).toEqual({ edit: false, confirm: true });
+  });
+
+  it('names the transaction by date and amount, not by description alone (TICKET-UI-30)', async () => {
+    await openForm();
+    await openDeleteConfirm();
+
+    // "Supermarket" alone identified eight rows in the seeded data — the user could not tell which
+    // one they were about to lose.
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('01/07/2026');
+    expect(text).toContain('10,00');
+    expect(text).toContain('Carrefour Market');
+  });
+
+  /** The confirm's own Cancel — clicked through the template, so the `(openChange)` binding this
+   * flow depends on is part of what the test exercises. Both dialogs render a "Cancel", which is
+   * why the lookup is scoped to the confirm's own `<dialog>`. */
+  const dismissConfirm = async (): Promise<void> => {
+    const confirmDialog = [...(fixture.nativeElement as HTMLElement).querySelectorAll('dialog')][1];
+    [...confirmDialog.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'Cancel')
+      ?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  it('returns to the edit dialog with unsaved edits intact when the confirm is dismissed', async () => {
+    await openForm();
+    const form = (fixture.componentInstance as unknown as Internals).form;
+    form.controls.notes.setValue('half-written note');
+
+    await openDeleteConfirm();
+    expect(openStates()).toEqual({ edit: false, confirm: true });
+
+    // Cancel and Escape are the same event to this component: the confirm closes itself, emitting
+    // `openChange(false)` without ever emitting `confirmed`.
+    await dismissConfirm();
+
+    expect(openStates()).toEqual({ edit: true, confirm: false });
+    // The reopen must not run `resetForm()` — that would silently discard the note.
+    expect(form.controls.notes.value).toBe('half-written note');
+  });
+
+  it('holds the edit session open across the detour, so no child re-seeds either', async () => {
+    await openForm();
+    const internals = fixture.componentInstance as unknown as Internals;
+
+    await openDeleteConfirm();
+
+    // The subtle half of the fix: `app-attribution-override-fieldset` is mounted outside the
+    // dialog's own `@if` and reseeds on every `false → true` of its `open` input, so binding it to
+    // the raw dialog state would discard an unsaved attribution pick on the way back while leaving
+    // `notes` — which this component seeds itself — looking fine. Both now read the session.
+    expect(internals.editSessionOpen()).toBe(true);
+    expect(fixture.componentInstance.open()).toBe(false);
+
+    await dismissConfirm();
+    expect(internals.editSessionOpen()).toBe(true);
+  });
+
+  it('does not reopen the edit dialog once the delete went through', async () => {
+    await openForm();
+    await openDeleteConfirm();
+
+    buttonLabelled('Delete permanently')?.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const nativeElement = fixture.nativeElement as HTMLElement;
-    [...nativeElement.querySelectorAll('button')]
-      .find((b) => b.textContent?.trim() === 'Delete')
-      ?.click();
-    fixture.detectChanges();
+    // `confirmed` fires before the dialog closes itself, so the same `openChange(false)` must not be
+    // read as a dismissal — the row is gone, there is nothing to go back to.
+    expect(openStates()).toEqual({ edit: false, confirm: false });
+    expect((fixture.componentInstance as unknown as Internals).editSessionOpen()).toBe(false);
+  });
 
-    expect(nativeElement.textContent).toContain('Its linked transfer will also be removed');
+  it('warns that the linked transfer will also be removed for a transfer leg', async () => {
+    await openForm({ transferId: 42 });
+    await openDeleteConfirm();
+
+    expect(fixture.nativeElement.textContent).toContain('Its linked transfer will also be removed');
   });
 });
 

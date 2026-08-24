@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-UI-30',
-    title: 'Deleting a transaction asks one clear question instead of stacking dialogs',
-    area: 'UI',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-TRF-06',
     title: 'Linked transfers say so, and the review step shows how much is left to check',
     area: 'Transfers',

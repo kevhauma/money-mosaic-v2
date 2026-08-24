@@ -1192,4 +1192,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'How-to’s, FAQ, Changelog and Settings are now pinned to the foot of the sidebar and always on screen. Only the Insights and Data groups above them scroll, inside their own frame.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-UI-30'],
+    title: 'Deleting a transaction asks one clear question instead of stacking two dialogs',
+    area: 'Transactions',
+    details: [
+      'The confirmation used to open on top of the edit dialog, whose “Save changes” stayed lit and clickable behind it — so there was no telling which dialog your Escape key or your click was about to reach.',
+      'The edit dialog now steps aside while you confirm, and Cancel or Escape brings it straight back with whatever you had typed still in place.',
+      'The confirmation also names the date and the amount, not just the description: “Supermarket” alone matched eight different rows.',
+    ],
+  },
 ];

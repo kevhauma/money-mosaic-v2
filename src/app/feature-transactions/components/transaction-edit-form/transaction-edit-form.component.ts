@@ -27,6 +27,7 @@ import {
   TableComponent,
   TypographyComponent,
 } from '@/shared/ui';
+import { formatCurrency, formatDate } from '@/shared/utils';
 import { AttributionOverrideFieldsetComponent } from '../attribution-override-fieldset/attribution-override-fieldset.component';
 import type { CategorySelectOption } from '../../category-picker';
 
@@ -82,16 +83,54 @@ export class TransactionEditFormComponent {
 
   protected readonly deleteConfirmOpen = signal(false);
 
-  /** Stern, deletion-specific warning — calls out the transfer-unlink side effect when it applies. */
+  /**
+   * True only while this dialog is closed *by us* to make room for the delete confirm
+   * (TICKET-UI-30) — never while the user closed it themselves.
+   */
+  private readonly confirmDetour = signal(false);
+
+  /**
+   * The edit **session**, as distinct from which dialog is on screen: it spans the detour through
+   * the delete confirm, so a cancelled delete returns to a form nobody re-seeded.
+   *
+   * Everything that seeds a control reads this rather than `open`, this component's own form and
+   * `app-attribution-override-fieldset` alike — the fieldset is mounted outside the `@if (open())`
+   * and reseeds on every `false → true` of its own `open` input, so handing it the raw dialog state
+   * would silently discard an unsaved attribution pick on the way back while leaving `notes` intact.
+   */
+  protected readonly editSessionOpen = computed(() => this.open() || this.confirmDetour());
+
+  /**
+   * Which transaction is about to be deleted, in enough detail to check (TICKET-UI-30). Description
+   * alone is not enough: the seeded dataset alone has eight rows reading "Supermarket", so the
+   * confirm named a row the user had no way to identify. Date and amount are what the user is
+   * looking at in the table.
+   */
+  private readonly deleteSubject = computed(() => {
+    const transaction = this.transaction();
+    if (!transaction) return '';
+    const description = transaction.counterpartyName ?? transaction.rawDescription;
+    return `${formatDate(transaction.bookingDate)} · ${formatCurrency(transaction.amount, {
+      signed: true,
+    })} · ${description}`;
+  });
+
+  /** Stern, deletion-specific warning — names the row, then calls out the transfer-unlink side effect when it applies. */
   protected readonly deleteMessage = computed(() =>
-    this.isTransferLeg()
-      ? 'This permanently deletes this transaction and cannot be undone. Its linked transfer will also be removed.'
-      : 'This permanently deletes this transaction and cannot be undone.',
+    [
+      this.deleteSubject(),
+      'This permanently deletes this transaction and cannot be undone.',
+      this.isTransferLeg() ? 'Its linked transfer will also be removed.' : '',
+    ]
+      .filter(Boolean)
+      .join(' — '),
   );
 
   constructor() {
+    // Keyed on the session, not the dialog: a return from a cancelled delete confirm is not a fresh
+    // open, and re-seeding there would throw away edits the user had not saved yet (TICKET-UI-30).
     effect(() => {
-      if (this.open()) {
+      if (this.editSessionOpen()) {
         this.resetForm();
       }
     });
@@ -204,12 +243,38 @@ export class TransactionEditFormComponent {
     this.open.set(false);
   }
 
+  /**
+   * Hands the screen over to the confirm rather than stacking on top of it (TICKET-UI-30). The
+   * confirm used to open over a still-live edit dialog, whose un-dimmed "Save changes" stayed
+   * clickable behind it and whose Escape target was ambiguous. Closing this one first leaves exactly
+   * one `showModal()` dialog open, so the focus trap, the backdrop and Escape all have one owner.
+   */
   protected confirmDelete(): void {
+    // Detour first: `editSessionOpen` must not dip to false between these two writes, or the seed
+    // effect fires and the form the user is about to come back to is already blank.
+    this.confirmDetour.set(true);
+    this.open.set(false);
     this.deleteConfirmOpen.set(true);
   }
 
-  protected deleteConfirmed(): void {
+  /**
+   * The confirm closes itself on both Cancel and Confirm, so this is where "backed out" is told from
+   * "went through": backing out returns to the edit dialog, with whatever was typed still in the
+   * form (`restoringFromConfirm` suppresses the reset).
+   */
+  protected onDeleteConfirmOpenChange(open: boolean): void {
+    this.deleteConfirmOpen.set(open);
+    // `onDeleteConfirmed` has already ended the detour when the delete went through, so a still-open
+    // detour is what a Cancel or an Escape looks like — there is no second flag reconstructing it.
+    if (open || !this.confirmDetour()) return;
+
+    this.open.set(true);
+    this.confirmDetour.set(false);
+  }
+
+  /** `ConfirmDialogComponent` emits this *before* closing itself, so the detour is already over by the time `onDeleteConfirmOpenChange` sees the close. */
+  protected onDeleteConfirmed(): void {
+    this.confirmDetour.set(false);
     this.deleteRequested.emit();
-    this.open.set(false);
   }
 }

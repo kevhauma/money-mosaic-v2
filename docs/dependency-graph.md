@@ -12,7 +12,7 @@ below `src/app` — which is enough to reach individual files in most feature/co
 subtrees.
 
 <!-- GENERATED:STATS:START -->
-- 416 leaf nodes, 1283 edges.
+- 416 leaf nodes, 1284 edges.
 <!-- GENERATED:STATS:END -->
 
 - `*.spec.ts` and `node_modules` are excluded.
@@ -1959,6 +1959,7 @@ DN-->25
 DN-->3U
 DN-->5E
 DN-->F2
+DN-->GE
 DP-->DD
 DP-->DX
 DP-->B
