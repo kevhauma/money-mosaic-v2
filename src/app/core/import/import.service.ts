@@ -49,6 +49,23 @@ export type CommitImportResult = {
   backfilledTransactions: { id: number; changes: Pick<Transaction, 'rawLine' | 'rawRow'> }[];
 };
 
+/**
+ * What undoing a batch would cost, read before the user confirms it (TICKET-IMP-13).
+ *
+ * Undo is a **hard delete** of the rows the batch created, so the two figures beyond the row count
+ * are the ones the user cannot get back by re-importing the same file: work they did *after* the
+ * import. Re-importing restores the rows; it does not restore the category you set on one by hand,
+ * and it does not restore a transfer link you made.
+ */
+export type UndoImportImpact = {
+  /** Transactions this batch created and undo would remove. Zero for a batch already undone. */
+  rowCount: number;
+  /** Of those, how many carry a hand-set category (`categoryManual`) that the delete takes with them. */
+  manuallyCategorisedCount: number;
+  /** Of those, how many are one leg of a linked transfer — each unlinks its counterpart. */
+  transferLinkedCount: number;
+};
+
 export type UndoImportResult = {
   /** Transfer records removed because one side belonged to the undone import. */
   unlinkedTransferIds: number[];
@@ -240,6 +257,28 @@ export class ImportService {
 
       return { batch, addedTransactions, duplicateCount, backfilledTransactions: backfillUpdates };
     });
+  };
+
+  /**
+   * What `undoImport` would do to this batch, without doing it (TICKET-IMP-13) — so the confirm
+   * dialog can state the cost rather than asking the user to guess it.
+   *
+   * Read-only, and reads the same rows the undo will delete: `getByImportBatch` is the one query
+   * both go through, so the count shown and the count removed cannot disagree.
+   *
+   * A batch that has already been undone reports zero of everything, which is what makes a second
+   * undo a stated no-op instead of a surprise.
+   */
+  previewUndo = async (importBatchId: number): Promise<UndoImportImpact> => {
+    const transactions = await this.transactionsRepository.getByImportBatch(importBatchId);
+
+    return {
+      rowCount: transactions.length,
+      manuallyCategorisedCount: transactions.filter((transaction) => transaction.categoryManual)
+        .length,
+      transferLinkedCount: transactions.filter((transaction) => transaction.transferId != null)
+        .length,
+    };
   };
 
   // A removed transaction may have been auto-linked to a transaction from a *different* import

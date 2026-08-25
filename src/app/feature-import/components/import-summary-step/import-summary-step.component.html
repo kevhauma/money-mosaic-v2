@@ -31,7 +31,7 @@
   @if (showDoneLink()) {
     <mm-button color="primary" size="sm" link="/accounts">Done</mm-button>
   }
-  <mm-button variant="ghost" size="sm" class="text-error" (click)="undoConfirmOpen.set(true)">
+  <mm-button variant="ghost" size="sm" class="text-error" (click)="openUndoConfirm()">
     Undo this import
   </mm-button>
 </mm-flex>
@@ -39,7 +39,7 @@
 <mm-confirm-dialog
   [(open)]="undoConfirmOpen"
   title="Undo this import?"
-  message="This removes every transaction this import added. This cannot be undone."
+  [message]="undoMessage()"
   confirmLabel="Undo import"
   [danger]="true"
   (confirmed)="confirmUndo()"

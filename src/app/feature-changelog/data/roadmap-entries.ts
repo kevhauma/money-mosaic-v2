@@ -67,11 +67,4 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Ideas',
     isTopic: true,
   },
-  // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
-  {
-    versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-IMP-13',
-    title: 'See what you have imported, and undo a batch that went wrong',
-    area: 'Import',
-  },
 ];

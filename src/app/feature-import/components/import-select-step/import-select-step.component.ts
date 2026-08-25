@@ -4,6 +4,7 @@ import { detectOwnIban, matchAccountByIban, CsvImportService, guessDelimiter } f
 import { FieldsetComponent, FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import type { PendingAccountDraft, QueuedImportFile } from '../../import-queue';
+import { ImportHistoryComponent } from '../import-history/import-history.component';
 import { QueuedFileRowComponent } from '../queued-file-row/queued-file-row.component';
 
 let nextDraftId = 0;
@@ -16,6 +17,7 @@ const stripExtension = (filename: string): string => filename.replace(/\.[^./\\]
   imports: [
     FieldsetComponent,
     FlexComponent,
+    ImportHistoryComponent,
     PaperComponent,
     QueuedFileRowComponent,
     TypographyComponent,

@@ -600,3 +600,61 @@ describe('partitionByFingerprint: import-anyway mode (TICKET-IMP-14)', () => {
     expect(duplicateCount).toBe(1);
   });
 });
+
+/**
+ * TICKET-IMP-13 — the history's Undo asks what the undo would cost before it happens, so the
+ * confirm dialog can state it. Same query as the undo itself, so the two cannot disagree.
+ */
+describe('ImportService: previewUndo (TICKET-IMP-13)', () => {
+  const setup = (transactions: Partial<Transaction>[]) => {
+    TestBed.resetTestingModule();
+    const transactionsRepository = { getByImportBatch: vi.fn().mockResolvedValue(transactions) };
+
+    TestBed.configureTestingModule({
+      providers: [
+        ImportService,
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: ImportBatchesRepository, useValue: {} },
+        { provide: TransferCleanupService, useValue: {} },
+      ],
+    });
+
+    return { service: TestBed.inject(ImportService), transactionsRepository };
+  };
+
+  it('counts only the rows this batch created', async () => {
+    const { service, transactionsRepository } = setup([{ id: 1 }, { id: 2 }, { id: 3 }]);
+
+    const impact = await service.previewUndo(99);
+
+    // The batch id is the whole filter — nothing else can reach the count.
+    expect(transactionsRepository.getByImportBatch).toHaveBeenCalledWith(99);
+    expect(impact.rowCount).toBe(3);
+  });
+
+  it('counts the rows the user categorised by hand, which re-importing would not restore', async () => {
+    const { service } = setup([
+      { id: 1, categoryManual: true },
+      { id: 2 },
+      { id: 3, categoryManual: true },
+    ]);
+
+    expect((await service.previewUndo(99)).manuallyCategorisedCount).toBe(2);
+  });
+
+  it('counts the rows linked as transfers, whose counterparts the undo unlinks', async () => {
+    const { service } = setup([{ id: 1, transferId: 5 }, { id: 2 }]);
+
+    expect((await service.previewUndo(99)).transferLinkedCount).toBe(1);
+  });
+
+  it('reports zero of everything for a batch that has already been undone', async () => {
+    const { service } = setup([]);
+
+    expect(await service.previewUndo(99)).toEqual({
+      rowCount: 0,
+      manuallyCategorisedCount: 0,
+      transferLinkedCount: 0,
+    });
+  });
+});

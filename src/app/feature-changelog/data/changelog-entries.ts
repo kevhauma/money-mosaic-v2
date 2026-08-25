@@ -1294,4 +1294,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       '“(Beta)” is gone from the sidebar — it promised nothing you could check. What is still changing is on the Roadmap tab.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-IMP-13'],
+    title: 'Import now has a history, and an import can be undone',
+    area: 'Import',
+    details: [
+      'The app has recorded every import since day one and showed you none of them, and once a file was in there was no way to take it back out.',
+      'The first step of the import wizard now lists what you have imported before — when, which file, into which account, how many rows — with an Undo on each one.',
+      'Undo says what it will cost before you agree to it: how many transactions go, how many of them carry a category you set by hand, and how many are linked as transfers. Re-importing the file brings the rows back; it does not bring those back, so the app says so rather than finding out for you.',
+      'Undoing removes only that import’s rows. The other side of any transfer link stays, as an ordinary transaction.',
+    ],
+  },
 ];

@@ -32,6 +32,10 @@
     </mm-flex>
   </mm-fieldset>
 
+  <!-- Before the queue, not after (TICKET-IMP-13): this is what the user already has, and step 1
+       is the moment they are about to add to it. Undo lives here for the same reason. -->
+  <app-import-history />
+
   @if (queue().length > 0) {
     <mm-fieldset [legend]="'Files (' + queue().length + ')'">
       <ul class="flex flex-col gap-2">

@@ -1,0 +1,59 @@
+<mm-fieldset legend="Previously imported">
+  @if (!loaded()) {
+    <mm-text variant="caption">Checking what you have imported before…</mm-text>
+  } @else if (rows().length === 0) {
+    <mm-text variant="caption">
+      Nothing imported yet. Once you import a file it is listed here, and you can take it back from
+      here too.
+    </mm-text>
+  } @else {
+    <mm-table density="compact" class="bg-base-100">
+      <caption class="sr-only">
+        Past imports, newest first
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Imported</th>
+          <th scope="col">File</th>
+          <th scope="col">Account</th>
+          <th scope="col">Rows</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.batchId) {
+          <tr>
+            <td class="whitespace-nowrap">{{ row.importedOn }}</td>
+            <th scope="row">
+              <span class="block max-w-48 truncate" [title]="row.fileName">{{ row.fileName }}</span>
+            </th>
+            <td>{{ row.accountName }}</td>
+            <td class="whitespace-nowrap">{{ row.rowsLabel }}</td>
+            <td class="text-right">
+              <mm-button
+                variant="ghost"
+                size="xs"
+                class="text-error"
+                [ariaLabel]="row.undoAriaLabel"
+                (click)="requestUndo(row)"
+              >
+                Undo
+              </mm-button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </mm-table>
+  }
+</mm-fieldset>
+
+<!-- The shared dialog, with the cost already read (TICKET-IMP-13): what goes, and the two things
+     re-importing the same file would not bring back. -->
+<mm-confirm-dialog
+  [(open)]="confirmOpen"
+  title="Undo this import?"
+  [message]="confirmMessage()"
+  confirmLabel="Undo import"
+  [danger]="true"
+  (confirmed)="confirmUndo()"
+/>

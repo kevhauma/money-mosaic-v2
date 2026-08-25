@@ -24,6 +24,7 @@ import {
   type CommitImportResult,
   type ImportDuplicatePreview,
   type ParsedRowResult,
+  type UndoImportImpact,
 } from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
 
@@ -152,6 +153,10 @@ export const ImportBatchesStore = signalStore(
 
         return { ...result, addedTransactions: categorisedTransactions };
       },
+
+      /** What undoing this batch would cost (TICKET-IMP-13) — read-only, same door as `undoImport`. */
+      previewUndo: (importBatchId: number): Promise<UndoImportImpact> =>
+        importService.previewUndo(importBatchId),
 
       undoImport: async (batch: ImportBatch): Promise<void> => {
         await transactionsStore.hydrate();
