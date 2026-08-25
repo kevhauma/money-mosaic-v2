@@ -10,14 +10,19 @@ The list is in recommended build order: the tiny independent fixes first (locale
 
 ## Status, 2026-08-25
 
-**All 22 are built**, and 21 are fully ticked. Two lines below stay `- [ ]`, each with its reason on
-the line, and neither is code left unwritten:
+**All 23 are built and fully ticked** as of 2026-08-25. The two boxes this file recorded as open by
+design were both closed that day, neither by weakening its criterion:
 
-- **TXN-12** — the "mobile top bar names the page" criterion was deliberately not built, because
-  TICKET-UI-25's sticky page header already satisfies the need behind it and a second title would
-  breach TICKET-UI-22. A scope decision, recorded rather than taken quietly.
-- **TRF-06** — the pending-candidate state still rests on unit tests; it needs a crafted transfer
-  fixture, not a browser session.
+- **TXN-12** — the "mobile top bar names the page" criterion is met, and the shell bar is still
+  unchanged: the sticky page header covers it inside the viewport (re-measured at 375px), and the
+  half nobody had checked — *outside* it — turned out to be genuinely missing, because no route set
+  a `title`, so the tab, the history entry and a screen reader's navigation announcement read "Money
+  Mosaic" on all twenty-one routes. Each route now names itself and `AppTitleStrategy` appends the
+  brand. No second visible title, so TICKET-UI-22 stands.
+- **TRF-06** — the pending-candidate state is now live-verified against a crafted three-row fixture
+  (two same-amount inflows against one outflow, which the matcher cannot resolve uniquely), removed
+  again afterwards by its fingerprint prefix. The recipe is written into the ticket's Notes, since
+  it is the seed data's standing gap rather than a one-off.
 
 STAT-43's own live check was blocked while the session's browser pane was hidden — the panel sits
 behind `@defer (on viewport)`, which never fires without compositing — and was completed on
@@ -37,10 +42,10 @@ behind `@defer (on viewport)`, which never fires without compositing — and was
 - [x] [TICKET-UI-27](./tickets/TICKET-UI-27-separate-money-colours-from-brand-colour.md) — Positive net worth renders in the same red as a loss (bug fix, UXR-4 — primary and error five hue degrees apart in both default themes) — touches all ten themes; after UI-29
 - [x] [TICKET-UI-28](./tickets/TICKET-UI-28-sidebar-outgrew-its-viewport.md) — Sidebar's last nav items fall below the fold with no scroll affordance (bug fix, UXR-8 — TICKET-UI-26's "nine items" premise now runs to 15) — needs a re-decision, not just a patch; after UI-32 (same file)
 - [x] [TICKET-UI-30](./tickets/TICKET-UI-30-modal-on-modal-delete-confirm.md) — Delete confirmation opens a modal on top of a modal (bug fix, UXR-17 — parent's Save stays live behind it; confirm names only "Supermarket", of which there are eight) — independent
-- [ ] [TICKET-TRF-06](./tickets/TICKET-TRF-06-make-transfer-review-visible.md) — Transfer review is invisible, and linked pairs still read "Uncategorised" (bug fix, UXR-13, FR-TRF-4) — step 3 of the core loop; independent — **built and shipped, one box still open**: the pending-candidate state could not be live-verified without writing crafted transactions into real data, so it rests on unit tests. See the ticket's last criterion.
+- [x] [TICKET-TRF-06](./tickets/TICKET-TRF-06-make-transfer-review-visible.md) — Transfer review is invisible, and linked pairs still read "Uncategorised" (bug fix, UXR-13, FR-TRF-4) — step 3 of the core loop; independent — **closed 2026-08-25**: the pending-candidate half is now live-verified too, against a crafted fixture the ticket's Notes record so it need not be re-derived. The trigger showed `2 pairs need review.` with its warning badge *while still collapsed* — the exact state CR-2.2's removed gate used to hide.
 - [x] [TICKET-STAT-43](./tickets/TICKET-STAT-43-heatmap-per-row-scales.md) — Heatmap shades each row on its own scale, so cells can't be compared (bug fix, UXR-20) — a deliberate trade-off to re-make, not a slip; coordinate with TICKET-STAT-31 — the as-is was stale (the rescale landed in `a8bae7a`, 2026-08-09), so this became the caption/naming fix that stopped the panel disclaiming its own semantics.
 - [x] [TICKET-STAT-45](./tickets/TICKET-STAT-45-heatmap-one-hue-ramp.md) — The heatmap's six category hues make the grid unreadable (bug fix, reported directly) — the hue half TICKET-STAT-43 deferred to a TICKET-STAT-34 re-decision; the grid now ramps one theme-primary hue, pale-to-deep on a light theme and deep-to-bright on a dark one. Browser-verified in both default themes.
-- [ ] [TICKET-TXN-12](./tickets/TICKET-TXN-12-mobile-transactions-table.md) — Transactions is unusable on a phone (bug fix, UXR-9 — 750px table in a 375px viewport, 20px touch targets) — larger; after TXN-11, same page — **shipped, one box open as a scope call**: below `md` the rows render as cards (measured at 375px: 343px wide, 44px targets, no horizontal scroll; the live breakpoint crossing verified 2026-08-25) and the table is untouched at ≥1024px. The "mobile top bar names the page" criterion was **not** built — TICKET-UI-25's sticky `mm-page-header` already keeps the title on screen at every scroll position, and a second title would breach TICKET-UI-22. See the ticket's implementation note.
+- [x] [TICKET-TXN-12](./tickets/TICKET-TXN-12-mobile-transactions-table.md) — Transactions is unusable on a phone (bug fix, UXR-9 — 750px table in a 375px viewport, 20px touch targets) — larger; after TXN-11, same page — below `md` the rows render as cards (measured at 375px: 343px wide, 44px targets, no horizontal scroll; the live breakpoint crossing verified 2026-08-25) and the table is untouched at ≥1024px. **Closed 2026-08-25**: the "mobile top bar names the page" criterion is met without touching the shell bar — the sticky `mm-page-header` covers it on screen, and per-route `title`s plus `AppTitleStrategy` cover the tab, the history and a screen reader's route announcement, which nothing did before. See the ticket's closing note.
 - [x] [TICKET-ACC-13](./tickets/TICKET-ACC-13-last-imported-on-account-cards.md) — Show when each account was last imported (UXR-12) — cheapest of the import-safety group, independent of both others; start the group here
 - [x] [TICKET-IMP-14](./tickets/TICKET-IMP-14-duplicate-preview-before-commit.md) — Say how many rows are duplicates before committing an import (UXR-11) — prevention; cheaper than IMP-13 and worth shipping before it
 - [x] [TICKET-REC-11](./tickets/TICKET-REC-11-recurring-needs-correction-affordances.md) — Recurring detection can't be corrected, and over-claims (bug fix, UXR-15 — 100% of the month classified as recurring, one counterparty listed twice) — the clearest breach of "reversible automation"; likely additive schema
