@@ -1177,7 +1177,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
     area: 'UI',
     details: [
       'The two default themes set the brand colour and the loss colour five hue degrees apart, so the Net worth tile — which used the brand colour — rendered a healthy +€16,898.26 in the red reserved for losses, right next to a green “Net cash flow”.',
-      'Money now has its own pair of colours, separate from the brand and from the alert palette, and the Net worth tile is coloured by whether the figure is positive or negative.',
+      'Money now has its own pair of colours, separate from the brand and from the alert palette. The Net worth tile keeps the brand colour — it is the hero figure of the Dashboard, and it is meant to follow whatever colour the theme leads with.',
       'The loss red in both default themes and in Retro-Futurism moved clear of each theme’s brand colour, and a check now fails the build if any theme puts the two back within reach of each other.',
     ],
   },

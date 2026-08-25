@@ -140,14 +140,6 @@ export class DashboardOverviewComponent {
   /** Money's own tokens, never `success`/`error` (TICKET-UI-27) — see `moneyColor`. */
   protected readonly netColor = computed(() => moneyColor(this.statsStore.periodStats().net));
 
-  /**
-   * The hero tile was `color="primary"`, which in both default themes is a coral five hue degrees
-   * from the loss red — so a positive net worth read as an alarm (TICKET-UI-27). It is sign-coloured
-   * now; the `mm-net-worth` plate, wash and label hooks are untouched, since those come from the
-   * class, not from this input.
-   */
-  protected readonly netWorthColor = computed(() => moneyColor(this.accountsStore.netWorth()));
-
   protected readonly incomeSubLabel = computed(() =>
     this.periodizedSubLabel(this.statsStore.periodStats().income),
   );

@@ -25,8 +25,8 @@
   <!-- The page's sections: the money flow Sankey (TICKET-EXP-02) and the spending mosaic
        (TICKET-EXP-07), plus whatever range-scoped section lands here next. Each panel decides for
        itself whether it has anything to draw, so a range with no flow leaves no empty frame behind. -->
-  <app-money-flow-panel />
-  <app-spending-mosaic-panel />
+  <app-money-flow-panel class="mb-6 block" />
+  <app-spending-mosaic-panel class="mb-6 block" />
 
   @if (hasNothingInRange()) {
     <mm-paper>
