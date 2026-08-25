@@ -8,6 +8,14 @@ Design health at review time: **21/40** on Nielsen's ten heuristics. The determi
 
 The list is in recommended build order: the tiny independent fixes first (locale, three layout defects, two content/label fixes), then the theming and accessibility work, then the trust fixes that make the numbers self-explaining, then the presentation jobs, and the three largest builds last — recurring corrections, the income rework, and the import safety net, which are the only items likely to need schema thought.
 
+## Status, 2026-08-25
+
+**All 22 are built.** Three lines below stay `- [ ]` on purpose, each with its reason on the line:
+one acceptance box on TRF-06, STAT-43 and TXN-12 could not be honestly ticked, and none of the three
+is code left unwritten. Two of them are the same cause — a browser check that the session's hidden
+preview pane made impossible — and the third is a scope decision recorded rather than taken quietly.
+Re-open each from its own ticket, not from here.
+
 - [x] [TICKET-SET-10](./tickets/TICKET-SET-10-default-locale-to-belgian.md) — Default locale ships US date order to a Belgian user (bug fix, UXR-5 — `DEFAULT_LOCALE = 'en-US'` at `format-settings.ts:13`) — tiny, independent, visible on every screen; do first
 - [x] [TICKET-TXN-11](./tickets/TICKET-TXN-11-filter-bar-controls-overlap.md) — Transactions filter controls overlap each other (bug fix, UXR-6 — `lg:grid-cols-6` gives 115px cells to controls needing 180px) — pure CSS, most-used screen, independent
 - [x] [TICKET-LOAN-15](./tickets/TICKET-LOAN-15-remaining-caption-overflows-card.md) — Loan card's "remaining" caption escapes the card border (bug fix, UXR-7 — `justify-between` with no `min-w-0`, overflows from ~€1,250 up) — pure CSS, independent
