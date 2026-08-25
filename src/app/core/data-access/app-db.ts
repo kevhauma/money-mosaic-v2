@@ -479,6 +479,34 @@ export type ImportBatch = {
   dateTo: string;
 };
 
+/**
+ * A user's correction to a *detected* recurring payment (TICKET-REC-11) — the equivalent, for
+ * recurring detection, of `categoryManual` on a transaction: helpful automation the user can always
+ * override, and an override re-detection may never quietly discard.
+ *
+ * **Identified by an occurrence, not by the series key.** `RecurringPaymentSeries.key` is
+ * `<cluster>|<median amount>` and its own doc forbids hanging an override off it, because a price
+ * change moves the median. A transaction id is a Dexie primary key: it does not move. A stored
+ * override applies to whichever series still contains `anchorTransactionId` among its occurrences,
+ * which is why importing *older* history — which would move a series' first occurrence earlier —
+ * does not lose the override either.
+ */
+export type RecurringOverride = {
+  id?: number;
+  /** `dismissed`: not really a recurring payment. `merged`: the same real payment as another series. */
+  kind: 'dismissed' | 'merged';
+  /** Any transaction id belonging to the series this override is about. */
+  anchorTransactionId: number;
+  /**
+   * For `merged` only: a transaction id belonging to the series this one is folded into. The two
+   * are stored as a directed pair rather than a group id — a group would need its own lifecycle,
+   * and a pair is enough for "these two rows are one payment", which is the whole of what the
+   * review asked for.
+   */
+  mergedIntoTransactionId?: number;
+  createdAt: string;
+};
+
 /** Singleton row (id always 1) persisting the trained auto-categoriser model (FR-ML-4) so it survives a reload. */
 export type CategoryModelArtifact = {
   id: 1;
@@ -840,6 +868,7 @@ class AppDb extends Dexie {
   savingsGoals!: Table<SavingsGoal, number>;
   forecastSettings!: Table<ForecastSettings, number>;
   loans!: Table<Loan, number>;
+  recurringOverrides!: Table<RecurringOverride, number>;
 
   constructor() {
     super('money-mosaic');
@@ -1106,6 +1135,14 @@ class AppDb extends Dexie {
     // `.upgrade()` is needed, same as `savingsGoals`/`forecastSettings` at v14.
     this.version(15).stores({
       loans: '++id, categoryId, loanType, archived',
+    });
+
+    // Adds `recurringOverrides` for TICKET-REC-11's dismiss/merge corrections — indexed on
+    // `anchorTransactionId`, which is how a stored override is matched back to a freshly detected
+    // series, and on `kind` so the dismissals and the merges can be read apart. Purely additive — a
+    // brand-new, empty table — so no `.upgrade()` is needed, same as `loans` at v15.
+    this.version(16).stores({
+      recurringOverrides: '++id, anchorTransactionId, kind',
     });
 
     this.on('populate', () => {

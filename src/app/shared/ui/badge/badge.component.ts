@@ -19,6 +19,13 @@ export class BadgeComponent {
   readonly class = input('', { alias: 'class' });
   /** Opt-in inline style passthrough (e.g. a computed confidence gradient) — empty by default, no effect on existing callers. */
   readonly style = input('', { alias: 'style' });
+  /**
+   * Hover text for a badge that abbreviates something (TICKET-REC-11's confidence marker names what
+   * weakened the match). Its own input because a native attribute does not forward through a
+   * wrapping component — the same reason `ariaExpanded` is an input on `mm-button`: bound on the
+   * host it lands on an unstyled custom element rather than on the `.badge` span the user points at.
+   */
+  readonly title = input<string>();
 
   /** Same `daisyClasses(base, [conditional modifiers], extra)` shape as every other shared/ui primitive (button/paper/typography already exceed the complexity tool's CRAP threshold too, unsuppressed) — the score here is inflated by this file having no dedicated `.spec.ts`, not by real branching risk. */
   // fallow-ignore-next-line complexity

@@ -4,6 +4,7 @@ import {
   AccountsRepository,
   appDb,
   CategoriesRepository,
+  RecurringOverridesRepository,
   TransactionsRepository,
   type Account,
   type Category,
@@ -17,6 +18,7 @@ import {
   TransactionsStore,
 } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
+import { RecurringSeriesStore } from '../../recurring-series.store';
 import { RecurringPaymentsPanelComponent } from './recurring-payments-panel.component';
 
 const checking: Account = {
@@ -111,6 +113,12 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
   // process-global under isolate:false — pin them so another spec file can't reach in.
   withCleanFormatSettings();
 
+  const recurringOverridesRepository = {
+    getAll: vi.fn().mockResolvedValue([]),
+    add: vi.fn().mockResolvedValue(1),
+    remove: vi.fn().mockResolvedValue(undefined),
+  };
+
   const createFixture = async (
     transactions: Transaction[],
     categories: Category[] = [subscriptions],
@@ -136,6 +144,9 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
           provide: CategoriesRepository,
           useValue: { getAll: vi.fn().mockResolvedValue(categories) },
         },
+        // TICKET-REC-11: the panel shows nothing until the user's corrections have loaded, so a
+        // fixture with none still has to say so rather than leave the store un-hydrated.
+        { provide: RecurringOverridesRepository, useValue: recurringOverridesRepository },
       ],
     }).compileComponents();
 
@@ -144,9 +155,18 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     await TestBed.inject(AccountsStore).hydrate();
     await TestBed.inject(CategoriesStore).hydrate();
     await TestBed.inject(AppSettingsStore).hydrate();
+    await TestBed.inject(RecurringSeriesStore).hydrate();
     fixture.detectChanges();
     return fixture;
   };
+
+  beforeEach(() => {
+    // The corrections mock is shared, and some cases below seed it — reset it so an override from
+    // one test never leaks into the next.
+    recurringOverridesRepository.getAll.mockResolvedValue([]);
+    recurringOverridesRepository.add.mockClear();
+    recurringOverridesRepository.remove.mockClear();
+  });
 
   afterEach(async () => {
     vi.useRealTimers();
@@ -325,7 +345,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       expect(text).not.toContain('€42.99');
     });
 
-    it('renders no flag badges at all — the Status column was removed on 2026-08-09', async () => {
+    it('renders no flag badges — the Status column was removed on 2026-08-09 (TICKET-REC-11 adds a confidence one)', async () => {
       // Three payments at €9.99 then three at €12.99 (a sustained repricing), plus a cancelled
       // series: between them these carry all three of REC-04's flags. None of them reaches the UI
       // any more. What survives is the *grouping*, which the two tests above assert.
@@ -343,7 +363,15 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
       const host = fixture.nativeElement as HTMLElement;
       openStoppedGroup(fixture);
 
-      expect(host.querySelectorAll('mm-badge')).toHaveLength(0);
+      // One badge per rendered row, and it is the confidence marker TICKET-REC-11 added — not a
+      // flag badge coming back. The flags themselves still reach the user by their other routes.
+      const badges = [...host.querySelectorAll('mm-badge')].map((badge) =>
+        badge.textContent?.trim(),
+      );
+      expect(badges.length).toBe(host.querySelectorAll('tbody tr th[scope="row"]').length);
+      for (const badge of badges) {
+        expect(['Strong match', 'Fair match', 'Weak match']).toContain(badge);
+      }
       expect(host.textContent).not.toContain('Price ↑');
       expect(host.textContent).not.toContain('Overdue');
       expect([...host.querySelectorAll('thead th')].map((th) => th.textContent?.trim())).toEqual([
@@ -512,6 +540,180 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
 
       expect(cellsOf(host).map((row) => row[0])).toEqual([expect.stringContaining('Gym')]);
       expect(host.textContent).toContain('1 concluded series hidden');
+    });
+  });
+
+  /**
+   * TICKET-REC-11 — the panel's half of "reversible automation": say how sure the detection is,
+   * and give the user something to do when it is wrong. The matching of a stored override back onto
+   * a re-detected series is `recurring-overrides.spec.ts`'s business; these are about the controls.
+   */
+  describe('corrections (TICKET-REC-11)', () => {
+    /** The dismiss button inside an expanded row's evidence panel. */
+    const dismissButtonOf = (host: HTMLElement): HTMLButtonElement | null =>
+      [...host.querySelectorAll('button')].find((button) =>
+        button.getAttribute('aria-label')?.startsWith('Dismiss '),
+      ) ?? null;
+
+    const expandFirstRow = (fixture: ComponentFixture<RecurringPaymentsPanelComponent>): void => {
+      (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLButtonElement>('tbody th[scope="row"] button')
+        ?.click();
+      fixture.detectChanges();
+    };
+
+    it('marks every row with how sure the detection is', async () => {
+      const fixture = await createFixture(streamlyMonthly());
+      const host = fixture.nativeElement as HTMLElement;
+
+      const badge = host.querySelector('tbody th[scope="row"] mm-badge');
+      // Four occurrences, steady dates, steady amount — one doubt (fewer than six payments).
+      expect(badge?.textContent?.trim()).toBe('Fair match');
+      // The tooltip lands on the `.badge` span, not the host: a native attribute does not forward
+      // through a wrapping component, so `mm-badge` takes it as its own input.
+      expect(badge?.querySelector('span')?.getAttribute('title')).toContain('seen 4 times so far');
+    });
+
+    it('offers the dismiss control with the evidence, not on the row itself', async () => {
+      const fixture = await createFixture(streamlyMonthly());
+      const host = fixture.nativeElement as HTMLElement;
+
+      expect(dismissButtonOf(host)).toBeNull();
+
+      expandFirstRow(fixture);
+
+      expect(dismissButtonOf(host)?.getAttribute('aria-label')).toBe(
+        'Dismiss Streamly — not a recurring payment',
+      );
+    });
+
+    it('dismissing writes an override anchored on the series’ earliest occurrence', async () => {
+      const fixture = await createFixture(streamlyMonthly());
+      expandFirstRow(fixture);
+
+      dismissButtonOf(fixture.nativeElement as HTMLElement)?.click();
+      await fixture.whenStable();
+
+      expect(recurringOverridesRepository.add).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'dismissed', anchorTransactionId: 1 }),
+      );
+    });
+
+    it('drops a dismissed series out of the list, the count and the total', async () => {
+      recurringOverridesRepository.getAll.mockResolvedValue([
+        { id: 1, kind: 'dismissed', anchorTransactionId: 1, createdAt: TODAY },
+      ]);
+      const fixture = await createFixture([...streamlyMonthly(), ...gymMonthly()]);
+      const host = fixture.nativeElement as HTMLElement;
+
+      expect(host.textContent).not.toContain('Streamly');
+      expect(host.textContent).toContain('1 recurring payment ≈');
+      // €5 gym only — the €12.99 subscription is dismissed, so it counts toward nothing.
+      expect(host.textContent).toContain('€5,00');
+    });
+
+    it('keeps a dismissed series reachable, and restores it', async () => {
+      recurringOverridesRepository.getAll.mockResolvedValue([
+        { id: 1, kind: 'dismissed', anchorTransactionId: 1, createdAt: TODAY },
+      ]);
+      const fixture = await createFixture([...streamlyMonthly(), ...gymMonthly()]);
+      const host = fixture.nativeElement as HTMLElement;
+
+      const disclosure = [...host.querySelectorAll('button')].find((button) =>
+        button.textContent?.includes('Dismissed (1)'),
+      );
+      expect(disclosure).toBeTruthy();
+      disclosure?.click();
+      fixture.detectChanges();
+
+      const restore = [...host.querySelectorAll('button')].find((button) =>
+        button.getAttribute('aria-label')?.startsWith('Restore Streamly'),
+      );
+      expect(restore).toBeTruthy();
+
+      restore?.click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(recurringOverridesRepository.remove).toHaveBeenCalledWith(1);
+      expect(host.textContent).toContain('Streamly');
+    });
+
+    it('suggests merging two detections of the same payment, and merges on request', async () => {
+      // Same counterparty, same category, two amount bands far enough apart that `bandByAmount`
+      // splits them — the review's FreshMarket case.
+      const cheap = ['2026-02-06', '2026-03-06', '2026-04-06'].map((bookingDate, index) =>
+        transaction({
+          id: 400 + index,
+          bookingDate,
+          amount: -58.4,
+          counterpartyName: 'FreshMarket',
+        }),
+      );
+      const dear = ['2026-02-20', '2026-03-20', '2026-04-20'].map((bookingDate, index) =>
+        transaction({
+          id: 500 + index,
+          bookingDate,
+          amount: -73.15,
+          counterpartyName: 'FreshMarket',
+        }),
+      );
+      const fixture = await createFixture([...cheap, ...dear]);
+      const host = fixture.nativeElement as HTMLElement;
+
+      expect(host.textContent).toContain('FreshMarket is listed twice');
+      const mergeButton = [...host.querySelectorAll('button')].find((button) =>
+        button.getAttribute('aria-label')?.startsWith('Merge the two FreshMarket'),
+      );
+      expect(mergeButton).toBeTruthy();
+
+      mergeButton?.click();
+      await fixture.whenStable();
+
+      expect(recurringOverridesRepository.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'merged',
+          anchorTransactionId: 500,
+          mergedIntoTransactionId: 400,
+        }),
+      );
+    });
+
+    it('lists a merged pair as one row', async () => {
+      const cheap = ['2026-02-06', '2026-03-06', '2026-04-06'].map((bookingDate, index) =>
+        transaction({
+          id: 400 + index,
+          bookingDate,
+          amount: -58.4,
+          counterpartyName: 'FreshMarket',
+        }),
+      );
+      const dear = ['2026-02-20', '2026-03-20', '2026-04-20'].map((bookingDate, index) =>
+        transaction({
+          id: 500 + index,
+          bookingDate,
+          amount: -73.15,
+          counterpartyName: 'FreshMarket',
+        }),
+      );
+      recurringOverridesRepository.getAll.mockResolvedValue([
+        {
+          id: 1,
+          kind: 'merged',
+          anchorTransactionId: 500,
+          mergedIntoTransactionId: 400,
+          createdAt: TODAY,
+        },
+      ]);
+      const fixture = await createFixture([...cheap, ...dear]);
+      const host = fixture.nativeElement as HTMLElement;
+
+      const names = [...host.querySelectorAll('tbody th[scope="row"]')].map((cell) =>
+        cell.textContent?.trim(),
+      );
+      expect(names.filter((name) => name?.includes('FreshMarket'))).toHaveLength(1);
+      // And the suggestion is gone, because there is nothing left to suggest.
+      expect(host.textContent).not.toContain('is listed twice');
     });
   });
 });

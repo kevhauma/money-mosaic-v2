@@ -16,3 +16,4 @@ export * from './salary-metadata.repository';
 export * from './goals.repository';
 export * from './forecast-settings.repository';
 export * from './loans.repository';
+export * from './recurring-overrides.repository';

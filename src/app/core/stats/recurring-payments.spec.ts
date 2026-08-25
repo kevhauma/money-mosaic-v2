@@ -1,5 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
-import { detectRecurringPayments } from './recurring-payments';
+import { detectRecurringPayments, mergeRecurringSeries } from './recurring-payments';
 
 const TODAY = '2026-08-07';
 
@@ -907,5 +907,176 @@ describe('detectRecurringPayments: a category’s applicability window (TICKET-R
     // TODAY is 2026-08-07 — a window ending exactly today has not ended yet.
     expect(detect(rent(), housing({ activeUntil: TODAY })).series).toHaveLength(1);
     expect(detect(rent(), housing({ activeUntil: '2026-08-06' })).series).toEqual([]);
+  });
+});
+
+/**
+ * TICKET-REC-11 — detection now says how sure it is, and can be told two rows are one payment.
+ * Both read only signals detection already computed; neither changes what is detected.
+ */
+describe('detectRecurringPayments: confidence (TICKET-REC-11)', () => {
+  const monthly = (dates: string[], amounts: number[]): Transaction[] =>
+    dates.map((bookingDate, index) =>
+      transaction({
+        id: index + 1,
+        bookingDate,
+        amount: -amounts[index],
+        counterpartyName: 'Streamly',
+      }),
+    );
+
+  const confidenceOfFirst = (transactions: Transaction[]) =>
+    detectRecurringPayments(transactions, NO_CATEGORIES, NO_ACCOUNTS, TODAY).series[0].confidence;
+
+  it('is high for a long, steady, same-priced rhythm', () => {
+    const dates = [
+      '2026-01-05',
+      '2026-02-05',
+      '2026-03-05',
+      '2026-04-05',
+      '2026-05-05',
+      '2026-06-05',
+    ];
+
+    const confidence = confidenceOfFirst(
+      monthly(
+        dates,
+        dates.map(() => 12.99),
+      ),
+    );
+
+    expect(confidence).toEqual({ level: 'high', reason: '' });
+  });
+
+  it('drops a level for a rhythm that has only just started, and says so', () => {
+    const dates = ['2026-04-05', '2026-05-05', '2026-06-05'];
+
+    const confidence = confidenceOfFirst(
+      monthly(
+        dates,
+        dates.map(() => 12.99),
+      ),
+    );
+
+    expect(confidence.level).toBe('medium');
+    expect(confidence.reason).toBe('seen 3 times so far');
+  });
+
+  it('drops two levels when the amount wanders as well', () => {
+    // Four payments (so the count doubt stands) whose amounts sit out near the edges of the band
+    // the detector held them in — 10.50 and 13.50 around a €12 median.
+    const dates = ['2026-03-05', '2026-04-05', '2026-05-05', '2026-06-05'];
+
+    const confidence = confidenceOfFirst(monthly(dates, [10.5, 12, 12, 13.5]));
+
+    expect(confidence.level).toBe('low');
+    expect(confidence.reason).toBe('seen 4 times so far');
+  });
+
+  it('names the drifting dates on a long series whose rhythm is ragged', () => {
+    // Six payments — past the count doubt — alternating 26 and 35 days apart. Both gaps sit inside
+    // the monthly band (24–38), so this is still detected as monthly; it is just not steady.
+    const dates = [
+      '2026-01-05',
+      '2026-01-31',
+      '2026-03-07',
+      '2026-04-02',
+      '2026-05-07',
+      '2026-06-02',
+    ];
+
+    const confidence = confidenceOfFirst(
+      monthly(
+        dates,
+        dates.map(() => 12.99),
+      ),
+    );
+
+    expect(confidence.reason).toBe('the dates drift from one to the next');
+  });
+});
+
+describe('mergeRecurringSeries (TICKET-REC-11)', () => {
+  const seriesOf = (transactions: Transaction[], index = 0) =>
+    detectRecurringPayments(transactions, NO_CATEGORIES, NO_ACCOUNTS, TODAY).series[index];
+
+  const freshMarket = (dates: string[], amount: number, startId: number): Transaction[] =>
+    dates.map((bookingDate, index) =>
+      transaction({
+        id: startId + index,
+        bookingDate,
+        amount: -amount,
+        counterpartyName: 'FreshMarket',
+      }),
+    );
+
+  const cheap = freshMarket(['2026-02-06', '2026-03-06', '2026-04-06'], 58.4, 400);
+  const dear = freshMarket(['2026-02-20', '2026-03-20', '2026-04-20'], 73.15, 500);
+
+  it('keeps every occurrence, once each, in date order', () => {
+    const detected = detectRecurringPayments(
+      [...cheap, ...dear],
+      NO_CATEGORIES,
+      NO_ACCOUNTS,
+      TODAY,
+    ).series;
+
+    const merged = mergeRecurringSeries(detected[0], detected[1]);
+
+    expect(merged.occurrences).toHaveLength(6);
+    expect(merged.occurrences.map((occurrence) => occurrence.date)).toEqual([
+      '2026-02-06',
+      '2026-02-20',
+      '2026-03-06',
+      '2026-03-20',
+      '2026-04-06',
+      '2026-04-20',
+    ]);
+  });
+
+  it('states what the merged payments actually cost per month, not a median times a rate', () => {
+    const detected = detectRecurringPayments(
+      [...cheap, ...dear],
+      NO_CATEGORIES,
+      NO_ACCOUNTS,
+      TODAY,
+    ).series;
+
+    const merged = mergeRecurringSeries(detected[0], detected[1]);
+
+    // €394.65 spread over the 73 days these six payments span plus one 14-day interval, at ~30.4
+    // days to the month — i.e. what was actually spent, per month.
+    //
+    // How much that matters depends on the cadence the merge lands on: here it is fortnightly and
+    // the old `median × rate` would have said about the same. On the dev seed, whose FreshMarket
+    // payments merge into a *weekly* rhythm, the same formula claimed €253.94/month for a pair of
+    // grocery bills that had never come to more than about €130 — which is what this replaces.
+    expect(merged.monthlyEquivalent).toBeCloseTo(138.07, 1);
+  });
+
+  it('re-scores confidence over the merged whole', () => {
+    const detected = detectRecurringPayments(
+      [...cheap, ...dear],
+      NO_CATEGORIES,
+      NO_ACCOUNTS,
+      TODAY,
+    ).series;
+
+    const merged = mergeRecurringSeries(detected[0], detected[1]);
+
+    // Six payments now, but at two different prices — the amount doubt is real and is stated.
+    expect(merged.confidence.level).not.toBe('high');
+  });
+
+  it('never counts a shared occurrence twice', () => {
+    const one = seriesOf(cheap);
+
+    const merged = mergeRecurringSeries(one, one);
+
+    expect(merged.occurrences).toHaveLength(one.occurrences.length);
+    // Within a few percent of the detector's own figure, not identical: this measures the interval
+    // the payments actually kept, where the detector uses the nominal 30.44-day month.
+    expect(merged.monthlyEquivalent).toBeGreaterThan(one.monthlyEquivalent * 0.9);
+    expect(merged.monthlyEquivalent).toBeLessThan(one.monthlyEquivalent * 1.1);
   });
 });

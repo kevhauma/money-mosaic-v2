@@ -1,12 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { type RecurringCadence } from '@/core/stats';
+import { type RecurringCadence, type RecurringConfidence } from '@/core/stats';
 import { AppSettingsStore, CategoriesStore } from '@/core/state';
 import { CHART_NO_COLOR_FALLBACK } from '@/shared/echarts';
 import {
+  AlertComponent,
+  BadgeComponent,
+  type BadgeColor,
+  type BadgeVariant,
   ButtonComponent,
   EmptyStateComponent,
   FlexComponent,
+  LoadingSkeletonComponent,
   PaperComponent,
   PrivacyBlurComponent,
   TableComponent,
@@ -14,6 +19,10 @@ import {
 } from '@/shared/ui';
 import { formatCurrency, formatDate } from '@/shared/utils';
 import { RecurringSeriesStore } from '../../recurring-series.store';
+import {
+  RecurringDismissedListComponent,
+  type DismissedRow,
+} from '../recurring-dismissed-list/recurring-dismissed-list.component';
 import type { RecurringSeriesRow } from '../../recurring-payments-row-vm';
 
 const UNCATEGORISED_LABEL = 'Uncategorised';
@@ -26,6 +35,24 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
   quarterly: 'Quarterly',
   yearly: 'Yearly',
 };
+
+/**
+ * How each confidence level reads on a row (TICKET-REC-11). Words rather than a percentage: the
+ * signals behind the score are uncalibrated heuristics, and "71%" would claim a precision the
+ * detector does not have. The strong one is deliberately quiet — outline, no colour — so the page
+ * does not shout at the reader about the rows that are fine.
+ */
+const CONFIDENCE_DISPLAY: Record<
+  RecurringConfidence['level'],
+  { label: string; color: BadgeColor | undefined; variant: BadgeVariant }
+> = {
+  high: { label: 'Strong match', color: undefined, variant: 'outline' },
+  medium: { label: 'Fair match', color: 'warning', variant: 'outline' },
+  low: { label: 'Weak match', color: 'warning', variant: 'soft' },
+};
+
+const confidenceTitle = (label: string, reason: string): string =>
+  reason ? `${label} — ${reason}` : label;
 
 /**
  * The Recurring page's payments section (FR-REC-2, TICKET-REC-02) — one list of every payment
@@ -54,11 +81,15 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
   selector: 'app-recurring-payments-panel',
   imports: [
     NgTemplateOutlet,
+    AlertComponent,
+    BadgeComponent,
     ButtonComponent,
     EmptyStateComponent,
     FlexComponent,
+    LoadingSkeletonComponent,
     PaperComponent,
     PrivacyBlurComponent,
+    RecurringDismissedListComponent,
     TableComponent,
     TypographyComponent,
   ],
@@ -89,10 +120,12 @@ export class RecurringPaymentsPanelComponent {
     Omit<RecurringSeriesRow, 'expanded' | 'expandIcon' | 'toggleAriaLabel'>[]
   >(() => {
     const categoriesById = this.categoriesStore.categoriesById();
+    const mergeOverrideIdByKey = this.recurringSeriesStore.mergeOverrideIdByKey();
 
     return this.recurringSeriesStore.series().map((series) => {
       const category =
         series.categoryId != null ? categoriesById.get(series.categoryId) : undefined;
+      const confidence = CONFIDENCE_DISPLAY[series.confidence.level];
 
       return {
         key: series.key,
@@ -111,6 +144,13 @@ export class RecurringPaymentsPanelComponent {
           amount: formatCurrency(occurrence.amount),
         })),
         stopped: series.flags.stopped !== undefined,
+        confidenceLabel: confidence.label,
+        confidenceColor: confidence.color,
+        confidenceVariant: confidence.variant,
+        confidenceTitle: confidenceTitle(confidence.label, series.confidence.reason),
+        dismissAriaLabel: `Dismiss ${series.label} — not a recurring payment`,
+        mergeOverrideId: mergeOverrideIdByKey.get(series.key) ?? null,
+        unmergeAriaLabel: `Undo the merge on ${series.label}`,
       };
     });
   });
@@ -167,6 +207,13 @@ export class RecurringPaymentsPanelComponent {
     this.stoppedGroupOpen.update((open) => !open);
   }
 
+  /**
+   * Whether the user's corrections have loaded (TICKET-REC-11). The page must not say "nothing
+   * repeating found yet" while they are still in flight — that is an assertion of absence during a
+   * load, the same claim TICKET-TRF-06 removed from the transfers panel.
+   */
+  protected readonly correctionsLoaded = this.recurringSeriesStore.overridesLoaded;
+
   /** Off the shared series, not `rows()` — a count has no business re-deriving because a row was unfolded. */
   protected readonly seriesCount = computed(() => this.recurringSeriesStore.activeSeries().length);
 
@@ -201,6 +248,72 @@ export class RecurringPaymentsPanelComponent {
         .reduce((total, series) => total + series.monthlyEquivalent, 0),
     ),
   );
+
+  /**
+   * The detected series behind each rendered row, so a correction acts on the series rather than on
+   * the row's display key — `RecurringPaymentSeries.key` is `<cluster>|<median amount>` and its own
+   * doc forbids persisting it, so the store anchors an override on a transaction id instead
+   * (TICKET-REC-11).
+   */
+  private readonly seriesByKey = computed(
+    () => new Map(this.recurringSeriesStore.series().map((series) => [series.key, series])),
+  );
+
+  /**
+   * Rows that look like the same payment listed twice (TICKET-REC-11) — the review's own case was
+   * FreshMarket appearing as two monthly payments. Offered as a suggestion above the table, never
+   * merged automatically: the app does not know these are one payment, only that they are the shape
+   * of thing that usually is.
+   */
+  protected readonly mergeSuggestions = computed(() =>
+    this.recurringSeriesStore.mergeCandidates().map((pair) => ({
+      primaryKey: pair.primary.key,
+      duplicateKey: pair.duplicate.key,
+      label: pair.primary.label,
+      // The two amounts are kept out of the sentence and blurred on their own (TICKET-PRIV-01):
+      // baking them into prose would either leak them under privacy mode or, if the whole sentence
+      // were blurred, hide the explanation along with the figures — which TICKET-STAT-42 forbids.
+      leadText: `${pair.primary.label} is listed twice —`,
+      primaryAmount: formatCurrency(pair.primary.typicalAmount),
+      duplicateAmount: formatCurrency(pair.duplicate.typicalAmount),
+      trailText: ', same category.',
+      mergeAriaLabel: `Merge the two ${pair.primary.label} payments into one`,
+    })),
+  );
+
+  /**
+   * Dismissed detections, kept visible behind a disclosure rather than deleted (TICKET-REC-11). A
+   * dismissal the user cannot see or undo would be the same automation problem in the other
+   * direction — the page would now be silently *hiding* something instead of silently asserting it.
+   */
+  protected readonly dismissedRows = computed<DismissedRow[]>(() =>
+    this.recurringSeriesStore.dismissedSeries().map(({ series, overrideId }) => ({
+      overrideId,
+      label: series.label,
+      typicalAmount: formatCurrency(series.typicalAmount),
+      restoreAriaLabel: `Restore ${series.label} to the recurring payments list`,
+    })),
+  );
+
+  protected dismiss(key: string): void {
+    const series = this.seriesByKey().get(key);
+    if (series) void this.recurringSeriesStore.dismissSeries(series);
+  }
+
+  protected merge(primaryKey: string, duplicateKey: string): void {
+    const primary = this.seriesByKey().get(primaryKey);
+    const duplicate = this.seriesByKey().get(duplicateKey);
+    if (primary && duplicate) void this.recurringSeriesStore.mergeSeries(primary, duplicate);
+  }
+
+  /** Undoes a user merge — the same call as restoring a dismissal, since both remove an override. */
+  protected unmerge(overrideId: number): void {
+    void this.recurringSeriesStore.restoreOverride(overrideId);
+  }
+
+  protected restore(overrideId: number): void {
+    void this.recurringSeriesStore.restoreOverride(overrideId);
+  }
 
   protected toggle(key: string): void {
     this.expandedKeys.update((keys) => {

@@ -33,6 +33,18 @@ export type RecurringFlags = {
   stopped?: { since: string };
 };
 
+/**
+ * How strongly the evidence supports calling this a recurring payment (TICKET-REC-11) — derived
+ * from the signals detection already computes, never stored. The review's complaint was that a
+ * weak match was presented exactly like a strong one, so this is the thing that has to differ on
+ * screen.
+ */
+export type RecurringConfidence = {
+  level: 'high' | 'medium' | 'low';
+  /** One clause naming what weakened it, for the row's tooltip; empty on a `high` match. */
+  reason: string;
+};
+
 export type RecurringPaymentSeries = {
   /**
    * The cluster key plus the band's typical amount — stable across re-derivations of a *given*
@@ -65,6 +77,8 @@ export type RecurringPaymentSeries = {
    */
   projectUntil?: string;
   flags: RecurringFlags;
+  /** How much to trust this detection (TICKET-REC-11) — derived, like `flags`, never stored. */
+  confidence: RecurringConfidence;
 };
 
 export type RecurringPaymentsResult = {
@@ -428,7 +442,12 @@ const bandByAmount = (candidates: readonly Candidate[]): Candidate[][] => {
  */
 const recogniseCadence = (
   dates: readonly string[],
-): { cadence: RecurringCadence; medianGapDays: number; perMonth: number } | null => {
+): {
+  cadence: RecurringCadence;
+  medianGapDays: number;
+  perMonth: number;
+  gaps: number[];
+} | null => {
   const gaps: number[] = [];
   for (let index = 1; index < dates.length; index++) {
     gaps.push(daysBetween(dates[index - 1], dates[index]));
@@ -442,7 +461,7 @@ const recogniseCadence = (
   if (!band) return null;
   if (gaps.some((gap) => !fitsBand(gap, band))) return null;
 
-  return { cadence: band.cadence, medianGapDays, perMonth: perMonthOf(band) };
+  return { cadence: band.cadence, medianGapDays, perMonth: perMonthOf(band), gaps };
 };
 
 /** The category most of the band's occurrences carry, ties going to the earliest occurrence. */
@@ -462,6 +481,94 @@ const dominantCategoryId = (occurrences: readonly Candidate[]): number | null =>
   }
   return best;
 };
+
+/**
+ * Occurrences beyond which count alone stops being the weak signal. `MIN_OCCURRENCES` (3) is the
+ * floor a rhythm needs to exist at all; at six a pattern has repeated through half a year of
+ * monthly billing, which is where "it happened three times" stops being the interesting doubt.
+ */
+const CONFIDENT_OCCURRENCES = 6;
+
+/**
+ * How far the gaps may wander from their own median before the rhythm reads as irregular. A tenth
+ * of the interval is about three days on a monthly bill — inside the wobble a weekend or a bank
+ * holiday causes, and well inside what `CADENCE_BANDS` already tolerated on the way in.
+ */
+const STEADY_JITTER_RATIO = 0.1;
+
+/**
+ * How far the amounts may sit from the band's median before the price reads as unsteady.
+ *
+ * A *third* of `AMOUNT_BAND_TOLERANCE`, calibrated against what banding already permits rather than
+ * chosen: `bandByAmount` admits an occurrence within 15% of a *running* median, so a band's amounts
+ * are tighter than 15% apart in practice and a threshold at half the tolerance was effectively
+ * unreachable — the signal would have been decorative. At a third, a series with a couple of
+ * occurrences out near the edge of its band trips it, which is the case worth flagging.
+ */
+const STEADY_AMOUNT_RATIO = AMOUNT_BAND_TOLERANCE / 3;
+
+/** Mean absolute deviation from a value — the spread measure, robust enough and cheap. */
+const meanDeviation = (values: readonly number[], centre: number): number =>
+  values.reduce((sum, value) => sum + Math.abs(value - centre), 0) / values.length;
+
+/**
+ * Scores a series against three of detection's own signals (TICKET-REC-11): how many times it has
+ * repeated, how steady its interval is, and how steady its amount is. Each doubt costs one level,
+ * and the first one found is the one named — a row says the most important thing that is wrong with
+ * it, not a list.
+ *
+ * Deliberately *not* a percentage: the inputs are heuristics with no calibration behind them, and a
+ * "71% confident" would claim a precision this does not have. Three levels is what the evidence
+ * supports.
+ */
+const scoreConfidence = (
+  occurrences: readonly RecurringOccurrence[],
+  gaps: readonly number[],
+  intervalDays: number,
+  typicalAmount: number,
+): RecurringConfidence => {
+  const doubts: string[] = [];
+
+  if (occurrences.length < CONFIDENT_OCCURRENCES) {
+    doubts.push(`seen ${occurrences.length} times so far`);
+  }
+  if (meanDeviation(gaps, intervalDays) > intervalDays * STEADY_JITTER_RATIO) {
+    doubts.push('the dates drift from one to the next');
+  }
+  if (
+    typicalAmount > 0 &&
+    meanDeviation(
+      occurrences.map((occurrence) => occurrence.amount),
+      typicalAmount,
+    ) >
+      typicalAmount * STEADY_AMOUNT_RATIO
+  ) {
+    doubts.push('the amount varies between payments');
+  }
+
+  const level = doubts.length === 0 ? 'high' : doubts.length === 1 ? 'medium' : 'low';
+  return { level, reason: doubts[0] ?? '' };
+};
+
+/** The day-gaps between consecutive occurrences, oldest first — what `scoreConfidence` reads. */
+const gapsOf = (occurrences: readonly RecurringOccurrence[]): number[] => {
+  const gaps: number[] = [];
+  for (let index = 1; index < occurrences.length; index++) {
+    gaps.push(daysBetween(occurrences[index - 1].date, occurrences[index].date));
+  }
+  return gaps;
+};
+
+/** Re-scores a series whose occurrences changed — a repricing folded two levels together, or the
+ * user merged two rows (TICKET-REC-11). Without this, a merged series would carry the confidence of
+ * whichever half happened to win the spread. */
+const confidenceOf = (series: RecurringPaymentSeries): RecurringConfidence =>
+  scoreConfidence(
+    series.occurrences,
+    gapsOf(series.occurrences),
+    series.intervalDays,
+    series.typicalAmount,
+  );
 
 const toSeries = (band: readonly Candidate[]): RecurringPaymentSeries | null => {
   if (band.length < MIN_OCCURRENCES) return null;
@@ -492,7 +599,92 @@ const toSeries = (band: readonly Candidate[]): RecurringPaymentSeries | null => 
     intervalDays: rhythm.medianGapDays,
     // Filled by the passes below, once the series is whole and the clock is known.
     flags: {},
+    confidence: scoreConfidence(occurrences, rhythm.gaps, rhythm.medianGapDays, typicalAmount),
   };
+};
+
+/** Days in an average month — the divisor that turns an observed span into months. */
+const DAYS_PER_MONTH = 365.25 / 12;
+
+/**
+ * What a set of occurrences actually costs per month: everything they came to, over the span they
+ * cover, with one interval added so the last payment owns its period like every other one.
+ *
+ * Used for a **merged** series (TICKET-REC-11) instead of `typicalAmount × cadence rate`. A merged
+ * series is heterogeneous by construction — the user said two different-priced rows are one payment
+ * — and a median amount multiplied by a rate then overstates it badly: two ~monthly grocery bills
+ * of €58 and €73 merge into a series whose payments arrive fortnightly, and €58 × the fortnightly
+ * rate claims €254/month for something that has never cost more than about €130. Measuring what was
+ * actually spent cannot do that.
+ *
+ * On an unmerged, steady series the two agree to within a few percent — n payments spanning
+ * `n × interval` days give mean × the interval's own monthly rate — so they are not different
+ * ideas. They differ only in that the detector's version uses the *nominal* cadence rate (a month
+ * is 30.44 days) where this one uses the interval the payments actually kept (three payments across
+ * February keep a shorter one).
+ */
+const observedMonthlyEquivalent = (
+  occurrences: readonly RecurringOccurrence[],
+  intervalDays: number,
+): number => {
+  const total = occurrences.reduce((sum, occurrence) => sum + occurrence.amount, 0);
+  const spanDays =
+    daysBetween(occurrences[0].date, occurrences[occurrences.length - 1].date) + intervalDays;
+  return spanDays > 0 ? (total / spanDays) * DAYS_PER_MONTH : total;
+};
+
+/**
+ * Folds one detected series into another because the **user** said they are the same real payment
+ * (TICKET-REC-11) — the counterpart to `repriced`, which folds two levels the detector itself
+ * recognised as one commitment.
+ *
+ * Every figure is recomputed from the combined occurrences rather than inherited, so the merged row
+ * states a rhythm that is actually true of it: a merge is a claim about the world, and a monthly
+ * total carried over from one half would be a number nobody computed.
+ *
+ * The cadence is re-recognised, and falls back to the primary's when the combination fits no band —
+ * which is a real outcome, not a failure: two monthly rows merged into one series whose payments
+ * alternate every fortnight may genuinely be a fortnightly rhythm, and may equally be two payments
+ * a fortnight apart that the user knows are one bill. Keeping the primary's cadence in that case
+ * says the least, and `confidence` is re-scored either way, so a merge that made the rhythm ragged
+ * says so on the row.
+ *
+ * Occurrences are de-duplicated by transaction id: merging a series with one it overlaps (a price
+ * change already folded both levels in, say) must not count a payment twice into the total.
+ */
+export const mergeRecurringSeries = (
+  primary: RecurringPaymentSeries,
+  absorbed: RecurringPaymentSeries,
+): RecurringPaymentSeries => {
+  const byTransactionId = new Map<number, RecurringOccurrence>();
+  for (const occurrence of [...primary.occurrences, ...absorbed.occurrences]) {
+    byTransactionId.set(occurrence.transactionId, occurrence);
+  }
+  const occurrences = [...byTransactionId.values()].sort((a, b) => a.date.localeCompare(b.date));
+
+  const typicalAmount = median(occurrences.map((occurrence) => occurrence.amount));
+  const rhythm = recogniseCadence(occurrences.map((occurrence) => occurrence.date));
+  const cadence = rhythm?.cadence ?? primary.cadence;
+  const intervalDays = rhythm?.medianGapDays ?? primary.intervalDays;
+  const lastDate = occurrences[occurrences.length - 1].date;
+
+  const merged: RecurringPaymentSeries = {
+    ...primary,
+    occurrences,
+    typicalAmount,
+    cadence,
+    intervalDays,
+    lastDate,
+    nextExpectedDate: formatIsoDate(parseIsoDate(lastDate) + intervalDays * MS_PER_DAY),
+    monthlyEquivalent: observedMonthlyEquivalent(occurrences, intervalDays),
+    // The detector's own flags described the halves; recomputing them needs the clock, which this
+    // function deliberately does not have. Timing flags are re-derived downstream from `lastDate`
+    // and `intervalDays`, both of which are correct above; a `priceChange` the detector found on
+    // either half survives on the primary and stays true of it.
+    flags: primary.flags,
+  };
+
+  return { ...merged, confidence: confidenceOf(merged) };
 };
 
 /**
@@ -521,17 +713,22 @@ const isRepricingOf = (earlier: RecurringPaymentSeries, later: RecurringPaymentS
 const repriced = (
   earlier: RecurringPaymentSeries,
   later: RecurringPaymentSeries,
-): RecurringPaymentSeries => ({
-  ...later,
-  occurrences: [...earlier.occurrences, ...later.occurrences],
-  flags: {
-    priceChange: {
-      from: earlier.typicalAmount,
-      to: later.typicalAmount,
-      atDate: later.occurrences[0].date,
+): RecurringPaymentSeries => {
+  const folded: RecurringPaymentSeries = {
+    ...later,
+    occurrences: [...earlier.occurrences, ...later.occurrences],
+    flags: {
+      priceChange: {
+        from: earlier.typicalAmount,
+        to: later.typicalAmount,
+        atDate: later.occurrences[0].date,
+      },
     },
-  },
-});
+  };
+  // Re-scored over both levels (TICKET-REC-11): the folded series has been seen more times than
+  // either half, and taking `later`'s score through the spread would understate that.
+  return { ...folded, confidence: confidenceOf(folded) };
+};
 
 /** Same counterparty, same cadence — the two things a repricing keeps and the amount does not. */
 const byClusterAndCadence = (

@@ -24,11 +24,11 @@ describe('needsPartnerContributionSeed (TICKET-CAT-02 .version(6) upgrade idempo
   });
 });
 
-describe('goals & forecast schema (TICKET-FUT-02 .version(14))', () => {
-  it('is at version 15', async () => {
+describe('schema version and table set (currently .version(16), TICKET-REC-11)', () => {
+  it('is at version 16', async () => {
     await appDb.open();
 
-    expect(appDb.verno).toBe(15);
+    expect(appDb.verno).toBe(16);
   });
 
   it('declares savingsGoals as an auto-incrementing entity table indexed on sortOrder', async () => {
@@ -46,7 +46,19 @@ describe('goals & forecast schema (TICKET-FUT-02 .version(14))', () => {
     expect(appDb.forecastSettings.schema.indexes).toEqual([]);
   });
 
-  it('leaves every table shipped before v14 in place — .version(14) is additive only', async () => {
+  it('declares recurringOverrides as an auto-incrementing table indexed for override matching', async () => {
+    await appDb.open();
+
+    // `anchorTransactionId` is how a stored correction is matched back to a freshly detected
+    // series, and `kind` reads the dismissals and the merges apart (TICKET-REC-11).
+    expect(appDb.recurringOverrides.schema.primKey.auto).toBe(true);
+    expect(appDb.recurringOverrides.schema.indexes.map((index) => index.name).sort()).toEqual([
+      'anchorTransactionId',
+      'kind',
+    ]);
+  });
+
+  it('leaves every table shipped before the latest version in place — each version is additive only', async () => {
     await appDb.open();
     const tableNames = appDb.tables.map((table) => table.name).sort();
 
@@ -62,6 +74,7 @@ describe('goals & forecast schema (TICKET-FUT-02 .version(14))', () => {
       'importBatches',
       'loans',
       'mappingProfiles',
+      'recurringOverrides',
       'rules',
       'salaryMetadata',
       'savingsGoals',

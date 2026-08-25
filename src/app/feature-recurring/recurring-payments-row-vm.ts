@@ -1,3 +1,5 @@
+import type { BadgeColor, BadgeVariant } from '@/shared/ui';
+
 /** One occurrence as a series' expansion renders it — the evidence behind the detection. */
 export type RecurringOccurrenceRow = {
   transactionId: number;
@@ -34,4 +36,23 @@ export type RecurringSeriesRow = {
    * `priceChange` is shown nowhere.
    */
   stopped: boolean;
+  /**
+   * How far to trust this detection (TICKET-REC-11), as the row renders it. Shown on **every** row,
+   * not only the weak ones: a marker that appears solely when something is wrong teaches the reader
+   * that its absence means nothing, and the review's complaint was precisely that a weak match was
+   * presented exactly like a strong one.
+   */
+  confidenceLabel: string;
+  confidenceColor: BadgeColor | undefined;
+  confidenceVariant: BadgeVariant;
+  /** The hover/accessible sentence naming what weakened it; the label alone on a strong match. */
+  confidenceTitle: string;
+  /** Names the row, so the dismiss control is unambiguous with fifty of them on the page. */
+  dismissAriaLabel: string;
+  /**
+   * The override to remove to undo a user merge on this row, or `null` when the row was not merged.
+   * A merge is as reversible as a dismissal, or the page has only moved the trap (TICKET-REC-11).
+   */
+  mergeOverrideId: number | null;
+  unmergeAriaLabel: string;
 };

@@ -1267,4 +1267,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The drop zone on step 1 says all this up front, so the question is answered before you pick a file.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-REC-11'],
+    title: 'You can now tell the Recurring page when it has guessed wrong',
+    area: 'Recurring',
+    details: [
+      'Recurring detection was presented as settled fact: no way to say a payment is not really recurring, no way to say two rows are the same payment, and no sense of how sure the app was about any of it.',
+      'Every row now carries a strong/fair/weak match marker, and hovering it says what weakened the guess — too few payments so far, dates that drift, or an amount that varies.',
+      'Expand a row and you can dismiss it. It stays dismissed when detection re-runs, it stops counting toward the monthly total, and it is listed under “Dismissed” with a Restore button so nothing disappears for good.',
+      'When the same shop shows up twice at two different amounts, the page offers to merge the two into one — and the merge can be undone from the row it made.',
+    ],
+  },
 ];

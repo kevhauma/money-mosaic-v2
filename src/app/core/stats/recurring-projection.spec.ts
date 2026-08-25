@@ -13,6 +13,9 @@ const series = (overrides: Partial<RecurringPaymentSeries> = {}): RecurringPayme
   monthlyEquivalent: 12.99,
   intervalDays: 31,
   flags: {},
+  // TICKET-REC-11 added `confidence`; a hand-built series states a strong one so these
+  // cases stay about what they were about.
+  confidence: { level: 'high', reason: '' },
   ...overrides,
 });
 

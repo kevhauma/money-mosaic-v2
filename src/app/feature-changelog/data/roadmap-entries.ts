@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-REC-11',
-    title: 'Tell the app when a recurring payment isn’t one, and merge duplicates',
-    area: 'Recurring',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-INC-23',
     title: 'The Income page opens with your income instead of a wall of setup',
     area: 'Income',

@@ -26,7 +26,38 @@
     <mm-text as="p" variant="caption" class="mt-1">{{ caption }}</mm-text>
   }
 
-  @if (rows().length === 0) {
+  <!-- Suggested, never applied (TICKET-REC-11): the app cannot know two rows are one payment, only
+       that they look like it. Above the table because it is a claim about the list as a whole. -->
+  @for (suggestion of mergeSuggestions(); track suggestion.duplicateKey) {
+    <mm-alert status="info" variant="soft" class="mt-3 block">
+      <mm-flex align="center" justify="between" gap="3" [wrap]="true">
+        <span>
+          {{ suggestion.leadText }}
+          <mm-privacy-blur [blurred]="privacyMode()">{{
+            suggestion.primaryAmount
+          }}</mm-privacy-blur>
+          and
+          <mm-privacy-blur [blurred]="privacyMode()">{{
+            suggestion.duplicateAmount
+          }}</mm-privacy-blur
+          >{{ suggestion.trailText }}
+        </span>
+        <mm-button
+          size="xs"
+          [ariaLabel]="suggestion.mergeAriaLabel"
+          (click)="merge(suggestion.primaryKey, suggestion.duplicateKey)"
+        >
+          Merge into one
+        </mm-button>
+      </mm-flex>
+    </mm-alert>
+  }
+
+  <!-- "Nothing found" is a claim, and an un-hydrated store looks exactly like an empty one — the
+       same trap TICKET-TRF-06 removed from the transfers panel (TICKET-REC-11). -->
+  @if (!correctionsLoaded()) {
+    <mm-loading-skeleton [rows]="4" class="mt-3 block" />
+  } @else if (rows().length === 0) {
     <mm-empty-state
       title="Nothing repeating found yet"
       message="A payment is detected once it has happened at least three times at the same place, for a similar amount, on a regular rhythm."
@@ -83,6 +114,19 @@
                 row.label
               }}</span>
             </mm-button>
+            <!-- Confidence rides the name column rather than taking a column of its own: TICKET-REC-10
+                 measured this table's width to the pixel and warned that adding one puts the
+                 horizontal scrollbar back. Shown on every row, so its absence never has to be
+                 interpreted (TICKET-REC-11). -->
+            <mm-badge
+              [color]="row.confidenceColor"
+              [variant]="row.confidenceVariant"
+              size="sm"
+              class="ml-1 align-middle"
+              [title]="row.confidenceTitle"
+            >
+              {{ row.confidenceLabel }}
+            </mm-badge>
           </th>
           <td>
             <mm-flex align="center" gap="2">
@@ -124,6 +168,31 @@
                   </li>
                 }
               </ul>
+
+              <!-- The correction sits with the evidence (TICKET-REC-11), which is where the user
+                   decides the detection is wrong — and where the detail row already answers "why
+                   does the app think this repeats?". -->
+              <mm-flex align="center" gap="3" [wrap]="true" class="mt-3">
+                <mm-button
+                  variant="outline"
+                  size="xs"
+                  [ariaLabel]="row.dismissAriaLabel"
+                  (click)="dismiss(row.key)"
+                >
+                  Not a recurring payment
+                </mm-button>
+                @if (row.mergeOverrideId; as mergeOverrideId) {
+                  <mm-button
+                    variant="ghost"
+                    size="xs"
+                    [ariaLabel]="row.unmergeAriaLabel"
+                    (click)="unmerge(mergeOverrideId)"
+                  >
+                    Undo merge
+                  </mm-button>
+                }
+                <mm-text variant="caption">{{ row.confidenceTitle }}</mm-text>
+              </mm-flex>
             </td>
           </tr>
         }
@@ -171,5 +240,15 @@
         </tbody>
       }
     </mm-table>
+  }
+
+  <!-- A dismissal the user cannot see or undo is the same automation problem in the other direction
+       — the page silently hiding something instead of silently asserting it (TICKET-REC-11). -->
+  @if (dismissedRows().length > 0) {
+    <app-recurring-dismissed-list
+      [rows]="dismissedRows()"
+      [privacyMode]="privacyMode()"
+      (restoreRequested)="restore($event)"
+    />
   }
 </mm-paper>
