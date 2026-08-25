@@ -12,7 +12,7 @@ export type JointLegContext = {
 };
 
 /**
- * Classifies a joint account's own transaction leg for the contribution model (TICKET-STAT-03):
+ * Classifies a joint account's own transaction leg for the contribution model (TICKET-STAT-46):
  * `mineIn`/`mineOut` — a linked transfer to/from one of my own non-joint accounts, or (for
  * `mineIn`) a positive non-transfer amount not otherwise identifiable as a co-owner's — counts
  * at 100%. `jointSpend` — a negative non-transfer amount (shared spending) — counts at my share

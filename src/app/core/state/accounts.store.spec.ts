@@ -235,7 +235,7 @@ describe('AccountsStore: manual account ordering (TICKET-ACC-04)', () => {
   });
 });
 
-describe('AccountsStore: contribution-based net worth for joint accounts (TICKET-STAT-03)', () => {
+describe('AccountsStore: contribution-based net worth for joint accounts (TICKET-STAT-46)', () => {
   const accountsRepository = {
     getAll: vi.fn().mockResolvedValue([]),
     update: vi.fn().mockResolvedValue(1),

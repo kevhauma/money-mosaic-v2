@@ -22,11 +22,12 @@ Verification before declaring any change done: `ng lint` + `ng test` + `ng build
 | Coding conventions (naming, folders, styling, forms, testing) | `.claude/skills/coding-conventions/SKILL.md` |
 | Dexie schema, entities, versioning rules, repositories | `.claude/skills/data-model/SKILL.md` |
 | Feature/store/service map — what lives where | `.claude/skills/project-map/SKILL.md` |
-| Functional requirements (FR-TXN-*, FR-CAT-*, FR-TRF-*, ...) | `docs/v1.0_foundation/finance-app-spec.md`, `docs/v1.0_foundation/overview.md` |
-| UI layout spec | `docs/v1.0_foundation/ui-layout-spec.md` |
-| Requirements for every other shipped/backlog version (joint accounts, auto-categorise, dashboard insights, income, loans, data management, v2+, ...) | `docs/<version>/overview.md` — don't hardcode a version list here, ask the `spec-navigator` subagent or list `docs/` |
+| Functional requirements (FR-TXN-*, FR-CAT-*, FR-TRF-*, ...) | `docs/reference/finance-app-spec.md`, `docs/releases/v1.0_foundation/overview.md` |
+| UI layout spec | `docs/reference/ui-layout-spec.md` |
+| Every ticket, by feature area (dashboard, transactions, accounts, import, income, loans, ...) | `docs/<area>/overview.md` + `docs/<area>/tickets/` — don't hardcode an area list here, list `docs/` or ask the `spec-navigator` subagent |
+| What a given release shipped, in build order, with its scope decisions | `docs/releases/<version>/overview.md` — each ticket links back to its release via its **Released in** line |
 | Angular / Tailwind 4 / daisyUI / Vitest guidance | installed skills in `.agents/skills/` (managed by `npx skills`, tracked in `skills-lock.json`) |
-| `docs/` folder naming scheme (feature milestone vs. review, grandfathered exceptions) | `docs/README.md` |
+| `docs/` layout (area folders vs. `releases/` vs. `reference/`, ticket ID scheme) | `docs/README.md` |
 
 Subagents in `.claude/agents/`: `conventions-reviewer` (diff review against project rules), `verifier` (lint/test/build runner), `spec-navigator` (answers requirement/spec questions from `docs/`).
 

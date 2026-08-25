@@ -274,7 +274,7 @@ table.sr-only {
 
 /*
  * ============================== Deformable UI (default, light) ==============================
- * docs/v1.9_deformable_ui_redesign/design-language.md §1/§2 — gummy/candy pastel-saturated
+ * docs/releases/v1.9_deformable_ui_redesign/design-language.md §1/§2 — gummy/candy pastel-saturated
  * palette (coral / periwinkle / mint), big soft uniform radii (pill fields, chunky rounded
  * boxes) — the "everything is soft material" baseline.
  */
@@ -357,7 +357,7 @@ table.sr-only {
 
 /*
  * ============================== Deformable UI (default, dark) ==============================
- * docs/v1.9_deformable_ui_redesign/design-language.md §1 — same gummy hues, brighter/lighter so
+ * docs/releases/v1.9_deformable_ui_redesign/design-language.md §1 — same gummy hues, brighter/lighter so
  * they still pop against a soft plum-black surface. Same radius/border tokens as light so the
  * soft-material shape language is consistent across both modes. Dark mode steps the surface
  * instead of relying on shadows (a blurred glow barely reads on a dark background), so the

@@ -22,8 +22,7 @@ TICKET-PUB-05). It stays current because:
 
 ```ts
 export type RoadmapEntry = {
-  readonly versionFolder: string; // the docs/ folder the ticket lives in, e.g. "v2"
-  readonly ticketId: string; // e.g. "TICKET-SET-05" — one entry per open ticket, never batched
+    readonly ticketId: string; // e.g. "TICKET-SET-05" — one entry per open ticket, never batched
   readonly title: string; // plain language, see below
   readonly area: string; // short tag, e.g. "App Settings", "Public / Onboarding"
   readonly isTopic?: boolean; // true for a topic-level entry — see "Topic-level entries" below
@@ -36,8 +35,8 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
 
 No `date`/`status` field — unlike Changelog entries, these haven't shipped, so there's nothing to
 sort by beyond each version's own build order (`groupRoadmapEntries` in
-`group-roadmap-entries.ts` groups by `versionFolder`, preserving first-appearance order — it does
-not sort). Group headings are derived from `versionFolder` via `formatRoadmapHeading` (also in
+`group-roadmap-entries.ts` groups by `area`, preserving first-appearance order — it does
+not sort). The group heading is the `area` string itself (
 `group-roadmap-entries.ts`), which strips a leading `v<N>_` version prefix and title-cases the
 remainder (`"v1.6_income_growth"` → `"Income Growth"`); a folder with no such prefix (e.g. `"v2"`,
 the current near-term backlog) renders unchanged.
@@ -49,7 +48,7 @@ the current near-term backlog) renders unchanged.
   Roadmap entries map 1:1 to a currently open ticket here — there's no "already shipped,
   summarize it" case the way Changelog allows.
 - **Added by `story-ticket`'s Step 4.5**, right after the new ticket is added to `overview.md` —
-  append one entry for the just-created ticket, using its own `versionFolder`/`ticketId`.
+  append one entry for the just-created ticket, using its own `area`/`ticketId`.
 - **Removed by `work-ticket`'s Step 6.5**, right after that ticket's Changelog entry is added —
   delete the row whose `ticketId` matches. If no matching row exists (the ticket predates
   TICKET-PUB-05, or it was created before this skill existed), there's nothing to remove — skip
@@ -60,7 +59,7 @@ the current near-term backlog) renders unchanged.
 - **`area`** is a short, human-readable tag — usually the ticket's own `Area:` field, unless that
   reads too internal.
 - **Order in the array should track each version's `overview.md` build order** (top to bottom) —
-  when adding a new entry, insert it near entries from the same `versionFolder` if practical;
+  when adding a new entry, insert it near entries from the same `area` if practical;
   exact position doesn't affect rendering (`groupRoadmapEntries` preserves whatever order the
   array has), but it keeps the file easy to eyeball against `overview.md`.
 
@@ -68,7 +67,6 @@ the current near-term backlog) renders unchanged.
 
 ```ts
 {
-  versionFolder: 'v2',
   ticketId: 'TICKET-SET-05',
   title: 'Foundation for app settings (accent color, currency, locale, privacy mode)',
   area: 'App Settings',
@@ -88,9 +86,9 @@ since there's no single ticket to track.
   is exact-`TICKET-*`-only) — a topic-level row has to be removed/replaced by hand once that
   version actually gets ticketed via `story-ticket` (at that point, add one normal per-ticket
   entry per new ticket instead, and delete the old topic-level row).
-- Bundle several topic-level entries under the same `versionFolder` when a track/backlog covers
-  more than one idea (e.g. several rows all under `versionFolder: 'v9999_ideas'`) — they group
-  together under one heading (`formatRoadmapHeading('v9999_ideas')` → `"Ideas"`).
+- Bundle several topic-level entries under the same `area` when a track/backlog covers
+  more than one idea (e.g. several rows all under `area: 'Ideas'`) — they group
+  together under one heading (the shared `area` string).
 - Keep the `title` scoped to one idea per row rather than one long comma-separated summary, so
   each shows as its own line under the shared heading.
 

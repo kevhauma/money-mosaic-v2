@@ -51,7 +51,7 @@ type VariantSpec = {
 };
 
 /**
- * docs/v1.9_deformable_ui_redesign/design-language.md §5 — supersedes design-language.md §4's
+ * docs/releases/v1.9_deformable_ui_redesign/design-language.md §5 — supersedes design-language.md §4's
  * "Swiss Modernism 2.0" scale. Same sizes/weights/tracking as v1.5 — only `display`/`heading` move
  * to the bubbly `font-display` face (`styles.css`'s `@theme` block); `subheading`/`body`/`caption`/
  * `label` stay off it, since a bubbly face reads worse at paragraph/label sizes than the system

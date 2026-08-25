@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/c
 import { CHANGELOG_ENTRIES } from '../../data/changelog-entries';
 import { ROADMAP_ENTRIES } from '../../data/roadmap-entries';
 import { groupChangelogEntries } from '../../group-changelog-entries';
-import { formatRoadmapHeading, groupRoadmapEntries } from '../../group-roadmap-entries';
+import { groupRoadmapEntries } from '../../group-roadmap-entries';
 import {
   DividerComponent,
   PageHeaderComponent,
@@ -14,6 +14,7 @@ import { ChangelogEntryRowComponent } from '../changelog-entry-row/changelog-ent
 
 type DisplayEntry = {
   readonly key: string;
+  /** Empty when the group heading already names the area (Roadmap), so the badge isn't repeated. */
   readonly area: string;
   readonly title: string;
   readonly details: readonly string[];
@@ -25,7 +26,7 @@ const TABS: TabDefinition[] = [
   { label: 'Roadmap', value: 'roadmap' },
 ];
 
-/** Both tabs render the same heading+badge+title shape, so grouping is normalized once here rather than templated twice. */
+/** Both tabs render the same heading+badge+title shape, so grouping is normalized once here rather than templated twice. Changelog groups by date and badges the area; Roadmap groups by area, so it leaves the badge empty. */
 const CHANGELOG_GROUPS: readonly DisplayGroup[] = groupChangelogEntries(CHANGELOG_ENTRIES).map(
   (group) => ({
     heading: group.date,
@@ -40,10 +41,10 @@ const CHANGELOG_GROUPS: readonly DisplayGroup[] = groupChangelogEntries(CHANGELO
 
 const ROADMAP_GROUPS: readonly DisplayGroup[] = groupRoadmapEntries(ROADMAP_ENTRIES).map(
   (group) => ({
-    heading: formatRoadmapHeading(group.versionFolder),
+    heading: group.area,
     entries: group.entries.map((entry) => ({
       key: entry.ticketId,
-      area: entry.area,
+      area: '',
       title: entry.title,
       details: [],
     })),

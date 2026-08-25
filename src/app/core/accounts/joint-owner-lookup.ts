@@ -3,7 +3,7 @@ import { normalizeIban } from '@/shared/utils';
 
 /**
  * The single `counterpartyIban` → co-owner lookup, shared by CAT-02 (auto-tagging "Partner
- * contribution"), TRF-03 (excluding partner inflows from transfer matching) and STAT-03
+ * contribution"), TRF-03 (excluding partner inflows from transfer matching) and STAT-46
  * (classifying joint-account legs) so the three never disagree on who a co-owner is.
  */
 export const resolveCoOwnerByIban = (

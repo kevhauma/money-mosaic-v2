@@ -18,7 +18,7 @@ ticket via the `work-ticket` skill includes adding one entry, the same way check
 ```ts
 export type ChangelogEntry = {
   readonly date: string; // ISO YYYY-MM-DD, the day the entry was added
-  readonly versionFolder: string; // the docs/ folder the ticket(s) live in, e.g. "v2"
+  readonly release: string; // release label this shipped under, e.g. "v1.4_data_management"
   readonly ticketIds: readonly string[]; // e.g. ["TICKET-CHG-01"] — more than one for a batched entry
   readonly title: string; // plain language, see below
   readonly area: string; // short tag, e.g. "Changelog", "Transactions", "Settings"
@@ -67,7 +67,7 @@ Single-ticket entry (the normal case, added via `work-ticket` Step 6.5):
 ```ts
 {
   date: '2026-07-22',
-  versionFolder: 'v2',
+  release: 'v2',
   ticketIds: ['TICKET-CHG-01'],
   title: "Added a Changelog page showing what's shipped",
   area: 'Changelog',
@@ -79,7 +79,7 @@ Batched entry (backfilling an already-shipped version in one pass):
 ```ts
 {
   date: '2026-07-17',
-  versionFolder: 'v1.4_data_management',
+  release: 'v1.4_data_management',
   ticketIds: ['TICKET-DAT-01', 'TICKET-DAT-02', 'TICKET-DAT-03'],
   title: 'Added full local data export/import (JSON backup & restore), a persistent-storage request, and delete-all-data',
   area: 'Data management',

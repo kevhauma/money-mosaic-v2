@@ -114,7 +114,7 @@ describe('classifyForStats: base exclusions', () => {
   });
 });
 
-describe('classifyForStats: joint account routing (TICKET-STAT-03)', () => {
+describe('classifyForStats: joint account routing (TICKET-STAT-46)', () => {
   const jointAccount: Account = {
     id: 1,
     name: 'Joint',

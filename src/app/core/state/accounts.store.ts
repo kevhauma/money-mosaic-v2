@@ -63,7 +63,7 @@ export const AccountsStore = signalStore(
     });
 
     // Real bank balance (unchanged by the contribution model) — the accounts UI keeps showing
-    // this figure for every account, joint included (TICKET-STAT-03).
+    // this figure for every account, joint included (TICKET-STAT-46).
     const balancesById = computed(() => {
       const totals = transactionTotalsByAccountId();
       return new Map(
@@ -79,7 +79,7 @@ export const AccountsStore = signalStore(
     );
 
     // Shared lookup context for classifying a joint account's own transaction legs
-    // (TICKET-STAT-03) — reused by both the stake and the contributor-breakdown computeds below.
+    // (TICKET-STAT-46) — reused by both the stake and the contributor-breakdown computeds below.
     const jointLegContext = computed((): JointLegContext => ({
       transactionsById: new Map(transactionsStore.transactions().map((t) => [t.id!, t])),
       accountsById: accountsById(),

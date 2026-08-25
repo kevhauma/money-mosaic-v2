@@ -7,7 +7,7 @@ import type { LastImportStatus } from './last-import-status';
 export type AccountCardVm = {
   account: Account;
   balance: number;
-  /** My net-worth stake in a joint account (TICKET-STAT-03) — `hasShare` is `false` (and
+  /** My net-worth stake in a joint account (TICKET-STAT-46) — `hasShare` is `false` (and
    * `shareDisplay` meaningless) for a non-joint account. Split into a flag + a non-nullable number,
    * rather than `number | null`, so the template can gate on `hasShare` without a `!` assertion to
    * satisfy `SignedAmountPipe`'s `number` parameter — a `null`-check alone doesn't narrow a signal

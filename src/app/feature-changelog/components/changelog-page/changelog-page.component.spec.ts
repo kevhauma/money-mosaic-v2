@@ -3,7 +3,7 @@ import { ChangelogPageComponent } from './changelog-page.component';
 import { CHANGELOG_ENTRIES } from '../../data/changelog-entries';
 import { ROADMAP_ENTRIES } from '../../data/roadmap-entries';
 import { groupChangelogEntries } from '../../group-changelog-entries';
-import { formatRoadmapHeading, groupRoadmapEntries } from '../../group-roadmap-entries';
+import { groupRoadmapEntries } from '../../group-roadmap-entries';
 
 describe('ChangelogPageComponent', () => {
   beforeEach(async () => {
@@ -92,7 +92,7 @@ describe('ChangelogPageComponent', () => {
     expect(text).not.toContain(ROADMAP_ENTRIES[0].title);
   });
 
-  it('renders every roadmap entry title and area, grouped under its version heading in build order, once the Roadmap tab is selected', () => {
+  it('renders every roadmap entry title grouped under its area heading, without repeating the area as a per-row badge, once the Roadmap tab is selected', () => {
     const fixture = TestBed.createComponent(ChangelogPageComponent);
     fixture.detectChanges();
 
@@ -106,12 +106,14 @@ describe('ChangelogPageComponent', () => {
     const expectedGroups = groupRoadmapEntries(ROADMAP_ENTRIES);
 
     for (const group of expectedGroups) {
-      expect(text).toContain(formatRoadmapHeading(group.versionFolder));
+      expect(text).toContain(group.area);
       for (const entry of group.entries) {
         expect(text).toContain(entry.title);
-        expect(text).toContain(entry.area);
       }
     }
+
+    // The group heading already names the area, so a per-row badge would repeat it on every line.
+    expect(fixture.nativeElement.querySelectorAll('mm-badge').length).toBe(0);
 
     // Changelog content is hidden while the Roadmap tab is active.
     if (CHANGELOG_ENTRIES.length > 0) {

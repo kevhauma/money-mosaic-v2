@@ -1,6 +1,7 @@
 export type ChangelogEntry = {
   readonly date: string;
-  readonly versionFolder: string;
+  /** Release label this shipped under — matches a folder under `docs/releases/`. */
+  readonly release: string;
   readonly ticketIds: readonly string[];
   readonly title: string;
   readonly area: string;
@@ -14,7 +15,7 @@ export type ChangelogEntry = {
 /**
  * Append-only, hand-maintained (TICKET-CHG-01) — a new entry is added by the `work-ticket` skill's
  * changelog step once a ticket ships. `ticketIds` holds more than one ID for a batched entry (e.g.
- * the historical backfill below, grouped by version rather than one row per ticket) — see
+ * the historical backfill below, grouped by release rather than one row per ticket) — see
  * `.claude/skills/changelog-entry/SKILL.md` for the entry convention. Dates on the backfilled
  * entries below are reconstructed from git history (last activity on that version's tickets), not
  * exact ship dates — precise enough for a changelog, not a source of truth for anything else.
@@ -22,7 +23,7 @@ export type ChangelogEntry = {
 export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   {
     date: '2026-07-10',
-    versionFolder: 'v1.0_foundation',
+    release: 'v1.0_foundation',
     ticketIds: [
       'TICKET-DEV-01',
       'TICKET-ACC-01',
@@ -43,12 +44,12 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-15',
-    versionFolder: 'v1.1_joint_accounts',
+    release: 'v1.1_joint_accounts',
     ticketIds: [
       'TICKET-ACC-02',
       'TICKET-ACC-03',
       'TICKET-CAT-02',
-      'TICKET-STAT-03',
+      'TICKET-STAT-46',
       'TICKET-TXN-03',
       'TICKET-TXN-04',
       'TICKET-TRF-04',
@@ -65,7 +66,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-20',
-    versionFolder: 'v1.2_auto_categorise',
+    release: 'v1.2_auto_categorise',
     ticketIds: [
       'TICKET-ML-01',
       'TICKET-ML-02',
@@ -91,7 +92,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-21',
-    versionFolder: 'v1.3_dashboard_insights',
+    release: 'v1.3_dashboard_insights',
     ticketIds: [
       'TICKET-STAT-09',
       'TICKET-STAT-05',
@@ -116,7 +117,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-17',
-    versionFolder: 'v1.4_data_management',
+    release: 'v1.4_data_management',
     ticketIds: ['TICKET-DAT-01', 'TICKET-DAT-02', 'TICKET-DAT-03'],
     title:
       'Added full local data export/import (JSON backup & restore), a persistent-storage request, and delete-all-data',
@@ -124,7 +125,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-18',
-    versionFolder: 'v1.5_redesign',
+    release: 'v1.5_redesign',
     ticketIds: [
       'TICKET-UI-01',
       'TICKET-UI-02',
@@ -148,7 +149,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-21',
-    versionFolder: 'v1.9_deformable_ui_redesign',
+    release: 'v1.9_deformable_ui_redesign',
     ticketIds: [
       'TICKET-UI-16',
       'TICKET-UI-17',
@@ -163,28 +164,28 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-21',
-    versionFolder: 'v2',
+    release: 'v2',
     ticketIds: ['TICKET-PUB-01', 'TICKET-PUB-06', 'TICKET-PUB-02', 'TICKET-PUB-03'],
     title: 'Added a public landing page (with a GitHub link) and in-app How-to guides & FAQ',
     area: 'Public pages',
   },
   {
     date: '2026-07-22',
-    versionFolder: 'v2',
+    release: 'v2',
     ticketIds: ['TICKET-CHG-01'],
     title: "Added a Changelog page showing what's shipped, kept current via the ticket workflow",
     area: 'Changelog',
   },
   {
     date: '2026-07-22',
-    versionFolder: 'v2',
+    release: 'v2',
     ticketIds: ['TICKET-PUB-05'],
     title: "Added a Roadmap tab to the Changelog page, showing what's planned next",
     area: 'Changelog',
   },
   {
     date: '2026-07-23',
-    versionFolder: 'v1.5_redesign',
+    release: 'v1.5_redesign',
     ticketIds: ['TICKET-TXN-08'],
     title:
       'Added an Expense/Income switch to the transaction amount filter, so you can type a plain positive amount instead of remembering to enter it as negative',
@@ -192,7 +193,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-23',
-    versionFolder: 'v1.5_redesign',
+    release: 'v1.5_redesign',
     ticketIds: ['TICKET-CAT-07'],
     title:
       'Added a "Make rule from filter" button so a filtered transaction view can be turned straight into a categorisation rule',
@@ -200,7 +201,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-23',
-    versionFolder: 'v1.5_redesign',
+    release: 'v1.5_redesign',
     ticketIds: ['TICKET-IMP-07'],
     title:
       'Redesigned the CSV import mapper into a guided, field-by-field flow with live sample values, required-field errors, and duplicate-column warnings',
@@ -208,7 +209,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-24',
-    versionFolder: 'v1.1_joint_accounts',
+    release: 'v1.1_joint_accounts',
     ticketIds: ['TICKET-IMP-08'],
     title:
       'Added a "+ New account" quick action to the CSV import screen, so a brand-new bank or account no longer needs to be set up before importing — including seeding its opening balance from the file\'s own running balance column when it has one',
@@ -216,7 +217,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-24',
-    versionFolder: 'v1.5_redesign',
+    release: 'v1.5_redesign',
     ticketIds: ['TICKET-IMP-09'],
     title:
       'The CSV import mapper now walks through the fields, and a final summary as a short horizontal wizard, with the raw file preview and row preview shown side by side, instead of one long scrolling form',
@@ -224,21 +225,21 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-26',
-    versionFolder: 'v2_settings',
+    release: 'v2_settings',
     ticketIds: ['TICKET-SET-05', 'TICKET-SET-02'],
     title: 'Accent color picker for default themes',
     area: 'Settings',
   },
   {
     date: '2026-07-26',
-    versionFolder: 'v1.5_bugs',
+    release: 'v1.5_bugs',
     ticketIds: [],
     title: 'Popover menus now have a background. no longer transparent',
     area: 'Bugfix',
   },
   {
     date: '2026-07-26',
-    versionFolder: 'v2',
+    release: 'v2',
     ticketIds: ['TICKET-SET-03'],
     title:
       'Added a currency display setting — pick a symbol (€, $, £, ¥, ₹, or your own) and whether it shows before or after the number, everywhere amounts appear',
@@ -246,7 +247,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-26',
-    versionFolder: 'v2',
+    release: 'v2',
     ticketIds: ['TICKET-SET-04'],
     title:
       "Added a locale setting, so number grouping/decimal separators and dates throughout the app are formatted the way you're used to reading them, not hardcoded to one convention",
@@ -254,14 +255,14 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-28',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-IMP-10'],
     title: "Tidied up the CSV import mapping screen's internals for easier future maintenance",
     area: 'Import',
   },
   {
     date: '2026-07-28',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-TEST-03'],
     title:
       "Added a safety-net test suite pinning the import wizard's commit behavior ahead of upcoming internal changes",
@@ -269,7 +270,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-28',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-IMP-11'],
     title:
       "Simplified the CSV import wizard's internals into a single, more reliable session — no behavior change, but the Confirm button and mapping screen logic are now more consistent under the hood",
@@ -277,7 +278,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-28',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-IMP-12'],
     title:
       "Tidied up the batch-import waiting screen's internals for easier future maintenance — no visible change",
@@ -285,7 +286,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-28',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-NG-10'],
     title:
       'Fixed a bug where dashboard percentages, ratios, and month names always showed Belgian-style formatting regardless of your locale setting',
@@ -293,7 +294,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-28',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-STAT-23'],
     title:
       "Tidied up the category-comparison dashboard panel's internals for easier future maintenance — no visible change",
@@ -301,7 +302,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-28',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-ACC-05'],
     title:
       "Tidied up the Accounts page's internals for easier future maintenance — no visible change",
@@ -309,7 +310,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-29',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-ACC-06'],
     title:
       'The account detail page and the accounts list now share one balance display, so they stay in sync — no visible change',
@@ -317,7 +318,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-29',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-TXN-09'],
     title:
       "Tidied up the transactions table's internals for easier future maintenance — no visible change",
@@ -325,7 +326,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-29',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-CAT-08'],
     title:
       "Tidied up the rule editor's condition rows for easier future maintenance — no visible change",
@@ -333,7 +334,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-29',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-STAT-24'],
     title:
       'Added an exhaustive test suite pinning how every transaction is counted towards income, expense, and savings',
@@ -341,7 +342,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-29',
-    versionFolder: 'v2',
+    release: 'v2',
     ticketIds: ['TICKET-SET-06', 'TICKET-DAT-04'],
     title:
       'Data export, import, and delete-all now live inside Settings instead of their own sidebar item',
@@ -349,7 +350,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-29',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-SET-07'],
     title:
       'Rebuilt the Settings page as separate sections so new settings are quicker to add — no visible change',
@@ -357,14 +358,14 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-07-29',
-    versionFolder: 'v2_code_review',
+    release: 'v2_code_review',
     ticketIds: ['TICKET-SOLID-07'],
     title: 'Moved the shared date-range state to where the rest of the app-wide state lives',
     area: 'Foundation',
   },
   {
     date: '2026-07-30',
-    versionFolder: 'v2',
+    release: 'v2',
     ticketIds: [],
     title:
       'The rules page now has a single export button that switches to "Export selected" once you tick some rules, instead of two separate buttons',
@@ -372,7 +373,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
+    release: 'v1.6_income_growth',
     ticketIds: [
       'TICKET-INC-01',
       'TICKET-INC-03',
@@ -407,7 +408,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
+    release: 'v1.6_income_growth',
     ticketIds: [
       'TICKET-SET-08',
       'TICKET-INC-13',
@@ -436,7 +437,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-01',
-    versionFolder: 'v1.6_income_growth',
+    release: 'v1.6_income_growth',
     ticketIds: ['TICKET-ACC-07'],
     title:
       'The charts on the Accounts page now show what is actually in each account, instead of your share of it',
@@ -444,7 +445,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-02',
-    versionFolder: 'v1.6_income_growth',
+    release: 'v1.6_income_growth',
     ticketIds: ['TICKET-INC-19', 'TICKET-INC-20'],
     title:
       'A bonus you record on a salary deposit now comes off the right category, and shows up as its own band on the income chart',
@@ -458,7 +459,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-02',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: [
       'TICKET-UI-22',
       'TICKET-UI-23',
@@ -482,7 +483,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-UI-24'],
     title:
       'A page header now reads as two groups: what you are looking at sits by the title, what acts on it stays right',
@@ -490,7 +491,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-UI-25'],
     title:
       "The page header stays put while you scroll, so a long page's controls are always within reach",
@@ -498,7 +499,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-CHG-02'],
     title:
       'The Changelog/Roadmap switch moved up beside the page title, the same way Categories and Rules switch',
@@ -506,7 +507,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-PUB-09'],
     title:
       "A how-to guide and the FAQ now carry a “Back to how-to's” link, so you can work through several without the browser's back button",
@@ -514,7 +515,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-STAT-28'],
     title:
       'Net worth moved out of the Dashboard header and into the stats row, so every headline figure is read in one place',
@@ -527,7 +528,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-STAT-26'],
     title:
       'Chart legends moved out of the plot and into their own strip, so series names no longer sit on top of the data',
@@ -535,7 +536,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-STAT-27'],
     title:
       'A chart now keeps the settings you gave it for the rest of your visit, so switching the bucket size no longer puts back the series you just hid',
@@ -549,7 +550,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-ACC-10'],
     title:
       'Balance charts now always plot a daily balance, so they stop opening on Month and you stop setting them back to Day',
@@ -562,7 +563,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-03',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-ACC-11'],
     title:
       "Hovering a day on a balance chart now tells you what actually happened that day, instead of repeating the balance you're already looking at",
@@ -576,7 +577,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-04',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-ACC-09'],
     title:
       'Account cards now sit in one column in the same order as the chart’s bands, so you can look from a band straight down to its account',
@@ -589,7 +590,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-04',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-TXN-10'],
     title:
       'Picking Income or Expenses now filters the transactions list straight away, instead of waiting for you to also type an amount',
@@ -603,7 +604,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-04',
-    versionFolder: 'v1.6.2_interface_polish',
+    release: 'v1.6.2_interface_polish',
     ticketIds: ['TICKET-INC-22'],
     title:
       'The Income page now uses the width it has instead of stacking everything into one very long column',
@@ -617,7 +618,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-04',
-    versionFolder: 'v2',
+    release: 'v2',
     ticketIds: ['TICKET-PRIV-01'],
     title: 'You can now hide the amounts on your Dashboard with one click',
     details: [
@@ -631,7 +632,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-05',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-STAT-29', 'TICKET-STAT-30'],
     title: 'A new Dashboard heatmap shows which categories you spend on, and when',
     details: [
@@ -646,7 +647,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-06',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: [
       'TICKET-EXP-01',
       'TICKET-EXP-02',
@@ -669,7 +670,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-07',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-02'],
     title: 'Explore now lists the payments that repeat, and what they cost you per month',
     details: [
@@ -685,7 +686,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-07',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-03'],
     title: 'See when your recurring payments are expected to land, as a calendar or a list',
     details: [
@@ -700,7 +701,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-08',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-04'],
     title: 'Recurring payments now tell you when one gets dearer, runs late, or stops',
     details: [
@@ -716,7 +717,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-08',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-CAT-10'],
     title: 'Record the period a category actually applied to',
     details: [
@@ -731,7 +732,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-CAT-11'],
     title: 'Category pick lists only offer what applied on the date you are looking at',
     details: [
@@ -747,7 +748,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-05'],
     title:
       'A commitment you have dated the end of leaves the recurring list, quietly and correctly',
@@ -762,7 +763,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-06'],
     title: 'Stopped payments fold away behind a closed section',
     details: [
@@ -775,7 +776,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-07'],
     title: 'Weekly and every-two-weeks payments finally show up as recurring',
     details: [
@@ -788,7 +789,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-08'],
     title: 'Payments at the same place are recognised as the same place',
     details: [
@@ -802,7 +803,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-09'],
     title: 'The bills you pay from a joint account are detected, at the full amount',
     details: [
@@ -816,7 +817,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-REC-10'],
     title: 'The recurring payments table fits on screen again',
     details: [
@@ -830,7 +831,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-STAT-34'],
     title: 'Every spending heatmap row is now shaded in its own category’s colour',
     details: [
@@ -845,7 +846,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-STAT-33'],
     title: 'An “All” row across the top of the spending heatmap',
     details: [
@@ -860,7 +861,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-09',
-    versionFolder: 'v2.3_navigation',
+    release: 'v2.3_navigation',
     ticketIds: ['TICKET-UI-26'],
     title: 'The sidebar now sorts your pages into “Insights” and “Data”',
     details: [
@@ -873,7 +874,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-10',
-    versionFolder: 'v2.3_navigation',
+    release: 'v2.3_navigation',
     ticketIds: ['TICKET-PRIV-02'],
     title: '“Hide amounts” is now on every page that shows you figures',
     details: [
@@ -888,7 +889,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-11',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-EXP-07'],
     title: 'Explore now lays your spending out as a mosaic, sized by what things actually cost',
     details: [
@@ -902,7 +903,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-11',
-    versionFolder: 'v2.1_extra_graphs',
+    release: 'v2.1_extra_graphs',
     ticketIds: ['TICKET-EXP-08'],
     title: 'The spending mosaic now shows the individual payments inside every category',
     details: [
@@ -916,7 +917,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-13',
-    versionFolder: 'v2.2_goals_and_forecast',
+    release: 'v2.2_goals_and_forecast',
     ticketIds: [
       'TICKET-FUT-01',
       'TICKET-FUT-02',
@@ -942,7 +943,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-14',
-    versionFolder: 'v1.1_joint_accounts',
+    release: 'v1.1_joint_accounts',
     ticketIds: ['TICKET-TRF-05'],
     title:
       'Money you move into a shared account now links to your own deposit, not to a co-owner’s payment of the same amount',
@@ -950,7 +951,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-16',
-    versionFolder: 'v1.8_extended_date_range_picker',
+    release: 'v1.8_extended_date_range_picker',
     ticketIds: ['TICKET-STAT-37'],
     title:
       'The date-range dropdown on Dashboard, Explore and Accounts now offers 21 named ranges — rolling windows, "so far" variants, and fiscal quarters/years — instead of the previous 11',
@@ -958,7 +959,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-17',
-    versionFolder: 'v1.8_extended_date_range_picker',
+    release: 'v1.8_extended_date_range_picker',
     ticketIds: ['TICKET-STAT-39'],
     title:
       'You can now type an exact date range, like "90 days ago" or a specific date, straight into the date-range picker, preview what it resolves to, and press Apply once — instead of only clicking through a calendar',
@@ -966,7 +967,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-20',
-    versionFolder: 'v1.8_extended_date_range_picker',
+    release: 'v1.8_extended_date_range_picker',
     ticketIds: ['TICKET-STAT-40'],
     title:
       'The date-range picker now remembers your last 10 applied ranges — shared across Dashboard, Explore and Accounts — so a window you built once is one click away instead of retyped',
@@ -974,7 +975,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-20',
-    versionFolder: 'v1.8_extended_date_range_picker',
+    release: 'v1.8_extended_date_range_picker',
     ticketIds: ['TICKET-STAT-41'],
     title:
       'The Transactions date-range calendar now has "previous year"/"next year" buttons, so picking a date from years back takes a handful of clicks instead of paging through every month in between',
@@ -982,7 +983,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-21',
-    versionFolder: 'v1.7_loan_tracker',
+    release: 'v1.7_loan_tracker',
     ticketIds: [
       'TICKET-LOAN-01',
       'TICKET-LOAN-02',
@@ -1003,14 +1004,14 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-21',
-    versionFolder: 'v1.7_loan_tracker',
+    release: 'v1.7_loan_tracker',
     ticketIds: ['TICKET-LOAN-11'],
     title: 'You can now archive a paid-off loan or delete one you added by mistake',
     area: 'Loans',
   },
   {
     date: '2026-08-21',
-    versionFolder: 'v1.7_loan_tracker',
+    release: 'v1.7_loan_tracker',
     ticketIds: ['TICKET-LOAN-07'],
     title:
       'A loan’s detail page now charts its balance dropping over time — the textbook schedule next to what you actually paid — so you can see at a glance whether you’re ahead or behind',
@@ -1018,7 +1019,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-21',
-    versionFolder: 'v1.7_loan_tracker',
+    release: 'v1.7_loan_tracker',
     ticketIds: ['TICKET-LOAN-08'],
     title:
       'A loan’s detail page now has a full month-by-month schedule — payment, principal, interest, and remaining balance for every month of the term',
@@ -1026,7 +1027,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-21',
-    versionFolder: 'v1.7_loan_tracker',
+    release: 'v1.7_loan_tracker',
     ticketIds: ['TICKET-LOAN-09'],
     title:
       'A loan’s detail page now lists every transaction that counted toward its payoff, most recent first, each linking straight to that transaction',
@@ -1034,7 +1035,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-22',
-    versionFolder: 'v1.7_loan_tracker',
+    release: 'v1.7_loan_tracker',
     ticketIds: ['TICKET-LOAN-10'],
     title:
       'Every loan now shows whether you’re ahead of or behind its original schedule, and roughly how much interest your extra payments have saved',
@@ -1042,7 +1043,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-22',
-    versionFolder: 'v1.7_loan_tracker',
+    release: 'v1.7_loan_tracker',
     ticketIds: ['TICKET-LOAN-12', 'TICKET-LOAN-13', 'TICKET-LOAN-14'],
     title:
       'Every loan now has a What-if tab: ask what an extra payment or a one-off lump sum would do, and see the new payoff date and what it really saves',
@@ -1056,7 +1057,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-SET-10'],
     title:
       'Dates and amounts now come out the way you read them — 23/08/2026 and €1.234,56 — without a trip to Settings',
@@ -1064,7 +1065,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-TXN-11'],
     title:
       'The transaction filter controls each sit in their own space again, at every window width',
@@ -1072,7 +1073,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-LOAN-15'],
     title:
       'A loan’s remaining balance and its caption both stay inside the card, at any size of balance',
@@ -1080,14 +1081,14 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-PUB-10'],
     title: 'Help guides and changelog entries read as written, with no stray asterisks in the text',
     area: 'Help',
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-UI-32'],
     title: 'The sidebar’s “Learning” is now “Auto-categoriser”, which is what the page actually is',
     area: 'Navigation',
@@ -1099,7 +1100,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-UI-29'],
     title: 'Checkboxes look like checkboxes again, not radio buttons',
     area: 'UI',
@@ -1110,7 +1111,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-UI-31'],
     title: 'Two skip links jump you straight to the page or straight to the menu',
     area: 'Accessibility',
@@ -1122,7 +1123,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-EXP-09'],
     title: 'The spending mosaic’s figure table adds up to 100% again',
     area: 'Explore',
@@ -1134,7 +1135,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-STAT-44'],
     title: 'The category breakdown stops drawing a donut for a single category',
     area: 'Dashboard',
@@ -1147,7 +1148,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-STAT-42'],
     title: 'Each savings figure says what it actually counts',
     area: 'Dashboard',
@@ -1160,7 +1161,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-ACC-12'],
     title: 'The balance history chart shows each account’s own balance, not a running total',
     area: 'Accounts',
@@ -1171,7 +1172,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-UI-27'],
     title: 'A positive amount stops being drawn in the same red as a loss',
     area: 'UI',
@@ -1183,7 +1184,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-23',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-UI-28'],
     title: 'Settings and Changelog stay in the sidebar, whatever the height of your window',
     area: 'Navigation',
@@ -1194,7 +1195,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-UI-30'],
     title: 'Deleting a transaction asks one clear question instead of stacking two dialogs',
     area: 'Transactions',
@@ -1206,7 +1207,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-TRF-06'],
     title: 'Transfer review says how much is left to check, and linked rows say they are linked',
     area: 'Transfers',
@@ -1218,7 +1219,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-STAT-43'],
     title:
       'The spending heatmap says what its colours mean, instead of warning you not to trust them',
@@ -1230,7 +1231,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-TXN-12'],
     title: 'Transactions is readable on a phone',
     area: 'Transactions',
@@ -1243,7 +1244,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-ACC-13'],
     title: 'Every account says when it was last imported',
     area: 'Accounts',
@@ -1256,7 +1257,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-IMP-14'],
     title: 'The import wizard says how many rows you already have, before you commit',
     area: 'Import',
@@ -1269,7 +1270,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-REC-11'],
     title: 'You can now tell the Recurring page when it has guessed wrong',
     area: 'Recurring',
@@ -1282,7 +1283,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-INC-23'],
     title: 'The Income page shows you your income instead of asking you to configure it first',
     area: 'Income',
@@ -1296,7 +1297,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-24',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-IMP-13'],
     title: 'Import now has a history, and an import can be undone',
     area: 'Import',
@@ -1309,7 +1310,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-25',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-STAT-45'],
     title: 'The spending heatmap now shades in one colour, so the grid can be read at a glance',
     area: 'Dashboard',
@@ -1321,7 +1322,7 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
   },
   {
     date: '2026-08-25',
-    versionFolder: 'v2.3_ux_review',
+    release: 'v2.3_ux_review',
     ticketIds: ['TICKET-TXN-12'],
     title: 'Every page now names itself in the browser tab',
     area: 'Navigation',

@@ -4,7 +4,7 @@
  * variant. The classes themselves are inert — each theme style's daisyUI block supplies the
  * `--mm-*` custom properties that give them a look. The default Deformable UI theme reads them as
  * a jelly press-squish and a soft primary-tinted gel glow
- * (docs/v1.9_deformable_ui_redesign/design-language.md §3/§4); other theme styles reinterpret or
+ * (docs/releases/v1.9_deformable_ui_redesign/design-language.md §3/§4); other theme styles reinterpret or
  * ignore them.
  */
 export const MM_SQUISH_CLASS = 'mm-squish';

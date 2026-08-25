@@ -7,22 +7,24 @@ description: Work a ticket end-to-end — read it, plan the implementation, buil
 
 Drive one ticket from "not started" to "story checked off". The ticket is the source of
 truth: its **Acceptance criteria** are the contract, and each maps to that ticket's own
-**User story** section — and to the matching title+checkbox line in the version's
+**User story** section — and to the matching title+checkbox line in its area's
 `overview.md` — which must be checked off once every criterion passes.
 
-**Never assume the docs layout or which versions exist — discover it at runtime.** Tickets
-live in `docs/<version>/tickets/TICKET-<PREFIX>-<NN>-*.md`; the version's `overview.md`
-carries a title+checkbox line per ticket, **listed in recommended build order top to bottom
-— not grouped by area**. Mirror what you find; don't hardcode `v1`.
+**Never assume the docs layout or which areas exist — discover it at runtime.** Tickets are
+organised **by feature area**, not by release: they live in
+`docs/<area>/tickets/TICKET-<PREFIX>-<NN>-*.md`, and a prefix maps to exactly one area
+folder, so the ticket ID tells you where its file is. The area's `overview.md` carries a
+title+checkbox line per ticket, indexed by number within each prefix. `docs/releases/` is a
+historical record of what shipped when — read it for a ticket's build-order context, never
+edit it. See `docs/README.md`; mirror what you find, don't hardcode an area list.
 
 ## Step 1 — Locate the ticket
 
 - **If the user named a ticket** (ID like `TICKET-ACC-01`, a prefix+number, or a path),
   open that file. If only a partial ID was given, glob `docs/*/tickets/` to resolve it.
-- **If no ticket was named**, scan `docs/*/tickets/` and the version's `overview.md`
+- **If no ticket was named**, scan `docs/*/tickets/` and each area's `overview.md`
   for **open** work — lines still marked `- [ ]` that link to a ticket — and ask via
-  `AskUserQuestion` which one to work. The **first open, ticketed line** in `overview.md`
-  is the suggested next ticket (the list is already in build order); check its trailing
+  `AskUserQuestion` which one to work. Check a candidate's trailing
   note for an unmet dependency before suggesting it, and present the real, currently-open
   tickets you found — don't recite a remembered list.
 
@@ -129,10 +131,16 @@ catch convention drift.
 
 Once every acceptance-criteria checkbox in the ticket is `- [x]`:
 
-- Open the `overview.md` for the ticket's version.
+- Open the `overview.md` for the ticket's **area** (`docs/<area>/overview.md`).
 - Find the line whose ticket link matches this ticket ID — e.g. the line containing
   `[TICKET-ACC-01](./tickets/…)`. **Match on the ticket link, not the title wording.**
 - Flip that line's `- [ ]` → `- [x]`.
+- If the ticket ships as part of a named release, replace its `- **Released in:** _unreleased_`
+  metadata line with a link to that release's `docs/releases/<version>/overview.md`, and update
+  the trailing `· _unreleased_` on its `overview.md` line to the same release label. If it's
+  shipping outside any named release, leave both as `_unreleased_`.
+- Never edit anything under `docs/releases/` for a ticket that wasn't part of that release —
+  those files record what a past release actually did.
 
 ## Step 6.5 — Add a changelog entry, remove the roadmap entry (only when ALL criteria are `[x]`)
 
@@ -142,7 +150,7 @@ should get a Changelog entry — default the suggested answer to yes for a user-
 feature/bugfix and to no for a purely internal refactor/infra ticket, but let the user decide.
 If they say yes, invoke the **`changelog-entry`** skill's convention to append one entry to
 `src/app/feature-changelog/data/changelog-entries.ts` for the ticket just completed — `date`
-(today, ISO), `versionFolder`, `ticketIds` (this one ticket's ID), a plain-language `title`
+(today, ISO), `release`, `ticketIds` (this one ticket's ID), a plain-language `title`
 derived from the ticket's **User story**, and `area`. If they say no, skip it and note that in
 Step 7's report. Skip asking entirely only if the changelog feature/skill doesn't exist yet in
 the repo (e.g. this ticket predates TICKET-CHG-01 landing).

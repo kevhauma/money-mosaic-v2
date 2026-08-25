@@ -258,7 +258,7 @@ describe('computePeriodStats: signed netting by category kind (TICKET-STAT-11)',
   });
 });
 
-describe('computePeriodStats: joint-account share weighting (TICKET-STAT-03)', () => {
+describe('computePeriodStats: joint-account share weighting (TICKET-STAT-46)', () => {
   const jointAccount: Account = {
     id: 1,
     name: 'Joint',

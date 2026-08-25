@@ -16,7 +16,7 @@ export type ContributorBreakdown = {
 };
 
 /**
- * Who has put money into a joint account (TICKET-STAT-03), for the account detail "your share"
+ * Who has put money into a joint account (TICKET-STAT-46), for the account detail "your share"
  * breakdown. Reuses `classifyJointLeg` so this can never disagree with the stake/net-worth maths —
  * it only adds a finer split of the `mineIn`/`coOwnerIn` buckets for display purposes.
  */

@@ -6,7 +6,7 @@ import {
 } from './classify-joint-leg';
 
 /**
- * My net-worth stake in a joint account (TICKET-STAT-03): `ownershipShare * openingBalance` plus
+ * My net-worth stake in a joint account (TICKET-STAT-46): `ownershipShare * openingBalance` plus
  * every one of its own transactions weighted via `resolveContribution` — which also honours a
  * manual `attributionOverride` and zeroes out a leg reimbursed via `reimbursementTransferId`
  * (TICKET-TXN-03). For a non-joint account this isn't meaningful — callers gate on

@@ -126,7 +126,7 @@ const hasNeutralKind = (
  * (CAT-02 — the user has said "this is a contribution"), or it's a one-sided inflow into a
  * `joint` account whose counterparty is a registered co-owner (ACC-03) or simply isn't a known
  * own IBAN at all (fallback for a contributor not yet registered). Reuses `resolveCoOwnerByIban`,
- * the same lookup CAT-02/STAT-03 use, so matching and stats agree on what counts as a
+ * the same lookup CAT-02/STAT-46 use, so matching and stats agree on what counts as a
  * contribution. `ownIbans` must already contain normalized IBANs (see `ownAccountIbans`).
  */
 export const isExternalContribution = (

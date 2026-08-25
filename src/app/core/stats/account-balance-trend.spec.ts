@@ -135,7 +135,7 @@ describe('computeAccountBalanceTrends: real balances, not the net-worth stake (T
     expect(perAccountSeries[0].points[0].balance).toBe(300);
     expect(perAccountSeries[1].points[0].balance).toBe(500);
 
-    // TICKET-STAT-03's "the bands sum to net worth" invariant is deliberately dropped here: the
+    // TICKET-STAT-46's "the bands sum to net worth" invariant is deliberately dropped here: the
     // joint account's un-weighted €100 of partner-borne spending is the whole difference. The
     // combined figure it used to be compared against was `computeNetWorthTrend`'s €900, which
     // TICKET-ACC-07 retired from production and this change deleted.

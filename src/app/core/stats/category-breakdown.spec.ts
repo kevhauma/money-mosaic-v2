@@ -242,7 +242,7 @@ describe('computeCategoryBreakdown: signed netting by category kind (TICKET-STAT
   });
 });
 
-describe('computeCategoryBreakdown: joint-account share weighting (TICKET-STAT-03)', () => {
+describe('computeCategoryBreakdown: joint-account share weighting (TICKET-STAT-46)', () => {
   const jointAccount: Account = {
     id: 1,
     name: 'Joint',

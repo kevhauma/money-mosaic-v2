@@ -1,11 +1,13 @@
 <div class="flex items-start gap-2">
-  <mm-badge
-    color="primary"
-    variant="soft"
-    size="sm"
-    class="h-auto w-24 whitespace-normal py-1 text-center leading-tight"
-    >{{ area() }}</mm-badge
-  >
+  @if (area()) {
+    <mm-badge
+      color="primary"
+      variant="soft"
+      size="sm"
+      class="h-auto w-24 whitespace-normal py-1 text-center leading-tight"
+      >{{ area() }}</mm-badge
+    >
+  }
   <div class="flex flex-col gap-1">
     <mm-text as="span" class="block">{{ title() }}</mm-text>
     <ul class="list-disc pl-5" [class.hidden]="details().length === 0">

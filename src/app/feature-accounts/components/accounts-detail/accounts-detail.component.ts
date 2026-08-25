@@ -72,7 +72,7 @@ export class AccountsDetailComponent {
       : 0;
   });
 
-  /** My net-worth stake in this account (TICKET-STAT-03) — null for a non-joint account. */
+  /** My net-worth stake in this account (TICKET-STAT-46) — null for a non-joint account. */
   private readonly share = computed<number | null>(() => {
     const account = this.account();
     return account?.type === 'joint' && account.id != null

@@ -100,4 +100,4 @@ Pure logic files (`*-matching.ts`, `core/stats/*`, `core/loans/*`, `csv-row-mapp
 
 `docs/` holds one folder per version/milestone, each with `overview.md` (the ticket checklist) + `tickets/`, alongside code-review backlogs. **`docs/README.md` explains the folder-naming scheme and lists what's shipped versus specced — read that instead of a version list here, which would go stale immediately.**
 
-Two anchors that don't move: `docs/v1.0_foundation/finance-app-spec.md` (the FR-* functional requirements referenced from code comments) and `docs/v1.0_foundation/ui-layout-spec.md`. For "what does the spec say about X", ask the **spec-navigator** subagent rather than grepping.
+Two anchors that don't move: `docs/reference/finance-app-spec.md` (the FR-* functional requirements referenced from code comments) and `docs/reference/ui-layout-spec.md`. For "what does the spec say about X", ask the **spec-navigator** subagent rather than grepping.
