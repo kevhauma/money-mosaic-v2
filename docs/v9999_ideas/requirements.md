@@ -1,7 +1,8 @@
 # Ideas
 
 ## Competitive analysis
-- see [competitive-analysis.md](./competitive-analysis.md) — gaps/strengths vs Monarch Money & co (biggest gaps: budgets, goals, recurring/bill calendar, manual assets for net worth)
+- see [competitive-analysis.md](./competitive-analysis.md) — first snapshot, 2026-07-20 (v1.7): gaps/strengths vs Monarch Money & co, plus all the peer research and sources
+- see [competitive-analysis-v2.md](./competitive-analysis-v2.md) — second snapshot, 2026-08-25 (v2.3): re-scores those gaps against the current app — goals and recurring/bill calendar are **closed**, forecasting half-closed; biggest remaining gaps: budgets, wiring the bill calendar into a balance projection, net worth beyond bank accounts (the `loans` table is built but unwired), offline/installable
 
 
 ## Food voucher support
@@ -14,7 +15,7 @@
 - scannable QR code that shares the data? needs compression
 
 ## Extra graphs
-> **Graduated to [v2.1_extra_graphs](../v2.1_extra_graphs/overview.md)** — all three lines below are worked out as seven
+> **Graduated to [v2.1_extra_graphs](../releases/v2.1_extra_graphs/overview.md)** — all three lines below are worked out as seven
 > tickets there (heatmap as a Dashboard row, Sankey + 3D on a new `/explore` page). Kept here as the origin of that
 > version; a "chart builder" (freeform measure × dimension × period) is the one graph idea deliberately *not* ticketed —
 > see that version's "Considered, not ticketed yet".

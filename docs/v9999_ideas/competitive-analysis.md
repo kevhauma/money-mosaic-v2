@@ -1,5 +1,9 @@
 # Competitive analysis — Money Mosaic vs. commercial & open-source finance apps
 
+> **Superseded for the Money Mosaic column by [competitive-analysis-v2.md](./competitive-analysis-v2.md)**
+> (2026-08-25), which re-scores every gap below against the app as it stands after v2.3. This file stays
+> the reference for the peer research and the sources — v2 carries those forward without re-verifying them.
+
 Snapshot written 2026-07-20, comparing Money Mosaic (v1.0–v1.7 shipped) against apps with the same
 purpose. **[Monarch Money](https://www.monarch.com)** (the current mainstream benchmark, $99.99/yr
 Core, $199/yr Plus) gets the deepest treatment; a dedicated section below covers the rest of the
@@ -289,5 +293,5 @@ are each matched by at most one other app, never by the same one.
    stays compatible with NFR-PRIV-1.
 
 Everything in "structural gaps" that needs a server stays parked unless the no-backend principle
-is deliberately revisited (see [../v1.4_data_management/overview.md](../v1.4_data_management/overview.md)
+is deliberately revisited (see [../v1.4_data_management/overview.md](../releases/v1.4_data_management/overview.md)
 "Considered, not ticketed yet" for the same conclusion reached from the backup angle).
