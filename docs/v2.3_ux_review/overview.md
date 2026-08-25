@@ -10,11 +10,18 @@ The list is in recommended build order: the tiny independent fixes first (locale
 
 ## Status, 2026-08-25
 
-**All 22 are built.** Three lines below stay `- [ ]` on purpose, each with its reason on the line:
-one acceptance box on TRF-06, STAT-43 and TXN-12 could not be honestly ticked, and none of the three
-is code left unwritten. Two of them are the same cause — a browser check that the session's hidden
-preview pane made impossible — and the third is a scope decision recorded rather than taken quietly.
-Re-open each from its own ticket, not from here.
+**All 22 are built**, and 21 are fully ticked. Two lines below stay `- [ ]`, each with its reason on
+the line, and neither is code left unwritten:
+
+- **TXN-12** — the "mobile top bar names the page" criterion was deliberately not built, because
+  TICKET-UI-25's sticky page header already satisfies the need behind it and a second title would
+  breach TICKET-UI-22. A scope decision, recorded rather than taken quietly.
+- **TRF-06** — the pending-candidate state still rests on unit tests; it needs a crafted transfer
+  fixture, not a browser session.
+
+STAT-43's own live check was blocked while the session's browser pane was hidden — the panel sits
+behind `@defer (on viewport)`, which never fires without compositing — and was completed on
+2026-08-25 once the pane was open.
 
 - [x] [TICKET-SET-10](./tickets/TICKET-SET-10-default-locale-to-belgian.md) — Default locale ships US date order to a Belgian user (bug fix, UXR-5 — `DEFAULT_LOCALE = 'en-US'` at `format-settings.ts:13`) — tiny, independent, visible on every screen; do first
 - [x] [TICKET-TXN-11](./tickets/TICKET-TXN-11-filter-bar-controls-overlap.md) — Transactions filter controls overlap each other (bug fix, UXR-6 — `lg:grid-cols-6` gives 115px cells to controls needing 180px) — pure CSS, most-used screen, independent
@@ -31,8 +38,8 @@ Re-open each from its own ticket, not from here.
 - [x] [TICKET-UI-28](./tickets/TICKET-UI-28-sidebar-outgrew-its-viewport.md) — Sidebar's last nav items fall below the fold with no scroll affordance (bug fix, UXR-8 — TICKET-UI-26's "nine items" premise now runs to 15) — needs a re-decision, not just a patch; after UI-32 (same file)
 - [x] [TICKET-UI-30](./tickets/TICKET-UI-30-modal-on-modal-delete-confirm.md) — Delete confirmation opens a modal on top of a modal (bug fix, UXR-17 — parent's Save stays live behind it; confirm names only "Supermarket", of which there are eight) — independent
 - [ ] [TICKET-TRF-06](./tickets/TICKET-TRF-06-make-transfer-review-visible.md) — Transfer review is invisible, and linked pairs still read "Uncategorised" (bug fix, UXR-13, FR-TRF-4) — step 3 of the core loop; independent — **built and shipped, one box still open**: the pending-candidate state could not be live-verified without writing crafted transactions into real data, so it rests on unit tests. See the ticket's last criterion.
-- [ ] [TICKET-STAT-43](./tickets/TICKET-STAT-43-heatmap-per-row-scales.md) — Heatmap shades each row on its own scale, so cells can't be compared (bug fix, UXR-20) — a deliberate trade-off to re-make, not a slip; coordinate with TICKET-STAT-31 — **shipped, one box still open**: the as-is was stale (the rescale landed in `a8bae7a`, 2026-08-09), so this became the caption/naming fix that stopped the panel disclaiming its own semantics. The live check could not run — the panel is behind `@defer (on viewport)` and the session's browser pane was never displayed, so the trigger never fired. See the ticket's last-but-one criterion.
-- [ ] [TICKET-TXN-12](./tickets/TICKET-TXN-12-mobile-transactions-table.md) — Transactions is unusable on a phone (bug fix, UXR-9 — 750px table in a 375px viewport, 20px touch targets) — larger; after TXN-11, same page — **shipped, one box deliberately left open**: below `md` the rows render as cards (measured at 375px: 343px wide, 44px targets, no horizontal scroll) and the table is untouched at ≥1024px. The "mobile top bar names the page" criterion was **not** built — TICKET-UI-25's sticky `mm-page-header` already keeps the title on screen at every scroll position, and a second title would breach TICKET-UI-22. See the ticket's implementation note.
+- [x] [TICKET-STAT-43](./tickets/TICKET-STAT-43-heatmap-per-row-scales.md) — Heatmap shades each row on its own scale, so cells can't be compared (bug fix, UXR-20) — a deliberate trade-off to re-make, not a slip; coordinate with TICKET-STAT-31 — the as-is was stale (the rescale landed in `a8bae7a`, 2026-08-09), so this became the caption/naming fix that stopped the panel disclaiming its own semantics.
+- [ ] [TICKET-TXN-12](./tickets/TICKET-TXN-12-mobile-transactions-table.md) — Transactions is unusable on a phone (bug fix, UXR-9 — 750px table in a 375px viewport, 20px touch targets) — larger; after TXN-11, same page — **shipped, one box open as a scope call**: below `md` the rows render as cards (measured at 375px: 343px wide, 44px targets, no horizontal scroll; the live breakpoint crossing verified 2026-08-25) and the table is untouched at ≥1024px. The "mobile top bar names the page" criterion was **not** built — TICKET-UI-25's sticky `mm-page-header` already keeps the title on screen at every scroll position, and a second title would breach TICKET-UI-22. See the ticket's implementation note.
 - [x] [TICKET-ACC-13](./tickets/TICKET-ACC-13-last-imported-on-account-cards.md) — Show when each account was last imported (UXR-12) — cheapest of the import-safety group, independent of both others; start the group here
 - [x] [TICKET-IMP-14](./tickets/TICKET-IMP-14-duplicate-preview-before-commit.md) — Say how many rows are duplicates before committing an import (UXR-11) — prevention; cheaper than IMP-13 and worth shipping before it
 - [x] [TICKET-REC-11](./tickets/TICKET-REC-11-recurring-needs-correction-affordances.md) — Recurring detection can't be corrected, and over-claims (bug fix, UXR-15 — 100% of the month classified as recurring, one counterparty listed twice) — the clearest breach of "reversible automation"; likely additive schema
