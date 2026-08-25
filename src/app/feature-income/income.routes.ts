@@ -15,6 +15,7 @@ export const INCOME_ROUTES: Routes = [
     children: [
       {
         path: '',
+        title: 'Income',
         loadComponent: () =>
           import('./components/income-overview/income-overview.component').then(
             (m) => m.IncomeOverviewComponent,
@@ -25,6 +26,7 @@ export const INCOME_ROUTES: Routes = [
       // linkable, reloadable and reachable with the back button.
       {
         path: 'settings',
+        title: 'Income settings',
         loadComponent: () =>
           import('./components/income-settings-page/income-settings-page.component').then(
             (m) => m.IncomeSettingsPageComponent,
@@ -32,6 +34,7 @@ export const INCOME_ROUTES: Routes = [
       },
       {
         path: 'salary',
+        title: 'Salary details',
         loadComponent: () =>
           import('./components/salary-details-page/salary-details-page.component').then(
             (m) => m.SalaryDetailsPageComponent,

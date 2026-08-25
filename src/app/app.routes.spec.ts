@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { Router, TitleStrategy, provideRouter } from '@angular/router';
+import { AppTitleStrategy } from './core/layout/app-title.strategy';
 import { routes } from './app.routes';
 
 /**
@@ -102,6 +104,60 @@ describe('app routes: unmatched URLs', () => {
 
       expect(resolved).toBe(true);
       expect(router.url).toBe('/auto-categoriser');
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
+});
+
+/**
+ * The shipped table's own titles (TICKET-TXN-12) — `AppTitleStrategy`'s two branches are covered
+ * against a local table in `core/layout/app-title.strategy.spec.ts`; what these cases pin is that
+ * each *real* route carries the name of the page it opens, since a page shipped without one is
+ * invisible from the tab, the history and a screen reader's navigation announcement.
+ */
+describe('app routes: page titles', () => {
+  const titleAfterNavigating = async (url: string): Promise<string> => {
+    TestBed.configureTestingModule({
+      providers: [provideRouter(routes), { provide: TitleStrategy, useClass: AppTitleStrategy }],
+    });
+    await TestBed.inject(Router).navigateByUrl(url);
+    return TestBed.inject(Title).getTitle();
+  };
+
+  it(
+    'names the page the URL opened, ahead of the brand',
+    async () => {
+      await expect(titleAfterNavigating('/transactions')).resolves.toBe(
+        'Transactions · Money Mosaic',
+      );
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
+
+  it(
+    'names a child page for itself rather than for its section',
+    async () => {
+      await expect(titleAfterNavigating('/income/salary')).resolves.toBe(
+        'Salary details · Money Mosaic',
+      );
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
+
+  it(
+    'resolves a guide URL to that guide, not to a generic "How-to"',
+    async () => {
+      await expect(titleAfterNavigating('/help/importing-a-bank-statement')).resolves.toBe(
+        'Importing a bank statement · Money Mosaic',
+      );
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
+
+  it(
+    'leaves the landing page as the bare brand — it is the front door, not a page inside the app',
+    async () => {
+      await expect(titleAfterNavigating('/home')).resolves.toBe('Money Mosaic');
     },
     ROUTE_RESOLUTION_TIMEOUT_MS,
   );

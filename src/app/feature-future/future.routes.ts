@@ -16,6 +16,7 @@ export const FUTURE_ROUTES: Routes = [
     children: [
       {
         path: '',
+        title: 'Future',
         loadComponent: () =>
           import('./components/future-overview/future-overview.component').then(
             (m) => m.FutureOverviewComponent,

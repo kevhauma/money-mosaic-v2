@@ -9,6 +9,7 @@ import type { Routes } from '@angular/router';
 export const RECURRING_ROUTES: Routes = [
   {
     path: '',
+    title: 'Recurring',
     loadComponent: () =>
       import('./components/recurring-overview/recurring-overview.component').then(
         (m) => m.RecurringOverviewComponent,

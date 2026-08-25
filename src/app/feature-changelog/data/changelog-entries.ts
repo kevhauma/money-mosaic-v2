@@ -1319,4 +1319,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The row label already says which category it is, so the colour is free to mean only one thing: the same shade is the same amount, in any row.',
     ],
   },
+  {
+    date: '2026-08-25',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-TXN-12'],
+    title: 'Every page now names itself in the browser tab',
+    area: 'Navigation',
+    details: [
+      'Whichever page you were on, the tab, the bookmark and your phone’s tab switcher all said the same thing: “Money Mosaic”. With a few tabs open there was no telling them apart, and a bookmark saved nothing about where it pointed.',
+      'The tab now reads the page first — “Transactions · Money Mosaic” — and a how-to opens under its own name rather than a generic one.',
+      'A screen reader gets the same thing: moving between pages used to announce no change of title at all, because there was none.',
+    ],
+  },
 ];

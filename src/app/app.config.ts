@@ -6,9 +6,14 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router';
 
 import { appDb } from './core/data-access';
+// Imported straight from its file, not through the `@/core/layout` barrel: that barrel also
+// re-exports `AppShellComponent`, and `@Component` has side effects esbuild can't tree-shake — so
+// a barrel import here would drag the whole shell (and its icons, buttons and stores) into the
+// eager bundle, which the shell's own lazy `loadComponent` exists to avoid.
+import { AppTitleStrategy } from './core/layout/app-title.strategy';
 import { StorageStatusService } from './core/storage';
 import { routes } from './app.routes';
 
@@ -16,6 +21,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
+    // Appends the brand to each route's own `title` (TICKET-TXN-12). Without a strategy the router
+    // would set `document.title` to the bare page name, dropping "Money Mosaic" from every tab.
+    { provide: TitleStrategy, useClass: AppTitleStrategy },
     provideAppInitializer(() => {
       // Captured before the async boundary — `inject()` only works synchronously here, but the
       // dev-seed step below runs after `await`, so it resolves its service off this injector.

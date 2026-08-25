@@ -5,6 +5,7 @@ import { echarts } from '@/shared/echarts';
 export const DASHBOARD_ROUTES: Routes = [
   {
     path: '',
+    title: 'Dashboard',
     providers: [provideEchartsCore({ echarts })],
     loadComponent: () =>
       import('./components/dashboard-overview/dashboard-overview.component').then(

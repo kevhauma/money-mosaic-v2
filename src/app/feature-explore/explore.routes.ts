@@ -15,6 +15,7 @@ export const EXPLORE_ROUTES: Routes = [
     children: [
       {
         path: '',
+        title: 'Explore',
         loadComponent: () =>
           import('./components/explore-overview/explore-overview.component').then(
             (m) => m.ExploreOverviewComponent,
