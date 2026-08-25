@@ -2,19 +2,6 @@
   <mm-button actions-start variant="ghost" size="sm" link="/income">Back to income</mm-button>
 </mm-page-header>
 
-@if (arrivedFromSetup()) {
-  <!-- Only on the onboarding path (TICKET-PUB-08) — a returning user editing one setting doesn't
-       need to be told what a settings page is. The explanations below are always present; this
-       only frames them. -->
-  <mm-alert status="info" variant="soft" class="mb-6 block">
-    <span class="grow">
-      Work down the page: set when your career started, then tick the categories that count. Each
-      section explains what it changes.
-    </span>
-    <mm-button variant="ghost" size="sm" link="/income">Back to Income</mm-button>
-  </mm-alert>
-}
-
 <mm-paper>
   <h2 class="card-title text-base">Career start</h2>
   <mm-text variant="caption" as="p">
@@ -84,13 +71,7 @@
   </mm-text>
 
   <div class="mt-3">
-    <app-income-category-checklist
-      legend="Spread across their year"
-      hint="Tick a category that pays out once a year rather than monthly."
-      emptyMessage="Nothing to smooth: no income category is counted right now."
-      [categories]="smoothableCategories()"
-      (toggled)="toggleSmoothed($event)"
-    />
+    <app-income-lump-sum-checklist />
   </div>
 </mm-paper>
 

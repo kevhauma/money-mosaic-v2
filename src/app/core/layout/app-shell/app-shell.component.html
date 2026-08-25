@@ -110,7 +110,12 @@
             <li>
               <a routerLink="/income" routerLinkActive="menu-active" [class]="navItemClass">
                 <ng-icon name="tablerTrendingUp" size="18" aria-hidden="true" />
-                <mm-text as="span">Income (Beta)</mm-text>
+                <!-- "(Beta)" dropped (TICKET-INC-23). It had been in the sidebar since v1.6
+                     landed and promised the user nothing checkable — not "figures may be wrong",
+                     not "this will change", just a word. The page has since shipped twelve tickets
+                     and a UX review pass; what is still moving is recorded on the Roadmap tab,
+                     which is a claim the user can actually read. -->
+                <mm-text as="span">Income</mm-text>
               </a>
             </li>
             <li>

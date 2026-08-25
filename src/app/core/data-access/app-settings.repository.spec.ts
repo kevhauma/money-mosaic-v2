@@ -179,41 +179,6 @@ describe('AppSettingsRepository', () => {
     expect(await appDb.appSettings.count()).toBe(1);
   });
 
-  it('markGuideSeen records a slug on a row that does not exist yet (TICKET-PUB-08)', async () => {
-    await repository.markGuideSeen('getting-started-with-the-income-page');
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      seenGuideSlugs: ['getting-started-with-the-income-page'],
-    });
-  });
-
-  it('markGuideSeen is idempotent — marking the same slug twice leaves one entry', async () => {
-    await repository.markGuideSeen('income');
-    await repository.markGuideSeen('income');
-
-    expect((await repository.get()).seenGuideSlugs).toEqual(['income']);
-  });
-
-  it('markGuideSeen appends a second slug rather than replacing the first', async () => {
-    await repository.markGuideSeen('income');
-    await repository.markGuideSeen('loans');
-
-    expect((await repository.get()).seenGuideSlugs).toEqual(['income', 'loans']);
-  });
-
-  it('markGuideSeen preserves unrelated settings and stays a single row', async () => {
-    await repository.setLocale('en-GB');
-    await repository.markGuideSeen('income');
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      locale: 'en-GB',
-      seenGuideSlugs: ['income'],
-    });
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
   it('setGrossColor(undefined) clears the color without touching the rest of the row', async () => {
     await repository.setPrimaryColor('rose');
     await repository.setGrossColor('violet');

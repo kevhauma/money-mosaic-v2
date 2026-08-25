@@ -118,12 +118,6 @@ export const AppSettingsStore = signalStore(
       },
 
       /** Records that a guide's first-visit intro has been shown (TICKET-PUB-08); idempotent. */
-      markGuideSeen: async (slug: string): Promise<void> => {
-        const seen = store.seenGuideSlugs() ?? [];
-        if (seen.includes(slug)) return;
-        await appSettingsRepository.markGuideSeen(slug);
-        patchState(store, { seenGuideSlugs: [...seen, slug] });
-      },
 
       /**
        * Records an applied range (TICKET-STAT-40) — most-recent-first, deduped by its expression

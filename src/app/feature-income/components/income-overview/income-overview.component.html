@@ -2,136 +2,153 @@
 <!-- Reason: CRAP only, from an assumed-zero coverage estimate. This template's own numbers are fine
      (cyclomatic 5 of 20, cognitive 10 of 15); the score comes from `estimated_component_inherited`
      coverage on a page that `income-overview.component.spec.ts` exercises with ~35 cases. Every
-     branch here is a page-state choice — first-visit intro, empty state, charts, one-month modal —
+     branch here is a page-state choice — empty state, charts, one-month modal, the inference notes —
      and there is no decision point to remove without hiding one of them behind a component that
      exists only to lower a number. -->
-@if (showIntro()) {
-  <app-income-intro />
-} @else {
-  <!-- Order (TICKET-INC-21): the two destinations that change what this page computes come first,
-       at the same default weight other pages give a page-level control (Rules' "Re-run rules"); the
-       guide is last and stays `ghost`, because it is a reference link rather than a control — three
-       identical ghosts read as one undifferentiated set.
-       No date range here on purpose: `/income` scopes itself to `IncomeStore.incomeRange()`
-       (TICKET-INC-12), and TICKET-UI-23 deliberately does not give this page one. -->
-  <mm-page-header title="Income">
-    <mm-button actions-end size="sm" link="/income/settings">
-      <ng-icon name="tablerAdjustments" size="16" aria-hidden="true" />
-      Income settings
-    </mm-button>
-    <mm-button actions-end size="sm" link="/income/salary">
-      <ng-icon name="tablerReceipt2" size="16" aria-hidden="true" />
-      Salary details
-    </mm-button>
-    <mm-button actions-end variant="ghost" size="sm" [link]="fullGuideLink">
-      <ng-icon name="tablerHelpCircle" size="16" aria-hidden="true" />
-      Guide
-    </mm-button>
-    <!-- Last in the end group (TICKET-PRIV-02), after the guide: the three above are about this
-         page's *content*, and this one is about who can read the screen. -->
-    <mm-privacy-toggle actions-end />
-  </mm-page-header>
+<!-- No first-visit gate (TICKET-INC-23). TICKET-PUB-08 put the getting-started guide in front of
+   this page; it cost ~500 words before any content, and its "Skip for now" exit landed on a page
+   of em-dashes and a meaningless 0%. The guide is still one click away in the header, and each
+   assumption the page makes is now stated beside the figure it produced. -->
+<!-- Order (TICKET-INC-21): the two destinations that change what this page computes come first,
+     at the same default weight other pages give a page-level control (Rules' "Re-run rules"); the
+     guide is last and stays `ghost`, because it is a reference link rather than a control — three
+     identical ghosts read as one undifferentiated set.
+     No date range here on purpose: `/income` scopes itself to `IncomeStore.incomeRange()`
+     (TICKET-INC-12), and TICKET-UI-23 deliberately does not give this page one. -->
+<mm-page-header title="Income">
+  <mm-button actions-end size="sm" link="/income/settings">
+    <ng-icon name="tablerAdjustments" size="16" aria-hidden="true" />
+    Income settings
+  </mm-button>
+  <mm-button actions-end size="sm" link="/income/salary">
+    <ng-icon name="tablerReceipt2" size="16" aria-hidden="true" />
+    Salary details
+  </mm-button>
+  <mm-button actions-end variant="ghost" size="sm" [link]="fullGuideLink">
+    <ng-icon name="tablerHelpCircle" size="16" aria-hidden="true" />
+    Guide
+  </mm-button>
+  <!-- Last in the end group (TICKET-PRIV-02), after the guide: the three above are about this
+       page's *content*, and this one is about who can read the screen. -->
+  <mm-privacy-toggle actions-end />
+</mm-page-header>
 
-  <!-- The *one-month* salary surface (TICKET-INC-18): a click on a chart point is the question "what
-     was June?", and answering it shouldn't mean leaving the chart for a multi-year table. The full
-     table is `/income/salary`'s job, and this links there. -->
-  <mm-modal [(open)]="salaryMonthOpen" class="max-w-lg">
-    <span mm-modal-title>{{ salaryMonthTitle() }}</span>
-    <!-- Mounted only while the modal is open, so it builds its controls from fresh stored values each
-       time instead of syncing them against the store mid-edit (TICKET-INC-10). -->
-    @if (openSalaryMonth(); as month) {
-      <app-salary-month-modal [yearMonth]="month" />
-    }
-  </mm-modal>
-
-  @if (hasSelectedCategories()) {
-    <!-- Two columns from `lg:` (TICKET-INC-17): charts in the main column, the events rail beside
-       them, so events never push the charts down on a wide screen. Below `lg:` the rail stacks
-       under the charts, which is why it comes second in the DOM. `min-w-0` on the charts column
-       stops a wide chart from forcing the grid past the viewport. -->
-    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div class="min-w-0">
-        <mm-paper>
-          <h2 class="card-title text-base">Income by month</h2>
-
-          <div
-            echarts
-            [options]="chartOption()"
-            class="h-72 w-full"
-            role="img"
-            [attr.aria-label]="chartAriaLabel()"
-            (chartClick)="onChartClick($event)"
-            (chartLegendSelectChanged)="onLegendSelectChanged($event)"
-            (chartDataZoom)="onDataZoom($event)"
-          ></div>
-
-          <!-- Screen-reader-only companion table for the chart above — not a visible data table, so
-             it skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
-          <table class="sr-only">
-            <caption>
-              Total income per period, underlying the chart above
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Period</th>
-                <th scope="col">Income</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of accessibleRows(); track row.bucketKey) {
-                <tr>
-                  <th scope="row">{{ row.bucketKey }}</th>
-                  <td>{{ row.total }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </mm-paper>
-
-        <!-- These two stay full width, and TICKET-INC-22's "pair the two short panels" was measured
-             and abandoned rather than shipped: the charts column is 617px on a 1280px window, so a
-             half is 297px, and the growth panel's three stat cards are 168px each — they stack one
-             per row and that panel goes 177px → 536px. Pairing cut ~185px of page but left both
-             halves cramped (the yearly heading wrapped and its chart lost a third of its width),
-             which is a worse page, not a shorter one. Three cards only sit side by side above a
-             ~600px half, i.e. a ~1,224px charts column, which this layout never has next to a 20rem
-             rail. The scroll win is in the Net vs gross grid and the rail cap instead. -->
-        <app-income-growth-panel class="mt-6 block" />
-
-        <app-income-yearly-panel class="mt-6 block" />
-
-        <!-- Back in the charts column after a spell at full page width (TICKET-INC-22). It was moved
-             out because its 2-up threshold looked marginal here and because a horizontal scrollbar
-             appeared once it sat further right — but that scrollbar was never this section's doing:
-             it was `sr-only` failing to constrain a `<table>`, fixed in `styles.css`. With the real
-             cause gone, the reasons to keep it in the column win: the events rail stays sticky for
-             the *whole* page rather than only the part above this section, and the page reads as one
-             column of panels beside one rail. Its `@container` is 567px here against a 512px
-             threshold, so 2×2 holds with 55px to spare. -->
-        <app-income-gross-net-section class="mt-6 block" />
-      </div>
-
-      <!-- `lg:self-start` is load-bearing, not decoration (TICKET-INC-22): a grid item stretches to
-           its row by default, and a stretched item gives `sticky` nothing to move within — the rail
-           would silently scroll away with the charts. `lg:top-20` clears the sticky page header
-           (64px) with a 16px gap; below `lg:` the rail stacks under the charts and is neither
-           sticky nor capped, since a viewport-tall sticky rail on a phone would cover the very
-           content it annotates. -->
-      <app-income-events-sidebar class="block lg:sticky lg:top-20 lg:self-start" />
-    </div>
-  } @else {
-    <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
-       ticked" and "nothing is categorised as income yet" look identical from here, and a first-time
-       user almost always has the second. -->
-    <mm-empty-state
-      class="mt-6"
-      title="No income is being counted yet"
-      message="Two things cause this. If you have income categories, tick at least one under Income settings. If that list is empty, no category has kind “income” yet — set that under Categories, and make sure your imported transactions are assigned to it."
-    >
-      <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
-      <mm-button action color="primary" class="mt-2" link="/income/settings">
-        Open income settings
-      </mm-button>
-    </mm-empty-state>
+<!-- The *one-month* salary surface (TICKET-INC-18): a click on a chart point is the question "what
+   was June?", and answering it shouldn't mean leaving the chart for a multi-year table. The full
+   table is `/income/salary`'s job, and this links there. -->
+<mm-modal [(open)]="salaryMonthOpen" class="max-w-lg">
+  <span mm-modal-title>{{ salaryMonthTitle() }}</span>
+  <!-- Mounted only while the modal is open, so it builds its controls from fresh stored values each
+     time instead of syncing them against the store mid-edit (TICKET-INC-10). -->
+  @if (openSalaryMonth(); as month) {
+    <app-salary-month-modal [yearMonth]="month" />
   }
+</mm-modal>
+
+@if (hasSelectedCategories()) {
+  <!-- Two columns from `lg:` (TICKET-INC-17): charts in the main column, the events rail beside
+     them, so events never push the charts down on a wide screen. Below `lg:` the rail stacks
+     under the charts, which is why it comes second in the DOM. `min-w-0` on the charts column
+     stops a wide chart from forcing the grid past the viewport. -->
+  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0">
+      <mm-paper>
+        <h2 class="card-title text-base">Income by month</h2>
+
+        <div
+          echarts
+          [options]="chartOption()"
+          class="h-72 w-full"
+          role="img"
+          [attr.aria-label]="chartAriaLabel()"
+          (chartClick)="onChartClick($event)"
+          (chartLegendSelectChanged)="onLegendSelectChanged($event)"
+          (chartDataZoom)="onDataZoom($event)"
+        ></div>
+
+        <!-- Screen-reader-only companion table for the chart above — not a visible data table, so
+           it skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
+        <table class="sr-only">
+          <caption>
+            Total income per period, underlying the chart above
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Period</th>
+              <th scope="col">Income</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of accessibleRows(); track row.bucketKey) {
+              <tr>
+                <th scope="row">{{ row.bucketKey }}</th>
+                <td>{{ row.total }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <!-- The two assumptions this chart is drawn under, stated where they act and corrigible
+             here (TICKET-INC-23). Both were steps in the setup wall that used to stand in front of
+             the page; the controls are the same ones `/income/settings` renders. -->
+        <app-income-inference-note
+          [statement]="lumpSumNote()"
+          subject="which categories are annual lump sums"
+        >
+          <app-income-lump-sum-checklist />
+        </app-income-inference-note>
+
+        <app-income-inference-note
+          [statement]="mainIncomeCategoryNote()"
+          subject="your main income category"
+        >
+          <app-income-main-category />
+        </app-income-inference-note>
+      </mm-paper>
+
+      <!-- These two stay full width, and TICKET-INC-22's "pair the two short panels" was measured
+           and abandoned rather than shipped: the charts column is 617px on a 1280px window, so a
+           half is 297px, and the growth panel's three stat cards are 168px each — they stack one
+           per row and that panel goes 177px → 536px. Pairing cut ~185px of page but left both
+           halves cramped (the yearly heading wrapped and its chart lost a third of its width),
+           which is a worse page, not a shorter one. Three cards only sit side by side above a
+           ~600px half, i.e. a ~1,224px charts column, which this layout never has next to a 20rem
+           rail. The scroll win is in the Net vs gross grid and the rail cap instead. -->
+      <app-income-growth-panel class="mt-6 block" />
+
+      <app-income-yearly-panel class="mt-6 block" />
+
+      <!-- Back in the charts column after a spell at full page width (TICKET-INC-22). It was moved
+           out because its 2-up threshold looked marginal here and because a horizontal scrollbar
+           appeared once it sat further right — but that scrollbar was never this section's doing:
+           it was `sr-only` failing to constrain a `<table>`, fixed in `styles.css`. With the real
+           cause gone, the reasons to keep it in the column win: the events rail stays sticky for
+           the *whole* page rather than only the part above this section, and the page reads as one
+           column of panels beside one rail. Its `@container` is 567px here against a 512px
+           threshold, so 2×2 holds with 55px to spare. -->
+      <app-income-gross-net-section class="mt-6 block" />
+    </div>
+
+    <!-- `lg:self-start` is load-bearing, not decoration (TICKET-INC-22): a grid item stretches to
+         its row by default, and a stretched item gives `sticky` nothing to move within — the rail
+         would silently scroll away with the charts. `lg:top-20` clears the sticky page header
+         (64px) with a 16px gap; below `lg:` the rail stacks under the charts and is neither
+         sticky nor capped, since a viewport-tall sticky rail on a phone would cover the very
+         content it annotates. -->
+    <app-income-events-sidebar class="block lg:sticky lg:top-20 lg:self-start" />
+  </div>
+} @else {
+  <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
+     ticked" and "nothing is categorised as income yet" look identical from here, and a first-time
+     user almost always has the second. -->
+  <mm-empty-state
+    class="mt-6"
+    title="No income is being counted yet"
+    message="Two things cause this. If you have income categories, tick at least one under Income settings. If that list is empty, no category has kind “income” yet — set that under Categories, and make sure your imported transactions are assigned to it."
+  >
+    <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
+    <mm-button action color="primary" class="mt-2" link="/income/settings">
+      Open income settings
+    </mm-button>
+  </mm-empty-state>
 }

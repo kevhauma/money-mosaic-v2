@@ -179,18 +179,13 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
       expect(text).toContain('Both do the same thing to the charts');
     });
 
-    it('shows the onboarding hand-off banner only when arrived from the intro (TICKET-PUB-08)', async () => {
+    it('renders no onboarding banner — its only entry point was the deleted intro (TICKET-INC-23)', async () => {
       await setup([category(1, 'Salary', 'income')]);
 
+      // `?from=setup` had exactly one producer, the first-visit gate. With the gate gone the banner
+      // could never render again, so the input and the branch went with it rather than staying as
+      // unreachable UI a spec kept green by setting the input by hand.
       expect(fixture.nativeElement.querySelector('mm-alert')).toBeNull();
-
-      fixture.componentRef.setInput('from', 'setup');
-      fixture.detectChanges();
-
-      const banner = fixture.nativeElement.querySelector('mm-alert') as HTMLElement;
-      expect(banner).not.toBeNull();
-      expect(banner.textContent).toContain('Work down the page');
-      expect(banner.querySelector('a[href="/income"]')?.textContent).toContain('Back to Income');
     });
 
     it('keeps a one-line hint on each control alongside the section copy', async () => {

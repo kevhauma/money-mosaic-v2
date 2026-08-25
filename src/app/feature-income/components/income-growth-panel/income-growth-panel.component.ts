@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { computeIncomeGrowth, lastCompleteBucketKey, type IncomeGrowthWindow } from '@/core/stats';
 import { AppSettingsStore } from '@/core/state';
 import { PrivacyBlurComponent, StatCardComponent, TypographyComponent } from '@/shared/ui';
+import { IncomeCareerStartComponent } from '../income-career-start/income-career-start.component';
+import { IncomeInferenceNoteComponent } from '../income-inference-note/income-inference-note.component';
 import {
   bucketDateBoundaries,
   buildTransactionDrilldownParams,
@@ -13,7 +15,12 @@ import { INCOME_GRANULARITY } from '../../income-granularity';
 import { IncomeStore } from '../../income.store';
 
 /** Printed instead of a percentage when the comparison would be `±∞%` — nothing was earned in the window being compared against. */
-const NO_PERCENT_SHOWN = '—';
+/**
+ * What a card shows where a percentage would go when there is nothing to compare against
+ * (TICKET-INC-23). Words, not an em dash: a row of dashes is the app declining to say anything,
+ * and the sub-label underneath already knows exactly what is missing.
+ */
+const NO_COMPARISON_YET = 'Not yet';
 
 export type IncomeGrowthCardVm = {
   label: string;
@@ -51,7 +58,7 @@ export const buildIncomeGrowthCard = (
   if (window === null)
     return {
       label,
-      value: NO_PERCENT_SHOWN,
+      value: NO_COMPARISON_YET,
       subLabel: missingReason,
       tooltip: '',
       color: undefined,
@@ -61,7 +68,7 @@ export const buildIncomeGrowthCard = (
 
   return {
     label,
-    value: window.pct === null ? NO_PERCENT_SHOWN : formatPercent(window.pct, 'signed'),
+    value: window.pct === null ? NO_COMPARISON_YET : formatPercent(window.pct, 'signed'),
     subLabel: `${formatCurrency(window.total)} → ${formatCurrency(current)}`,
     tooltip: `${formatDate(window.from)} – ${formatDate(window.to)}: ${formatCurrency(window.total)}`,
     color: growthColor(window.pct),
@@ -92,7 +99,13 @@ export const buildIncomeGrowthCard = (
  */
 @Component({
   selector: 'app-income-growth-panel',
-  imports: [PrivacyBlurComponent, StatCardComponent, TypographyComponent],
+  imports: [
+    IncomeCareerStartComponent,
+    IncomeInferenceNoteComponent,
+    PrivacyBlurComponent,
+    StatCardComponent,
+    TypographyComponent,
+  ],
   templateUrl: './income-growth-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -143,6 +156,25 @@ export class IncomeGrowthPanelComponent {
         };
   });
 
+  /**
+   * Whether the career start is the user's own date or the app's guess (TICKET-INC-23). It matters
+   * to the wording: with nothing set, `computeIncomeGrowth`'s baseline is the first month the
+   * imported history happened to pay anything — which is not a career start, and labelling it as one
+   * is the inference the old setup wall existed to prevent and did not.
+   */
+  private readonly careerStartIsSet = computed(() => !!this.incomeStore.careerStartDate());
+
+  /** The sentence stating that assumption, beside the figure it produced. */
+  protected readonly careerStartNote = computed(() => {
+    const stored = this.incomeStore.careerStartDate();
+    if (stored) return `Counting from ${formatDate(stored)}, the career start you set.`;
+
+    const baseline = this.growth()?.careerStart;
+    return baseline
+      ? `No career start set, so this counts from ${formatDate(baseline.from)} — the first month your imported history paid anything.`
+      : 'No career start set, so this counts from the first month your imported history paid anything.';
+  });
+
   protected readonly cards = computed<IncomeGrowthCardVm[]>(() => {
     const growth = this.growth();
     if (growth === null) return [];
@@ -150,7 +182,11 @@ export class IncomeGrowthPanelComponent {
     // year. Reading them left to right is then reading the story forwards.
     return [
       buildIncomeGrowthCard(
-        'vs. start of career',
+        // Says what it actually compares against (TICKET-INC-23). "vs. start of career" is only
+        // true once the user has told the app when that was; until then the baseline is the first
+        // month the data pays anything, and claiming otherwise is how a meaningless 0% got read as
+        // "no growth since I started working".
+        this.careerStartIsSet() ? 'vs. start of career' : 'vs. your first month on record',
         growth.current,
         growth.careerStart,
         'no earlier month on record to compare against',

@@ -652,6 +652,12 @@ export type AppSettings = {
    *
    * Same "additive optional field, no version bump" reasoning as the fields above.
    * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   *
+   * **Nothing writes this since TICKET-INC-23** removed the Income page's first-visit gate, which
+   * was its only producer. The field stays because dropping it would be a migration that buys
+   * nothing — rows already carrying it are harmless — and because it is where a future first-visit
+   * hook belongs. The methods that maintained it were deleted with their caller rather than left as
+   * an API with nothing behind it.
    */
   seenGuideSlugs: string[] | undefined;
   /**

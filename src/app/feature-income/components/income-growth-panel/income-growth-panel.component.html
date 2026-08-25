@@ -27,6 +27,13 @@
   </div>
 } @else {
   <mm-text variant="caption" as="p">
-    No complete calendar month in your history yet — growth needs a whole month to compare.
+    No complete calendar month in your history yet — growth needs a whole month to compare. Import a
+    month that has already ended and these three figures fill in.
   </mm-text>
 }
+
+<!-- The assumption behind the first card, stated beside the number it produced, with the control
+     that changes it one click away (TICKET-INC-23). -->
+<app-income-inference-note [statement]="careerStartNote()" subject="your career start date">
+  <app-income-career-start />
+</app-income-inference-note>

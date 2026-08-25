@@ -27,10 +27,11 @@ import {
 } from '@/shared/ui';
 import { formatCurrency, HIDDEN_AMOUNT_TEXT } from '@/shared/utils';
 import { AppSettingsStore, chartSeriesFilter, chartZoomControl } from '@/core/state';
-import { GUIDES } from '@/feature-help';
 import { IncomeStore } from '../../income.store';
 import { IncomeEventsSidebarComponent } from '../income-events-sidebar/income-events-sidebar.component';
-import { IncomeIntroComponent, INCOME_GUIDE_SLUG } from '../income-intro/income-intro.component';
+import { IncomeLumpSumChecklistComponent } from '../income-lump-sum-checklist/income-lump-sum-checklist.component';
+import { IncomeInferenceNoteComponent } from '../income-inference-note/income-inference-note.component';
+import { IncomeMainCategoryComponent } from '../income-main-category/income-main-category.component';
 import { IncomeGrossNetSectionComponent } from '../income-gross-net-section/income-gross-net-section.component';
 import { IncomeGrowthPanelComponent } from '../income-growth-panel/income-growth-panel.component';
 import { IncomeYearlyPanelComponent } from '../income-yearly-panel/income-yearly-panel.component';
@@ -38,6 +39,10 @@ import { SalaryMonthModalComponent } from '../salary-month-modal/salary-month-mo
 import { monthLabel } from '../../salary-metadata-rows';
 
 export type IncomeTrendAccessibleRow = { bucketKey: string; total: string };
+
+/** The Income page's own getting-started guide (TICKET-PUB-07). Linked from the header; since
+ * TICKET-INC-23 it is never rendered as a gate in front of the page. */
+const INCOME_GUIDE_SLUG = 'getting-started-with-the-income-page';
 
 /**
  * The `YYYY-MM` bucket an echarts click landed on, or `undefined` when the event carries no usable
@@ -122,7 +127,9 @@ export const buildIncomeTrendChartOption = (
     EmptyStateComponent,
     IncomeEventsSidebarComponent,
     IncomeGrossNetSectionComponent,
-    IncomeIntroComponent,
+    IncomeLumpSumChecklistComponent,
+    IncomeInferenceNoteComponent,
+    IncomeMainCategoryComponent,
     IncomeGrowthPanelComponent,
     IncomeYearlyPanelComponent,
     MmModalComponent,
@@ -144,20 +151,37 @@ export class IncomeOverviewComponent {
   private readonly appSettingsStore = inject(AppSettingsStore);
 
   /**
-   * The first-visit intro replaces the whole page until it's been seen (TICKET-PUB-08) — including
-   * the empty state, since an empty Income page is precisely the situation the intro explains and
-   * "No income is being counted yet" is a worse first sentence than "here's what this page is".
-   *
-   * A slug missing from `GUIDES` degrades to the normal page rather than an empty intro: the
-   * content is the reason the intro exists, and a blank one would be worse than none.
+   * The long-form explanation, in the header where the reader can reach it when they want it
+   * (TICKET-INC-23). It used to stand in front of the page instead; the words were the same, and
+   * ~500 of them before any content is a gate rather than help.
    */
-  protected readonly showIntro = computed(
-    () =>
-      !(this.appSettingsStore.seenGuideSlugs() ?? []).includes(INCOME_GUIDE_SLUG) &&
-      GUIDES.some((guide) => guide.slug === INCOME_GUIDE_SLUG),
-  );
-
   protected readonly fullGuideLink = `/help/${INCOME_GUIDE_SLUG}`;
+
+  /**
+   * The two assumptions the trend chart above is drawn under (TICKET-INC-23), each stated beside the
+   * chart they shape and corrigible there. Both were steps in the setup wall this replaced.
+   */
+  protected readonly lumpSumNote = computed(() => {
+    const smoothedIds = this.incomeStore.smoothedBonusCategoryIds();
+    const smoothed = this.incomeStore
+      .countedIncomeCategories()
+      .filter((category) => category.id != null && smoothedIds.has(category.id));
+    if (smoothed.length === 0) {
+      return 'No category is treated as an annual lump sum, so a 13th month or holiday pay draws as one tall month rather than being spread across its year.';
+    }
+    const names = smoothed.map((category) => category.name).join(', ');
+    return `Spread across their year, so they do not draw as a spike: ${names}.`;
+  });
+
+  protected readonly mainIncomeCategoryNote = computed(() => {
+    const mainId = this.incomeStore.mainIncomeCategoryId();
+    const name = this.incomeStore
+      .countedIncomeCategories()
+      .find((category) => category.id === mainId)?.name;
+    return name
+      ? `A bonus you record on a month's salary details comes off ${name}.`
+      : 'No main income category set, so a bonus recorded on a month’s salary details is taken off every category that paid you that month, in proportion.';
+  });
 
   protected readonly hasSelectedCategories = computed(
     () => this.incomeStore.selectedIncomeCategoryIds().size > 0,

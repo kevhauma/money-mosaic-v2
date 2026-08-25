@@ -1280,4 +1280,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'When the same shop shows up twice at two different amounts, the page offers to merge the two into one — and the merge can be undone from the row it made.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-INC-23'],
+    title: 'The Income page shows you your income instead of asking you to configure it first',
+    area: 'Income',
+    details: [
+      'Opening Income for the first time used to mean reading about five settings before the page would show anything — and skipping that landed you on a page of dashes and a “0% since you started” that was really just comparing your first imported month against itself.',
+      'The page now opens on your actual income. Where it has had to assume something — which categories are annual lump sums, which one your salary lands in, when your career started — it says so in one line next to the figure that assumption produced, and the control to change it opens right there.',
+      'The growth card is honest about what it compares: “vs. your first month on record” until you tell it when you actually started working, at which point it becomes “vs. start of career”.',
+      'Panels with nothing to compare say what would fill them rather than showing a dash, and the getting-started guide is still one click away in the header.',
+      '“(Beta)” is gone from the sidebar — it promised nothing you could check. What is still changing is on the Roadmap tab.',
+    ],
+  },
 ];

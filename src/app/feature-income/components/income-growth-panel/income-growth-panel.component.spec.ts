@@ -51,7 +51,7 @@ describe('buildIncomeGrowthCard (FR-INC-5, TICKET-INC-05)', () => {
     expect(buildIncomeGrowthCard('x', 2000, flat, 'n/a').color).toBeUndefined();
   });
 
-  it('shows a dash rather than ±∞% when the compared window earned nothing', () => {
+  it('says “Not yet” rather than ±∞% when the compared window earned nothing', () => {
     const card = buildIncomeGrowthCard(
       'vs. previous month',
       2200,
@@ -59,7 +59,7 @@ describe('buildIncomeGrowthCard (FR-INC-5, TICKET-INC-05)', () => {
       'n/a',
     );
 
-    expect(card.value).toBe('—');
+    expect(card.value).toBe('Not yet');
     expect(card.color).toBeUndefined();
   });
 
@@ -71,7 +71,7 @@ describe('buildIncomeGrowthCard (FR-INC-5, TICKET-INC-05)', () => {
       'no data from a year ago yet',
     );
 
-    expect(card.value).toBe('—');
+    expect(card.value).toBe('Not yet');
     expect(card.subLabel).toBe('no data from a year ago yet');
     expect(card.tooltip).toBe('');
   });
@@ -232,7 +232,7 @@ describe('IncomeGrowthPanelComponent', () => {
 
     // Chronological by baseline: since I started, since last year, since January.
     expect(cards()).toEqual([
-      { label: 'vs. start of career', value: '+100%' },
+      { label: 'vs. your first month on record', value: '+100%' },
       { label: 'vs. same month last year', value: '+50%' },
       { label: 'vs. start of year', value: '+20%' },
     ]);
@@ -243,7 +243,7 @@ describe('IncomeGrowthPanelComponent', () => {
     // render as a dash and the card could never say anything.
     await setup([payslip(1, '2024-03-15', 1500), payslip(2, '2026-07-15', 3000)]);
 
-    expect(cards()[0]).toEqual({ label: 'vs. start of career', value: '+100%' });
+    expect(cards()[0]).toEqual({ label: 'vs. your first month on record', value: '+100%' });
   });
 
   it('names the baseline month and its figure in the card’s sub-label and tooltip', async () => {
@@ -270,7 +270,7 @@ describe('IncomeGrowthPanelComponent', () => {
   it('shows no percentage rather than ±∞% when the compared month earned nothing', async () => {
     await setup([payslip(1, '2026-07-15', 3000)]);
 
-    expect(cards()[0].value).toBe('—');
+    expect(cards()[0].value).toBe('Not yet');
     expect(fixture.nativeElement.textContent).not.toContain('Infinity');
     expect(fixture.nativeElement.textContent).not.toContain('NaN');
   });
@@ -281,7 +281,7 @@ describe('IncomeGrowthPanelComponent', () => {
     });
 
     // With the only income category excluded, both windows are zero — so there is no % to state.
-    expect(cards()[0].value).toBe('—');
+    expect(cards()[0].value).toBe('Not yet');
   });
 
   it('spreads a smoothed bonus over its year instead of reading it as a raise (FR-INC-4)', async () => {
@@ -431,7 +431,7 @@ describe('IncomeGrowthPanelComponent', () => {
 
       const second = fixture.nativeElement.querySelectorAll('mm-stat-card')[1] as HTMLElement;
 
-      expect(cards()[1].value).toBe('—');
+      expect(cards()[1].value).toBe('Not yet');
       expect(second.querySelector('a')).toBeNull();
     });
   });

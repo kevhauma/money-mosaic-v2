@@ -1,0 +1,7 @@
+<app-income-category-checklist
+  legend="Spread across their year"
+  hint="Tick a category that pays out once a year rather than monthly."
+  emptyMessage="Nothing to smooth: no income category is counted right now."
+  [categories]="categories()"
+  (toggled)="toggle($event)"
+/>

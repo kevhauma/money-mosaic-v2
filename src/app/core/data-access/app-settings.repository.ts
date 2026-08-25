@@ -82,18 +82,6 @@ export class AppSettingsRepository {
     return appDb.appSettings.put({ ...current, id: 1, fiscalYearStartMonth });
   };
 
-  /**
-   * Records that a guide's first-visit intro has been shown (TICKET-PUB-08). Idempotent — marking
-   * the same slug twice leaves one entry, because both of the intro's exits call this and a user
-   * who reaches the page by two paths shouldn't accumulate duplicates.
-   */
-  markGuideSeen = async (slug: string): Promise<number> => {
-    const current = await this.get();
-    const seenGuideSlugs = current.seenGuideSlugs ?? [];
-    if (seenGuideSlugs.includes(slug)) return 1;
-    return appDb.appSettings.put({ ...current, id: 1, seenGuideSlugs: [...seenGuideSlugs, slug] });
-  };
-
   // Read-merge-put like every setter here; the dedup/cap/move-to-top logic lives one layer up in
   // `AppSettingsStore.recordRecentRange` (TICKET-STAT-40) — this just persists whatever list it's given.
   setRecentRanges = async (recentRanges: RecentRange[]): Promise<number> => {

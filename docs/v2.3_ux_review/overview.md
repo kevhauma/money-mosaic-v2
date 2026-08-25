@@ -28,7 +28,7 @@ The list is in recommended build order: the tiny independent fixes first (locale
 - [x] [TICKET-ACC-13](./tickets/TICKET-ACC-13-last-imported-on-account-cards.md) — Show when each account was last imported (UXR-12) — cheapest of the import-safety group, independent of both others; start the group here
 - [x] [TICKET-IMP-14](./tickets/TICKET-IMP-14-duplicate-preview-before-commit.md) — Say how many rows are duplicates before committing an import (UXR-11) — prevention; cheaper than IMP-13 and worth shipping before it
 - [x] [TICKET-REC-11](./tickets/TICKET-REC-11-recurring-needs-correction-affordances.md) — Recurring detection can't be corrected, and over-claims (bug fix, UXR-15 — 100% of the month classified as recurring, one counterparty listed twice) — the clearest breach of "reversible automation"; likely additive schema
-- [ ] [TICKET-INC-23](./tickets/TICKET-INC-23-replace-the-income-onboarding-wall.md) — Income's onboarding gate is a wall, and skipping it lands on em-dashes (bug fix, UXR-14) — partly reverses TICKET-PUB-08; larger rework
+- [x] [TICKET-INC-23](./tickets/TICKET-INC-23-replace-the-income-onboarding-wall.md) — Income's onboarding gate is a wall, and skipping it lands on em-dashes (bug fix, UXR-14) — partly reverses TICKET-PUB-08; larger rework
 - [ ] [TICKET-IMP-13](./tickets/TICKET-IMP-13-import-history-with-undo.md) — Import history with per-batch undo (UXR-10) — largest item here; may need an additive schema version; last
 
 ## Rejected after checking — deliberately not ticketed

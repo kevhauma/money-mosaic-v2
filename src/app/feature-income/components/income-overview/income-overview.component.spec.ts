@@ -196,7 +196,12 @@ describe('IncomeOverviewComponent', () => {
   const accountsRepository = { getAll: vi.fn() };
   const categoriesRepository = { getAll: vi.fn() };
   const transactionsRepository = { getAll: vi.fn() };
-  const appSettingsRepository = { get: vi.fn(), setExcludedIncomeCategoryIds: vi.fn() };
+  const appSettingsRepository = {
+    get: vi.fn(),
+    setExcludedIncomeCategoryIds: vi.fn(),
+    // Every write the page could make goes through here; TICKET-INC-23 asserts it makes none.
+    update: vi.fn().mockResolvedValue(1),
+  };
 
   let fixture: ComponentFixture<IncomeOverviewComponent>;
 
@@ -243,11 +248,12 @@ describe('IncomeOverviewComponent', () => {
       smoothedBonusCategoryIds?: number[];
       transactions?: Transaction[];
       /**
-       * Defaults to "already seen" (TICKET-PUB-08): the first-visit intro replaces the whole page,
-       * so every test about the page itself needs it out of the way. The intro's own block passes
-       * `[]` to get the first-visit state back.
+       * Kept after TICKET-INC-23 removed the first-visit gate, because "has this user seen the
+       * guide" is still the flag that distinguishes a first visit — the tests that assert the page
+       * renders anyway pass `[]` to get that state.
        */
       seenGuideSlugs?: string[];
+      mainIncomeCategoryId?: number;
       /** Privacy mode as persisted, so the page opens already blurred (TICKET-PRIV-02). */
       privacyMode?: boolean;
     } = {},
@@ -261,6 +267,7 @@ describe('IncomeOverviewComponent', () => {
       careerStartDate,
       smoothedBonusCategoryIds: extra.smoothedBonusCategoryIds,
       seenGuideSlugs: extra.seenGuideSlugs ?? ['getting-started-with-the-income-page'],
+      mainIncomeCategoryId: extra.mainIncomeCategoryId,
       privacyMode: extra.privacyMode,
     } as AppSettings);
 
@@ -345,39 +352,84 @@ describe('IncomeOverviewComponent', () => {
     expect(fixture.nativeElement.querySelector('app-income-gross-net-panel')).toBeNull();
   });
 
-  describe('first-visit intro (TICKET-PUB-08)', () => {
+  /**
+   * TICKET-INC-23 reversed TICKET-PUB-08's "guide on first visit": the guide is good, its placement
+   * as a gate is what failed. These pin that a first visit reaches the page's real content.
+   */
+  describe('no first-visit gate (TICKET-INC-23)', () => {
     const INCOME_GUIDE = 'getting-started-with-the-income-page';
 
-    it('replaces the whole page with the intro until the guide has been seen', async () => {
+    it('renders the page itself on a first visit, not an intro', async () => {
       await setup([salary], undefined, undefined, { seenGuideSlugs: [] });
-
-      expect(fixture.nativeElement.querySelector('app-income-intro')).not.toBeNull();
-      // Not rendered behind it: the charts would otherwise be reachable by tab order and
-      // announced to a screen reader while the intro owns the screen.
-      expect(fixture.nativeElement.querySelector('[echarts]')).toBeNull();
-      expect(fixture.nativeElement.querySelector('mm-page-header')).toBeNull();
-    });
-
-    it('takes precedence over the empty state — the empty page is what it explains', async () => {
-      await setup([], undefined, undefined, { seenGuideSlugs: [] });
-
-      expect(fixture.nativeElement.querySelector('app-income-intro')).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('mm-empty-state')).toBeNull();
-    });
-
-    it('renders the normal page once the guide has been seen', async () => {
-      await setup([salary], undefined, undefined, { seenGuideSlugs: [INCOME_GUIDE] });
 
       expect(fixture.nativeElement.querySelector('app-income-intro')).toBeNull();
       expect(fixture.nativeElement.querySelector('[echarts]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('mm-page-header')).not.toBeNull();
     });
 
-    it('keeps a Guide link in the header afterwards, so it is never unreachable', async () => {
+    it('shows the real empty state on a first visit with nothing to count', async () => {
+      // The gate used to take precedence here, so a user with no income categories saw a wall
+      // instead of the one message that would have told them what to do.
+      await setup([], undefined, undefined, { seenGuideSlugs: [] });
+
+      expect(fixture.nativeElement.querySelector('mm-empty-state')).not.toBeNull();
+    });
+
+    it('renders the same page for a user who has already seen the guide', async () => {
       await setup([salary], undefined, undefined, { seenGuideSlugs: [INCOME_GUIDE] });
+
+      expect(fixture.nativeElement.querySelector('[echarts]')).not.toBeNull();
+    });
+
+    it('keeps the Guide link in the header, so the long-form explanation stays reachable', async () => {
+      await setup([salary], undefined, undefined, { seenGuideSlugs: [] });
 
       expect(
         fixture.nativeElement.querySelector(`mm-page-header a[href="/help/${INCOME_GUIDE}"]`),
       ).not.toBeNull();
+    });
+
+    it('states the assumptions behind the chart, each with a way to change it', async () => {
+      await setup([salary], undefined, undefined, { seenGuideSlugs: [] });
+      const notes = [...fixture.nativeElement.querySelectorAll('app-income-inference-note')];
+
+      // Three: the two the trend chart is drawn under, plus the growth panel's career-start one.
+      // Each of the three was a step in the setup wall this replaced.
+      expect(notes).toHaveLength(3);
+      const text = notes.map((note) => note.textContent ?? '').join(' ');
+      expect(text).toContain('No category is treated as an annual lump sum');
+      expect(text).toContain('No main income category set');
+      expect(text).toContain('No career start set');
+      for (const note of notes) {
+        expect(note.querySelector('button')?.textContent?.trim()).toBe('Change this');
+      }
+    });
+
+    it('writes nothing on a first visit — a configured user’s settings are untouched', async () => {
+      // The gate wrote `markGuideSeen` on both of its exits. Nothing here writes at all: the page
+      // states what it assumed and waits to be told otherwise.
+      await setup([salary], undefined, '2020-01-01', {
+        seenGuideSlugs: [],
+        mainIncomeCategoryId: 1,
+      });
+
+      expect(appSettingsRepository.update).not.toHaveBeenCalled();
+      // And the configured values are what the notes report back.
+      const text = fixture.nativeElement.textContent ?? '';
+      expect(text).toContain('the career start you set');
+      expect(text).not.toContain('No career start set');
+    });
+
+    it('opens the real control in place, rather than sending the user to settings', async () => {
+      await setup([salary], undefined, undefined, { seenGuideSlugs: [] });
+      const note = fixture.nativeElement.querySelector('app-income-inference-note');
+
+      expect(note.querySelector('app-income-category-checklist')).toBeNull();
+
+      note.querySelector('button').click();
+      fixture.detectChanges();
+
+      expect(note.querySelector('app-income-category-checklist')).not.toBeNull();
     });
   });
 
