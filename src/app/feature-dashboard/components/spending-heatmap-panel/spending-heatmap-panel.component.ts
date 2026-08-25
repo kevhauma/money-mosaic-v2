@@ -21,8 +21,8 @@ import {
 import {
   resolveChartAnimation,
   resolveChartPlotMode,
+  resolveChartPrimaryColor,
   resolveHeatmapCellColor,
-  resolveHeatmapTotalsColor,
   type ChartPlotMode,
   type HeatmapAmountScale,
 } from '@/shared/echarts';
@@ -62,16 +62,14 @@ const CYCLE_AXIS_NOUNS: Record<CycleKey, string> = {
 /**
  * What the shading means, in place of the amount scale the panel used to draw (TICKET-STAT-34).
  *
- * States the grid's rule at exactly the level it is true (TICKET-STAT-43). Every category row is
- * read against one pooled scale, so *depth* is comparable across rows — but the anchor colour is
- * still the category's own, so the sentence says "how deep", not "which shade": a pale-yellow cell
- * and a dark-blue one at the same ramp position are the same amount, and claiming they look alike
- * would mislead in the other direction. The `All` strip is named as what it is — a column summary
- * above the grid — rather than as a row exempt from the grid's scale, which is how the caption read
- * while the panel still coloured each row on its own extent.
+ * Says "the same shade means the same amount" outright now the grid is one hue (TICKET-STAT-45).
+ * Under per-category colours the caption had to hedge that to *depth* — a pale-yellow cell and a
+ * dark-blue one at the same ramp position were the same amount and looked nothing alike — which is
+ * precisely the reading the single hue removes. The `All` strip stays named as what it is, a column
+ * summary above the grid, because it alone keeps its own scale.
  */
 const HEATMAP_SHADING_CAPTION =
-  'Every category is read against one scale for the whole grid — within a colour, deeper means more spend, and the same depth means the same amount in any row. The All strip above totals each column, on its own scale.';
+  'Every cell is read against one scale for the whole grid — the stronger the colour, the more spend, and the same shade means the same amount in any row. The All strip above totals each column, on its own scale.';
 
 /**
  * One row's amounts, left to right. `cells` is dense and row-major (`buildGrid` fills every
@@ -134,8 +132,8 @@ const drilldownFor = (
 /** The theme-resolved values the option builder needs, kept as inputs so it stays a pure function of its arguments. */
 export type HeatmapChartTheme = {
   plotMode: ChartPlotMode;
-  /** The anchor the `All` band ramps from — it has no category, so it takes the theme's leading accent. */
-  bandColor: string;
+  /** The one colour both grids ramp from — the theme's primary (TICKET-STAT-45). */
+  rampColor: string;
 };
 
 /**
@@ -146,10 +144,14 @@ export type HeatmapChartTheme = {
  * The y-axis is the aggregate's rows **reversed**: echarts draws category index 0 at the bottom,
  * and the heaviest category belongs at the top where the eye starts.
  *
- * Colour is resolved per cell rather than by a `visualMap` (TICKET-STAT-34): each cell is drawn in
- * its own row's category colour, moved along a lightness ramp by how the amount sits against a
- * scale. Keeping the resolution here is what lets the option shape stay flat — one `itemStyle` per
- * data item — instead of one `visualMap` per row.
+ * Colour is resolved per cell rather than by a `visualMap` (TICKET-STAT-34): every cell is drawn in
+ * the theme's primary, moved along a lightness ramp by how the amount sits against a scale. Keeping
+ * the resolution here is what lets the option shape stay flat — one `itemStyle` per data item —
+ * instead of one `visualMap` per row.
+ *
+ * **One hue, not one per row** (TICKET-STAT-45). Rows used to be shaded in their own category
+ * colour, which put two variables in one channel and left the grid reading as confetti; the row
+ * label already says which category it is, so the colour is free to encode only how much.
  *
  * **Two scales, not one per row.** Every category row shares one scale, pooled over the whole grid,
  * so a cell's shade means the same thing in every row and the rows can be read against each other.
@@ -167,7 +169,7 @@ export const buildHeatmapChartOption = (
   privacyMode: boolean,
 ): EChartsCoreOption => {
   const { rows, cells, totalsRow } = heatmap;
-  const { plotMode, bandColor } = theme;
+  const { plotMode, rampColor } = theme;
   const lastRowIndex = rows.length - 1;
 
   // One scale for every category row, pooled over the whole grid; the band gets its own.
@@ -246,7 +248,7 @@ export const buildHeatmapChartOption = (
         yAxisIndex: 0,
         data: totalsRow.map((amount, columnIndex) => ({
           value: [columnIndex, 0, amount],
-          itemStyle: { color: resolveHeatmapCellColor(bandColor, bandScale, amount, plotMode) },
+          itemStyle: { color: resolveHeatmapCellColor(rampColor, bandScale, amount, plotMode) },
         })),
         label: { show: false },
       },
@@ -257,12 +259,7 @@ export const buildHeatmapChartOption = (
         data: cells.map((cell) => ({
           value: [cell.columnIndex, lastRowIndex - cell.rowIndex, cell.amount],
           itemStyle: {
-            color: resolveHeatmapCellColor(
-              rows[cell.rowIndex].color,
-              categoryScale,
-              cell.amount,
-              plotMode,
-            ),
+            color: resolveHeatmapCellColor(rampColor, categoryScale, cell.amount, plotMode),
           },
         })),
         label: { show: false },
@@ -389,7 +386,7 @@ export class SpendingHeatmapPanelComponent {
     buildHeatmapChartOption(
       this.heatmap(),
       this.columnLabels(),
-      { plotMode: resolveChartPlotMode(), bandColor: resolveHeatmapTotalsColor() },
+      { plotMode: resolveChartPlotMode(), rampColor: resolveChartPrimaryColor() },
       this.privacyMode(),
     ),
   );

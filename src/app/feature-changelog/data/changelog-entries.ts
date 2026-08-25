@@ -1307,4 +1307,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Undoing removes only that import’s rows. The other side of any transfer link stays, as an ordinary transaction.',
     ],
   },
+  {
+    date: '2026-08-25',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-STAT-45'],
+    title: 'The spending heatmap now shades in one colour, so the grid can be read at a glance',
+    area: 'Dashboard',
+    details: [
+      'Each row used to be drawn in its own category colour, so a cell was saying two things at once — which category it belonged to, and how much went out — and the grid read as confetti.',
+      'Every cell is now shaded from your theme’s own colour, including the accent you picked in Settings. Light themes run pale for a quiet day to deep for a heavy one; dark themes run the other way, dim to bright. Either way, heavier spend stands out more.',
+      'The row label already says which category it is, so the colour is free to mean only one thing: the same shade is the same amount, in any row.',
+    ],
+  },
 ];

@@ -12,7 +12,6 @@ export type HeatmapRow = {
   /** `null` = the "Other" fold (every category outside the top N, plus uncategorised spend). */
   categoryId: number | null;
   name: string;
-  color: string;
   /** Sum of this row's cells, so the row total can never disagree with what the row draws. */
   total: number;
 };
@@ -51,9 +50,6 @@ export type CategoryCycleHeatmap = {
 
 const OTHER_ROW_NAME = 'Other';
 const DEFAULT_TOP_CATEGORY_COUNT = 4;
-
-/** `CHART_NO_COLOR_FALLBACK`'s value, duplicated here for the same reason `category-composition-trend.ts` duplicates it: `core/` never imports from `shared/echarts`. */
-const NO_COLOR_FALLBACK = '#9ca3af';
 
 /**
  * How many of a cycle's columns the range's own calendar days can land in (TICKET-STAT-30) — the
@@ -163,7 +159,6 @@ const buildRows = (
     return {
       categoryId,
       name: category?.name ?? 'Unknown',
-      color: category?.color ?? NO_COLOR_FALLBACK,
       total: rowTotals[index],
     };
   });
@@ -172,7 +167,6 @@ const buildRows = (
     rows.push({
       categoryId: null,
       name: OTHER_ROW_NAME,
-      color: NO_COLOR_FALLBACK,
       total: rowTotals[topCategoryIds.length],
     });
   }

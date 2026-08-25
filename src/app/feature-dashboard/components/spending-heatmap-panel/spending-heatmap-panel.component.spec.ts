@@ -11,7 +11,7 @@ import {
   RangeStore,
   TransactionsStore,
 } from '@/core/state';
-import { CHART_NO_COLOR_FALLBACK, echarts, resolveHeatmapCellColor } from '@/shared/echarts';
+import { echarts, resolveHeatmapCellColor } from '@/shared/echarts';
 import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import {
@@ -214,11 +214,13 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
   it('states what the shading is relative to, in place of the removed amount scale (TICKET-STAT-34)', async () => {
     await seedGroceries(transaction({ id: 1, amount: -40 }));
 
-    // The caption states the grid's rule; it no longer disclaims that a row is exempt from it
-    // (TICKET-STAT-43) — that wording outlived the per-row scale it described.
+    // The caption states the grid's rule; it no longer hedges shade to *depth within a colour*
+    // (TICKET-STAT-45) — that wording outlived the per-category hues it described, and neither
+    // does it disclaim that a row is exempt from the scale (TICKET-STAT-43).
     expect(fixture.nativeElement.textContent).toContain(
-      'one scale for the whole grid — within a colour, deeper means more spend',
+      'one scale for the whole grid — the stronger the colour, the more spend',
     );
+    expect(fixture.nativeElement.textContent).not.toContain('within a colour');
     expect(fixture.nativeElement.textContent).not.toContain('The All row has its own scale');
     // What remains is a hidden, label-less visualMap that only exists because echarts refuses to
     // draw a cartesian heatmap without one — not a scale the reader can see.
@@ -521,8 +523,8 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
   const heatmap = {
     columnKeys: ['mon', 'tue'],
     rows: [
-      { categoryId: 1, name: 'Rent', color: '#ff0000', total: 900 },
-      { categoryId: 2, name: 'Groceries', color: '#00ff00', total: 40 },
+      { categoryId: 1, name: 'Rent', total: 900 },
+      { categoryId: 2, name: 'Groceries', total: 40 },
     ],
     cells: [
       { rowIndex: 0, columnIndex: 0, amount: 900 },
@@ -544,9 +546,10 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
   /** And the band's own, which is the one exception (TICKET-STAT-33): 925 and 15, average 470. */
   const BAND_SCALE = { min: 15, average: 470, max: 925 };
 
-  const BAND_COLOR = '#0000ff';
-  const LIGHT = { plotMode: 'light', bandColor: BAND_COLOR } as const;
-  const DARK = { plotMode: 'dark', bandColor: BAND_COLOR } as const;
+  /** The theme's primary, which both grids now ramp from (TICKET-STAT-45). */
+  const RAMP_COLOR = '#0000ff';
+  const LIGHT = { plotMode: 'light', rampColor: RAMP_COLOR } as const;
+  const DARK = { plotMode: 'dark', rampColor: RAMP_COLOR } as const;
 
   /** The categories' series; the band is its own (index 0) on its own grid. */
   const cellItems = (option: EChartsCoreOption): HeatmapCellItem[] =>
@@ -573,7 +576,7 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
     ]);
   });
 
-  describe('per-category colours on one shared scale (TICKET-STAT-34)', () => {
+  describe('one theme-primary ramp on one shared scale (TICKET-STAT-34, TICKET-STAT-45)', () => {
     it('draws no reader-visible amount scale — no colour maps to one amount across the chart', () => {
       const option = buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], LIGHT, false);
 
@@ -582,33 +585,23 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
       expect(option['visualMap']).toEqual(expect.objectContaining({ show: false }));
     });
 
-    it('colours each cell in its own row’s category colour, against the shared scale', () => {
+    it('colours every cell from the theme’s primary, against the shared scale', () => {
       const items = cellItems(buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], LIGHT, false));
 
-      // Hue per row — Rent's #ff0000, Groceries' #00ff00 — position on one pooled scale.
-      expect(items[0].itemStyle.color).toBe(
-        resolveHeatmapCellColor('#ff0000', CATEGORY_SCALE, 900, 'light'),
-      );
-      expect(items[1].itemStyle.color).toBe(
-        resolveHeatmapCellColor('#ff0000', CATEGORY_SCALE, 0, 'light'),
-      );
-      expect(items[2].itemStyle.color).toBe(
-        resolveHeatmapCellColor('#00ff00', CATEGORY_SCALE, 25, 'light'),
-      );
-      expect(items[3].itemStyle.color).toBe(
-        resolveHeatmapCellColor('#00ff00', CATEGORY_SCALE, 15, 'light'),
-      );
+      // One hue for the whole grid — only the position on the pooled scale differs per cell.
+      expect(items.map((item) => item.itemStyle.color)).toEqual([
+        resolveHeatmapCellColor(RAMP_COLOR, CATEGORY_SCALE, 900, 'light'),
+        resolveHeatmapCellColor(RAMP_COLOR, CATEGORY_SCALE, 0, 'light'),
+        resolveHeatmapCellColor(RAMP_COLOR, CATEGORY_SCALE, 25, 'light'),
+        resolveHeatmapCellColor(RAMP_COLOR, CATEGORY_SCALE, 15, 'light'),
+      ]);
     });
 
     it('reads every category row against the same scale, so equal amounts shade equally', () => {
-      // Two rows, same colour, the same amount in each: on a shared scale they must match — which
-      // is exactly what a per-row scale would *not* do.
+      // The same amount in two different rows: on a shared scale they must match — which is
+      // exactly what a per-row scale would *not* do.
       const twin = {
         ...heatmap,
-        rows: [
-          { categoryId: 1, name: 'A', color: '#ff0000', total: 100 },
-          { categoryId: 2, name: 'B', color: '#ff0000', total: 40 },
-        ],
         cells: [
           { rowIndex: 0, columnIndex: 0, amount: 100 },
           { rowIndex: 0, columnIndex: 1, amount: 0 },
@@ -622,13 +615,10 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
       expect(items[0].itemStyle.color).toBe(items[2].itemStyle.color);
     });
 
-    it('ramps the "Other" fold from the neutral gray the aggregate hands it', () => {
+    it('ramps the "Other" fold from the same primary as every other row', () => {
       const withOther = {
         ...heatmap,
-        rows: [
-          ...heatmap.rows,
-          { categoryId: null, name: 'Other', color: CHART_NO_COLOR_FALLBACK, total: 30 },
-        ],
+        rows: [...heatmap.rows, { categoryId: null, name: 'Other', total: 30 }],
         cells: [
           ...heatmap.cells,
           { rowIndex: 2, columnIndex: 0, amount: 20 },
@@ -642,10 +632,10 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
       const items = cellItems(buildHeatmapChartOption(withOther, ['Mon', 'Tue'], LIGHT, false));
 
       expect(items[4].itemStyle.color).toBe(
-        resolveHeatmapCellColor(CHART_NO_COLOR_FALLBACK, sharedScale, 20, 'light'),
+        resolveHeatmapCellColor(RAMP_COLOR, sharedScale, 20, 'light'),
       );
       expect(items[5].itemStyle.color).toBe(
-        resolveHeatmapCellColor(CHART_NO_COLOR_FALLBACK, sharedScale, 10, 'light'),
+        resolveHeatmapCellColor(RAMP_COLOR, sharedScale, 10, 'light'),
       );
     });
 
@@ -658,9 +648,12 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
         parseInt(hex.slice(3, 5), 16) +
         parseInt(hex.slice(5, 7), 16);
 
-      // Rent's Monday is the grid's heaviest cell: darker than #ff0000 on light, lighter on dark.
-      expect(brightness(light[0].itemStyle.color)).toBeLessThan(brightness('#ff0000'));
-      expect(brightness(dark[0].itemStyle.color)).toBeGreaterThan(brightness('#ff0000'));
+      // Rent's Monday is the grid's heaviest cell, its Tuesday the quietest. Light mode runs
+      // pale → deep, dark mode deep → bright — the same ramp, mirrored.
+      expect(brightness(light[0].itemStyle.color)).toBeLessThan(brightness(RAMP_COLOR));
+      expect(brightness(light[1].itemStyle.color)).toBeGreaterThan(brightness(RAMP_COLOR));
+      expect(brightness(dark[0].itemStyle.color)).toBeGreaterThan(brightness(RAMP_COLOR));
+      expect(brightness(dark[1].itemStyle.color)).toBeLessThan(brightness(RAMP_COLOR));
     });
   });
 
@@ -691,14 +684,14 @@ describe('buildHeatmapChartOption (TICKET-STAT-29)', () => {
       ]);
     });
 
-    it('scales the band on its own maximum, off the theme’s leading accent', () => {
+    it('scales the band on its own maximum, off the same theme primary as the grid', () => {
       const band = bandItems(buildHeatmapChartOption(heatmap, ['Mon', 'Tue'], LIGHT, false));
 
       expect(band[0].itemStyle.color).toBe(
-        resolveHeatmapCellColor(BAND_COLOR, BAND_SCALE, 925, 'light'),
+        resolveHeatmapCellColor(RAMP_COLOR, BAND_SCALE, 925, 'light'),
       );
       expect(band[1].itemStyle.color).toBe(
-        resolveHeatmapCellColor(BAND_COLOR, BAND_SCALE, 15, 'light'),
+        resolveHeatmapCellColor(RAMP_COLOR, BAND_SCALE, 15, 'light'),
       );
     });
 

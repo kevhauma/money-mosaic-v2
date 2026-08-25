@@ -138,40 +138,102 @@ export function resolveChartPlotMode(): ChartPlotMode {
   return DARK_PLOT_THEMES.includes(activeDataTheme()) ? 'dark' : 'light';
 }
 
-/** The slot a heatmap row that is *not* a category shades from — the theme's leading accent. Safe to share with a series palette: a heatmap has no categorical series to collide with. */
-const HEATMAP_ACCENT_SLOT = 0;
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+/** Anything the colour picker can't have produced (legacy/imported data) falls back rather than reaching `parseInt` and returning `#NaNNaNNaN`. */
+const normalizeHex = (hex: string): string =>
+  HEX_COLOR.test(hex) ? `#${hex.slice(1).toLowerCase()}` : CHART_NO_COLOR_FALLBACK;
+
+/** `deformable`'s own `--color-primary` (`styles.css`), for when the property can't be read — a
+ * non-browser build, or a theme that aliases primary to something this can't parse. */
+const DEFAULT_PRIMARY_COLOR = '#f75d59';
 
 /**
- * The colour the heatmap's `All` band ramps from (TICKET-STAT-33). The theme's leading accent
- * rather than `CHART_NO_COLOR_FALLBACK`'s grey, which the app reads as "uncategorised" everywhere
- * else and would be a lie on a row that sums every category there is.
+ * Only OKLCH is parsed, deliberately: every theme block and every accent preset declares
+ * `--color-primary` in OKLCH, and `themes/theme-palette.spec.ts` already fails the build for a
+ * theme whose primary this vocabulary can't read. Accepting a hex here too would be a branch for a
+ * case the palette guard does not allow to exist.
  */
-export function resolveHeatmapTotalsColor(): string {
-  return (CHART_CATEGORICAL_COLORS[activeDataTheme()] ?? DEFORMABLE_LIGHT)[HEATMAP_ACCENT_SLOT];
+
+/** `oklch(L C H)` — with `L` as a percentage or a 0–1 number, and any `/ alpha` suffix ignored. */
+const OKLCH = /^\s*oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)/i;
+
+const gammaChannel = (linear: number): number => {
+  const encoded =
+    linear <= 0.0031308 ? 12.92 * linear : 1.055 * Math.pow(Math.max(linear, 0), 1 / 2.4) - 0.055;
+  return encoded * 255;
+};
+
+/**
+ * `oklch(...)` → an sRGB hex literal, or `undefined` for anything that isn't an OKLCH triple.
+ *
+ * Every theme declares `--color-primary` in OKLCH and canvas can't consume the string, so this is
+ * the bridge — the standard Oklab matrices, with out-of-gamut channels clipped per channel (a hue
+ * the display can't reach lands on its nearest wall rather than wrapping into a different colour).
+ */
+const oklchToHex = (value: string): string | undefined => {
+  const match = OKLCH.exec(value);
+  if (!match) return undefined;
+
+  const [, rawLightness, percent, rawChroma, rawHue] = match;
+  const lightness = Number(rawLightness) / (percent ? 100 : 1);
+  const chroma = Number(rawChroma);
+  const hue = (Number(rawHue) * Math.PI) / 180;
+
+  const a = chroma * Math.cos(hue);
+  const b = chroma * Math.sin(hue);
+  const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+
+  return `#${[
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ]
+    .map((linear) => toHex(gammaChannel(linear)))
+    .join('')}`;
+};
+
+/**
+ * The app's live `--color-primary` as a canvas hex — the theme's own brand colour, or the accent
+ * preset the user picked, which `AppSettingsStore` applies as an inline override on `<html>`.
+ *
+ * Read off the DOM rather than mapped per `data-theme` like the categorical palettes above: primary
+ * is the one token a *user setting* can move, so a table keyed by theme name would go stale the
+ * moment someone picks an accent, and a theme added later would silently fall back.
+ */
+export function resolveChartPrimaryColor(): string {
+  if (typeof document === 'undefined') return DEFAULT_PRIMARY_COLOR;
+
+  const declared = getComputedStyle(document.documentElement).getPropertyValue('--color-primary');
+  return oklchToHex(declared) ?? DEFAULT_PRIMARY_COLOR;
 }
 
-/** One heatmap row's own extent, the scale a cell in it is read against (TICKET-STAT-34). */
+/** The extent a heatmap cell is read against (TICKET-STAT-34) — whichever amounts the caller pooled into it. */
 export type HeatmapAmountScale = { min: number; average: number; max: number };
 
 /**
- * How far the quietest cell in a row fades into the plot background. High, because a below-average
- * cell is meant to recede — but short of 1, so the row keeps a visible floor rather than dissolving
- * into empty grid.
+ * How far the quietest cell fades into the plot background. High, because a below-average cell is
+ * meant to recede — but short of 1, so the grid keeps a visible floor rather than dissolving into
+ * empty plot. Raised from 0.7 when the grid went single-hue (TICKET-STAT-45): the whole ramp is one
+ * colour now, so its two ends have to be told apart by lightness alone.
  */
-const TOWARD_BACKGROUND_MAX_MIX = 0.7;
+const TOWARD_BACKGROUND_MAX_MIX = 0.82;
 
 /**
- * How far the heaviest cell moves away from it. Deliberately lower: mixing much past half way into
- * pure white/black washes the hue out, and a row that stops looking like its category defeats the
- * point of shading it in the category's colour at all.
+ * How far the heaviest cell moves away from it. Still the shorter half: mixing far past half way
+ * into pure white/black washes the hue out, and a grid whose deep end has stopped looking like the
+ * theme's colour defeats the point of shading it in that colour at all.
  */
-const AWAY_FROM_BACKGROUND_MAX_MIX = 0.5;
+const AWAY_FROM_BACKGROUND_MAX_MIX = 0.55;
 
 /**
- * Where a cell's colour travels, and how far, per side of its row's average — the whole direction
+ * Where a cell's colour travels, and how far, per side of the scale's average — the whole direction
  * rule in four rows rather than a ternary per branch. *Heavier spend always stands out more*: on a
  * dark plot that means toward white, on a light one toward black, and the quiet side is the mirror
- * of it in both.
+ * of it in both. So a light theme reads pale → deep and a dark theme deep → bright, both along the
+ * one hue.
  */
 const HEATMAP_RAMP: Record<
   ChartPlotMode,
@@ -187,45 +249,42 @@ const HEATMAP_RAMP: Record<
   },
 };
 
-const HEX_COLOR = /^#[0-9a-f]{6}$/i;
-
-/** Anything the colour picker can't have produced (legacy/imported data) falls back rather than reaching `parseInt` and returning `#NaNNaNNaN`. */
-const normalizeHex = (hex: string): string =>
-  HEX_COLOR.test(hex) ? `#${hex.slice(1).toLowerCase()}` : CHART_NO_COLOR_FALLBACK;
-
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
 
 /**
- * One heatmap cell's colour, against whatever `scale` the caller pools it on (TICKET-STAT-34) —
- * replacing TICKET-STAT-29's amount-labelled `visualMap`, which gave the whole chart one ramp and
- * one legend. **Which** amounts make up the scale is the caller's decision, not this function's:
- * the spending heatmap pools every category cell into one and puts its `All` strip on a second
+ * One heatmap cell's colour: `rampColor` moved along a lightness ramp by where `amount` sits on
+ * `scale`. **Which** amounts make up the scale is the caller's decision, not this function's — the
+ * spending heatmap pools every category cell into one and puts its `All` strip on a second
  * (TICKET-STAT-43), so "row" appears nowhere in the contract below.
  *
- * The scale's **average** is the anchor: a cell there draws in the category's configured colour
- * exactly, so the colour most cells sit near is the one on the category's dot everywhere else in
- * the app. Below it the colour moves toward the plot background, above it away from it — stated
- * once as *heavier spend always stands out more*, which on a dark theme means lighter and on a
- * light theme darker, rather than two palettes to keep in sync.
+ * `rampColor` is **one hue for the whole grid** — the theme's primary (TICKET-STAT-45). It used to
+ * be each row's own category colour, which made a cell carry two variables at once (hue = which
+ * category, lightness = how much) and left the grid reading as confetti: six hues at six
+ * intensities, none of them comparable by eye. The category is what the row *label* says; the
+ * colour is free to say only how much.
+ *
+ * The scale's **average** is the anchor: a cell there draws in `rampColor` exactly, so the colour
+ * most cells sit near is the app's own brand colour. Below it the colour moves toward the plot
+ * background, above it away from it — stated once as *heavier spend always stands out more*, which
+ * on a dark theme means lighter and on a light theme darker, rather than two palettes to keep in
+ * sync.
  *
  * The average, not the range's midpoint: a grid with one huge Friday and four quiet days has an
  * average far below its midpoint, and it is "what this usually costs on a day like this" that a
  * cell is read against.
  *
  * Only lightness moves — mixing toward pure white or pure black scales every channel difference
- * uniformly, so the hue survives untouched and a cell stays recognisably *that* category's at
- * every intensity. This is also why depth, not shade, is what compares across categories: two
- * equal amounts in differently-coloured rows land at the same ramp position in their own hues.
- * A scale with no spread (every amount equal, all-zero included) draws flat in the category colour
- * instead of dividing by an empty range.
+ * uniformly, so the hue survives untouched and every cell stays recognisably the theme's colour at
+ * every intensity. A scale with no spread (every amount equal, all-zero included) draws flat in
+ * `rampColor` instead of dividing by an empty range.
  */
 export function resolveHeatmapCellColor(
-  categoryColor: string,
+  rampColor: string,
   scale: HeatmapAmountScale,
   amount: number,
   mode: ChartPlotMode,
 ): string {
-  const anchor = normalizeHex(categoryColor);
+  const anchor = normalizeHex(rampColor);
   const { min, average, max } = scale;
   const above = amount >= average;
 
