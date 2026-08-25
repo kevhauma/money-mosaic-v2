@@ -1254,4 +1254,17 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'The date comes from the import records themselves, so undoing an import moves it back to the one before it.',
     ],
   },
+  {
+    date: '2026-08-24',
+    versionFolder: 'v2.3_ux_review',
+    ticketIds: ['TICKET-IMP-14'],
+    title: 'The import wizard says how many rows you already have, before you commit',
+    area: 'Import',
+    details: [
+      'Overlapping monthly exports have always been handled — rows you already had were recognised and quietly dropped — but nothing on screen said so, so committing an import meant guessing whether you were adding 40 new transactions or re-adding 38 old ones.',
+      'Step 2 now states it plainly: how many rows are new, how many are already in the account, and which rows those are — each one marked in the preview, with a button to filter the table down to just them.',
+      'You also get the choice. Skipping them stays the default; “import them anyway” is there for the case where the same payment really did happen twice, and the import summary records how many were re-imported that way.',
+      'The drop zone on step 1 says all this up front, so the question is answered before you pick a file.',
+    ],
+  },
 ];

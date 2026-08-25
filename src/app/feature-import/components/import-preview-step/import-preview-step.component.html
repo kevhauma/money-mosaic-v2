@@ -1,3 +1,12 @@
+@if (duplicateCount() > 0) {
+  <!-- The 50-row cap is why this is here (TICKET-IMP-14): on a heavily overlapping file the
+       already-present rows are exactly the ones the user wants to check, and they could be
+       anywhere in it. -->
+  <mm-button variant="ghost" size="xs" class="mb-2" (click)="toggleDuplicatesOnly()">
+    {{ toggleLabel() }}
+  </mm-button>
+}
+
 <mm-table density="compact" scroll="auto" class="h-96">
   <thead>
     <tr>
@@ -13,7 +22,13 @@
       <tr>
         @if (previewRow.row; as row) {
           @if (row.valid) {
-            <td class="whitespace-nowrap"><mm-badge color="success" size="sm">valid</mm-badge></td>
+            <td class="whitespace-nowrap">
+              @if (previewRow.alreadyImported) {
+                <mm-badge color="warning" size="sm">already imported</mm-badge>
+              } @else {
+                <mm-badge color="success" size="sm">valid</mm-badge>
+              }
+            </td>
             <td class="whitespace-nowrap">{{ row.transaction.bookingDate }}</td>
             <td class="whitespace-nowrap">
               <mm-text [color]="previewRow.amountColor" [numeric]="true">
@@ -32,8 +47,8 @@
   </tbody>
 </mm-table>
 
-@if (rows().length > previewRows().length) {
+@if (listedCount() > previewRows().length) {
   <mm-text as="p" class="mt-2 text-xs text-base-content/60">
-    Showing the first {{ previewRows().length }} of {{ rows().length }} rows.
+    Showing the first {{ previewRows().length }} of {{ listedCount() }} rows.
   </mm-text>
 }

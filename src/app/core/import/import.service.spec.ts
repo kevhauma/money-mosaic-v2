@@ -354,3 +354,249 @@ describe('partitionByFingerprint: dedupe partitioning', () => {
     expect(duplicateCount).toBe(2);
   });
 });
+
+/**
+ * TICKET-IMP-14 — the wizard now says how many incoming rows are new and how many the app already
+ * has, and the user chooses what happens to the duplicates. Both halves partition with the same
+ * function, so these cover the preview's counts and the two commit modes together.
+ */
+describe('ImportService: duplicate preview and handling (TICKET-IMP-14)', () => {
+  beforeEach(() => {
+    vi.spyOn(appDb, 'transaction').mockImplementation(((...args: unknown[]) =>
+      (args[args.length - 1] as () => unknown)()) as never);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const setup = (existingTransactions: Transaction[]) => {
+    // Several of these cases commit once to seed "already there", then re-configure with what was
+    // stored — two TestBeds in one test, which needs the first torn down first.
+    TestBed.resetTestingModule();
+    const transactionsRepository = {
+      getByAccount: vi.fn().mockResolvedValue(existingTransactions),
+      bulkAdd: vi
+        .fn()
+        .mockImplementation((rows: Transaction[]) =>
+          Promise.resolve(rows.map((_, index) => index + 100)),
+        ),
+      bulkUpdate: vi.fn().mockResolvedValue(0),
+    };
+    const importBatchesRepository = {
+      add: vi.fn().mockResolvedValue(1),
+      getById: vi.fn().mockResolvedValue({ id: 1 } as ImportBatch),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        ImportService,
+        { provide: TransactionsRepository, useValue: transactionsRepository },
+        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
+        { provide: TransferCleanupService, useValue: {} },
+      ],
+    });
+
+    return {
+      service: TestBed.inject(ImportService),
+      transactionsRepository,
+      importBatchesRepository,
+    };
+  };
+
+  const row = (overrides: Partial<Transaction> = {}): ValidParsedRow =>
+    ({
+      valid: true,
+      transaction: {
+        bookingDate: '2026-06-01',
+        amount: -10,
+        currency: 'EUR',
+        rawDescription: 'Coffee',
+        ...overrides,
+      },
+    }) as ValidParsedRow;
+
+  /** Commits the given rows once and hands back what was stored, to seed "already there". */
+  const commitFirst = async (rows: ValidParsedRow[]): Promise<Transaction[]> => {
+    const { service } = setup([]);
+    const result = await service.commitImport({
+      accountId: 1,
+      fileName: 'first.csv',
+      totalRowsRead: rows.length,
+      validRows: rows,
+    });
+    return result.addedTransactions;
+  };
+
+  it('reports an all-new file as zero duplicates', async () => {
+    const { service } = setup([]);
+
+    const preview = await service.previewImport(1, [row(), row({ amount: -20 })]);
+
+    expect(preview.duplicateRows).toEqual([]);
+    expect(preview.newRows).toHaveLength(2);
+  });
+
+  it('reports every row of a fully-overlapping file as already present', async () => {
+    const rows = [row(), row({ amount: -20 })];
+    const stored = await commitFirst(rows);
+    const { service } = setup(stored);
+
+    const preview = await service.previewImport(1, rows);
+
+    expect(preview.newRows).toEqual([]);
+    expect(preview.duplicateRows).toHaveLength(2);
+  });
+
+  it('splits a partially-overlapping file, keeping file order on both sides', async () => {
+    const stored = await commitFirst([row(), row({ amount: -20 })]);
+    const { service } = setup(stored);
+
+    const preview = await service.previewImport(1, [
+      row(),
+      row({ amount: -30, rawDescription: 'New one' }),
+      row({ amount: -20 }),
+    ]);
+
+    expect(preview.duplicateRows).toHaveLength(2);
+    expect(preview.newRows).toHaveLength(1);
+    expect(preview.newRows[0].transaction.rawDescription).toBe('New one');
+  });
+
+  it('touches the database not at all for a file whose account does not exist yet', async () => {
+    const { service, transactionsRepository } = setup([]);
+
+    const preview = await service.previewImport(-1, [row()]);
+
+    expect(transactionsRepository.getByAccount).not.toHaveBeenCalled();
+    expect(preview.newRows).toHaveLength(1);
+    expect(preview.duplicateRows).toEqual([]);
+  });
+
+  it('skip (the default) imports exactly the new rows and leaves the existing ones untouched', async () => {
+    const stored = await commitFirst([row(), row({ amount: -20 })]);
+    const { service, transactionsRepository, importBatchesRepository } = setup(stored);
+
+    const result = await service.commitImport({
+      accountId: 1,
+      fileName: 'second.csv',
+      totalRowsRead: 3,
+      validRows: [row(), row({ amount: -30, rawDescription: 'New one' }), row({ amount: -20 })],
+    });
+
+    expect(result.addedTransactions).toHaveLength(1);
+    expect(result.addedTransactions[0].rawDescription).toBe('New one');
+    expect(result.duplicateCount).toBe(2);
+    // Nothing about an existing row is rewritten — no category, no categoryManual, no transferId.
+    // The only bulkUpdate this path can ever make is TICKET-TXN-06's rawLine/rawRow backfill, and
+    // these rows carry neither, so it makes none at all.
+    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
+    expect(importBatchesRepository.add).toHaveBeenCalledWith(
+      expect.objectContaining({ rowsAdded: 1, rowsDuplicate: 2 }),
+    );
+  });
+
+  it('import-anyway admits every row, on fingerprints that do not collide with the stored ones', async () => {
+    const stored = await commitFirst([row(), row({ amount: -20 })]);
+    const { service, transactionsRepository } = setup(stored);
+
+    const result = await service.commitImport({
+      accountId: 1,
+      fileName: 'second.csv',
+      totalRowsRead: 2,
+      validRows: [row(), row({ amount: -20 })],
+      duplicateHandling: 'import',
+    });
+
+    expect(result.addedTransactions).toHaveLength(2);
+    expect(result.duplicateCount).toBe(0);
+    const storedKeys = new Set(stored.map((transaction) => transaction.fingerprint));
+    for (const added of result.addedTransactions) {
+      expect(storedKeys.has(added.fingerprint)).toBe(false);
+    }
+    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
+  });
+
+  it('records the knowingly re-imported rows on the batch, so the audit stays honest', async () => {
+    const stored = await commitFirst([row(), row({ amount: -20 })]);
+    const { service, importBatchesRepository } = setup(stored);
+
+    await service.commitImport({
+      accountId: 1,
+      fileName: 'second.csv',
+      totalRowsRead: 2,
+      validRows: [row(), row({ amount: -20 })],
+      duplicateHandling: 'import',
+    });
+
+    // rowsDuplicate stays "not added", so rowsRead = rowsAdded + rowsDuplicate still holds; the
+    // recognised-but-added rows get their own figure, or a batch of 2 knowingly re-imported rows
+    // would look exactly like a batch of 2 genuinely new ones.
+    expect(importBatchesRepository.add).toHaveBeenCalledWith(
+      expect.objectContaining({ rowsAdded: 2, rowsDuplicate: 0, rowsDuplicateImported: 2 }),
+    );
+  });
+
+  it('leaves the field off a batch where nothing was re-imported', async () => {
+    const { service, importBatchesRepository } = setup([]);
+
+    await service.commitImport({
+      accountId: 1,
+      fileName: 'first.csv',
+      totalRowsRead: 1,
+      validRows: [row()],
+    });
+
+    expect(importBatchesRepository.add).toHaveBeenCalledWith(
+      expect.objectContaining({ rowsDuplicateImported: undefined }),
+    );
+  });
+
+  it('counts a second file overlapping the first, once the first has been committed', async () => {
+    // The wizard commits file by file, so by the time file 2 is scanned file 1 is in the account —
+    // which is what makes overlap *within* an incoming batch of exports show up here at all.
+    const stored = await commitFirst([row(), row({ amount: -20 })]);
+    const { service } = setup(stored);
+
+    const preview = await service.previewImport(1, [
+      row({ amount: -20 }),
+      row({ amount: -40, rawDescription: 'Only in file two' }),
+    ]);
+
+    expect(preview.duplicateRows).toHaveLength(1);
+    expect(preview.newRows).toHaveLength(1);
+    expect(preview.newRows[0].transaction.rawDescription).toBe('Only in file two');
+  });
+});
+
+describe('partitionByFingerprint: import-anyway mode (TICKET-IMP-14)', () => {
+  it('walks past every stored occurrence rather than dropping the row', () => {
+    const rows = [{ fingerprint: 'dup' }, { fingerprint: 'dup' }];
+
+    const { accepted, duplicates, duplicateCount } = partitionByFingerprint(
+      rows,
+      new Set(['dup|1', 'dup|2']),
+      'import',
+    );
+
+    expect(accepted).toEqual([{ fingerprint: 'dup|3' }, { fingerprint: 'dup|4' }]);
+    expect(duplicates).toEqual([]);
+    expect(duplicateCount).toBe(0);
+  });
+
+  it('leaves a genuinely new row on its first occurrence', () => {
+    const { accepted } = partitionByFingerprint([{ fingerprint: 'fresh' }], new Set(), 'import');
+
+    expect(accepted).toEqual([{ fingerprint: 'fresh|1' }]);
+  });
+
+  it('defaults to skip when no handling is passed, so every existing caller is unchanged', () => {
+    const { accepted, duplicateCount } = partitionByFingerprint(
+      [{ fingerprint: 'dup' }],
+      new Set(['dup|1']),
+    );
+
+    expect(accepted).toEqual([]);
+    expect(duplicateCount).toBe(1);
+  });
+});

@@ -2,12 +2,18 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { from, of, startWith, switchMap, timer, map as rxMap, type Observable } from 'rxjs';
 import { AccountsStore, ImportBatchesStore } from '@/core/state';
-import { CsvImportService, type CommitImportResult, type ParsedRowResult } from '@/core/import';
+import {
+  CsvImportService,
+  type CommitImportResult,
+  type DuplicateHandling,
+  type ParsedRowResult,
+} from '@/core/import';
 import type { MappingProfile } from '@/core/data-access';
 import { ICON_BY_ACCOUNT_TYPE } from '@/feature-accounts';
 import { MappingProfilesStore } from './mapping-profiles.store';
 import type { PendingAccountDraft, QueuedImportFile } from './import-queue';
 import type { ImportMappingResult } from './column-mapping';
+import { duplicateAlertStatus, duplicateScanSummary, type DuplicateScanVm } from './duplicate-scan';
 
 // Select → Map+Preview → Summary. Map and preview live on one screen (step 2); there is no
 // separate preview-only step anymore.
@@ -15,6 +21,12 @@ export type WizardStep = 1 | 2 | 3;
 type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
 
 type ParseInput = { file: File; mappingProfile: Omit<MappingProfile, 'id'> };
+
+/** The duplicate scan's own three states (TICKET-IMP-14) — `idle` covers "nothing to scan yet". */
+type DuplicateScanState =
+  | { status: 'idle' }
+  | { status: 'scanning' }
+  | { status: 'done'; duplicateRows: Set<ParsedRowResult>; newCount: number };
 type ParseState =
   | { status: 'idle' }
   | { status: 'parsing' }
@@ -99,6 +111,13 @@ export class ImportWizardSession {
   readonly batchMapping = signal<Omit<MappingProfile, 'id'> | null>(null);
   readonly manualOverrideActive = signal(false);
   readonly applyToRemaining = signal(false);
+
+  /**
+   * What to do with rows the app already has (TICKET-IMP-14). `skip` by default — that is what
+   * every import did before this was a choice, and it is the answer that cannot double-count money.
+   * Reset per file, so an override on one file is not silently inherited by the next.
+   */
+  readonly duplicateHandling = signal<DuplicateHandling>('skip');
 
   readonly totalFiles = computed(() => this.queue().length);
   readonly currentFile = computed<File | null>(
@@ -196,6 +215,72 @@ export class ImportWizardSession {
   readonly parseWarnings = computed(() => {
     const state = this.parseState();
     return state.status === 'done' ? state.warnings : [];
+  });
+
+  /**
+   * What the account already has among the rows just parsed (TICKET-IMP-14), scanned off the same
+   * `parsedRows()` the preview table renders — so the rows it reports back are the very objects the
+   * table shows and can be marked by identity, with no second notion of sameness anywhere.
+   *
+   * Rides the parse pipeline rather than duplicating its debounce: `parsedRows()` only changes once
+   * a parse settles, so this fires once per settled parse.
+   *
+   * RxJS for a single Promise looks like overkill against this repo's "streams only at inherently
+   * stream-based boundaries" rule, and the two operators are the whole justification: `switchMap`
+   * drops a superseded scan's late result the way the parse pipeline drops a superseded parse, and
+   * `startWith` makes "scanning" a state the UI can render rather than a gap. Same caveat as the
+   * parse pipeline, and worth repeating: `switchMap` does not cancel the Dexie read, it only stops
+   * anyone listening to it.
+   */
+  private readonly duplicateScanInput = computed<{
+    accountId: number;
+    rows: ValidParsedRow[];
+  } | null>(() => {
+    const accountId = this.currentAccountId();
+    if (this.step() !== 2 || accountId === null) return null;
+    const rows = this.parsedRows().filter((row): row is ValidParsedRow => row.valid);
+    if (rows.length === 0) return null;
+    return { accountId, rows };
+  });
+
+  private readonly duplicateScanState = toSignal(
+    toObservable(this.duplicateScanInput).pipe(
+      switchMap((input): Observable<DuplicateScanState> => {
+        if (!input) return of<DuplicateScanState>({ status: 'idle' });
+        return from(this.importBatchesStore.previewImport(input.accountId, input.rows)).pipe(
+          rxMap((preview): DuplicateScanState => ({
+            status: 'done',
+            duplicateRows: new Set<ParsedRowResult>(preview.duplicateRows),
+            newCount: preview.newRows.length,
+          })),
+          startWith<DuplicateScanState>({ status: 'scanning' }),
+        );
+      }),
+    ),
+    { initialValue: { status: 'idle' } },
+  );
+
+  /**
+   * The whole scan as one view-model (TICKET-IMP-14) — the map step binds this single input rather
+   * than six, and `duplicateCount` is derived once here instead of in each consumer.
+   */
+  readonly duplicateScan = computed<DuplicateScanVm>(() => {
+    const state = this.duplicateScanState();
+    const rows = state.status === 'done' ? state.duplicateRows : new Set<ParsedRowResult>();
+    const newCount = state.status === 'done' ? state.newCount : 0;
+    const duplicateCount = rows.size;
+    return {
+      rows,
+      newCount,
+      duplicateCount,
+      known: state.status === 'done',
+      scanning: state.status === 'scanning',
+      summary:
+        state.status === 'done'
+          ? duplicateScanSummary(newCount, duplicateCount, this.duplicateHandling())
+          : null,
+      alertStatus: duplicateAlertStatus(duplicateCount),
+    };
   });
 
   /** The Next/Confirm button's label + disabled state (TICKET-IMP-11, CR4-1 §1 Option A) — the
@@ -362,6 +447,7 @@ export class ImportWizardSession {
         mappingProfileId: savedProfile?.id,
         totalRowsRead: this.parsedRows().length,
         validRows,
+        duplicateHandling: this.duplicateHandling(),
       });
 
       this.commitResults.update((results) => [...results, result]);
@@ -388,6 +474,10 @@ export class ImportWizardSession {
         this.currentFileIndex.set(nextIndex);
         this.manualOverrideActive.set(false);
         this.applyToRemaining.set(false);
+        // Per file, never inherited: the next export is a different question (TICKET-IMP-14). It is
+        // also what makes the multi-file case work — the file just committed is in the database by
+        // now, so the next file's scan counts overlap with it as well as with older data.
+        this.duplicateHandling.set('skip');
         const batch = this.batchMapping();
         this.mapResult.set(batch ? { mappingProfile: batch } : null);
       } else {
@@ -422,6 +512,7 @@ export class ImportWizardSession {
     this.batchMapping.set(null);
     this.manualOverrideActive.set(false);
     this.applyToRemaining.set(false);
+    this.duplicateHandling.set('skip');
     this.accountCreationError.set(null);
   }
 }

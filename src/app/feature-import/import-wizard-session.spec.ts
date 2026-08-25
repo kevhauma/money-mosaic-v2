@@ -28,6 +28,7 @@ const VALID_RESULT = { mappingProfile: MAPPING_PROFILE };
 let session: ImportWizardSession;
 let parse: Mock;
 let commitImport: Mock;
+let previewImport: Mock;
 
 const wait = (ms: number): Promise<void> => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const settleParse = (): Promise<void> => wait(350);
@@ -50,6 +51,10 @@ beforeEach(() => {
   parse = vi
     .fn()
     .mockResolvedValue({ headers: ['Date', 'Desc'], rows: [validRow()], warnings: [] });
+  previewImport = vi.fn().mockImplementation(async (_accountId: number, rows: unknown[]) => ({
+    newRows: rows,
+    duplicateRows: [],
+  }));
   commitImport = vi.fn().mockImplementation(
     async (input: { accountId: number }): Promise<CommitImportResult> =>
       ({
@@ -63,7 +68,10 @@ beforeEach(() => {
     providers: [
       ImportWizardSession,
       { provide: CsvImportService, useValue: { parse } },
-      { provide: ImportBatchesStore, useValue: { commitImport, undoImport: vi.fn() } },
+      {
+        provide: ImportBatchesStore,
+        useValue: { commitImport, undoImport: vi.fn(), previewImport },
+      },
       { provide: MappingProfilesStore, useValue: { upsertForBankAndAccount: vi.fn() } },
       { provide: AccountsStore, useValue: { addAccount: vi.fn() } },
     ],
@@ -152,5 +160,82 @@ describe('ImportWizardSession: manual override pauses batch mode (TICKET-IMP-11)
     await settleParse();
 
     expect(commitImport).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * TICKET-IMP-14 — the wizard scans the parsed rows against the account before the user commits,
+ * and relays their choice about the duplicates to the commit. The partition itself is tested in
+ * `import.service.spec.ts`; what matters here is that the session asks, reports, and passes on.
+ */
+describe('ImportWizardSession: duplicate scan and handling (TICKET-IMP-14)', () => {
+  it('says nothing about duplicates until the scan has actually run', () => {
+    enterStep2WithFile(11);
+
+    expect(session.duplicateScan().known).toBe(false);
+    expect(session.duplicateScan().duplicateCount).toBe(0);
+    expect(session.duplicateScan().newCount).toBe(0);
+  });
+
+  it('reports the counts and the rows themselves once the scan settles', async () => {
+    const rows = [validRow(), validRow()];
+    parse.mockResolvedValue({ headers: ['Date', 'Desc'], rows, warnings: [] });
+    previewImport.mockResolvedValue({ newRows: [rows[1]], duplicateRows: [rows[0]] });
+
+    enterStep2WithFile(11);
+    session.mapResult.set(VALID_RESULT);
+    await settleParse();
+    await wait(0);
+
+    expect(previewImport).toHaveBeenCalledWith(11, rows);
+    expect(session.duplicateScan().known).toBe(true);
+    expect(session.duplicateScan().newCount).toBe(1);
+    expect(session.duplicateScan().duplicateCount).toBe(1);
+    // The sentence follows the choice, so it says what will happen (TICKET-IMP-14).
+    expect(session.duplicateScan().summary).toBe(
+      '1 row new, 1 already in this account — those will be skipped.',
+    );
+    // By identity, so the preview table can mark the very rows it is already rendering.
+    expect(session.duplicateScan().rows.has(rows[0])).toBe(true);
+    expect(session.duplicateScan().rows.has(rows[1])).toBe(false);
+  });
+
+  it('commits with skip unless the user says otherwise', async () => {
+    enterStep2WithFile(11);
+    session.mapResult.set(VALID_RESULT);
+    await settleParse();
+
+    await session.goNext();
+
+    expect(commitImport).toHaveBeenCalledWith(
+      expect.objectContaining({ duplicateHandling: 'skip' }),
+    );
+  });
+
+  it('passes import-anyway through to the commit when the user picks it', async () => {
+    enterStep2WithFile(11);
+    session.mapResult.set(VALID_RESULT);
+    await settleParse();
+    session.duplicateHandling.set('import');
+
+    await session.goNext();
+
+    expect(commitImport).toHaveBeenCalledWith(
+      expect.objectContaining({ duplicateHandling: 'import' }),
+    );
+  });
+
+  it('resets the choice for the next file, so one override is not inherited', async () => {
+    session.queue.set([queueRow(11), queueRow(12)]);
+    session.currentFileIndex.set(0);
+    session.step.set(2);
+    session.mapResult.set(VALID_RESULT);
+    await settleParse();
+    session.duplicateHandling.set('import');
+
+    await session.goNext();
+
+    expect(session.currentFileIndex()).toBe(1);
+    expect(session.duplicateHandling()).toBe('skip');
   });
 });

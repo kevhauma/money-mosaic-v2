@@ -20,7 +20,13 @@ import {
   type MappingProfileColumns,
   type SignConvention,
 } from '@/core/data-access';
-import { CsvImportService, guessDelimiter, type ParsedRowResult } from '@/core/import';
+import {
+  CsvImportService,
+  guessDelimiter,
+  type DuplicateHandling,
+  type ParsedRowResult,
+} from '@/core/import';
+import { EMPTY_DUPLICATE_SCAN, type DuplicateScanVm } from '../../duplicate-scan';
 import {
   AlertComponent,
   BadgeComponent,
@@ -28,6 +34,7 @@ import {
   FieldsetComponent,
   FlexComponent,
   InputComponent,
+  LabelComponent,
   SelectComponent,
   TableComponent,
   TypographyComponent,
@@ -77,6 +84,7 @@ import { ImportPreviewStepComponent } from '../import-preview-step/import-previe
     FlexComponent,
     ImportPreviewStepComponent,
     InputComponent,
+    LabelComponent,
     SelectComponent,
     TableComponent,
     TypographyComponent,
@@ -111,6 +119,12 @@ export class ImportMapStepComponent {
   readonly canOfferApplyToRemaining = input(false);
   readonly remainingFilesCount = input(0);
   readonly applyToRemaining = model(false);
+
+  // Wizard-owned duplicate scan (TICKET-IMP-14) — the session runs the same partition the commit
+  // will and joins it into one view-model (`duplicate-scan.ts`); this step renders it and relays
+  // the user's choice back up.
+  readonly duplicateScan = input<DuplicateScanVm>(EMPTY_DUPLICATE_SCAN);
+  readonly duplicateHandling = model<DuplicateHandling>('skip');
 
   protected readonly dateFormats = SUPPORTED_DATE_FORMATS;
   protected readonly encodings = SUPPORTED_ENCODINGS;
@@ -207,6 +221,10 @@ export class ImportMapStepComponent {
   protected readonly invalidRowCount = computed(
     () => this.parsedRows().length - this.validRowCount(),
   );
+
+  protected setDuplicateHandling(handling: DuplicateHandling): void {
+    this.duplicateHandling.set(handling);
+  }
 
   // Tracks the file we last ran detection for, so re-detection reacts to the file reference itself
   // rather than a one-shot flag — correctness no longer depends on the wizard destroying/recreating

@@ -217,7 +217,51 @@
               </div>
             </mm-alert>
           }
-          <app-import-preview-step [rows]="parsedRows()" />
+          <!-- Duplicate check (TICKET-IMP-14): the counts, then the choice. Both sit above the
+               table because they are what the user needs before committing, and the table below is
+               how they check the claim. -->
+          @if (duplicateScan().scanning) {
+            <mm-text as="p" variant="caption" class="mb-2">
+              Checking which rows are already in this account…
+            </mm-text>
+          } @else if (duplicateScan().summary; as summary) {
+            <mm-alert [status]="duplicateScan().alertStatus" variant="soft" class="mb-3 block">
+              <mm-flex direction="col" gap="2">
+                <span>{{ summary }}</span>
+                @if (duplicateScan().duplicateCount > 0) {
+                  <mm-flex
+                    align="center"
+                    gap="4"
+                    [wrap]="true"
+                    role="radiogroup"
+                    aria-label="Rows already in this account"
+                  >
+                    <mm-label as="label" class="justify-start gap-2">
+                      <input
+                        type="radio"
+                        name="duplicate-handling"
+                        class="radio radio-sm"
+                        [checked]="duplicateHandling() === 'skip'"
+                        (change)="setDuplicateHandling('skip')"
+                      />
+                      <mm-text variant="caption" color="base-content">Skip them</mm-text>
+                    </mm-label>
+                    <mm-label as="label" class="justify-start gap-2">
+                      <input
+                        type="radio"
+                        name="duplicate-handling"
+                        class="radio radio-sm"
+                        [checked]="duplicateHandling() === 'import'"
+                        (change)="setDuplicateHandling('import')"
+                      />
+                      <mm-text variant="caption" color="base-content">Import them anyway</mm-text>
+                    </mm-label>
+                  </mm-flex>
+                }
+              </mm-flex>
+            </mm-alert>
+          }
+          <app-import-preview-step [rows]="parsedRows()" [duplicates]="duplicateScan().rows" />
         }
       </div>
     </div>

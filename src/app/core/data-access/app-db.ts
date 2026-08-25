@@ -462,7 +462,19 @@ export type ImportBatch = {
   importedAt: string;
   rowsRead: number;
   rowsAdded: number;
+  /** Rows recognised as already present and **skipped**. */
   rowsDuplicate: number;
+  /**
+   * Rows recognised as already present and **added anyway**, because the user chose to
+   * (TICKET-IMP-14). Absent on every batch imported before that was a choice, and on every batch
+   * since where the user left the default alone — so `undefined` reads as zero.
+   *
+   * A separate figure rather than folding into `rowsDuplicate`: that one means "not added", and
+   * `rowsRead = rowsAdded + rowsDuplicate` stays true. Without this, a batch where 40 known rows
+   * were knowingly re-imported would be indistinguishable from 40 genuinely new ones. Optional and
+   * non-indexed, so it needs no new `.version()` block.
+   */
+  rowsDuplicateImported?: number;
   dateFrom: string;
   dateTo: string;
 };

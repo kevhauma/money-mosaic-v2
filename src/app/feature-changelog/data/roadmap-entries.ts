@@ -70,12 +70,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   // UX review backlog (docs/v2.3_ux_review), in that overview's recommended build order.
   {
     versionFolder: 'v2.3_ux_review',
-    ticketId: 'TICKET-IMP-14',
-    title: 'The importer tells you how many rows are duplicates before you commit',
-    area: 'Import',
-  },
-  {
-    versionFolder: 'v2.3_ux_review',
     ticketId: 'TICKET-REC-11',
     title: 'Tell the app when a recurring payment isn’t one, and merge duplicates',
     area: 'Recurring',

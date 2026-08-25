@@ -11,6 +11,14 @@
     <div class="stat-title">Skipped duplicates</div>
     <div class="stat-value text-2xl">{{ batch().rowsDuplicate }}</div>
   </div>
+  <!-- Only for a batch where the user chose "import them anyway" (TICKET-IMP-14) — otherwise the
+       tile would read 0 on every import ever made and say nothing. -->
+  @if (batch().rowsDuplicateImported) {
+    <div class="stat">
+      <div class="stat-title">Re-imported duplicates</div>
+      <div class="stat-value text-2xl text-warning">{{ batch().rowsDuplicateImported }}</div>
+    </div>
+  }
 </div>
 
 <mm-text as="p" variant="caption" class="mt-4">

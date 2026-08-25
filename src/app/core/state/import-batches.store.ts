@@ -18,7 +18,13 @@ import {
 import { ImportBatchesRepository, type ImportBatch, type Transaction } from '@/core/data-access';
 import { TransactionsStore } from './transactions.store';
 import { TransfersStore } from './transfers.store';
-import { ImportService, type CommitImportInput, type CommitImportResult } from '@/core/import';
+import {
+  ImportService,
+  type CommitImportInput,
+  type CommitImportResult,
+  type ImportDuplicatePreview,
+  type ParsedRowResult,
+} from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
 
 /** Applies `{ id, categoryId }` updates onto their matching transactions, leaving the rest untouched. */
@@ -92,6 +98,17 @@ export const ImportBatchesStore = signalStore(
         }
         return hydration;
       },
+
+      /**
+       * Which of a file's rows the app already has (TICKET-IMP-14) — a read-only look at the same
+       * partition `commitImport` will make. It changes no state, and lives here anyway so the import
+       * wizard keeps one door onto the import machinery rather than reaching past its store for the
+       * half that happens to be a query.
+       */
+      previewImport: (
+        accountId: number,
+        validRows: Extract<ParsedRowResult, { valid: true }>[],
+      ): Promise<ImportDuplicatePreview> => importService.previewImport(accountId, validRows),
 
       /**
        * Runs the rules engine, then the co-owner contribution registry (TICKET-CAT-02), over freshly

@@ -22,6 +22,13 @@
           (change)="onFileSelected($event)"
         />
       </label>
+      <!-- Answers the fear before the file is even chosen (TICKET-IMP-14): the overlap between
+           monthly exports is the reason people hesitate here, and the app has always handled it
+           silently. -->
+      <mm-text as="p" variant="caption">
+        Overlapping exports are fine — rows you have already imported are recognised and counted
+        before anything is added.
+      </mm-text>
     </mm-flex>
   </mm-fieldset>
 

@@ -32,6 +32,8 @@ class MapStubComponent {
   readonly canOfferApplyToRemaining = input(false);
   readonly remainingFilesCount = input(0);
   readonly applyToRemaining = model(false);
+  readonly duplicateScan = input<unknown>(null);
+  readonly duplicateHandling = model<'skip' | 'import'>('skip');
 }
 @Component({ selector: 'app-import-summary-step', template: '' })
 class SummaryStubComponent {
@@ -65,6 +67,7 @@ describe('ImportWizardComponent: combined map + preview step', () => {
   let component: InstanceType<typeof ImportWizardComponent>;
   let parse: Mock;
   let commitImport: Mock;
+  let previewImport: Mock;
 
   const set = (key: string, value: unknown): void =>
     (component as unknown as { session: Record<string, { set(v: unknown): void }> }).session[
@@ -79,6 +82,12 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     parse = vi
       .fn()
       .mockResolvedValue({ headers: ['Date', 'Desc'], rows: [validRow()], warnings: [] });
+    // Every incoming row is new unless a test says otherwise — the wizard's own flow is what these
+    // cases are about, and the duplicate scan's behaviour lives in `import.service.spec.ts`.
+    previewImport = vi.fn().mockImplementation(async (_accountId: number, rows: unknown[]) => ({
+      newRows: rows,
+      duplicateRows: [],
+    }));
     commitImport = vi.fn().mockImplementation(
       async (input: { accountId: number }): Promise<CommitImportResult> =>
         ({
@@ -93,7 +102,10 @@ describe('ImportWizardComponent: combined map + preview step', () => {
       providers: [
         provideRouter([]),
         { provide: CsvImportService, useValue: { parse } },
-        { provide: ImportBatchesStore, useValue: { commitImport, undoImport: vi.fn() } },
+        {
+          provide: ImportBatchesStore,
+          useValue: { commitImport, undoImport: vi.fn(), previewImport },
+        },
         { provide: MappingProfilesStore, useValue: { upsertForBankAndAccount: vi.fn() } },
         { provide: AccountsStore, useValue: { activeAccounts: signal([]) } },
       ],
@@ -462,6 +474,7 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
   let component: InstanceType<typeof ImportWizardComponent>;
   let parse: Mock;
   let commitImport: Mock;
+  let previewImport: Mock;
   let addAccount: Mock;
 
   const set = (key: string, value: unknown): void =>
@@ -497,6 +510,12 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
     parse = vi
       .fn()
       .mockResolvedValue({ headers: ['Date', 'Desc'], rows: [validRow()], warnings: [] });
+    // Every incoming row is new unless a test says otherwise — the wizard's own flow is what these
+    // cases are about, and the duplicate scan's behaviour lives in `import.service.spec.ts`.
+    previewImport = vi.fn().mockImplementation(async (_accountId: number, rows: unknown[]) => ({
+      newRows: rows,
+      duplicateRows: [],
+    }));
     commitImport = vi.fn().mockImplementation(
       async (input: { accountId: number }): Promise<CommitImportResult> =>
         ({
@@ -512,7 +531,10 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
       providers: [
         provideRouter([]),
         { provide: CsvImportService, useValue: { parse } },
-        { provide: ImportBatchesStore, useValue: { commitImport, undoImport: vi.fn() } },
+        {
+          provide: ImportBatchesStore,
+          useValue: { commitImport, undoImport: vi.fn(), previewImport },
+        },
         { provide: MappingProfilesStore, useValue: { upsertForBankAndAccount: vi.fn() } },
         { provide: AccountsStore, useValue: { activeAccounts: signal([]), addAccount } },
       ],
