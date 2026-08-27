@@ -18,7 +18,8 @@ type Internals = {
   deleteAllConfirmed: () => Promise<void>;
   qrSendOpen: { (): boolean; set: (value: boolean) => void };
   qrReceiveOpen: { (): boolean; set: (value: boolean) => void };
-  onQrReceived: (data: AppDataExport) => void;
+  onQrReceived: (transfer: { data: AppDataExport; omitted: Record<string, string[]> }) => void;
+  importNote: () => string | null;
   reloadPage: () => void;
 };
 
@@ -124,7 +125,7 @@ describe('DataManagementOverviewComponent', () => {
       await setup();
       internals().qrReceiveOpen.set(true);
 
-      internals().onQrReceived(backup);
+      internals().onQrReceived({ data: backup, omitted: {} });
 
       expect(internals().qrReceiveOpen()).toBe(false);
       expect(internals().importDialogOpen()).toBe(true);
@@ -134,6 +135,35 @@ describe('DataManagementOverviewComponent', () => {
 
       expect(dataManagementRepository.importAll).toHaveBeenCalledExactlyOnceWith(backup, 'merge');
       expect(internals().reloadPromptOpen()).toBe(true);
+    });
+
+    it('warns at the point of no return when the transfer left the source CSV behind', async () => {
+      await setup();
+
+      internals().onQrReceived({ data: backup, omitted: { transactions: ['rawLine', 'rawRow'] } });
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(internals().importNote()).toMatch(/original CSV rows/i);
+      // Named once, not once per omitted field.
+      expect(
+        internals()
+          .importNote()
+          ?.match(/original CSV rows/gi),
+      ).toHaveLength(1);
+      expect(internals().importNote()).toMatch(/clear them/i);
+      expect(fixture.nativeElement.textContent as string).toContain('original CSV rows');
+    });
+
+    it('clears a leftover transfer warning when a file is picked instead', async () => {
+      await setup();
+      internals().onQrReceived({ data: backup, omitted: { transactions: ['rawLine'] } });
+      expect(internals().importNote()).not.toBeNull();
+
+      const file = new File([JSON.stringify(backup)], 'backup.json', { type: 'application/json' });
+      await internals().onFileSelected(fileSelectEvent(file));
+
+      expect(internals().importNote()).toBeNull();
     });
 
     it('offers send and receive without mounting either dialog until asked', async () => {

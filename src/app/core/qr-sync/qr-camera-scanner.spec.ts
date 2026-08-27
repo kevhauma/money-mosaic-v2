@@ -103,7 +103,7 @@ describe('QrCameraScanner: camera lifetime', () => {
   it('reads codes off the camera and stops every track when told to stop', async () => {
     const { stream, tracks } = fakeStream();
     setMediaDevices(vi.fn().mockResolvedValue(stream));
-    stubBarcodeDetector(['MMQR1|abcdef01|0|1|9a3c1e07|payload']);
+    stubBarcodeDetector(['MMQR2|abcdef01|0|1|9a3c1e07|payload']);
     const seen: string[] = [];
     const scanner = new QrCameraScanner();
     const { video, canvas } = elements();
@@ -111,7 +111,7 @@ describe('QrCameraScanner: camera lifetime', () => {
     await scanner.start(video, canvas, (text) => seen.push(text));
     await vi.advanceTimersByTimeAsync(200);
 
-    expect(seen).toEqual(['MMQR1|abcdef01|0|1|9a3c1e07|payload']);
+    expect(seen).toEqual(['MMQR2|abcdef01|0|1|9a3c1e07|payload']);
 
     scanner.stop();
     await vi.advanceTimersByTimeAsync(500);

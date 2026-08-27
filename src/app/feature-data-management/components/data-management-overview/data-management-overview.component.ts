@@ -14,10 +14,33 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { downloadJson } from '@/shared/utils';
+import type { QrTransferResult } from '@/core/qr-sync';
 import { QrReceiveDialogComponent } from '../qr-receive-dialog/qr-receive-dialog.component';
 import { QrSendDialogComponent } from '../qr-send-dialog/qr-send-dialog.component';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
+const OMITTED_FIELD_LABELS: Record<string, string> = {
+  rawLine: 'original CSV rows',
+  rawRow: 'original CSV rows',
+};
+
+/**
+ * A QR transfer leaves the bulky source-CSV fields behind unless the sender opted in, and `bulkPut`
+ * replaces a whole row — so a merge can *clear* those fields on transactions this browser already
+ * has. Worth one sentence at the point of no return rather than a surprise afterwards.
+ */
+const describeOmissions = (omitted: Record<string, string[]>): string | null => {
+  const labels = [
+    ...new Set(
+      Object.values(omitted)
+        .flat()
+        .map((field) => OMITTED_FIELD_LABELS[field] ?? field),
+    ),
+  ];
+  if (!labels.length) return null;
+  return `This transfer left the ${labels.join(' and ')} behind to keep the code count down. Merging will clear them on any transaction already stored here.`;
+};
 
 @Component({
   selector: 'app-data-management-overview',
@@ -52,6 +75,8 @@ export class DataManagementOverviewComponent {
 
   protected readonly qrSendOpen = signal(false);
   protected readonly qrReceiveOpen = signal(false);
+  /** Set when a QR transfer arrived without some fields, so the confirm dialog can say so. */
+  protected readonly importNote = signal<string | null>(null);
 
   protected readonly deleteDialogOpen = signal(false);
   protected readonly deleting = signal(false);
@@ -84,6 +109,7 @@ export class DataManagementOverviewComponent {
         throw new Error('This file is not a Money Mosaic backup.');
       }
       this.pendingImport = parsed;
+      this.importNote.set(null);
       this.importMode.set('merge');
       this.importDialogOpen.set(true);
     } catch {
@@ -95,10 +121,11 @@ export class DataManagementOverviewComponent {
    * A QR transfer lands in exactly the same place a chosen file does — the Replace-vs-Merge
    * dialog — so there is one import path, one confirmation, and one schema-version guard.
    */
-  protected onQrReceived(data: AppDataExport): void {
+  protected onQrReceived(transfer: QrTransferResult): void {
     this.qrReceiveOpen.set(false);
     this.errorMessage.set(null);
-    this.pendingImport = data;
+    this.pendingImport = transfer.data;
+    this.importNote.set(describeOmissions(transfer.omitted));
     this.importMode.set('merge');
     this.importDialogOpen.set(true);
   }

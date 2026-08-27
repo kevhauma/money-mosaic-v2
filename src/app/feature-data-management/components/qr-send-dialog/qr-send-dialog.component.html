@@ -15,7 +15,13 @@
     @case ('too-large') {
       <mm-alert status="warning" class="mt-4">
         Your data needs {{ frameCount() }} codes — more than the {{ maxFrames }} a screen-to-camera
-        transfer can realistically carry. Use “Export data” instead and move the file across.
+        transfer can realistically carry.
+        @if (rawRowsPushedItOver()) {
+          Turn off the original CSV rows below to shrink it, or use “Export data” and move the file
+          across.
+        } @else {
+          Use “Export data” instead and move the file across.
+        }
       </mm-alert>
     }
 
@@ -52,6 +58,25 @@
         </mm-text>
       </div>
     }
+  }
+
+  @if (phase() === 'ready' || phase() === 'too-large') {
+    <mm-label as="label" class="mt-4 justify-start gap-3">
+      <input
+        type="checkbox"
+        class="checkbox checkbox-sm"
+        [checked]="includeRawRows()"
+        (change)="setIncludeRawRows(!includeRawRows())"
+      />
+      <span>
+        <mm-text as="p" weight="medium">Include the original CSV rows</mm-text>
+        <mm-text as="p" class="text-xs text-base-content/60">
+          The untouched line each transaction was imported from, shown on its detail page. Roughly
+          four times as many codes, and merging without it clears the rows the other device already
+          has.
+        </mm-text>
+      </span>
+    </mm-label>
   }
 
   <div class="modal-action">

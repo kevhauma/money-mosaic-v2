@@ -11,7 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DataManagementRepository } from '@/core/data-access';
+import { DataManagementRepository, type AppDataExport } from '@/core/data-access';
 import {
   QR_FRAME_INTERVAL_MS,
   QR_MAX_FRAMES,
@@ -23,6 +23,7 @@ import {
 import {
   AlertComponent,
   ButtonComponent,
+  LabelComponent,
   MmModalComponent,
   TypographyComponent,
 } from '@/shared/ui';
@@ -46,10 +47,13 @@ const formatPassDuration = (milliseconds: number): string => {
  * Sending half of the QR transfer (TICKET-DAT-05): exports the database, encodes it into QR frames
  * and blinks them on screen in a loop until the receiving device has caught every one. Mounted by
  * its parent only while open, so a fresh instance prepares its own payload in `ngOnInit`.
+ *
+ * The export is read once and kept; toggling "include original CSV rows" only re-encodes it, since
+ * that choice changes the payload by roughly 4× and is worth letting the user see before starting.
  */
 @Component({
   selector: 'app-qr-send-dialog',
-  imports: [AlertComponent, ButtonComponent, MmModalComponent, TypographyComponent],
+  imports: [AlertComponent, ButtonComponent, LabelComponent, MmModalComponent, TypographyComponent],
   templateUrl: './qr-send-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -64,6 +68,7 @@ export class QrSendDialogComponent implements OnInit, OnDestroy {
   protected readonly frames = signal<string[]>([]);
   protected readonly frameIndex = signal(0);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly includeRawRows = signal(false);
 
   protected readonly frameCount = computed(() => this.frames().length);
   protected readonly isAnimated = computed(() => this.frameCount() > 1);
@@ -73,11 +78,16 @@ export class QrSendDialogComponent implements OnInit, OnDestroy {
   protected readonly codeNoun = computed(() => (this.frameCount() === 1 ? 'code' : 'codes'));
   protected readonly closeLabel = computed(() => (this.phase() === 'sending' ? 'Done' : 'Close'));
   protected readonly frameNumber = computed(() => this.frameIndex() + 1);
+  /** Above the ceiling *because* of the opt-in — there's a cheaper fix than the file export. */
+  protected readonly rawRowsPushedItOver = computed(
+    () => this.phase() === 'too-large' && this.includeRawRows(),
+  );
 
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>('qrCanvas');
 
   /** Symbols are built once per frame and reused on every pass — encoding is the expensive part. */
   private readonly symbols = new Map<number, QrSymbol>();
+  private exported: AppDataExport | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
   private wakeLock: ScreenWakeLock | null = null;
   private wakeLockWanted = false;
@@ -94,18 +104,21 @@ export class QrSendDialogComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     try {
-      const data = await this.dataManagementRepository.exportAll();
-      const frames = await this.qrSync.encode(data);
-      this.frames.set(frames);
-      this.phase.set(frames.length > QR_MAX_FRAMES ? 'too-large' : 'ready');
+      this.exported = await this.dataManagementRepository.exportAll();
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'Could not prepare the data.');
-      this.phase.set('failed');
+      this.fail(error, 'Could not read your data.');
+      return;
     }
+    await this.buildFrames();
   }
 
   ngOnDestroy(): void {
     this.stopAnimation();
+  }
+
+  protected async setIncludeRawRows(include: boolean): Promise<void> {
+    this.includeRawRows.set(include);
+    await this.buildFrames();
   }
 
   protected start(): void {
@@ -121,6 +134,28 @@ export class QrSendDialogComponent implements OnInit, OnDestroy {
   protected close(): void {
     this.stopAnimation();
     this.closed.emit();
+  }
+
+  private async buildFrames(): Promise<void> {
+    const data = this.exported;
+    if (!data) return;
+
+    this.phase.set('preparing');
+    this.symbols.clear();
+    this.frameIndex.set(0);
+
+    try {
+      const frames = await this.qrSync.encode(data, { includeRawRows: this.includeRawRows() });
+      this.frames.set(frames);
+      this.phase.set(frames.length > QR_MAX_FRAMES ? 'too-large' : 'ready');
+    } catch (error) {
+      this.fail(error, 'Could not prepare the data.');
+    }
+  }
+
+  private fail(error: unknown, fallback: string): void {
+    this.errorMessage.set(error instanceof Error ? error.message : fallback);
+    this.phase.set('failed');
   }
 
   private stopAnimation(): void {

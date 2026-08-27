@@ -3,7 +3,7 @@
  * symbol stays in byte mode with no encoding surprises:
  *
  * ```
- * MMQR1|4f2a91bc|12|60|9a3c1e07|<chunk>
+ * MMQR2|4f2a91bc|12|60|9a3c1e07|<chunk>
  * ──┬── ────┬─── ─┬ ─┬ ────┬─── ───┬───
  *   │       │     │  │     │       └ this frame's slice of the Base64url payload
  *   │       │     │  │     └ FNV-1a checksum (8 hex) of the WHOLE Base64url payload
@@ -18,7 +18,7 @@
  * rejected as a unit (per-frame repair would need a fountain code — see the ticket's notes).
  */
 
-export const QR_FORMAT_ID = 'MMQR1';
+export const QR_FORMAT_ID = 'MMQR2';
 
 /**
  * Hard ceiling on the length of a whole frame string, header included — the one number that makes
@@ -28,7 +28,7 @@ export const QR_FORMAT_ID = 'MMQR1';
  */
 export const QR_FRAME_CHAR_CEILING = 1280;
 
-/** Widest header this format can produce: `MMQR1` + 8-hex id + 4-digit index + 4-digit total +
+/** Widest header this format can produce: `MMQR2` + 8-hex id + 4-digit index + 4-digit total +
  * 8-hex checksum + the five separators. Four digits each is headroom — {@link QR_MAX_FRAMES}
  * needs three. */
 const MAX_HEADER_CHARS = QR_FORMAT_ID.length + 8 + 4 + 4 + 8 + 5;

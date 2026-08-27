@@ -1246,6 +1246,8 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Settings shows your whole database as codes that loop on screen',
       'The other device reads them with its camera, no file and no network',
       'A finished scan asks Merge or Replace, exactly like importing a backup',
+      'Transfers leave the original CSV rows behind, which cuts the codes by three quarters',
+      'Tick a box to send those rows too, and see the new count before you start',
     ],
   },
 ];

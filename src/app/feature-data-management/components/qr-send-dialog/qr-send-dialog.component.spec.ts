@@ -6,6 +6,9 @@ import { QrSendDialogComponent } from './qr-send-dialog.component';
 
 type Internals = {
   phase: () => 'preparing' | 'ready' | 'sending' | 'too-large' | 'failed';
+  includeRawRows: () => boolean;
+  rawRowsPushedItOver: () => boolean;
+  setIncludeRawRows: (include: boolean) => Promise<void>;
   frameCount: () => number;
   frameIndex: () => number;
   isAnimated: () => boolean;
@@ -22,7 +25,7 @@ const backup: AppDataExport = {
 };
 
 const syntheticFrames = (count: number): string[] =>
-  Array.from({ length: count }, (_, index) => `MMQR1|abcdef01|${index}|${count}|9a3c1e07|chunk`);
+  Array.from({ length: count }, (_, index) => `MMQR2|abcdef01|${index}|${count}|9a3c1e07|chunk`);
 
 describe('QrSendDialogComponent: preparing and showing a transfer', () => {
   let fixture: ComponentFixture<QrSendDialogComponent>;
@@ -123,6 +126,35 @@ describe('QrSendDialogComponent: preparing and showing a transfer', () => {
     expect(clearInterval).toHaveBeenCalled();
     expect(closed).toHaveBeenCalledTimes(1);
     clearInterval.mockRestore();
+  });
+
+  it('leaves the source CSV rows out by default, and re-encodes when they are asked for', async () => {
+    await setup(syntheticFrames(60));
+    qrSync.encode.mockResolvedValue(syntheticFrames(240));
+
+    expect(internals().includeRawRows()).toBe(false);
+    expect(qrSync.encode).toHaveBeenCalledWith(backup, { includeRawRows: false });
+
+    await internals().setIncludeRawRows(true);
+    fixture.detectChanges();
+
+    expect(qrSync.encode).toHaveBeenLastCalledWith(backup, { includeRawRows: true });
+    // Re-encoded from the export already in hand — the database is read exactly once.
+    expect(dataManagementRepository.exportAll).toHaveBeenCalledTimes(1);
+    expect(internals().frameCount()).toBe(240);
+    expect(internals().phase()).toBe('ready');
+  });
+
+  it('points at the toggle, not the file export, when the raw rows are what broke the ceiling', async () => {
+    await setup(syntheticFrames(60));
+    qrSync.encode.mockResolvedValue(syntheticFrames(QR_MAX_FRAMES + 1));
+
+    await internals().setIncludeRawRows(true);
+    fixture.detectChanges();
+
+    expect(internals().phase()).toBe('too-large');
+    expect(internals().rawRowsPushedItOver()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Turn off the original CSV rows');
   });
 
   it('surfaces an export failure instead of showing an empty code', async () => {

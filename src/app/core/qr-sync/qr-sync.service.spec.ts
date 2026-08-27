@@ -1,5 +1,5 @@
 import { DataManagementRepository, appDb, type AppDataExport } from '@/core/data-access';
-import { QR_FRAME_CHAR_CEILING, parseQrFrame } from './qr-frames';
+import { QR_FORMAT_ID, QR_FRAME_CHAR_CEILING, parseQrFrame } from './qr-frames';
 import { QrSyncService } from './qr-sync.service';
 
 /** A payload big enough to need many frames, and varied enough that gzip can't flatten it away. */
@@ -36,10 +36,27 @@ describe('QrSyncService: encode', () => {
 
   it('round-trips a multi-frame export back to the original object', async () => {
     const data = bigExport(400);
-    const frames = await service.encode(data);
+    const frames = await service.encode(data, { includeRawRows: true });
 
     expect(frames.length).toBeGreaterThan(1);
-    expect(await service.decode(shuffledFrames(frames))).toEqual(data);
+    // Encoded with the raw CSV carried, so the round trip has to be exact.
+    expect((await service.decode(shuffledFrames(frames))).data).toEqual(data);
+  });
+
+  it('leaves the source-CSV fields behind by default, and says which it dropped', async () => {
+    const data = bigExport(400);
+    data.tables['transactions'] = (data.tables['transactions'] as Record<string, unknown>[]).map(
+      (row, index) => ({ ...row, rawLine: `line ${index}`, rawRow: { Bedrag: String(index) } }),
+    );
+
+    const lean = await service.encode(data);
+    const full = await service.encode(data, { includeRawRows: true });
+    const received = await service.decode(new Map(lean.map((frame, index) => [index, frame])));
+
+    expect(lean.length).toBeLessThan(full.length);
+    expect(received.omitted).toEqual({ transactions: ['rawLine', 'rawRow'] });
+    expect(received.data.tables['transactions'][0]).not.toHaveProperty('rawLine');
+    expect(received.data.tables['transactions']).toHaveLength(400);
   });
 
   it('keeps every emitted frame inside the scannable character ceiling', async () => {
@@ -80,7 +97,7 @@ describe('QrSyncService: decode', () => {
     const victim = parseQrFrame(frames[1]);
     tampered.set(
       1,
-      ['MMQR1', victim?.transferId, 1, victim?.total, victim?.checksum, 'AAAA'].join('|'),
+      [QR_FORMAT_ID, victim?.transferId, 1, victim?.total, victim?.checksum, 'AAAA'].join('|'),
     );
 
     await expect(service.decode(tampered)).rejects.toThrow(/checksum/i);
@@ -119,9 +136,9 @@ describe('QrSyncService: the schema-version guard applies to QR payloads too', (
     const repository = new DataManagementRepository();
     const frames = await service.encode(bigExport(50, appDb.verno + 1));
 
-    const decoded = await service.decode(new Map(frames.map((frame, index) => [index, frame])));
+    const { data } = await service.decode(new Map(frames.map((frame, index) => [index, frame])));
 
-    expect(decoded.schemaVersion).toBe(appDb.verno + 1);
-    await expect(repository.importAll(decoded, 'merge')).rejects.toThrow(/newer database schema/i);
+    expect(data.schemaVersion).toBe(appDb.verno + 1);
+    await expect(repository.importAll(data, 'merge')).rejects.toThrow(/newer database schema/i);
   });
 });

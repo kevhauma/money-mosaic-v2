@@ -245,7 +245,7 @@ export const GUIDES: readonly Guide[] = [
       {
         title: 'On the sending device, start the transfer',
         description:
-          'Choose "Send to another device". Money Mosaic packs your database and tells you how many codes it needs and roughly how long one pass takes before anything starts. A very large database is refused here with a pointer back to the file export — blinking it across would take longer than it is worth.',
+          'Choose "Send to another device". Money Mosaic packs your database and tells you how many codes it needs and roughly how long one pass takes before anything starts. To keep that count down, a transfer leaves the original CSV rows behind — the untouched line each transaction was imported from, shown on its detail page. Tick "Include the original CSV rows" if you want them, and watch the code count jump by roughly four times. A database too large either way is refused here with a pointer back to the file export.',
       },
       {
         title: 'On the receiving device, open the camera',
@@ -260,7 +260,7 @@ export const GUIDES: readonly Guide[] = [
       {
         title: 'Choose Merge or Replace, then reload',
         description:
-          'A completed scan lands in the same confirmation as a file import. Merge adds the incoming rows to what is already there; Replace erases what this browser already holds. Reload when prompted to see the result. If a scan is corrupted it is refused on its checksum and nothing is imported — just run the transfer again.',
+          'A completed scan lands in the same confirmation as a file import. Merge adds the incoming rows to what is already there; Replace erases what this browser already holds. If the transfer left the original CSV rows behind, the dialog says so — and merging will clear them on transactions this browser already has, so use the file export instead when you care about keeping them. Reload when prompted to see the result. If a scan is corrupted it is refused on its checksum and nothing is imported — just run the transfer again.',
       },
     ],
     tryItLabel: 'Try it — go to Settings',

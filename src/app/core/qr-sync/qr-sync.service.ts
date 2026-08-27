@@ -2,6 +2,27 @@ import { Injectable } from '@angular/core';
 import type { AppDataExport } from '@/core/data-access';
 import { decodePayload, encodePayload } from './qr-payload-codec';
 import { buildQrFrames, fnv1aHex, newTransferId, parseQrFrame, type QrFrame } from './qr-frames';
+import {
+  fromTransferPayload,
+  toTransferPayload,
+  type QrTransferPayload,
+} from './qr-transfer-payload';
+
+/** What a completed scan yields: the export itself, plus what the sender chose to leave behind. */
+export type QrTransferResult = {
+  data: AppDataExport;
+  /** Table name → fields the sender omitted. Empty when the whole database came across. */
+  omitted: Record<string, string[]>;
+};
+
+export type QrEncodeOptions = {
+  /**
+   * Carry `rawLine`/`rawRow` — TICKET-TXN-06's copy of the source CSV — across as well. Off by
+   * default: measured at ~68% of the compressed payload, for one audit table on the transaction
+   * detail view. An 8,000-transaction database is ~217 frames without them and ~804 with.
+   */
+  includeRawRows: boolean;
+};
 
 /**
  * A second transport for the export/import machinery of TICKET-DAT-01: instead of writing a JSON
@@ -15,9 +36,12 @@ import { buildQrFrames, fnv1aHex, newTransferId, parseQrFrame, type QrFrame } fr
  */
 @Injectable({ providedIn: 'root' })
 export class QrSyncService {
-  /** `JSON.stringify` → gzip → Base64url → fixed-size frames, one string per QR symbol. */
-  encode = async (data: AppDataExport): Promise<string[]> => {
-    const payload = await encodePayload(JSON.stringify(data));
+  /** Export → transfer payload → gzip → Base64url → fixed-size frames, one string per QR symbol. */
+  encode = async (
+    data: AppDataExport,
+    options: QrEncodeOptions = { includeRawRows: false },
+  ): Promise<string[]> => {
+    const payload = await encodePayload(JSON.stringify(toTransferPayload(data, options)));
     return buildQrFrames(payload, newTransferId());
   };
 
@@ -26,7 +50,7 @@ export class QrSyncService {
    * message worth showing the user on a foreign frame, a mixed-up transfer, a gap in the sequence,
    * or a checksum mismatch — so a corrupted scan is refused before any import is attempted.
    */
-  decode = async (frames: Map<number, string>): Promise<AppDataExport> => {
+  decode = async (frames: Map<number, string>): Promise<QrTransferResult> => {
     const parsed = this.parseAll(frames);
     const [first] = parsed;
 
@@ -55,7 +79,8 @@ export class QrSyncService {
       );
     }
 
-    return JSON.parse(await decodePayload(payload)) as AppDataExport;
+    const transfer = JSON.parse(await decodePayload(payload)) as QrTransferPayload;
+    return { data: fromTransferPayload(transfer), omitted: transfer.omitted ?? {} };
   };
 
   private parseAll(frames: Map<number, string>): [QrFrame, ...QrFrame[]] {

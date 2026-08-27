@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import type { AppDataExport } from '@/core/data-access';
-import { QrSyncService, parseQrFrame } from '@/core/qr-sync';
+import { QR_FORMAT_ID, QrSyncService, parseQrFrame } from '@/core/qr-sync';
 import { QrReceiveDialogComponent } from './qr-receive-dialog.component';
 
 type Internals = {
@@ -103,10 +103,30 @@ describe('QrReceiveDialogComponent: scanning a transfer', () => {
 
     await vi.waitFor(() => expect(received).toHaveBeenCalledTimes(1), WAIT);
 
-    expect(received.mock.calls[0][0]).toEqual(data);
+    expect(received.mock.calls[0][0]).toEqual({ data, omitted: {} });
     expect(internals().collected()).toBe(frames.length);
     expect(internals().total()).toBe(frames.length);
     expect(allTracksStopped()).toBe(true);
+  });
+
+  it('reports the fields the sender left behind, so the import can say so', async () => {
+    const withRaw = bigExport(400);
+    withRaw.tables['transactions'] = (
+      withRaw.tables['transactions'] as Record<string, unknown>[]
+    ).map((row, index) => ({ ...row, rawLine: `original;csv;line;${index}` }));
+
+    queueCodes(await new QrSyncService().encode(withRaw));
+    const { received } = await mount();
+
+    await vi.waitFor(() => expect(received).toHaveBeenCalledTimes(1), WAIT);
+
+    const transfer = received.mock.calls[0][0] as {
+      data: AppDataExport;
+      omitted: Record<string, string[]>;
+    };
+    expect(transfer.omitted).toEqual({ transactions: ['rawLine'] });
+    expect(transfer.data.tables['transactions'][0]).not.toHaveProperty('rawLine');
+    expect(transfer.data.tables['transactions']).toHaveLength(400);
   });
 
   it('ignores frames belonging to a different transfer', async () => {
@@ -128,7 +148,7 @@ describe('QrReceiveDialogComponent: scanning a transfer', () => {
     const frames = await new QrSyncService().encode(bigExport(800));
     const victim = parseQrFrame(frames[1]);
     const corrupted = [
-      'MMQR1',
+      QR_FORMAT_ID,
       victim?.transferId,
       1,
       victim?.total,

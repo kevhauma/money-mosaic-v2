@@ -42,7 +42,7 @@ Adds a second transport for the export/import machinery that already exists: ins
 
 ## Acceptance criteria
 
-- [x] `QrSyncService` exposes `encode`/`decode` with the chunk-header format documented in the file, and a round-trip `decode(encode(x))` reproduces the original export for a realistic multi-frame payload. (Format documented at the top of [`qr-frames.ts`](../../../src/app/core/qr-sync/qr-frames.ts); service in [`qr-sync.service.ts`](../../../src/app/core/qr-sync/qr-sync.service.ts). `qr-sync.service.spec.ts` -> "round-trips a multi-frame export back to the original object" feeds an 800-row export back through `decode` from a deliberately shuffled map.)
+- [x] `QrSyncService` exposes `encode`/`decode` with the chunk-header format documented in the file, and a round-trip `decode(encode(x))` reproduces the original export for a realistic multi-frame payload. **Amended 2026-08-27** — `encode` takes an options argument and `decode` returns `{ data, omitted }` rather than a bare `AppDataExport`; the round trip is exact when `includeRawRows` is on, and omits the source-CSV fields when it is off. See "Payload slimming" below. (Format documented at the top of [`qr-frames.ts`](../../../src/app/core/qr-sync/qr-frames.ts); service in [`qr-sync.service.ts`](../../../src/app/core/qr-sync/qr-sync.service.ts). `qr-sync.service.spec.ts` -> "round-trips a multi-frame export back to the original object" feeds an 800-row export back through `decode` from a deliberately shuffled map.)
 - [x] Compression uses the native `CompressionStream`/`DecompressionStream` — no compression dependency is added. ([`qr-payload-codec.ts`](../../../src/app/core/qr-sync/qr-payload-codec.ts); the only new dependencies in `package.json` are `qrcode-generator` and `jsqr`, both QR-only and both dynamically imported.)
 - [x] Every emitted frame's character count stays inside the configured chunk ceiling, asserted by a test so a later tweak cannot silently produce unscannable frames. (Stronger than asserted: `QR_CHUNK_CHARS` is now _derived_ from `QR_FRAME_CHAR_CEILING` minus the widest possible header, so the two cannot drift. Covered by `qr-frames.spec.ts` -> "keeps every frame inside the scannable character ceiling" and "leaves the chunk size in the range a level-M symbol reads reliably off a screen", plus `qr-sync.service.spec.ts` -> "keeps every emitted frame inside the scannable character ceiling" on a real 2,000-row payload.)
 - [x] The sender modal reports frame count and estimated duration before the animation starts, and refuses (with a pointer to the file export) above the configured frame ceiling. (`qr-send-dialog.component.spec.ts` -> "reports the frame count and an estimated pass time before anything animates" asserts "60 codes" and "8 seconds" in the rendered DOM with no `<canvas>` present yet; "refuses a payload above the frame ceiling and points at the file export instead" asserts the `too-large` phase, the count, the words "Export data", and that no animation interval was scheduled.)
@@ -82,3 +82,50 @@ Accepted as-is, recorded rather than fixed:
 - **Hardcoded `#ffffff` / `#000000` in `qr-code-renderer.ts`** (and the `bg-white` placeholder on the canvas) break the "daisyUI tokens, never hex" rule deliberately: a scanner needs fixed black-on-white contrast, and `base-100` is not white in most of this app's themes. A themed QR code is an unreadable QR code.
 - **`jsqr` ships CommonJS**, so a production build adds it to the four CommonJS warnings the repo already emits (`papaparse`, `node-fetch`, `seedrandom`, `long`). No `allowedCommonJsDependencies` entry was added, since the repo has deliberately never used that option and the module only reaches a lazy chunk.
 - **`csv-backup/`** — real bank CSVs sitting untracked and un-ignored in the working tree. Nothing to do with this ticket, and deliberately not committed here, but worth an entry in `.gitignore`.
+
+## Payload slimming (2026-08-27, after the first real database hit the ceiling)
+
+The first user database to go through this needed **829 frames** — past the 250 ceiling by more
+than 3x, so the feature simply did not work for the person it was built for. Measured against a
+realistic Belgian-bank CSV at 20,000 transactions, gzip -9:
+
+| Payload | Bytes/txn | vs. as-is | 829-frame database |
+|---|---|---|---|
+| as-is (`AppDataExport` JSON) | 102.7 | 100% | 829 frames |
+| without `rawLine`/`rawRow` | 33.0 | 32% | ~266 frames |
+| ...and columnar | 26.9 | 26% | ~217 frames |
+| columnar only, raw kept | 99.6 | 97% | ~804 frames |
+
+The finding: **~68% of the compressed payload was `rawLine` + `rawRow`** — TICKET-TXN-06's copy of
+the source CSV, stored twice per transaction, feeding one audit table on the transaction detail
+view. Columnar encoding is worth ~18% on top of that but almost nothing on its own, because the raw
+CSV strings drown the repeated key names out.
+
+What changed, in `core/qr-sync/qr-transfer-payload.ts`:
+
+- The QR payload is no longer `AppDataExport` JSON. It is a versioned `QrTransferPayload` — `v`,
+  the schema version, `omitted`, and columnar `[keys, rows]` per table. Absent values use a NUL
+  sentinel (a JSON array cannot hold `undefined`, and `null` is a legitimate stored value); a real
+  string starting with NUL is escaped by doubling, so the encoding stays lossless.
+- `rawLine`/`rawRow` are dropped **by default**, with an opt-in checkbox in the send dialog that
+  re-encodes and shows the new frame count before anything starts. The user chose the toggle over
+  always-exclude.
+- The frame format id went `MMQR1` -> `MMQR2`. The payload inside changed shape, so a build from
+  before this change must reject these frames at `parseQrFrame` rather than mis-parse them. That
+  is exactly what the version in the format id is for; nothing had shipped, so it was free.
+- `decode` returns `{ data, omitted }`, and the Replace-vs-Merge dialog warns when a transfer left
+  fields behind. This matters beyond honesty: `importAll` uses `bulkPut`, which replaces whole
+  rows, so **merging a slimmed transfer clears `rawLine`/`rawRow` on transactions the receiving
+  device already has**. Said plainly at the point of no return rather than discovered later.
+
+Still open, deliberately: denser frames. At 1,246 characters each frame uses about half of what a
+level-M symbol holds; ~2,000 would take that same database to ~135 frames. That is the tuning the
+live browser check above was meant to settle, and it needs a real camera, so it stays untouched.
+
+## Separately: `exportAll` silently loses the trained model
+
+Not introduced here and not fixed here, but found while measuring. `CategoryModelArtifact`
+(`app-db.ts`) holds three `ArrayBuffer` fields, and `JSON.stringify` turns an `ArrayBuffer` into
+`{}`. So the **file** export has always dropped the trained auto-categoriser weights, and importing
+that backup writes a corrupt artifact row rather than no row at all. It affects `downloadJson` and
+the QR path equally, since both stringify the same `exportAll` output. Worth its own ticket.

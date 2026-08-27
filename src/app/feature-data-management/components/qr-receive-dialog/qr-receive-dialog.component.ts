@@ -10,13 +10,13 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import type { AppDataExport } from '@/core/data-access';
 import {
   QrCameraError,
   QrCameraScanner,
   QrFrameCollector,
   QrSyncService,
   type QrScannerFailure,
+  type QrTransferResult,
 } from '@/core/qr-sync';
 import {
   AlertComponent,
@@ -44,7 +44,7 @@ export class QrReceiveDialogComponent implements AfterViewInit, OnDestroy {
   private readonly qrSync = inject(QrSyncService);
   private readonly scanner = inject(QrCameraScanner);
 
-  readonly received = output<AppDataExport>();
+  readonly received = output<QrTransferResult>();
   readonly cancelled = output<void>();
 
   protected readonly phase = signal<ReceivePhase>('starting');

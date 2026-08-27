@@ -122,6 +122,10 @@
     Choose how the imported file should be combined with your existing data.
   </mm-text>
 
+  @if (importNote()) {
+    <mm-alert status="warning" variant="soft" class="mb-3">{{ importNote() }}</mm-alert>
+  }
+
   <mm-fieldset class="gap-1">
     <mm-label as="label" class="justify-start gap-3">
       <input
