@@ -1,0 +1,63 @@
+<mm-modal [open]="true" (openChange)="close()" class="max-w-xl">
+  <span mm-modal-title>Send to another device</span>
+
+  @switch (phase()) {
+    @case ('preparing') {
+      <mm-text as="p" variant="caption" class="py-6">
+        Packing your data into codes — this takes a moment for a large database.
+      </mm-text>
+    }
+
+    @case ('failed') {
+      <mm-alert status="error" class="mt-4">{{ errorMessage() }}</mm-alert>
+    }
+
+    @case ('too-large') {
+      <mm-alert status="warning" class="mt-4">
+        Your data needs {{ frameCount() }} codes — more than the {{ maxFrames }} a screen-to-camera
+        transfer can realistically carry. Use “Export data” instead and move the file across.
+      </mm-alert>
+    }
+
+    @case ('ready') {
+      <mm-text as="p" variant="caption" class="pt-3">
+        Your data becomes {{ frameCount() }} {{ codeNoun() }}, shown one after another for about
+        {{ passDuration() }} per pass. Open “Receive from another device” on the other device, point
+        its camera at this screen, and leave both windows alone until it says it has everything.
+      </mm-text>
+      <mm-text as="p" class="pt-2 text-sm text-base-content/60">
+        Nothing is sent over any network. The data leaves this device as light and enters the other
+        one through its camera.
+      </mm-text>
+    }
+
+    @case ('sending') {
+      <div class="flex flex-col items-center gap-3 py-4">
+        <canvas
+          #qrCanvas
+          class="rounded-box h-auto w-full max-w-sm bg-white"
+          aria-hidden="true"
+        ></canvas>
+        <p class="sr-only">
+          {{ frameCount() }} {{ codeNoun() }} are now on screen. Point the other device's camera at
+          this screen and leave it there until that device reports every code collected.
+        </p>
+        <mm-text as="p" variant="caption" aria-hidden="true">
+          @if (isAnimated()) {
+            Showing code {{ frameNumber() }} of {{ frameCount() }} — the sequence repeats until you
+            close this.
+          } @else {
+            One code holds everything. Keep it on screen until the other device confirms.
+          }
+        </mm-text>
+      </div>
+    }
+  }
+
+  <div class="modal-action">
+    <mm-button type="button" (click)="close()">{{ closeLabel() }}</mm-button>
+    @if (phase() === 'ready') {
+      <mm-button type="button" color="primary" (click)="start()">Show the codes</mm-button>
+    }
+  </div>
+</mm-modal>

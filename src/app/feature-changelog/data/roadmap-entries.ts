@@ -49,7 +49,7 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
   },
   {
     ticketId: 'topic-multi-device',
-    title: 'Sync between multiple devices (desktop, mobile, tablet) via E2E, P2P, QR code',
+    title: 'Two-way sync between multiple devices (desktop, mobile, tablet) via E2E, P2P',
     area: 'Ideas',
     isTopic: true,
   },

@@ -16,6 +16,9 @@ type Internals = {
   onFileSelected: (event: Event) => Promise<void>;
   confirmImport: () => Promise<void>;
   deleteAllConfirmed: () => Promise<void>;
+  qrSendOpen: { (): boolean; set: (value: boolean) => void };
+  qrReceiveOpen: { (): boolean; set: (value: boolean) => void };
+  onQrReceived: (data: AppDataExport) => void;
   reloadPage: () => void;
 };
 
@@ -113,6 +116,37 @@ describe('DataManagementOverviewComponent', () => {
       await internals().onFileSelected(fileSelectEvent(null));
 
       expect(internals().importDialogOpen()).toBe(false);
+    });
+  });
+
+  describe('QR transfer (TICKET-DAT-05)', () => {
+    it('routes a scanned payload into the same replace-vs-merge dialog a chosen file uses', async () => {
+      await setup();
+      internals().qrReceiveOpen.set(true);
+
+      internals().onQrReceived(backup);
+
+      expect(internals().qrReceiveOpen()).toBe(false);
+      expect(internals().importDialogOpen()).toBe(true);
+      expect(internals().importMode()).toBe('merge');
+
+      await internals().confirmImport();
+
+      expect(dataManagementRepository.importAll).toHaveBeenCalledExactlyOnceWith(backup, 'merge');
+      expect(internals().reloadPromptOpen()).toBe(true);
+    });
+
+    it('offers send and receive without mounting either dialog until asked', async () => {
+      await setup();
+
+      expect(fixture.nativeElement.querySelector('app-qr-send-dialog')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-qr-receive-dialog')).toBeNull();
+
+      internals().qrSendOpen.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.nativeElement.querySelector('app-qr-send-dialog')).not.toBeNull();
     });
   });
 

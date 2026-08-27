@@ -1,0 +1,47 @@
+<mm-modal [open]="true" (openChange)="cancel()" class="max-w-xl">
+  <span mm-modal-title>Receive from another device</span>
+
+  @if (failed()) {
+    <mm-alert status="error" class="mt-4">{{ errorMessage() }}</mm-alert>
+    @if (suggestFileImport()) {
+      <mm-text as="p" variant="caption" class="pt-3">
+        Nothing to retry here. Export a backup file on the other device instead, move it across, and
+        use “Choose file” under Import data.
+      </mm-text>
+    }
+  } @else {
+    <mm-text as="p" variant="caption" class="pt-3">
+      Point this device's camera at the other device's screen and hold it there. Codes may arrive in
+      any order — keep watching until every one is in.
+    </mm-text>
+  }
+
+  <div class="mt-4 flex flex-col items-center gap-3" [class.hidden]="failed()">
+    <video
+      #preview
+      class="rounded-box w-full max-w-sm bg-base-300"
+      playsinline
+      muted
+      aria-label="Camera preview"
+    ></video>
+    <mm-text as="p" variant="caption" aria-live="polite">
+      @switch (phase()) {
+        @case ('starting') {
+          Starting the camera…
+        }
+        @case ('decoding') {
+          All codes collected — unpacking the data…
+        }
+        @default {
+          {{ progressLabel() }}
+        }
+      }
+    </mm-text>
+  </div>
+
+  <canvas #frameBuffer class="hidden" aria-hidden="true"></canvas>
+
+  <div class="modal-action">
+    <mm-button type="button" (click)="cancel()">Cancel</mm-button>
+  </div>
+</mm-modal>

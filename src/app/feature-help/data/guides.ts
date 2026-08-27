@@ -231,4 +231,39 @@ export const GUIDES: readonly Guide[] = [
     tryItLabel: 'Try it — go to Income',
     tryItRoute: '/income',
   },
+  {
+    slug: 'moving-your-data-to-another-device',
+    title: 'Moving your data to another device',
+    summary:
+      'Copy everything to a second browser or phone — as a backup file, or by showing a QR code and scanning it.',
+    steps: [
+      {
+        title: 'Decide which route you need',
+        description:
+          'Both routes live under Settings → Data and carry exactly the same content. "Export data" writes one JSON file you move yourself. "Send to another device" shows the same data as QR codes for the other device to read with its camera — no file, no cloud drive, no cable.',
+      },
+      {
+        title: 'On the sending device, start the transfer',
+        description:
+          'Choose "Send to another device". Money Mosaic packs your database and tells you how many codes it needs and roughly how long one pass takes before anything starts. A very large database is refused here with a pointer back to the file export — blinking it across would take longer than it is worth.',
+      },
+      {
+        title: 'On the receiving device, open the camera',
+        description:
+          'Choose "Receive from another device" and allow the camera when asked. The camera only works over HTTPS or on localhost — if the page says the context is insecure, that is why. Point it at the other screen; the counter shows how many codes are in so far.',
+      },
+      {
+        title: 'Hold still until every code is in',
+        description:
+          'The sending screen loops through its codes over and over, so they can arrive in any order and be seen more than once. Keep both devices steady until the receiving one says it has everything — it may take more than one pass.',
+      },
+      {
+        title: 'Choose Merge or Replace, then reload',
+        description:
+          'A completed scan lands in the same confirmation as a file import. Merge adds the incoming rows to what is already there; Replace erases what this browser already holds. Reload when prompted to see the result. If a scan is corrupted it is refused on its checksum and nothing is imported — just run the transfer again.',
+      },
+    ],
+    tryItLabel: 'Try it — go to Settings',
+    tryItRoute: '/settings',
+  },
 ];

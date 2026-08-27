@@ -1236,4 +1236,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Screen readers get the same, where before there was no title change to announce',
     ],
   },
+  {
+    date: '2026-08-27',
+    release: 'unreleased',
+    ticketIds: ['TICKET-DAT-05'],
+    title: 'Move your data to another device by showing a code and scanning it',
+    area: 'Data Management',
+    details: [
+      'Settings shows your whole database as codes that loop on screen',
+      'The other device reads them with its camera, no file and no network',
+      'A finished scan asks Merge or Replace, exactly like importing a backup',
+    ],
+  },
 ];

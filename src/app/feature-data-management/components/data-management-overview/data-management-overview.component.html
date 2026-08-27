@@ -36,6 +36,30 @@
   </mm-paper>
 </div>
 
+<div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+  <mm-paper elevation="flat" bodyClass="card-body gap-3">
+    <h2 class="card-title text-base">Send to another device</h2>
+    <mm-text as="p" class="text-sm text-base-content/60">
+      Show your data as a sequence of QR codes for another browser to read with its camera. Nothing
+      travels over a network — the data leaves this screen as light.
+    </mm-text>
+    <mm-button color="primary" class="w-fit" (click)="qrSendOpen.set(true)">
+      Send to another device
+    </mm-button>
+  </mm-paper>
+
+  <mm-paper elevation="flat" bodyClass="card-body gap-3">
+    <h2 class="card-title text-base">Receive from another device</h2>
+    <mm-text as="p" class="text-sm text-base-content/60">
+      Point this device's camera at another device showing its codes. Needs camera permission, and
+      HTTPS or localhost.
+    </mm-text>
+    <mm-button color="primary" class="w-fit" (click)="qrReceiveOpen.set(true)">
+      Receive from another device
+    </mm-button>
+  </mm-paper>
+</div>
+
 <mm-paper elevation="flat" bodyClass="card-body gap-2" class="mt-4">
   <mm-flex align="center" gap="2">
     <h2 class="card-title text-base">Persistent storage</h2>
@@ -83,6 +107,14 @@
     Delete all data
   </mm-button>
 </mm-paper>
+
+@if (qrSendOpen()) {
+  <app-qr-send-dialog (closed)="qrSendOpen.set(false)" />
+}
+
+@if (qrReceiveOpen()) {
+  <app-qr-receive-dialog (received)="onQrReceived($event)" (cancelled)="qrReceiveOpen.set(false)" />
+}
 
 <mm-modal [(open)]="importDialogOpen">
   <span mm-modal-title>Import data</span>

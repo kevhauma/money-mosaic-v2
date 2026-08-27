@@ -13,6 +13,7 @@
 - being able to sync between devides
 - WebRTC Datachannels, handshake via pair code? possibly needs server
 - scannable QR code that shares the data? needs compression
+  > **The QR third graduated to [TICKET-DAT-05](../data-management/tickets/TICKET-DAT-05-qr-code-data-sync.md)** — one-way device-to-device transfer over an animated, gzip-compressed QR sequence. The two lines above (WebRTC datachannels, pair-code handshake, true two-way sync) are still open ideas.
 
 ## Extra graphs
 > **Graduated to [v2.1_extra_graphs](../releases/v2.1_extra_graphs/overview.md)** — all three lines below are worked out as seven

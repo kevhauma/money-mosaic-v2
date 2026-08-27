@@ -14,6 +14,8 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { downloadJson } from '@/shared/utils';
+import { QrReceiveDialogComponent } from '../qr-receive-dialog/qr-receive-dialog.component';
+import { QrSendDialogComponent } from '../qr-send-dialog/qr-send-dialog.component';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -29,6 +31,8 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
     LabelComponent,
     MmModalComponent,
     PaperComponent,
+    QrReceiveDialogComponent,
+    QrSendDialogComponent,
     TypographyComponent,
   ],
   templateUrl: './data-management-overview.component.html',
@@ -45,6 +49,9 @@ export class DataManagementOverviewComponent {
   protected readonly importMode = signal<ImportMode>('merge');
   protected readonly importing = signal(false);
   protected readonly reloadPromptOpen = signal(false);
+
+  protected readonly qrSendOpen = signal(false);
+  protected readonly qrReceiveOpen = signal(false);
 
   protected readonly deleteDialogOpen = signal(false);
   protected readonly deleting = signal(false);
@@ -82,6 +89,18 @@ export class DataManagementOverviewComponent {
     } catch {
       this.errorMessage.set('Could not read this file — it is not a valid Money Mosaic backup.');
     }
+  }
+
+  /**
+   * A QR transfer lands in exactly the same place a chosen file does — the Replace-vs-Merge
+   * dialog — so there is one import path, one confirmation, and one schema-version guard.
+   */
+  protected onQrReceived(data: AppDataExport): void {
+    this.qrReceiveOpen.set(false);
+    this.errorMessage.set(null);
+    this.pendingImport = data;
+    this.importMode.set('merge');
+    this.importDialogOpen.set(true);
   }
 
   protected async confirmImport(): Promise<void> {
