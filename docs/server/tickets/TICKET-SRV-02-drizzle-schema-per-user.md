@@ -24,7 +24,26 @@ Ports all 17 entities from the Dexie schema onto Drizzle/SQLite, each row owned 
 
 ## Desired result (to-be)
 
-- **A shared entity-types module.** The `type` definitions currently living in `app-db.ts` move to `src/app/core/data-access/entities.ts` (re-exported from the existing barrel so no import in `src/app/` changes), and the server imports them with `import type`. One definition of `Account`, `Transaction`, `Category` and the rest, read by both sides — the client cannot drift from the wire shape without a type error.
+- **A shared entity-types module, in a third location neither workspace owns.** The `type`
+  definitions currently living in `app-db.ts` move to **`shared/entities.ts`** at the repo root,
+  and both sides import them from there. `src/app/core/data-access/entities.ts` becomes a
+  re-export of that module (and stays re-exported from the existing barrel), so **no import path
+  in `src/app/` changes**. One definition of `Account`, `Transaction`, `Category` and the rest,
+  read by both sides — the client cannot drift from the wire shape without a type error.
+
+  > **Amended 2026-09-23.** This bullet originally had the server `import type` straight from
+  > `src/app/core/data-access/entities.ts`. TICKET-SRV-01 shipped two ESLint guards that forbid
+  > exactly that (`src/**` may not import `server/**`, and vice versa) — the first because a value
+  > import would drag `better-sqlite3` into the browser bundle, which is a `CLAUDE.md` hard rule.
+  > Rather than punch a hole in a guard that is protecting a hard rule, the shared types get their
+  > own home. Decided with the user; the alternative considered and rejected was hand-mirroring
+  > the 29 types server-side, which would have given up this bullet's whole reason for existing.
+  >
+  > `shared/` holds **framework-free, dependency-free plain TypeScript only** — no Angular, no
+  > Dexie, no Drizzle. The 29 entity types already qualify: Dexie appears in `app-db.ts` only in
+  > the `AppDb` class, never in the type definitions. Both `tsconfig.app.json` and
+  > `server/tsconfig.json` need a path mapping for it, and the two ESLint guards need `shared/**`
+  > permitted from both sides while everything else stays forbidden.
 - **One Drizzle table per entity**, in `server/src/schema/`, each with:
   - `id` — integer primary key autoincrement, matching the client's `number` ids. Ids stay unique **per table across all users**, so one user's ids are simply non-contiguous. Nothing in the app assumes contiguity.
   - `userId` — integer, not null, referencing `users.id` with cascade delete, and **indexed on every table**. This is what makes [TICKET-AUTH-03](../../auth/tickets/TICKET-AUTH-03-admin-user-management.md)'s user deletion a cascade rather than eighteen manual deletes.
@@ -49,6 +68,9 @@ Ports all 17 entities from the Dexie schema onto Drizzle/SQLite, each row owned 
 - [ ] Two users seeded in the same database each get their own copy, and neither's rows are visible in a query scoped to the other.
 - [ ] Deleting a user removes every row they own across all 18 tables, by cascade, with foreign keys enabled.
 - [ ] Moving the entity types out of `app-db.ts` changes no import path in `src/app/` — `ng lint`, `ng test` and `ng build --configuration development` all still pass with the Dexie app untouched.
+- [ ] `shared/entities.ts` imports nothing — no Angular, no Dexie, no Drizzle — and both workspaces compile against it. Asserted by the two typechecks passing plus a check that the module has no import statements.
+- [ ] The TICKET-SRV-01 ESLint guards still hold in both directions: `src/**` importing `server/**` is still an error, and so is the reverse. Only `shared/**` crosses. Verified with a deliberate probe import each way, as SRV-01 did.
+- [ ] `ng build` reports **no change** to the initial bundle — the shared module is types only, so it erases entirely.
 - [ ] Verified via the fallow skill and coding-conventions skill.
 
 ## Notes
