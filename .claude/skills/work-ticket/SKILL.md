@@ -18,6 +18,32 @@ title+checkbox line per ticket, indexed by number within each prefix. `docs/rele
 historical record of what shipped when — read it for a ticket's build-order context, never
 edit it. See `docs/README.md`; mirror what you find, don't hardcode an area list.
 
+## Running mode — in-session or delegated
+
+You can work the ticket yourself in this session, or hand it to the **`ticket-worker`**
+subagent (`.claude/agents/ticket-worker.md`), which runs this same skill in its own context and
+reports back a short summary. Delegate when the user wants **several tickets in a row** and the
+main conversation shouldn't fill up with each one's implementation detail; work it inline when
+it's a single ticket, or when the user wants to review the plan and steer as you build.
+
+When delegating:
+
+- **One `ticket-worker` at a time. Never two in parallel** — they share one working tree, so two
+  concurrent runs would interleave edits, cross-contaminate `git diff`, and race the same lint /
+  test / build commands. Launch the next one only after the previous has reported back.
+  Also don't run a `ticket-worker` alongside `verifier` or any other agent that builds or tests.
+- Do Step 1 (locate the ticket) yourself, and resolve up front everything the agent can't ask
+  about: which ticket, whether it gets a changelog entry, and whether the user wants a live
+  browser check. Pass those in the prompt, e.g.
+  `Work TICKET-ACC-01 (docs/accounts/tickets/…). changelog: yes. Browser check: the orchestrator
+  will run it.`
+- The agent leaves every "Verified live in the browser: …" criterion open — **you** run those
+  with the `preview_*` tools when it returns (ask the user first, per `CLAUDE.md`), then tick
+  them with the evidence.
+- Relay the agent's report to the user — its output isn't shown to them. Summarize per ticket:
+  status, what changed, unticked criteria and why, verification result.
+- The agent never commits. Committing (and any browser check) stays with you.
+
 ## Step 1 — Locate the ticket
 
 - **If the user named a ticket** (ID like `TICKET-ACC-01`, a prefix+number, or a path),

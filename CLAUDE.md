@@ -29,7 +29,7 @@ Verification before declaring any change done: `ng lint` + `ng test` + `ng build
 | Angular / Tailwind 4 / daisyUI / Vitest guidance | installed skills in `.agents/skills/` (managed by `npx skills`, tracked in `skills-lock.json`) |
 | `docs/` layout (area folders vs. `releases/` vs. `reference/`, ticket ID scheme) | `docs/README.md` |
 
-Subagents in `.claude/agents/`: `conventions-reviewer` (diff review against project rules), `verifier` (lint/test/build runner), `spec-navigator` (answers requirement/spec questions from `docs/`).
+Subagents in `.claude/agents/`: `conventions-reviewer` (diff review against project rules), `verifier` (lint/test/build runner), `spec-navigator` (answers requirement/spec questions from `docs/`), `ticket-worker` (works one ticket end-to-end in its own context, for running tickets back-to-back — **never run two of these, or one alongside `verifier`, at the same time**: they share this working tree).
 
 ## Hard rules
 

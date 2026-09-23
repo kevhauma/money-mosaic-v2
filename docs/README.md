@@ -16,9 +16,10 @@ docs/dashboard/
 ```
 
 The area folders map onto `src/app/feature-*` wherever a matching feature exists
-(`docs/transactions/` ↔ `feature-transactions/`), plus two that don't:
-`docs/engineering/` (code-review output — refactors, performance, cleanup, tests) and
-`docs/tooling/` (repo tooling, skills, dev seed).
+(`docs/transactions/` ↔ `feature-transactions/`), plus three that don't:
+`docs/engineering/` (code-review output — refactors, performance, cleanup, tests),
+`docs/tooling/` (repo tooling, skills, dev seed), and `docs/server/` (the backend — Express,
+SQLite, Drizzle — which lives in `server/`, not in `src/app/`).
 
 Don't hardcode the area list anywhere; `ls docs/` is the source of truth.
 
@@ -30,6 +31,13 @@ prefix is never split across folders — so a ticket's ID alone tells you where 
 
 `<NN>` is unique per prefix across the whole project, not per release. When adding a ticket,
 take the next free number for that prefix.
+
+Two prefix pairs are easy to confuse, so they are written down rather than guessed at:
+
+- **`ACC` (`docs/accounts/`) is about *bank* accounts**; **`AUTH` (`docs/auth/`) is about *user*
+  accounts** — sign-in, sessions, roles, and the admin panel that manages them.
+- **`SRV` (`docs/server/`) is the backend itself** — the Express/SQLite/Drizzle process and the
+  move of the app's data onto it. Anything about who is allowed to see that data is `AUTH`.
 
 ## `docs/releases/<version>/` — what shipped when
 
