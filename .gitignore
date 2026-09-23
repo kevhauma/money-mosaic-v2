@@ -47,3 +47,12 @@ Thumbs.db
 
 # Personal CSV bank exports — never commit real financial data
 /csv-backup/
+
+# Backend workspace (TICKET-SRV-01): its own dependencies, and the SQLite database it creates on
+# first boot. The schema lives in server/drizzle/ migrations — the data file never gets committed.
+/server/node_modules
+/server/data/
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal

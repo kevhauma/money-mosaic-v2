@@ -34,20 +34,64 @@ Stands up the backend process the rest of v3 builds on: an Express app, a SQLite
 
 ## Acceptance criteria
 
-- [ ] `npm run server` starts the process, creates `server/data/money-mosaic.sqlite` if absent, applies pending migrations, and serves `GET /api/health` with `{ ok: true }`.
-- [ ] A second start against the existing file applies nothing and starts cleanly — migrations are idempotent.
-- [ ] `PORT` and `DB_FILE` env overrides are honoured, covered by a test for the resolution of each.
-- [ ] `PRAGMA foreign_keys` reads back `1` and `journal_mode` reads back `wal` on an opened database, asserted by a test.
-- [ ] `npm run dev` brings up both processes, and a request to `http://localhost:4210/api/health` through the proxy reaches the server.
-- [ ] `ng build --configuration development` and `ng lint` both succeed and neither one reads anything under `server/` — verified by a deliberate type error in a server file leaving both green.
-- [ ] No server dependency appears in the root `package.json` `dependencies`, and `ng build` reports **no change** to the initial bundle. The `angular.json` budgets are **not** raised.
-- [ ] `server/data/` is gitignored; no `.sqlite` file is ever committed.
-- [ ] Backend tests run via `npm run test:server` against an in-memory database and cover: health response shape, migration idempotency, pragma state, env overrides.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: with `npm run dev` running, the app loads as before and `/api/health` responds through the proxy.
+> **Implementation note (2026-09-23).** Two deviations, recorded as they happened:
+>
+> 1. The WAL assertion below runs against a database file in the **OS temp dir**, not an in-memory
+>    one: SQLite answers `memory` for `journal_mode` on `:memory:`, so WAL is unassertable there.
+>    Every other backend test is in-memory, and no test ever touches `server/data/`.
+> 2. `server/drizzle/` ships only `meta/_journal.json` with an empty `entries` array — what
+>    `drizzle-kit generate` produces for a schema with 0 tables. The migration runner still runs on
+>    boot and creates `__drizzle_migrations`, so `schemaVersion` is `0` until TICKET-AUTH-01 adds
+>    the first table. Idempotency is therefore proven against a generated fixture migration *and*
+>    against the real (empty) folder.
+
+- [x] `npm run server` starts the process, creates `server/data/money-mosaic.sqlite` if absent, applies pending migrations, and serves `GET /api/health` with `{ ok: true }`. (Observed on a clean tree: `server/src/index.ts` logged `Money Mosaic server listening on http://localhost:4300`, `server/data/money-mosaic.sqlite` plus its `-wal`/`-shm` sidecars appeared where none existed, the migrator created `__drizzle_migrations`, and `curl http://localhost:4300/api/health` returned `{"ok":true,"schemaVersion":0}`.)
+- [x] A second start against the existing file applies nothing and starts cleanly — migrations are idempotent. (A second `npm run server` against the existing file booted without error and answered health identically; `sqlite_master` still held exactly `__drizzle_migrations`. Asserted by `server/src/db.migrations.spec.ts` > 'applies a pending migration once and does nothing on a second run' — a generated fixture migration stays at one `__drizzle_migrations` row and its inserted data survives — and 'applies the repo migrations folder cleanly, twice'.)
+- [x] `PORT` and `DB_FILE` env overrides are honoured, covered by a test for the resolution of each. (`server/src/config.ts`'s `resolvePort`/`resolveDbFile`; `server/src/config.spec.ts` covers the 4300 default, a `PORT` override, rejection of a non-port value, the default db path, a relative and an absolute `DB_FILE`, and `:memory:` pass-through.)
+- [x] `PRAGMA foreign_keys` reads back `1` and `journal_mode` reads back `wal` on an opened database, asserted by a test. (`server/src/db.spec.ts` > 'enforces foreign keys and journals in WAL mode', against a temp-dir file database per the implementation note above; the WAL sidecars also appeared next to the real `server/data/money-mosaic.sqlite` on boot.)
+- [x] `npm run dev` brings up both processes, and a request to `http://localhost:4210/api/health` through the proxy reaches the server. (`scripts/dev.mjs` spawned `ng serve --port 4210` and the backend together; `curl http://localhost:4210/api/health` returned `200 {"ok":true,"schemaVersion":0}` with `x-powered-by: Express` on the response, and `curl http://localhost:4210/` returned 200 for the app shell. The dev request logger is asserted by `server/src/middleware/request-logger.spec.ts`. Checked with curl, not a browser — see the last criterion.)
+- [x] `ng build --configuration development` and `ng lint` both succeed and neither one reads anything under `server/` — verified by a deliberate type error in a server file leaving both green. (With `export const isolationProbe: number = 'not a number';` appended to `server/src/config.ts`: `ng lint` reported 'All files pass linting' and `ng build --configuration development` completed; the server's own `tsc --noEmit` failed it with `src/config.ts(49,14): error TS2322`. Probe removed afterwards.)
+- [x] No server dependency appears in the root `package.json` `dependencies`, and `ng build` reports **no change** to the initial bundle. The `angular.json` budgets are **not** raised. (Root `package.json` gained scripts only — `express`/`better-sqlite3`/`drizzle-orm` live in `server/package.json`. Production `ng build` with the change: initial total 851.94 kB raw / 158.46 kB transfer; with `angular.json` + `package.json` stashed: the same 851.94 kB / 158.46 kB. `angular.json` gained only `serve.options.proxyConfig`; the budget block is untouched.)
+- [x] `server/data/` is gitignored; no `.sqlite` file is ever committed. (`.gitignore` now carries `/server/node_modules`, `/server/data/` and `*.sqlite`/`-wal`/`-shm`/`-journal`; `git check-ignore -v server/data/money-mosaic.sqlite` resolves to `.gitignore:54`, and `git add -A --dry-run` lists no `.sqlite` and no `node_modules` — only sources plus `server/package-lock.json`.)
+- [x] Backend tests run via `npm run test:server` against an in-memory database and cover: health response shape, migration idempotency, pragma state, env overrides. (`npm run test:server` → 6 files, 22 tests passing through `server/vitest.config.ts`, independently of `ng test`. Health shape + JSON 404: `server/src/routes/health.spec.ts`; JSON error body: `server/src/middleware/error-handler.spec.ts`; dev request logging: `server/src/middleware/request-logger.spec.ts`; idempotency: `server/src/db.migrations.spec.ts`; pragmas and schema-version read: `server/src/db.spec.ts`; env overrides: `server/src/config.spec.ts`. In-memory throughout except the WAL assertion — see the implementation note above.)
+- [x] Verified via the fallow skill and coding-conventions skill. (`npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet` and `npx fallow health --complexity --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet` both exit 0; `fallow dead-code --workspace money-mosaic-server` reports nothing. A stale-suppression finding on `scripts/dev.mjs` was fixed by deleting the unneeded `fallow-ignore-file` comment. Conventions: repo Prettier run over every new `.ts`, `type` over `interface`, arrow-function exports, specs colocated as `*.spec.ts`; the workspace is documented in the project-map skill's new **Server** section and in coding-conventions' **Verification** section.)
+- [ ] Verified live in the browser: with `npm run dev` running, the app loads as before and `/api/health` responds through the proxy. — not ticked: browser verification waived by the user for the v3 server/auth run (headless equivalents were run instead: `curl http://localhost:4210/` returned 200 for the app shell and `curl http://localhost:4210/api/health` returned the JSON body through the proxy).
 
 ## Notes
 
+- **Post-review changes (2026-09-23).** The `conventions-reviewer` pass on the finished diff
+  produced six fixes, applied before the commit:
+  1. **An ESLint guard, not just a convention, keeps the two workspaces apart.** The reviewer
+     found that nothing stopped `src/**` importing `server/**` — `ng lint`'s isolation comes
+     from `angular.json`'s `lintFilePatterns`, which says nothing about imports, and a value
+     import would have pulled `better-sqlite3` toward the browser bundle. The root
+     `eslint.config.js` now ignores `server/**`/`scripts/**` and bans `**/server/**` imports
+     from `src/**`; `server/eslint.config.js` mirrors it for `**/src/app/**`. The guard was
+     confirmed to fire against a deliberate probe import. Later v3 tickets wanting shared DTOs
+     must give them their own home rather than reaching across the seam.
+  2. **A 5xx no longer echoes its own message to the client.** `messageOf` returned
+     `error.message` for any thrown `Error`, which would have put SQLite text like
+     `UNIQUE constraint failed: users.email` on the wire from TICKET-AUTH-01 onward. Deliberate
+     4xx still carry their wording; 5xx answer `Internal server error` and the detail goes to
+     the logger only.
+  3. **`server/src/app.testing.ts`** replaces the server-harness boilerplate that three specs had
+     each hand-rolled, before SRV-02..05 copied it a fourth and fifth time. It cleans up through
+     `onTestFinished`, not a module-level `afterEach`, because Node caches the module and a
+     top-level hook would only attach to the first file that imported it.
+  4. `app.disable('x-powered-by')`, and an explicit `express.json({ limit: '10mb' })` — the 100 kB
+     default would have surfaced in TICKET-SRV-04 as a bare 413 on a bulk write.
+  5. `migrations.spec.ts` → `db.migrations.spec.ts`, since it tests `db.ts` and there is no
+     `migrations.ts`; `proxy.conf.json` lost `secure` and `logLevel`, which the Vite-based
+     Angular 21 dev-server ignores; and the request-logger spec's fixed 20 ms sleep became
+     `vi.waitFor`.
+  6. `.gitignore` had been rewritten CRLF→LF end to end, turning 9 real lines into a 101-line
+     diff. Restored to 9 added lines.
+- **Left for TICKET-SRV-03, not fixed here:** `createHealthRouter` takes the whole
+  `DatabaseHandle` (which exposes `close()`) because health genuinely reads `sqlite_master` off
+  the raw connection. The per-entity routers should take the Drizzle instance alone — don't copy
+  the health signature.
+
+- **Installing the backend:** `npm run server:install` (or `npm install` inside `server/`). On npm 10.9.2 the *first* resolve of `vitest@4`'s peer set crashes arborist (`Cannot read properties of null (reading 'edgesOut')`); `npm install --legacy-peer-deps` gets past it, and the committed `server/package-lock.json` means a plain `npm install` works from then on. Recorded here so the next person doesn't think they broke something.
 - **This ticket knowingly contradicts a founding constraint.** `CLAUDE.md` opens with "**No backend** — all data lives in IndexedDB". That line is not edited here: it stays true until the data actually moves, and [TICKET-SRV-08](./TICKET-SRV-08-retire-dexie.md) rewrites it as the last step of v3. Editing it now would make the repo's own documentation lie for the length of the version.
 - **Port 4300** is chosen to sit clear of 4210 (`ng serve`) and 4200 (Angular's default) so a stray default-port serve cannot collide with the API.
 - `better-sqlite3` is a native module, so `npm install` compiles or downloads a prebuilt binary. This is a local-hosting project, so that cost is paid once on the machine that hosts it — worth knowing before it surprises someone on a fresh clone.

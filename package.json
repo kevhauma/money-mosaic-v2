@@ -7,7 +7,12 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:server": "npm --prefix server run test",
     "lint": "ng lint",
+    "dev": "node scripts/dev.mjs",
+    "server": "npm --prefix server run start",
+    "server:install": "npm --prefix server install",
+    "server:migrate": "npm --prefix server run migrate",
     "prepare": "husky",
     "fallow:audit": "fallow audit"
   },

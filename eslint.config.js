@@ -6,6 +6,34 @@ const angular = require('angular-eslint');
 
 module.exports = defineConfig([
   {
+    // The backend workspace and the root dev scripts are not part of the Angular workspace and
+    // have their own toolchains (`server/eslint.config.js`). Without this, an editor running the
+    // root config over `server/**` would apply Angular rules to Express code (TICKET-SRV-01).
+    ignores: ['server/**', 'scripts/**'],
+  },
+  {
+    // Hard rule guard (CLAUDE.md): nothing under `src/` may import from the backend workspace.
+    // A value import would drag `better-sqlite3` and Express toward the browser bundle; even a
+    // type-only import couples the client to the server's internal schema. Later v3 tickets are
+    // tempted by exactly this when they want shared DTOs — those belong in their own location,
+    // not in `server/src/`.
+    files: ['src/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/server/*', '**/server/**'],
+              message:
+                'The Angular app must never import from the backend workspace (TICKET-SRV-01) — server code pulls better-sqlite3 and Express into the browser bundle.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.ts'],
     extends: [
       eslint.configs.recommended,

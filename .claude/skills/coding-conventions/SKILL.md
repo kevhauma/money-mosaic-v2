@@ -161,6 +161,8 @@ Apply SOLID as it maps onto this codebase's existing tiers — don't import Java
 
 ## Verification
 
+Backend work lives in the separate `server/` workspace (TICKET-SRV-01) with its own tsconfig, ESLint config and Vitest setup — verify it with `npm run test:server` (plus `npm run lint --prefix server` / `npm run typecheck --prefix server`); `ng lint`/`ng test`/`ng build` deliberately never read it. See the project-map skill's **Server** section.
+
 Before considering any change complete, run:
 
 1. `ng lint` — must pass clean
