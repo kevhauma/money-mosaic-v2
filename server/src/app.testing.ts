@@ -2,7 +2,8 @@ import { onTestFinished } from 'vitest';
 import type { Express } from 'express';
 
 import { createApp } from './app.js';
-import { openDatabase, runMigrations } from './db.js';
+import { seedAdminUser } from './auth/seed.js';
+import { openDatabase, runMigrations, type DatabaseHandle, type DrizzleDb } from './db.js';
 
 /**
  * Testing-only harness for the backend specs. Every suite that needs a live server repeats the
@@ -28,14 +29,37 @@ export const startTestServer = async (app: Express): Promise<string> => {
   return `http://127.0.0.1:${address.port}`;
 };
 
+export type TestAppOptions = {
+  readonly isDev?: boolean;
+  /** Seed the first-boot `admin` / `admin` account, exactly as `index.ts` does. */
+  readonly seed?: boolean;
+};
+
+export type TestApp = {
+  readonly baseUrl: string;
+  readonly handle: DatabaseHandle;
+  /** The same Drizzle instance the app is serving, so a spec can assert on rows directly. */
+  readonly db: DrizzleDb;
+};
+
 /**
  * Boots the real app against a migrated **in-memory** database — a backend spec never touches
- * `server/data/`. Both the server and the database close when the test ends.
+ * `server/data/` — and seeds it the way a first boot would. Both the server and the database close
+ * when the test ends.
  */
-export const startTestApp = async ({ isDev = false } = {}): Promise<string> => {
+export const startTestAppWithDb = async ({
+  isDev = false,
+  seed = true,
+}: TestAppOptions = {}): Promise<TestApp> => {
   const handle = openDatabase(':memory:');
   onTestFinished(() => handle.close());
   runMigrations(handle);
+  if (seed) await seedAdminUser(handle.db);
 
-  return startTestServer(createApp({ handle, isDev }));
+  const baseUrl = await startTestServer(createApp({ handle, isDev }));
+  return { baseUrl, handle, db: handle.db };
 };
+
+/** `startTestAppWithDb` for the specs that only need the URL. */
+export const startTestApp = async (options: TestAppOptions = {}): Promise<string> =>
+  (await startTestAppWithDb(options)).baseUrl;

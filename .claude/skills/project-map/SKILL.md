@@ -101,9 +101,15 @@ Pure logic files (`*-matching.ts`, `core/stats/*`, `core/loans/*`, `csv-row-mapp
 
 The v3 backend, added by TICKET-SRV-01. A **separate workspace**, not part of the Angular one: its own `package.json` (Express + `better-sqlite3` + Drizzle, installed with `npm run server:install`), `tsconfig.json`, `eslint.config.js` and Vitest setup, so `ng build`/`ng lint`/`ng test` never read a line of it and no server dependency reaches the browser bundle. Root scripts: `npm run dev` (both processes — `ng serve` on 4210 plus the API on 4300, via `scripts/dev.mjs`), `npm run server`, `npm run server:migrate`, `npm run test:server`.
 
-- `server/src/` — `index.ts` (boot: open db → run migrations → listen), `app.ts` (`createApp`, injectable so specs mount it without booting), `config.ts` (`PORT`/`DB_FILE` resolution + `MIGRATIONS_DIR`), `db.ts` (the one Drizzle instance, `foreign_keys`/WAL pragmas, `runMigrations`, `readSchemaVersion`), `routes/`, `middleware/` (dev request logger + the JSON error handler), `schema/` (Drizzle tables — empty until TICKET-AUTH-01/SRV-02).
+- `server/src/` — `index.ts` (boot: open db → run migrations → seed the first admin → listen), `app.ts` (`createApp`, injectable so specs mount it without booting), `config.ts` (`PORT`/`DB_FILE` resolution + `MIGRATIONS_DIR`), `db.ts` (the one Drizzle instance, `foreign_keys`/WAL pragmas, `runMigrations`, `readSchemaVersion`), `types.ts` (wire shapes — `PublicUser`, `UserRole`), `routes/` (`health.ts`, `auth.ts`), `middleware/` (dev request logger, the JSON error handler, `require-auth.ts`), `auth/` (`passwords.ts` scrypt hashing, `cookies.ts`, `sessions.ts`, `users.ts`, `seed.ts` — the first-boot `admin`/`admin` account), `schema/` (Drizzle tables: `users` + `sessions` from TICKET-AUTH-01, the rest arriving with TICKET-SRV-02).
 - `server/drizzle/` — generated migrations, applied on boot. `server/data/` (the SQLite file) is gitignored.
-- Specs are `*.spec.ts` next to the source, run by `npm run test:server` against an in-memory database. Operational detail lives in [`server/README.md`](../../../server/README.md).
+- Specs are `*.spec.ts` next to the source, run by `npm run test:server` against an in-memory database. `app.testing.ts` is the shared harness: `startTestApp()` for a base URL, `startTestAppWithDb()` when a spec also needs the Drizzle instance, `startTestServer(app)` for a hand-built app (e.g. a throwaway route behind `requireAuth`). Operational detail lives in [`server/README.md`](../../../server/README.md).
+
+Backend conventions worth knowing before adding to it (TICKET-SRV-01/AUTH-01):
+- A router takes the **Drizzle instance alone** (`createAuthRouter(db)`); only `createHealthRouter` takes the whole `DatabaseHandle`, because it reads `sqlite_master` off the raw connection.
+- Authenticated routers mount behind `createRequireAuth(db)` **per router**, not as a blanket `app.use('/api', …)` — that keeps an unknown path a 404 rather than a 401. The signed-in user comes off the request via `authUserOf(req)`, never from a body or a query string.
+- Drizzle **column names are camelCase**, matching the entity field names the client uses, so a row and its JSON shape read the same.
+- The client and the server **share no code**: ESLint blocks imports across the seam in both directions, so a wire type like `PublicUser` is hand-mirrored on the Angular side rather than imported.
 
 **The app still reads and writes Dexie.** Nothing in `src/app/` talks to this server yet — that swap is TICKET-SRV-05, and `core/data-access/` stays the only seam either way.
 

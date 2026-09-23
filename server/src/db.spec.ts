@@ -62,9 +62,9 @@ describe('db: readSchemaVersion', () => {
     const handle = openMemory();
     runMigrations(handle);
 
-    // TICKET-SRV-01 ships an empty schema, so the journal is empty and the count is 0 — what
-    // matters here is that the bookkeeping table exists and is readable.
-    expect(readSchemaVersion(handle)).toBe(0);
+    // TICKET-AUTH-01 landed the first migration (`users` + `sessions`), so the count is no longer
+    // zero — what matters here is that the bookkeeping table exists and is readable.
+    expect(readSchemaVersion(handle)).toBeGreaterThan(0);
     expect(
       handle.sqlite
         .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`)

@@ -36,6 +36,21 @@ before the server listens, and `server/data/` is gitignored — the schema lives
 ## Endpoints
 
 - `GET /api/health` → `{ ok: true, schemaVersion: <applied migrations> }`
+- `POST /api/auth/login` → `{ email, password }` in, the public user `{ id, email, displayName, role }` out, plus an `HttpOnly` session cookie. A wrong password, an unknown identifier and a disabled account all answer the same 401.
+- `POST /api/auth/logout` → 204, session row deleted, cookie cleared. Idempotent.
+- `GET /api/auth/me` → the public user for the cookie's session, or 401.
+
+Everything else under `/api` mounts behind `requireAuth` (TICKET-AUTH-01); health, login and logout
+are the only routes a signed-out client can reach.
+
+**First boot seeds one account: `admin` / `admin`** (role `admin`, display name "Administrator").
+The identifier is literally `admin` — the login field is free text, not a validated email address.
+Seeding only ever runs against an empty `users` table, so it cannot resurrect a deleted admin or
+reset a changed password. Passwords are hashed with `scrypt` from `node:crypto` and a per-user salt;
+the hash and salt never appear in a response.
+
+This server is **deliberately unsecured for LAN hosting**: no HTTPS, no CSRF tokens, no rate
+limiting, no session expiry. Do not put it on the public internet.
 
 In development the Angular dev server proxies `/api` here (`proxy.conf.json`), so the browser sees
 one origin and no CORS configuration is needed.

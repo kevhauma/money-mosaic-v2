@@ -17,8 +17,8 @@ const openMemory = (): DatabaseHandle => {
 
 /**
  * Writes a throwaway migrations folder in the same shape `drizzle-kit generate` produces, so
- * idempotency is exercised against a migration that actually does something. The repo's own
- * `server/drizzle` ships empty until TICKET-AUTH-01 adds the first table.
+ * idempotency is exercised against a migration that owns its own throwaway table, independent of
+ * whatever the repo's `server/drizzle` folder currently holds.
  */
 const writeMigrationsFolder = (sql: string): string => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-server-migrations-'));
