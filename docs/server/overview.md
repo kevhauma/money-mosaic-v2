@@ -11,10 +11,10 @@ The backend itself — Express, SQLite, Drizzle — and the move of the app's da
 > every `SRV` ticket — decided with the user on 2026-09-23. Don't add them back, and don't
 > treat their absence as an oversight to repair.
 
-**9 tickets** — 1 done.
+**9 tickets** — 2 done.
 
 - [x] [TICKET-SRV-01](./tickets/TICKET-SRV-01-express-sqlite-drizzle-skeleton.md) — Express + SQLite + Drizzle backend skeleton (new — introduces a backend, superseding the "no backend" premise in `CLAUDE.md`) — nothing depends on it yet, but everything in v3 does; build it first · _unreleased_
-- [ ] [TICKET-SRV-02](./tickets/TICKET-SRV-02-drizzle-schema-per-user.md) — Every Dexie table as a Drizzle table, owned by a user (ports the data model in `data-model/SKILL.md`) — needs TICKET-SRV-01 and TICKET-AUTH-01 · _unreleased_
+- [x] [TICKET-SRV-02](./tickets/TICKET-SRV-02-drizzle-schema-per-user.md) — Every Dexie table as a Drizzle table, owned by a user (ports the data model in `data-model/SKILL.md`) — needs TICKET-SRV-01 and TICKET-AUTH-01 · _unreleased_
 - [ ] [TICKET-SRV-03](./tickets/TICKET-SRV-03-rest-api-per-entity.md) — A REST API for every entity, scoped to the signed-in user (mirrors the repository layer) — needs TICKET-SRV-02 · _unreleased_
 - [ ] [TICKET-SRV-04](./tickets/TICKET-SRV-04-transactional-write-endpoints.md) — The multi-table write paths become transactional server endpoints (preserves NFR-RESIL-1) — needs TICKET-SRV-03 · _unreleased_
 - [ ] [TICKET-SRV-05](./tickets/TICKET-SRV-05-repositories-over-http.md) — Repositories talk HTTP instead of Dexie (refactor, preserves the repository seam in `CLAUDE.md`) — needs TICKET-SRV-03, TICKET-SRV-04 and TICKET-AUTH-02; this is the point of no return for local-first · _unreleased_

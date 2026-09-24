@@ -10,6 +10,13 @@ import * as schema from './schema/index.js';
 
 export type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
 
+/**
+ * Either the database or an open transaction on it. A write helper that takes this can be called
+ * standalone *or* composed into a caller's larger transaction, which is what lets `seedAdminUser`
+ * make "create the user and give them their first-run data" a single atomic step.
+ */
+export type DbOrTx = DrizzleDb | Parameters<Parameters<DrizzleDb['transaction']>[0]>[0];
+
 export type DatabaseHandle = {
   /** The raw better-sqlite3 connection — pragmas, migrations and health checks use it directly. */
   readonly sqlite: Database.Database;

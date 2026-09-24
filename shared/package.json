@@ -1,0 +1,7 @@
+{
+  "name": "@money-mosaic/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-free types and seed data shared by the Angular app and the server (TICKET-SRV-02). Not an installed package — both workspaces reach it through a `shared/*` tsconfig path mapping. This manifest exists only to mark the folder as ESM, which is what lets the server's NodeNext typecheck read it."
+}

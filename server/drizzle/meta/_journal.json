@@ -8,6 +8,13 @@
       "when": 1790194593170,
       "tag": "0000_users_and_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790279300316,
+      "tag": "0001_entities_per_user",
+      "breakpoints": true
     }
   ]
 }

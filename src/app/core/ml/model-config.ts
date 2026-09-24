@@ -1,8 +1,10 @@
-export type FeatureConfig = {
-  dim: number;
-  charNgramMin: number;
-  charNgramMax: number;
-};
+/**
+ * Declared in `shared/entities.ts` (which `CategoryModelArtifact.featureConfig` is typed against)
+ * and re-exported here, where the model's configuration lives — see the note on `AccentColorId` in
+ * `core/theme/accent-colors.ts` for why that direction (TICKET-SRV-02).
+ */
+export type { FeatureConfig } from '@/core/data-access/entities';
+import type { FeatureConfig } from '@/core/data-access/entities';
 
 export const DEFAULT_FEATURE_CONFIG: FeatureConfig = {
   dim: 8192,

@@ -1,6 +1,12 @@
 import { signal } from '@angular/core';
 
-export type CurrencySymbolPosition = 'before' | 'after';
+/**
+ * Declared in `shared/entities.ts` (which `AppSettings.currencySymbolPosition` is typed against)
+ * and re-exported here, where the formatting behaviour lives — see the note on `AccentColorId` in
+ * `core/theme/accent-colors.ts` for why that direction (TICKET-SRV-02).
+ */
+export type { CurrencySymbolPosition } from '@/core/data-access/entities';
+import type { CurrencySymbolPosition } from '@/core/data-access/entities';
 
 export const DEFAULT_CURRENCY_SYMBOL = '€';
 export const DEFAULT_CURRENCY_SYMBOL_POSITION: CurrencySymbolPosition = 'before';

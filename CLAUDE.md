@@ -37,7 +37,10 @@ Subagents in `.claude/agents/`: `conventions-reviewer` (diff review against proj
 - **Dexie schema changes are additive**: new `.version(n + 1).stores(...)` (+ `.upgrade()` if data must transform). Never edit a shipped version block.
 - Components/stores never touch `appDb` tables directly — always go through a repository in `core/data-access/`.
 - Rules must never overwrite a category the user set manually (`categoryManual` flag on `Transaction`).
-- Cross-feature imports go through the feature's `index.ts` barrel (`@/feature-x`), never deep paths. Exception already in place: `app.routes.ts` imports `feature-transactions/transactions.routes` directly to break a barrel cycle — don't "fix" it back.
+- Cross-feature imports go through the feature's `index.ts` barrel (`@/feature-x`), never deep paths. Two exceptions already in place — don't "fix" either back:
+  - `app.routes.ts` imports `feature-transactions/transactions.routes` directly to break a barrel cycle.
+  - Four modules that *define* a type re-exported by `shared/entities.ts` (`core/theme/accent-colors.ts`, `core/stats/saving-velocity.ts`, `core/ml/model-config.ts`, `shared/utils/format-settings.ts`) import it from `@/core/data-access/entities` rather than the barrel. The barrel would drag the Angular repositories into `shared/utils`; these are type-only imports, so there is no runtime cycle. `app-db.ts` uses the same trick for the same reason.
+- **`shared/` is framework-free, dependency-free plain TypeScript** — the one place both the Angular app and the server may import from (TICKET-SRV-02). It may import *nothing*: not Angular, not Dexie, not Drizzle, not ngrx. An ESLint block and `server/src/shared-module.spec.ts` both enforce it; the spec reads the folder, so a new module there is covered automatically. Neither workspace may import the other — `src/**` ↔ `server/**` is blocked in both directions.
 - Prettier (single quotes) runs via husky/lint-staged pre-commit; don't fight it.
 - **Never mention Claude, Anthropic, or any AI assistant in git history.** No `Co-Authored-By: Claude ...` trailer, no "Generated with Claude Code", no 🤖 — not in commit messages, branch names, tags, or PR bodies. Referring to the `CLAUDE.md` file by name is fine.
 

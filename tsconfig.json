@@ -5,7 +5,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/app/*"]
+      "@/*": ["src/app/*"],
+      /* The repo-root `shared/` workspace — framework-free types both this app and `server/`
+         compile against (TICKET-SRV-02). `server/tsconfig.json` declares the same mapping. Only
+         `src/app/core/data-access/entities.ts` and `seed-data.ts` use it; everything else in the
+         app keeps importing through `@/core/data-access`. */
+      "shared/*": ["shared/*"]
     },
     "strict": true,
     "noImplicitOverride": true,

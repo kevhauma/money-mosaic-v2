@@ -46,6 +46,8 @@ Also multi-table, and generic over every table at once:
 
 ## Acceptance criteria
 
+- [ ] **Ownership is validated inside the transaction, not before it.** Every foreign-key field these multi-table writes touch is confirmed to belong to the signed-in user as part of the same transaction that writes, so a concurrent delete cannot slip between the check and the write. Carries the same 404-not-403 rule as TICKET-SRV-03.
+- [ ] **Deleting a category an active loan still tracks is refused with a readable message**, not a raw SQLite constraint failure. TICKET-SRV-02 gave `loans.categoryId` a NO ACTION foreign key precisely so this surfaces as a refusal rather than silently destroying the loan; this endpoint turns that into a 409 that names the loan.
 - [ ] Each of the nine operations is one endpoint, and each runs in exactly one SQLite transaction — asserted per endpoint by forcing a failure at the last step and confirming **nothing** was written.
 - [ ] `POST /api/import/commit` returns the same shape `commitImport` returns today, and the client-side `ImportService` needs no change beyond its body.
 - [ ] Undoing an import removes its transactions and batch **and** cleans up transfers that linked into a different batch — the FR-TRF-2 cross-batch case, tested explicitly.

@@ -14,8 +14,13 @@ import { computePeriodStats } from './period-stats';
  * `net-cash-flow` matches what most people mean by "what I managed to save" — someone who never
  * moves money to a savings account reads as €0/month under the strict basis. The caller always
  * passes one; there is deliberately no default.
+ *
+ * Declared in `shared/entities.ts` (which `ForecastSettings.basis` is typed against) and
+ * re-exported here, where the measurement lives — see the note on `AccentColorId` in
+ * `core/theme/accent-colors.ts` for why that direction (TICKET-SRV-02).
  */
-export type SavingBasis = 'net-cash-flow' | 'savings-transfers';
+export type { SavingBasis } from '@/core/data-access/entities';
+import type { SavingBasis } from '@/core/data-access/entities';
 
 export type MonthlySavingPoint = { bucketKey: string; from: string; to: string; amount: number };
 

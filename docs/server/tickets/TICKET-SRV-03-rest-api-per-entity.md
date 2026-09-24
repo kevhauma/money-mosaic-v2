@@ -38,6 +38,7 @@ Exposes the tables from [TICKET-SRV-02](./TICKET-SRV-02-drizzle-schema-per-user.
 
 ## Acceptance criteria
 
+- [ ] **A write may not reference another user's row.** Every foreign-key field a request body carries (`transactions.accountId` / `categoryId`, `loans.categoryId`, `transfers.fromTransactionId` / `toTransactionId`, `recurringOverrides.anchorTransactionId`) is checked to belong to the signed-in user before the write, and a mismatch is a **404**, not a 403 — a row the caller does not own is a row that does not exist as far as they are concerned. Asserted by a test that signs in as one user and tries to reference another's row for each of those fields. (TICKET-SRV-02 left this deliberately unenforced at the schema level: composite `(userId, parentId)` foreign keys across eighteen tables were a bigger change than that ticket, and reads were never at risk because every query is user-scoped. This is where it gets enforced.)
 - [ ] Every public method on all 17 repositories has a corresponding endpoint — asserted by a checklist test that enumerates the repository method names and fails on one with no route.
 - [ ] Every endpoint returns 401 without a session, tested per router rather than for one sample route.
 - [ ] **User B cannot read, update, or delete user A's rows.** For each entity: a list call returns only B's rows; a `GET`/`PATCH`/`DELETE` on A's id returns 404 and changes nothing. This is the ticket's central test and it runs against every table, not a sample.

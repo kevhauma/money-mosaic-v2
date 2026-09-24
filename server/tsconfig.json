@@ -2,6 +2,14 @@
    Angular build or `ng lint` never reads anything under server/ (TICKET-SRV-01). */
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      /* The repo-root `shared/` workspace — framework-free types and seed data this server and
+         the Angular app compile against (TICKET-SRV-02). The root `tsconfig.json` declares the
+         same mapping; `vitest.config.ts` mirrors it as a resolve alias, since Vitest resolves
+         modules itself rather than through tsc. */
+      "shared/*": ["../shared/*"]
+    },
     "target": "ES2022",
     "lib": ["ES2023"],
     "module": "NodeNext",
@@ -20,5 +28,5 @@
     "noEmit": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "drizzle.config.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "../shared/**/*.ts", "drizzle.config.ts", "vitest.config.ts"]
 }

@@ -1,6 +1,13 @@
 import type { ThemeStyleId } from './theme-styles';
 
-export type AccentColorId = 'amber' | 'sky' | 'violet' | 'rose' | 'teal' | 'lime';
+/**
+ * Declared in `shared/entities.ts` and re-exported here, where the palette itself lives
+ * (TICKET-SRV-02): `AppSettings.primaryColor` stores one of these ids, and that shared module may
+ * not import anything — so the union is defined there and this module, which owns the colours,
+ * hands it on. One definition either way; consumers keep importing it from here.
+ */
+export type { AccentColorId } from '@/core/data-access/entities';
+import type { AccentColorId } from '@/core/data-access/entities';
 
 export type AccentColor = {
   id: AccentColorId;

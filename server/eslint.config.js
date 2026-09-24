@@ -15,8 +15,9 @@ export default tseslint.config(
       // Express recognises an error handler by its arity, so the unused `next` parameter is load-bearing.
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       // The mirror of the root config's guard: the backend never reaches into the Angular app.
-      // The two sides share no code — anything genuinely common gets its own home rather than
-      // one workspace reaching across the seam (TICKET-SRV-01).
+      // Anything genuinely common gets its own home rather than one workspace reaching across the
+      // seam (TICKET-SRV-01) — since TICKET-SRV-02 that home is the repo-root `shared/`
+      // workspace, which this guard deliberately does not match.
       'no-restricted-imports': [
         'error',
         {
@@ -24,7 +25,7 @@ export default tseslint.config(
             {
               group: ['**/src/app/**'],
               message:
-                'The backend must never import from the Angular app (TICKET-SRV-01) — the two workspaces share no code.',
+                'The backend must never import from the Angular app (TICKET-SRV-01) — put anything both sides need in the repo-root shared/ workspace instead.',
             },
           ],
         },

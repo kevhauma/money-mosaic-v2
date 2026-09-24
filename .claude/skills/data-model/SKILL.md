@@ -5,9 +5,11 @@ description: Dexie/IndexedDB schema reference for MoneyMosaicVibe — entities, 
 
 # Data Model (Dexie.js / IndexedDB)
 
-Everything lives in `src/app/core/data-access/`. The single source of truth is [app-db.ts](../../../src/app/core/data-access/app-db.ts): the `AppDb` Dexie subclass (db name `money-mosaic`), all entity `type` definitions, seed data, and version blocks. `export const appDb = new AppDb()` is the singleton; `app.config.ts` opens it and hydrates all stores in `provideAppInitializer` before render.
+Everything lives in `src/app/core/data-access/`. [app-db.ts](../../../src/app/core/data-access/app-db.ts) holds the `AppDb` Dexie subclass (db name `money-mosaic`), the default-settings constants, and the sixteen version blocks. `export const appDb = new AppDb()` is the singleton; `app.config.ts` opens it and hydrates all stores in `provideAppInitializer` before render.
 
-## Entities (all defined in app-db.ts)
+**The entity `type`s and the first-run seed data moved out** (TICKET-SRV-02) to the repo-root [`shared/entities.ts`](../../../shared/entities.ts) and [`shared/seed-data.ts`](../../../shared/seed-data.ts), so the v3 server compiles against exactly the same definitions without either workspace importing the other. `core/data-access/entities.ts` and `seed-data.ts` re-export them and `app-db.ts` re-exports those in turn, so **no import path in `src/app/` changed** — a new entity type is still reached as `from '@/core/data-access'`, it is just *declared* in `shared/`, which may import nothing at all. The Drizzle mirror of every table below lives in `server/src/schema/`; see the **project-map** skill's Server and Shared sections.
+
+## Entities (all defined in `shared/entities.ts`, re-exported through `core/data-access`)
 
 | Entity                       | Table                        | Indexes                                                                                                                         | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ---------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,7 +46,7 @@ Everything lives in `src/app/core/data-access/`. The single source of truth is [
       '++id, accountId, bookingDate, categoryId, transferId, fingerprint, importBatchId',
   });
   ```
-- `this.on('populate')` seeds first-run data only: KBC + Belfius mapping-profile templates, ~10 default categories, default transfer settings. `populate` does NOT run for existing users — they need an `.upgrade()` block.
+- `this.on('populate')` seeds first-run data only: KBC + Belfius mapping-profile templates, ~10 default categories, default transfer settings — the constants in `shared/seed-data.ts`. `populate` does NOT run for existing users — they need an `.upgrade()` block. The server seeds the same constants per *user* rather than per database, in `server/src/seed-user-defaults.ts`.
 
 ## Repository layer
 
