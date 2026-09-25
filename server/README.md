@@ -81,6 +81,47 @@ types, `number` ids, with `userId` and SQL `NULL`s dropped. A row belonging to a
 `Internal server error`, with the detail in the log, so a SQLite constraint message never reaches a
 client.
 
+### The transactional operations (TICKET-SRV-04)
+
+Nine write paths in the app span more than one table, so a per-table REST call cannot express them:
+two HTTP calls are two transactions, and the gap between them is where the data gets corrupted. Each
+is **one endpoint running in one SQLite transaction** — every ownership check included, so a row
+cannot change hands between the check and the write.
+
+- **Import** — `POST /api/import/commit` takes `{ batch, transactions, backfill }` (the batch to
+  create, the accepted rows, and `{ id, changes }` patches for rows that already existed) and answers
+  `{ batch, addedTransactions, duplicateCount, backfilledTransactions }`. `importBatchId` is assigned
+  here, so a row carrying one is a 400. The CSV never crosses the wire: parsing, mapping,
+  fingerprinting and the duplicate decision stay in the browser's Web Worker.
+- `POST /api/import/:batchId/undo` → `{ unlinkedTransferIds, clearedTransferTransactionIds }`, and
+  `GET /api/import/:batchId/undo-preview` → `{ rowCount, manuallyCategorisedCount,
+  transferLinkedCount }`. Both read the batch's rows through the same query, so the cost the dialog
+  states is the cost the undo pays. An already-undone (or unknown, or another user's) batch reports
+  zeroes rather than 404 — every statement is user-scoped, so there is nothing to refuse.
+- **Transactions** — `POST /api/transactions/delete` with `{ ids }` → the cleanup report
+  `{ removedTransactionIds, unlinkedTransferIds, clearedTransferTransactionIds }`. Unlike
+  `DELETE /api/transactions/bulk`, it also unpicks every transfer that touched the rows.
+- **Transfers** — `POST /api/transfers/link` (`{ fromTransactionId, toTransactionId, method,
+  confidence }`, `linkedAt` optional) → `{ transfer, updatedTransactions }`, writing the link and
+  stamping both legs, whose category it clears (a transfer is neither spending nor income).
+  `POST /api/transfers/link/batch` takes an array of those and links a whole auto-matching pass in one
+  transaction. `POST /api/transfers/:id/unlink` → `{ clearedAttributionOverrides }`, removing the row,
+  clearing both stamps and dropping any `attributionOverride.reimbursementTransferId` that named it.
+- **Accounts** — `DELETE /api/accounts/:id` answers **200 with the cascade report** rather than 204:
+  the account, its transactions and their transfers go, and a linked transaction in *another* account
+  has its `transferId` cleared (the half no foreign key can do).
+  `POST /api/accounts/:id/transactions/delete` is the same cascade with the account row kept.
+- **Categories** — `DELETE /api/categories/:id` answers **409 naming the loans** that track the
+  category instead of the bare 500 SQLite's NO ACTION constraint would produce. Built from a query,
+  not from a caught constraint message.
+- **The whole dataset** — `GET /api/data/export` → `{ schemaVersion, exportedAt, tables }` over the
+  signed-in user's rows; `POST /api/data/import` takes `{ mode: 'replace' | 'merge', data }` and
+  rejects a `schemaVersion` newer than the server's before writing anything; `DELETE /api/data` clears
+  this user's rows and nobody else's. Ids are preserved, so cross-table references survive a restore —
+  which also means an id already belonging to another account is a 409 (TICKET-SRV-07 is what
+  reconciles a browser database's ids). `categoryModel` is not in the document: megabytes of weights
+  cannot survive JSON, and `/api/categoryModel` carries them as bytes.
+
 
 **First boot seeds one account: `admin` / `admin`** (role `admin`, display name "Administrator").
 The identifier is literally `admin` — the login field is free text, not a validated email address.

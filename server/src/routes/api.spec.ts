@@ -8,30 +8,38 @@ import { createApiRouters } from './api.js';
 import { ENTITY_SAMPLES, startTwoUserApp } from './samples.testing.js';
 
 /**
- * Two promises about the API as a whole (TICKET-SRV-03).
+ * Promises about the API as a whole (TICKET-SRV-03, extended by TICKET-SRV-04).
  *
  * 1. **Every repository method has an endpoint.** The repository layer is the seam TICKET-SRV-05
  *    swaps, so a method with nowhere to send its call is a migration that cannot finish. The
  *    repository side of the checklist is *read out of the source files* rather than listed here,
  *    so a method added later fails this spec instead of being discovered by TICKET-SRV-05.
- * 2. **Every router answers 401 without a session** — checked per router rather than for one
+ * 2. **Every multi-table operation has one too.** The four services in `OPERATION_FILES` are the
+ *    ones that opened a Dexie transaction across tables, which is precisely what a per-table REST
+ *    API cannot express; TICKET-SRV-04 gives each of their methods a single endpoint, and this is
+ *    the list of which.
+ * 3. **Every router answers 401 without a session** — checked per router rather than for one
  *    sample route, since the middleware is mounted per router and a missed mount is invisible
  *    from anywhere else.
  *
- * The repositories are read as **files, not imports**: the TICKET-SRV-01 ESLint guard forbids the
+ * The client sources are read as **files, not imports**: the TICKET-SRV-01 ESLint guard forbids the
  * backend importing from `src/app/`, and an import would drag Angular and Dexie into a Node test.
  */
 
-const DATA_ACCESS_DIR = fileURLToPath(
-  new URL('../../../src/app/core/data-access/', import.meta.url),
-);
+const CORE_DIR = fileURLToPath(new URL('../../../src/app/core/', import.meta.url));
+const DATA_ACCESS_DIR = `${CORE_DIR}data-access/`;
 
 /**
- * `exportAll`/`importAll`/`deleteAll` iterate every table at once. They are the transport for
- * TICKET-SRV-07's migration and land with the other multi-table operations in TICKET-SRV-04 —
- * deliberately out of scope here, per this ticket's Notes.
+ * The services that opened an `appDb.transaction('rw', [...])` spanning tables — the nine write
+ * paths TICKET-SRV-04 moves behind one endpoint each. Listed by file because they live one per
+ * feature folder rather than in a single directory, so a rename fails this spec on the read.
  */
-const DEFERRED_REPOSITORIES = new Set(['DataManagementRepository']);
+const OPERATION_FILES: readonly string[] = [
+  'import/import.service.ts',
+  'transactions/transaction-deletion.service.ts',
+  'transfers/transfer-linking.service.ts',
+  'accounts/account-deletion.service.ts',
+];
 
 type Endpoint = readonly [method: string, path: string];
 
@@ -73,6 +81,12 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
     getAll: ['GET', '/api/transfers'],
     getByIds: ['GET', '/api/transfers?ids=1,2'],
     add: ['POST', '/api/transfers'],
+    // NOT the endpoint TICKET-SRV-05 should wire `remove` to. This raw delete removes the
+    // `Transfer` row and leaves both legs' `transferId` stamped, which is the orphan state
+    // TICKET-SRV-04 exists to prevent — `POST /api/transfers/:id/unlink` is the one that cleans
+    // up. `TransfersRepository.remove` has no caller outside `TransferCleanupService`, whose whole
+    // body is now server-side, so SRV-05 should **delete the method** rather than port it. Listed
+    // here only because the endpoint exists and this registry enumerates the surface.
     remove: ['DELETE', '/api/transfers/1'],
   },
   RecurringOverridesRepository: {
@@ -98,6 +112,10 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
     update: ['PATCH', '/api/transactions/1'],
     bulkAdd: ['POST', '/api/transactions/bulk'],
     bulkUpdate: ['PATCH', '/api/transactions/bulk'],
+    // Same caveat as `TransfersRepository.remove` above: this deletes rows without the transfer
+    // cleanup, so a surviving leg keeps a `transferId` pointing at a transfer that cascaded away.
+    // `POST /api/transactions/delete` is the one with the cleanup. Its only caller is
+    // `TransactionDeletionService`, so SRV-05 should delete the method rather than wire it here.
     bulkRemove: ['DELETE', '/api/transactions/bulk'],
   },
   CategoryModelRepository: {
@@ -126,6 +144,11 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
     'setMode',
     'setScopeAccountIds',
   ]),
+  DataManagementRepository: {
+    exportAll: ['GET', '/api/data/export'],
+    importAll: ['POST', '/api/data/import'],
+    deleteAll: ['DELETE', '/api/data'],
+  },
   AppSettingsRepository: settingsRepository('/api/settings/appSettings', [
     'setPrimaryColor',
     'setCurrencySymbol',
@@ -143,6 +166,35 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
   ]),
 };
 
+/**
+ * Service method -> the endpoint it will call once TICKET-SRV-05 rewires its body (TICKET-SRV-04).
+ *
+ * `previewImport` is the odd one out, deliberately: it is pure arithmetic over one read the list
+ * endpoint already answers, and the point of the duplicate preview is that it decides sameness with
+ * the same code the commit does — client-side in both cases.
+ */
+const OPERATIONS: Record<string, Record<string, Endpoint>> = {
+  ImportService: {
+    previewImport: ['GET', '/api/transactions?accountId=1'],
+    commitImport: ['POST', '/api/import/commit'],
+    previewUndo: ['GET', '/api/import/1/undo-preview'],
+    undoImport: ['POST', '/api/import/1/undo'],
+  },
+  TransactionDeletionService: {
+    removeMany: ['POST', '/api/transactions/delete'],
+  },
+  TransferLinkingService: {
+    linkManually: ['POST', '/api/transfers/link'],
+    linkAuto: ['POST', '/api/transfers/link'],
+    linkAutoBatch: ['POST', '/api/transfers/link/batch'],
+    unlink: ['POST', '/api/transfers/1/unlink'],
+  },
+  AccountDeletionService: {
+    clearTransactions: ['POST', '/api/accounts/1/transactions/delete'],
+    deleteAccount: ['DELETE', '/api/accounts/1'],
+  },
+};
+
 /** Every `name = (…) =>` member of the repository class in a file, in source order. */
 const methodsOf = (source: string): string[] =>
   [...source.matchAll(/^ {2}(\w+) = /gm)].map((match) => match[1]!);
@@ -153,15 +205,23 @@ const repositoryMethods = (): Record<string, string[]> =>
       .readdirSync(DATA_ACCESS_DIR)
       .filter((name) => name.endsWith('.repository.ts'))
       .map((name) => fs.readFileSync(`${DATA_ACCESS_DIR}${name}`, 'utf8'))
-      .map((source) => [/export class (\w+)/.exec(source)?.[1] ?? '', methodsOf(source)])
-      .filter(([className]) => !DEFERRED_REPOSITORIES.has(className as string)),
+      .map((source) => [/export class (\w+)/.exec(source)?.[1] ?? '', methodsOf(source)]),
+  );
+
+/** The same reading, for the four operation services. */
+const operationMethods = (): Record<string, string[]> =>
+  Object.fromEntries(
+    OPERATION_FILES.map((name) => fs.readFileSync(`${CORE_DIR}${name}`, 'utf8')).map((source) => [
+      /export class (\w+)/.exec(source)?.[1] ?? '',
+      methodsOf(source),
+    ]),
   );
 
 describe('every repository method has an endpoint', () => {
   const methods = repositoryMethods();
 
-  it('finds the seventeen repositories this ticket covers', () => {
-    expect(Object.keys(methods)).toHaveLength(17);
+  it('finds every repository in the folder', () => {
+    expect(Object.keys(methods)).toHaveLength(18);
     expect(Object.keys(ENDPOINTS).sort()).toEqual(Object.keys(methods).sort());
   });
 
@@ -175,7 +235,10 @@ describe('every repository method has an endpoint', () => {
   it('answers each of those endpoints with something other than "no such route"', async () => {
     const { app, alice } = await startTwoUserApp();
 
-    for (const [className, mapped] of Object.entries(ENDPOINTS)) {
+    for (const [className, mapped] of [
+      ...Object.entries(ENDPOINTS),
+      ...Object.entries(OPERATIONS),
+    ]) {
       for (const [name, [method, path]] of Object.entries(mapped)) {
         const response = await apiJson<{ error?: string }>(app, path, {
           as: alice.session,
@@ -189,6 +252,20 @@ describe('every repository method has an endpoint', () => {
         );
       }
     }
+  });
+});
+
+describe('every multi-table operation has an endpoint', () => {
+  const methods = operationMethods();
+
+  it('finds the four services TICKET-SRV-04 moves', () => {
+    expect(Object.keys(OPERATIONS).sort()).toEqual(Object.keys(methods).sort());
+  });
+
+  it.each(Object.entries(OPERATIONS))('%s', (className, mapped) => {
+    // Both directions, as above: a public method with no endpoint fails, and so does an entry for a
+    // method that no longer exists.
+    expect(Object.keys(mapped).sort()).toEqual([...(methods[className] ?? [])].sort());
   });
 });
 
@@ -217,9 +294,14 @@ describe('test coverage of the registry itself', () => {
 
     const entityPaths = createApiRouters(app.db)
       .map(({ path }) => path)
-      // The settings singletons and the binary model artifact have specs of their own; everything
-      // else is an entity router and has to appear in `ENTITY_SAMPLES`.
-      .filter((path) => !path.startsWith('/api/settings/') && path !== '/api/categoryModel');
+      // The settings singletons, the binary model artifact and the two operation-only routers
+      // (`/api/import`, `/api/data`) have specs of their own; everything else is an entity router
+      // and has to appear in `ENTITY_SAMPLES`.
+      .filter(
+        (path) =>
+          !path.startsWith('/api/settings/') &&
+          !['/api/categoryModel', '/api/import', '/api/data'].includes(path),
+      );
 
     expect(ENTITY_SAMPLES.map(({ path }) => path).sort()).toEqual(entityPaths.sort());
   });

@@ -40,6 +40,12 @@ export type EntitySample = {
   readonly create: (fixtures: EntityFixtures) => Record<string, unknown>;
   /** A body `PATCH /:id` accepts, and the field it changes. */
   readonly patch: Record<string, unknown>;
+  /**
+   * What a successful `DELETE /:id` answers, when it is not the shared router's 204. `/api/accounts`
+   * cascades into transactions and transfers (TICKET-SRV-04) and answers **200** with the report of
+   * what went with the account, because the stores have no other way to learn it.
+   */
+  readonly deleteStatus?: number;
 };
 
 const ACCOUNT = {
@@ -118,6 +124,7 @@ export const ENTITY_SAMPLES: readonly EntitySample[] = [
     table: accounts,
     create: () => ({ ...ACCOUNT, name: 'Savings' }),
     patch: { name: 'Renamed' },
+    deleteStatus: 200,
   },
   {
     path: '/api/categories',

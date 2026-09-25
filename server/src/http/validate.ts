@@ -102,7 +102,7 @@ const invalid = (key: string, column: SQLiteColumn) =>
   httpError(400, `Invalid value for "${key}": expected ${expectationOf(column)}`);
 
 /** A JSON body has to be an object before any field of it can be wrong. */
-const asRecord = (body: unknown): Record<string, unknown> => {
+export const asRecord = (body: unknown): Record<string, unknown> => {
   // Express leaves `req.body` undefined when a request carries no body at all, which is a valid
   // empty patch rather than a malformed one.
   if (body === undefined) return {};
@@ -199,4 +199,53 @@ export const parseIdQuery = (query: unknown, name: string): number | undefined =
   const id = typeof raw === 'string' ? toId(raw) : undefined;
   if (id === undefined) throw httpError(400, `Invalid value for "${name}": expected an integer`);
   return id;
+};
+
+/* --------------------------------------------------------------------------------------------
+ * Bulk payloads (TICKET-SRV-03's bulk endpoints, TICKET-SRV-04's transactional ones)
+ *
+ * The shapes a *list* of writes arrives in, shared by `/api/transactions/bulk`, the import commit
+ * and the transfer link batch. They live next to the per-field validation rather than in one of
+ * those routes because the second route to need them is the one that would otherwise copy them.
+ * ------------------------------------------------------------------------------------------ */
+
+/** A body that has to be a list of items before any of them can be wrong. */
+export const asArray = (body: unknown): unknown[] => {
+  if (!Array.isArray(body)) throw httpError(400, 'Request body must be an array');
+  return body;
+};
+
+/** A row id from a payload — a 400 naming it, rather than a silent no-such-row. */
+export const asId = (value: unknown): number => {
+  const id = toId(value);
+  if (id === undefined) throw httpError(400, 'Invalid value for "id": expected an integer');
+  return id;
+};
+
+/**
+ * Re-labels a deliberate 4xx with the batch position that caused it, so "expected a number" points
+ * at one of four hundred rows. A 5xx is left exactly as it is — its message never reaches a client
+ * and rewriting it would only obscure the log.
+ */
+const atItem = (index: number, error: unknown): unknown => {
+  const status = (error as { status?: unknown } | null)?.status;
+  if (typeof status !== 'number' || status >= 500) return error;
+  return httpError(status, `${(error as Error).message} (item ${index})`);
+};
+
+/** Runs one item of a batch, labelling whatever it throws with that item's position. */
+export const inItem = <T>(index: number, run: () => T): T => {
+  try {
+    return run();
+  } catch (error) {
+    throw atItem(index, error);
+  }
+};
+
+export type BulkUpdate = { readonly id: number; readonly changes: unknown };
+
+/** One `{ id, changes }` of a bulk patch, before its `changes` meet the table. */
+export const asBulkUpdate = (item: unknown): BulkUpdate => {
+  const { id, changes } = (item ?? {}) as Partial<Record<keyof BulkUpdate, unknown>>;
+  return { id: asId(id), changes };
 };

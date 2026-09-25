@@ -51,7 +51,13 @@ const cache = new Map<SQLiteTable, readonly OwnedReference[]>();
  * and dangle. It is the one hand-written inventory here, so `ownership.spec.ts` pins it.
  */
 const SOFT_REFERENCES = new Map<SQLiteTable, readonly OwnedReference[]>([
-  [importBatches, [{ key: 'accountId', parent: accounts }]],
+  [
+    importBatches,
+    [
+      { key: 'accountId', parent: accounts },
+      { key: 'mappingProfileId', parent: mappingProfiles },
+    ],
+  ],
   [mappingProfiles, [{ key: 'defaultAccountId', parent: accounts }]],
   [
     transactions,
@@ -70,7 +76,7 @@ const SOFT_REFERENCES = new Map<SQLiteTable, readonly OwnedReference[]>([
  * Deriving the foreign keys rather than listing them means a new one is covered the moment it is
  * declared — listing them would be a second inventory to keep in step, where adding a `categoryId`
  * would compile, migrate, and quietly not be checked. `ownership.spec.ts` asserts the combined set
- * is exactly the ten fields TICKET-SRV-03 enumerates, so a *removed* check is caught too.
+ * is exactly the eleven fields TICKET-SRV-03 and TICKET-SRV-04 enumerate, so a *removed* check is caught too.
  */
 export const referencesOf = (table: SQLiteTable): readonly OwnedReference[] => {
   const cached = cache.get(table);

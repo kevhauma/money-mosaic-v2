@@ -18,8 +18,11 @@ type AttributionOverride = NonNullable<Transaction['attributionOverride']>;
  * turns a missed cleanup into an error instead of an orphan row:
  * - `accountId` → **cascade**. `AccountDeletionService.deleteAccount` already removes an account's
  *   transactions in one transaction; this is that promise, enforced.
- * - `categoryId` → **set null**. `CategoriesStore.removeCategory` clears the category off every
- *   referencing transaction before deleting it, which is exactly what SET NULL does.
+ * - `categoryId` → **set null**, as a backstop only. `CategoriesStore.removeCategory` clears the
+ *   category off every referencing transaction before deleting it, and it clears `categoryManual`
+ *   with it — which SET NULL does *not* do. A row left with `categoryManual: true` and no category
+ *   is one the rules engine will never touch again, so `DELETE /api/categories/:id` does the write
+ *   explicitly (TICKET-SRV-04) and this constraint is what catches any path that forgets to.
  * - `transferId` is deliberately **not** a foreign key: `transfers` references this table from the
  *   other side, and a cycle of two mutual FKs cannot be satisfied by two ordinary inserts. The
  *   link is created by `transfers`, and `TransferCleanupService` clears the surviving side.

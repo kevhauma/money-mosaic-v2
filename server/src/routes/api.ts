@@ -1,20 +1,22 @@
 import type { Router } from 'express';
 
 import type { DrizzleDb } from '../db.js';
-import { accounts } from '../schema/accounts.js';
-import { categories } from '../schema/categories.js';
 import { importBatches } from '../schema/import-batches.js';
 import { loans } from '../schema/loans.js';
 import { mappingProfiles } from '../schema/mapping-profiles.js';
 import { recurringOverrides } from '../schema/recurring-overrides.js';
 import { rules } from '../schema/rules.js';
-import { transfers } from '../schema/transfers.js';
+import { createAccountsRouter } from './accounts.js';
+import { createCategoriesRouter } from './categories.js';
 import { createCategoryModelRouter } from './category-model.js';
+import { createDataRouter } from './data.js';
 import { createEntityRouter, type OwnedTable } from './entity-router.js';
 import { createGoalsRouter } from './goals.js';
+import { createImportRouter } from './import.js';
 import { createSalaryMetadataRouter } from './salary-metadata.js';
 import { createSettingsRouter, SETTINGS_TABLES } from './settings.js';
 import { createTransactionsRouter } from './transactions.js';
+import { createTransfersRouter } from './transfers.js';
 
 /**
  * Every authenticated `/api` router, in one list (TICKET-SRV-03).
@@ -36,14 +38,17 @@ export type ApiRouter = {
   readonly router: Router;
 };
 
-/** The ten entities whose whole surface is the shared factory's four verbs. */
+/**
+ * The entities whose whole surface is the shared factory's four verbs.
+ *
+ * `accounts`, `categories`, `transfers` and `transactions` have each left this list for a router of
+ * their own: every one of them carries an operation that spans more than one table, and a cascade,
+ * a link or a refusal cannot be expressed as one row's worth of REST (TICKET-SRV-04).
+ */
 const UNIFORM_ENTITIES: readonly (readonly [string, OwnedTable])[] = [
-  ['accounts', accounts],
-  ['categories', categories],
   ['rules', rules],
   ['mappingProfiles', mappingProfiles],
   ['importBatches', importBatches],
-  ['transfers', transfers],
   ['loans', loans],
   ['recurringOverrides', recurringOverrides],
 ];
@@ -53,7 +58,12 @@ export const createApiRouters = (db: DrizzleDb): ApiRouter[] => [
     path: `/api/${name}`,
     router: createEntityRouter({ db, table }),
   })),
+  { path: '/api/accounts', router: createAccountsRouter(db) },
+  { path: '/api/categories', router: createCategoriesRouter(db) },
   { path: '/api/transactions', router: createTransactionsRouter(db) },
+  { path: '/api/transfers', router: createTransfersRouter(db) },
+  { path: '/api/import', router: createImportRouter(db) },
+  { path: '/api/data', router: createDataRouter(db) },
   { path: '/api/goals', router: createGoalsRouter(db) },
   { path: '/api/salaryMetadata', router: createSalaryMetadataRouter(db) },
   { path: '/api/categoryModel', router: createCategoryModelRouter(db) },

@@ -165,3 +165,24 @@ export const apiJson = async <T = unknown>(
   const text = await response.text();
   return { status: response.status, body: (text === '' ? undefined : JSON.parse(text)) as T };
 };
+
+/* --------------------------------------------------------------------------------------------
+ * Forced failures (TICKET-SRV-04)
+ *
+ * Every transactional endpoint has to answer the question "and if the *last* step fails?" with
+ * "then nothing happened". A trigger that raises on one statement is how a spec asks it: no
+ * production code learns it is being tested, and the failure lands exactly where the endpoint is
+ * least defended rather than at the first validation it happens to reach.
+ * ------------------------------------------------------------------------------------------ */
+
+/** Makes the next `INSERT`/`UPDATE`/`DELETE` on a table abort, taking its transaction with it. */
+export const abortOn = (
+  app: TestApp,
+  event: 'INSERT' | 'UPDATE' | 'DELETE',
+  table: string,
+): void => {
+  app.handle.sqlite.exec(
+    `CREATE TRIGGER abort_${event}_${table} BEFORE ${event} ON "${table}" ` +
+      `BEGIN SELECT RAISE(ABORT, 'forced failure (test)'); END`,
+  );
+};

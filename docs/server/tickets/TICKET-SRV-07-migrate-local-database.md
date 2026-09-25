@@ -62,6 +62,10 @@ Detects a pre-v3 `money-mosaic` IndexedDB database in the browser, offers to upl
 
 ## Notes
 
+- **`POST /api/data/import` was not built for a document this big, and this ticket is the largest one it will ever see.** Two things to check before relying on it (noted from TICKET-SRV-04's review):
+  - **The body limit is 10 MB** (`JSON_BODY_LIMIT` in `server/src/app.ts`). A decade of transactions carrying `rawLine`/`rawRow` will exceed that and get a bare 413 with nothing useful in it. Raise the limit for this route, or chunk the upload.
+  - **It is row-at-a-time**: one existence SELECT per row, then a second pass of up to five reference SELECTs per transaction row, where the Dexie original was one `bulkPut` per table. Fine for a test fixture, slow for a real database. Batching the reference pass into one `IN (…)` query per parent table is the cheap fix if it turns out to matter.
+
 - **The id remap is the only genuinely novel logic in v3.** Everything else is a port; this is new code doing something that has never been done in this codebase, against data the user cannot get back if it goes wrong. It deserves the largest share of the testing effort and a real database to rehearse against.
 - **Content-based assertions, not id-based ones.** A test that checks `transaction.categoryId === 3` proves nothing after a remap. The fixture tests must resolve through to the row and compare what it says.
 - **This must ship before [TICKET-SRV-08](./TICKET-SRV-08-retire-dexie.md)**, which deletes the Dexie code this migration reads through. After SRV-08 the only route out of an old browser database is the JSON file export — still possible, but manual, and it loses the trained model.

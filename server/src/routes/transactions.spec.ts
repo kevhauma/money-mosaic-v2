@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { apiFetch, apiJson } from '../app.testing.js';
+import { abortOn, apiFetch, apiJson } from '../app.testing.js';
 import { startTwoUserApp, transactionBody, type TwoUserApp } from './samples.testing.js';
 
 /**
@@ -228,5 +228,142 @@ describe('bulk writes run in one transaction', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe('Request body must be an array');
+  });
+});
+
+/**
+ * `POST /delete` (TICKET-SRV-04) — the delete that also unpicks transfers. `DELETE /bulk` above
+ * removes rows and nothing else; this one is the operation the bulk-action bar and the edit popup
+ * actually perform, and it spans three tables.
+ */
+describe('POST /api/transactions/delete', () => {
+  /** Two fresh legs, linked, plus the transfer id — the shape every case here needs. */
+  const linkedPair = async (app: TwoUserApp['app'], alice: TwoUserApp['alice']) => {
+    const from = await create(app, alice.session, transactionBody(alice.fixtures.accountId));
+    const to = await create(app, alice.session, transactionBody(alice.fixtures.accountId));
+    const linked = await apiJson<{ transfer: Row }>(app, '/api/transfers/link', {
+      as: alice.session,
+      method: 'POST',
+      body: {
+        fromTransactionId: from.body.id,
+        toTransactionId: to.body.id,
+        method: 'manual',
+        confidence: 'manual',
+      },
+    });
+
+    return { from: from.body.id, to: to.body.id, transferId: linked.body.transfer.id };
+  };
+
+  it('deletes the rows and repairs the transfer that touched them', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const { from, to, transferId } = await linkedPair(app, alice);
+
+    const result = await apiJson<{
+      removedTransactionIds: number[];
+      unlinkedTransferIds: number[];
+      clearedTransferTransactionIds: number[];
+    }>(app, '/api/transactions/delete', {
+      as: alice.session,
+      method: 'POST',
+      body: { ids: [from] },
+    });
+
+    expect(result.status).toBe(200);
+    expect(result.body).toEqual({
+      removedTransactionIds: [from],
+      unlinkedTransferIds: [transferId],
+      clearedTransferTransactionIds: [to],
+    });
+
+    expect((await apiFetch(app, `/api/transactions/${from}`, { as: alice.session })).status).toBe(
+      404,
+    );
+    expect(
+      (await apiJson<Row>(app, `/api/transactions/${to}`, { as: alice.session })).body[
+        'transferId'
+      ],
+    ).toBeUndefined();
+    expect(
+      (await apiFetch(app, `/api/transfers/${transferId}`, { as: alice.session })).status,
+    ).toBe(404);
+  });
+
+  it('skips an id belonging to another user, and never touches their row', async () => {
+    const { app, alice, bob } = await startTwoUserApp();
+
+    // The lenient half matches `bulkDelete`, which is a no-op on a key that is not there — a stale
+    // selection must not fail the whole request. The strict half is the one that matters: Bob's
+    // row is untouched, and Alice's report never mentions it.
+    const done = await apiJson<{ removedTransactionIds: number[] }>(
+      app,
+      '/api/transactions/delete',
+      {
+        as: alice.session,
+        method: 'POST',
+        body: { ids: [alice.fixtures.transactionIds[0], bob.fixtures.transactionIds[0]] },
+      },
+    );
+
+    expect(done.body.removedTransactionIds).toEqual([alice.fixtures.transactionIds[0]]);
+    expect((await list(app, alice.session)).body).toHaveLength(1);
+    expect((await list(app, bob.session)).body).toHaveLength(2);
+  });
+
+  it('reports nothing removed when every id is already gone', async () => {
+    const { app, alice } = await startTwoUserApp();
+
+    const done = await apiJson<{ removedTransactionIds: number[] }>(
+      app,
+      '/api/transactions/delete',
+      { as: alice.session, method: 'POST', body: { ids: [999_001, 999_002] } },
+    );
+
+    expect(done.body.removedTransactionIds).toEqual([]);
+    expect((await list(app, alice.session)).body).toHaveLength(2);
+  });
+
+  it('reports zeroes for an empty selection and rejects a malformed id', async () => {
+    const { app, alice } = await startTwoUserApp();
+
+    const empty = await apiJson<{ removedTransactionIds: number[] }>(
+      app,
+      '/api/transactions/delete',
+      { as: alice.session, method: 'POST', body: { ids: [] } },
+    );
+    expect(empty.body.removedTransactionIds).toEqual([]);
+    expect((await list(app, alice.session)).body).toHaveLength(2);
+
+    const malformed = await apiJson<{ error: string }>(app, '/api/transactions/delete', {
+      as: alice.session,
+      method: 'POST',
+      body: { ids: ['nope'] },
+    });
+    expect(malformed.status).toBe(400);
+    expect(malformed.body.error).toContain('item 0');
+  });
+
+  it('writes nothing when the last step fails', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const { from, to, transferId } = await linkedPair(app, alice);
+    // Deleting the rows is the last step: the transfer is already gone and the surviving leg already
+    // cleared by the time it runs, which is the state that must not survive the failure.
+    abortOn(app, 'DELETE', 'transactions');
+
+    const failed = await apiFetch(app, '/api/transactions/delete', {
+      as: alice.session,
+      method: 'POST',
+      body: { ids: [from] },
+    });
+
+    expect(failed.status).toBe(500);
+    expect(
+      (await apiFetch(app, `/api/transfers/${transferId}`, { as: alice.session })).status,
+    ).toBe(200);
+    expect(
+      (await apiJson<Row>(app, `/api/transactions/${to}`, { as: alice.session })).body[
+        'transferId'
+      ],
+    ).toBe(transferId);
   });
 });

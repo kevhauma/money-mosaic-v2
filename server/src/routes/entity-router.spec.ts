@@ -98,7 +98,9 @@ describe.each(eachSample)('%s', (path, sample) => {
     expect(patched.status).toBe(200);
     expect(patched.body).toMatchObject(sample.patch);
 
-    expect((await apiFetch(app, target, { as: alice.session, method: 'DELETE' })).status).toBe(204);
+    expect((await apiFetch(app, target, { as: alice.session, method: 'DELETE' })).status).toBe(
+      sample.deleteStatus ?? 204,
+    );
     expect((await apiFetch(app, target, { as: alice.session })).status).toBe(404);
   });
 
@@ -173,12 +175,14 @@ describe('entity router: shared behaviour', () => {
     expect(response.body.error).toContain('ids');
   });
 
-  it('never answers with a SQLite constraint message', async () => {
+  it('refuses to delete a category a loan tracks, naming the loan (TICKET-SRV-04)', async () => {
     const { app, alice } = await startTwoUserApp();
 
-    // `loans.categoryId` is NO ACTION, so deleting a category an active loan tracks is refused by
-    // SQLite itself (TICKET-SRV-02). The friendly wording belongs to TICKET-SRV-04; what must be
-    // true *now* is that the raw constraint failure never reaches the client.
+    // `loans.categoryId` is NO ACTION, so deleting a category a loan tracks is refused by SQLite
+    // itself (TICKET-SRV-02) — with `FOREIGN KEY constraint failed`, a message no client may see and
+    // none could act on. TICKET-SRV-04's `/api/categories` asks which loans track it first and
+    // answers 409 in words, so this asserts both halves: the wording is ours, and the constraint's
+    // is nowhere in it.
     await apiFetch(app, '/api/loans', {
       as: alice.session,
       method: 'POST',
@@ -201,7 +205,14 @@ describe('entity router: shared behaviour', () => {
       { as: alice.session, method: 'DELETE' },
     );
 
-    expect(refused.status).toBe(500);
-    expect(refused.body.error).toBe('Internal server error');
+    expect(refused.status).toBe(409);
+    expect(refused.body.error).toContain('"Car"');
+    expect(refused.body.error).not.toContain('constraint');
+
+    // And the category is still there, with its loan intact.
+    expect(
+      (await apiFetch(app, `/api/categories/${alice.fixtures.categoryId}`, { as: alice.session }))
+        .status,
+    ).toBe(200);
   });
 });

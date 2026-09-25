@@ -25,7 +25,7 @@ const EXPECTED_REFERENCES: Record<string, string[]> = {
   transfers: ['fromTransactionId', 'toTransactionId'],
   recurringOverrides: ['anchorTransactionId', 'mergedIntoTransactionId'],
   loans: ['categoryId'],
-  importBatches: ['accountId'],
+  importBatches: ['accountId', 'mappingProfileId'],
   mappingProfiles: ['defaultAccountId'],
 };
 
