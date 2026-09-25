@@ -5,7 +5,7 @@ import { unmatchableDigest, verifyPassword } from '../auth/passwords.js';
 import { createSession, deleteSession } from '../auth/sessions.js';
 import { findUserByEmail, toPublicUser } from '../auth/users.js';
 import type { DrizzleDb } from '../db.js';
-import type { HttpError } from '../middleware/error-handler.js';
+import { httpError } from '../http/errors.js';
 import { authUserOf, createRequireAuth } from '../middleware/require-auth.js';
 
 /**
@@ -25,12 +25,6 @@ const SIGN_IN_FAILED = 'Incorrect email or password';
  * would double the cost of every login.
  */
 const absentUserDigest = unmatchableDigest();
-
-const httpError = (status: number, message: string): HttpError => {
-  const error: HttpError = new Error(message);
-  error.status = status;
-  return error;
-};
 
 type Credentials = { readonly email: string; readonly password: string };
 

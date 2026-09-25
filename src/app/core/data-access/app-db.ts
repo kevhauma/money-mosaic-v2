@@ -11,7 +11,6 @@ import type {
   CategoryModelSettings,
   CsvEncoding,
   DashboardLayoutSettings,
-  DashboardRowId,
   DateFormat,
   ForecastSettings,
   ImportBatch,
@@ -39,6 +38,10 @@ import {
 // `from '@/core/data-access'` import keeps resolving exactly as it did.
 export * from './entities';
 export * from './seed-data';
+// `DEFAULT_APP_SETTINGS` and the other four singleton fallbacks moved to `shared/seed-data.ts`
+// alongside `DEFAULT_TRANSFER_SETTINGS` (TICKET-SRV-03), so the server answers an unwritten
+// singleton with the same object this app falls back to. The re-export above is what keeps every
+// existing import of them resolving from here.
 
 /**
  * The option lists behind three of those unions. They stay in the Angular workspace because only
@@ -69,74 +72,6 @@ export const needsPartnerContributionSeed = (
   !categories.some(
     (category) => category.isSystem && category.name === PARTNER_CONTRIBUTION_CATEGORY_NAME,
   );
-
-export const DEFAULT_CATEGORY_COMPARISON_SETTINGS: CategoryComparisonSettings = {
-  id: 1,
-  excludedCategoryIds: [],
-};
-
-/**
- * A row added by a later ticket goes on the **end** (TICKET-STAT-29's `spending-heatmap` is the
- * first to do so): `resolveDashboardRowOrder` appends ids an existing saved layout doesn't know
- * about, so appending here is what makes a new row arrive in the same place for a new user and a
- * returning one, instead of shuffling a layout someone already arranged.
- */
-export const DEFAULT_DASHBOARD_ROW_ORDER: DashboardRowId[] = [
-  'stats',
-  'weekday-weekend',
-  'category-breakdown',
-  'category-comparison',
-  'trend-chart',
-  'top-transactions',
-  'action-queue',
-  'account-balance',
-  'spending-heatmap',
-];
-
-export const DEFAULT_DASHBOARD_LAYOUT_SETTINGS: DashboardLayoutSettings = {
-  id: 1,
-  rowOrder: DEFAULT_DASHBOARD_ROW_ORDER,
-  hiddenRowIds: [],
-};
-
-export const DEFAULT_CATEGORY_MODEL_SETTINGS: CategoryModelSettings = {
-  id: 1,
-  trainingWindowYears: null,
-};
-
-export const DEFAULT_APP_SETTINGS: AppSettings = {
-  id: 1,
-  primaryColor: undefined,
-  // undefined, not a concrete '€'/'before' — same tri-state-via-undefined pattern as
-  // `primaryColor` above: keeps a fresh row's read-merge-put free of extra concrete fields (which
-  // would otherwise leak into every other setter's write), with the real default applied by each
-  // reader via `?? DEFAULT_CURRENCY_SYMBOL`/`?? DEFAULT_CURRENCY_SYMBOL_POSITION`.
-  currencySymbol: undefined,
-  currencySymbolPosition: undefined,
-  locale: undefined,
-  excludedIncomeCategoryIds: undefined,
-  careerStartDate: undefined,
-  smoothedBonusCategoryIds: undefined,
-  grossColor: undefined,
-  mainIncomeCategoryId: undefined,
-  seenGuideSlugs: undefined,
-  heatmapExcludedCategoryIds: undefined,
-  privacyMode: undefined,
-  fiscalYearStartMonth: undefined,
-  recentRanges: undefined,
-};
-
-export const DEFAULT_FORECAST_SETTINGS: ForecastSettings = {
-  id: 1,
-  lookbackMonths: 6,
-  basis: 'net-cash-flow',
-  safetyNetAmount: 0,
-  mode: 'when-affordable',
-  // Declared as `undefined` rather than omitted, the `DEFAULT_APP_SETTINGS` convention: this object
-  // seeds `ForecastSettingsStore`'s `withState`, and ngrx derives its signal members from the seed's
-  // *keys* — an omitted key means no signal at all, so a later `patchState` would be unreadable.
-  scopeAccountIds: undefined,
-};
 
 class AppDb extends Dexie {
   accounts!: Table<Account, number>;

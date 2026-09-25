@@ -1,7 +1,7 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import type { Rule, RuleAction, RuleCondition } from 'shared/entities.js';
-import { inList, json, ownerId } from './columns.js';
+import { inList, json, jsonArray, ownerId } from './columns.js';
 
 const MATCHES: readonly [
   NonNullable<Rule['conditionMatch']>,
@@ -28,7 +28,7 @@ export const rules = sqliteTable(
     enabled: integer('enabled', { mode: 'boolean' }).notNull(),
     continueOnMatch: integer('continueOnMatch', { mode: 'boolean' }).notNull(),
     conditionMatch: text('conditionMatch', { enum: MATCHES }),
-    conditions: json<RuleCondition[]>('conditions').notNull(),
+    conditions: jsonArray<RuleCondition[]>('conditions').notNull(),
     action: json<RuleAction>('action').notNull(),
   },
   (table) => [

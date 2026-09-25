@@ -1,7 +1,7 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import type { AccentColorId, CurrencySymbolPosition, RecentRange } from 'shared/entities.js';
-import { inList, json, ownerPrimaryKey } from './columns.js';
+import { inList, jsonArray, ownerPrimaryKey } from './columns.js';
 
 const ACCENT_COLORS: readonly [AccentColorId, ...AccentColorId[]] = [
   'amber',
@@ -43,19 +43,19 @@ export const appSettings = sqliteTable(
     /** A BCP 47 tag (e.g. `en-BE`) driving number grouping, separators and date formatting. */
     locale: text('locale'),
     /** Income categories opted *out* of "my income growth" (FR-INC-3). */
-    excludedIncomeCategoryIds: json<number[]>('excludedIncomeCategoryIds'),
+    excludedIncomeCategoryIds: jsonArray<number[]>('excludedIncomeCategoryIds'),
     /** ISO `YYYY-MM-DD` the user's working life started — not where their history begins. */
     careerStartDate: text('careerStartDate'),
     /** Income categories marked as an annual lump sum, spread across their year (FR-INC-4). */
-    smoothedBonusCategoryIds: json<number[]>('smoothedBonusCategoryIds'),
+    smoothedBonusCategoryIds: jsonArray<number[]>('smoothedBonusCategoryIds'),
     /** Colour of the `/income` gross-pay series, so gross and net are told apart deliberately. */
     grossColor: text('grossColor', { enum: ACCENT_COLORS }),
     /** The category salary lands in, so a recorded bonus comes off that one rather than pro rata. */
     mainIncomeCategoryId: integer('mainIncomeCategoryId'),
     /** How-to guides whose first-visit intro has been shown. Nothing writes it since TICKET-INC-23. */
-    seenGuideSlugs: json<string[]>('seenGuideSlugs'),
+    seenGuideSlugs: jsonArray<string[]>('seenGuideSlugs'),
     /** Expense categories left out of the Dashboard's spending heatmap (FR-STAT-15). */
-    heatmapExcludedCategoryIds: json<number[]>('heatmapExcludedCategoryIds'),
+    heatmapExcludedCategoryIds: jsonArray<number[]>('heatmapExcludedCategoryIds'),
     /** Blurs every figure on the Dashboard so the page survives a screen-share. NULL = off. */
     privacyMode: integer('privacyMode', { mode: 'boolean' }),
     /** Calendar month (1-12) a fiscal year begins in. NULL = January, today's behaviour. */
@@ -65,7 +65,7 @@ export const appSettings = sqliteTable(
      * range-expression text (`now-30d`), not resolved dates, so a saved relative range still
      * means "the last 30 days" on read.
      */
-    recentRanges: json<RecentRange[]>('recentRanges'),
+    recentRanges: jsonArray<RecentRange[]>('recentRanges'),
   },
   (table) => [
     inList('appSettings_primaryColor_check', table.primaryColor, ACCENT_COLORS),

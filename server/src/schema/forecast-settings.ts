@@ -1,7 +1,7 @@
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import type { ForecastMode, SavingBasis } from 'shared/entities.js';
-import { inList, json, ownerPrimaryKey } from './columns.js';
+import { inList, jsonArray, ownerPrimaryKey } from './columns.js';
 
 const BASES: readonly [SavingBasis, ...SavingBasis[]] = ['net-cash-flow', 'savings-transfers'];
 const MODES: readonly [ForecastMode, ...ForecastMode[]] = ['when-affordable', 'required-rate'];
@@ -30,7 +30,7 @@ export const forecastSettings = sqliteTable(
     /** Solve for the date a goal becomes affordable, or for the rate it demands (FUT-09). */
     mode: text('mode', { enum: MODES }),
     /** Accounts the forecast may consider (FUT-08). NULL or empty = every account. */
-    scopeAccountIds: json<number[]>('scopeAccountIds'),
+    scopeAccountIds: jsonArray<number[]>('scopeAccountIds'),
   },
   (table) => [
     inList('forecastSettings_basis_check', table.basis, BASES),

@@ -6,7 +6,7 @@ import type {
   MappingProfileColumns,
   SignConvention,
 } from 'shared/entities.js';
-import { inList, json, ownerId } from './columns.js';
+import { inList, json, jsonArray, ownerId } from './columns.js';
 
 const DATE_FORMATS: readonly [DateFormat, ...DateFormat[]] = [
   'DD/MM/YYYY',
@@ -36,7 +36,7 @@ export const mappingProfiles = sqliteTable(
     userId: ownerId(),
     name: text('name').notNull(),
     bankPreset: text('bankPreset'),
-    headerSignature: json<string[]>('headerSignature'),
+    headerSignature: jsonArray<string[]>('headerSignature'),
     delimiter: text('delimiter').notNull(),
     decimalSeparator: text('decimalSeparator').notNull(),
     dateFormat: text('dateFormat', { enum: DATE_FORMATS }).notNull(),

@@ -1,7 +1,7 @@
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import type { Account, JointOwner } from 'shared/entities.js';
-import { inList, json, ownerId } from './columns.js';
+import { inList, jsonArray, ownerId } from './columns.js';
 
 /** One list, read by both the (types-only) `enum` and the CHECK, the `users.role` convention. */
 const TYPES: readonly [Account['type'], ...Account['type'][]] = [
@@ -35,7 +35,7 @@ export const accounts = sqliteTable(
     archived: integer('archived', { mode: 'boolean' }).notNull(),
     /** A fraction in `[0, 1]`; only meaningful for `type === 'joint'`. NULL means "all mine". */
     ownershipShare: real('ownershipShare'),
-    coOwners: json<JointOwner[]>('coOwners'),
+    coOwners: jsonArray<JointOwner[]>('coOwners'),
     sortOrder: integer('sortOrder'),
   },
   // Dexie declared `name`, `type` and `archived`; each becomes a composite `(userId, field)` index,

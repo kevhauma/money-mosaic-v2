@@ -49,6 +49,38 @@ export const ownerPrimaryKey = () =>
 export const json = <T>(name: string) => text(name, { mode: 'json' }).$type<T>();
 
 /**
+ * The names of every JSON column whose value is a JSON **array** rather than an object.
+ *
+ * Drizzle's `json` mode erases the `$type<T>` at runtime, so body validation can only see "this
+ * column holds JSON" and would accept `{}` where the entity type says `number[]` — a 200 that
+ * hands the browser something `.includes()` throws on. Recording the shape here is what lets
+ * `parseEntityBody` tell the two apart. Column names are unique across the schema, which
+ * `dexie-parity.spec.ts` asserts.
+ */
+export const JSON_ARRAY_COLUMNS: ReadonlySet<string> = new Set([
+  'coOwners',
+  'excludedIncomeCategoryIds',
+  'smoothedBonusCategoryIds',
+  'seenGuideSlugs',
+  'heatmapExcludedCategoryIds',
+  'recentRanges',
+  'excludedCategoryIds',
+  'categoryIdByIndex',
+  'rowOrder',
+  'hiddenRowIds',
+  'scopeAccountIds',
+  'headerSignature',
+  'conditions',
+]);
+
+/** A JSON array column: `json<T[]>` plus its shape recorded in {@link JSON_ARRAY_COLUMNS}. */
+export const jsonArray = <T>(name: string) => {
+  if (!JSON_ARRAY_COLUMNS.has(name))
+    throw new Error(`${name} is a JSON array column but is missing from JSON_ARRAY_COLUMNS`);
+  return json<T>(name);
+};
+
+/**
  * A binary column for the three `ArrayBuffer` fields of `CategoryModelArtifact`. Reads back as a
  * `Buffer` (a `Uint8Array` subclass), byte for byte — which incidentally fixes the silent
  * model-weight loss recorded in TICKET-DAT-05, where `JSON.stringify` turned each buffer into an

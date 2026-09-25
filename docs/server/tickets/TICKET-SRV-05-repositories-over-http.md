@@ -47,6 +47,8 @@ Reimplements all 17 repositories in [`core/data-access/`](../../../src/app/core/
 
 ## Notes
 
+- **A settings endpoint answers `{}` for a row that was never written — keys *absent*, not present-with-`undefined`.** So the repository must keep spreading the response over its `DEFAULT_*` constant rather than returning the body straight through. This is not cosmetic: `ForecastSettingsStore` and `AppSettingsStore` derive their signal members from the seed object's **keys**, so a body missing a key produces a store missing a member — the `withState`-needs-every-key gotcha that TICKET-FUT-* hit in v2.2. Noted from TICKET-SRV-03's review, while it is cheap.
+
 - **This ticket is the point of no return for the local-first premise.** Up to here the app still works with the server switched off; after it, it does not. That is why [TICKET-SRV-06](./TICKET-SRV-06-bootstrap-hydration-over-network.md) (what the app does when the server is unreachable) is sequenced immediately after and should not be deferred — between the two, an offline user gets a blank screen with console errors.
 - **The per-method signature check earns its place.** Seventeen repositories reimplemented by hand is exactly the situation where a `Promise<void>` quietly becomes a `Promise<number>` and a caller's `if` starts always-truthing. The compiler catches most of it; the check catches the rest.
 - **Expect the abstraction to leak in exactly one place: latency.** Dexie resolved in microseconds off the same thread; the API resolves over a network. Nothing in the acceptance criteria above covers perceived speed — that is SRV-06's loading states and, if the dashboard's chained reads turn out to be slow, a follow-up ticket for batching them. Do not pre-optimise it here.

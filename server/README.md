@@ -50,6 +50,38 @@ migration is never edited.
 Everything else under `/api` mounts behind `requireAuth` (TICKET-AUTH-01); health, login and logout
 are the only routes a signed-out client can reach.
 
+### The entity API (TICKET-SRV-03)
+
+One router per table, each mounted behind `requireAuth` individually — see `src/routes/api.ts` for
+the registry. The signed-in user comes from the session cookie and from nowhere else: no endpoint
+reads a `userId` from a body, a query string or a path, and one in a body is ignored.
+
+- **Uniform entities** — `accounts`, `categories`, `rules`, `mappingProfiles`, `importBatches`,
+  `transfers`, `loans`, `recurringOverrides`, `goals`, `salaryMetadata`, `transactions`:
+  `GET /api/<name>` (with `?ids=1,2,3` to fetch a subset), `GET /api/<name>/:id`,
+  `POST /api/<name>`, `PATCH /api/<name>/:id`, `DELETE /api/<name>/:id`.
+- **Transactions** additionally: `GET /api/transactions/count`, the list filters
+  `?accountId=` / `?importBatchId=` / `?reimbursementTransferId=`, and
+  `POST` / `PATCH` / `DELETE /api/transactions/bulk` (an array of rows, of `{ id, changes }`, and of
+  ids) — each one SQLite transaction, all applied or none.
+- **Goals**: `PATCH /api/goals/sort-order` with the full `{ id, sortOrder }[]`, applied atomically.
+- **Salary metadata**: `PUT /api/salaryMetadata` upserts by `yearMonth` and **replaces** the row.
+- **Settings singletons** — `appSettings`, `transferSettings`, `forecastSettings`,
+  `categoryComparisonSettings`, `dashboardLayoutSettings`, `categoryModelSettings`:
+  `GET`/`PATCH /api/settings/<name>`. A user with no row reads the shared `DEFAULT_*` constant; a
+  patch merges into the row server-side, inside a transaction, creating it if absent.
+- **The trained model**: `GET`/`PUT`/`DELETE /api/categoryModel`, `application/octet-stream` rather
+  than JSON — `[uint32 LE header length][header JSON][modelTopology][weightSpecs][weightData]`, where
+  the header is `{ entity, blobs: { name: byteLength } }`. Megabytes of weights have no business
+  being base64 in a JSON body.
+
+Responses are the entity shapes the Angular repositories already return — same field names, same
+types, `number` ids, with `userId` and SQL `NULL`s dropped. A row belonging to another user answers
+**404, not 403**. A malformed body is a 400 naming the field; anything unexpected is a 500 reading
+`Internal server error`, with the detail in the log, so a SQLite constraint message never reaches a
+client.
+
+
 **First boot seeds one account: `admin` / `admin`** (role `admin`, display name "Administrator").
 The identifier is literally `admin` — the login field is free text, not a validated email address.
 Seeding only ever runs against an empty `users` table, so it cannot resurrect a deleted admin or

@@ -1,7 +1,7 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import type { CategoryModelArtifact, FeatureConfig } from 'shared/entities.js';
-import { bytes, json, ownerPrimaryKey } from './columns.js';
+import { bytes, json, jsonArray, ownerPrimaryKey } from './columns.js';
 
 type ModelMetrics = CategoryModelArtifact['metrics'];
 
@@ -22,7 +22,7 @@ export const categoryModel = sqliteTable('categoryModel', {
   weightSpecs: bytes('weightSpecs').notNull(),
   weightData: bytes('weightData').notNull(),
   /** Output index -> category id. A dense array, so its position *is* the model's class index. */
-  categoryIdByIndex: json<number[]>('categoryIdByIndex').notNull(),
+  categoryIdByIndex: jsonArray<number[]>('categoryIdByIndex').notNull(),
   featureConfig: json<FeatureConfig>('featureConfig').notNull(),
   /** `taxonomySignature()` at training time — flips the model `stale` once categories change. */
   taxonomySignature: text('taxonomySignature').notNull(),

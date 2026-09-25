@@ -1,7 +1,7 @@
 import { sqliteTable } from 'drizzle-orm/sqlite-core';
 
 import type { DashboardRowId } from 'shared/entities.js';
-import { json, ownerPrimaryKey } from './columns.js';
+import { jsonArray, ownerPrimaryKey } from './columns.js';
 
 /**
  * The user's Dashboard row order and hidden rows (TICKET-STAT-14) — one row per user, ported from
@@ -15,8 +15,8 @@ import { json, ownerPrimaryKey } from './columns.js';
  */
 export const dashboardLayoutSettings = sqliteTable('dashboardLayoutSettings', {
   userId: ownerPrimaryKey(),
-  rowOrder: json<DashboardRowId[]>('rowOrder').notNull(),
-  hiddenRowIds: json<DashboardRowId[]>('hiddenRowIds').notNull(),
+  rowOrder: jsonArray<DashboardRowId[]>('rowOrder').notNull(),
+  hiddenRowIds: jsonArray<DashboardRowId[]>('hiddenRowIds').notNull(),
 });
 
 export type DashboardLayoutSettingsRow = typeof dashboardLayoutSettings.$inferSelect;

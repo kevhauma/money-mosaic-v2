@@ -3,6 +3,8 @@ import express, { type Express } from 'express';
 import type { DatabaseHandle } from './db.js';
 import { createErrorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/request-logger.js';
+import { createRequireAuth } from './middleware/require-auth.js';
+import { createApiRouters } from './routes/api.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createHealthRouter } from './routes/health.js';
 
@@ -34,10 +36,13 @@ export const createApp = ({ handle, isDev }: CreateAppOptions): Express => {
   app.use('/api', createHealthRouter(handle));
   app.use('/api/auth', createAuthRouter(handle.db));
 
-  // Every router added from here on mounts behind `createRequireAuth(handle.db)` (TICKET-SRV-03):
-  // health and the auth routes above are the only endpoints a signed-out client may reach. The
-  // middleware is applied per router rather than blanket-mounted on `/api`, so an unknown path
-  // still answers 404 rather than 401.
+  // Health and the auth routes above are the only endpoints a signed-out client may reach: every
+  // entity router mounts behind `requireAuth` (TICKET-SRV-03). The middleware is applied per router
+  // rather than blanket-mounted on `/api`, so an unknown path still answers 404 rather than 401.
+  const requireAuth = createRequireAuth(handle.db);
+  for (const { path, router } of createApiRouters(handle.db)) {
+    app.use(path, requireAuth, router);
+  }
 
   app.use(notFoundHandler);
   app.use(createErrorHandler());

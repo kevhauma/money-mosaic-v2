@@ -2,8 +2,11 @@ import { onTestFinished } from 'vitest';
 import type { Express } from 'express';
 
 import { createApp } from './app.js';
+import { readCookie, SESSION_COOKIE } from './auth/cookies.js';
+import { hashPassword } from './auth/passwords.js';
 import { seedAdminUser } from './auth/seed.js';
 import { openDatabase, runMigrations, type DatabaseHandle, type DrizzleDb } from './db.js';
+import { users } from './schema/users.js';
 
 /**
  * Testing-only harness for the backend specs. Every suite that needs a live server repeats the
@@ -63,3 +66,102 @@ export const startTestAppWithDb = async ({
 /** `startTestAppWithDb` for the specs that only need the URL. */
 export const startTestApp = async (options: TestAppOptions = {}): Promise<string> =>
   (await startTestAppWithDb(options)).baseUrl;
+
+/* --------------------------------------------------------------------------------------------
+ * Signed-in requests (TICKET-SRV-03)
+ *
+ * Every entity endpoint is behind `requireAuth`, so a route spec's first two lines are always
+ * "make a user, sign it in". Two users, in fact: the whole point of the isolation tests is that
+ * one of them cannot see the other's rows.
+ * ------------------------------------------------------------------------------------------ */
+
+/** Password every test user is created with. Nothing here tests password strength. */
+export const TEST_PASSWORD = 'test-password';
+
+export type TestSession = {
+  readonly id: number;
+  readonly email: string;
+  /** Headers that authenticate a `fetch` as this user. */
+  readonly headers: Record<string, string>;
+};
+
+/**
+ * The scrypt digest of `TEST_PASSWORD`, derived once. Key derivation is deliberately expensive
+ * (~75ms), and a spec that makes two users per test would otherwise spend most of its time proving
+ * scrypt still works — which `passwords.spec.ts` already does.
+ */
+let testDigest: Promise<Awaited<ReturnType<typeof hashPassword>>> | undefined;
+
+const testPasswordDigest = (): Promise<Awaited<ReturnType<typeof hashPassword>>> =>
+  (testDigest ??= hashPassword(TEST_PASSWORD));
+
+/** The session token a login response handed back, read out of its `Set-Cookie` header. */
+const sessionCookieOf = (response: Response): string => {
+  for (const header of response.headers.getSetCookie()) {
+    const token = readCookie(header.split(';')[0] ?? '', SESSION_COOKIE);
+    if (token !== undefined) return token;
+  }
+  throw new Error('login did not set a session cookie');
+};
+
+/** Creates an ordinary (non-admin) user and signs it in over HTTP, cookie and all. */
+export const signInAs = async (app: TestApp, email: string): Promise<TestSession> => {
+  const id = app.db
+    .insert(users)
+    .values({
+      email,
+      displayName: email,
+      ...(await testPasswordDigest()),
+      role: 'user',
+      disabled: false,
+    })
+    .returning({ id: users.id })
+    .get().id;
+
+  const response = await fetch(`${app.baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password: TEST_PASSWORD }),
+  });
+  if (!response.ok) throw new Error(`could not sign in as ${email}`);
+
+  return { id, email, headers: { cookie: `${SESSION_COOKIE}=${sessionCookieOf(response)}` } };
+};
+
+export type ApiRequest = {
+  /** Omit to make the request signed-out, which is what the 401 checks do. */
+  readonly as?: TestSession;
+  readonly method?: string;
+  /** Sent as a JSON body. Mutually exclusive with `binary`. */
+  readonly body?: unknown;
+  /** Sent as `application/octet-stream`, for the model artifact endpoints. */
+  readonly binary?: Uint8Array;
+};
+
+/** One `/api` request, with or without a session. */
+export const apiFetch = (
+  app: TestApp,
+  path: string,
+  { as, method = 'GET', body, binary }: ApiRequest = {},
+): Promise<Response> => {
+  const headers: Record<string, string> = { ...as?.headers };
+  if (binary !== undefined) headers['content-type'] = 'application/octet-stream';
+  else if (body !== undefined) headers['content-type'] = 'application/json';
+
+  return fetch(`${app.baseUrl}${path}`, {
+    method,
+    headers,
+    body: binary ?? (body === undefined ? undefined : JSON.stringify(body)),
+  });
+};
+
+/** `apiFetch` for the (many) cases that want the status and the parsed body together. */
+export const apiJson = async <T = unknown>(
+  app: TestApp,
+  path: string,
+  request: ApiRequest = {},
+): Promise<{ status: number; body: T }> => {
+  const response = await apiFetch(app, path, request);
+  const text = await response.text();
+  return { status: response.status, body: (text === '' ? undefined : JSON.parse(text)) as T };
+};

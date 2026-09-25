@@ -5,9 +5,22 @@
  * `seedUserDefaults` writes the same rows for a newly created user. One definition, so the two
  * cannot drift — which is what `server/src/seed-user-defaults.spec.ts` asserts.
  *
+ * The `DEFAULT_*` singleton fallbacks at the bottom are here for the same reason: they are what a
+ * singleton row reads as before anyone has written it, on both sides of the seam (TICKET-SRV-03).
+ *
  * Plain data and type-only imports, per the rules in `shared/entities.ts`.
  */
-import type { Category, MappingProfile, TransferSettings } from './entities.js';
+import type {
+  AppSettings,
+  Category,
+  CategoryComparisonSettings,
+  CategoryModelSettings,
+  DashboardLayoutSettings,
+  DashboardRowId,
+  ForecastSettings,
+  MappingProfile,
+  TransferSettings,
+} from './entities.js';
 
 /** Name of the seeded `neutral`-kind system category (TICKET-CAT-02), used to find it on both first-run seeding and the `.version(6)` backfill. */
 export const PARTNER_CONTRIBUTION_CATEGORY_NAME = 'Partner contribution';
@@ -180,4 +193,86 @@ export const DEFAULT_TRANSFER_SETTINGS: TransferSettings = {
   id: 1,
   matchWindowDays: 3,
   autoLinkMediumConfidence: true,
+};
+
+/* --------------------------------------------------------------------------------------------
+ * Singleton fallbacks
+ *
+ * What an **unwritten** singleton row reads as. Dexie's repositories return these via
+ * `(await table.get(1)) ?? DEFAULT_X`, and the server's `/api/settings/<name>` endpoints answer
+ * with the same objects for a user who has never written the row — and merge a PATCH into them
+ * when creating it (TICKET-SRV-03).
+ *
+ * They live here, beside `DEFAULT_TRANSFER_SETTINGS`, for that second reader: a copy on the server
+ * would be a second definition of "what the user gets before they choose", and the two would drift
+ * the first time a default changed. The `id: 1` each one carries is the old singleton convention
+ * the browser database still keys on; the server drops it, since there the owner is the key.
+ * ------------------------------------------------------------------------------------------ */
+
+export const DEFAULT_CATEGORY_COMPARISON_SETTINGS: CategoryComparisonSettings = {
+  id: 1,
+  excludedCategoryIds: [],
+};
+
+/**
+ * A row added by a later ticket goes on the **end** (TICKET-STAT-29's `spending-heatmap` is the
+ * first to do so): `resolveDashboardRowOrder` appends ids an existing saved layout doesn't know
+ * about, so appending here is what makes a new row arrive in the same place for a new user and a
+ * returning one, instead of shuffling a layout someone already arranged.
+ */
+export const DEFAULT_DASHBOARD_ROW_ORDER: DashboardRowId[] = [
+  'stats',
+  'weekday-weekend',
+  'category-breakdown',
+  'category-comparison',
+  'trend-chart',
+  'top-transactions',
+  'action-queue',
+  'account-balance',
+  'spending-heatmap',
+];
+
+export const DEFAULT_DASHBOARD_LAYOUT_SETTINGS: DashboardLayoutSettings = {
+  id: 1,
+  rowOrder: DEFAULT_DASHBOARD_ROW_ORDER,
+  hiddenRowIds: [],
+};
+
+export const DEFAULT_CATEGORY_MODEL_SETTINGS: CategoryModelSettings = {
+  id: 1,
+  trainingWindowYears: null,
+};
+
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  id: 1,
+  primaryColor: undefined,
+  // undefined, not a concrete '€'/'before' — same tri-state-via-undefined pattern as
+  // `primaryColor` above: keeps a fresh row's read-merge-put free of extra concrete fields (which
+  // would otherwise leak into every other setter's write), with the real default applied by each
+  // reader via `?? DEFAULT_CURRENCY_SYMBOL`/`?? DEFAULT_CURRENCY_SYMBOL_POSITION`.
+  currencySymbol: undefined,
+  currencySymbolPosition: undefined,
+  locale: undefined,
+  excludedIncomeCategoryIds: undefined,
+  careerStartDate: undefined,
+  smoothedBonusCategoryIds: undefined,
+  grossColor: undefined,
+  mainIncomeCategoryId: undefined,
+  seenGuideSlugs: undefined,
+  heatmapExcludedCategoryIds: undefined,
+  privacyMode: undefined,
+  fiscalYearStartMonth: undefined,
+  recentRanges: undefined,
+};
+
+export const DEFAULT_FORECAST_SETTINGS: ForecastSettings = {
+  id: 1,
+  lookbackMonths: 6,
+  basis: 'net-cash-flow',
+  safetyNetAmount: 0,
+  mode: 'when-affordable',
+  // Declared as `undefined` rather than omitted, the `DEFAULT_APP_SETTINGS` convention: this object
+  // seeds `ForecastSettingsStore`'s `withState`, and ngrx derives its signal members from the seed's
+  // *keys* — an omitted key means no signal at all, so a later `patchState` would be unreadable.
+  scopeAccountIds: undefined,
 };

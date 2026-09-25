@@ -1,6 +1,6 @@
 import { sqliteTable } from 'drizzle-orm/sqlite-core';
 
-import { json, ownerPrimaryKey } from './columns.js';
+import { jsonArray, ownerPrimaryKey } from './columns.js';
 
 /**
  * Category ids left out of the Dashboard's category period comparison panel — one row per user,
@@ -13,7 +13,7 @@ import { json, ownerPrimaryKey } from './columns.js';
  */
 export const categoryComparisonSettings = sqliteTable('categoryComparisonSettings', {
   userId: ownerPrimaryKey(),
-  excludedCategoryIds: json<number[]>('excludedCategoryIds').notNull(),
+  excludedCategoryIds: jsonArray<number[]>('excludedCategoryIds').notNull(),
 });
 
 export type CategoryComparisonSettingsRow = typeof categoryComparisonSettings.$inferSelect;
