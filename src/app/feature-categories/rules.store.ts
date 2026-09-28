@@ -20,6 +20,7 @@ import {
   type SharedRulesFile,
   type SkippedRuleEntry,
 } from './rule-share';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 export type ImportRulesResult = { added: number; skipped: SkippedRuleEntry[] };
 
@@ -42,6 +43,10 @@ export const RulesStore = signalStore(
   withMethods((store) => {
     const rulesRepository = inject(RulesRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
@@ -54,6 +59,7 @@ export const RulesStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       // Aliased to the store's own public method names (same pattern as `withArchivable`'s
@@ -209,6 +215,9 @@ export const RulesStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('RulesStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `rules()` synchronously can still `await store.hydrate()` as a guard.

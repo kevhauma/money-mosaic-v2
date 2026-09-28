@@ -13,8 +13,8 @@ import { daisyClasses } from '@/shared/utils';
 export type InputColor =
   'neutral' | 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
 export type InputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-/** `month` renders the browser's `yyyy-mm` picker — a lump sum lands in a month, not on a day (TICKET-LOAN-14). */
-export type InputType = 'text' | 'number' | 'date' | 'email' | 'month';
+/** `month` renders the browser's `yyyy-mm` picker — a lump sum lands in a month, not on a day (TICKET-LOAN-14); `password` masks the value and is what the login form signs in with (TICKET-AUTH-02). */
+export type InputType = 'text' | 'number' | 'date' | 'email' | 'month' | 'password';
 
 @Component({
   selector: 'mm-input',
@@ -38,6 +38,8 @@ export class InputComponent implements ControlValueAccessor {
   readonly min = input<string>();
   readonly max = input<string>();
   readonly maxlength = input<number>();
+  /** Native autofill hint (`email`, `current-password`, ...) — it does not forward through a wrapping component, and a login form without it is one a password manager cannot fill (TICKET-AUTH-02). */
+  readonly autocomplete = input<string>();
   readonly ariaInvalid = input(false);
   /** Accessible name for an input with no visible `<label>` of its own — e.g. a cell in an editable table, whose column header alone doesn't say which row it belongs to. */
   readonly ariaLabel = input<string>();

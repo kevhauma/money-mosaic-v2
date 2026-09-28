@@ -134,6 +134,11 @@ const defaultStoreState = (): RangeStoreState => ({
  * via `pickGranularityForSpan` (TICKET-STAT-15) and then held for the session by `ChartOptionsStore`
  * (TICKET-STAT-27), alongside each chart's hidden series and dragged zoom window.
  */
+/**
+ * Deliberately **not** registered for the sign-out wipe (TICKET-AUTH-02): this holds a UI choice,
+ * not user data, and nothing about it is worth carrying between two people's sessions or is
+ * revealing if it is. `store-reset-registry.spec.ts` lists it with this reason.
+ */
 export const RangeStore = signalStore(
   { providedIn: 'root' },
   withState<RangeStoreState>(defaultStoreState()),

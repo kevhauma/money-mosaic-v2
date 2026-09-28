@@ -19,6 +19,7 @@ import {
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
 import { TransactionDeletionService, type RemoveTransactionsResult } from '@/core/transactions';
 import { isSavingsMovement } from '@/core/transfers';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 const transactionConfig = entityConfig({
   entity: type<Transaction>(),
@@ -70,8 +71,13 @@ export const TransactionsStore = signalStore(
   withMethods((store) => {
     const transactionsRepository = inject(TransactionsRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     return {
+      reset,
       /**
        * Idempotent and safe to call from multiple places (app bootstrap fires it once
        * without awaiting; any flow reading `transactions()` synchronously can await it as a
@@ -171,6 +177,9 @@ export const TransactionsStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('TransactionsStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `transactions()` synchronously can still `await store.hydrate()` as a guard.

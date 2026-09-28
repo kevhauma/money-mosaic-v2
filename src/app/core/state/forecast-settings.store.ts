@@ -14,6 +14,7 @@ import {
   type ForecastSettings,
 } from '@/core/data-access';
 import type { SavingBasis } from '@/core/stats';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 /**
  * The forecast's own parameters (TICKET-FUT-02, FR-FUT-2), edited by TICKET-FUT-06.
@@ -39,6 +40,10 @@ export const ForecastSettingsStore = signalStore(
   withMethods((store) => {
     const forecastSettingsRepository = inject(ForecastSettingsRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
@@ -51,6 +56,7 @@ export const ForecastSettingsStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       setLookbackMonths: async (lookbackMonths: number): Promise<void> => {
@@ -93,6 +99,9 @@ export const ForecastSettingsStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('ForecastSettingsStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `lookbackMonths()`/`basis()` synchronously can still `await store.hydrate()` as a guard.

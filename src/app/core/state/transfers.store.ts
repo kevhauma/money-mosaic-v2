@@ -21,6 +21,7 @@ import { TransfersRepository, type Transaction, type Transfer } from '@/core/dat
 import { TransferLinkingService, TransferMatchingService } from '@/core/transfers';
 import { TransactionsStore } from './transactions.store';
 import { TransferSettingsStore } from './transfer-settings.store';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 const transferConfig = entityConfig({
   entity: type<Transfer>(),
@@ -49,8 +50,13 @@ export const TransfersStore = signalStore(
     const transferLinkingService = inject(TransferLinkingService);
     const transactionsStore = inject(TransactionsStore);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     return {
+      reset,
       /** Idempotent; `force: true` re-fetches (used by the dev seed after writing new transfers). */
       hydrate: (options?: { force?: boolean }): Promise<void> => {
         if (!hydration || options?.force) {
@@ -150,6 +156,9 @@ export const TransfersStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('TransfersStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `transfers()` synchronously can still `await store.hydrate()` as a guard.

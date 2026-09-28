@@ -1,8 +1,31 @@
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { Router, TitleStrategy, provideRouter } from '@angular/router';
+import { vi } from 'vitest';
+import { AuthApiService, type PublicUser } from '@/core/auth';
 import { AppTitleStrategy } from './core/layout/app-title.strategy';
 import { routes } from './app.routes';
+
+const ADMIN: PublicUser = {
+  id: 1,
+  email: 'admin@example.com',
+  displayName: 'Admin',
+  role: 'admin',
+};
+
+/**
+ * Every route below `/login` now sits behind `authGuard` (TICKET-AUTH-02), and the guard settles an
+ * `unknown` session by calling `GET /api/auth/me`. These cases are about the route *table*, not
+ * about who is signed in, so they stub that one call — signed in unless a case says otherwise.
+ */
+const signedIn = (user: PublicUser | null = ADMIN) => ({
+  provide: AuthApiService,
+  useValue: {
+    me: vi.fn(() => (user ? Promise.resolve(user) : Promise.reject(new Error('401')))),
+    login: vi.fn(),
+    logout: vi.fn(),
+  },
+});
 
 /**
  * Records what the shipped route table actually does with a URL nothing matches — there is no
@@ -21,7 +44,7 @@ const ROUTE_RESOLUTION_TIMEOUT_MS = 30_000;
 
 describe('app routes: unmatched URLs', () => {
   const navigate = async (url: string): Promise<{ resolved: boolean; error: unknown }> => {
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({ providers: [provideRouter(routes), signedIn()] });
     const router = TestBed.inject(Router);
     try {
       return { resolved: await router.navigateByUrl(url), error: null };
@@ -97,7 +120,7 @@ describe('app routes: unmatched URLs', () => {
     async () => {
       // The rename must not break a bookmark or a note written while the page was called
       // Learning — this is the only reason the old path is still in the table.
-      TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+      TestBed.configureTestingModule({ providers: [provideRouter(routes), signedIn()] });
       const router = TestBed.inject(Router);
 
       const resolved = await router.navigateByUrl('/learning');
@@ -118,7 +141,11 @@ describe('app routes: unmatched URLs', () => {
 describe('app routes: page titles', () => {
   const titleAfterNavigating = async (url: string): Promise<string> => {
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), { provide: TitleStrategy, useClass: AppTitleStrategy }],
+      providers: [
+        provideRouter(routes),
+        signedIn(),
+        { provide: TitleStrategy, useClass: AppTitleStrategy },
+      ],
     });
     await TestBed.inject(Router).navigateByUrl(url);
     return TestBed.inject(Title).getTitle();
@@ -158,6 +185,50 @@ describe('app routes: page titles', () => {
     'leaves the landing page as the bare brand — it is the front door, not a page inside the app',
     async () => {
       await expect(titleAfterNavigating('/home')).resolves.toBe('Money Mosaic');
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
+});
+
+/**
+ * What the guard does to the shipped table (TICKET-AUTH-02) — the guard's own branches are covered
+ * in `core/auth/auth.guard.spec.ts`; what these pin is that it is actually *attached* here, and
+ * that `/login` is the one route it is not attached to.
+ */
+describe('app routes: the session gate', () => {
+  const navigateAs = async (user: PublicUser | null, url: string): Promise<Router> => {
+    TestBed.configureTestingModule({ providers: [provideRouter(routes), signedIn(user)] });
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl(url);
+    return router;
+  };
+
+  it(
+    'sends a signed-out visitor from a deep link to /login, carrying the URL they asked for',
+    async () => {
+      const router = await navigateAs(null, '/transactions');
+
+      expect(router.url).toBe('/login?returnUrl=%2Ftransactions');
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
+
+  it(
+    'leaves /login itself reachable without a session',
+    async () => {
+      const router = await navigateAs(null, '/login');
+
+      expect(router.url).toBe('/login');
+    },
+    ROUTE_RESOLUTION_TIMEOUT_MS,
+  );
+
+  it(
+    'lets a signed-in visitor straight through to the route they asked for',
+    async () => {
+      const router = await navigateAs(ADMIN, '/transactions');
+
+      expect(router.url).toBe('/transactions');
     },
     ROUTE_RESOLUTION_TIMEOUT_MS,
   );

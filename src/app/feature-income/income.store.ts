@@ -17,6 +17,7 @@ import {
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import type { AccentColorId } from '@/core/theme';
 import { savingsAccountIbans } from '@/core/transfers';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 import {
   clampRangeToCareerStart,
   validateCareerStartDate,
@@ -291,6 +292,10 @@ export const IncomeStore = signalStore(
   withMethods((store) => {
     const salaryMetadataRepository = inject(SalaryMetadataRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
@@ -305,6 +310,7 @@ export const IncomeStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       /**
@@ -327,6 +333,9 @@ export const IncomeStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('IncomeStore', store.reset, store.hydrate);
+
       // Fire-and-forget on first injection rather than at app bootstrap (TICKET-PERF-07) — nothing
       // outside `/income` reads salary metadata.
       void store.hydrate();

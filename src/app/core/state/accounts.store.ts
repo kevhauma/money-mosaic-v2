@@ -29,6 +29,7 @@ import {
   withArchivable,
   withPersistedCrud,
 } from '@/shared/utils';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 const accountConfig = entityConfig({
   entity: type<Account>(),
@@ -179,6 +180,10 @@ export const AccountsStore = signalStore(
     const transactionsStore = inject(TransactionsStore);
     const transfersStore = inject(TransfersStore);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     /**
      * Idempotent; triggered on first injection (`withHooks` below, TICKET-PERF-07). `force: true`
@@ -196,6 +201,7 @@ export const AccountsStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       // Aliased to the store's own public method names (same pattern as `withArchivable`'s
@@ -259,6 +265,9 @@ export const AccountsStore = signalStore(
   })),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('AccountsStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `accounts()` synchronously can still `await store.hydrate()` as a guard.

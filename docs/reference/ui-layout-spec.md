@@ -14,6 +14,14 @@ Persistent-sidebar layout built on daisyUI's `drawer` component.
 
 **Range & grouping switcher** — two controls, always shown together: a date-range picker (quick presets — This month, Last month, This quarter, This year — plus a custom from/to picker) and a grouping segmented control (Day / Week / Month / Quarter) that decides how period-based stats are bucketed. Default: current calendar month, grouped by month. It's global because most stats are range-sliced (FR-STAT-2/FR-STAT-7/§7); it writes `from`, `to`, `groupBy` query params that Dashboard, Accounts detail, and Categories all read, so navigating between them keeps you looking at the same range. Centralize the keys in `shared/utils/search-params.ts` per the routing convention. Transactions reads `from`/`to` too (to inherit the range on drill-down) but ignores `groupBy` — a flat list has nothing to bucket.
 
+### 1.1 Before the shell — `/login` (TICKET-AUTH-02)
+
+One route renders **outside** the shell: the sign-in screen. A visitor the app cannot identify has no nav to render and no data to show, so `/login` is a full-page, sidebar-free layout — a single centred `mm-paper` card carrying the brand mark, an email and a password field, one submit button with a pending state, and one inline error line in the server's own wording.
+
+- **Never a child of `AppShellComponent`.** Rendering it inside the shell would make the nav, its icons and every feature store eager for a signed-out visitor, which is exactly what the shell's lazy `loadComponent` exists to avoid. It is a sibling top-level route, like the landing page.
+- **Every other route sits behind `authGuard`**, which sends a signed-out visitor here carrying the URL it stopped (`?returnUrl=`); a successful sign-in returns there rather than to the dashboard.
+- **The shell owns the way back out**: the pinned foot of the sidebar names the signed-in user and carries the "Sign out" action, below the utility links.
+
 ## 2. Breakpoints
 
 | Range | Sidebar | Stat grids | Tables |
@@ -115,6 +123,7 @@ Use daisyUI's built-in `light` / `dark` themes, switched via `prefers-color-sche
 
 | Path | Feature | Reads query params |
 |---|---|---|
+| `/login` | `feature-auth` | `returnUrl` (the URL `authGuard` stopped) |
 | `/dashboard` | `feature-dashboard` | `from`, `to`, `groupBy` |
 | `/accounts` | `feature-accounts` | — |
 | `/accounts/:id` | `feature-accounts` | `from`, `to`, `groupBy` (for the mini stats) |

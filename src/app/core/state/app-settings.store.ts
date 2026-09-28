@@ -20,6 +20,7 @@ import {
   type AccentColorId,
 } from '@/core/theme';
 import { syncFormatSettings, type CurrencySymbolPosition } from '@/shared/utils';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 export const AppSettingsStore = signalStore(
   { providedIn: 'root' },
@@ -36,6 +37,10 @@ export const AppSettingsStore = signalStore(
   withMethods((store) => {
     const appSettingsRepository = inject(AppSettingsRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
@@ -48,6 +53,7 @@ export const AppSettingsStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       setPrimaryColor: async (primaryColor: AccentColorId | undefined): Promise<void> => {
@@ -140,6 +146,9 @@ export const AppSettingsStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('AppSettingsStore', store.reset, store.hydrate);
+
       // Fire-and-forget on first injection instead of app bootstrap (TICKET-PERF-07).
       void store.hydrate();
 

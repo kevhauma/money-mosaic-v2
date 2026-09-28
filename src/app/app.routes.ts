@@ -1,25 +1,37 @@
 import { Routes } from '@angular/router';
+import { authGuard } from '@/core/auth';
 import { homeRedirectGuard, markVisitedGuard } from '@/core/onboarding';
 
 export const routes: Routes = [
+  {
+    // The only unguarded route, and the only one rendered outside the shell (TICKET-AUTH-02) —
+    // everything below it needs a session, and `authGuard` sends a signed-out visitor here with
+    // the URL it stopped.
+    path: 'login',
+    loadChildren: () => import('@/feature-auth').then((m) => m.AUTH_ROUTES),
+  },
   {
     // First-time visitor lands on the public landing page (TICKET-PUB-01); a returning visitor
     // (homeRedirectGuard sees the `mm-has-visited` flag already set) is redirected to /dashboard.
     path: '',
     pathMatch: 'full',
-    canActivate: [homeRedirectGuard],
+    canActivate: [authGuard, homeRedirectGuard],
     loadChildren: () => import('@/feature-home').then((m) => m.HOME_ROUTES),
   },
   {
     // The landing page stays reachable at an explicit route even after the "seen it" flag is
     // set — linked from Settings rather than the primary sidebar nav.
     path: 'home',
+    canActivate: [authGuard],
     loadChildren: () => import('@/feature-home').then((m) => m.HOME_ROUTES),
   },
   {
     // The authenticated-app shell (drawer/sidebar) wraps every feature route below as a
     // lazy layout route — the landing page above is a sibling route rendered outside it.
     path: '',
+    // One guard on the layout route covers every feature child below it — a page added later is
+    // guarded by existing there, rather than by remembering to guard it (TICKET-AUTH-02).
+    canActivate: [authGuard],
     loadComponent: () => import('@/core/layout').then((m) => m.AppShellComponent),
     children: [
       {

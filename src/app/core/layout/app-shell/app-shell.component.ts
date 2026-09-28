@@ -6,7 +6,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   tablerArrowsExchange,
@@ -18,6 +18,7 @@ import {
   tablerHelpCircle,
   tablerHistory,
   tablerHome,
+  tablerLogout,
   tablerMenu2,
   tablerReceipt2,
   tablerRepeat,
@@ -26,6 +27,7 @@ import {
   tablerTargetArrow,
   tablerTrendingUp,
 } from '@ng-icons/tabler-icons';
+import { SessionStore } from '@/core/auth';
 import { AppSettingsStore, TransactionsStore } from '@/core/state';
 // Imported directly (not via the @/shared/ui barrel) to keep the rest of shared/ui — and the
 // @angular/forms it drags in via InputComponent/SelectComponent — out of the eager bundle;
@@ -74,6 +76,7 @@ const SKIP_LINK_CLASS =
     provideIcons({
       tablerMenu2,
       tablerHome,
+      tablerLogout,
       tablerTrendingUp,
       tablerRepeat,
       tablerChartSankey,
@@ -93,6 +96,8 @@ const SKIP_LINK_CLASS =
 })
 export class AppShellComponent {
   protected readonly transactionsStore = inject(TransactionsStore);
+  protected readonly sessionStore = inject(SessionStore);
+  private readonly router = inject(Router);
   // Unused otherwise — injecting it is the point. `AppSettingsStore` only hydrates and wires up
   // its settings-application effects (accent color, TICKET-SET-03's currency symbol/position) the
   // first time something injects it (`providedIn: 'root'` + onInit, TICKET-PERF-07); previously
@@ -122,6 +127,18 @@ export class AppShellComponent {
     // `focus()` scrolls the element into view on its own (that is its default, short of
     // `preventScroll`), so there is no separate scroll call to keep in step with it.
     (region === 'content' ? this.mainRegion() : this.navRegion()).nativeElement.focus();
+  }
+
+  /**
+   * Ends the session and leaves the app (TICKET-AUTH-02). `logout()` empties every registered
+   * store before this navigates, so the login screen cannot be reached with the previous user's
+   * figures still rendered behind it.
+   */
+  protected async signOut(): Promise<void> {
+    // Swallowed on purpose: `logout()` clears the session locally whatever the server answered, so
+    // an unreachable server must not strand the user inside an app they are no longer signed in to.
+    await this.sessionStore.logout().catch(() => undefined);
+    await this.router.navigateByUrl('/login');
   }
 
   protected onDrawerCheckboxChange(event: Event): void {

@@ -1,11 +1,24 @@
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
+import { AuthApiService, SessionStore, type PublicUser } from '@/core/auth';
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
 import { TransactionsStore } from '@/core/state';
 import { AppShellComponent } from './app-shell.component';
 
 const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
+const authApi = {
+  login: vi.fn(),
+  logout: vi.fn().mockResolvedValue(undefined),
+  me: vi.fn(),
+};
+
+const ADMIN: PublicUser = {
+  id: 1,
+  email: 'admin@example.com',
+  displayName: 'Admin',
+  role: 'admin',
+};
 
 /** Uncategorised by `TransactionsStore`'s definition: no category, not linked as a transfer, not a savings movement. */
 const uncategorised = (id: number): Transaction => ({
@@ -27,6 +40,7 @@ beforeEach(async () => {
     providers: [
       provideRouter([]),
       { provide: TransactionsRepository, useValue: transactionsRepository },
+      { provide: AuthApiService, useValue: authApi },
     ],
   }).compileComponents();
 });
@@ -341,5 +355,55 @@ describe('AppShellComponent: the sidebar fits its viewport (TICKET-UI-28)', () =
       expect(nav.querySelector(`ul[aria-labelledby="${heading.id}"]`)).not.toBeNull();
     }
     expect(nav.querySelectorAll('h2.menu-title')).toHaveLength(2);
+  });
+});
+
+/** The shell's user area (TICKET-AUTH-02) — who is signed in, and the way out. */
+describe('AppShellComponent: the user area', () => {
+  const signOutButton = (fixture: ComponentFixture<AppShellComponent>): HTMLElement =>
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      'button[aria-label="Sign out"]',
+    )!;
+
+  it('names the signed-in user', async () => {
+    authApi.login.mockResolvedValue(ADMIN);
+    await TestBed.inject(SessionStore).login('admin@example.com', 'admin');
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Admin');
+  });
+
+  it('signs out through the API, clears the session and lands on /login', async () => {
+    authApi.login.mockResolvedValue(ADMIN);
+    const session = TestBed.inject(SessionStore);
+    await session.login('admin@example.com', 'admin');
+    const navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+
+    signOutButton(fixture).click();
+    await fixture.whenStable();
+
+    expect(authApi.logout).toHaveBeenCalledOnce();
+    expect(session.status()).toBe('anonymous');
+    expect(session.user()).toBeNull();
+    expect(navigateByUrl).toHaveBeenCalledWith('/login');
+  });
+
+  it('still leaves for /login when the logout call cannot reach the server', async () => {
+    authApi.login.mockResolvedValue(ADMIN);
+    authApi.logout.mockRejectedValue(new Error('offline'));
+    const session = TestBed.inject(SessionStore);
+    await session.login('admin@example.com', 'admin');
+    const navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+
+    signOutButton(fixture).click();
+    await fixture.whenStable();
+
+    expect(session.status()).toBe('anonymous');
+    expect(navigateByUrl).toHaveBeenCalledWith('/login');
   });
 });

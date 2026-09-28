@@ -1,0 +1,54 @@
+<!-- Full-page, shell-free: the whole viewport is the sign-in surface, since there is no nav to
+     render for a visitor the app cannot identify yet. -->
+<div class="grid min-h-screen place-items-center bg-base-200 p-4">
+  <mm-paper elevation="floating" class="w-full max-w-sm">
+    <span class="mm-brand font-display flex items-center gap-1.5 text-lg font-semibold">
+      <span class="mm-brand-icon" aria-hidden="true"></span>
+      <span>Money<span class="mm-brand-sep" aria-hidden="true"></span>Mosaic</span>
+    </span>
+
+    <mm-text as="h1" variant="heading">Sign in</mm-text>
+    <mm-text as="p" variant="caption" color="base-content">
+      Your finances stay on this machine — signing in is what tells the app whose they are.
+    </mm-text>
+
+    <form class="flex flex-col gap-2" [formGroup]="form" (ngSubmit)="submit()">
+      <mm-fieldset legend="Email">
+        <mm-input
+          type="email"
+          formControlName="email"
+          autocomplete="username"
+          placeholder="you@example.com"
+          [ariaInvalid]="form.controls.email.touched && form.controls.email.invalid"
+        />
+      </mm-fieldset>
+
+      <mm-fieldset legend="Password">
+        <mm-input
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          [ariaInvalid]="form.controls.password.touched && form.controls.password.invalid"
+        />
+      </mm-fieldset>
+
+      <!-- One error line, in the server's own wording (TICKET-AUTH-01 answers the same message for
+           a wrong password, an unknown address and a disabled account). `role="alert"` so it is
+           announced rather than only seen. -->
+      @if (error(); as message) {
+        <mm-alert status="error" variant="soft" class="mt-2 text-sm" role="alert">
+          {{ message }}
+        </mm-alert>
+      }
+
+      <mm-button type="submit" color="primary" shape="block" class="mt-4" [disabled]="pending()">
+        @if (pending()) {
+          <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+          Signing in…
+        } @else {
+          Sign in
+        }
+      </mm-button>
+    </form>
+  </mm-paper>
+</div>

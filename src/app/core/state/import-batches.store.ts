@@ -27,6 +27,7 @@ import {
   type UndoImportImpact,
 } from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 /** Applies `{ id, categoryId }` updates onto their matching transactions, leaving the rest untouched. */
 const applyCategoryUpdates = (
@@ -88,8 +89,13 @@ export const ImportBatchesStore = signalStore(
     const rulesEngineService = inject(RulesEngineService);
     const coOwnerContributionService = inject(CoOwnerContributionService);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     return {
+      reset,
       /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
       hydrate: (): Promise<void> => {
         if (!hydration) {
@@ -179,6 +185,9 @@ export const ImportBatchesStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('ImportBatchesStore', store.reset, store.hydrate);
+
       // Fire-and-forget on first `/import` injection instead of app bootstrap (TICKET-PERF-07).
       void store.hydrate();
     },

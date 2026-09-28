@@ -224,6 +224,24 @@
           </a>
         </li>
       </ul>
+
+      <!-- Who is signed in, and the way out (TICKET-AUTH-02). Pinned below the utility list for the
+           same reason that list is pinned: it is chrome about the session, not a place to navigate
+           to, and it must stay visible however long the feature groups above it grow. -->
+      <div class="mt-4 flex shrink-0 items-center gap-2 border-t border-base-300 pt-4">
+        <mm-text as="span" variant="label" class="min-w-0 flex-1 truncate">
+          {{ sessionStore.displayName() }}
+        </mm-text>
+        <mm-button
+          shape="square"
+          variant="ghost"
+          size="sm"
+          ariaLabel="Sign out"
+          (click)="signOut()"
+        >
+          <ng-icon name="tablerLogout" size="18" aria-hidden="true" />
+        </mm-button>
+      </div>
     </nav>
   </div>
 </div>

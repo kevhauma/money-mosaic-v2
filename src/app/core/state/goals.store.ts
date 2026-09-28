@@ -18,6 +18,7 @@ import {
 } from '@ngrx/signals/entities';
 import { GoalsRepository, type SavingsGoal } from '@/core/data-access';
 import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 const goalConfig = entityConfig({
   entity: type<SavingsGoal>(),
@@ -42,6 +43,10 @@ export const GoalsStore = signalStore(
   withMethods((store) => {
     const goalsRepository = inject(GoalsRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
@@ -66,6 +71,7 @@ export const GoalsStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       /**
@@ -115,6 +121,9 @@ export const GoalsStore = signalStore(
   })),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('GoalsStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read `goals()`
       // synchronously can still `await store.hydrate()` as a guard.

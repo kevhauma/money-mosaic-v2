@@ -1,3 +1,4 @@
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import {
   ApplicationConfig,
   inject,
@@ -8,6 +9,7 @@ import {
 } from '@angular/core';
 import { provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router';
 
+import { authInterceptor } from './core/auth';
 import { appDb } from './core/data-access';
 // Imported straight from its file, not through the `@/core/layout` barrel: that barrel also
 // re-exports `AppShellComponent`, and `@Component` has side effects esbuild can't tree-shake — so
@@ -21,6 +23,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
+    // The app's first HTTP client (TICKET-AUTH-02). `withFetch()` because the backend speaks
+    // cookies and streams, and `authInterceptor` is what attaches the session to every `/api`
+    // call and turns an expired one into a trip back to `/login`.
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     // Appends the brand to each route's own `title` (TICKET-TXN-12). Without a strategy the router
     // would set `document.title` to the bare page name, dropping "Money Mosaic" from every tab.
     { provide: TitleStrategy, useClass: AppTitleStrategy },

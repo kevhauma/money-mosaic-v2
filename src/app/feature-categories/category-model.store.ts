@@ -16,6 +16,7 @@ import {
 import { TransactionsStore, CategoriesStore } from '@/core/state';
 import { RulesStore } from './rules.store';
 import { CategoryModelService } from './category-model.service';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 export type CategoryModelStatus =
   'untrained' | 'not-enough-data' | 'training' | 'ready' | 'stale' | 'error';
@@ -69,6 +70,10 @@ export const CategoryModelStore = signalStore(
     const categoriesStore = inject(CategoriesStore);
     const rulesStore = inject(RulesStore);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     const activeTaxonomySignature = (): string =>
       taxonomySignature(
@@ -186,6 +191,7 @@ export const CategoryModelStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       /** User-initiated only (ML-10's Train/Retrain control) — no automatic retrain-on-N-labels. */
@@ -301,6 +307,9 @@ export const CategoryModelStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('CategoryModelStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration (persisted-model load + ML worker init) the moment
       // anything first injects this store, instead of at app bootstrap (TICKET-PERF-07).
       void store.hydrate();

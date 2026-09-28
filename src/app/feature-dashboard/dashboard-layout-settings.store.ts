@@ -7,6 +7,7 @@ import {
   type DashboardRowId,
 } from '@/core/data-access';
 import { moveDashboardRow, resolveDashboardRowOrder } from './dashboard-row-order';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 /**
  * The user's Dashboard row order and hidden-row set (TICKET-STAT-14), persisted so it survives a
@@ -18,8 +19,13 @@ export const DashboardLayoutSettingsStore = signalStore(
   withMethods((store) => {
     const dashboardLayoutSettingsRepository = inject(DashboardLayoutSettingsRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     return {
+      reset,
       /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
       hydrate: (): Promise<void> => {
         if (!hydration) {
@@ -61,6 +67,9 @@ export const DashboardLayoutSettingsStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('DashboardLayoutSettingsStore', store.reset, store.hydrate);
+
       // Fire-and-forget on first injection instead of app bootstrap (TICKET-PERF-07).
       void store.hydrate();
     },

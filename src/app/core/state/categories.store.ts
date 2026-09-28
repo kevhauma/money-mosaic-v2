@@ -19,6 +19,7 @@ import {
 import { CategoriesRepository, type Category } from '@/core/data-access';
 import { TransactionsStore } from './transactions.store';
 import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 const categoryConfig = entityConfig({
   entity: type<Category>(),
@@ -54,6 +55,10 @@ export const CategoriesStore = signalStore(
     const categoriesRepository = inject(CategoriesRepository);
     const transactionsStore = inject(TransactionsStore);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
@@ -66,6 +71,7 @@ export const CategoriesStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       addCategory: async (category: Category): Promise<Category> => {
@@ -114,6 +120,9 @@ export const CategoriesStore = signalStore(
   })),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('CategoriesStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `categories()` synchronously can still `await store.hydrate()` as a guard.

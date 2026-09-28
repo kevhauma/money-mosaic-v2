@@ -8,6 +8,7 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { MappingProfilesRepository, type MappingProfile } from '@/core/data-access';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 
 export const matchTemplateForHeaders = (
   profiles: MappingProfile[],
@@ -33,6 +34,10 @@ export const MappingProfilesStore = signalStore(
   withMethods((store) => {
     const mappingProfilesRepository = inject(MappingProfilesRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     /**
      * Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07) so this
@@ -49,6 +54,7 @@ export const MappingProfilesStore = signalStore(
     };
 
     return {
+      reset,
       hydrate,
 
       /**
@@ -120,6 +126,9 @@ export const MappingProfilesStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('MappingProfilesStore', store.reset, store.hydrate);
+
       // Fire-and-forget: kicks off hydration the moment `/import` first injects this store
       // instead of at app bootstrap, so its data/code only lands when that route is visited
       // (TICKET-PERF-07). `detectTemplateForFile` awaits it itself when a read needs it settled.

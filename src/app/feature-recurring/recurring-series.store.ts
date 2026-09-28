@@ -11,6 +11,7 @@ import { detectRecurringPayments, type RecurringPaymentSeries } from '@/core/sta
 import { savingsAccountIbans } from '@/core/transfers';
 import { RecurringOverridesRepository, type RecurringOverride } from '@/core/data-access';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
+import { createStoreReset, registerStoreReset } from '@/core/store-reset';
 import { anchorOf, applyRecurringOverrides, mergeCandidatePairs } from './recurring-overrides';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -117,6 +118,10 @@ export const RecurringSeriesStore = signalStore(
   withMethods((store) => {
     const repository = inject(RecurringOverridesRepository);
     let hydration: Promise<void> | null = null;
+    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
+    const reset = createStoreReset(store, () => {
+      hydration = null;
+    });
 
     const record = async (override: RecurringOverride): Promise<void> => {
       const id = await repository.add(override);
@@ -124,6 +129,7 @@ export const RecurringSeriesStore = signalStore(
     };
 
     return {
+      reset,
       /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
       hydrate: (): Promise<void> => {
         if (!hydration) {
@@ -165,6 +171,9 @@ export const RecurringSeriesStore = signalStore(
   }),
   withHooks({
     onInit(store) {
+      // Registers this store for the sign-out wipe (TICKET-AUTH-02), before hydration starts.
+      registerStoreReset('RecurringSeriesStore', store.reset, store.hydrate);
+
       // Fire-and-forget on first injection rather than at app bootstrap (TICKET-PERF-07).
       void store.hydrate();
     },

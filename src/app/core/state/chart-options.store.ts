@@ -83,6 +83,11 @@ const EMPTY_ENTRY: ChartOptionsEntry = { hiddenSeries: [] };
  * `RangeStore` does. A hidden-account filter surviving a browser restart is a different product
  * decision: someone who forgot they hid an account would read the chart as simply wrong.
  */
+/**
+ * Deliberately **not** registered for the sign-out wipe (TICKET-AUTH-02): this holds a UI choice,
+ * not user data, and nothing about it is worth carrying between two people's sessions or is
+ * revealing if it is. `store-reset-registry.spec.ts` lists it with this reason.
+ */
 export const ChartOptionsStore = signalStore(
   { providedIn: 'root' },
   withState<ChartOptionsStoreState>({ byChart: {} }),

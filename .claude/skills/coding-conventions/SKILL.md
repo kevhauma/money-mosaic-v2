@@ -23,7 +23,7 @@ ng generate component feature-{name}/components/{Name}  # scaffold a standalone 
 - `shared/ui/` — shared standalone components wrapping Tailwind/daisyUI primitives
 - `shared/utils/` — shared signals, pipes, directives, and utilities
 
-No backend: all persistence is local-first via IndexedDB (Dexie.js). There is no HTTP data-access layer, API codegen, or axios client — everything an app previously fetched from a server instead lives in `core/data-access/`.
+Persistence is local-first via IndexedDB (Dexie.js): everything an app would normally fetch from a server lives in `core/data-access/` instead, and there is no API codegen or axios client. The one exception since TICKET-AUTH-02 is **sign-in**, which talks to the `server/` workspace over `HttpClient` — see **HTTP** below. Entity data stays in Dexie until TICKET-SRV-05 moves it.
 
 ## Feature Folder Structure
 
@@ -104,6 +104,7 @@ Apply SOLID as it maps onto this codebase's existing tiers — don't import Java
 - **The canonical store shape is [`core/state/accounts.store.ts`](../../../src/app/core/state/accounts.store.ts) — copy it** rather than working from a description here. What matters and doesn't change: `signalStore({ providedIn: 'root' })` + `withEntities`, `computed()` derivations, and explicit `await` on the repository before patching state.
 - **Every statistic is a `computed()` derivation** of source signals — never a manually maintained/mutated field
 - **Persistence is an explicit awaited repository call, and hydration happens on first injection.** A store method awaits its repository, then patches state — there is no `effect()` mirroring signal writes into IndexedDB. Each store exposes an idempotent, cached `hydrate()` invoked from `withHooks({ onInit })` (TICKET-PERF-07), so the first injection of a store starts its load; `app.config.ts` only opens the database. In specs this means **mock the repository before creating the component** — re-mocking afterwards hits the cached hydration and changes nothing.
+- **A store that hydrates must also register for the sign-out wipe** (TICKET-AUTH-02). Build its `reset` with `createStoreReset(store, () => { hydration = null; })` inside the `withMethods` block that owns the memoised hydration promise, return it alongside `hydrate`, and hand both to the registry from `withHooks({ onInit })` with `registerStoreReset('XStore', store.reset, store.hydrate)` — `@/core/store-reset`. Stores are `providedIn: 'root'` and are never torn down, so a store that skips this keeps the previous user's data visible to the next one; `core/store-reset/store-reset-registry.spec.ts` reads the source tree and fails on the gap.
 - **Memoize expensive aggregates** (e.g. per `(accountId, yearMonth)`) with a `computed()` backed by a `Map` cache, so a single edit invalidates only the touched bucket, not all history
 - Reach for RxJS only at boundaries that are inherently stream-based (router events, `fromEvent`, Web Worker messages for CSV parsing) — convert to a signal with `toSignal()` at the boundary rather than threading Observables through component state
 - **UI state that must outlive a component but not a reload** (a page's date range, a chart's bucket size / hidden series / dragged zoom) lives in a keyed root `signalStore` with no repository behind it — `RangeStore`, `ChartOptionsStore` — reached from a component through an **inject-context helper** called from a field initializer, named for what it controls: [`pageRangeControl()`](../../../src/app/core/state/page-range-control.ts), [`chartGranularity()`/`chartSeriesFilter()`/`chartZoomControl()`/`chartCycle()`/`chartGroupCategories()`](../../../src/app/core/state/chart-options-control.ts). The helper returns a `computed()` read plus explicit handlers and **never a local writable mirrored into the store by an `effect`** — a mirror writes the auto-derived *seed* on first mount, which the store can't tell from a user's choice, so the seeding rule silently stops applying for the rest of the session (TICKET-STAT-27)
@@ -118,6 +119,12 @@ Apply SOLID as it maps onto this codebase's existing tiers — don't import Java
 - Each entity gets a thin repository in `core/data-access/` (e.g. `TransactionsRepository`) wrapping the Dexie table — components and store services never touch `db.transactions` directly
 - Multi-table writes (e.g. import batch insert + fingerprint dedupe check) run inside `db.transaction('rw', [...tables], async () => { ... })` for atomicity
 - All repository methods are `async`/`await`, called from store service methods — never awaited directly inside a template or component constructor
+
+## HTTP (the `server/` API)
+
+- The app's one `HttpClient` is provided in `app.config.ts` (`withFetch()` + `authInterceptor`). Components and stores never call it directly: a **service in `core/`** owns the calls for one area (`core/auth/auth-api.service.ts` is the first), the same tier a repository occupies for Dexie, and a store awaits that service before patching state.
+- Every `/api` call rides on the `HttpOnly` session cookie (`withCredentials`), so "am I signed in?" is answered by `GET /api/auth/me` and never by reading a cookie. A 401 from any other `/api` call clears the session and routes to `/login` (`core/auth/auth.interceptor.ts`).
+- The server's wire types are **hand-mirrored** client-side (`core/auth/public-user.ts`) — `src/**` and `server/**` may not import each other, and only what both sides *persist* belongs in the repo-root `shared/` workspace.
 
 ## Styling
 
