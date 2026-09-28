@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PageHeaderComponent, TypographyComponent } from '@/shared/ui';
 import { SettingsAboutSectionComponent } from '../settings-about-section/settings-about-section.component';
+import { SettingsAccountSectionComponent } from '../settings-account-section/settings-account-section.component';
 import { SettingsCurrencyLocaleSectionComponent } from '../settings-currency-locale-section/settings-currency-locale-section.component';
 import { SettingsDataSectionComponent } from '../settings-data-section/settings-data-section.component';
 import { SettingsPrivacySectionComponent } from '../settings-privacy-section/settings-privacy-section.component';
@@ -20,6 +21,7 @@ import { SettingsThemeSectionComponent } from '../settings-theme-section/setting
     RouterLink,
     PageHeaderComponent,
     SettingsAboutSectionComponent,
+    SettingsAccountSectionComponent,
     SettingsCurrencyLocaleSectionComponent,
     SettingsDataSectionComponent,
     SettingsPrivacySectionComponent,

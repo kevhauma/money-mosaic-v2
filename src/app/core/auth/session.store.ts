@@ -2,8 +2,8 @@ import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { StoreResetService } from '@/core/store-reset';
 import { AuthApiService } from './auth-api.service';
-import { signInErrorMessage } from './auth-errors';
-import type { PublicUser } from './public-user';
+import { authErrorMessage, signInErrorMessage } from './auth-errors';
+import type { SessionUser } from './public-user';
 
 /**
  * `unknown` until `GET /api/auth/me` has answered once — the cookie is `HttpOnly`, so a fresh tab
@@ -12,15 +12,33 @@ import type { PublicUser } from './public-user';
 export type SessionStatus = 'unknown' | 'authenticated' | 'anonymous';
 
 type SessionState = {
-  readonly user: PublicUser | null;
+  readonly user: SessionUser | null;
   readonly status: SessionStatus;
   /** The server's wording for the last failed sign-in, shown inline on the login form. */
   readonly error: string | null;
   /** A sign-in is in flight — the submit button's pending state. */
   readonly pending: boolean;
+  /**
+   * The default-password reminder was dismissed (TICKET-AUTH-04). Deliberately *not* persisted: the
+   * banner is meant to come back next session for as long as the shared password is still in place,
+   * and a remembered dismissal is how a reminder becomes furniture nobody sees. Part of
+   * `ANONYMOUS`, so signing out (or in as somebody else) starts the nag over.
+   */
+  readonly defaultPasswordNoticeDismissed: boolean;
 };
 
-const ANONYMOUS: SessionState = { user: null, status: 'anonymous', error: null, pending: false };
+const ANONYMOUS: SessionState = {
+  user: null,
+  status: 'anonymous',
+  error: null,
+  pending: false,
+  defaultPasswordNoticeDismissed: false,
+};
+
+/** What the Settings form shows when a password change failed with nothing quotable. */
+const PASSWORD_CHANGE_FAILED = 'Could not change your password. Please try again.';
+/** Same, for the display-name save. */
+const RENAME_FAILED = 'Could not save your display name. Please try again.';
 
 /**
  * Who is signed in — read by the guard, the interceptor, the login form and the shell's user area.
@@ -34,11 +52,30 @@ export const SessionStore = signalStore(
   { providedIn: 'root' },
   // Every key is declared here, `error`/`pending` included: a key omitted from the initial state
   // makes a later `patchState` of it unreadable.
-  withState<SessionState>({ user: null, status: 'unknown', error: null, pending: false }),
-  withComputed(({ user, status }) => ({
+  withState<SessionState>({
+    user: null,
+    status: 'unknown',
+    error: null,
+    pending: false,
+    defaultPasswordNoticeDismissed: false,
+  }),
+  withComputed(({ user, status, defaultPasswordNoticeDismissed }) => ({
     isAuthenticated: computed(() => status() === 'authenticated'),
     /** What the shell's user area shows — the display name, or the email until one is set. */
     displayName: computed(() => user()?.displayName ?? user()?.email ?? ''),
+    /**
+     * Whether to show the standing "this installation still uses `admin` / `admin`" reminder
+     * (TICKET-AUTH-04). Three conditions, deliberately spelled out rather than trusted to the
+     * server's flag alone: an admin (the only role that could be the seeded account, and the only
+     * one for whom the warning is actionable), still on the seeded password, and not already
+     * waved away this session.
+     */
+    showDefaultPasswordNotice: computed(
+      () =>
+        user()?.role === 'admin' &&
+        user()?.usingDefaultPassword === true &&
+        !defaultPasswordNoticeDismissed(),
+    ),
   })),
   withMethods((store) => {
     const api = inject(AuthApiService);
@@ -102,7 +139,16 @@ export const SessionStore = signalStore(
           // later must not fire a second identity call to learn what this one just established.
           // Assigned after the reset above, which nulls it.
           restoration = Promise.resolve();
-          patchState(store, { user, status: 'authenticated', error: null, pending: false });
+          patchState(store, {
+            user,
+            status: 'authenticated',
+            error: null,
+            pending: false,
+            // Reset explicitly, for the same reason the stores above are: signing in is not always
+            // preceded by signing out. Without this, A dismissing the reminder would hide it from B
+            // when B signs in over the top of A's session.
+            defaultPasswordNoticeDismissed: false,
+          });
           // Re-loads what the reset just emptied. A store hydrates on its *first* injection, which
           // on a second sign-in in the same tab has long since happened — without this the pages
           // the previous user visited would render empty until a full reload.
@@ -111,6 +157,51 @@ export const SessionStore = signalStore(
         } catch (error) {
           patchState(store, { ...ANONYMOUS, error: signInErrorMessage(error) });
           return false;
+        }
+      },
+
+      /** Waves the default-password reminder away until the next sign-in (TICKET-AUTH-04). */
+      dismissDefaultPasswordNotice: (): void => {
+        patchState(store, { defaultPasswordNoticeDismissed: true });
+      },
+
+      /**
+       * Changes the signed-in user's own password (TICKET-AUTH-04). Resolves `null` on success, or
+       * the message to show — the server's own wording for a wrong current password.
+       *
+       * The message is **returned** rather than parked on the store's `error`, unlike `login`: that
+       * one belongs to a screen the app navigates away from on success, while this belongs to a
+       * form on a page you stay on and come back to, and a root-store error would still be sitting
+       * there on the next visit.
+       *
+       * The server keeps this session alive and ends the user's others, so there is nothing to
+       * re-authenticate here. Patching the answer in is what retires the reminder banner: the
+       * updated user carries `usingDefaultPassword: false`.
+       */
+      changePassword: async (
+        currentPassword: string,
+        newPassword: string,
+      ): Promise<string | null> => {
+        try {
+          patchState(store, { user: await api.changePassword(currentPassword, newPassword) });
+          return null;
+        } catch (error) {
+          return authErrorMessage(error, PASSWORD_CHANGE_FAILED);
+        }
+      },
+
+      /**
+       * Renames the signed-in user. Resolves `null` on success, or the message to show.
+       *
+       * The patched user is what updates the shell's user area without a reload — the shell reads
+       * `displayName` off this same store.
+       */
+      updateDisplayName: async (displayName: string): Promise<string | null> => {
+        try {
+          patchState(store, { user: await api.updateDisplayName(displayName) });
+          return null;
+        } catch (error) {
+          return authErrorMessage(error, RENAME_FAILED);
         }
       },
 

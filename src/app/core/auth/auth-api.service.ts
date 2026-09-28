@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { AUTH_LOGIN_URL, AUTH_LOGOUT_URL, AUTH_ME_URL } from './auth-endpoints';
-import type { PublicUser } from './public-user';
+import { AUTH_LOGIN_URL, AUTH_LOGOUT_URL, AUTH_ME_URL, AUTH_PASSWORD_URL } from './auth-endpoints';
+import type { SessionUser } from './public-user';
 
 /**
  * The `/api/auth` calls, as promises. The session cookie is `HttpOnly`, so there is no client-side
@@ -14,8 +14,8 @@ import type { PublicUser } from './public-user';
 export class AuthApiService {
   private readonly http = inject(HttpClient);
 
-  login(email: string, password: string): Promise<PublicUser> {
-    return firstValueFrom(this.http.post<PublicUser>(AUTH_LOGIN_URL, { email, password }));
+  login(email: string, password: string): Promise<SessionUser> {
+    return firstValueFrom(this.http.post<SessionUser>(AUTH_LOGIN_URL, { email, password }));
   }
 
   /** 204 and idempotent server-side — signing out without a session is a success. */
@@ -23,7 +23,26 @@ export class AuthApiService {
     await firstValueFrom(this.http.post<void>(AUTH_LOGOUT_URL, {}));
   }
 
-  me(): Promise<PublicUser> {
-    return firstValueFrom(this.http.get<PublicUser>(AUTH_ME_URL));
+  me(): Promise<SessionUser> {
+    return firstValueFrom(this.http.get<SessionUser>(AUTH_ME_URL));
+  }
+
+  /**
+   * Changes the signed-in user's own password (TICKET-AUTH-04). There is deliberately no id
+   * argument: the server takes the account from the session cookie, so this call cannot be aimed at
+   * anyone else. A 401 means the current password was wrong, not that the session expired.
+   *
+   * Answers with the updated user, whose `usingDefaultPassword` is now `false` — which is what
+   * retires the reminder banner without a second request.
+   */
+  changePassword(currentPassword: string, newPassword: string): Promise<SessionUser> {
+    return firstValueFrom(
+      this.http.post<SessionUser>(AUTH_PASSWORD_URL, { currentPassword, newPassword }),
+    );
+  }
+
+  /** Renames the signed-in user — the one field a non-admin may change about themselves. */
+  updateDisplayName(displayName: string): Promise<SessionUser> {
+    return firstValueFrom(this.http.patch<SessionUser>(AUTH_ME_URL, { displayName }));
   }
 }

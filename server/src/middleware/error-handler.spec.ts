@@ -55,4 +55,51 @@ describe('middleware: JSON error handler', () => {
     expect(response.status).toBe(422);
     expect((await response.json()) as { error: string }).toEqual({ error: 'nope' });
   });
+
+  it('passes on a code a 4xx chose, for the client to branch on', async () => {
+    const error: HttpError = Object.assign(new Error('nope'), {
+      status: 401,
+      clientCode: 'wrong_current_password',
+    });
+    const baseUrl = await startThrowingApp(error);
+
+    const response = await fetch(`${baseUrl}/boom`);
+
+    expect((await response.json()) as { error: string; code: string }).toEqual({
+      error: 'nope',
+      code: 'wrong_current_password',
+    });
+  });
+
+  it('withholds a 5xx code, which nobody chose and so is an internal detail', async () => {
+    // What better-sqlite3 and Node's fs throw: `code` is not a field only our own errors carry, so
+    // echoing it unconditionally would put back the internals `messageOf` is careful to withhold.
+    const error = Object.assign(new Error('UNIQUE constraint failed: users.email'), {
+      code: 'SQLITE_CONSTRAINT_UNIQUE',
+    });
+    const baseUrl = await startThrowingApp(error);
+
+    const response = await fetch(`${baseUrl}/boom`);
+
+    expect(response.status).toBe(500);
+    expect((await response.json()) as { error: string }).toEqual({
+      error: 'Internal server error',
+    });
+  });
+
+  it('withholds a foreign code on a 4xx it did not choose', async () => {
+    // `express.json()` is mounted app-wide, and body-parser answers 400 for an aborted or malformed
+    // body while passing the underlying stream error's `code` through untouched. Filtering by status
+    // alone would let that reach the client, which is why the handler reads `clientCode` instead.
+    const error = Object.assign(new Error('request aborted'), {
+      status: 400,
+      code: 'ECONNABORTED',
+    });
+    const baseUrl = await startThrowingApp(error);
+
+    const response = await fetch(`${baseUrl}/boom`);
+
+    expect(response.status).toBe(400);
+    expect((await response.json()) as { error: string }).toEqual({ error: 'request aborted' });
+  });
 });

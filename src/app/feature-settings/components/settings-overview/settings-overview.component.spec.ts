@@ -45,11 +45,14 @@ describe('SettingsOverviewComponent', () => {
 
     const sections = Array.from(
       element.querySelectorAll(
-        'app-settings-theme-section, app-settings-currency-locale-section, app-settings-data-section, app-settings-about-section',
+        'app-settings-account-section, app-settings-theme-section, app-settings-currency-locale-section, app-settings-data-section, app-settings-about-section',
       ),
     ).map((section) => section.tagName.toLowerCase());
 
     expect(sections).toEqual([
+      // First on the page since TICKET-AUTH-04: the default-password banner links to `/settings`
+      // and has to land on the password form, not below three sections of unrelated preferences.
+      'app-settings-account-section',
       'app-settings-theme-section',
       'app-settings-currency-locale-section',
       'app-settings-data-section',

@@ -10,10 +10,21 @@ import type { HttpError } from '../middleware/error-handler.js';
  * these two helpers are.
  */
 
-/** An error carrying the status the route chose, for Express to hand to the error handler. */
-export const httpError = (status: number, message: string): HttpError => {
+/**
+ * An error carrying the status the route chose, for Express to hand to the error handler.
+ *
+ * The optional `code` is for the few failures a *client* has to branch on rather than merely
+ * display. Wording is not a contract — it gets rephrased — and two routes can answer the same
+ * status for entirely different reasons, which is exactly the case `code` exists for: a 401 from
+ * `POST /api/auth/password` is either "wrong current password" or "your session expired", and the
+ * interceptor has to sign the user out for one and not the other (TICKET-AUTH-04).
+ */
+export const httpError = (status: number, message: string, code?: string): HttpError => {
   const error: HttpError = new Error(message);
   error.status = status;
+  // Written to `clientCode`, not `code` — see the `HttpError` doc comment: `code` is a field Node and
+  // better-sqlite3 set on their own errors, so the response may only ever carry one a route chose.
+  if (code !== undefined) error.clientCode = code;
   return error;
 };
 

@@ -19,3 +19,16 @@ export type PublicUser = {
   readonly displayName: string;
   readonly role: UserRole;
 };
+
+/**
+ * What the session endpoints (`login`, `me`, `password`, `PATCH me`) answer with — `PublicUser` plus
+ * the one fact the server only tells an account about itself (TICKET-AUTH-04).
+ */
+export type SessionUser = PublicUser & {
+  /**
+   * This is the seeded `admin` account, still on the `admin` password every installation of this app
+   * ships with. `SessionStore.showDefaultPasswordNotice` turns it into the reminder banner; nothing
+   * is blocked either way — the banner nags, it does not gate.
+   */
+  readonly usingDefaultPassword: boolean;
+};

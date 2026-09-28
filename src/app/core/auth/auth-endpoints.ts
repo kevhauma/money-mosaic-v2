@@ -1,11 +1,27 @@
 /**
- * The three endpoints a signed-out client may reach (TICKET-AUTH-01). Declared once because the
- * interceptor has to recognise two of them by URL: a 401 from `me` or `login` is an *answer*, not
- * an expired session (see `auth.interceptor.ts`).
+ * The `/api/auth` endpoints, declared once because the interceptor has to recognise several of them
+ * by URL: a 401 from `me`, `login` or `password` is an *answer*, not an expired session (see
+ * `auth.interceptor.ts`). The first three are also the only endpoints a signed-out client may reach
+ * (TICKET-AUTH-01).
  */
 export const AUTH_LOGIN_URL = '/api/auth/login';
 export const AUTH_LOGOUT_URL = '/api/auth/logout';
 export const AUTH_ME_URL = '/api/auth/me';
+
+/**
+ * Self-service password change (TICKET-AUTH-04). Behind the session guard, and *unlike* `login` and
+ * `me` its 401 is ambiguous: "that is not your current password" from the route itself, or "your
+ * session expired" from the guard in front of it. So this URL is not exempt by URL — the
+ * interceptor exempts it only when the body names the code below.
+ */
+export const AUTH_PASSWORD_URL = '/api/auth/password';
+
+/**
+ * The `code` the server puts on the wrong-current-password 401, mirroring
+ * `WRONG_CURRENT_PASSWORD_CODE` in `server/src/routes/auth.ts`. Matched on rather than the message,
+ * so rewording the sentence a user reads can never change which requests sign that user out.
+ */
+export const WRONG_CURRENT_PASSWORD_CODE = 'wrong_current_password';
 
 /** The `/api` prefix every backend route sits under. */
 const API_PREFIX = '/api/';

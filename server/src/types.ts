@@ -20,3 +20,20 @@ export type PublicUser = {
   readonly displayName: string;
   readonly role: UserRole;
 };
+
+/**
+ * A user as the *session* endpoints describe them (TICKET-AUTH-04) — `PublicUser` plus the one fact
+ * only the account holder is told about themselves.
+ *
+ * Separate from `PublicUser` because the admin panel's user list (TICKET-AUTH-03) answers "who else
+ * exists", not "what should I be nagged about", and a flag on every row there would invite exactly
+ * the cross-account reading this shape refuses.
+ */
+export type SessionUser = PublicUser & {
+  /**
+   * This account is the seeded `admin` and its password has never been changed — the one credential
+   * every installation of this app shares. The client turns it into an admin-only reminder banner;
+   * nothing is blocked either way (see TICKET-AUTH-04's "no forced change").
+   */
+  readonly usingDefaultPassword: boolean;
+};

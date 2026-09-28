@@ -1,6 +1,10 @@
 <mm-page-header title="Settings" />
 
-<app-settings-theme-section />
+<!-- Account first (TICKET-AUTH-04): it is the section the default-password reminder sends people
+     to, and the only one that is about *you* rather than about how the app behaves. -->
+<app-settings-account-section />
+
+<app-settings-theme-section class="mt-6 block" />
 <app-settings-currency-locale-section class="mt-6 block" />
 <app-settings-reporting-section class="mt-6 block" />
 <app-settings-privacy-section class="mt-6 block" />

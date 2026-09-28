@@ -11,6 +11,8 @@ const authApi = {
   login: vi.fn(),
   logout: vi.fn().mockResolvedValue(undefined),
   me: vi.fn(),
+  changePassword: vi.fn(),
+  updateDisplayName: vi.fn(),
 };
 
 const ADMIN: PublicUser = {
@@ -372,6 +374,25 @@ describe('AppShellComponent: the user area', () => {
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Admin');
+  });
+
+  it('follows a rename with no reload (TICKET-AUTH-04)', async () => {
+    authApi.login.mockResolvedValue(ADMIN);
+    const session = TestBed.inject(SessionStore);
+    await session.login('admin@example.com', 'admin');
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+    // The name sits beside the sign-out button, which is what identifies the user area here.
+    // `closest('div')` rather than `parentElement`, which is the `mm-button` wrapper.
+    const userArea = (): string => signOutButton(fixture).closest('div')!.textContent!;
+    expect(userArea()).toContain('Admin');
+
+    authApi.updateDisplayName.mockResolvedValue({ ...ADMIN, displayName: 'The Boss' });
+    await session.updateDisplayName('The Boss');
+    fixture.detectChanges();
+
+    // Settings and the shell read the same store signal, so the sidebar updates itself.
+    expect(userArea()).toContain('The Boss');
   });
 
   it('signs out through the API, clears the session and lands on /login', async () => {

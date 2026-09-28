@@ -2,16 +2,47 @@ import { HttpErrorResponse, type HttpInterceptorFn } from '@angular/common/http'
 import { inject, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { AUTH_LOGIN_URL, AUTH_ME_URL, isApiUrl, isEndpoint } from './auth-endpoints';
+import {
+  AUTH_LOGIN_URL,
+  AUTH_ME_URL,
+  AUTH_PASSWORD_URL,
+  isApiUrl,
+  isEndpoint,
+  WRONG_CURRENT_PASSWORD_CODE,
+} from './auth-endpoints';
 import { SessionStore } from './session.store';
 
 /**
- * A 401 from these two is an answer, not an expired session: `me` is how a signed-out visitor is
- * *identified* as signed out (`SessionStore.restore()`), and `login` is a rejected password, which
- * the form reports inline. Redirecting on either would loop the guard, or throw away the
- * `returnUrl` the login page is holding.
+ * A 401 from these two is *always* an answer, never an expired session, so the URL alone settles it:
+ * `me` is how a signed-out visitor is *identified* as signed out (`SessionStore.restore()`), and
+ * `login` is a rejected password, which the form reports inline. Both sit in front of the session
+ * guard, so neither can answer 401 for any other reason — and redirecting on either would loop the
+ * guard, or throw away the `returnUrl` the login page is holding.
  */
 const ANSWERS_401_NORMALLY = [AUTH_ME_URL, AUTH_LOGIN_URL] as const;
+
+/**
+ * `POST /api/auth/password` is the one endpoint whose 401 means two different things (TICKET-AUTH-04):
+ * "that is not your current password", which belongs inline on the Settings form, or "your session
+ * expired while that form sat open", which has to sign the user out like any other expiry. Exempting
+ * the URL outright would swallow the second case — leaving someone typing into a form backed by a
+ * dead cookie, told only that they are "Not signed in", with nothing to make them sign in again — so
+ * the route tags the first case with a `code` and only that code is exempt.
+ */
+const isWrongCurrentPassword = (url: string, error: HttpErrorResponse): boolean =>
+  isEndpoint(url, AUTH_PASSWORD_URL) &&
+  (error.error as { code?: unknown } | null)?.code === WRONG_CURRENT_PASSWORD_CODE;
+
+/**
+ * Whether this failure means the session is gone, as opposed to an endpoint answering a question
+ * with a 401. Named rather than inlined into the `catchError` below: the whole decision the
+ * interceptor makes is this one, and it reads as a list of conditions rather than as control flow.
+ */
+const isSessionExpired = (url: string, error: unknown): boolean =>
+  error instanceof HttpErrorResponse &&
+  error.status === 401 &&
+  !isEndpoint(url, ...ANSWERS_401_NORMALLY) &&
+  !isWrongCurrentPassword(url, error);
 
 /**
  * Sends the session cookie with every `/api` call, and turns an expired session into a trip back
@@ -33,13 +64,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(request).pipe(
     catchError((error: unknown) => {
-      const sessionExpired =
-        apiCall &&
-        error instanceof HttpErrorResponse &&
-        error.status === 401 &&
-        !isEndpoint(req.url, ...ANSWERS_401_NORMALLY);
-
-      if (sessionExpired) {
+      if (apiCall && isSessionExpired(req.url, error)) {
         const session = injector.get(SessionStore);
         const router = injector.get(Router);
 

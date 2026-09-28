@@ -35,6 +35,7 @@ import { AppSettingsStore, TransactionsStore } from '@/core/state';
 // re-exports once anything from the barrel is imported eagerly.
 import { ButtonComponent } from '@/shared/ui/button/button.component';
 import { TypographyComponent } from '@/shared/ui/typography/typography.component';
+import { DefaultPasswordNoticeComponent } from '../default-password-notice/default-password-notice.component';
 
 /** Sidebar nav item — default look is Deformable UI's soft rounded (not full-pill — TICKET-UI-21) primary tint on `.menu-active` (docs/releases/v1.9_deformable_ui_redesign/design-language.md §7); the `mm-nav-item` marker is a theme-style hook other themes' scoped CSS restyles (every other theme sets its own `.mm-nav-item` radius, so this base class only governs the default theme). Defined once and bound identically to every nav `<a>` rather than repeating the same utility string per item. */
 const NAV_ITEM_CLASS =
@@ -68,6 +69,7 @@ const SKIP_LINK_CLASS =
     RouterLinkActive,
     NgIcon,
     ButtonComponent,
+    DefaultPasswordNoticeComponent,
     TypographyComponent,
   ],
   templateUrl: './app-shell.component.html',

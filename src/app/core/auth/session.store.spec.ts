@@ -4,7 +4,7 @@ import { vi } from 'vitest';
 import { StoreResetService } from '@/core/store-reset';
 import { AuthApiService } from './auth-api.service';
 import { SessionStore } from './session.store';
-import type { PublicUser } from './public-user';
+import type { PublicUser, SessionUser } from './public-user';
 
 const ADMIN: PublicUser = {
   id: 1,
@@ -13,11 +13,20 @@ const ADMIN: PublicUser = {
   role: 'admin',
 };
 
+/** The seeded admin as the server describes it before anyone has changed the password. */
+const DEFAULT_PASSWORD_ADMIN: SessionUser = { ...ADMIN, usingDefaultPassword: true };
+
 const unauthorized = (message: string): HttpErrorResponse =>
   new HttpErrorResponse({ status: 401, error: { error: message } });
 
 describe('SessionStore: sign-in, sign-out and restore', () => {
-  const api = { login: vi.fn(), logout: vi.fn(), me: vi.fn() };
+  const api = {
+    login: vi.fn(),
+    logout: vi.fn(),
+    me: vi.fn(),
+    changePassword: vi.fn(),
+    updateDisplayName: vi.fn(),
+  };
   let store: InstanceType<typeof SessionStore>;
 
   beforeEach(() => {
@@ -144,5 +153,167 @@ describe('SessionStore: sign-in, sign-out and restore', () => {
     await store.restore();
 
     expect(api.me).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('SessionStore: changing your own password and name (TICKET-AUTH-04)', () => {
+  const api = {
+    login: vi.fn(),
+    logout: vi.fn().mockResolvedValue(undefined),
+    me: vi.fn(),
+    changePassword: vi.fn(),
+    updateDisplayName: vi.fn(),
+  };
+  let store: InstanceType<typeof SessionStore>;
+
+  /** Signs in as the untouched seeded admin — the state every case below starts from. */
+  const signInAsSeededAdmin = async (): Promise<void> => {
+    api.login.mockResolvedValue(DEFAULT_PASSWORD_ADMIN);
+    await store.login('admin@example.com', 'admin');
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    api.logout.mockResolvedValue(undefined);
+    TestBed.configureTestingModule({
+      providers: [{ provide: AuthApiService, useValue: api }],
+    });
+    store = TestBed.inject(SessionStore);
+  });
+
+  it('adopts the updated user on a successful password change, which retires the reminder', async () => {
+    await signInAsSeededAdmin();
+    expect(store.showDefaultPasswordNotice()).toBe(true);
+    api.changePassword.mockResolvedValue({ ...ADMIN, usingDefaultPassword: false });
+
+    const failure = await store.changePassword('admin', 'something-else');
+
+    expect(failure).toBeNull();
+    expect(api.changePassword).toHaveBeenCalledWith('admin', 'something-else');
+    // The session is deliberately kept alive server-side, so nothing here signs the user out.
+    expect(store.status()).toBe('authenticated');
+    expect(store.showDefaultPasswordNotice()).toBe(false);
+  });
+
+  it("returns the server's wording for a wrong current password and keeps the session", async () => {
+    await signInAsSeededAdmin();
+    api.changePassword.mockRejectedValue(unauthorized('Current password is incorrect'));
+
+    const failure = await store.changePassword('not-my-password', 'something-else');
+
+    expect(failure).toBe('Current password is incorrect');
+    expect(store.status()).toBe('authenticated');
+    expect(store.user()).toEqual(DEFAULT_PASSWORD_ADMIN);
+  });
+
+  it('says so plainly when the server cannot be reached for a password change', async () => {
+    await signInAsSeededAdmin();
+    api.changePassword.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+    expect(await store.changePassword('admin', 'something-else')).toBe(
+      'Cannot reach the server. Is it running?',
+    );
+  });
+
+  it('adopts a new display name, which is what the shell reads', async () => {
+    await signInAsSeededAdmin();
+    api.updateDisplayName.mockResolvedValue({
+      ...DEFAULT_PASSWORD_ADMIN,
+      displayName: 'The Boss',
+    });
+
+    const failure = await store.updateDisplayName('The Boss');
+
+    expect(failure).toBeNull();
+    expect(store.displayName()).toBe('The Boss');
+  });
+
+  it('reports a failed rename and leaves the old name in place', async () => {
+    await signInAsSeededAdmin();
+    // The body a real 500 carries: `createErrorHandler` withholds the true message and answers the
+    // literal "Internal server error", which is not worth showing on a form — so the caller's own
+    // wording has to win over an `{ error }` body that happens to be present.
+    api.updateDisplayName.mockRejectedValue(
+      new HttpErrorResponse({ status: 500, error: { error: 'Internal server error' } }),
+    );
+
+    expect(await store.updateDisplayName('The Boss')).toBe(
+      'Could not save your display name. Please try again.',
+    );
+    expect(store.displayName()).toBe('Admin');
+  });
+});
+
+describe('SessionStore: the default-password reminder (TICKET-AUTH-04)', () => {
+  const api = {
+    login: vi.fn(),
+    logout: vi.fn().mockResolvedValue(undefined),
+    me: vi.fn(),
+    changePassword: vi.fn(),
+    updateDisplayName: vi.fn(),
+  };
+  let store: InstanceType<typeof SessionStore>;
+
+  const restoreAs = async (user: SessionUser): Promise<void> => {
+    api.me.mockResolvedValue(user);
+    await store.restore();
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    api.logout.mockResolvedValue(undefined);
+    TestBed.configureTestingModule({
+      providers: [{ provide: AuthApiService, useValue: api }],
+    });
+    store = TestBed.inject(SessionStore);
+  });
+
+  it('is hidden while nobody is signed in', () => {
+    expect(store.showDefaultPasswordNotice()).toBe(false);
+  });
+
+  it('shows for an admin still on the seeded password', async () => {
+    await restoreAs(DEFAULT_PASSWORD_ADMIN);
+
+    expect(store.showDefaultPasswordNotice()).toBe(true);
+  });
+
+  it('stays hidden for an admin who has changed the password', async () => {
+    await restoreAs({ ...ADMIN, usingDefaultPassword: false });
+
+    expect(store.showDefaultPasswordNotice()).toBe(false);
+  });
+
+  it('stays hidden for a non-admin, who could not act on it anyway', async () => {
+    await restoreAs({ ...ADMIN, role: 'user', usingDefaultPassword: true });
+
+    expect(store.showDefaultPasswordNotice()).toBe(false);
+  });
+
+  it('can be dismissed for the session, and comes back on the next sign-in', async () => {
+    await restoreAs(DEFAULT_PASSWORD_ADMIN);
+
+    store.dismissDefaultPasswordNotice();
+    expect(store.showDefaultPasswordNotice()).toBe(false);
+
+    // Dismissal is state, not a stored preference: a shared password should not be able to go quiet
+    // for good on one click.
+    await store.logout();
+    api.login.mockResolvedValue(DEFAULT_PASSWORD_ADMIN);
+    await store.login('admin@example.com', 'admin');
+
+    expect(store.showDefaultPasswordNotice()).toBe(true);
+  });
+
+  it('comes back for somebody who signs in over a live session, without signing out first', async () => {
+    await restoreAs(DEFAULT_PASSWORD_ADMIN);
+    store.dismissDefaultPasswordNotice();
+
+    // `/login` is reachable with a live session, so the dismissal cannot be left to the sign-out
+    // path that clears it: one admin dismissing the reminder must not hide it from the next.
+    api.login.mockResolvedValue(DEFAULT_PASSWORD_ADMIN);
+    await store.login('admin@example.com', 'admin');
+
+    expect(store.showDefaultPasswordNotice()).toBe(true);
   });
 });

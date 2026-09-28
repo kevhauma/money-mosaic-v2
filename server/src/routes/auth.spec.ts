@@ -32,7 +32,7 @@ import { createErrorHandler } from '../middleware/error-handler.js';
 import { authUserOf, createRequireAuth } from '../middleware/require-auth.js';
 import { sessions } from '../schema/sessions.js';
 import { users } from '../schema/users.js';
-import type { PublicUser } from '../types.js';
+import type { PublicUser, SessionUser } from '../types.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json' };
 
@@ -89,12 +89,15 @@ describe('api: POST /api/auth/login', () => {
     const response = await login(baseUrl, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD);
 
     expect(response.status).toBe(200);
-    const body = (await response.json()) as PublicUser;
+    const body = (await response.json()) as SessionUser;
     expect(body).toEqual({
       id: expect.any(Number) as number,
       email: 'admin',
       displayName: 'Administrator',
       role: 'admin',
+      // TICKET-AUTH-04 widened this response from `PublicUser` to `SessionUser`; the flag is the
+      // whole difference, and it is `true` here because this database was seeded a moment ago.
+      usingDefaultPassword: true,
     });
 
     const cookie = response.headers.getSetCookie().join('; ');
@@ -207,6 +210,200 @@ describe('api: POST /api/auth/logout', () => {
   });
 });
 
+const changePassword = (
+  baseUrl: string,
+  token: string | undefined,
+  body: unknown,
+): Promise<Response> =>
+  fetch(`${baseUrl}/api/auth/password`, {
+    method: 'POST',
+    headers: token === undefined ? JSON_HEADERS : { ...JSON_HEADERS, ...withCookie(token) },
+    body: JSON.stringify(body),
+  });
+
+const meOf = (baseUrl: string, token: string): Promise<Response> =>
+  fetch(`${baseUrl}/api/auth/me`, { headers: withCookie(token) });
+
+const patchMe = (baseUrl: string, token: string, body: unknown): Promise<Response> =>
+  fetch(`${baseUrl}/api/auth/me`, {
+    method: 'PATCH',
+    headers: { ...JSON_HEADERS, ...withCookie(token) },
+    body: JSON.stringify(body),
+  });
+
+/** The `SessionUser` a session endpoint answered with. */
+const sessionUserOf = async (response: Response): Promise<SessionUser> =>
+  (await response.json()) as SessionUser;
+
+describe('api: POST /api/auth/password', () => {
+  it('lets a non-admin change their own password, and the old one stops working', async () => {
+    const { baseUrl, db } = await seededApp();
+    await addUser(db, { email: 'sam', password: 'first-password' });
+    const token = await signIn(baseUrl, 'sam', 'first-password');
+
+    const response = await changePassword(baseUrl, token, {
+      currentPassword: 'first-password',
+      newPassword: 'second-password',
+    });
+
+    expect(response.status).toBe(200);
+    expect((await login(baseUrl, 'sam', 'first-password')).status).toBe(401);
+    expect((await login(baseUrl, 'sam', 'second-password')).status).toBe(200);
+  });
+
+  it('answers a wrong current password with 401 and changes nothing', async () => {
+    const { baseUrl, db } = await seededApp();
+    await addUser(db, { email: 'sam', password: 'first-password' });
+    const token = await signIn(baseUrl, 'sam', 'first-password');
+    const before = db.select().from(users).where(eq(users.email, 'sam')).get();
+
+    const response = await changePassword(baseUrl, token, {
+      currentPassword: 'not-my-password',
+      newPassword: 'second-password',
+    });
+
+    expect(response.status).toBe(401);
+    // The `code` is the load-bearing half: `requireAuth` in front of this route answers 401 too, so
+    // the client tells "wrong password" from "session expired" by this field and not by the prose.
+    expect((await response.json()) as { error: string; code: string }).toEqual({
+      error: 'Current password is incorrect',
+      code: 'wrong_current_password',
+    });
+    expect(db.select().from(users).where(eq(users.email, 'sam')).get()).toEqual(before);
+    expect((await login(baseUrl, 'sam', 'first-password')).status).toBe(200);
+  });
+
+  it('keeps the calling session alive and ends that user’s other sessions', async () => {
+    const { baseUrl, db } = await seededApp();
+    await addUser(db, { email: 'sam', password: 'first-password' });
+    // Two cookies for the same account — "the tab I am typing in" and "the machine I am worried
+    // about". Changing the password has to keep the first and end the second.
+    const thisTab = await signIn(baseUrl, 'sam', 'first-password');
+    const otherMachine = await signIn(baseUrl, 'sam', 'first-password');
+    expect(thisTab).not.toBe(otherMachine);
+
+    await changePassword(baseUrl, thisTab, {
+      currentPassword: 'first-password',
+      newPassword: 'second-password',
+    });
+
+    expect((await meOf(baseUrl, thisTab)).status).toBe(200);
+    expect((await meOf(baseUrl, otherMachine)).status).toBe(401);
+    expect(db.select().from(sessions).where(eq(sessions.token, otherMachine)).all()).toEqual([]);
+  });
+
+  it('changes only the caller: an id or email in the body is ignored, and a session is required', async () => {
+    const { baseUrl, db } = await seededApp();
+    await addUser(db, { email: 'sam', password: 'sam-password' });
+    await addUser(db, { email: 'alex', password: 'alex-password' });
+    const samToken = await signIn(baseUrl, 'sam', 'sam-password');
+    const alexId = db.select().from(users).where(eq(users.email, 'alex')).get()!.id;
+
+    // The route takes the account from the session and has no id parameter — a body naming another
+    // user is extra noise, not a target.
+    const response = await changePassword(baseUrl, samToken, {
+      id: alexId,
+      userId: alexId,
+      email: 'alex',
+      currentPassword: 'sam-password',
+      newPassword: 'sam-new-password',
+    });
+
+    expect(response.status).toBe(200);
+    expect((await login(baseUrl, 'alex', 'alex-password')).status).toBe(200);
+    expect((await login(baseUrl, 'sam', 'sam-new-password')).status).toBe(200);
+    // And without a session there is no caller to change at all.
+    expect(
+      (await changePassword(baseUrl, undefined, { currentPassword: 'a', newPassword: 'b' })).status,
+    ).toBe(401);
+  });
+
+  it('answers a missing, empty or non-string field with 400 and changes nothing', async () => {
+    const { baseUrl, db } = await seededApp();
+    await addUser(db, { email: 'sam', password: 'first-password' });
+    const token = await signIn(baseUrl, 'sam', 'first-password');
+
+    const statuses = await Promise.all(
+      [
+        { currentPassword: 'first-password', newPassword: '' },
+        { currentPassword: '', newPassword: 'second-password' },
+        { currentPassword: 'first-password' },
+        { newPassword: 'second-password' },
+        { currentPassword: 'first-password', newPassword: 42 },
+      ].map(async (body) => (await changePassword(baseUrl, token, body)).status),
+    );
+
+    expect(statuses).toEqual([400, 400, 400, 400, 400]);
+    expect((await login(baseUrl, 'sam', 'first-password')).status).toBe(200);
+  });
+});
+
+describe('api: the default-password flag', () => {
+  it('reports usingDefaultPassword for the untouched seeded admin, and drops it once changed', async () => {
+    const { baseUrl } = await seededApp();
+    const token = await signIn(baseUrl, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD);
+
+    expect((await sessionUserOf(await meOf(baseUrl, token))).usingDefaultPassword).toBe(true);
+
+    const changed = await changePassword(baseUrl, token, {
+      currentPassword: SEED_ADMIN_PASSWORD,
+      newPassword: 'something-else',
+    });
+
+    // The change's own response already says so, so the client need not re-ask.
+    expect((await sessionUserOf(changed)).usingDefaultPassword).toBe(false);
+    expect((await sessionUserOf(await meOf(baseUrl, token))).usingDefaultPassword).toBe(false);
+  });
+
+  it('is false for an ordinary account whose password has never been changed either', async () => {
+    const { baseUrl, db } = await seededApp();
+    await addUser(db, { email: 'sam', password: 'sam-password' });
+    const token = await signIn(baseUrl, 'sam', 'sam-password');
+
+    // `passwordUpdatedAt === createdAt` holds for every fresh account; only the seeded `admin`
+    // identifier makes it mean "the password everybody knows".
+    expect((await sessionUserOf(await meOf(baseUrl, token))).usingDefaultPassword).toBe(false);
+  });
+
+  it('is on the login response too, so a fresh sign-in can show the reminder', async () => {
+    const { baseUrl } = await seededApp();
+
+    const response = await login(baseUrl, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD);
+
+    expect((await sessionUserOf(response)).usingDefaultPassword).toBe(true);
+  });
+});
+
+describe('api: PATCH /api/auth/me', () => {
+  it('renames the caller and answers with the updated user', async () => {
+    const { baseUrl, db } = await seededApp();
+    await addUser(db, { email: 'sam', password: 'sam-password' });
+    const token = await signIn(baseUrl, 'sam', 'sam-password');
+
+    const response = await patchMe(baseUrl, token, { displayName: '  Sam Rivers  ' });
+
+    expect(response.status).toBe(200);
+    // Trimmed, since the value is a label the shell renders verbatim.
+    expect((await sessionUserOf(response)).displayName).toBe('Sam Rivers');
+    expect((await sessionUserOf(await meOf(baseUrl, token))).displayName).toBe('Sam Rivers');
+  });
+
+  it('rejects a blank or non-string display name with 400', async () => {
+    const { baseUrl, db } = await seededApp();
+    await addUser(db, { email: 'sam', password: 'sam-password' });
+    const token = await signIn(baseUrl, 'sam', 'sam-password');
+
+    const statuses = await Promise.all(
+      [{ displayName: '   ' }, { displayName: 42 }, {}].map(
+        async (body) => (await patchMe(baseUrl, token, body)).status,
+      ),
+    );
+
+    expect(statuses).toEqual([400, 400, 400]);
+    expect((await sessionUserOf(await meOf(baseUrl, token))).displayName).toBe('sam');
+  });
+});
+
 describe('api: auth responses never carry a password digest', () => {
   it('leaks neither the hash nor the salt in any auth response', async () => {
     const { baseUrl, db } = await seededApp();
@@ -228,6 +425,28 @@ describe('api: auth responses never carry a password digest', () => {
       )
     ).join('\n');
 
+    expect(serialised).not.toContain(stored!.passwordHash);
+    expect(serialised).not.toContain(stored!.passwordSalt);
+    expect(serialised).not.toContain('passwordHash');
+    expect(serialised).not.toContain('passwordSalt');
+  });
+
+  it('leaks neither from the change-password or rename responses, which build from the row', async () => {
+    const { baseUrl, db } = await seededApp();
+    const token = await signIn(baseUrl, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD);
+    // Sequential, not parallel: the password change invalidates nothing the rename needs, but the
+    // digest to look for is the *new* one, so it has to be read after the change lands.
+    const renamed = await patchMe(baseUrl, token, { displayName: 'Boss' });
+    const changed = await changePassword(baseUrl, token, {
+      currentPassword: SEED_ADMIN_PASSWORD,
+      newPassword: 'something-else',
+    });
+
+    const serialised = `${await renamed.text()} ${await changed.text()}`;
+    const stored = db.select().from(users).get();
+
+    // Both responses are assembled by spreading the stored row, so a `toSessionUser` that stopped
+    // picking fields would put the digest on the wire here first.
     expect(serialised).not.toContain(stored!.passwordHash);
     expect(serialised).not.toContain(stored!.passwordSalt);
     expect(serialised).not.toContain('passwordHash');

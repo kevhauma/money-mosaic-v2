@@ -43,9 +43,11 @@ migration is never edited.
 ## Endpoints
 
 - `GET /api/health` → `{ ok: true, schemaVersion: <applied migrations> }`
-- `POST /api/auth/login` → `{ email, password }` in, the public user `{ id, email, displayName, role }` out, plus an `HttpOnly` session cookie. A wrong password, an unknown identifier and a disabled account all answer the same 401.
+- `POST /api/auth/login` → `{ email, password }` in, the session user `{ id, email, displayName, role, usingDefaultPassword }` out, plus an `HttpOnly` session cookie. A wrong password, an unknown identifier and a disabled account all answer the same 401.
 - `POST /api/auth/logout` → 204, session row deleted, cookie cleared. Idempotent.
-- `GET /api/auth/me` → the public user for the cookie's session, or 401.
+- `GET /api/auth/me` → the session user for the cookie's session, or 401. `usingDefaultPassword` is true only for the seeded `admin` account whose password has never been changed (TICKET-AUTH-04).
+- `POST /api/auth/password` → `{ currentPassword, newPassword }` for the signed-in caller; 401 for a wrong current password, 400 for an empty one. Keeps the caller's own session and deletes that user's other sessions. **No id parameter** — the account comes from the cookie, so it cannot be aimed at anyone else.
+- `PATCH /api/auth/me` → `{ displayName }`; the one field a non-admin may change about themselves.
 
 Everything else under `/api` mounts behind `requireAuth` (TICKET-AUTH-01); health, login and logout
 are the only routes a signed-out client can reach.

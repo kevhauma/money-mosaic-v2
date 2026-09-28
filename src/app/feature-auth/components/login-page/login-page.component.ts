@@ -50,8 +50,16 @@ export class LoginPageComponent {
   protected readonly pending = this.sessionStore.pending;
   protected readonly error = this.sessionStore.error;
 
+  /**
+   * `Validators.required` and deliberately **not** `Validators.email`, even though the field is
+   * labelled and named for an email address. The identifier is free text on the server on purpose
+   * (`server/src/schema/users.ts`), and the account every installation ships with is literally
+   * `admin` — so an email rule here rejected the seeded credentials in the browser before any
+   * request went out, which meant nobody could sign in to a fresh database at all. Whatever the
+   * server accepts as an identifier, this form has to be able to send.
+   */
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', Validators.required],
     password: ['', Validators.required],
   });
 

@@ -49,15 +49,30 @@ describe('LoginPageComponent', () => {
     fixture.detectChanges();
   });
 
-  it('renders an email field, a password field and a submit button — no shell around them', () => {
+  it('renders an identifier field, a password field and a submit button — no shell around them', () => {
     const page = fixture.nativeElement as HTMLElement;
     const inputs = page.querySelectorAll('input');
 
-    expect(inputs[0].type).toBe('email');
+    // Deliberately `text` rather than `email`: the seeded account's identifier is `admin`, and the
+    // server takes the field as free text (TICKET-AUTH-04).
+    expect(inputs[0].type).toBe('text');
     expect(inputs[1].type).toBe('password');
     expect(page.querySelector('button[type="submit"]')).not.toBeNull();
     expect(page.querySelector('app-shell')).toBeNull();
     expect(page.querySelector('nav')).toBeNull();
+  });
+
+  it("signs in with the seeded account's bare `admin` identifier, which is not an email address", async () => {
+    // The regression this pins: the field carried `Validators.email`, so the only account a fresh
+    // installation has was rejected in the browser before any request went out and nobody could sign
+    // in at all. The server takes the identifier as free text on purpose — whatever it accepts, this
+    // form has to be able to send (TICKET-AUTH-04).
+    api.login.mockResolvedValue(ADMIN);
+    fillIn('admin', 'admin');
+
+    await submit();
+
+    expect(api.login).toHaveBeenCalledExactlyOnceWith('admin', 'admin');
   });
 
   it('lands on the URL the guard stopped, rather than the dashboard', async () => {

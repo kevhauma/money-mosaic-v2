@@ -55,6 +55,10 @@
       aria-label="Page content"
       class="flex-1 p-4 lg:p-6"
     >
+      <!-- Ahead of the page's own header so it reads first, and inside `main` so it picks up the
+           page inset instead of needing its own (TICKET-AUTH-04). Renders nothing at all for anyone
+           but an admin still on the seeded password. -->
+      <app-default-password-notice />
       <router-outlet />
     </main>
   </div>

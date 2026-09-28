@@ -2,6 +2,7 @@ import { getTableColumns, getTableName } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 
 import { httpError } from './errors.js';
+import type { HttpError } from '../middleware/error-handler.js';
 import { JSON_ARRAY_COLUMNS } from '../schema/columns.js';
 
 /**
@@ -230,7 +231,11 @@ export const asId = (value: unknown): number => {
 const atItem = (index: number, error: unknown): unknown => {
   const status = (error as { status?: unknown } | null)?.status;
   if (typeof status !== 'number' || status >= 500) return error;
-  return httpError(status, `${(error as Error).message} (item ${index})`);
+  // The code is carried across with the message. Nothing thrown inside a batch item chooses one
+  // today, so this changes no behaviour — but re-labelling an error is no reason to drop the half of
+  // it a client branches on, and the first coded error in here would otherwise go quiet.
+  const { clientCode } = error as HttpError;
+  return httpError(status, `${(error as Error).message} (item ${index})`, clientCode);
 };
 
 /** Runs one item of a batch, labelling whatever it throws with that item's position. */

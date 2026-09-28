@@ -1,0 +1,51 @@
+<mm-paper>
+  <mm-text variant="heading" as="h2">Account</mm-text>
+  <mm-text as="p" variant="caption" class="mt-1">
+    Who you are signed in as on this machine. Your name and your password are yours to change here —
+    an administrator can reset a password for you, but nobody has to be asked.
+  </mm-text>
+
+  @if (user(); as account) {
+    <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <mm-text as="p" variant="caption">
+        Signed in as
+        <span class="font-semibold">{{ account.email }}</span>
+      </mm-text>
+      <mm-badge color="primary" variant="soft" size="sm">{{ roleLabel() }}</mm-badge>
+    </div>
+
+    <form
+      class="mt-4 flex flex-wrap items-end gap-3"
+      [formGroup]="nameForm"
+      (ngSubmit)="saveDisplayName()"
+    >
+      <mm-fieldset legend="Display name" class="w-full max-w-xs">
+        <mm-input
+          type="text"
+          formControlName="displayName"
+          autocomplete="nickname"
+          placeholder="How you want to be addressed"
+          [ariaInvalid]="
+            nameForm.controls.displayName.touched && nameForm.controls.displayName.invalid
+          "
+        />
+      </mm-fieldset>
+      <mm-button type="submit" color="primary" size="sm" [disabled]="namePending()">
+        Save name
+      </mm-button>
+    </form>
+
+    @if (nameSaved()) {
+      <mm-alert status="success" variant="soft" class="mt-2 text-sm" role="status">
+        Your display name has been updated.
+      </mm-alert>
+    }
+    @if (nameError(); as message) {
+      <mm-alert status="error" variant="soft" class="mt-2 text-sm" role="alert">
+        {{ message }}
+      </mm-alert>
+    }
+
+    <app-account-password-form [usingDefaultPassword]="account.usingDefaultPassword" />
+  }
+</mm-paper>

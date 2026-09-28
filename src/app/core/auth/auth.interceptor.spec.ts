@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { vi, type MockInstance } from 'vitest';
 import { firstValueFrom } from 'rxjs';
-import { AUTH_ME_URL } from './auth-endpoints';
+import { AUTH_ME_URL, AUTH_PASSWORD_URL, WRONG_CURRENT_PASSWORD_CODE } from './auth-endpoints';
 import { authInterceptor } from './auth.interceptor';
 import { AuthApiService } from './auth-api.service';
 import { SessionStore } from './session.store';
@@ -118,6 +118,40 @@ describe('authInterceptor', () => {
     await response;
 
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('leaves a 401 from the change-password call alone — a wrong current password is not an expiry', async () => {
+    await signIn();
+    const response = firstValueFrom(http.post(AUTH_PASSWORD_URL, {})).catch(() => 'rejected');
+
+    httpMock
+      .expectOne(AUTH_PASSWORD_URL)
+      .flush(
+        { error: 'Current password is incorrect', code: WRONG_CURRENT_PASSWORD_CODE },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+    await response;
+
+    // The server explicitly kept this session alive (TICKET-AUTH-04), so mistyping the current
+    // password must leave the user on the Settings form rather than back at /login.
+    expect(session.status()).toBe('authenticated');
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('signs out on a 401 from the change-password call that is NOT the wrong-password answer', async () => {
+    await signIn();
+    const response = firstValueFrom(http.post(AUTH_PASSWORD_URL, {})).catch(() => 'rejected');
+
+    // What `requireAuth` answers when the session expired while the form sat open — same status and
+    // same URL as the case above, distinguishable only by the missing `code`. The URL must not be
+    // exempt outright, or this user is left typing into a form backed by a dead cookie.
+    httpMock
+      .expectOne(AUTH_PASSWORD_URL)
+      .flush({ error: 'Not signed in' }, { status: 401, statusText: 'Unauthorized' });
+    await response;
+
+    expect(session.status()).toBe('anonymous');
+    expect(navigate).toHaveBeenCalled();
   });
 
   it('ignores a non-/api request entirely, credentials included', () => {
