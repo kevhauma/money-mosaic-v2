@@ -1,5 +1,8 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
-import { App } from './app/app';
+import { startApp } from './app/app-bootstrap';
 
-bootstrapApplication(App, appConfig).catch((err) => console.error(err));
+// One call: `startApp` owns both outcomes, including the "can't reach the server" screen that
+// replaces a rejected bootstrap (TICKET-SRV-06).
+// The `.catch` is the floor under the floor: `startApp` handles a rejected bootstrap, but if the
+// *failure* path itself throws, nothing else would report it — a blank page and an empty console is
+// precisely what this file exists to prevent.
+startApp().catch((error: unknown) => console.error(error));

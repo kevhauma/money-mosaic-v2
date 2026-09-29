@@ -68,9 +68,13 @@ export class StoreResetService {
    * same tab. Without this, the stores reset at sign-out would stay empty until a full reload.
    */
   rehydrateAll(): Promise<void> {
-    return Promise.all([...this.registrations.values()].map(({ hydrate }) => hydrate())).then(
-      () => undefined,
-    );
+    return Promise.all(
+      // Each store's failure is swallowed here and left on its own `error` for its own page to
+      // report (TICKET-SRV-06). `Promise.all` rejects on the first failure, so without this one
+      // unreachable read would both hide the seventeen that worked and, since the one caller
+      // fires this and moves on, surface as an unhandled rejection at sign-in.
+      [...this.registrations.values()].map(({ hydrate }) => hydrate().catch(() => undefined)),
+    ).then(() => undefined);
   }
 }
 
@@ -104,19 +108,14 @@ export const createStoreReset = <State extends object>(
  * store stays empty for the rest of the session, and nothing short of signing out clears it.
  *
  * So a rejection forgets itself on the way past, leaving the next `hydrate()` free to try again.
- * This is only the *retry being possible*; TICKET-SRV-06 owns making the failure visible and giving
- * somebody a way to trigger that retry.
- *
- * ```ts
- * hydration = retryOnFailure(
- *   repository.getAll().then((rows) => patchState(store, …)),
- *   () => { hydration = null; },
- * );
- * ```
+ * This is only the *retry being possible*; TICKET-SRV-06 made the failure visible and gave somebody
+ * a way to trigger that retry — `createHydration` in `with-hydration.ts` is the only caller now, and
+ * the `forget` it passes also records the message on the store's `error`, which is why the callback
+ * receives the rejection.
  */
-export const retryOnFailure = <T>(work: Promise<T>, forget: () => void): Promise<T> =>
+export const retryOnFailure = <T>(work: Promise<T>, forget: (error: unknown) => void): Promise<T> =>
   work.catch((error: unknown) => {
-    forget();
+    forget(error);
     throw error;
   });
 

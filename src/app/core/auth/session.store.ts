@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { isTransportFailure } from '@/core/server-status';
 import { StoreResetService } from '@/core/store-reset';
 import { AuthApiService } from './auth-api.service';
 import { authErrorMessage, signInErrorMessage } from './auth-errors';
@@ -115,6 +116,14 @@ export const SessionStore = signalStore(
        * land *after* a successful sign-in and patch the fresh session back to anonymous — leaving
        * the tab signed out against a valid cookie, and `'anonymous'` rather than `'unknown'` means
        * no guard would ever ask again.
+       *
+       * **An unreachable server is not an answer** (TICKET-SRV-06). Treating it as one — which is
+       * what happened until SRV-06, since every failure led to `clearSession()` — signs a perfectly
+       * valid session out and parks the user on a login screen that cannot work either, which is
+       * the worst of the three things that could be shown. So a transport failure leaves `status`
+       * at `'unknown'`, forgets the memo so the next call genuinely re-asks, and **rejects**: the
+       * app initializer turns that rejection into the "can't reach the server" screen, and the
+       * guards below it treat it as "not now" rather than "not signed in".
        */
       restore: (): Promise<void> => {
         const attempt: Promise<void> = (restoration ??= api.me().then(
@@ -122,8 +131,16 @@ export const SessionStore = signalStore(
             if (restoration === attempt)
               patchState(store, { user, status: 'authenticated', error: null });
           },
-          () => {
-            if (restoration === attempt) clearSession();
+          (error: unknown) => {
+            if (restoration !== attempt) return;
+            if (!isTransportFailure(error)) {
+              clearSession();
+              return;
+            }
+            // Cleared before re-throwing, so nothing holds the rejected promise: the next
+            // `restore()` starts a fresh request rather than re-rejecting with this one.
+            restoration = null;
+            throw error;
           },
         ));
         return attempt;

@@ -5,7 +5,7 @@ import {
   DEFAULT_CATEGORY_COMPARISON_SETTINGS,
   type CategoryComparisonSettings,
 } from '@/core/data-access';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 /**
  * The user's optional category-exclusion list for the dashboard's category period comparison
@@ -15,30 +15,22 @@ import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/sto
 export const CategoryComparisonSettingsStore = signalStore(
   { providedIn: 'root' },
   withState<CategoryComparisonSettings>(DEFAULT_CATEGORY_COMPARISON_SETTINGS),
+  withHydrationState(),
   withMethods((store) => {
     const categoryComparisonSettingsRepository = inject(CategoryComparisonSettingsRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      categoryComparisonSettingsRepository.get().then((settings) => patchState(store, settings)),
+    );
 
     return {
       reset,
-      /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-      hydrate: (): Promise<void> => {
-        if (!hydration) {
-          hydration = retryOnFailure(
-            categoryComparisonSettingsRepository
-              .get()
-              .then((settings) => patchState(store, settings)),
-            () => {
-              hydration = null;
-            },
-          );
-        }
-        return hydration;
-      },
+      hydrate,
+      retry,
 
       setExcludedCategoryIds: async (excludedCategoryIds: number[]): Promise<void> => {
         await categoryComparisonSettingsRepository.setExcludedCategoryIds(excludedCategoryIds);
@@ -52,7 +44,9 @@ export const CategoryComparisonSettingsStore = signalStore(
       registerStoreReset('CategoryComparisonSettingsStore', store.reset, store.hydrate);
 
       // Fire-and-forget on first injection instead of app bootstrap (TICKET-PERF-07).
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

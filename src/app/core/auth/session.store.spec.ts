@@ -95,6 +95,29 @@ describe('SessionStore: sign-in, sign-out and restore', () => {
     expect(store.error()).toBeNull();
   });
 
+  it('rejects rather than signing anybody out when the server does not answer (TICKET-SRV-06)', async () => {
+    // Status 0 is an outage, not an answer about who this is. Treating it as one — which is what
+    // every failure used to mean here — signs a valid session out and parks the user on a login
+    // screen that needs the very server that is missing.
+    api.me.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+    await expect(store.restore()).rejects.toBeInstanceOf(HttpErrorResponse);
+
+    expect(store.status()).toBe('unknown');
+    expect(store.user()).toBeNull();
+  });
+
+  it('forgets an unanswered restore, so the next one genuinely asks again', async () => {
+    api.me.mockRejectedValueOnce(new HttpErrorResponse({ status: 0 }));
+    await store.restore().catch(() => undefined);
+
+    api.me.mockResolvedValue(ADMIN);
+    await store.restore();
+
+    expect(api.me).toHaveBeenCalledTimes(2);
+    expect(store.status()).toBe('authenticated');
+  });
+
   it('asks who is signed in only once, however many guards resolve at the same moment', async () => {
     api.me.mockResolvedValue(ADMIN);
 

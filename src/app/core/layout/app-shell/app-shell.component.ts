@@ -3,6 +3,8 @@ import {
   Component,
   ElementRef,
   inject,
+  Injector,
+  isDevMode,
   signal,
   viewChild,
 } from '@angular/core';
@@ -29,11 +31,13 @@ import {
   tablerUsers,
 } from '@ng-icons/tabler-icons';
 import { SessionStore } from '@/core/auth';
+import { ServerStatusService } from '@/core/server-status';
 import { AppSettingsStore, TransactionsStore } from '@/core/state';
 // Imported directly (not via the @/shared/ui barrel) to keep the rest of shared/ui — and the
 // @angular/forms it drags in via InputComponent/SelectComponent — out of the eager bundle;
 // Angular's @Component decorator has side effects, so esbuild can't tree-shake unused barrel
 // re-exports once anything from the barrel is imported eagerly.
+import { AlertComponent } from '@/shared/ui/alert/alert.component';
 import { ButtonComponent } from '@/shared/ui/button/button.component';
 import { TypographyComponent } from '@/shared/ui/typography/typography.component';
 import { DefaultPasswordNoticeComponent } from '../default-password-notice/default-password-notice.component';
@@ -69,6 +73,7 @@ const SKIP_LINK_CLASS =
     RouterLink,
     RouterLinkActive,
     NgIcon,
+    AlertComponent,
     ButtonComponent,
     DefaultPasswordNoticeComponent,
     TypographyComponent,
@@ -101,7 +106,9 @@ const SKIP_LINK_CLASS =
 export class AppShellComponent {
   protected readonly transactionsStore = inject(TransactionsStore);
   protected readonly sessionStore = inject(SessionStore);
+  protected readonly serverStatus = inject(ServerStatusService);
   private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
   // Unused otherwise — injecting it is the point. `AppSettingsStore` only hydrates and wires up
   // its settings-application effects (accent color, TICKET-SET-03's currency symbol/position) the
   // first time something injects it (`providedIn: 'root'` + onInit, TICKET-PERF-07); previously
@@ -118,6 +125,21 @@ export class AppShellComponent {
 
   private readonly mainRegion = viewChild.required<ElementRef<HTMLElement>>('mainRegion');
   private readonly navRegion = viewChild.required<ElementRef<HTMLElement>>('navRegion');
+
+  constructor() {
+    // Dev-only sample-data seed (TICKET-DEV-01), moved here from `provideAppInitializer` by
+    // TICKET-SRV-06. It cannot run at bootstrap any more: the data it writes lives on the server
+    // behind a session, so seeding before anyone is signed in would be a handful of 401s. The
+    // shell is the first thing that renders only once somebody *is* signed in, which makes it the
+    // earliest correct moment. The dynamic import keeps the seed module and its dataset in a
+    // separate chunk a production build never references, and `isDevMode()` gates it out at
+    // runtime regardless.
+    if (isDevMode()) {
+      void import('@/dev-seed/dev-seed.service')
+        .then(({ DevSeedService }) => this.injector.get(DevSeedService).seedIfEmpty())
+        .catch((error: unknown) => console.error('Dev seed failed', error));
+    }
+  }
 
   /**
    * Moves focus (not just the scroll position) into `main`/`nav`, so the next Tab continues *inside*

@@ -45,68 +45,77 @@
   }
 </mm-modal>
 
-@if (hasSelectedCategories()) {
-  <!-- Two columns from `lg:` (TICKET-INC-17): charts in the main column, the events rail beside
+<!-- The page's own content, gated on the stores it is computed from (TICKET-SRV-06): the empty
+     state below is advice about settings, and an unread `AppSettingsStore` looks exactly like a
+     user who has ticked no income categories. -->
+<mm-hydration-boundary
+  [loading]="hydration.loading()"
+  [error]="hydration.error()"
+  [rows]="5"
+  (retry)="hydration.retry()"
+>
+  @if (hasSelectedCategories()) {
+    <!-- Two columns from `lg:` (TICKET-INC-17): charts in the main column, the events rail beside
      them, so events never push the charts down on a wide screen. Below `lg:` the rail stacks
      under the charts, which is why it comes second in the DOM. `min-w-0` on the charts column
      stops a wide chart from forcing the grid past the viewport. -->
-  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-    <div class="min-w-0">
-      <mm-paper>
-        <h2 class="card-title text-base">Income by month</h2>
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div class="min-w-0">
+        <mm-paper>
+          <h2 class="card-title text-base">Income by month</h2>
 
-        <div
-          echarts
-          [options]="chartOption()"
-          class="h-72 w-full"
-          role="img"
-          [attr.aria-label]="chartAriaLabel()"
-          (chartClick)="onChartClick($event)"
-          (chartLegendSelectChanged)="onLegendSelectChanged($event)"
-          (chartDataZoom)="onDataZoom($event)"
-        ></div>
+          <div
+            echarts
+            [options]="chartOption()"
+            class="h-72 w-full"
+            role="img"
+            [attr.aria-label]="chartAriaLabel()"
+            (chartClick)="onChartClick($event)"
+            (chartLegendSelectChanged)="onLegendSelectChanged($event)"
+            (chartDataZoom)="onDataZoom($event)"
+          ></div>
 
-        <!-- Screen-reader-only companion table for the chart above — not a visible data table, so
+          <!-- Screen-reader-only companion table for the chart above — not a visible data table, so
            it skips mm-table's overflow/border/zebra chrome entirely (TICKET-UI-07). -->
-        <table class="sr-only">
-          <caption>
-            Total income per period, underlying the chart above
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Period</th>
-              <th scope="col">Income</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of accessibleRows(); track row.bucketKey) {
+          <table class="sr-only">
+            <caption>
+              Total income per period, underlying the chart above
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">{{ row.bucketKey }}</th>
-                <td>{{ row.total }}</td>
+                <th scope="col">Period</th>
+                <th scope="col">Income</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (row of accessibleRows(); track row.bucketKey) {
+                <tr>
+                  <th scope="row">{{ row.bucketKey }}</th>
+                  <td>{{ row.total }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
 
-        <!-- The two assumptions this chart is drawn under, stated where they act and corrigible
+          <!-- The two assumptions this chart is drawn under, stated where they act and corrigible
              here (TICKET-INC-23). Both were steps in the setup wall that used to stand in front of
              the page; the controls are the same ones `/income/settings` renders. -->
-        <app-income-inference-note
-          [statement]="lumpSumNote()"
-          subject="which categories are annual lump sums"
-        >
-          <app-income-lump-sum-checklist />
-        </app-income-inference-note>
+          <app-income-inference-note
+            [statement]="lumpSumNote()"
+            subject="which categories are annual lump sums"
+          >
+            <app-income-lump-sum-checklist />
+          </app-income-inference-note>
 
-        <app-income-inference-note
-          [statement]="mainIncomeCategoryNote()"
-          subject="your main income category"
-        >
-          <app-income-main-category />
-        </app-income-inference-note>
-      </mm-paper>
+          <app-income-inference-note
+            [statement]="mainIncomeCategoryNote()"
+            subject="your main income category"
+          >
+            <app-income-main-category />
+          </app-income-inference-note>
+        </mm-paper>
 
-      <!-- These two stay full width, and TICKET-INC-22's "pair the two short panels" was measured
+        <!-- These two stay full width, and TICKET-INC-22's "pair the two short panels" was measured
            and abandoned rather than shipped: the charts column is 617px on a 1280px window, so a
            half is 297px, and the growth panel's three stat cards are 168px each — they stack one
            per row and that panel goes 177px → 536px. Pairing cut ~185px of page but left both
@@ -114,11 +123,11 @@
            which is a worse page, not a shorter one. Three cards only sit side by side above a
            ~600px half, i.e. a ~1,224px charts column, which this layout never has next to a 20rem
            rail. The scroll win is in the Net vs gross grid and the rail cap instead. -->
-      <app-income-growth-panel class="mt-6 block" />
+        <app-income-growth-panel class="mt-6 block" />
 
-      <app-income-yearly-panel class="mt-6 block" />
+        <app-income-yearly-panel class="mt-6 block" />
 
-      <!-- Back in the charts column after a spell at full page width (TICKET-INC-22). It was moved
+        <!-- Back in the charts column after a spell at full page width (TICKET-INC-22). It was moved
            out because its 2-up threshold looked marginal here and because a horizontal scrollbar
            appeared once it sat further right — but that scrollbar was never this section's doing:
            it was `sr-only` failing to constrain a `<table>`, fixed in `styles.css`. With the real
@@ -126,29 +135,30 @@
            the *whole* page rather than only the part above this section, and the page reads as one
            column of panels beside one rail. Its `@container` is 567px here against a 512px
            threshold, so 2×2 holds with 55px to spare. -->
-      <app-income-gross-net-section class="mt-6 block" />
-    </div>
+        <app-income-gross-net-section class="mt-6 block" />
+      </div>
 
-    <!-- `lg:self-start` is load-bearing, not decoration (TICKET-INC-22): a grid item stretches to
+      <!-- `lg:self-start` is load-bearing, not decoration (TICKET-INC-22): a grid item stretches to
          its row by default, and a stretched item gives `sticky` nothing to move within — the rail
          would silently scroll away with the charts. `lg:top-20` clears the sticky page header
          (64px) with a 16px gap; below `lg:` the rail stacks under the charts and is neither
          sticky nor capped, since a viewport-tall sticky rail on a phone would cover the very
          content it annotates. -->
-    <app-income-events-sidebar class="block lg:sticky lg:top-20 lg:self-start" />
-  </div>
-} @else {
-  <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
+      <app-income-events-sidebar class="block lg:sticky lg:top-20 lg:self-start" />
+    </div>
+  } @else {
+    <!-- Names both real causes, not just the one the title used to (TICKET-PUB-07): "nothing is
      ticked" and "nothing is categorised as income yet" look identical from here, and a first-time
      user almost always has the second. -->
-  <mm-empty-state
-    class="mt-6"
-    title="No income is being counted yet"
-    message="Two things cause this. If you have income categories, tick at least one under Income settings. If that list is empty, no category has kind “income” yet — set that under Categories, and make sure your imported transactions are assigned to it."
-  >
-    <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
-    <mm-button action color="primary" class="mt-2" link="/income/settings">
-      Open income settings
-    </mm-button>
-  </mm-empty-state>
-}
+    <mm-empty-state
+      class="mt-6"
+      title="No income is being counted yet"
+      message="Two things cause this. If you have income categories, tick at least one under Income settings. If that list is empty, no category has kind “income” yet — set that under Categories, and make sure your imported transactions are assigned to it."
+    >
+      <ng-icon icon name="tablerTrendingUp" size="40" aria-hidden="true" />
+      <mm-button action color="primary" class="mt-2" link="/income/settings">
+        Open income settings
+      </mm-button>
+    </mm-empty-state>
+  }
+</mm-hydration-boundary>

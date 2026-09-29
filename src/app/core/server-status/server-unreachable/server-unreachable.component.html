@@ -1,0 +1,40 @@
+<div class="flex min-h-screen items-center justify-center bg-base-200 p-6">
+  <div class="card w-full max-w-xl bg-base-100 shadow-lg">
+    <div class="card-body gap-4">
+      <h1 class="card-title text-2xl">Can't reach the server</h1>
+
+      <p class="text-base-content/80">
+        Money Mosaic keeps your accounts and transactions on your own server, and this browser
+        couldn't get an answer from it. Nothing is lost — there is just nothing to show until the
+        connection is back.
+      </p>
+
+      <ul class="list-disc space-y-1 pl-5 text-sm text-base-content/70">
+        <li>The server may not be running. Start it and try again.</li>
+        <li>Its address may have changed, in which case this page is asking the wrong one.</li>
+      </ul>
+
+      <p class="text-sm text-base-content/70">
+        Asking:
+        <code class="rounded bg-base-200 px-1.5 py-0.5 break-all">{{ apiUrl }}</code>
+      </p>
+
+      @if (failedBefore()) {
+        <p role="alert" class="text-sm font-medium text-error">
+          Still no answer after {{ attempt() }} tries.
+        </p>
+      }
+
+      <div class="card-actions justify-end">
+        <button type="button" class="btn btn-primary" [disabled]="retrying()" (click)="onRetry()">
+          @if (retrying()) {
+            <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+            Retrying…
+          } @else {
+            Retry
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

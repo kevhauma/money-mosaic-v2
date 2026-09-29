@@ -15,6 +15,7 @@ export * from './cycle-picker/cycle-picker.component';
 export * from './paginator/paginator.component';
 export * from './date-range-input/date-range-input.component';
 export * from './loading-skeleton/loading-skeleton.component';
+export * from './hydration-boundary/hydration-boundary.component';
 export * from './typography/typography.component';
 export * from './paper/paper.component';
 export * from './tabs/tabs.component';

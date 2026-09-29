@@ -15,17 +15,13 @@ import {
   type AdminUserChanges,
   type NewAccount,
 } from '@/core/auth';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 type AdminUsersState = {
   readonly users: readonly AdminUser[];
-  /** The first load is in flight — the table's skeleton, not a per-row spinner. */
-  readonly loading: boolean;
-  /** Why the **list** could not be loaded. Every *action*'s failure is returned, not stored. */
-  readonly error: string | null;
 };
 
-const EMPTY: AdminUsersState = { users: [], loading: false, error: null };
+const EMPTY: AdminUsersState = { users: [] };
 
 const LOAD_FAILED = 'Could not load the accounts. Please try again.';
 const CREATE_FAILED = 'Could not create the account. Please try again.';
@@ -49,8 +45,11 @@ const DELETE_FAILED = 'Could not delete the account. Please try again.';
 export const AdminUsersStore = signalStore(
   { providedIn: 'root' },
   // Spread rather than shared by reference, and every key is declared: a key omitted from the
-  // initial state makes a later `patchState` of it unreadable.
+  // initial state makes a later `patchState` of it unreadable. `loading`/`error` are no longer
+  // among them — they are `withHydrationState`'s, shared with every other hydrating store
+  // (TICKET-SRV-06), and this store's own `load` no longer sets them.
   withState<AdminUsersState>({ ...EMPTY }),
+  withHydrationState(),
   withComputed(({ users }) => ({
     /**
      * Administrators who could sign in right now — the server's own `enabledAdminCount`, mirrored so
@@ -64,12 +63,6 @@ export const AdminUsersStore = signalStore(
   withMethods((store) => {
     const api = inject(AdminUsersApiService);
     const session = inject(SessionStore);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
-
     /** Swaps one account for the version the server just answered with. */
     const replace = (updated: AdminUser): void => {
       patchState(store, {
@@ -77,38 +70,30 @@ export const AdminUsersStore = signalStore(
       });
     };
 
-    const load = async (): Promise<void> => {
-      patchState(store, { loading: true, error: null });
-      try {
-        patchState(store, { users: await api.list(), loading: false, error: null });
-      } catch (error) {
-        patchState(store, { ...EMPTY, error: authErrorMessage(error, LOAD_FAILED) });
-      }
-    };
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` is the panel's "try again" and `reset` the sign-out wipe
+     * (TICKET-SRV-06, TICKET-AUTH-02). The message mapper is this store's alone: its reads go
+     * through `AdminUsersApiService` rather than `ApiClient`, so a failure arrives as a raw
+     * `HttpErrorResponse` that only `authErrorMessage` can turn into a sentence.
+     *
+     * It asks nothing of the server for a non-admin. That is not a permission check (the server's
+     * `requireAdmin` is), it is about `rehydrateAll`: signing in as an ordinary user in a tab where
+     * an admin had the panel open would otherwise fire a call that can only ever answer 403.
+     */
+    const { hydrate, retry, reset } = createHydration(
+      store,
+      async () => {
+        if (session.user()?.role !== 'admin') return;
+        patchState(store, { users: await api.list() });
+      },
+      (error) => authErrorMessage(error, LOAD_FAILED),
+    );
 
     return {
       reset,
-
-      /**
-       * Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07), which only
-       * happens when the admin panel is opened, since nothing else injects this store.
-       *
-       * It asks nothing of the server for a non-admin. That is not a permission check (the server's
-       * `requireAdmin` is), it is about `rehydrateAll`: signing in as an ordinary user in a tab where
-       * an admin had the panel open would otherwise fire a call that can only ever answer 403.
-       */
-      hydrate: (): Promise<void> => {
-        if (!hydration) {
-          hydration = session.user()?.role === 'admin' ? load() : Promise.resolve();
-        }
-        return hydration;
-      },
-
-      /** Re-reads the list, for the "try again" on a failed load. */
-      reload: (): Promise<void> => {
-        hydration = load();
-        return hydration;
-      },
+      hydrate,
+      retry,
 
       /**
        * Creates an account, which the server also seeds with its default categories, mapping
@@ -169,7 +154,9 @@ export const AdminUsersStore = signalStore(
       // email, which is exactly what the next person to sign in must not find sitting in memory.
       registerStoreReset('AdminUsersStore', store.reset, store.hydrate);
 
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

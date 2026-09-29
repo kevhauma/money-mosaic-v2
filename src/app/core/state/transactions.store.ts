@@ -19,7 +19,7 @@ import {
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
 import { TransactionDeletionService, type RemoveTransactionsResult } from '@/core/transactions';
 import { isSavingsMovement } from '@/core/transfers';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 const transactionConfig = entityConfig({
   entity: type<Transaction>(),
@@ -68,38 +68,27 @@ export const TransactionsStore = signalStore(
     };
   }),
   withState({ hydrated: false }),
+  withHydrationState(),
   withMethods((store) => {
     const transactionsRepository = inject(TransactionsRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
+
+    /**
+     * `hydrate` is idempotent and safe to call from multiple places (any flow reading
+     * `transactions()` synchronously can await it as a guard); `force: true` re-fetches even after
+     * a prior hydrate resolved — used by the dev seed after writing new rows directly through the
+     * repository (TICKET-PERF-05). `retry` is the user-facing forced re-fetch after a failed load
+     * (TICKET-SRV-06), `reset` the sign-out wipe (TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      transactionsRepository.getAll().then((transactions) => {
+        patchState(store, setAllEntities(transactions, transactionConfig), { hydrated: true });
+      }),
+    );
 
     return {
       reset,
-      /**
-       * Idempotent and safe to call from multiple places (app bootstrap fires it once
-       * without awaiting; any flow reading `transactions()` synchronously can await it as a
-       * guard). `force: true` re-fetches even after a prior hydrate resolved — used by the
-       * dev seed to refresh state after writing new rows directly through the repository
-       * (TICKET-PERF-05).
-       */
-      hydrate: (options?: { force?: boolean }): Promise<void> => {
-        if (!hydration || options?.force) {
-          hydration = retryOnFailure(
-            transactionsRepository.getAll().then((transactions) => {
-              patchState(store, setAllEntities(transactions, transactionConfig), {
-                hydrated: true,
-              });
-            }),
-            () => {
-              hydration = null;
-            },
-          );
-        }
-        return hydration;
-      },
+      hydrate,
+      retry,
 
       /** Receives the current savings-account IBANs from `AccountsStore` (TICKET-TRF-02). */
       setOwnSavingsIbans: (ownSavingsIbans: ReadonlySet<string>): void => {
@@ -190,7 +179,9 @@ export const TransactionsStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `transactions()` synchronously can still `await store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

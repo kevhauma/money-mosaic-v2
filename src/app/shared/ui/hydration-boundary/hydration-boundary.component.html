@@ -1,0 +1,12 @@
+<!-- The failure wins over the load: a store that failed is not loading any more, and the message is
+     the only thing here anyone can act on. -->
+@if (error()) {
+  <div role="alert" class="alert alert-error alert-soft">
+    <span class="grow">{{ error() }}</span>
+    <mm-button size="sm" variant="outline" (click)="retry.emit()">Try again</mm-button>
+  </div>
+} @else if (loading()) {
+  <mm-loading-skeleton [rows]="rows()" />
+} @else {
+  <ng-content />
+}

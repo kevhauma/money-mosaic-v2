@@ -20,7 +20,7 @@ import {
   type SharedRulesFile,
   type SkippedRuleEntry,
 } from './rule-share';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 export type ImportRulesResult = { added: number; skipped: SkippedRuleEntry[] };
 
@@ -36,36 +36,28 @@ export const RulesStore = signalStore(
   // entity state, no divergent orchestration, so this store adopts all three generic methods.
   withPersistedCrud(RulesRepository, ruleConfig),
   withState({ lastRunCount: null as number | null, hydrated: false }),
+  withHydrationState(),
   withComputed(({ entities }) => ({
     rules: entities,
     rulesByPriority: computed(() => [...entities()].sort((a, b) => a.priority - b.priority)),
   })),
   withMethods((store) => {
     const rulesRepository = inject(RulesRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
-
-    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          rulesRepository.getAll().then((rules) => {
-            patchState(store, setAllEntities(rules, ruleConfig), { hydrated: true });
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      rulesRepository.getAll().then((rules) => {
+        patchState(store, setAllEntities(rules, ruleConfig), { hydrated: true });
+      }),
+    );
 
     return {
       reset,
       hydrate,
+      retry,
 
       // Aliased to the store's own public method names (same pattern as `withArchivable`'s
       // `activeEntities`/`archivedEntities` -> `activeAccounts`/`archivedAccounts`).
@@ -226,7 +218,9 @@ export const RulesStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `rules()` synchronously can still `await store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

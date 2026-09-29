@@ -21,7 +21,7 @@ import { TransfersRepository, type Transaction, type Transfer } from '@/core/dat
 import { TransferLinkingService, TransferMatchingService } from '@/core/transfers';
 import { TransactionsStore } from './transactions.store';
 import { TransferSettingsStore } from './transfer-settings.store';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 const transferConfig = entityConfig({
   entity: type<Transfer>(),
@@ -45,32 +45,26 @@ export const TransfersStore = signalStore(
     transfersById: computed(() => new Map(entities().map((transfer) => [transfer.id!, transfer]))),
   })),
   withState({ hydrated: false }),
+  withHydrationState(),
   withMethods((store) => {
     const transfersRepository = inject(TransfersRepository);
     const transferLinkingService = inject(TransferLinkingService);
     const transactionsStore = inject(TransactionsStore);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
+    /**
+     * `hydrate` is idempotent; `force: true` re-fetches (used by the dev seed after writing new
+     * transfers). `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      transfersRepository.getAll().then((transfers) => {
+        patchState(store, setAllEntities(transfers, transferConfig), { hydrated: true });
+      }),
+    );
 
     return {
       reset,
-      /** Idempotent; `force: true` re-fetches (used by the dev seed after writing new transfers). */
-      hydrate: (options?: { force?: boolean }): Promise<void> => {
-        if (!hydration || options?.force) {
-          hydration = retryOnFailure(
-            transfersRepository.getAll().then((transfers) => {
-              patchState(store, setAllEntities(transfers, transferConfig), { hydrated: true });
-            }),
-            () => {
-              hydration = null;
-            },
-          );
-        }
-        return hydration;
-      },
+      hydrate,
+      retry,
 
       link: async (fromTransaction: Transaction, toTransaction: Transaction): Promise<void> => {
         const { transfer, updatedTransactions } = await transferLinkingService.linkManually(
@@ -167,7 +161,9 @@ export const TransfersStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `transfers()` synchronously can still `await store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

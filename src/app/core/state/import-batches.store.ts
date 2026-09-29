@@ -27,7 +27,7 @@ import {
   type UndoImportImpact,
 } from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 /** Applies `{ id, categoryId }` updates onto their matching transactions, leaving the rest untouched. */
 const applyCategoryUpdates = (
@@ -57,6 +57,7 @@ export const ImportBatchesStore = signalStore(
    * the transfers panel, so the flag goes in with the first consumer rather than after it.
    */
   withState({ hydrated: false }),
+  withHydrationState(),
   withComputed(({ entities }) => ({
     batches: entities,
     /**
@@ -88,28 +89,21 @@ export const ImportBatchesStore = signalStore(
     const importService = inject(ImportService);
     const rulesEngineService = inject(RulesEngineService);
     const coOwnerContributionService = inject(CoOwnerContributionService);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      importBatchesRepository.getAll().then((batches) => {
+        patchState(store, setAllEntities(batches, importBatchConfig), { hydrated: true });
+      }),
+    );
 
     return {
       reset,
-      /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-      hydrate: (): Promise<void> => {
-        if (!hydration) {
-          hydration = retryOnFailure(
-            importBatchesRepository.getAll().then((batches) => {
-              patchState(store, setAllEntities(batches, importBatchConfig), { hydrated: true });
-            }),
-            () => {
-              hydration = null;
-            },
-          );
-        }
-        return hydration;
-      },
+      hydrate,
+      retry,
 
       /**
        * Which of a file's rows the app already has (TICKET-IMP-14) — a read-only look at the same
@@ -194,7 +188,9 @@ export const ImportBatchesStore = signalStore(
       registerStoreReset('ImportBatchesStore', store.reset, store.hydrate);
 
       // Fire-and-forget on first `/import` injection instead of app bootstrap (TICKET-PERF-07).
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

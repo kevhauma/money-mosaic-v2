@@ -10,6 +10,7 @@ import {
   type SessionUser,
 } from '@/core/auth';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
+import { AdminUsersStore } from '../../admin-users.store';
 import { AdminUsersPageComponent } from './admin-users-page.component';
 
 const ADMIN_SESSION: SessionUser = {
@@ -72,8 +73,7 @@ describe('AdminUsersPageComponent', () => {
 
   const click = async (element: HTMLElement): Promise<void> => {
     element.click();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settle();
   };
 
   const type = async (input: HTMLInputElement, value: string): Promise<void> => {
@@ -95,11 +95,26 @@ describe('AdminUsersPageComponent', () => {
   const rowText = (): string[] =>
     [...page().querySelectorAll('tbody tr')].map((row) => row.textContent ?? '');
 
+  /**
+   * Waits on the store's own hydration rather than on change detection alone. Since TICKET-SRV-06
+   * it resolves a couple of microtasks after the request it made — the shared `createHydration`
+   * wraps the read in a `.then` that clears `loading` and a `.catch` that records `error` — so a
+   * bare `whenStable()` returns while the page is still showing its skeleton. `hydrate()` answers
+   * with whichever load is in flight, including the forced one the "try again" button fires, and
+   * its rejection is the failure the page is about to render.
+   */
+  const settle = async (): Promise<void> => {
+    await TestBed.inject(AdminUsersStore)
+      .hydrate()
+      .catch(() => undefined);
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
   const render = async (): Promise<void> => {
     fixture = TestBed.createComponent(AdminUsersPageComponent);
     fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settle();
   };
 
   beforeEach(async () => {

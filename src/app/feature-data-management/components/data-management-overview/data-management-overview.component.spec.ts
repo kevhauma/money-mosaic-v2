@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { DataManagementRepository, type AppDataExport } from '@/core/data-access';
+import { StorageStatusService } from '@/core/storage';
 import { DataManagementOverviewComponent } from './data-management-overview.component';
 
 type Internals = {
@@ -57,6 +58,27 @@ describe('DataManagementOverviewComponent', () => {
   };
 
   const internals = (): Internals => fixture.componentInstance as unknown as Internals;
+
+  describe('persistent-storage panel', () => {
+    it('asks the browser for its storage status on arrival, rather than reporting a stale default', () => {
+      // The regression this pins (TICKET-SRV-06): `checkAndRequest` used to be called at bootstrap,
+      // and when that call moved out, nothing invoked it — so `status` sat at its `'unsupported'`
+      // initial value and the panel reported "not supported" on every browser, forever. Nothing
+      // failed, because nothing asserted it.
+      const checkAndRequest = vi.fn().mockResolvedValue(undefined);
+      TestBed.configureTestingModule({
+        imports: [DataManagementOverviewComponent],
+        providers: [
+          { provide: DataManagementRepository, useValue: dataManagementRepository },
+          { provide: StorageStatusService, useValue: { checkAndRequest, status: () => 'granted' } },
+        ],
+      });
+
+      TestBed.createComponent(DataManagementOverviewComponent).detectChanges();
+
+      expect(checkAndRequest).toHaveBeenCalledOnce();
+    });
+  });
 
   describe('export', () => {
     it('downloads the exported data as a JSON file, no network request involved', async () => {

@@ -63,7 +63,17 @@ const describeOmissions = (omitted: Record<string, string[]>): string | null => 
 })
 export class DataManagementOverviewComponent {
   private readonly dataManagementRepository = inject(DataManagementRepository);
-  protected readonly storageStatus = inject(StorageStatusService).status;
+  private readonly storageStatusService = inject(StorageStatusService);
+  protected readonly storageStatus = this.storageStatusService.status;
+
+  constructor() {
+    // Asked here rather than at bootstrap (TICKET-SRV-06): the service's status starts at
+    // `'unsupported'` and is only ever written by this call, so with nothing invoking it the panel
+    // below would report "not supported" on every browser regardless of the truth. The page that
+    // shows the answer is the page that should ask the question — and asking on each visit is
+    // deliberate, since the browser's decision can change between them.
+    void this.storageStatusService.checkAndRequest();
+  }
 
   protected readonly exporting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);

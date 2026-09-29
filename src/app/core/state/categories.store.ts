@@ -19,7 +19,7 @@ import {
 import { CategoriesRepository, type Category } from '@/core/data-access';
 import { TransactionsStore } from './transactions.store';
 import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 const categoryConfig = entityConfig({
   entity: type<Category>(),
@@ -51,33 +51,26 @@ export const CategoriesStore = signalStore(
     };
   }),
   withState({ hydrated: false }),
+  withHydrationState(),
   withMethods((store) => {
     const categoriesRepository = inject(CategoriesRepository);
     const transactionsStore = inject(TransactionsStore);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
 
-    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          categoriesRepository.getAll().then((categories) => {
-            patchState(store, setAllEntities(categories, categoryConfig), { hydrated: true });
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      categoriesRepository.getAll().then((categories) => {
+        patchState(store, setAllEntities(categories, categoryConfig), { hydrated: true });
+      }),
+    );
 
     return {
       reset,
       hydrate,
+      retry,
 
       addCategory: async (category: Category): Promise<Category> => {
         const id = await categoriesRepository.add(category);
@@ -131,7 +124,9 @@ export const CategoriesStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `categories()` synchronously can still `await store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

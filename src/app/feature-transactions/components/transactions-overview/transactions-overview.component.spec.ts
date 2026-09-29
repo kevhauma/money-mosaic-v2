@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { ServerUnreachableError } from '@/core/server-status';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
@@ -694,6 +695,30 @@ describe('TransactionsOverviewComponent', () => {
       expect(transactionsRepository.update).toHaveBeenCalledWith(
         expect.any(Number),
         expect.objectContaining({ categoryId: 7, categoryManual: true }),
+      );
+    });
+  });
+  describe('when the data could not be read (TICKET-SRV-06)', () => {
+    it('reports the failure with a retry instead of "No transactions match"', async () => {
+      await setup();
+      fixture.detectChanges();
+
+      // The server goes away mid-session, and the user presses the retry the page offers: the
+      // second read fails too, and the page says so rather than reporting an empty result.
+      transactionsRepository.getAll.mockRejectedValue(new ServerUnreachableError());
+      await TestBed.inject(TransactionsStore).retry();
+      fixture.detectChanges();
+
+      const page: HTMLElement = fixture.nativeElement;
+
+      // Exactly one read per press — the retry re-issues the request, it does not start a loop.
+      expect(transactionsRepository.getAll).toHaveBeenCalledTimes(2);
+      expect(page.textContent).toContain('Cannot reach the server. Is it running?');
+      // "No transactions match" is a claim about the user's filters, and this is not that.
+      expect(page.textContent).not.toContain('No transactions match');
+      expect(page.querySelector('tbody')).toBeNull();
+      expect([...page.querySelectorAll('button')].map((b) => b.textContent?.trim())).toContain(
+        'Try again',
       );
     });
   });

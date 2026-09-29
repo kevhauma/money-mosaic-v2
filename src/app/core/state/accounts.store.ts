@@ -29,7 +29,7 @@ import {
   withArchivable,
   withPersistedCrud,
 } from '@/shared/utils';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 const accountConfig = entityConfig({
   entity: type<Account>(),
@@ -174,40 +174,31 @@ export const AccountsStore = signalStore(
     };
   }),
   withState({ hydrated: false }),
+  withHydrationState(),
   withMethods((store) => {
     const accountsRepository = inject(AccountsRepository);
     const accountDeletionService = inject(AccountDeletionService);
     const transactionsStore = inject(TransactionsStore);
     const transfersStore = inject(TransfersStore);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
 
     /**
-     * Idempotent; triggered on first injection (`withHooks` below, TICKET-PERF-07). `force: true`
-     * re-fetches even after a prior hydrate already resolved — used by the dev seed to refresh
-     * state after writing new rows directly through the repository (matching
-     * `TransactionsStore`/`TransfersStore`'s established pattern, TICKET-PERF-05).
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `force: true` re-fetches even after a prior hydrate already resolved — used
+     * by the dev seed to refresh state after writing new rows directly through the repository
+     * (matching `TransactionsStore`/`TransfersStore`'s established pattern, TICKET-PERF-05).
+     * `retry` is the same forced re-fetch offered to the user after a failure (TICKET-SRV-06), and
+     * `reset` empties the store when the signed-in user changes (TICKET-AUTH-02).
      */
-    const hydrate = (options?: { force?: boolean }): Promise<void> => {
-      if (!hydration || options?.force) {
-        hydration = retryOnFailure(
-          accountsRepository.getAll().then((accounts) => {
-            patchState(store, setAllEntities(accounts, accountConfig), { hydrated: true });
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      accountsRepository.getAll().then((accounts) => {
+        patchState(store, setAllEntities(accounts, accountConfig), { hydrated: true });
+      }),
+    );
 
     return {
       reset,
       hydrate,
+      retry,
 
       // Aliased to the store's own public method names (same pattern as `withArchivable`'s
       // `activeEntities`/`archivedEntities` -> `activeAccounts`/`archivedAccounts`).
@@ -276,7 +267,9 @@ export const AccountsStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `accounts()` synchronously can still `await store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
 
       const transactionsStore = inject(TransactionsStore);
       // Push savings-account IBANs down into TransactionsStore so its categorisation backlog can drop

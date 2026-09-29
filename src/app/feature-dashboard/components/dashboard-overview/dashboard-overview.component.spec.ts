@@ -7,7 +7,8 @@ import {
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
-import { TransfersRepository, type Transaction } from '@/core/data-access';
+import { TransactionsRepository, TransfersRepository, type Transaction } from '@/core/data-access';
+import { ServerUnreachableError } from '@/core/server-status';
 import { AccountsStore, AppSettingsStore, RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import { formatCurrency } from '@/shared/utils';
@@ -695,5 +696,31 @@ describe('DashboardOverviewComponent before hydration (TICKET-STAT-22)', () => {
     expect(TestBed.inject(TransactionsStore).hydrated()).toBe(false);
     expect(fixture.nativeElement.querySelector('mm-empty-state')).toBeNull();
     expect(fixture.nativeElement.querySelector('mm-loading-skeleton')).not.toBeNull();
+  });
+
+  it('reports a failed load rather than "No transactions yet" (TICKET-SRV-06)', async () => {
+    // A read that never reaches the server, which is what `ApiClient` rejects with when nothing
+    // answers — the store turns it into the message the page shows.
+    TestBed.overrideProvider(TransactionsRepository, {
+      useValue: { getAll: () => Promise.reject(new ServerUnreachableError()) },
+    });
+
+    const fixture = TestBed.createComponent(DashboardOverviewComponent);
+    fixture.detectChanges();
+    await TestBed.inject(TransactionsStore)
+      .hydrate()
+      .catch(() => undefined);
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(page.textContent).toContain('Cannot reach the server. Is it running?');
+    // The hazard this exists for: an invitation to import, addressed to somebody whose data the
+    // app simply failed to read.
+    expect(page.querySelector('mm-empty-state')).toBeNull();
+    expect(page.textContent).not.toContain('No transactions yet');
+    expect([...page.querySelectorAll('button')].map((b) => b.textContent?.trim())).toContain(
+      'Try again',
+    );
   });
 });

@@ -13,11 +13,13 @@ import {
   buildTransactionDrilldownParams,
   formatCurrency,
   formatPercent,
+  hydrationOf,
   moneyColor,
 } from '@/shared/utils';
 import {
   ButtonComponent,
   EmptyStateComponent,
+  HydrationBoundaryComponent,
   LoadingSkeletonComponent,
   PageHeaderComponent,
   PaperComponent,
@@ -44,6 +46,7 @@ import { WeekdayWeekendSplitPanelComponent } from '../weekday-weekend-split-pane
     NgIcon,
     ButtonComponent,
     EmptyStateComponent,
+    HydrationBoundaryComponent,
     LoadingSkeletonComponent,
     PageHeaderComponent,
     PaperComponent,
@@ -89,6 +92,13 @@ export class DashboardOverviewComponent {
       ? { label: 'Done', icon: 'tablerCheck' }
       : { label: 'Dashboard settings', icon: 'tablerPencil' },
   );
+
+  /**
+   * Whether the page can be believed yet (TICKET-SRV-06). Its empty state and every figure on it
+   * are derived from these two stores, and an un-hydrated store renders as "No transactions yet" —
+   * a sentence about the user's finances, delivered when the truth is "we could not read them".
+   */
+  protected readonly hydration = hydrationOf(this.transactionsStore, this.accountsStore);
 
   /**
    * Deliberately read off `TransactionsStore` rather than `StatsStore`'s period-filtered stats

@@ -376,4 +376,10 @@ class AppDb extends Dexie {
   }
 }
 
+// Reason: genuinely referenced by nothing since TICKET-SRV-06 took `appDb.open()` out of
+// `provideAppInitializer` — the last line of code that touched it. The class and its version
+// history survive on purpose: TICKET-SRV-07 reads this database once, to migrate a dataset already
+// sitting in somebody's browser onto the server, and TICKET-SRV-08 deletes the whole apparatus
+// afterwards. Deleting it here would take that migration's only source with it.
+// fallow-ignore-next-line unused-export
 export const appDb = new AppDb();

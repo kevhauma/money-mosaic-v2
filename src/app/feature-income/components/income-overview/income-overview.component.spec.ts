@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { ServerUnreachableError } from '@/core/server-status';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import {
@@ -299,12 +300,13 @@ describe('IncomeOverviewComponent', () => {
    * The monthly chart's own visually-hidden mirror table. Tightly scoped on purpose: the yearly
    * panel (TICKET-INC-06) and the "Net vs gross" section's four cells (TICKET-INC-16) each render
    * a `table.sr-only` of their own, so an unscoped query would silently mix their rows into these
-   * monthly-bucket assertions. The path is the page's two-column grid (TICKET-INC-17) → the charts
-   * column → the chart's own `mm-paper`, which is that column's only direct `mm-paper` child.
+   * monthly-bucket assertions. The path is the hydration boundary the page's content sits inside
+   * (TICKET-SRV-06) → the two-column grid (TICKET-INC-17) → the charts column → the chart's own
+   * `mm-paper`, which is that column's only direct `mm-paper` child.
    */
   const monthlyBucketRows = (selector: string): HTMLElement[] => [
     ...fixture.nativeElement.querySelectorAll(
-      `:scope > div > div > mm-paper:first-of-type table.sr-only ${selector}`,
+      `:scope > mm-hydration-boundary > div > div > mm-paper:first-of-type table.sr-only ${selector}`,
     ),
   ];
 
@@ -831,6 +833,27 @@ describe('IncomeOverviewComponent', () => {
       const totals = monthlyBucketRows('tbody td').map((cell) => cell.textContent?.trim());
 
       expect(totals[0]).toBe(formatCurrency(2000));
+    });
+  });
+  describe('when the data could not be read (TICKET-SRV-06)', () => {
+    it('reports the failure with a retry instead of "No income is being counted yet"', async () => {
+      await setup([salary]);
+
+      // The server goes away mid-session, and the user presses the retry the page offers: the
+      // second read fails too, and the page says so rather than advising them about settings it
+      // could not read.
+      appSettingsRepository.get.mockRejectedValue(new ServerUnreachableError());
+      await TestBed.inject(AppSettingsStore).retry();
+      fixture.detectChanges();
+
+      const page: HTMLElement = fixture.nativeElement;
+
+      expect(page.textContent).toContain('Cannot reach the server. Is it running?');
+      // That empty state is advice about the user's settings, which nobody has been able to read.
+      expect(page.textContent).not.toContain('No income is being counted yet');
+      expect([...page.querySelectorAll('button')].map((b) => b.textContent?.trim())).toContain(
+        'Try again',
+      );
     });
   });
 });

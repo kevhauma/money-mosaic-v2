@@ -22,8 +22,12 @@ const storeFilesUnder = (directory: string): string[] =>
     return entry.endsWith('.store.ts') ? [path] : [];
   });
 
-/** A store hydrates itself when it memoises a hydration promise — the TICKET-PERF-07 shape. */
-const HYDRATION_MARKER = 'let hydration';
+/**
+ * A store hydrates itself when it builds its hydration with `createHydration` — the shape every
+ * one of them shares since TICKET-SRV-06, which is also what gives it `loading`/`error`/`retry`.
+ * Before that it was the hand-rolled `let hydration` memo this looked for.
+ */
+const HYDRATION_MARKER = 'createHydration(';
 
 /**
  * Stores that deliberately hold **no user data** and so are not part of the sign-out wipe.
@@ -64,9 +68,29 @@ describe('store reset registry: every hydrating store registers for the sign-out
     expect(unregistered).toEqual([]);
   });
 
-  it('builds each reset from createStoreReset, so the hydration cache is cleared with the state', () => {
-    const handRolled = hydratingStores
-      .filter((store) => !store.source.includes('createStoreReset('))
+  it('declares loading and error state, so no page can render an un-hydrated store as empty', () => {
+    // `createHydration` writes both keys on every hydration, and a key that was never declared in
+    // `withState` cannot be read back after `patchState` writes it — so a store that composes the
+    // helper without the state feature ships a spinner that never stops (TICKET-SRV-06).
+    const undeclared = hydratingStores
+      .filter((store) => !store.source.includes('withHydrationState()'))
+      .map((store) => store.path);
+
+    expect(undeclared).toEqual([]);
+  });
+
+  it('leaves no store hand-rolling its own hydration, which is how the rule above gets bypassed', () => {
+    // The two checks above only inspect stores that already call `createHydration`, so neither can
+    // ever fail on a store that does not. This one closes that loop from the other side: the
+    // hand-rolled shape `createHydration` replaced — a `let hydration` memo, or reaching past it to
+    // `retryOnFailure` — would otherwise pass every gate here while shipping a page with no loading
+    // or error state at all (TICKET-SRV-06).
+    const handRolled = stores
+      .filter(
+        (store) =>
+          !store.source.includes(HYDRATION_MARKER) &&
+          (store.source.includes('let hydration') || store.source.includes('retryOnFailure(')),
+      )
       .map((store) => store.path);
 
     expect(handRolled).toEqual([]);

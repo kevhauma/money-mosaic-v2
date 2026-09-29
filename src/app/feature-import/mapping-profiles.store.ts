@@ -8,7 +8,7 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { MappingProfilesRepository, type MappingProfile } from '@/core/data-access';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 export const matchTemplateForHeaders = (
   profiles: MappingProfile[],
@@ -31,36 +31,26 @@ export const MappingProfilesStore = signalStore(
   { providedIn: 'root' },
   withEntities(mappingProfileConfig),
   withComputed(({ entities }) => ({ profiles: entities })),
+  withHydrationState(),
   withMethods((store) => {
     const mappingProfilesRepository = inject(MappingProfilesRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
-
     /**
-     * Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07) so this
-     * store's own code/data only lands once something on the `/import` route actually injects
-     * it, and safe to await again from `detectTemplateForFile` below without re-fetching.
+     * `hydrate` is idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07)
+     * so this store's own code/data only lands once something on the `/import` route actually
+     * injects it, and safe to await again from `detectTemplateForFile` below without re-fetching.
+     * `retry` re-reads after a failed load and `reset` empties the store when the signed-in user
+     * changes (TICKET-SRV-06, TICKET-AUTH-02).
      */
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          mappingProfilesRepository.getAll().then((profiles) => {
-            patchState(store, setAllEntities(profiles, mappingProfileConfig));
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      mappingProfilesRepository.getAll().then((profiles) => {
+        patchState(store, setAllEntities(profiles, mappingProfileConfig));
+      }),
+    );
 
     return {
       reset,
       hydrate,
+      retry,
 
       /**
        * Upserts the remembered mapping for a bank+account so repeated imports keep a single profile
@@ -137,7 +127,9 @@ export const MappingProfilesStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment `/import` first injects this store
       // instead of at app bootstrap, so its data/code only lands when that route is visited
       // (TICKET-PERF-07). `detectTemplateForFile` awaits it itself when a read needs it settled.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

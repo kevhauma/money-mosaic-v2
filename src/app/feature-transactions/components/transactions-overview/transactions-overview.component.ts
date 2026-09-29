@@ -17,7 +17,7 @@ import {
   ButtonComponent,
   EmptyStateComponent,
   FlexComponent,
-  LoadingSkeletonComponent,
+  HydrationBoundaryComponent,
   PageHeaderComponent,
   PaginatorComponent,
   TableComponent,
@@ -27,6 +27,7 @@ import {
   createPagination,
   createSelectionModel,
   formatDate,
+  hydrationOf,
   isCompactViewport,
   negativeMoneyColor,
   normalizeIban,
@@ -75,7 +76,7 @@ const EMPTY_FILTERS: TransactionFilters = {
     ButtonComponent,
     EmptyStateComponent,
     FlexComponent,
-    LoadingSkeletonComponent,
+    HydrationBoundaryComponent,
     PageHeaderComponent,
     PaginatorComponent,
     RuleFormComponent,
@@ -97,6 +98,18 @@ export class TransactionsOverviewComponent {
   protected readonly accountsStore = inject(AccountsStore);
   protected readonly categoriesStore = inject(CategoriesStore);
   protected readonly rulesStore = inject(RulesStore);
+
+  /**
+   * The page's list is a statement about four stores (TICKET-SRV-06). Categories and accounts are
+   * in it because a row's category name and account name come from them: a row rendered before
+   * they land shows an id-shaped blank where a name belongs.
+   */
+  protected readonly hydration = hydrationOf(
+    this.transactionsStore,
+    this.transfersStore,
+    this.accountsStore,
+    this.categoriesStore,
+  );
 
   /** Drill-down inheritance (FR-STAT-6): bound from the route's query params via `withComponentInputBinding()`. */
   readonly accountId = input<string>();

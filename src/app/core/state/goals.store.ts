@@ -18,7 +18,7 @@ import {
 } from '@ngrx/signals/entities';
 import { GoalsRepository, type SavingsGoal } from '@/core/data-access';
 import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 const goalConfig = entityConfig({
   entity: type<SavingsGoal>(),
@@ -40,28 +40,20 @@ export const GoalsStore = signalStore(
     archivedGoals: archivedEntities,
   })),
   withState({ hydrated: false }),
+  withHydrationState(),
   withMethods((store) => {
     const goalsRepository = inject(GoalsRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
 
-    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          goalsRepository.getAll().then((goals) => {
-            patchState(store, setAllEntities(goals, goalConfig), { hydrated: true });
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      goalsRepository.getAll().then((goals) => {
+        patchState(store, setAllEntities(goals, goalConfig), { hydrated: true });
+      }),
+    );
 
     /** One bulk write, then one patch per moved row — shared by both reorder paths. */
     const applyOrder = async (updates: { id: number; sortOrder: number }[]): Promise<void> => {
@@ -78,6 +70,7 @@ export const GoalsStore = signalStore(
     return {
       reset,
       hydrate,
+      retry,
 
       /**
        * Appends the goal to the end of the queue: a new want does not get to jump ahead of the
@@ -132,7 +125,9 @@ export const GoalsStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read `goals()`
       // synchronously can still `await store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

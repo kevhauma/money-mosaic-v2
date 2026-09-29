@@ -2,25 +2,18 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import {
   ApplicationConfig,
   inject,
-  Injector,
-  isDevMode,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router';
 
-import { authInterceptor } from './core/auth';
-// Straight from its file, not through the `@/core/data-access` barrel, and for the same reason as
-// `AppTitleStrategy` below: that barrel re-exports seventeen `@Injectable` repositories, whose
-// decorators esbuild cannot tree-shake, so importing it here drags the whole data layer into the
-// eager bundle to reach one `open()` (TICKET-SRV-05).
-import { appDb } from './core/data-access/app-db';
+import { authInterceptor, SessionStore } from './core/auth';
 // Imported straight from its file, not through the `@/core/layout` barrel: that barrel also
 // re-exports `AppShellComponent`, and `@Component` has side effects esbuild can't tree-shake — so
 // a barrel import here would drag the whole shell (and its icons, buttons and stores) into the
 // eager bundle, which the shell's own lazy `loadComponent` exists to avoid.
 import { AppTitleStrategy } from './core/layout/app-title.strategy';
-import { StorageStatusService } from './core/storage';
+import { serverStatusInterceptor } from './core/server-status';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -29,31 +22,22 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     // The app's first HTTP client (TICKET-AUTH-02). `withFetch()` because the backend speaks
     // cookies and streams, and `authInterceptor` is what attaches the session to every `/api`
-    // call and turns an expired one into a trip back to `/login`.
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    // call and turns an expired one into a trip back to `/login`. `serverStatusInterceptor` sits
+    // *below* it (TICKET-SRV-06): it retries a read once when nothing answered and keeps
+    // `ServerStatusService` fed, both of which want the final outcome of a request, not the
+    // outcome of its first attempt.
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor, serverStatusInterceptor])),
     // Appends the brand to each route's own `title` (TICKET-TXN-12). Without a strategy the router
     // would set `document.title` to the bare page name, dropping "Money Mosaic" from every tab.
     { provide: TitleStrategy, useClass: AppTitleStrategy },
-    provideAppInitializer(() => {
-      // Captured before the async boundary — `inject()` only works synchronously here, but the
-      // dev-seed step below runs after `await`, so it resolves its service off this injector.
-      const injector = inject(Injector);
-      // Every store now hydrates itself on first injection instead (`withHooks({ onInit })`,
-      // TICKET-PERF-07) — whichever route (or the dev seed below) first injects one kicks off its
-      // hydration there, so nothing needs to happen here beyond opening the database.
-      return appDb.open().then(async () => {
-        // Fire-and-forget (FR-DAT-4) — never awaited, so a denied/unsupported result can never
-        // delay or block the rest of bootstrap.
-        void injector.get(StorageStatusService).checkAndRequest();
-
-        // Dev-only sample-data seed (TICKET-DEV-01). The dynamic import keeps the seed module and
-        // its dataset in a separate chunk that a production build never references or loads, and
-        // `isDevMode()` gates it out at runtime regardless.
-        if (isDevMode()) {
-          const { DevSeedService } = await import('./dev-seed/dev-seed.service');
-          await injector.get(DevSeedService).seedIfEmpty();
-        }
-      });
-    }),
+    // Resolving the session is the whole of bootstrap (TICKET-SRV-06). No database is opened, no
+    // storage permission is asked for, and no data is loaded: every store hydrates itself on first
+    // injection (`withHooks({ onInit })`, TICKET-PERF-07), so data arrives per store, per route.
+    //
+    // The returned promise is deliberately allowed to reject. `restore()` rejects for exactly one
+    // reason — the server did not answer — and `app-bootstrap.ts` turns that rejection into the
+    // "can't reach the server" screen. A signed-out visitor is not a failure: that resolves, and
+    // `authGuard` sends them to `/login`.
+    provideAppInitializer(() => inject(SessionStore).restore()),
   ],
 };

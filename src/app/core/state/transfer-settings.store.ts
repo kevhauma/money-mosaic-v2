@@ -5,37 +5,30 @@ import {
   TransferSettingsRepository,
   type TransferSettings,
 } from '@/core/data-access';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 export const TransferSettingsStore = signalStore(
   { providedIn: 'root' },
   withState<TransferSettings>(DEFAULT_TRANSFER_SETTINGS),
+  withHydrationState(),
   withMethods((store) => {
     const transferSettingsRepository = inject(TransferSettingsRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
 
-    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          transferSettingsRepository.get().then((settings) => {
-            patchState(store, settings);
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      transferSettingsRepository.get().then((settings) => {
+        patchState(store, settings);
+      }),
+    );
 
     return {
       reset,
       hydrate,
+      retry,
 
       update: async (changes: Partial<TransferSettings>): Promise<void> => {
         await transferSettingsRepository.update(changes);
@@ -52,7 +45,9 @@ export const TransferSettingsStore = signalStore(
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `matchWindowDays()`/`autoLinkMediumConfidence()` synchronously can still `await
       // store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

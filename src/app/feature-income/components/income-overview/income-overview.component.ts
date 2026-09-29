@@ -20,13 +20,20 @@ import {
 import {
   ButtonComponent,
   EmptyStateComponent,
+  HydrationBoundaryComponent,
   MmModalComponent,
   PageHeaderComponent,
   PaperComponent,
   PrivacyToggleComponent,
 } from '@/shared/ui';
-import { formatCurrency, HIDDEN_AMOUNT_TEXT } from '@/shared/utils';
-import { AppSettingsStore, chartSeriesFilter, chartZoomControl } from '@/core/state';
+import { formatCurrency, HIDDEN_AMOUNT_TEXT, hydrationOf } from '@/shared/utils';
+import {
+  AppSettingsStore,
+  CategoriesStore,
+  chartSeriesFilter,
+  chartZoomControl,
+  TransactionsStore,
+} from '@/core/state';
 import { IncomeStore } from '../../income.store';
 import { IncomeEventsSidebarComponent } from '../income-events-sidebar/income-events-sidebar.component';
 import { IncomeLumpSumChecklistComponent } from '../income-lump-sum-checklist/income-lump-sum-checklist.component';
@@ -125,6 +132,7 @@ export const buildIncomeTrendChartOption = (
   imports: [
     ButtonComponent,
     EmptyStateComponent,
+    HydrationBoundaryComponent,
     IncomeEventsSidebarComponent,
     IncomeGrossNetSectionComponent,
     IncomeLumpSumChecklistComponent,
@@ -149,6 +157,18 @@ export const buildIncomeTrendChartOption = (
 export class IncomeOverviewComponent {
   private readonly incomeStore = inject(IncomeStore);
   private readonly appSettingsStore = inject(AppSettingsStore);
+
+  /**
+   * Every figure on this page is computed from these four (TICKET-SRV-06). The empty state below
+   * is the reason it matters here more than most: "No income is being counted yet" is advice about
+   * the user's *settings*, and it is what an unread `AppSettingsStore` looks like.
+   */
+  protected readonly hydration = hydrationOf(
+    this.incomeStore,
+    this.appSettingsStore,
+    inject(TransactionsStore),
+    inject(CategoriesStore),
+  );
 
   /**
    * The long-form explanation, in the header where the reader can reach it when they want it

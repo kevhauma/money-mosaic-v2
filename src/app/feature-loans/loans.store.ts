@@ -20,7 +20,7 @@ import { LoansRepository, type Loan } from '@/core/data-access';
 import { computeLoanProgress, type LoanProgress } from '@/core/loans';
 import { TransactionsStore } from '@/core/state';
 import { sortedBySortOrder, withArchivable } from '@/shared/utils';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 const loanConfig = entityConfig({
   entity: type<Loan>(),
@@ -69,32 +69,24 @@ export const LoansStore = signalStore(
     };
   }),
   withState({ hydrated: false }),
+  withHydrationState(),
   withMethods((store) => {
     const loansRepository = inject(LoansRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
-
-    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          loansRepository.getAll().then((loans) => {
-            patchState(store, setAllEntities(loans, loanConfig), { hydrated: true });
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      loansRepository.getAll().then((loans) => {
+        patchState(store, setAllEntities(loans, loanConfig), { hydrated: true });
+      }),
+    );
 
     return {
       reset,
       hydrate,
+      retry,
 
       /**
        * Appends the loan to the end of the display order, same convention as `GoalsStore.addGoal`.
@@ -137,7 +129,9 @@ export const LoansStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment anything first injects this store — the
       // `/loans` page container, in practice (TICKET-PERF-07). Idempotent, so flows that read
       // `loans()` synchronously can still `await store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

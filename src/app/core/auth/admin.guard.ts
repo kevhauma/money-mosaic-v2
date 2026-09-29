@@ -20,7 +20,14 @@ export const adminGuard: CanActivateFn = async (_route, state): Promise<GuardRes
   const session = inject(SessionStore);
   const router = inject(Router);
 
-  if (session.status() === 'unknown') await session.restore();
+  // Swallowed and re-read below, exactly as `authGuard` does: `restore()` rejects only when the
+  // server did not answer (TICKET-SRV-06), which leaves `status` at `'unknown'`.
+  if (session.status() === 'unknown') await session.restore().catch(() => undefined);
+
+  // Nothing answered, so the role is unknown — block rather than redirect anybody anywhere. Like
+  // `authGuard`'s equivalent branch, this is unreachable after a successful bootstrap and exists so
+  // that a future path resetting the status fails visibly; see the longer note there.
+  if (session.status() === 'unknown') return false;
 
   if (session.status() !== 'authenticated')
     return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });

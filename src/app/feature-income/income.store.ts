@@ -17,7 +17,7 @@ import {
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import type { AccentColorId } from '@/core/theme';
 import { savingsAccountIbans } from '@/core/transfers';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 import {
   clampRangeToCareerStart,
   validateCareerStartDate,
@@ -289,21 +289,22 @@ export const IncomeStore = signalStore(
         appSettingsStore.setMainIncomeCategoryId(mainIncomeCategoryId),
     };
   }),
+  withHydrationState(),
   withMethods((store) => {
     const salaryMetadataRepository = inject(SalaryMetadataRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
 
-    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-    const hydrate = (): Promise<void> => {
-      hydration ??= salaryMetadataRepository.getAll().then((salaryMetadata) => {
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02). Before SRV-06 this was the one
+     * hydration that memoised a *rejected* promise as well as a resolved one, so a single failed
+     * read left `/income` empty for the rest of the session.
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      salaryMetadataRepository.getAll().then((salaryMetadata) => {
         patchState(store, { salaryMetadata });
-      });
-      return hydration;
-    };
+      }),
+    );
 
     const reload = async (): Promise<void> => {
       patchState(store, { salaryMetadata: await salaryMetadataRepository.getAll() });
@@ -312,6 +313,7 @@ export const IncomeStore = signalStore(
     return {
       reset,
       hydrate,
+      retry,
 
       /**
        * Writes one month's gross wage / embedded bonus (FR-INC-10), replacing whatever that month
@@ -338,7 +340,9 @@ export const IncomeStore = signalStore(
 
       // Fire-and-forget on first injection rather than at app bootstrap (TICKET-PERF-07) — nothing
       // outside `/income` reads salary metadata.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

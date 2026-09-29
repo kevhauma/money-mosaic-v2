@@ -32,15 +32,22 @@
   />
 }
 
-@if (!transactionsStore.hydrated()) {
-  <mm-loading-skeleton [rows]="6" />
-} @else if (filteredTransactions().length === 0) {
-  <mm-empty-state
-    title="No transactions match"
-    message="Try widening your filters, or import a CSV to get started."
-  />
-} @else {
-  <!-- Two presentations of the same rows (TICKET-TXN-12): the table, and a card list for viewports
+<!-- The list, its empty state and its pagination are all statements about data that may not have
+     arrived (TICKET-SRV-06). "No transactions match" is a claim about the user's filters, so it
+     must not be what a failed read looks like. -->
+<mm-hydration-boundary
+  [loading]="hydration.loading()"
+  [error]="hydration.error()"
+  [rows]="6"
+  (retry)="hydration.retry()"
+>
+  @if (filteredTransactions().length === 0) {
+    <mm-empty-state
+      title="No transactions match"
+      message="Try widening your filters, or import a CSV to get started."
+    />
+  } @else {
+    <!-- Two presentations of the same rows (TICKET-TXN-12): the table, and a card list for viewports
        too narrow to read it. Branched on a signal rather than `hidden md:block` so only one is in
        the DOM — each row carries a `<select>` with an `<option>` per category, and fifty hidden
        copies of that would be a few thousand wasted nodes per page change.
@@ -49,61 +56,27 @@
        step: a seventh added to one and forgotten in the other is silent. What catches it is
        `transactions-overview.component.spec.ts` → "routes a card's actions to the same handlers the
        table rows use", which drives selection, edit and the category quick-set through a card. -->
-  @if (compactLayout()) {
-    <mm-flex align="center" gap="2" class="mb-2">
-      <!-- The card list has no `<thead>` to hang select-all off, so it gets its own control —
+    @if (compactLayout()) {
+      <mm-flex align="center" gap="2" class="mb-2">
+        <!-- The card list has no `<thead>` to hang select-all off, so it gets its own control —
            dropping it on a phone would remove the only route to a bulk edit. Label-wrapped for the
            same 44px hit area the cards' own checkboxes take. -->
-      <label class="flex min-h-11 min-w-11 cursor-pointer items-center gap-2">
-        <input
-          type="checkbox"
-          class="checkbox checkbox-sm"
-          aria-label="Select all filtered transactions"
-          [checked]="allFilteredSelected()"
-          [indeterminate]="someFilteredSelected()"
-          (change)="toggleSelectAllFiltered()"
-        />
-        <mm-text variant="caption">Select all</mm-text>
-      </label>
-    </mm-flex>
+        <label class="flex min-h-11 min-w-11 cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm"
+            aria-label="Select all filtered transactions"
+            [checked]="allFilteredSelected()"
+            [indeterminate]="someFilteredSelected()"
+            (change)="toggleSelectAllFiltered()"
+          />
+          <mm-text variant="caption">Select all</mm-text>
+        </label>
+      </mm-flex>
 
-    <ul class="flex flex-col gap-2">
-      @for (row of rows(); track row.id) {
-        <app-transaction-card
-          [row]="row"
-          [categoryOptions]="categoryOptions()"
-          (selectionToggled)="selection.toggle(row.id)"
-          (categoryChanged)="onCategoryChange(row.transaction, $event)"
-          (editRequested)="openEdit(row.transaction)"
-          (unlinkRequested)="unlink($event)"
-        />
-      }
-    </ul>
-  } @else {
-    <mm-table class="bg-base-100">
-      <thead>
-        <tr>
-          <th>
-            <input
-              type="checkbox"
-              class="checkbox checkbox-sm"
-              aria-label="Select all filtered transactions"
-              [checked]="allFilteredSelected()"
-              [indeterminate]="someFilteredSelected()"
-              (change)="toggleSelectAllFiltered()"
-            />
-          </th>
-          <th>Date</th>
-          <th>Description</th>
-          <th>Account</th>
-          <th>Category</th>
-          <th class="text-right">Amount</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+      <ul class="flex flex-col gap-2">
         @for (row of rows(); track row.id) {
-          <app-transaction-row
+          <app-transaction-card
             [row]="row"
             [categoryOptions]="categoryOptions()"
             (selectionToggled)="selection.toggle(row.id)"
@@ -112,18 +85,53 @@
             (unlinkRequested)="unlink($event)"
           />
         }
-      </tbody>
-    </mm-table>
-  }
+      </ul>
+    } @else {
+      <mm-table class="bg-base-100">
+        <thead>
+          <tr>
+            <th>
+              <input
+                type="checkbox"
+                class="checkbox checkbox-sm"
+                aria-label="Select all filtered transactions"
+                [checked]="allFilteredSelected()"
+                [indeterminate]="someFilteredSelected()"
+                (change)="toggleSelectAllFiltered()"
+              />
+            </th>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Account</th>
+            <th>Category</th>
+            <th class="text-right">Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <app-transaction-row
+              [row]="row"
+              [categoryOptions]="categoryOptions()"
+              (selectionToggled)="selection.toggle(row.id)"
+              (categoryChanged)="onCategoryChange(row.transaction, $event)"
+              (editRequested)="openEdit(row.transaction)"
+              (unlinkRequested)="unlink($event)"
+            />
+          }
+        </tbody>
+      </mm-table>
+    }
 
-  <mm-paginator
-    class="mt-3 block"
-    [currentPage]="pagination.currentPage()"
-    [totalPages]="pagination.totalPages()"
-    [pageRange]="pagination.pageRange()"
-    (pageChange)="pagination.setPage($event)"
-  />
-}
+    <mm-paginator
+      class="mt-3 block"
+      [currentPage]="pagination.currentPage()"
+      [totalPages]="pagination.totalPages()"
+      [pageRange]="pagination.pageRange()"
+      (pageChange)="pagination.setPage($event)"
+    />
+  }
+</mm-hydration-boundary>
 
 <app-transaction-edit-form
   [(open)]="formOpen"

@@ -11,7 +11,7 @@ import { detectRecurringPayments, type RecurringPaymentSeries } from '@/core/sta
 import { savingsAccountIbans } from '@/core/transfers';
 import { RecurringOverridesRepository, type RecurringOverride } from '@/core/data-access';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 import { anchorOf, applyRecurringOverrides, mergeCandidatePairs } from './recurring-overrides';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -50,6 +50,7 @@ const INITIAL: OverridesState = { overrides: [], hydrated: false };
 export const RecurringSeriesStore = signalStore(
   { providedIn: 'root' },
   withState(INITIAL),
+  withHydrationState(),
   withComputed(({ overrides, hydrated }) => {
     const transactionsStore = inject(TransactionsStore);
     const categoriesStore = inject(CategoriesStore);
@@ -117,11 +118,16 @@ export const RecurringSeriesStore = signalStore(
   }),
   withMethods((store) => {
     const repository = inject(RecurringOverridesRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      repository.getAll().then((overrides) => {
+        patchState(store, { overrides, hydrated: true });
+      }),
+    );
 
     const record = async (override: RecurringOverride): Promise<void> => {
       const id = await repository.add(override);
@@ -130,20 +136,8 @@ export const RecurringSeriesStore = signalStore(
 
     return {
       reset,
-      /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-      hydrate: (): Promise<void> => {
-        if (!hydration) {
-          hydration = retryOnFailure(
-            repository.getAll().then((overrides) => {
-              patchState(store, { overrides, hydrated: true });
-            }),
-            () => {
-              hydration = null;
-            },
-          );
-        }
-        return hydration;
-      },
+      hydrate,
+      retry,
 
       /** "This isn't really a recurring payment." Survives re-detection; reversible via `restore`. */
       dismissSeries: (series: RecurringPaymentSeries): Promise<void> =>
@@ -180,7 +174,9 @@ export const RecurringSeriesStore = signalStore(
       registerStoreReset('RecurringSeriesStore', store.reset, store.hydrate);
 
       // Fire-and-forget on first injection rather than at app bootstrap (TICKET-PERF-07).
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

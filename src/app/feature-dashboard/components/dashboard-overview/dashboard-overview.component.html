@@ -25,27 +25,36 @@
   }
 </mm-page-header>
 
-@if (hasNoTransactions()) {
-  <mm-empty-state
-    title="No transactions yet"
-    message="Import a bank CSV export and your stats, charts and insights fill in here."
-  >
-    <ng-icon icon name="tablerFileImport" size="40" aria-hidden="true" />
-    <mm-button action color="primary" class="mt-2" link="/import">Import transactions</mm-button>
-  </mm-empty-state>
-} @else if (!customizeMode()) {
-  @for (rowId of visibleRows(); track rowId) {
-    <div class="mb-6">
-      @switch (rowId) {
-        @case ('stats') {
-          @if (!statsStore.dataReady()) {
-            <mm-paper [fullHeight]="true">
-              <mm-loading-skeleton [rows]="2" />
-            </mm-paper>
-          } @else {
-            <!-- Each stat is its own free-standing card (not a joined .stats strip); the alternating tilt hooks only render in themes that opt in (Memphis). -->
-            <div class="flex flex-wrap gap-6 py-2">
-              <!-- Net worth leads the row (TICKET-STAT-28): the headline figure the other four
+<!-- Nothing below the header can be believed until these stores have loaded (TICKET-SRV-06):
+     `hasNoTransactions` is false while `TransactionsStore` is still empty-because-unread, so
+     without this gate a failed hydration renders the "No transactions yet" invitation to import. -->
+<mm-hydration-boundary
+  [loading]="hydration.loading()"
+  [error]="hydration.error()"
+  [rows]="4"
+  (retry)="hydration.retry()"
+>
+  @if (hasNoTransactions()) {
+    <mm-empty-state
+      title="No transactions yet"
+      message="Import a bank CSV export and your stats, charts and insights fill in here."
+    >
+      <ng-icon icon name="tablerFileImport" size="40" aria-hidden="true" />
+      <mm-button action color="primary" class="mt-2" link="/import">Import transactions</mm-button>
+    </mm-empty-state>
+  } @else if (!customizeMode()) {
+    @for (rowId of visibleRows(); track rowId) {
+      <div class="mb-6">
+        @switch (rowId) {
+          @case ('stats') {
+            @if (!statsStore.dataReady()) {
+              <mm-paper [fullHeight]="true">
+                <mm-loading-skeleton [rows]="2" />
+              </mm-paper>
+            } @else {
+              <!-- Each stat is its own free-standing card (not a joined .stats strip); the alternating tilt hooks only render in themes that opt in (Memphis). -->
+              <div class="flex flex-wrap gap-6 py-2">
+                <!-- Net worth leads the row (TICKET-STAT-28): the headline figure the other four
                    explain. It is the one card here that is NOT range-scoped (FR-STAT-1) — it is a
                    balance across accounts as of today — so its sub-label says so, and it drills
                    into /accounts where that balance breaks down rather than into a transaction
@@ -59,157 +68,158 @@
                    the hook's rules are all qualified with `.stat` — otherwise the plate paints
                    twice, one ring and one rotation outside the other. `tilt="none"` because
                    Memphis's hook already rotates it. -->
-              @if (accountsStore.dataReady()) {
+                @if (accountsStore.dataReady()) {
+                  <mm-stat-card
+                    class="mm-net-worth"
+                    label="Net worth"
+                    [value]="netWorthValue()"
+                    subLabel="Everything combined, as of today"
+                    color="primary"
+                    link="/accounts"
+                    tilt="none"
+                    [blurred]="privacyMode()"
+                  />
+                } @else {
+                  <mm-paper elevation="raised" class="min-w-44">
+                    <mm-loading-skeleton [rows]="2" />
+                  </mm-paper>
+                }
                 <mm-stat-card
-                  class="mm-net-worth"
-                  label="Net worth"
-                  [value]="netWorthValue()"
-                  subLabel="Everything combined, as of today"
-                  color="primary"
-                  link="/accounts"
-                  tilt="none"
+                  label="Income"
+                  [value]="incomeValue()"
+                  [subLabel]="incomeSubLabel()"
+                  link="/transactions"
+                  [queryParams]="drilldownParams()"
+                  tilt="a"
                   [blurred]="privacyMode()"
                 />
-              } @else {
-                <mm-paper elevation="raised" class="min-w-44">
-                  <mm-loading-skeleton [rows]="2" />
-                </mm-paper>
-              }
-              <mm-stat-card
-                label="Income"
-                [value]="incomeValue()"
-                [subLabel]="incomeSubLabel()"
-                link="/transactions"
-                [queryParams]="drilldownParams()"
-                tilt="a"
-                [blurred]="privacyMode()"
-              />
-              <mm-stat-card
-                label="Expense"
-                [value]="expenseValue()"
-                [subLabel]="expenseSubLabel()"
-                link="/transactions"
-                [queryParams]="drilldownParams()"
-                tilt="b"
-                [blurred]="privacyMode()"
-              />
-              <!-- These two answer the same question — "how much do I save?" — with numbers that
+                <mm-stat-card
+                  label="Expense"
+                  [value]="expenseValue()"
+                  [subLabel]="expenseSubLabel()"
+                  link="/transactions"
+                  [queryParams]="drilldownParams()"
+                  tilt="b"
+                  [blurred]="privacyMode()"
+                />
+                <!-- These two answer the same question — "how much do I save?" — with numbers that
                    differ five-fold, so each names what it counts (TICKET-STAT-42). The definitions
                    are the ones already written in `period-stats.ts` and `net-margin.ts`, quoted
                    rather than reinvented so the code and the UI can't drift apart again. -->
-              <mm-stat-card
-                label="Net cash flow"
-                [value]="netValue()"
-                [subLabel]="netMarginSubLabel()"
-                [definition]="netCashFlowDefinition"
-                [color]="netColor()"
-                link="/transactions"
-                [queryParams]="drilldownParams()"
-                tilt="a"
-                [blurred]="privacyMode()"
-              />
-              <mm-stat-card
-                label="Moved to savings"
-                [value]="savingsRateValue()"
-                [subLabel]="savingsSubLabel()"
-                [definition]="savingsRateDefinition"
-                tilt="b"
-                [blurred]="privacyMode()"
-              />
-            </div>
-          }
-        }
-        @case ('weekday-weekend') {
-          @defer (on viewport; prefetch on idle) {
-            <app-weekday-weekend-split-panel />
-          } @placeholder {
-            <mm-paper [fullHeight]="true">
-              <mm-loading-skeleton [rows]="3" />
-            </mm-paper>
-          }
-        }
-        @case ('category-breakdown') {
-          @defer (on viewport; prefetch on idle) {
-            <app-category-breakdown-panel />
-          } @placeholder {
-            <mm-paper [fullHeight]="true">
-              <h2 class="card-title text-base">Category breakdown</h2>
-              <mm-loading-skeleton [rows]="4" class="mt-2" />
-            </mm-paper>
-          }
-        }
-        @case ('category-comparison') {
-          @defer (on viewport; prefetch on idle) {
-            <app-category-comparison-panel />
-          } @placeholder {
-            <mm-paper [fullHeight]="true">
-              <h2 class="card-title text-base">Category period comparison</h2>
-              <mm-loading-skeleton [rows]="4" class="mt-4" />
-            </mm-paper>
-          }
-        }
-        @case ('trend-chart') {
-          @defer (on viewport; prefetch on idle) {
-            <app-trend-chart-panel />
-          } @placeholder {
-            <mm-paper [fullHeight]="true">
-              <h2 class="card-title text-base">Trend</h2>
-              <span class="sr-only">
-                Income and expense trend chart loads when scrolled into view.
-              </span>
-              <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div class="skeleton h-72 w-full"></div>
-                <div class="skeleton h-72 w-full"></div>
+                <mm-stat-card
+                  label="Net cash flow"
+                  [value]="netValue()"
+                  [subLabel]="netMarginSubLabel()"
+                  [definition]="netCashFlowDefinition"
+                  [color]="netColor()"
+                  link="/transactions"
+                  [queryParams]="drilldownParams()"
+                  tilt="a"
+                  [blurred]="privacyMode()"
+                />
+                <mm-stat-card
+                  label="Moved to savings"
+                  [value]="savingsRateValue()"
+                  [subLabel]="savingsSubLabel()"
+                  [definition]="savingsRateDefinition"
+                  tilt="b"
+                  [blurred]="privacyMode()"
+                />
               </div>
-            </mm-paper>
+            }
+          }
+          @case ('weekday-weekend') {
+            @defer (on viewport; prefetch on idle) {
+              <app-weekday-weekend-split-panel />
+            } @placeholder {
+              <mm-paper [fullHeight]="true">
+                <mm-loading-skeleton [rows]="3" />
+              </mm-paper>
+            }
+          }
+          @case ('category-breakdown') {
+            @defer (on viewport; prefetch on idle) {
+              <app-category-breakdown-panel />
+            } @placeholder {
+              <mm-paper [fullHeight]="true">
+                <h2 class="card-title text-base">Category breakdown</h2>
+                <mm-loading-skeleton [rows]="4" class="mt-2" />
+              </mm-paper>
+            }
+          }
+          @case ('category-comparison') {
+            @defer (on viewport; prefetch on idle) {
+              <app-category-comparison-panel />
+            } @placeholder {
+              <mm-paper [fullHeight]="true">
+                <h2 class="card-title text-base">Category period comparison</h2>
+                <mm-loading-skeleton [rows]="4" class="mt-4" />
+              </mm-paper>
+            }
+          }
+          @case ('trend-chart') {
+            @defer (on viewport; prefetch on idle) {
+              <app-trend-chart-panel />
+            } @placeholder {
+              <mm-paper [fullHeight]="true">
+                <h2 class="card-title text-base">Trend</h2>
+                <span class="sr-only">
+                  Income and expense trend chart loads when scrolled into view.
+                </span>
+                <div class="mt-2 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <div class="skeleton h-72 w-full"></div>
+                  <div class="skeleton h-72 w-full"></div>
+                </div>
+              </mm-paper>
+            }
+          }
+          @case ('top-transactions') {
+            @defer (on viewport; prefetch on idle) {
+              <app-top-transactions-panel />
+            } @placeholder {
+              <mm-paper [fullHeight]="true">
+                <h2 class="card-title text-base">Biggest transactions</h2>
+                <mm-loading-skeleton [rows]="3" class="mt-2" />
+              </mm-paper>
+            }
+          }
+          @case ('action-queue') {
+            @defer (on viewport; prefetch on idle) {
+              <app-action-queue-panel />
+            } @placeholder {
+              <mm-paper [fullHeight]="true">
+                <mm-loading-skeleton [rows]="2" />
+              </mm-paper>
+            }
+          }
+          @case ('account-balance') {
+            @defer (on viewport; prefetch on idle) {
+              <app-account-balance-strip />
+            } @placeholder {
+              <mm-paper [fullHeight]="true">
+                <h2 class="card-title text-base">Accounts</h2>
+                <mm-loading-skeleton [rows]="2" />
+              </mm-paper>
+            }
+          }
+          @case ('spending-heatmap') {
+            @defer (on viewport; prefetch on idle) {
+              <app-spending-heatmap-panel />
+            } @placeholder {
+              <mm-paper [fullHeight]="true">
+                <h2 class="card-title text-base">Spending heatmap</h2>
+                <span class="sr-only">
+                  Spending heatmap by category and day of the week loads when scrolled into view.
+                </span>
+                <div class="skeleton mt-2 h-64 w-full"></div>
+              </mm-paper>
+            }
           }
         }
-        @case ('top-transactions') {
-          @defer (on viewport; prefetch on idle) {
-            <app-top-transactions-panel />
-          } @placeholder {
-            <mm-paper [fullHeight]="true">
-              <h2 class="card-title text-base">Biggest transactions</h2>
-              <mm-loading-skeleton [rows]="3" class="mt-2" />
-            </mm-paper>
-          }
-        }
-        @case ('action-queue') {
-          @defer (on viewport; prefetch on idle) {
-            <app-action-queue-panel />
-          } @placeholder {
-            <mm-paper [fullHeight]="true">
-              <mm-loading-skeleton [rows]="2" />
-            </mm-paper>
-          }
-        }
-        @case ('account-balance') {
-          @defer (on viewport; prefetch on idle) {
-            <app-account-balance-strip />
-          } @placeholder {
-            <mm-paper [fullHeight]="true">
-              <h2 class="card-title text-base">Accounts</h2>
-              <mm-loading-skeleton [rows]="2" />
-            </mm-paper>
-          }
-        }
-        @case ('spending-heatmap') {
-          @defer (on viewport; prefetch on idle) {
-            <app-spending-heatmap-panel />
-          } @placeholder {
-            <mm-paper [fullHeight]="true">
-              <h2 class="card-title text-base">Spending heatmap</h2>
-              <span class="sr-only">
-                Spending heatmap by category and day of the week loads when scrolled into view.
-              </span>
-              <div class="skeleton mt-2 h-64 w-full"></div>
-            </mm-paper>
-          }
-        }
-      }
-    </div>
+      </div>
+    }
   }
-}
+</mm-hydration-boundary>
 
 <!-- Triggered off the signal rather than `on interaction(customizeToggle)`: the toggle button now lives
      inside an `@if`, and a template reference declared in a block isn't reachable from out here. Same

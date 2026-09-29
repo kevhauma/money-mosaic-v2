@@ -55,6 +55,17 @@
       aria-label="Page content"
       class="flex-1 p-4 lg:p-6"
     >
+      <!-- The standing outage notice (TICKET-SRV-06): shown the moment a request finds nothing
+           listening, and cleared by the next one that gets any answer at all. One line rather than
+           a takeover, because the app keeps working with what it already loaded — it is the *next*
+           thing you do that will fail, and this is what makes that legible instead of surprising.
+           `role="status"` rather than `alert`: it is a standing condition, not an interruption. -->
+      @if (serverStatus.isUnreachable()) {
+        <mm-alert status="warning" role="status" class="mb-4">
+          Can't reach the server. Anything you do now may not be saved — check that it is running.
+        </mm-alert>
+      }
+
       <!-- Ahead of the page's own header so it reads first, and inside `main` so it picks up the
            page inset instead of needing its own (TICKET-AUTH-04). Renders nothing at all for anyone
            but an admin still on the seeded password. -->

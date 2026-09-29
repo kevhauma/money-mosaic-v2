@@ -16,7 +16,7 @@ import {
 import { TransactionsStore, CategoriesStore } from '@/core/state';
 import { RulesStore } from './rules.store';
 import { CategoryModelService } from './category-model.service';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 export type CategoryModelStatus =
   'untrained' | 'not-enough-data' | 'training' | 'ready' | 'stale' | 'error';
@@ -63,18 +63,13 @@ const initialState: CategoryModelState = {
 export const CategoryModelStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
+  withHydrationState(),
   withMethods((store) => {
     const service = inject(CategoryModelService);
     const repository = inject(CategoryModelRepository);
     const transactionsStore = inject(TransactionsStore);
     const categoriesStore = inject(CategoriesStore);
     const rulesStore = inject(RulesStore);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
-
     const activeTaxonomySignature = (): string =>
       taxonomySignature(
         categoriesStore
@@ -144,60 +139,56 @@ export const CategoryModelStore = signalStore(
      */
     const stillUntrained = (): boolean => store.status() === 'untrained';
 
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          (async () => {
-            await Promise.all([
-              categoriesStore.hydrate(),
-              transactionsStore.hydrate(),
-              rulesStore.hydrate(),
-            ]);
-            const settings = await repository.getSettings();
-            patchState(store, { trainingWindowYears: settings.trainingWindowYears });
-            if (!stillUntrained()) return;
+    /**
+     * `hydrate` loads the persisted model (see above); `retry` re-runs that load after a failure
+     * and `reset` empties the store when the signed-in user changes (TICKET-SRV-06,
+     * TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, async () => {
+      await Promise.all([
+        categoriesStore.hydrate(),
+        transactionsStore.hydrate(),
+        rulesStore.hydrate(),
+      ]);
+      const settings = await repository.getSettings();
+      patchState(store, { trainingWindowYears: settings.trainingWindowYears });
+      if (!stillUntrained()) return;
 
-            const artifact = await repository.get();
-            if (!stillUntrained()) return;
-            if (!artifact) {
-              patchState(store, { status: 'untrained' });
-              return;
-            }
-
-            const status: CategoryModelStatus =
-              artifact.taxonomySignature === activeTaxonomySignature() ? 'ready' : 'stale';
-
-            await service.init(
-              {
-                modelTopology: artifact.modelTopology,
-                weightSpecs: artifact.weightSpecs,
-                weightData: artifact.weightData,
-                categoryIdByIndex: artifact.categoryIdByIndex,
-              },
-              artifact.featureConfig,
-            );
-            if (!stillUntrained()) return;
-
-            patchState(store, {
-              status,
-              metrics: artifact.metrics,
-              lastTrainedAt: artifact.trainedAt,
-              categoryIdByIndex: artifact.categoryIdByIndex,
-            });
-
-            if (status === 'ready') await refreshSuggestions();
-          })(),
-          () => {
-            hydration = null;
-          },
-        );
+      const artifact = await repository.get();
+      if (!stillUntrained()) return;
+      if (!artifact) {
+        patchState(store, { status: 'untrained' });
+        return;
       }
-      return hydration;
-    };
+
+      const status: CategoryModelStatus =
+        artifact.taxonomySignature === activeTaxonomySignature() ? 'ready' : 'stale';
+
+      await service.init(
+        {
+          modelTopology: artifact.modelTopology,
+          weightSpecs: artifact.weightSpecs,
+          weightData: artifact.weightData,
+          categoryIdByIndex: artifact.categoryIdByIndex,
+        },
+        artifact.featureConfig,
+      );
+      if (!stillUntrained()) return;
+
+      patchState(store, {
+        status,
+        metrics: artifact.metrics,
+        lastTrainedAt: artifact.trainedAt,
+        categoryIdByIndex: artifact.categoryIdByIndex,
+      });
+
+      if (status === 'ready') await refreshSuggestions();
+    });
 
     return {
       reset,
       hydrate,
+      retry,
 
       /** User-initiated only (ML-10's Train/Retrain control) — no automatic retrain-on-N-labels. */
       train: async (): Promise<void> => {
@@ -317,7 +308,9 @@ export const CategoryModelStore = signalStore(
 
       // Fire-and-forget: kicks off hydration (persisted-model load + ML worker init) the moment
       // anything first injects this store, instead of at app bootstrap (TICKET-PERF-07).
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

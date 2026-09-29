@@ -7,6 +7,7 @@ import {
   type UrlTree,
 } from '@angular/router';
 import { vi } from 'vitest';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthApiService } from './auth-api.service';
 import { authGuard } from './auth.guard';
 import { SessionStore } from './session.store';
@@ -80,5 +81,26 @@ describe('authGuard', () => {
 
     expect(TestBed.inject(Router).serializeUrl(result)).toBe('/login?returnUrl=%2Fdashboard');
     expect(api.me).toHaveBeenCalledOnce();
+  });
+
+  it('does not claim an unreachable server means signed out (TICKET-SRV-06)', async () => {
+    // Status 0: nothing answered. Sending this person to `/login` would state that they are signed
+    // out — and the form there needs the same server, so it could not put it right either.
+    api.me.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+    const session = TestBed.inject(SessionStore);
+
+    await expect(runGuard('/dashboard')).resolves.toBe(false);
+    expect(session.status()).toBe('unknown');
+  });
+
+  it('lets the same visitor through once the server answers again', async () => {
+    api.me.mockRejectedValueOnce(new HttpErrorResponse({ status: 0 }));
+    await runGuard('/dashboard');
+
+    api.me.mockResolvedValue(ADMIN);
+
+    await expect(runGuard('/dashboard')).resolves.toBe(true);
+    // Two calls, not one: the failed identification is not remembered as an answer.
+    expect(api.me).toHaveBeenCalledTimes(2);
   });
 });

@@ -14,7 +14,7 @@ import {
   type ForecastSettings,
 } from '@/core/data-access';
 import type { SavingBasis } from '@/core/stats';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 /**
  * The forecast's own parameters (TICKET-FUT-02, FR-FUT-2), edited by TICKET-FUT-06.
@@ -37,32 +37,25 @@ export const ForecastSettingsStore = signalStore(
     /** The scope, always an array. Empty means "every account", as it does on the row. */
     activeScopeAccountIds: computed<number[]>(() => store.scopeAccountIds?.() ?? []),
   })),
+  withHydrationState(),
   withMethods((store) => {
     const forecastSettingsRepository = inject(ForecastSettingsRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
 
-    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          forecastSettingsRepository.get().then((settings) => {
-            patchState(store, settings);
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      forecastSettingsRepository.get().then((settings) => {
+        patchState(store, settings);
+      }),
+    );
 
     return {
       reset,
       hydrate,
+      retry,
 
       setLookbackMonths: async (lookbackMonths: number): Promise<void> => {
         await forecastSettingsRepository.setLookbackMonths(lookbackMonths);
@@ -110,7 +103,9 @@ export const ForecastSettingsStore = signalStore(
       // Fire-and-forget: kicks off hydration the moment anything first injects this store,
       // instead of at app bootstrap (TICKET-PERF-07). Idempotent, so flows that read
       // `lookbackMonths()`/`basis()` synchronously can still `await store.hydrate()` as a guard.
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
     },
   }),
 );

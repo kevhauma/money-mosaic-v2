@@ -180,7 +180,7 @@ export class AdminUsersPageComponent {
   }
 
   protected retry(): Promise<void> {
-    return this.store.reload();
+    return this.store.retry();
   }
 
   private clearFeedback(): void {

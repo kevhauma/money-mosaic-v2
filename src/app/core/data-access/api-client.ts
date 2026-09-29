@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, firstValueFrom, map, of, throwError, type Observable } from 'rxjs';
+import { httpStatusOf, ServerUnreachableError } from '@/core/server-status';
 
 /**
  * The one place a repository turns into an HTTP call (TICKET-SRV-05).
@@ -73,10 +74,18 @@ const withClearedFields = (value: unknown): unknown => {
   );
 };
 
-/** The `{ error }` body `createErrorHandler` answers every failure with, server-side. */
-const messageOf = (error: HttpErrorResponse): string => {
-  const body = error.error as { error?: unknown } | null;
-  return typeof body?.error === 'string' && body.error !== '' ? body.error : error.message;
+/**
+ * The `{ error }` body `createErrorHandler` answers every failure with, server-side.
+ *
+ * Takes `unknown` rather than `HttpErrorResponse` for the same reason `asRejection` does: the
+ * response may be built from a second copy of `@angular/common/http` and fail an identity check,
+ * so the fields are read off the shape instead. Falls back to whatever message the object carries.
+ */
+const messageOf = (error: unknown): string => {
+  const failure = error as { error?: unknown; message?: unknown } | null;
+  const body = failure?.error as { error?: unknown } | null;
+  if (typeof body?.error === 'string' && body.error !== '') return body.error;
+  return typeof failure?.message === 'string' ? failure.message : 'Request failed';
 };
 
 @Injectable({ providedIn: 'root' })
@@ -167,17 +176,34 @@ export class ApiClient {
    * rejection carrying the message the server chose — never a silent `undefined`. `null` becomes
    * `undefined` because a 204 body arrives as `null` and the methods that expect one are typed
    * `Promise<void>`.
+   *
+   * A status of 0 is the exception (TICKET-SRV-06): nothing answered, so there is no message to
+   * carry, and flattening it to a plain `Error` would leave every caller holding the string
+   * `Http failure response for /api/…: 0 Unknown Error` with no way to tell an outage from a
+   * refusal. `ServerUnreachableError` keeps that distinction all the way up to the store.
    */
   private settled<T>(request: Observable<T>): Promise<T> {
     return firstValueFrom(
       request.pipe(
         map((body) => body ?? (undefined as T)),
-        catchError((error: unknown) =>
-          throwError(() =>
-            error instanceof HttpErrorResponse ? new Error(messageOf(error)) : error,
-          ),
-        ),
+        catchError((error: unknown) => throwError(() => this.asRejection(error))),
       ),
     );
+  }
+
+  /**
+   * The failure a repository rejects with: the outage type when nothing answered, and otherwise a
+   * plain `Error` carrying the message the *server* chose rather than HttpClient's own prose.
+   *
+   * Asked through `httpStatusOf`, not `instanceof HttpErrorResponse`, because under the test
+   * runner's pre-bundling the response can be built from a second copy of `@angular/common/http`
+   * and fail an identity check. That would leave every rejection in a spec un-flattened — a 500
+   * reaching the user as `Http failure response for /api/accounts: 500 …` instead of what the
+   * server said. One definition of "came back from HTTP", shared with `isTransportFailure`.
+   */
+  private asRejection(error: unknown): unknown {
+    const status = httpStatusOf(error);
+    if (status === undefined) return error;
+    return status === 0 ? new ServerUnreachableError() : new Error(messageOf(error));
   }
 }

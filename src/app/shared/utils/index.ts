@@ -12,6 +12,7 @@ export * from './quick-ranges';
 export { formatPercent, formatRatio } from './number-format';
 export * from './fingerprint';
 export * from './with-archivable';
+export * from './hydration-status';
 export * from './daisy-classes';
 export * from './pagination';
 export * from './selection-model';

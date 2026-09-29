@@ -20,7 +20,7 @@ import {
   type AccentColorId,
 } from '@/core/theme';
 import { syncFormatSettings, type CurrencySymbolPosition } from '@/shared/utils';
-import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
+import { createHydration, registerStoreReset, withHydrationState } from '@/core/store-reset';
 
 export const AppSettingsStore = signalStore(
   { providedIn: 'root' },
@@ -34,32 +34,25 @@ export const AppSettingsStore = signalStore(
      */
     privacyModeEnabled: computed(() => privacyMode() ?? false),
   })),
+  withHydrationState(),
   withMethods((store) => {
     const appSettingsRepository = inject(AppSettingsRepository);
-    let hydration: Promise<void> | null = null;
-    /** Empties this store when the signed-in user changes (TICKET-AUTH-02). */
-    const reset = createStoreReset(store, () => {
-      hydration = null;
-    });
 
-    /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
-    const hydrate = (): Promise<void> => {
-      if (!hydration) {
-        hydration = retryOnFailure(
-          appSettingsRepository.get().then((settings) => {
-            patchState(store, settings);
-          }),
-          () => {
-            hydration = null;
-          },
-        );
-      }
-      return hydration;
-    };
+    /**
+     * `hydrate` is idempotent and triggered on first injection (`withHooks` below,
+     * TICKET-PERF-07); `retry` re-reads after a failed load and `reset` empties the store when the
+     * signed-in user changes (TICKET-SRV-06, TICKET-AUTH-02).
+     */
+    const { hydrate, retry, reset } = createHydration(store, () =>
+      appSettingsRepository.get().then((settings) => {
+        patchState(store, settings);
+      }),
+    );
 
     return {
       reset,
       hydrate,
+      retry,
 
       setPrimaryColor: async (primaryColor: AccentColorId | undefined): Promise<void> => {
         await appSettingsRepository.setPrimaryColor(primaryColor);
@@ -155,7 +148,9 @@ export const AppSettingsStore = signalStore(
       registerStoreReset('AppSettingsStore', store.reset, store.hydrate);
 
       // Fire-and-forget on first injection instead of app bootstrap (TICKET-PERF-07).
-      void store.hydrate();
+      // `.catch` because nothing awaits this: the failure is already on the store's `error` for the
+      // page to render, and un-caught it would be an unhandled rejection too (TICKET-SRV-06).
+      void store.hydrate().catch(() => undefined);
 
       // Applies/clears the `--color-primary`/`--color-primary-content` override as inline styles
       // on <html> — inline style wins over the theme's own CSS-variable declaration by
