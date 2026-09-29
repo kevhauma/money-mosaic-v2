@@ -1,0 +1,42 @@
+<div class="flex flex-wrap gap-1">
+  <mm-button variant="ghost" size="xs" (click)="rename.emit()">Rename</mm-button>
+  <mm-button
+    variant="ghost"
+    size="xs"
+    [disabled]="!row().canResetPassword"
+    (click)="resetPassword.emit()"
+  >
+    Reset password
+  </mm-button>
+  <mm-button
+    variant="ghost"
+    size="xs"
+    [disabled]="!row().canChangeRole"
+    (click)="toggleRole.emit()"
+  >
+    {{ row().roleActionLabel }}
+  </mm-button>
+  <mm-button
+    variant="ghost"
+    size="xs"
+    [disabled]="!row().canDisable"
+    (click)="toggleDisabled.emit()"
+  >
+    {{ row().statusActionLabel }}
+  </mm-button>
+  <mm-button
+    variant="ghost"
+    size="xs"
+    color="error"
+    [disabled]="!row().canDelete"
+    (click)="remove.emit()"
+  >
+    Delete
+  </mm-button>
+</div>
+
+<!-- Why the greyed-out buttons on this row are greyed out, rather than leaving them looking
+     broken (TICKET-AUTH-03). The rule itself is the server's; this is the mirror of it. -->
+@if (row().blockedReason; as reason) {
+  <mm-text as="p" variant="caption" class="mt-1 block max-w-64">{{ reason }}</mm-text>
+}

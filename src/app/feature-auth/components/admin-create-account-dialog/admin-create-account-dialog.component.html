@@ -1,0 +1,62 @@
+<mm-modal [open]="open()" (openChange)="onOpenChange($event)">
+  <span mm-modal-title>New account</span>
+
+  <mm-text as="p" variant="caption" class="py-3">
+    The new account starts with the default categories, bank mapping profiles and transfer settings,
+    and none of your data. Tell the person their password — they can change it themselves under
+    Settings.
+  </mm-text>
+
+  <form class="flex flex-col gap-1" [formGroup]="form" (ngSubmit)="submit()">
+    <mm-fieldset legend="Email or username">
+      <mm-input
+        formControlName="email"
+        autocomplete="off"
+        [ariaInvalid]="form.controls.email.touched && form.controls.email.invalid"
+      />
+    </mm-fieldset>
+
+    <mm-fieldset legend="Display name">
+      <mm-input
+        formControlName="displayName"
+        autocomplete="off"
+        [ariaInvalid]="form.controls.displayName.touched && form.controls.displayName.invalid"
+      />
+    </mm-fieldset>
+
+    <!-- Deliberately a visible field: there is no email delivery on a LAN box, so the admin has to
+         be able to read this out loud (TICKET-AUTH-03). -->
+    <mm-fieldset legend="First password">
+      <mm-input
+        formControlName="password"
+        autocomplete="off"
+        [ariaInvalid]="form.controls.password.touched && form.controls.password.invalid"
+      />
+    </mm-fieldset>
+
+    <mm-fieldset legend="Role">
+      <mm-select formControlName="role" class="w-full">
+        <option value="user">Member</option>
+        <option value="admin">Administrator</option>
+      </mm-select>
+    </mm-fieldset>
+
+    @if (error(); as message) {
+      <mm-alert status="error" variant="soft" class="mt-2 text-sm" role="alert">
+        {{ message }}
+      </mm-alert>
+    }
+
+    <div class="modal-action">
+      <mm-button type="button" (click)="onOpenChange(false)">Cancel</mm-button>
+      <mm-button type="submit" color="primary" [disabled]="pending()">
+        @if (pending()) {
+          <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+          Creating…
+        } @else {
+          Create account
+        }
+      </mm-button>
+    </div>
+  </form>
+</mm-modal>

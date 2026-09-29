@@ -104,15 +104,23 @@ const sessionCookieOf = (response: Response): string => {
   throw new Error('login did not set a session cookie');
 };
 
-/** Creates an ordinary (non-admin) user and signs it in over HTTP, cookie and all. */
-export const signInAs = async (app: TestApp, email: string): Promise<TestSession> => {
+/**
+ * Creates a user and signs it in over HTTP, cookie and all. An ordinary account unless a `role` is
+ * asked for — the admin panel's specs (TICKET-AUTH-03) need both sides of `requireAdmin`, and the
+ * seeded `admin` is only one account where several tests need two.
+ */
+export const signInAs = async (
+  app: TestApp,
+  email: string,
+  role: 'admin' | 'user' = 'user',
+): Promise<TestSession> => {
   const id = app.db
     .insert(users)
     .values({
       email,
       displayName: email,
       ...(await testPasswordDigest()),
-      role: 'user',
+      role,
       disabled: false,
     })
     .returning({ id: users.id })

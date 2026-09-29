@@ -21,6 +21,37 @@ export type PublicUser = {
 };
 
 /**
+ * A user as the **admin panel** describes them (TICKET-AUTH-03) — the mirror of `AdminUser` in
+ * `server/src/types.ts`.
+ *
+ * The two timestamps are ISO-8601 strings, which is what arrives over JSON; they are not parsed into
+ * `Date`s anywhere, since the panel only ever shows them. Deliberately no `usingDefaultPassword`:
+ * that is the one thing the server tells an account about *itself* (`SessionUser`), and this shape
+ * describes everybody else.
+ */
+export type AdminUser = PublicUser & {
+  /** Locked out: the account cannot sign in, and its open sessions were ended. Not deleted. */
+  readonly disabled: boolean;
+  readonly createdAt: string;
+  readonly passwordUpdatedAt: string;
+};
+
+/** What `POST /api/admin/users` takes. `role` is explicit — the create dialog always asks. */
+export type NewAccount = {
+  readonly email: string;
+  readonly displayName: string;
+  readonly password: string;
+  readonly role: UserRole;
+};
+
+/** What `PATCH /api/admin/users/:id` takes: any subset, and a field left out is left alone. */
+export type AdminUserChanges = {
+  readonly displayName?: string;
+  readonly role?: UserRole;
+  readonly disabled?: boolean;
+};
+
+/**
  * What the session endpoints (`login`, `me`, `password`, `PATCH me`) answer with — `PublicUser` plus
  * the one fact the server only tells an account about itself (TICKET-AUTH-04).
  */

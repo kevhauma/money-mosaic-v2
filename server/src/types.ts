@@ -22,6 +22,24 @@ export type PublicUser = {
 };
 
 /**
+ * A user as the **admin panel** describes them (TICKET-AUTH-03) — `PublicUser` plus the three facts
+ * an administrator managing other people's accounts needs and nobody else is told: whether the
+ * account is locked out, when it was created, and when its password last changed.
+ *
+ * Timestamps are ISO-8601 strings rather than the `Date` Drizzle reads: they cross JSON either way,
+ * and declaring the wire shape as what actually arrives is what stops the client mirror from
+ * claiming a type it would have to parse first. There is deliberately no `usingDefaultPassword`
+ * here — that is the one fact the server only tells an account about *itself* (`SessionUser`), and a
+ * flag per row would invite exactly the cross-account reading it refuses. `passwordUpdatedAt`
+ * equalling `createdAt` is the same information an admin can act on, without the invitation.
+ */
+export type AdminUser = PublicUser & {
+  readonly disabled: boolean;
+  readonly createdAt: string;
+  readonly passwordUpdatedAt: string;
+};
+
+/**
  * A user as the *session* endpoints describe them (TICKET-AUTH-04) — `PublicUser` plus the one fact
  * only the account holder is told about themselves.
  *

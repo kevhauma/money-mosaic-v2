@@ -26,6 +26,7 @@ import {
   tablerTags,
   tablerTargetArrow,
   tablerTrendingUp,
+  tablerUsers,
 } from '@ng-icons/tabler-icons';
 import { SessionStore } from '@/core/auth';
 import { AppSettingsStore, TransactionsStore } from '@/core/state';
@@ -93,6 +94,7 @@ const SKIP_LINK_CLASS =
       tablerHelpCircle,
       tablerHistory,
       tablerSettings,
+      tablerUsers,
     }),
   ],
 })

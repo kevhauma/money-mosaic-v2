@@ -39,6 +39,20 @@ export const deleteSession = (db: DrizzleDb, token: string): void => {
 };
 
 /**
+ * Ends **every** session of a user (TICKET-AUTH-03) — what an admin resetting somebody's password
+ * or disabling their account does to the browsers they are already signed in on.
+ *
+ * No `keepToken` counterpart to `deleteOtherSessions`: this is somebody else's account being acted
+ * on, so there is no session of theirs that deserves to survive it. An admin who aims either
+ * operation at their *own* account is signed out here along with everyone else, which is the honest
+ * outcome — "every session of that user" cannot have an exception for the one doing the resetting
+ * without the guarantee becoming "every session except possibly one".
+ */
+export const deleteUserSessions = (tx: DbOrTx, userId: number): void => {
+  tx.delete(sessions).where(eq(sessions.userId, userId)).run();
+};
+
+/**
  * Ends every session of a user **except** the one making the request (TICKET-AUTH-04).
  *
  * Keeping the caller's own token is deliberate: the realistic reason to change a password on a LAN

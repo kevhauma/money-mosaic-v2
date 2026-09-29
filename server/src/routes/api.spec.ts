@@ -294,13 +294,14 @@ describe('test coverage of the registry itself', () => {
 
     const entityPaths = createApiRouters(app.db)
       .map(({ path }) => path)
-      // The settings singletons, the binary model artifact and the two operation-only routers
-      // (`/api/import`, `/api/data`) have specs of their own; everything else is an entity router
-      // and has to appear in `ENTITY_SAMPLES`.
+      // The settings singletons, the binary model artifact, the two operation-only routers
+      // (`/api/import`, `/api/data`) and the admin panel's account management (`/api/admin/users`,
+      // whose rows are accounts rather than the caller's own data — TICKET-AUTH-03) have specs of
+      // their own; everything else is an entity router and has to appear in `ENTITY_SAMPLES`.
       .filter(
         (path) =>
           !path.startsWith('/api/settings/') &&
-          !['/api/categoryModel', '/api/import', '/api/data'].includes(path),
+          !['/api/categoryModel', '/api/import', '/api/data', '/api/admin/users'].includes(path),
       );
 
     expect(ENTITY_SAMPLES.map(({ path }) => path).sort()).toEqual(entityPaths.sort());

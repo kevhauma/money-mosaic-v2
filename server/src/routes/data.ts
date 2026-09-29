@@ -1,6 +1,5 @@
-import { eq, getTableColumns, getTableName, is, sql } from 'drizzle-orm';
+import { eq, getTableName, sql } from 'drizzle-orm';
 import { Router } from 'express';
-import { SQLiteTable, type SQLiteColumn } from 'drizzle-orm/sqlite-core';
 
 import type { DbOrTx, DrizzleDb } from '../db.js';
 import { toEntity } from '../http/entity-response.js';
@@ -15,8 +14,14 @@ import {
   type EntityValues,
 } from '../http/validate.js';
 import { authUserOf } from '../middleware/require-auth.js';
+import {
+  clearUserRows,
+  idOf,
+  ownerOf,
+  PER_USER_TABLES,
+  type PerUserTable,
+} from '../operations/user-rows.js';
 import { categoryModel } from '../schema/category-model.js';
-import * as schema from '../schema/index.js';
 import { transactions } from '../schema/transactions.js';
 import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.js';
 
@@ -28,8 +33,8 @@ import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.j
  *
  * **The table list is derived, never written down.** `exportAll`/`importAll`/`deleteAll` were
  * generic over `appDb.tables` for exactly this reason: a table added later is covered without anyone
- * remembering this file. Here that means reading the Drizzle schema's own exports, minus the two
- * tables the server owns rather than the user (`users`, `sessions`).
+ * remembering this file. It lives in `operations/user-rows.ts`, which the admin panel's delete-user
+ * endpoint shares (TICKET-AUTH-03).
  *
  * **`categoryModel` is exported and imported by `/api/categoryModel`, not here.** It is megabytes of
  * `Float32` weights in three blob columns, and a JSON document is the one shape they cannot survive
@@ -40,9 +45,6 @@ import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.j
  * keeping it would leave a model claiming to describe transactions that are gone.
  */
 
-/** `users` and `sessions` are the server's own bookkeeping (TICKET-AUTH-01), not the user's data. */
-const SERVER_OWN_TABLES = new Set(['users', 'sessions']);
-
 /**
  * The Dexie `appDb.verno` this schema is a port of (TICKET-SRV-02), and the version an export
  * declares. It is **not** the migration count — `/api/health` reports that — because the number a
@@ -51,28 +53,6 @@ const SERVER_OWN_TABLES = new Set(['users', 'sessions']);
  * Dexie version without raising it fails there.
  */
 export const DATA_SCHEMA_VERSION = 16;
-
-/** A table of user-owned rows: `userId`, and (except on the singletons) a surrogate `id`. */
-type PerUserTable = SQLiteTable & { readonly userId: SQLiteColumn };
-
-const columnOf = (table: SQLiteTable, name: string): SQLiteColumn | undefined =>
-  (getTableColumns(table) as Record<string, SQLiteColumn>)[name];
-
-const ownerOf = (table: PerUserTable): SQLiteColumn => table.userId;
-
-/** `undefined` on the singleton tables, where the owner *is* the key (TICKET-SRV-02). */
-const idOf = (table: PerUserTable): SQLiteColumn | undefined => columnOf(table, 'id');
-
-/**
- * Every table whose rows belong to a user, read off the schema in its own declaration order.
- *
- * Widened to `unknown` first, the way `dexie-parity.spec.ts` does it: `Object.values` on the barrel
- * yields a union of every concrete table type, which no single type predicate is assignable to.
- */
-const PER_USER_TABLES: readonly PerUserTable[] = (Object.values(schema) as unknown[])
-  .filter((value): value is SQLiteTable => is(value, SQLiteTable))
-  .filter((table) => !SERVER_OWN_TABLES.has(getTableName(table)))
-  .map((table) => table as PerUserTable);
 
 /** Everything a JSON document can carry — see the note about `categoryModel` above. */
 const TRANSPORT_TABLES: readonly PerUserTable[] = PER_USER_TABLES.filter(
@@ -143,15 +123,6 @@ const exportTable = (tx: DbOrTx, table: PerUserTable, userId: number): unknown[]
       .where(eq(ownerOf(table), userId))
       .all() as Record<string, unknown>[]
   ).map((row) => toEntity(row, derivedOf(table)));
-
-/** Deletes every row this user owns, in every table — `deleteAll`, and `replace`'s first half. */
-const clearUserRows = (tx: DbOrTx, userId: number): void => {
-  for (const table of PER_USER_TABLES) {
-    tx.delete(table)
-      .where(eq(ownerOf(table), userId))
-      .run();
-  }
-};
 
 /** One validated row, written under this user with the id the document gave it. */
 const upsertRow = (

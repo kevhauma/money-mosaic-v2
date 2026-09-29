@@ -61,6 +61,12 @@ export const SessionStore = signalStore(
   }),
   withComputed(({ user, status, defaultPasswordNoticeDismissed }) => ({
     isAuthenticated: computed(() => status() === 'authenticated'),
+    /**
+     * Whether this user manages the other accounts (TICKET-AUTH-03) — read by the shell to show the
+     * admin nav entry. Not a permission: `requireAdmin` on the server is, and `adminGuard` is what
+     * keeps the URL unreachable. This only decides whether a link is offered.
+     */
+    isAdmin: computed(() => user()?.role === 'admin'),
     /** What the shell's user area shows — the display name, or the email until one is set. */
     displayName: computed(() => user()?.displayName ?? user()?.email ?? ''),
     /**
@@ -121,6 +127,28 @@ export const SessionStore = signalStore(
           },
         ));
         return attempt;
+      },
+
+      /**
+       * Re-asks the server who this session is, bypassing `restore`'s memo (TICKET-AUTH-03).
+       *
+       * `restore()` deliberately answers once per sign-in, which is right for the guard — but an
+       * admin can change their *own* role from the admin panel, and after that the cached answer is
+       * a lie the client would keep acting on: the nav entry stays, `adminGuard` keeps admitting
+       * the URL, and every action answers 403. Whoever makes such a change asks for this afterwards.
+       *
+       * A failure is left alone rather than signing anybody out: the interceptor already turns a
+       * genuinely dead session into a trip to `/login`, and a transient failure to re-read an
+       * identity is not a reason to discard the one already held.
+       */
+      refresh: async (): Promise<void> => {
+        try {
+          const user = await api.me();
+          restoration = Promise.resolve();
+          patchState(store, { user, status: 'authenticated' });
+        } catch {
+          // Deliberately nothing — see above.
+        }
       },
 
       /** Resolves `true` when the credentials were accepted; the error line stays on the store. */

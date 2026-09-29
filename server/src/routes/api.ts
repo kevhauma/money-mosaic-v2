@@ -7,6 +7,7 @@ import { mappingProfiles } from '../schema/mapping-profiles.js';
 import { recurringOverrides } from '../schema/recurring-overrides.js';
 import { rules } from '../schema/rules.js';
 import { createAccountsRouter } from './accounts.js';
+import { createAdminUsersRouter } from './admin-users.js';
 import { createCategoriesRouter } from './categories.js';
 import { createCategoryModelRouter } from './category-model.js';
 import { createDataRouter } from './data.js';
@@ -67,6 +68,11 @@ export const createApiRouters = (db: DrizzleDb): ApiRouter[] => [
   { path: '/api/goals', router: createGoalsRouter(db) },
   { path: '/api/salaryMetadata', router: createSalaryMetadataRouter(db) },
   { path: '/api/categoryModel', router: createCategoryModelRouter(db) },
+  // The one router here whose rows are not the caller's own data (TICKET-AUTH-03). It is in this
+  // list because it is an authenticated `/api` router like any other — `app.ts` mounts it behind
+  // `requireAuth`, and `api.spec.ts`'s per-router 401 check covers it for free — and it adds
+  // `requireAdmin` of its own on top.
+  { path: '/api/admin/users', router: createAdminUsersRouter(db) },
   ...SETTINGS_TABLES.map((settings) => ({
     path: `/api/settings/${settings.name}`,
     router: createSettingsRouter(db, settings),

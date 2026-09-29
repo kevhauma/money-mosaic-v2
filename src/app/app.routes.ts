@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '@/core/auth';
+import { adminGuard, authGuard } from '@/core/auth';
 import { homeRedirectGuard, markVisitedGuard } from '@/core/onboarding';
 
 export const routes: Routes = [
@@ -105,6 +105,15 @@ export const routes: Routes = [
       {
         path: 'settings',
         loadChildren: () => import('@/feature-settings').then((m) => m.SETTINGS_ROUTES),
+      },
+      {
+        // Account management (TICKET-AUTH-03), admin-only. `adminGuard` on top of the shell's
+        // `authGuard`: it redirects a signed-in non-admin rather than rendering a page whose every
+        // request would answer 403. The nav entry is hidden for them too, but the guard is what makes
+        // the URL unreachable.
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadChildren: () => import('@/feature-auth').then((m) => m.ADMIN_ROUTES),
       },
     ],
   },

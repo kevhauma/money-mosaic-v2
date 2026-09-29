@@ -103,6 +103,34 @@ describe('SessionStore: sign-in, sign-out and restore', () => {
     expect(api.me).toHaveBeenCalledOnce();
   });
 
+  it('re-reads the identity on refresh, past the memo restore holds (TICKET-AUTH-03)', async () => {
+    api.me.mockResolvedValue(ADMIN);
+    await store.restore();
+    expect(store.isAdmin()).toBe(true);
+
+    // An admin who demotes their own account from the panel is no longer an admin, and `restore()`
+    // would keep answering from its cache — leaving the nav entry, the guard and every action
+    // disagreeing with the server until a reload.
+    api.me.mockResolvedValue({ ...ADMIN, role: 'user' });
+    await store.refresh();
+
+    expect(store.isAdmin()).toBe(false);
+    expect(api.me).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the session it already has when a refresh fails', async () => {
+    api.me.mockResolvedValue(ADMIN);
+    await store.restore();
+
+    api.me.mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+    await store.refresh();
+
+    // A transient failure to re-read an identity is not a reason to discard the one in hand; a
+    // genuinely dead session is the interceptor's job, not this method's.
+    expect(store.status()).toBe('authenticated');
+    expect(store.isAdmin()).toBe(true);
+  });
+
   it('signs out through the API, clears the session and wipes every registered store', async () => {
     api.login.mockResolvedValue(ADMIN);
     const reset = vi.fn();

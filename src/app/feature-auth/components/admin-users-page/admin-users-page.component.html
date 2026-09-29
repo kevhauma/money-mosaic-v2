@@ -1,0 +1,118 @@
+<mm-page-header title="User accounts">
+  <mm-button actions-end color="primary" size="sm" (click)="createOpen.set(true)">
+    New account
+  </mm-button>
+</mm-page-header>
+
+<mm-text as="p" variant="caption" class="mb-4 block max-w-2xl">
+  Everyone who can sign in to this copy of Money Mosaic. Each account has its own transactions,
+  accounts and settings — nothing is shared between them.
+</mm-text>
+
+@if (actionNotice(); as notice) {
+  <mm-alert status="success" variant="soft" class="mb-4 text-sm" role="status">{{
+    notice
+  }}</mm-alert>
+}
+@if (actionError(); as message) {
+  <mm-alert status="error" variant="soft" class="mb-4 text-sm" role="alert">{{ message }}</mm-alert>
+}
+
+<mm-paper>
+  @if (loading()) {
+    <mm-loading-skeleton [rows]="4" />
+  } @else if (loadError(); as message) {
+    <mm-alert status="error" variant="soft" class="text-sm" role="alert">{{ message }}</mm-alert>
+    <mm-button size="sm" class="mt-3 self-start" (click)="retry()">Try again</mm-button>
+  } @else if (rows().length === 0) {
+    <mm-empty-state title="No accounts" message="Nobody can sign in to this installation." />
+  } @else {
+    <mm-table>
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Email</th>
+          <th scope="col">Role</th>
+          <th scope="col">Status</th>
+          <th scope="col">Password</th>
+          <th scope="col">Created</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr>
+            <td>
+              @if (editingId() === row.id) {
+                <!-- Inline rename: one row at a time, saved with Enter or the button beside it. -->
+                <form
+                  class="flex items-center gap-1"
+                  [formGroup]="renameForm"
+                  (ngSubmit)="saveRename(row)"
+                >
+                  <mm-input
+                    size="sm"
+                    class="w-36"
+                    ariaLabel="Display name"
+                    autocomplete="off"
+                    formControlName="displayName"
+                  />
+                  <mm-button type="submit" color="primary" size="xs">Save</mm-button>
+                  <mm-button type="button" variant="ghost" size="xs" (click)="cancelRename()">
+                    Cancel
+                  </mm-button>
+                </form>
+              } @else {
+                <span class="flex items-center gap-2">
+                  <mm-text as="span" weight="semibold">{{ row.displayName }}</mm-text>
+                  @if (row.isSelf) {
+                    <mm-badge size="xs" variant="soft">You</mm-badge>
+                  }
+                </span>
+              }
+            </td>
+            <td>
+              <span class="block max-w-48 truncate" [title]="row.email">{{ row.email }}</span>
+            </td>
+            <td>{{ row.roleLabel }}</td>
+            <td>
+              <mm-badge size="sm" variant="soft" [color]="row.statusColor">
+                {{ row.statusLabel }}
+              </mm-badge>
+            </td>
+            <td>{{ row.passwordChangedLabel }}</td>
+            <td>{{ row.createdLabel }}</td>
+            <td>
+              <app-admin-user-actions
+                [row]="row"
+                (rename)="startRename(row)"
+                (resetPassword)="openReset(row)"
+                (toggleRole)="toggleRole(row)"
+                (toggleDisabled)="toggleDisabled(row)"
+                (remove)="askDelete(row)"
+              />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </mm-table>
+  }
+</mm-paper>
+
+@if (createOpen()) {
+  <app-admin-create-account-dialog (closed)="createOpen.set(false)" />
+}
+
+@if (resetTarget(); as target) {
+  <app-admin-reset-password-dialog [account]="target" (closed)="resetTarget.set(null)" />
+}
+
+<mm-confirm-dialog
+  [(open)]="deleteOpen"
+  [title]="deletePrompt().title"
+  [message]="deletePrompt().message"
+  [confirmPhrase]="deletePrompt().phrase"
+  [danger]="true"
+  confirmLabel="Delete account and data"
+  (confirmed)="confirmDelete()"
+/>

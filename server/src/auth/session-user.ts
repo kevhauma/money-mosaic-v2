@@ -16,11 +16,16 @@ import { normaliseEmail, toPublicUser } from './users.js';
  * It reads the timestamps rather than testing the password because the digest is one-way: nothing
  * on this server can ask "is this still `admin`?" — only "has it ever been replaced?".
  *
- * Two known ways this answers `false` while the shipped password is in fact still in place, both
- * accepted: setting the password *back* to `admin` silences it for good, and renaming the seeded
- * account (which TICKET-AUTH-03 will allow) breaks the identifier half. Keying off something the
- * user cannot move — a `seeded` column — is the fix if that second one ever matters; it is not worth
- * a schema version for a reminder.
+ * One known way this answers `false` while the shipped password is in fact still in place, and it is
+ * accepted: setting the password *back* to `admin` silences it for good.
+ *
+ * The other one this comment used to warn about is now closed by a decision rather than a column.
+ * TICKET-AUTH-03's admin panel changes a `displayName`, a `role` and a `disabled` flag, and **never
+ * an `email`** — an identifier is chosen once, when the account is created, so nothing can move the
+ * seeded account out from under this check. (Deleting that account is allowed, but only while
+ * another administrator remains, and a deleted account is not a shared credential left in place —
+ * the reminder correctly stops applying.) A `seeded` column is still the fix if an email ever
+ * becomes editable; it is not worth a schema version today.
  *
  * `normaliseEmail` on the constant rather than comparing it raw: `email` is a normalised column
  * (every write goes through `normaliseEmail`), so this states that invariant instead of relying on

@@ -23,6 +23,13 @@ export const AUTH_PASSWORD_URL = '/api/auth/password';
  */
 export const WRONG_CURRENT_PASSWORD_CODE = 'wrong_current_password';
 
+/**
+ * The admin panel's account management (TICKET-AUTH-03). Not exempt from anything in the
+ * interceptor: a 401 here means exactly what it means everywhere else behind the session guard, and
+ * its own refusals are 403s and 409s.
+ */
+export const ADMIN_USERS_URL = '/api/admin/users';
+
 /** The `/api` prefix every backend route sits under. */
 const API_PREFIX = '/api/';
 

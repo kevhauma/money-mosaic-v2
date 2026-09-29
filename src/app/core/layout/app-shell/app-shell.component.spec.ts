@@ -412,6 +412,28 @@ describe('AppShellComponent: the user area', () => {
     expect(navigateByUrl).toHaveBeenCalledWith('/login');
   });
 
+  /**
+   * The admin panel's nav entry (TICKET-AUTH-03). Hiding it is not the enforcement — `adminGuard` and
+   * the server's `requireAdmin` are — but a link to a page that answers 403 is its own kind of bug.
+   */
+  it('offers the user-accounts link to an admin and to nobody else', async () => {
+    authApi.login.mockResolvedValue(ADMIN);
+    const session = TestBed.inject(SessionStore);
+    await session.login('admin@example.com', 'admin');
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+    const link = (): Element | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('a[href="/admin/users"]');
+
+    expect(link()).not.toBeNull();
+
+    authApi.login.mockResolvedValue({ ...ADMIN, id: 2, role: 'user' });
+    await session.login('ada@example.com', 'lovelace');
+    fixture.detectChanges();
+
+    expect(link()).toBeNull();
+  });
+
   it('still leaves for /login when the logout call cannot reach the server', async () => {
     authApi.login.mockResolvedValue(ADMIN);
     authApi.logout.mockRejectedValue(new Error('offline'));

@@ -227,6 +227,18 @@
             <mm-text as="span">Settings</mm-text>
           </a>
         </li>
+        <!-- Admin-only (TICKET-AUTH-03). Hidden rather than disabled for everyone else: there is
+             nothing on it a member could act on, and `adminGuard` + the server's `requireAdmin` are
+             what make it unreachable — this only decides whether the link is offered. Last in the
+             pinned list, so the nav a member sees is unchanged. -->
+        @if (sessionStore.isAdmin()) {
+          <li>
+            <a routerLink="/admin/users" routerLinkActive="menu-active" [class]="navItemClass">
+              <ng-icon name="tablerUsers" size="18" aria-hidden="true" />
+              <mm-text as="span">User accounts</mm-text>
+            </a>
+          </li>
+        }
       </ul>
 
       <!-- Who is signed in, and the way out (TICKET-AUTH-02). Pinned below the utility list for the
