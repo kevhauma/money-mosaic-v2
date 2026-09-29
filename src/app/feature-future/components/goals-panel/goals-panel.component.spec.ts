@@ -23,6 +23,7 @@ import {
 } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { GoalsPanelComponent } from './goals-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const goal = (overrides: Partial<SavingsGoal> = {}): SavingsGoal => ({
   id: 1,
@@ -85,6 +86,7 @@ const createFixture = async (
   await TestBed.configureTestingModule({
     imports: [GoalsPanelComponent],
     providers: [
+      ...provideFakeApi(),
       { provide: GoalsRepository, useValue: goalsRepository },
       { provide: AppSettingsRepository, useValue: appSettingsRepository },
       { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue(accounts) } },
@@ -503,6 +505,7 @@ describe('GoalsPanelComponent: the affordability readout (TICKET-FUT-05)', () =>
     await TestBed.configureTestingModule({
       imports: [GoalsPanelComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: GoalsRepository, useValue: goalsRepository },
         { provide: AppSettingsRepository, useValue: appSettingsRepository },
         { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },

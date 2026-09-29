@@ -13,6 +13,7 @@ import {
 import { AccountsStore, TransactionsStore, TransfersStore } from '@/core/state';
 
 import { TransferReviewComponent } from './transfer-review.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('TransferReviewComponent', () => {
   let component: TransferReviewComponent;
@@ -21,7 +22,7 @@ describe('TransferReviewComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TransferReviewComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransferReviewComponent);
@@ -84,6 +85,7 @@ describe('TransferReviewComponent: the review trigger states its status (TICKET-
     await TestBed.configureTestingModule({
       imports: [TransferReviewComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         {
           provide: TransactionsRepository,
@@ -162,6 +164,7 @@ describe('TransferReviewComponent: the review trigger states its status (TICKET-
     await TestBed.configureTestingModule({
       imports: [TransferReviewComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: TransfersRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },

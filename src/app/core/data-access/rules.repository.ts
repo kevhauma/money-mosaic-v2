@@ -1,13 +1,21 @@
-import { Injectable } from '@angular/core';
-import { appDb, type Rule } from './app-db';
+import { inject, Injectable } from '@angular/core';
+import { ApiClient } from './api-client';
+import type { Rule } from './entities';
 
+const PATH = '/rules';
+
+/** See `accounts.repository.ts` for the shape, and for what `update`'s `Promise<number>` means. */
 @Injectable({ providedIn: 'root' })
 export class RulesRepository {
-  getAll = (): Promise<Rule[]> => appDb.rules.toArray();
+  private readonly api = inject(ApiClient);
 
-  add = (rule: Rule): Promise<number> => appDb.rules.add(rule);
+  getAll = (): Promise<Rule[]> => this.api.get<Rule[]>(PATH);
 
-  update = (id: number, changes: Partial<Rule>): Promise<number> => appDb.rules.update(id, changes);
+  add = (rule: Rule): Promise<number> =>
+    this.api.post<{ id: number }>(PATH, rule).then(({ id }) => id);
 
-  remove = (id: number): Promise<void> => appDb.rules.delete(id);
+  update = (id: number, changes: Partial<Rule>): Promise<number> =>
+    this.api.patch<Rule>(`${PATH}/${id}`, changes).then(() => 1);
+
+  remove = (id: number): Promise<void> => this.api.delete(`${PATH}/${id}`);
 }

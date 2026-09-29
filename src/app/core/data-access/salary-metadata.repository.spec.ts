@@ -1,66 +1,42 @@
-import { appDb } from './app-db';
+import { TestBed } from '@angular/core/testing';
+import { callApi, withApiTesting } from './api-client.testing';
+import type { SalaryMetadata } from './entities';
 import { SalaryMetadataRepository } from './salary-metadata.repository';
 
-describe('SalaryMetadataRepository (FR-INC-10, TICKET-INC-10)', () => {
-  const repository = new SalaryMetadataRepository();
+const entry = { id: 2, yearMonth: '2026-03', grossWage: 4000 } as SalaryMetadata;
 
-  // fake-indexeddb is a process-wide singleton and Vitest runs with isolate:false, so rows written
-  // here would otherwise leak into other spec files.
-  afterEach(async () => {
-    await appDb.salaryMetadata.clear();
+describe('SalaryMetadataRepository', () => {
+  withApiTesting();
+
+  const repository = (): SalaryMetadataRepository => TestBed.inject(SalaryMetadataRepository);
+
+  it('getAll reads the list endpoint', async () => {
+    expect(
+      await callApi(() => repository().getAll(), { method: 'GET', url: '/api/salaryMetadata' }, [
+        entry,
+      ]),
+    ).toEqual([entry]);
   });
 
-  it('stores a month’s gross wage and bonus', async () => {
-    await repository.upsert({ yearMonth: '2026-03', grossWage: 3500, bonus: 900 });
-
-    expect(await repository.getAll()).toEqual([
-      { id: expect.any(Number), yearMonth: '2026-03', grossWage: 3500, bonus: 900 },
-    ]);
+  /**
+   * The look-up-by-month that used to happen here is the endpoint's, in one transaction: `PUT` is
+   * keyed by `yearMonth`, so the caller says "this is March now" and the server decides whether that
+   * is an insert or a replace. What this asserts is that the whole entry is sent to the upsert
+   * endpoint and the stored row's id comes back.
+   */
+  it('upsert puts the whole month and resolves to the stored row id', async () => {
+    expect(
+      await callApi(
+        () => repository().upsert(entry),
+        { method: 'PUT', url: '/api/salaryMetadata', body: entry },
+        { ...entry, id: 18 },
+      ),
+    ).toBe(18);
   });
 
-  it('updates the existing row rather than adding a second one for the same month', async () => {
-    await repository.upsert({ yearMonth: '2026-03', grossWage: 3500 });
-    await repository.upsert({ yearMonth: '2026-03', grossWage: 3800 });
-
-    const rows = await repository.getAll();
-    expect(rows).toHaveLength(1);
-    expect(rows[0].grossWage).toBe(3800);
-  });
-
-  it('keeps the row’s id stable across an update, so references to it stay valid', async () => {
-    await repository.upsert({ yearMonth: '2026-03', grossWage: 3500 });
-    const [first] = await repository.getAll();
-
-    await repository.upsert({ yearMonth: '2026-03', grossWage: 3800 });
-    const [second] = await repository.getAll();
-
-    expect(second.id).toBe(first.id);
-  });
-
-  it('keeps months apart', async () => {
-    await repository.upsert({ yearMonth: '2026-03', grossWage: 3500 });
-    await repository.upsert({ yearMonth: '2026-04', grossWage: 3600 });
-
-    expect((await repository.getAll()).map((row) => row.yearMonth).sort()).toEqual([
-      '2026-03',
-      '2026-04',
-    ]);
-  });
-
-  it('rejects a raw duplicate insert — the uniqueness lives in the schema, not only in upsert', async () => {
-    await appDb.salaryMetadata.add({ yearMonth: '2026-03', grossWage: 3500 });
-
+  it('remove deletes the one row', async () => {
     await expect(
-      appDb.salaryMetadata.add({ yearMonth: '2026-03', grossWage: 9999 }),
-    ).rejects.toThrow();
-  });
-
-  it('removes a row by id', async () => {
-    await repository.upsert({ yearMonth: '2026-03', grossWage: 3500 });
-    const [row] = await repository.getAll();
-
-    await repository.remove(row.id!);
-
-    expect(await repository.getAll()).toEqual([]);
+      callApi(() => repository().remove(2), { method: 'DELETE', url: '/api/salaryMetadata/2' }),
+    ).resolves.toBeUndefined();
   });
 });

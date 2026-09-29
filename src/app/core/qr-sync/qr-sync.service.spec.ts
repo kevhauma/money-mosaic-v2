@@ -1,4 +1,7 @@
-import { DataManagementRepository, appDb, type AppDataExport } from '@/core/data-access';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { DataManagementRepository, type AppDataExport } from '@/core/data-access';
+import { withApiTesting } from '@/core/data-access/api-client.testing';
 import { QR_FORMAT_ID, QR_FRAME_CHAR_CEILING, parseQrFrame } from './qr-frames';
 import { QrSyncService } from './qr-sync.service';
 
@@ -131,14 +134,35 @@ describe('QrSyncService: decode', () => {
 });
 
 describe('QrSyncService: the schema-version guard applies to QR payloads too', () => {
-  it('refuses a newer-schema export received over QR, exactly as it does a file', async () => {
+  withApiTesting();
+
+  /**
+   * The guard itself moved to the side that owns the schema (TICKET-SRV-04): `POST /api/data/import`
+   * refuses a document from a newer data model **before** its transaction opens, so nothing is
+   * written. What is still this service's business is that a QR-delivered document reaches that
+   * endpoint unchanged — version and all — and that the refusal arrives back as a rejection carrying
+   * the sentence the user is shown.
+   */
+  it('hands a newer-schema export to the endpoint unchanged, and surfaces its refusal', async () => {
     const service = new QrSyncService();
-    const repository = new DataManagementRepository();
-    const frames = await service.encode(bigExport(50, appDb.verno + 1));
+    const repository = TestBed.inject(DataManagementRepository);
+    const frames = await service.encode(bigExport(50, 99));
 
     const { data } = await service.decode(new Map(frames.map((frame, index) => [index, frame])));
+    expect(data.schemaVersion).toBe(99);
 
-    expect(data.schemaVersion).toBe(appDb.verno + 1);
-    await expect(repository.importAll(data, 'merge')).rejects.toThrow(/newer database schema/i);
+    const settled = repository.importAll(data, 'merge');
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/data/import');
+
+    expect((request.request.body as { data: AppDataExport }).data.schemaVersion).toBe(99);
+    request.flush(
+      {
+        error:
+          'This backup was created with a newer database schema (v99) than this server supports (v16). Update the server before importing.',
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+
+    await expect(settled).rejects.toThrow(/newer database schema/i);
   });
 });

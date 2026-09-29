@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
-  appDb,
   CategoriesRepository,
   TransactionsRepository,
   type Account,
@@ -18,6 +17,7 @@ import {
 } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { BillsCalendarComponent } from './bills-calendar.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const checking: Account = {
   id: 1,
@@ -88,6 +88,7 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
     await TestBed.configureTestingModule({
       imports: [BillsCalendarComponent],
       providers: [
+        ...provideFakeApi(),
         {
           provide: TransactionsRepository,
           useValue: { getAll: vi.fn().mockResolvedValue(transactions) },
@@ -138,7 +139,6 @@ describe('BillsCalendarComponent (TICKET-REC-03)', () => {
 
   afterEach(async () => {
     vi.useRealTimers();
-    await appDb.appSettings.clear();
   });
 
   it('renders nothing at all when no series was detected', async () => {

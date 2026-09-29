@@ -1,28 +1,39 @@
-import { appDb, DEFAULT_CATEGORY_COMPARISON_SETTINGS } from './app-db';
+import { TestBed } from '@angular/core/testing';
+import { callApi, withApiTesting } from './api-client.testing';
 import { CategoryComparisonSettingsRepository } from './category-comparison-settings.repository';
+import { DEFAULT_CATEGORY_COMPARISON_SETTINGS } from './seed-data';
+
+const PATH = '/api/settings/categoryComparisonSettings';
 
 describe('CategoryComparisonSettingsRepository', () => {
-  const repository = new CategoryComparisonSettingsRepository();
+  withApiTesting();
 
-  afterEach(async () => {
-    await appDb.categoryComparisonSettings.clear();
+  const repository = (): CategoryComparisonSettingsRepository =>
+    TestBed.inject(CategoryComparisonSettingsRepository);
+
+  it('get falls back to the defaults for a row nobody has written', async () => {
+    expect(await callApi(() => repository().get(), { method: 'GET', url: PATH }, {})).toEqual(
+      DEFAULT_CATEGORY_COMPARISON_SETTINGS,
+    );
   });
 
-  it('falls back to the empty-exclusion default before anything is written', async () => {
-    expect(await repository.get()).toEqual(DEFAULT_CATEGORY_COMPARISON_SETTINGS);
+  it('get layers the stored row over the defaults', async () => {
+    expect(
+      await callApi(
+        () => repository().get(),
+        { method: 'GET', url: PATH },
+        { excludedCategoryIds: [3, 4] },
+      ),
+    ).toEqual({ ...DEFAULT_CATEGORY_COMPARISON_SETTINGS, excludedCategoryIds: [3, 4] });
   });
 
-  it('round-trips a written exclusion list', async () => {
-    await repository.setExcludedCategoryIds([3, 7]);
-
-    expect(await repository.get()).toEqual({ id: 1, excludedCategoryIds: [3, 7] });
-  });
-
-  it('overwrites the singleton row rather than adding a second one', async () => {
-    await repository.setExcludedCategoryIds([1]);
-    await repository.setExcludedCategoryIds([2, 3]);
-
-    expect((await repository.get()).excludedCategoryIds).toEqual([2, 3]);
-    expect(await appDb.categoryComparisonSettings.count()).toBe(1);
+  it('setExcludedCategoryIds patches that one field', async () => {
+    expect(
+      await callApi(
+        () => repository().setExcludedCategoryIds([3]),
+        { method: 'PATCH', url: PATH, body: { excludedCategoryIds: [3] } },
+        DEFAULT_CATEGORY_COMPARISON_SETTINGS,
+      ),
+    ).toBe(1);
   });
 });

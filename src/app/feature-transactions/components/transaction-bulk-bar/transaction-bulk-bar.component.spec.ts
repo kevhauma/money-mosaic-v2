@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { CategoriesRepository, TransactionsRepository, type Category } from '@/core/data-access';
 import { CategoriesStore } from '@/core/state';
 import { TransactionBulkBarComponent } from './transaction-bulk-bar.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('TransactionBulkBarComponent', () => {
   let fixture: ComponentFixture<TransactionBulkBarComponent>;
@@ -11,7 +12,7 @@ describe('TransactionBulkBarComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TransactionBulkBarComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransactionBulkBarComponent);
@@ -127,6 +128,7 @@ describe('TransactionBulkBarComponent: applicability-aware picker (TICKET-CAT-11
     await TestBed.configureTestingModule({
       imports: [TransactionBulkBarComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         {

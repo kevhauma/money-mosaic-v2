@@ -5,6 +5,7 @@ import { AccountsRepository, type Account, type ImportBatch } from '@/core/data-
 import { AccountsStore, ImportBatchesStore } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { ImportSummaryStepComponent } from './import-summary-step.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const account: Account = {
   id: 1,
@@ -49,6 +50,7 @@ describe('ImportSummaryStepComponent: undo states its real cost (TICKET-IMP-13)'
     await TestBed.configureTestingModule({
       imports: [ImportSummaryStepComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue([account]) } },
         { provide: ImportBatchesStore, useValue: { previewUndo } },

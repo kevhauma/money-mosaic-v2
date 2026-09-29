@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { CategoriesRepository, RulesRepository } from '@/core/data-access';
 import { RuleShareBarComponent } from './rule-share-bar.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('RuleShareBarComponent', () => {
   let fixture: ComponentFixture<RuleShareBarComponent>;
@@ -24,6 +25,7 @@ describe('RuleShareBarComponent', () => {
     await TestBed.configureTestingModule({
       imports: [RuleShareBarComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: RulesRepository, useValue: rulesRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
       ],

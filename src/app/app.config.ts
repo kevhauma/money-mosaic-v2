@@ -10,7 +10,11 @@ import {
 import { provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router';
 
 import { authInterceptor } from './core/auth';
-import { appDb } from './core/data-access';
+// Straight from its file, not through the `@/core/data-access` barrel, and for the same reason as
+// `AppTitleStrategy` below: that barrel re-exports seventeen `@Injectable` repositories, whose
+// decorators esbuild cannot tree-shake, so importing it here drags the whole data layer into the
+// eager bundle to reach one `open()` (TICKET-SRV-05).
+import { appDb } from './core/data-access/app-db';
 // Imported straight from its file, not through the `@/core/layout` barrel: that barrel also
 // re-exports `AppShellComponent`, and `@Component` has side effects esbuild can't tree-shake — so
 // a barrel import here would drag the whole shell (and its icons, buttons and stores) into the

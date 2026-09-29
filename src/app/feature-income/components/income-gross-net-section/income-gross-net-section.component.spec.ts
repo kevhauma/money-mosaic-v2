@@ -23,6 +23,7 @@ import {
 } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 import { IncomeGrossNetSectionComponent } from './income-gross-net-section.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
 class ResizeObserverStub {
@@ -98,6 +99,7 @@ describe('IncomeGrossNetSectionComponent (FR-INC-13, TICKET-INC-16)', () => {
     await TestBed.configureTestingModule({
       imports: [IncomeGrossNetSectionComponent],
       providers: [
+        ...provideFakeApi(),
         provideEchartsCore({ echarts }),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },

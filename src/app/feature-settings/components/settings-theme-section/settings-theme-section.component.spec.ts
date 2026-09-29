@@ -1,24 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { appDb, DEFAULT_APP_SETTINGS } from '@/core/data-access';
+import { DEFAULT_APP_SETTINGS } from '@/core/data-access';
 import { AppSettingsStore } from '@/core/state';
 import { SettingsThemeSectionComponent } from './settings-theme-section.component';
+import { provideFakeApi, seedApi } from '@/core/data-access/fake-api.testing';
+
+/** The one endpoint this section's setting lives behind. */
+const APP_SETTINGS_URL = '/api/settings/appSettings';
 
 describe('SettingsThemeSectionComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
       imports: [SettingsThemeSectionComponent],
     }).compileComponents();
-  });
-
-  afterEach(async () => {
-    localStorage.removeItem('mm-theme-style');
-    document.documentElement.removeAttribute('data-theme');
-    document.documentElement.style.removeProperty('--color-primary');
-    document.documentElement.style.removeProperty('--color-primary-content');
-    // fake-indexeddb is a global singleton and Vitest runs with isolate:false, so a row written
-    // here would otherwise leak into other spec files.
-    await appDb.appSettings.clear();
   });
 
   const render = (): HTMLElement => {
@@ -50,7 +45,7 @@ describe('SettingsThemeSectionComponent', () => {
   it('marks the currently-selected accent swatch as pressed', async () => {
     // Spread the defaults rather than enumerating every field — `AppSettings` grows an additive
     // optional field most versions, and this test cares about exactly one of them.
-    await appDb.appSettings.put({ ...DEFAULT_APP_SETTINGS, primaryColor: 'rose' });
+    seedApi(APP_SETTINGS_URL, { ...DEFAULT_APP_SETTINGS, primaryColor: 'rose' });
     const fixture = TestBed.createComponent(SettingsThemeSectionComponent);
     fixture.detectChanges();
     await TestBed.inject(AppSettingsStore).hydrate();

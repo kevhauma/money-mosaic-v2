@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { MM_PRIVACY_BLURRED_CLASS } from '@/shared/utils';
 import { PrivacyBlurComponent } from './privacy-blur.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 /** `blurred` is a signal, not a plain field: this app change-detects zoneless, so a plain mutation never marks the host view dirty. */
 @Component({
@@ -19,7 +20,10 @@ describe('PrivacyBlurComponent: blur toggling', () => {
   const wrapper = (): HTMLElement => fixture.nativeElement.querySelector('mm-privacy-blur > span');
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
+    await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
+      imports: [HostComponent],
+    }).compileComponents();
     fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
   });

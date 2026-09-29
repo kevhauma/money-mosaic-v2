@@ -1,281 +1,105 @@
-import { appDb, DEFAULT_APP_SETTINGS, type AppSettings } from './app-db';
+import { TestBed } from '@angular/core/testing';
+import { callApi, withApiTesting } from './api-client.testing';
 import { AppSettingsRepository } from './app-settings.repository';
+import { DEFAULT_APP_SETTINGS } from './seed-data';
+
+const PATH = '/api/settings/appSettings';
+
+type Setter = (repository: AppSettingsRepository) => Promise<number>;
+
+/** Each of the fourteen setters, and the one-field body it is documented to send. */
+const SETTERS: readonly [string, Setter, unknown][] = [
+  ['PrimaryColor', (r) => r.setPrimaryColor('sky'), { primaryColor: 'sky' }],
+  ['CurrencySymbol', (r) => r.setCurrencySymbol('$'), { currencySymbol: '$' }],
+  [
+    'CurrencySymbolPosition',
+    (r) => r.setCurrencySymbolPosition('after'),
+    { currencySymbolPosition: 'after' },
+  ],
+  ['Locale', (r) => r.setLocale('en-BE'), { locale: 'en-BE' }],
+  [
+    'ExcludedIncomeCategoryIds',
+    (r) => r.setExcludedIncomeCategoryIds([1]),
+    { excludedIncomeCategoryIds: [1] },
+  ],
+  [
+    'HeatmapExcludedCategoryIds',
+    (r) => r.setHeatmapExcludedCategoryIds([2]),
+    { heatmapExcludedCategoryIds: [2] },
+  ],
+  ['CareerStartDate', (r) => r.setCareerStartDate('2020-01-01'), { careerStartDate: '2020-01-01' }],
+  [
+    'SmoothedBonusCategoryIds',
+    (r) => r.setSmoothedBonusCategoryIds([3]),
+    { smoothedBonusCategoryIds: [3] },
+  ],
+  ['GrossColor', (r) => r.setGrossColor('rose'), { grossColor: 'rose' }],
+  ['MainIncomeCategoryId', (r) => r.setMainIncomeCategoryId(4), { mainIncomeCategoryId: 4 }],
+  ['PrivacyMode', (r) => r.setPrivacyMode(true), { privacyMode: true }],
+  ['FiscalYearStartMonth', (r) => r.setFiscalYearStartMonth(4), { fiscalYearStartMonth: 4 }],
+  [
+    'RecentRanges',
+    (r) => r.setRecentRanges([{ fromExpr: 'start-of-month', toExpr: 'today' }]),
+    { recentRanges: [{ fromExpr: 'start-of-month', toExpr: 'today' }] },
+  ],
+];
+
+/** The four whose parameter accepts `undefined`, which means "clear this field". */
+const CLEARERS: readonly [string, Setter, string][] = [
+  ['PrimaryColor', (r) => r.setPrimaryColor(undefined), 'primaryColor'],
+  ['GrossColor', (r) => r.setGrossColor(undefined), 'grossColor'],
+  ['CareerStartDate', (r) => r.setCareerStartDate(undefined), 'careerStartDate'],
+  ['MainIncomeCategoryId', (r) => r.setMainIncomeCategoryId(undefined), 'mainIncomeCategoryId'],
+];
 
 describe('AppSettingsRepository', () => {
-  const repository = new AppSettingsRepository();
+  withApiTesting();
 
-  // Cleared on both sides: `appDb` is a module-level singleton and Vitest runs with `isolate:
-  // false`, so a row left behind by an earlier spec file in this worker would otherwise leak into
-  // the first test here — which asserts the table is empty.
-  beforeEach(async () => {
-    await appDb.appSettings.clear();
+  const repository = (): AppSettingsRepository => TestBed.inject(AppSettingsRepository);
+
+  it('get falls back to the defaults before anything is written', async () => {
+    expect(await callApi(() => repository().get(), { method: 'GET', url: PATH }, {})).toEqual(
+      DEFAULT_APP_SETTINGS,
+    );
   });
 
-  afterEach(async () => {
-    await appDb.appSettings.clear();
+  /**
+   * The stored row is layered **over** the defaults rather than returned as it stands — a change
+   * from the Dexie fallback, and a deliberate one: `AppSettingsStore` derives its signal members
+   * from the seed object's keys, so a body missing a key would produce a store missing a member
+   * (the `withState`-needs-every-key gotcha from v2.2).
+   */
+  it('get layers the stored row over the defaults, keeping every key', async () => {
+    const settings = await callApi(
+      () => repository().get(),
+      { method: 'GET', url: PATH },
+      { locale: 'en-BE' },
+    );
+
+    expect(settings).toEqual({ ...DEFAULT_APP_SETTINGS, locale: 'en-BE' });
+    expect(Object.keys(settings).sort()).toEqual(Object.keys(DEFAULT_APP_SETTINGS).sort());
   });
 
-  it('falls back to the default settings before anything is written', async () => {
-    expect(await repository.get()).toEqual(DEFAULT_APP_SETTINGS);
+  it.each(SETTERS)('set%s patches that one field', async (_name, call, body) => {
+    expect(
+      await callApi(
+        () => call(repository()),
+        { method: 'PATCH', url: PATH, body },
+        DEFAULT_APP_SETTINGS,
+      ),
+    ).toBe(1);
   });
 
-  it('returns the stored row once one exists', async () => {
-    // A row written before TICKET-SET-02 added `primaryColor` — Dexie doesn't enforce the TS
-    // shape at runtime, so an existing user's stored row can genuinely lack the field.
-    await appDb.appSettings.put({ id: 1 } as AppSettings);
-
-    expect(await repository.get()).toEqual({ id: 1 });
-  });
-
-  it('setPrimaryColor writes the singleton row without one existing yet', async () => {
-    await repository.setPrimaryColor('sky');
-
-    expect(await repository.get()).toEqual({ id: 1, primaryColor: 'sky' });
-  });
-
-  it('setPrimaryColor overwrites the singleton row rather than adding a second one', async () => {
-    await repository.setPrimaryColor('sky');
-    await repository.setPrimaryColor('rose');
-
-    expect((await repository.get()).primaryColor).toBe('rose');
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
-  it('setPrimaryColor(undefined) clears a previously chosen color', async () => {
-    await repository.setPrimaryColor('sky');
-
-    await repository.setPrimaryColor(undefined);
-
-    expect(await repository.get()).toEqual({ id: 1, primaryColor: undefined });
-  });
-
-  it('setCurrencySymbol writes the singleton row without one existing yet', async () => {
-    await repository.setCurrencySymbol('$');
-
-    expect(await repository.get()).toEqual({ id: 1, currencySymbol: '$' });
-  });
-
-  it('setCurrencySymbol overwrites the singleton row rather than adding a second one', async () => {
-    await repository.setCurrencySymbol('$');
-    await repository.setCurrencySymbol('£');
-
-    expect((await repository.get()).currencySymbol).toBe('£');
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
-  it('setCurrencySymbolPosition writes the singleton row without one existing yet', async () => {
-    await repository.setCurrencySymbolPosition('after');
-
-    expect(await repository.get()).toEqual({ id: 1, currencySymbolPosition: 'after' });
-  });
-
-  it('setCurrencySymbol and setCurrencySymbolPosition together preserve each other', async () => {
-    await repository.setCurrencySymbol('$');
-    await repository.setCurrencySymbolPosition('after');
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      currencySymbol: '$',
-      currencySymbolPosition: 'after',
-    });
-  });
-
-  it('setLocale writes the singleton row without one existing yet', async () => {
-    await repository.setLocale('en-GB');
-
-    expect(await repository.get()).toEqual({ id: 1, locale: 'en-GB' });
-  });
-
-  it('setLocale overwrites the singleton row rather than adding a second one', async () => {
-    await repository.setLocale('en-GB');
-    await repository.setLocale('nl-BE');
-
-    expect((await repository.get()).locale).toBe('nl-BE');
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
-  it('setLocale preserves currency settings written alongside it', async () => {
-    await repository.setCurrencySymbol('$');
-    await repository.setLocale('en-GB');
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      currencySymbol: '$',
-      locale: 'en-GB',
-    });
-  });
-
-  it('setExcludedIncomeCategoryIds writes the singleton row without one existing yet (TICKET-INC-03)', async () => {
-    await repository.setExcludedIncomeCategoryIds([2, 5]);
-
-    expect(await repository.get()).toEqual({ id: 1, excludedIncomeCategoryIds: [2, 5] });
-  });
-
-  it('setExcludedIncomeCategoryIds preserves unrelated settings and stays a single row', async () => {
-    await repository.setLocale('en-GB');
-    await repository.setExcludedIncomeCategoryIds([2]);
-    await repository.setExcludedIncomeCategoryIds([]);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      locale: 'en-GB',
-      excludedIncomeCategoryIds: [],
-    });
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
-  it('setCareerStartDate writes the singleton row without one existing yet (TICKET-INC-12)', async () => {
-    await repository.setCareerStartDate('2019-09-01');
-
-    expect(await repository.get()).toEqual({ id: 1, careerStartDate: '2019-09-01' });
-  });
-
-  it('setCareerStartDate preserves unrelated settings and stays a single row', async () => {
-    await repository.setLocale('en-GB');
-    await repository.setExcludedIncomeCategoryIds([2]);
-    await repository.setCareerStartDate('2019-09-01');
-    await repository.setCareerStartDate('2020-01-06');
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      locale: 'en-GB',
-      excludedIncomeCategoryIds: [2],
-      careerStartDate: '2020-01-06',
-    });
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
-  it('setCareerStartDate(undefined) clears the date without touching the rest of the row', async () => {
-    await repository.setLocale('en-GB');
-    await repository.setCareerStartDate('2019-09-01');
-
-    await repository.setCareerStartDate(undefined);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      locale: 'en-GB',
-      careerStartDate: undefined,
-    });
-  });
-
-  it('setGrossColor writes the singleton row without one existing yet (TICKET-SET-08)', async () => {
-    await repository.setGrossColor('violet');
-
-    expect(await repository.get()).toEqual({ id: 1, grossColor: 'violet' });
-  });
-
-  it('setGrossColor preserves unrelated settings and stays a single row', async () => {
-    await repository.setLocale('en-GB');
-    await repository.setPrimaryColor('rose');
-    await repository.setGrossColor('violet');
-    await repository.setGrossColor('teal');
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      locale: 'en-GB',
-      primaryColor: 'rose',
-      grossColor: 'teal',
-    });
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
-  it('setGrossColor(undefined) clears the color without touching the rest of the row', async () => {
-    await repository.setPrimaryColor('rose');
-    await repository.setGrossColor('violet');
-
-    await repository.setGrossColor(undefined);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      primaryColor: 'rose',
-      grossColor: undefined,
-    });
-  });
-
-  it('setMainIncomeCategoryId writes the singleton row without one existing yet (TICKET-INC-19)', async () => {
-    await repository.setMainIncomeCategoryId(4);
-
-    expect(await repository.get()).toEqual({ id: 1, mainIncomeCategoryId: 4 });
-  });
-
-  it('setMainIncomeCategoryId preserves unrelated settings and stays a single row', async () => {
-    await repository.setLocale('en-GB');
-    await repository.setSmoothedBonusCategoryIds([2]);
-    await repository.setMainIncomeCategoryId(4);
-    await repository.setMainIncomeCategoryId(1);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      locale: 'en-GB',
-      smoothedBonusCategoryIds: [2],
-      mainIncomeCategoryId: 1,
-    });
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
-  it('setMainIncomeCategoryId(undefined) clears it without touching the rest of the row', async () => {
-    await repository.setPrimaryColor('rose');
-    await repository.setMainIncomeCategoryId(4);
-
-    await repository.setMainIncomeCategoryId(undefined);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      primaryColor: 'rose',
-      mainIncomeCategoryId: undefined,
-    });
-  });
-
-  it('setFiscalYearStartMonth writes the singleton row without one existing yet (TICKET-SET-09)', async () => {
-    await repository.setFiscalYearStartMonth(4);
-
-    expect(await repository.get()).toEqual({ id: 1, fiscalYearStartMonth: 4 });
-  });
-
-  it('setFiscalYearStartMonth preserves a locale and a currency symbol already on the row', async () => {
-    await repository.setLocale('en-GB');
-    await repository.setCurrencySymbol('£');
-
-    await repository.setFiscalYearStartMonth(4);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      locale: 'en-GB',
-      currencySymbol: '£',
-      fiscalYearStartMonth: 4,
-    });
-    expect(await appDb.appSettings.count()).toBe(1);
-  });
-
-  it('setFiscalYearStartMonth(1) stores January explicitly rather than leaving the field unwritten', async () => {
-    await repository.setFiscalYearStartMonth(4);
-
-    await repository.setFiscalYearStartMonth(1);
-
-    expect((await repository.get()).fiscalYearStartMonth).toBe(1);
-  });
-
-  it('setRecentRanges writes the singleton row without one existing yet (TICKET-STAT-40)', async () => {
-    await repository.setRecentRanges([{ fromExpr: 'now-30d', toExpr: 'now' }]);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      recentRanges: [{ fromExpr: 'now-30d', toExpr: 'now' }],
-    });
-  });
-
-  it('setRecentRanges preserves a locale and a currency symbol already on the row', async () => {
-    await repository.setLocale('en-GB');
-    await repository.setCurrencySymbol('£');
-
-    await repository.setRecentRanges([{ fromExpr: '2026-01-01', toExpr: '2026-01-31' }]);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      locale: 'en-GB',
-      currencySymbol: '£',
-      recentRanges: [{ fromExpr: '2026-01-01', toExpr: '2026-01-31' }],
-    });
-    expect(await appDb.appSettings.count()).toBe(1);
+  // `JSON.stringify` drops an `undefined` value, which would turn a clear into a patch naming no
+  // field at all — so `ApiClient` puts it on the wire as `null`, which is what Dexie's `update`
+  // meant by deleting the property.
+  it.each(CLEARERS)('set%s clears the field by sending null', async (_name, call, field) => {
+    expect(
+      await callApi(
+        () => call(repository()),
+        { method: 'PATCH', url: PATH, body: { [field]: null } },
+        DEFAULT_APP_SETTINGS,
+      ),
+    ).toBe(1);
   });
 });

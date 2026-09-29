@@ -19,7 +19,7 @@ import {
 import { CategoriesRepository, type Category } from '@/core/data-access';
 import { TransactionsStore } from './transactions.store';
 import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 const categoryConfig = entityConfig({
   entity: type<Category>(),
@@ -63,9 +63,14 @@ export const CategoriesStore = signalStore(
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = categoriesRepository.getAll().then((categories) => {
-          patchState(store, setAllEntities(categories, categoryConfig), { hydrated: true });
-        });
+        hydration = retryOnFailure(
+          categoriesRepository.getAll().then((categories) => {
+            patchState(store, setAllEntities(categories, categoryConfig), { hydrated: true });
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

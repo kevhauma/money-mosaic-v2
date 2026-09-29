@@ -1,64 +1,59 @@
-import { appDb, CategoriesRepository, type Category } from './index';
+import { TestBed } from '@angular/core/testing';
+import { callApi, failApiCall, withApiTesting } from './api-client.testing';
+import { CategoriesRepository } from './categories.repository';
+import type { Category } from './entities';
 
-const rent = (overrides: Partial<Category> = {}): Category => ({
-  name: 'Rent (CAT-10 spec)',
-  kind: 'expense',
-  color: '#7F77DD',
-  icon: 'tag',
-  archived: false,
-  isSystem: false,
-  ...overrides,
-});
+const category = { id: 3, name: 'Groceries', kind: 'expense' } as Category;
 
-describe('CategoriesRepository: applicability window (TICKET-CAT-10)', () => {
-  const repository = new CategoriesRepository();
-  // Only ever removes what it added. Vitest runs `isolate: false`, so `appDb` is shared across every
-  // spec file in the worker and a `categories.clear()` here would delete the seeded rows other
-  // files rely on (the hazard `data-management.repository.spec.ts` snapshots around).
-  const created: number[] = [];
+describe('CategoriesRepository', () => {
+  withApiTesting();
 
-  const add = async (category: Category): Promise<number> => {
-    const id = await repository.add(category);
-    created.push(id);
-    return id;
-  };
+  const repository = (): CategoriesRepository => TestBed.inject(CategoriesRepository);
 
-  afterEach(async () => {
-    await appDb.categories.bulkDelete(created.splice(0));
+  it('getAll reads the list endpoint', async () => {
+    expect(
+      await callApi(() => repository().getAll(), { method: 'GET', url: '/api/categories' }, [
+        category,
+      ]),
+    ).toEqual([category]);
   });
 
-  it('persists both bounds on a plain add', async () => {
-    const id = await add(rent({ activeFrom: '2020-01-01', activeUntil: '2023-06-30' }));
-
-    expect(await appDb.categories.get(id)).toMatchObject({
-      activeFrom: '2020-01-01',
-      activeUntil: '2023-06-30',
-    });
+  it('add posts the category and resolves to the id the server assigned', async () => {
+    expect(
+      await callApi(
+        () => repository().add(category),
+        { method: 'POST', url: '/api/categories', body: category },
+        { ...category, id: 9 },
+      ),
+    ).toBe(9);
   });
 
-  /**
-   * The one behaviour the store spec's mock cannot prove. `Table.update` deletes a key whose value
-   * is `undefined` rather than storing it, which is exactly what the form relies on when a user
-   * clears a date — asserted against real (fake-)IndexedDB, since "clear the bound" is an
-   * acceptance criterion and a silently-kept bound would keep filtering things out forever.
-   */
-  it('removes a bound set back to undefined, rather than storing undefined', async () => {
-    const id = await add(rent({ activeFrom: '2020-01-01', activeUntil: '2023-06-30' }));
-
-    await repository.update(id, { activeUntil: undefined });
-
-    const stored = await appDb.categories.get(id);
-    expect(stored?.activeUntil).toBeUndefined();
-    expect(Object.hasOwn(stored ?? {}, 'activeUntil')).toBe(false);
-    // The other bound is untouched — clearing one is not clearing the window.
-    expect(stored?.activeFrom).toBe('2020-01-01');
+  it('update patches the one row and resolves to the number of rows changed', async () => {
+    expect(
+      await callApi(
+        () => repository().update(3, { name: 'Food' }),
+        { method: 'PATCH', url: '/api/categories/3', body: { name: 'Food' } },
+        category,
+      ),
+    ).toBe(1);
   });
 
-  it('adds a window to a category that never had one', async () => {
-    const id = await add(rent());
+  it('remove deletes the one row', async () => {
+    await expect(
+      callApi(() => repository().remove(3), { method: 'DELETE', url: '/api/categories/3' }),
+    ).resolves.toBeUndefined();
+  });
 
-    await repository.update(id, { activeUntil: '2023-06-30' });
+  it('rejects with the refusal when a loan still tracks the category (TICKET-SRV-04)', async () => {
+    const message = await failApiCall(
+      () => repository().remove(3),
+      { method: 'DELETE', url: '/api/categories/3' },
+      {
+        status: 409,
+        body: { error: 'This category cannot be deleted while the loan "Car" tracks it.' },
+      },
+    );
 
-    expect((await appDb.categories.get(id))?.activeUntil).toBe('2023-06-30');
+    expect(message).toContain('"Car"');
   });
 });

@@ -15,6 +15,7 @@ import { LoanBalanceChartComponent } from '../loan-balance-chart/loan-balance-ch
 import { LoanCompositionChartComponent } from '../loan-composition-chart/loan-composition-chart.component';
 import { LoanWhatIfComponent } from '../loan-what-if/loan-what-if.component';
 import { LoanDetailComponent } from './loan-detail.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 /**
  * Stands in for the real `<app-loan-balance-chart>` (TICKET-LOAN-07) in every test here — none of
@@ -94,6 +95,7 @@ const createFixture = async (
   await TestBed.configureTestingModule({
     imports: [LoanDetailComponent],
     providers: [
+      ...provideFakeApi(),
       // `deleteConfirmed()` navigates to `/loans` after removal — a real route so that resolves.
       provideRouter([{ path: 'loans', children: [] }]),
       { provide: LoansRepository, useValue: loansRepository },

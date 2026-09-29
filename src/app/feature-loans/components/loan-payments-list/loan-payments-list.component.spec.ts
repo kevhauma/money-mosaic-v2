@@ -5,6 +5,7 @@ import { TransactionsRepository, type Loan, type Transaction } from '@/core/data
 import { TransactionsStore } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { LoanPaymentsListComponent } from './loan-payments-list.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const loan = (overrides: Partial<Loan> = {}): Loan => ({
   id: 1,
@@ -47,6 +48,7 @@ const createFixture = async (
   await TestBed.configureTestingModule({
     imports: [LoanPaymentsListComponent],
     providers: [
+      ...provideFakeApi(),
       provideRouter([]),
       { provide: TransactionsRepository, useValue: transactionsRepository },
     ],

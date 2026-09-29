@@ -1,24 +1,24 @@
-import { Injectable } from '@angular/core';
-import {
-  appDb,
-  DEFAULT_DASHBOARD_LAYOUT_SETTINGS,
-  type DashboardLayoutSettings,
-  type DashboardRowId,
-} from './app-db';
+import { inject, Injectable } from '@angular/core';
+import { ApiClient } from './api-client';
+import type { DashboardLayoutSettings, DashboardRowId } from './entities';
+import { DEFAULT_DASHBOARD_LAYOUT_SETTINGS } from './seed-data';
 
+const PATH = '/settings/dashboardLayoutSettings';
+
+/** See `transfer-settings.repository.ts` for why the response is spread over the `DEFAULT_*`. */
 @Injectable({ providedIn: 'root' })
 export class DashboardLayoutSettingsRepository {
-  get = async (): Promise<DashboardLayoutSettings> =>
-    (await appDb.dashboardLayoutSettings.get(1)) ?? DEFAULT_DASHBOARD_LAYOUT_SETTINGS;
+  private readonly api = inject(ApiClient);
 
-  // Read-merge-put — the row carries two independent fields, so writing one must not clobber the other.
-  setRowOrder = async (rowOrder: DashboardRowId[]): Promise<number> => {
-    const current = await this.get();
-    return appDb.dashboardLayoutSettings.put({ ...current, id: 1, rowOrder });
-  };
+  get = (): Promise<DashboardLayoutSettings> =>
+    this.api
+      .get<Partial<DashboardLayoutSettings>>(PATH)
+      .then((settings) => ({ ...DEFAULT_DASHBOARD_LAYOUT_SETTINGS, ...settings }));
 
-  setHiddenRowIds = async (hiddenRowIds: DashboardRowId[]): Promise<number> => {
-    const current = await this.get();
-    return appDb.dashboardLayoutSettings.put({ ...current, id: 1, hiddenRowIds });
-  };
+  // One field per request — the row carries two independent ones, and the server merges.
+  setRowOrder = (rowOrder: DashboardRowId[]): Promise<number> =>
+    this.api.patch<DashboardLayoutSettings>(PATH, { rowOrder }).then(() => 1);
+
+  setHiddenRowIds = (hiddenRowIds: DashboardRowId[]): Promise<number> =>
+    this.api.patch<DashboardLayoutSettings>(PATH, { hiddenRowIds }).then(() => 1);
 }

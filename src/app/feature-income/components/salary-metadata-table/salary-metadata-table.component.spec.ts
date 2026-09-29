@@ -19,6 +19,7 @@ import {
 } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 import { BONUS_COLUMN_HINT, SalaryMetadataTableComponent } from './salary-metadata-table.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('SalaryMetadataTableComponent (FR-INC-10, TICKET-INC-10)', () => {
   const accountsRepository = { getAll: vi.fn() };
@@ -54,6 +55,7 @@ describe('SalaryMetadataTableComponent (FR-INC-10, TICKET-INC-10)', () => {
     await TestBed.configureTestingModule({
       imports: [SalaryMetadataTableComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },

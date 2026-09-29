@@ -12,6 +12,7 @@ import { RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { ExploreOverviewComponent } from './explore-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -38,6 +39,7 @@ const createFixture = async (
   await TestBed.configureTestingModule({
     imports: [ExploreOverviewComponent],
     providers: [
+      ...provideFakeApi(),
       provideRouter([]),
       provideEchartsCore({ echarts }),
       {

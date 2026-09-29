@@ -5,6 +5,7 @@ import { TransactionsRepository } from '@/core/data-access';
 import { TransactionsStore } from '@/core/state';
 
 import { ActionQueuePanelComponent } from './action-queue-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('ActionQueuePanelComponent', () => {
   let fixture: ComponentFixture<ActionQueuePanelComponent>;
@@ -19,6 +20,7 @@ describe('ActionQueuePanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ActionQueuePanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: TransactionsRepository, useValue: transactionsRepository },
       ],

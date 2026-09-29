@@ -1,21 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { appDb, DEFAULT_APP_SETTINGS } from '@/core/data-access';
+import { DEFAULT_APP_SETTINGS } from '@/core/data-access';
 import { AppSettingsStore } from '@/core/state';
 import { syncFormatSettings } from '@/shared/utils';
 import { SettingsReportingSectionComponent } from './settings-reporting-section.component';
+import { provideFakeApi, seedApi } from '@/core/data-access/fake-api.testing';
+
+/** The one endpoint this section's setting lives behind. */
+const APP_SETTINGS_URL = '/api/settings/appSettings';
 
 describe('SettingsReportingSectionComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
       imports: [SettingsReportingSectionComponent],
     }).compileComponents();
   });
 
-  afterEach(async () => {
-    // fake-indexeddb is a global singleton and Vitest runs with isolate:false, so a row written
-    // here would otherwise leak into other spec files.
-    await appDb.appSettings.clear();
+  afterEach(() => {
     syncFormatSettings({ locale: '' });
   });
 
@@ -72,7 +74,7 @@ describe('SettingsReportingSectionComponent', () => {
   it('reflects a hydrated non-January value in the select on load', async () => {
     // Spread the defaults rather than enumerating every field — `AppSettings` grows an additive
     // field most versions, and this test cares about exactly one of them.
-    await appDb.appSettings.put({ ...DEFAULT_APP_SETTINGS, fiscalYearStartMonth: 4 });
+    seedApi(APP_SETTINGS_URL, { ...DEFAULT_APP_SETTINGS, fiscalYearStartMonth: 4 });
     const fixture = TestBed.createComponent(SettingsReportingSectionComponent);
     fixture.detectChanges();
     await TestBed.inject(AppSettingsStore).hydrate();

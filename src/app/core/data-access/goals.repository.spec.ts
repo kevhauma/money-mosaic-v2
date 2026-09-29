@@ -1,71 +1,66 @@
-import { appDb, type SavingsGoal } from './app-db';
+import { TestBed } from '@angular/core/testing';
+import { callApi, withApiTesting } from './api-client.testing';
+import type { SavingsGoal } from './entities';
 import { GoalsRepository } from './goals.repository';
 
-const goal = (overrides: Partial<SavingsGoal> = {}): SavingsGoal => ({
-  name: 'Camera',
-  targetAmount: 1200,
-  archived: false,
-  createdAt: '2026-08-01',
-  ...overrides,
-});
+const goal = { id: 1, name: 'Buffer', targetAmount: 5000, sortOrder: 0 } as SavingsGoal;
 
 describe('GoalsRepository', () => {
-  const repository = new GoalsRepository();
+  withApiTesting();
 
-  // Cleared on both sides: `appDb` is a module-level singleton and Vitest runs with `isolate:
-  // false`, so a row left behind by an earlier spec file in this worker would leak into these.
-  beforeEach(async () => {
-    await appDb.savingsGoals.clear();
+  const repository = (): GoalsRepository => TestBed.inject(GoalsRepository);
+
+  // `savingsGoals` is the one table whose endpoint is not spelled like the table.
+  it('getAll reads the goals endpoint', async () => {
+    expect(
+      await callApi(() => repository().getAll(), { method: 'GET', url: '/api/goals' }, [goal]),
+    ).toEqual([goal]);
   });
 
-  afterEach(async () => {
-    await appDb.savingsGoals.clear();
+  it('add posts the goal and resolves to the id the server assigned', async () => {
+    expect(
+      await callApi(
+        () => repository().add(goal),
+        { method: 'POST', url: '/api/goals', body: goal },
+        { ...goal, id: 17 },
+      ),
+    ).toBe(17);
   });
 
-  it('starts empty and returns what was added', async () => {
-    expect(await repository.getAll()).toEqual([]);
-
-    const id = await repository.add(goal({ name: 'Camera' }));
-
-    expect(await repository.getAll()).toEqual([expect.objectContaining({ id, name: 'Camera' })]);
+  it('update patches the one row and resolves to the number of rows changed', async () => {
+    expect(
+      await callApi(
+        () => repository().update(1, { targetAmount: 6000 }),
+        { method: 'PATCH', url: '/api/goals/1', body: { targetAmount: 6000 } },
+        goal,
+      ),
+    ).toBe(1);
   });
 
-  it('updates a single field without touching the rest of the row', async () => {
-    const id = await repository.add(goal({ name: 'Camera', targetAmount: 1200, note: 'used ok' }));
-
-    await repository.update(id, { targetAmount: 1500 });
-
-    expect(await appDb.savingsGoals.get(id)).toEqual(
-      expect.objectContaining({ name: 'Camera', targetAmount: 1500, note: 'used ok' }),
-    );
+  it('remove deletes the one row', async () => {
+    await expect(
+      callApi(() => repository().remove(1), { method: 'DELETE', url: '/api/goals/1' }),
+    ).resolves.toBeUndefined();
   });
 
-  it('removes a goal', async () => {
-    const id = await repository.add(goal());
+  it('bulkUpdateSortOrder sends the whole reorder as one request', async () => {
+    const updates = [
+      { id: 1, sortOrder: 1 },
+      { id: 2, sortOrder: 0 },
+    ];
 
-    await repository.remove(id);
-
-    expect(await repository.getAll()).toEqual([]);
+    await expect(
+      callApi(() => repository().bulkUpdateSortOrder(updates), {
+        method: 'PATCH',
+        url: '/api/goals/sort-order',
+        body: updates,
+      }),
+    ).resolves.toBeUndefined();
   });
 
-  it('writes a whole reorder in one bulk call', async () => {
-    const first = await repository.add(goal({ name: 'Camera', sortOrder: 0 }));
-    const second = await repository.add(goal({ name: 'Holiday', sortOrder: 1 }));
-
-    await repository.bulkUpdateSortOrder([
-      { id: first, sortOrder: 1 },
-      { id: second, sortOrder: 0 },
-    ]);
-
-    expect((await appDb.savingsGoals.get(first))?.sortOrder).toBe(1);
-    expect((await appDb.savingsGoals.get(second))?.sortOrder).toBe(0);
-  });
-
-  it('treats an empty reorder as a no-op', async () => {
-    const id = await repository.add(goal({ sortOrder: 3 }));
-
-    await repository.bulkUpdateSortOrder([]);
-
-    expect((await appDb.savingsGoals.get(id))?.sortOrder).toBe(3);
+  // An empty reorder is nothing to do, not an empty request — `withApiTesting`'s verify is what
+  // fails this if a request is made anyway.
+  it('bulkUpdateSortOrder makes no request at all for an empty reorder', async () => {
+    await expect(repository().bulkUpdateSortOrder([])).resolves.toBeUndefined();
   });
 });

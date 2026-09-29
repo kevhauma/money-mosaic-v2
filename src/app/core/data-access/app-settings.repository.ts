@@ -1,91 +1,84 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import type { AccentColorId } from '@/core/theme';
 import type { CurrencySymbolPosition } from '@/shared/utils';
-import { appDb, DEFAULT_APP_SETTINGS, type AppSettings, type RecentRange } from './app-db';
+import { ApiClient } from './api-client';
+import type { AppSettings, RecentRange } from './entities';
+import { DEFAULT_APP_SETTINGS } from './seed-data';
 
+const PATH = '/settings/appSettings';
+
+/**
+ * The fourteen setters survive the move to the server unchanged in signature, and each is now a
+ * one-field `PATCH` instead of a read-merge-put (TICKET-SRV-05). Two consequences worth naming:
+ *
+ * - **The merge is the server's job**, inside a transaction, so two tabs setting two different
+ *   fields at the same moment can no longer lose one of them.
+ * - **A setter given `undefined` still clears its field.** `ApiClient` puts an explicitly-`undefined`
+ *   value on the wire as `null` — `JSON.stringify` would drop it, turning "clear this" into a patch
+ *   that names no field at all. That is Dexie's `update` semantics kept, not a new convention.
+ *
+ * See `transfer-settings.repository.ts` for why `get` spreads the response over the `DEFAULT_*`.
+ */
 @Injectable({ providedIn: 'root' })
 export class AppSettingsRepository {
-  get = async (): Promise<AppSettings> => (await appDb.appSettings.get(1)) ?? DEFAULT_APP_SETTINGS;
+  private readonly api = inject(ApiClient);
 
-  // Read-merge-put, not `.update()` — unlike `transferSettings`, this table isn't seeded on
-  // `populate`, so `.update()` alone would silently no-op for a user with no row yet.
-  setPrimaryColor = async (primaryColor: AccentColorId | undefined): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, primaryColor });
-  };
+  get = (): Promise<AppSettings> =>
+    this.api
+      .get<Partial<AppSettings>>(PATH)
+      .then((settings) => ({ ...DEFAULT_APP_SETTINGS, ...settings }));
 
-  setCurrencySymbol = async (currencySymbol: string): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, currencySymbol });
-  };
+  setPrimaryColor = (primaryColor: AccentColorId | undefined): Promise<number> =>
+    this.patch({ primaryColor });
 
-  setCurrencySymbolPosition = async (
-    currencySymbolPosition: CurrencySymbolPosition,
-  ): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, currencySymbolPosition });
-  };
+  setCurrencySymbol = (currencySymbol: string): Promise<number> => this.patch({ currencySymbol });
 
-  setLocale = async (locale: string): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, locale });
-  };
+  setCurrencySymbolPosition = (currencySymbolPosition: CurrencySymbolPosition): Promise<number> =>
+    this.patch({ currencySymbolPosition });
 
-  setExcludedIncomeCategoryIds = async (excludedIncomeCategoryIds: number[]): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, excludedIncomeCategoryIds });
-  };
+  setLocale = (locale: string): Promise<number> => this.patch({ locale });
 
-  // Read-merge-put like every setter here: the row carries a dozen independent fields, so writing
-  // one must not clobber the rest (TICKET-STAT-32).
-  setHeatmapExcludedCategoryIds = async (heatmapExcludedCategoryIds: number[]): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, heatmapExcludedCategoryIds });
-  };
+  setExcludedIncomeCategoryIds = (excludedIncomeCategoryIds: number[]): Promise<number> =>
+    this.patch({ excludedIncomeCategoryIds });
+
+  setHeatmapExcludedCategoryIds = (heatmapExcludedCategoryIds: number[]): Promise<number> =>
+    this.patch({ heatmapExcludedCategoryIds });
 
   // `undefined` clears the setting (TICKET-INC-12) — the Income page falls back to the full data
   // history, which is exactly what an unset field already means.
-  setCareerStartDate = async (careerStartDate: string | undefined): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, careerStartDate });
-  };
+  setCareerStartDate = (careerStartDate: string | undefined): Promise<number> =>
+    this.patch({ careerStartDate });
 
-  setSmoothedBonusCategoryIds = async (smoothedBonusCategoryIds: number[]): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, smoothedBonusCategoryIds });
-  };
+  setSmoothedBonusCategoryIds = (smoothedBonusCategoryIds: number[]): Promise<number> =>
+    this.patch({ smoothedBonusCategoryIds });
 
   // `undefined` clears the setting (TICKET-SET-08) — the Income page's gross series fall back to
   // the active theme's categorical palette, which is what an unset field already means.
-  setGrossColor = async (grossColor: AccentColorId | undefined): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, grossColor });
-  };
+  setGrossColor = (grossColor: AccentColorId | undefined): Promise<number> =>
+    this.patch({ grossColor });
 
   // `undefined` clears the setting (TICKET-INC-19) — an embedded bonus falls back to coming off
   // every non-zero income series pro rata, which is what an unset field already means.
-  setMainIncomeCategoryId = async (mainIncomeCategoryId: number | undefined): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, mainIncomeCategoryId });
-  };
+  setMainIncomeCategoryId = (mainIncomeCategoryId: number | undefined): Promise<number> =>
+    this.patch({ mainIncomeCategoryId });
 
-  setPrivacyMode = async (privacyMode: boolean): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, privacyMode });
-  };
+  setPrivacyMode = (privacyMode: boolean): Promise<number> => this.patch({ privacyMode });
 
   // No `undefined` variant (TICKET-SET-09) — the section always writes a concrete 1–12, including
   // January, so a deliberate January is recorded rather than indistinguishable from never having
   // written the field.
-  setFiscalYearStartMonth = async (fiscalYearStartMonth: number): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, fiscalYearStartMonth });
-  };
+  setFiscalYearStartMonth = (fiscalYearStartMonth: number): Promise<number> =>
+    this.patch({ fiscalYearStartMonth });
 
-  // Read-merge-put like every setter here; the dedup/cap/move-to-top logic lives one layer up in
-  // `AppSettingsStore.recordRecentRange` (TICKET-STAT-40) — this just persists whatever list it's given.
-  setRecentRanges = async (recentRanges: RecentRange[]): Promise<number> => {
-    const current = await this.get();
-    return appDb.appSettings.put({ ...current, id: 1, recentRanges });
-  };
+  // The dedup/cap/move-to-top logic lives one layer up in `AppSettingsStore.recordRecentRange`
+  // (TICKET-STAT-40) — this just persists whatever list it is given.
+  setRecentRanges = (recentRanges: RecentRange[]): Promise<number> => this.patch({ recentRanges });
+
+  /**
+   * The one request every setter above makes. Declared with modifiers so it stays private: fourteen
+   * copies of the same `.patch(...).then(() => 1)` would be fourteen chances to send the wrong path.
+   */
+  private patch(changes: Partial<AppSettings>): Promise<number> {
+    return this.api.patch<AppSettings>(PATH, changes).then(() => 1);
+  }
 }

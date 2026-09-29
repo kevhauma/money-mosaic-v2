@@ -2,12 +2,13 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { appDb, AccountsRepository } from '@/core/data-access';
+import { AccountsRepository } from '@/core/data-access';
 import { AccountsStore, TransactionsStore } from '@/core/state';
 import type { AccountCardVm } from '../../account-card-vm';
 
 import { AccountsOverviewComponent } from './accounts-overview.component';
 import { AccountBalanceHistoryChartComponent } from '../account-balance-history-chart/account-balance-history-chart.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // A light stand-in for the real chart (which pulls in echarts/zrender — jsdom has no real canvas,
 // and the VM-focused describe block below drives multiple real `detectChanges()` passes after
@@ -23,7 +24,7 @@ describe('AccountsOverviewComponent', () => {
   const setup = async (providers: unknown[] = []): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [AccountsOverviewComponent],
-      providers: [provideRouter([]), ...providers],
+      providers: [...provideFakeApi(), provideRouter([]), ...providers],
     })
       .overrideComponent(AccountsOverviewComponent, {
         remove: { imports: [AccountBalanceHistoryChartComponent] },
@@ -34,13 +35,7 @@ describe('AccountsOverviewComponent', () => {
     fixture = TestBed.createComponent(AccountsOverviewComponent);
   };
 
-  afterEach(async () => {
-    // The VM-focused describe block below writes through the real AccountsStore/TransactionsStore
-    // to the shared `appDb` (fake-indexeddb is a global singleton and Vitest runs with
-    // isolate:false), so leftover rows here leak into other spec files unless cleared.
-    await appDb.accounts.clear();
-    await appDb.transactions.clear();
-  });
+  afterEach(async () => {});
 
   it('should create', async () => {
     await setup();

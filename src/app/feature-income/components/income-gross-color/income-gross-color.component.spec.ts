@@ -9,6 +9,7 @@ import {
 } from '@/core/data-access';
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { IncomeGrossColorComponent } from './income-gross-color.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('IncomeGrossColorComponent (TICKET-SET-08)', () => {
   const accountsRepository = { getAll: vi.fn() };
@@ -28,6 +29,7 @@ describe('IncomeGrossColorComponent (TICKET-SET-08)', () => {
     await TestBed.configureTestingModule({
       imports: [IncomeGrossColorComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },

@@ -18,6 +18,7 @@ import {
 } from '@/core/state';
 import { computeZoomWindow, pickGranularityForSpan } from '@/core/stats';
 import { balanceTrendSignals, BALANCE_GRANULARITY } from './balance-trend-signals';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -58,6 +59,7 @@ describe('balanceTrendSignals', () => {
     categoriesRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: TransfersRepository, useValue: transfersRepository },

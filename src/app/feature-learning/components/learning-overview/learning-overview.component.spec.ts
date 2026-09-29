@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LearningOverviewComponent } from './learning-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // ModelStatusComponent injects CategoryModelStore -> CategoryModelService, which eagerly
 // constructs a real Worker (unavailable in jsdom) — stub it, same as category-model.service.spec.ts.
@@ -20,7 +21,7 @@ describe('LearningOverviewComponent', () => {
     vi.stubGlobal('Worker', FakeWorker);
     await TestBed.configureTestingModule({
       imports: [LearningOverviewComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LearningOverviewComponent);

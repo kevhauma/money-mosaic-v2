@@ -5,6 +5,7 @@ import { AuthApiService, SessionStore, type PublicUser } from '@/core/auth';
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
 import { TransactionsStore } from '@/core/state';
 import { AppShellComponent } from './app-shell.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const transactionsRepository = { getAll: vi.fn().mockResolvedValue([]) };
 const authApi = {
@@ -40,6 +41,7 @@ beforeEach(async () => {
   await TestBed.configureTestingModule({
     imports: [AppShellComponent],
     providers: [
+      ...provideFakeApi(),
       provideRouter([]),
       { provide: TransactionsRepository, useValue: transactionsRepository },
       { provide: AuthApiService, useValue: authApi },

@@ -4,6 +4,7 @@ import { Router, provideRouter } from '@angular/router';
 import { vi, type MockInstance } from 'vitest';
 import { AuthApiService, type PublicUser } from '@/core/auth';
 import { LoginPageComponent } from './login-page.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const ADMIN: PublicUser = {
   id: 1,
@@ -42,7 +43,11 @@ describe('LoginPageComponent', () => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
       imports: [LoginPageComponent],
-      providers: [provideRouter([]), { provide: AuthApiService, useValue: api }],
+      providers: [
+        ...provideFakeApi(),
+        provideRouter([]),
+        { provide: AuthApiService, useValue: api },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(LoginPageComponent);
     navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);

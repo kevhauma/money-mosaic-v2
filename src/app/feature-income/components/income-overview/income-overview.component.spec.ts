@@ -37,6 +37,7 @@ import {
   buildIncomeTrendChartOption,
   IncomeOverviewComponent,
 } from './income-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
 class ResizeObserverStub {
@@ -274,6 +275,7 @@ describe('IncomeOverviewComponent', () => {
     await TestBed.configureTestingModule({
       imports: [IncomeOverviewComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         { provide: AccountsRepository, useValue: accountsRepository },

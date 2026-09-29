@@ -4,6 +4,7 @@ import { AccountsRepository, type Account, type ImportBatch } from '@/core/data-
 import { AccountsStore, ImportBatchesStore } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { ImportHistoryComponent } from './import-history.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const account: Account = {
   id: 1,
@@ -50,6 +51,7 @@ describe('ImportHistoryComponent (TICKET-IMP-13)', () => {
     await TestBed.configureTestingModule({
       imports: [ImportHistoryComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue([account]) } },
         {
           provide: ImportBatchesStore,

@@ -17,6 +17,7 @@ import {
   syncFormatSettings,
 } from '@/shared/utils';
 import { IncomeCareerStartComponent } from './income-career-start.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('IncomeCareerStartComponent (FR-INC-12, TICKET-INC-12)', () => {
   const accountsRepository = { getAll: vi.fn() };
@@ -63,6 +64,7 @@ describe('IncomeCareerStartComponent (FR-INC-12, TICKET-INC-12)', () => {
     await TestBed.configureTestingModule({
       imports: [IncomeCareerStartComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },

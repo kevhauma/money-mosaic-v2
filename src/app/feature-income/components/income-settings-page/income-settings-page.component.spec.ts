@@ -17,6 +17,7 @@ import {
   syncFormatSettings,
 } from '@/shared/utils';
 import { IncomeSettingsPageComponent } from './income-settings-page.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const category = (
   id: number,
@@ -65,6 +66,7 @@ describe('IncomeSettingsPageComponent (FR-INC-3/4/12, TICKET-INC-04, TICKET-INC-
     await TestBed.configureTestingModule({
       imports: [IncomeSettingsPageComponent],
       providers: [
+        ...provideFakeApi(),
         // A page since TICKET-INC-18, so its back link needs a router.
         provideRouter([]),
         { provide: AccountsRepository, useValue: accountsRepository },

@@ -1,100 +1,68 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
-import { appDb, type Transaction } from '@/core/data-access';
-import { TransferCleanupService, type RemoveTransactionsWithCleanupResult } from '@/core/transfers';
+import { withApiTesting } from '@/core/data-access/api-client.testing';
+import type { Transaction } from '@/core/data-access';
 import { TransactionDeletionService } from './transaction-deletion.service';
 
-const setup = (options: { cleanupResult?: RemoveTransactionsWithCleanupResult }) => {
-  const transferCleanupService = {
-    removeTransactionsWithTransferCleanup: vi.fn().mockResolvedValue(
-      options.cleanupResult ?? {
-        removedTransactionIds: [],
-        unlinkedTransferIds: [],
-        clearedTransferTransactionIds: [],
-      },
-    ),
-  };
+const transaction = (id: number, overrides: Partial<Transaction> = {}): Transaction =>
+  ({ id, accountId: 1, bookingDate: '2026-07-01', ...overrides }) as Transaction;
 
-  TestBed.configureTestingModule({
-    providers: [
-      TransactionDeletionService,
-      { provide: TransferCleanupService, useValue: transferCleanupService },
-    ],
-  });
-
-  return {
-    service: TestBed.inject(TransactionDeletionService),
-    transferCleanupService,
-  };
+const EMPTY = {
+  removedTransactionIds: [],
+  unlinkedTransferIds: [],
+  clearedTransferTransactionIds: [],
 };
 
 describe('TransactionDeletionService: removeMany', () => {
-  // The cascade runs inside `appDb.transaction('rw', ...)`; stub it to synchronously invoke the scope
-  // so we exercise the repository calls without a real IndexedDB.
-  beforeEach(() => {
-    vi.spyOn(appDb, 'transaction').mockImplementation(((...args: unknown[]) =>
-      (args[args.length - 1] as () => unknown)()) as never);
-  });
+  withApiTesting();
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  const service = (): TransactionDeletionService => TestBed.inject(TransactionDeletionService);
 
-  it('delegates to the shared TransferCleanupService, inside its own rw transaction', async () => {
-    const transactions: Transaction[] = [
-      { id: 10, accountId: 1, bookingDate: '2026-07-01' } as Transaction,
-      { id: 11, accountId: 1, bookingDate: '2026-07-02' } as Transaction,
-    ];
-    const ctx = setup({
-      cleanupResult: {
-        removedTransactionIds: [10, 11],
-        unlinkedTransferIds: [],
-        clearedTransferTransactionIds: [],
-      },
+  /** Answers `POST /api/transactions/delete`, handing back the ids it was asked to remove. */
+  const removeAgainstApi = async (
+    transactions: Transaction[],
+    report: typeof EMPTY | Record<string, number[]>,
+  ): Promise<{ ids: number[]; result: unknown }> => {
+    const settled = service().removeMany(transactions);
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/transactions/delete');
+
+    expect(request.request.method).toBe('POST');
+    const { ids } = request.request.body as { ids: number[] };
+    request.flush(report);
+
+    return { ids, result: await settled };
+  };
+
+  /**
+   * Not `DELETE /api/transactions/bulk`, which removes rows and leaves every transfer that linked
+   * them pointing at nothing. This endpoint does both in one transaction (TICKET-SRV-04), which is
+   * why deleting transactions is one request rather than this service orchestrating three.
+   */
+  it('sends exactly the selected ids to the cleanup endpoint', async () => {
+    const { ids } = await removeAgainstApi([transaction(10), transaction(11)], {
+      ...EMPTY,
+      removedTransactionIds: [10, 11],
     });
 
-    const result = await ctx.service.removeMany(transactions);
-
-    expect(ctx.transferCleanupService.removeTransactionsWithTransferCleanup).toHaveBeenCalledWith(
-      transactions,
-    );
-    expect(result.removedTransactionIds).toEqual([10, 11]);
-    expect(appDb.transaction).toHaveBeenCalled();
+    expect(ids).toEqual([10, 11]);
   });
 
-  it('forwards the cleanup result verbatim', async () => {
-    const transactions: Transaction[] = [
-      { id: 10, accountId: 1, bookingDate: '2026-07-01', transferId: 5 } as Transaction,
-    ];
-    const ctx = setup({
-      cleanupResult: {
-        removedTransactionIds: [10],
-        unlinkedTransferIds: [5],
-        clearedTransferTransactionIds: [20],
-      },
-    });
-
-    const result = await ctx.service.removeMany(transactions);
-
-    expect(result).toEqual({
+  it('forwards the cleanup report verbatim, for the stores to mirror', async () => {
+    const report = {
       removedTransactionIds: [10],
       unlinkedTransferIds: [5],
       clearedTransferTransactionIds: [20],
-    });
+    };
+
+    const { result } = await removeAgainstApi([transaction(10, { transferId: 5 })], report);
+
+    expect(result).toEqual(report);
   });
 
   it('is a safe no-op for an empty selection', async () => {
-    const ctx = setup({});
+    const { ids, result } = await removeAgainstApi([], EMPTY);
 
-    const result = await ctx.service.removeMany([]);
-
-    expect(ctx.transferCleanupService.removeTransactionsWithTransferCleanup).toHaveBeenCalledWith(
-      [],
-    );
-    expect(result).toEqual({
-      removedTransactionIds: [],
-      unlinkedTransferIds: [],
-      clearedTransferTransactionIds: [],
-    });
+    expect(ids).toEqual([]);
+    expect(result).toEqual(EMPTY);
   });
 });

@@ -33,6 +33,7 @@ import {
   formatYearOverYearChange,
   IncomeYearlyPanelComponent,
 } from './income-yearly-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
 class ResizeObserverStub {
@@ -280,6 +281,7 @@ describe('IncomeYearlyPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [IncomeYearlyPanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideEchartsCore({ echarts }),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },

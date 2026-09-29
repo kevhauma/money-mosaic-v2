@@ -1,49 +1,43 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import type { SavingBasis } from '@/core/stats';
-import {
-  appDb,
-  DEFAULT_FORECAST_SETTINGS,
-  type ForecastMode,
-  type ForecastSettings,
-} from './app-db';
+import { ApiClient } from './api-client';
+import type { ForecastMode, ForecastSettings } from './entities';
+import { DEFAULT_FORECAST_SETTINGS } from './seed-data';
 
+const PATH = '/settings/forecastSettings';
+
+/** See `transfer-settings.repository.ts` for why the response is spread over the `DEFAULT_*`. */
 @Injectable({ providedIn: 'root' })
 export class ForecastSettingsRepository {
-  get = async (): Promise<ForecastSettings> =>
-    (await appDb.forecastSettings.get(1)) ?? DEFAULT_FORECAST_SETTINGS;
+  private readonly api = inject(ApiClient);
 
-  // Read-merge-put per field — the row carries several independent settings, so writing one must
-  // not clobber the others (the `dashboardLayoutSettings` precedent).
-  setLookbackMonths = async (lookbackMonths: number): Promise<number> => {
-    const current = await this.get();
-    return appDb.forecastSettings.put({ ...current, id: 1, lookbackMonths });
-  };
+  get = (): Promise<ForecastSettings> =>
+    this.api
+      .get<Partial<ForecastSettings>>(PATH)
+      .then((settings) => ({ ...DEFAULT_FORECAST_SETTINGS, ...settings }));
 
-  setBasis = async (basis: SavingBasis): Promise<number> => {
-    const current = await this.get();
-    return appDb.forecastSettings.put({ ...current, id: 1, basis });
-  };
+  // One field per request — the row carries several independent settings, and the server merges
+  // them inside a transaction rather than this repository reading, merging and putting back.
+  setLookbackMonths = (lookbackMonths: number): Promise<number> =>
+    this.api.patch<ForecastSettings>(PATH, { lookbackMonths }).then(() => 1);
 
-  setSafetyNetAmount = async (safetyNetAmount: number): Promise<number> => {
-    const current = await this.get();
-    return appDb.forecastSettings.put({ ...current, id: 1, safetyNetAmount });
-  };
+  setBasis = (basis: SavingBasis): Promise<number> =>
+    this.api.patch<ForecastSettings>(PATH, { basis }).then(() => 1);
 
-  // Which question the page is answering (TICKET-FUT-09). A non-indexed field on the row
-  // `.version(14)` already declared, so this needs no schema change.
-  setMode = async (mode: ForecastMode): Promise<number> => {
-    const current = await this.get();
-    return appDb.forecastSettings.put({ ...current, id: 1, mode });
-  };
+  setSafetyNetAmount = (safetyNetAmount: number): Promise<number> =>
+    this.api.patch<ForecastSettings>(PATH, { safetyNetAmount }).then(() => 1);
 
-  // Which accounts the forecast may consider (TICKET-FUT-08) — also non-indexed, also no schema
-  // change. An empty array is stored as `undefined`: "all accounts" has one representation.
-  setScopeAccountIds = async (scopeAccountIds: number[]): Promise<number> => {
-    const current = await this.get();
-    return appDb.forecastSettings.put({
-      ...current,
-      id: 1,
-      scopeAccountIds: scopeAccountIds.length ? scopeAccountIds : undefined,
-    });
-  };
+  // Which question the page is answering (TICKET-FUT-09).
+  setMode = (mode: ForecastMode): Promise<number> =>
+    this.api.patch<ForecastSettings>(PATH, { mode }).then(() => 1);
+
+  // Which accounts the forecast may consider (TICKET-FUT-08). An empty array is sent as `undefined`
+  // — which `ApiClient` puts on the wire as `null`, clearing the field — so "all accounts" keeps
+  // having one representation.
+  setScopeAccountIds = (scopeAccountIds: number[]): Promise<number> =>
+    this.api
+      .patch<ForecastSettings>(PATH, {
+        scopeAccountIds: scopeAccountIds.length ? scopeAccountIds : undefined,
+      })
+      .then(() => 1);
 }

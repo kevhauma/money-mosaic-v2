@@ -6,6 +6,7 @@ import { CategoriesStore } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 
 import { CategoriesOverviewComponent } from './categories-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('CategoriesOverviewComponent', () => {
   let fixture: ComponentFixture<CategoriesOverviewComponent>;
@@ -13,7 +14,7 @@ describe('CategoriesOverviewComponent', () => {
   const setup = async (providers: unknown[] = []): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [CategoriesOverviewComponent],
-      providers: [provideRouter([]), ...providers],
+      providers: [...provideFakeApi(), provideRouter([]), ...providers],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CategoriesOverviewComponent);

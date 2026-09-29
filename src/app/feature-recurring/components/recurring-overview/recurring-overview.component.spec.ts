@@ -9,6 +9,7 @@ import {
 } from '@/core/data-access';
 import { RangeStore, TransactionsStore } from '@/core/state';
 import { RecurringOverviewComponent } from './recurring-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -33,6 +34,7 @@ const createFixture = async (
   await TestBed.configureTestingModule({
     imports: [RecurringOverviewComponent],
     providers: [
+      ...provideFakeApi(),
       provideRouter([]),
       {
         provide: TransactionsRepository,

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { RuleFormComponent } from './rule-form.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('RuleFormComponent', () => {
   let component: RuleFormComponent;
@@ -8,6 +9,7 @@ describe('RuleFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
       imports: [RuleFormComponent],
     }).compileComponents();
 
@@ -27,6 +29,7 @@ describe('RuleFormComponent: regex pattern length cap (TICKET-PERF-02)', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
       imports: [RuleFormComponent],
     }).compileComponents();
 
@@ -97,6 +100,7 @@ describe('RuleFormComponent: pre-filled draft without a persisted id (TICKET-CAT
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
       imports: [RuleFormComponent],
     }).compileComponents();
 

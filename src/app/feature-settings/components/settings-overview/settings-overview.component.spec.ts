@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { appDb } from '@/core/data-access';
 import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
@@ -8,6 +7,7 @@ import {
   syncFormatSettings,
 } from '@/shared/utils';
 import { SettingsOverviewComponent } from './settings-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 /**
  * Composition only (TICKET-SET-07) — each section's own behaviour is covered by its own spec, so
@@ -17,7 +17,7 @@ describe('SettingsOverviewComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SettingsOverviewComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
   });
 
@@ -26,7 +26,6 @@ describe('SettingsOverviewComponent', () => {
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.style.removeProperty('--color-primary');
     document.documentElement.style.removeProperty('--color-primary-content');
-    await appDb.appSettings.clear();
     syncFormatSettings({
       currencySymbol: DEFAULT_CURRENCY_SYMBOL,
       currencySymbolPosition: DEFAULT_CURRENCY_SYMBOL_POSITION,

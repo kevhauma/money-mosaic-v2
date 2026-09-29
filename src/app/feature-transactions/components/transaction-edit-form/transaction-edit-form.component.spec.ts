@@ -15,6 +15,7 @@ import { AccountsStore, CategoriesStore } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import type { AttributionOverrideFieldsetComponent } from '../attribution-override-fieldset/attribution-override-fieldset.component';
 import { TransactionEditFormComponent } from './transaction-edit-form.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -63,6 +64,7 @@ describe('TransactionEditFormComponent: original CSV row (TICKET-TXN-06)', () =>
     await TestBed.configureTestingModule({
       imports: [TransactionEditFormComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: RulesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
@@ -136,6 +138,7 @@ describe('TransactionEditFormComponent: manual attribution override (TICKET-TXN-
     await TestBed.configureTestingModule({
       imports: [TransactionEditFormComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: RulesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
@@ -227,6 +230,7 @@ describe('TransactionEditFormComponent: nullify toggle (TICKET-TXN-04)', () => {
     await TestBed.configureTestingModule({
       imports: [TransactionEditFormComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: RulesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
@@ -325,6 +329,7 @@ describe('TransactionEditFormComponent: delete', () => {
     await TestBed.configureTestingModule({
       imports: [TransactionEditFormComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: RulesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
@@ -473,6 +478,7 @@ describe('TransactionEditFormComponent: applicability-aware category picker (TIC
     await TestBed.configureTestingModule({
       imports: [TransactionEditFormComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         {
           provide: CategoriesRepository,

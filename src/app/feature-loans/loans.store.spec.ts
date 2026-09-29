@@ -8,6 +8,7 @@ import {
 } from '@/core/data-access';
 import { TransactionsStore } from '@/core/state';
 import { LoansStore } from './loans.store';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const loan = (overrides: Partial<Loan> = {}): Loan => ({
   id: 1,
@@ -37,7 +38,7 @@ describe('LoansStore: display order, CRUD, and archiving (TICKET-LOAN-02)', () =
     // otherwise still be what `hydrate()` reads.
     loansRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
-      providers: [{ provide: LoansRepository, useValue: loansRepository }],
+      providers: [...provideFakeApi(), { provide: LoansRepository, useValue: loansRepository }],
     });
   });
 
@@ -146,6 +147,7 @@ describe('LoansStore: progressById (TICKET-LOAN-06)', () => {
     transactionsRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: LoansRepository, useValue: loansRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
       ],

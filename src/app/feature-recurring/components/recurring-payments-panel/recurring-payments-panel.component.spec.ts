@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
-  appDb,
   CategoriesRepository,
   RecurringOverridesRepository,
   TransactionsRepository,
@@ -20,6 +19,7 @@ import {
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { RecurringSeriesStore } from '../../recurring-series.store';
 import { RecurringPaymentsPanelComponent } from './recurring-payments-panel.component';
+import { apiCalls, provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const checking: Account = {
   id: 1,
@@ -132,6 +132,7 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
     await TestBed.configureTestingModule({
       imports: [RecurringPaymentsPanelComponent],
       providers: [
+        ...provideFakeApi(),
         {
           provide: TransactionsRepository,
           useValue: { getAll: vi.fn().mockResolvedValue(transactions) },
@@ -170,7 +171,6 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
 
   afterEach(async () => {
     vi.useRealTimers();
-    await appDb.appSettings.clear();
   });
 
   /** The stopped group's disclosure — the button inside its `scope="rowgroup"` heading (TICKET-REC-06). */
@@ -504,7 +504,11 @@ describe('RecurringPaymentsPanelComponent (TICKET-REC-02)', () => {
 
       openStoppedGroup(fixture);
 
-      expect(await appDb.appSettings.count()).toBe(0);
+      // Nothing was *written*: the toggle is component-local, so it has no business reaching
+      // persistence. Reads are another matter — the stores hydrate on injection either way.
+      expect(
+        apiCalls().filter((call) => call.method !== 'GET' && call.url.startsWith('/api/settings')),
+      ).toEqual([]);
     });
   });
 

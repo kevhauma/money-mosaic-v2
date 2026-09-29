@@ -1,255 +1,178 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
-import {
-  appDb,
-  TransactionsRepository,
-  TransfersRepository,
-  type Transaction,
-} from '@/core/data-access';
-import { TransferLinkingService } from './transfer-linking.service';
+import { withApiTesting } from '@/core/data-access/api-client.testing';
+import type { Transaction, Transfer } from '@/core/data-access';
+import { TransferLinkingService, type TransferLinkResult } from './transfer-linking.service';
+import type { TransferCandidate } from './transfer-matching';
 
-const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
-  id: 1,
-  accountId: 1,
-  bookingDate: '2026-06-01',
-  amount: -12,
-  currency: 'EUR',
-  rawDescription: 'Own transfer',
-  fingerprint: `fp-${overrides.id ?? 1}`,
-  createdAt: '2026-06-01T00:00:00.000Z',
-  ...overrides,
+const transaction = (id: number, overrides: Partial<Transaction> = {}): Transaction =>
+  ({
+    id,
+    accountId: 1,
+    bookingDate: '2026-07-01',
+    amount: -100,
+    categoryId: 9,
+    categoryManual: true,
+    ...overrides,
+  }) as Transaction;
+
+/** What the endpoint answers with: the created transfer and both legs as they now stand. */
+const linkResult = (transferId: number): TransferLinkResult => ({
+  transfer: { id: transferId, fromTransactionId: 10, toTransactionId: 11 } as Transfer,
+  updatedTransactions: [
+    { id: 10, transferId } as Transaction,
+    { id: 11, transferId } as Transaction,
+  ],
 });
 
-const setup = () => {
-  const transactionsRepository = {
-    update: vi.fn().mockResolvedValue(1),
-    getByReimbursementTransferId: vi.fn().mockResolvedValue([]),
+describe('TransferLinkingService', () => {
+  withApiTesting();
+
+  const service = (): TransferLinkingService => TestBed.inject(TransferLinkingService);
+  const http = (): HttpTestingController => TestBed.inject(HttpTestingController);
+
+  const answerLink = async <T>(
+    call: Promise<T>,
+    response: unknown,
+  ): Promise<{ body: T; sent: Record<string, unknown> }> => {
+    const request = http().expectOne('/api/transfers/link');
+
+    expect(request.request.method).toBe('POST');
+    const sent = request.request.body as Record<string, unknown>;
+    request.flush(response as never);
+
+    return { body: await call, sent };
   };
-  const transfersRepository = {
-    add: vi.fn().mockResolvedValue(42),
-    remove: vi.fn().mockResolvedValue(undefined),
-  };
 
-  TestBed.configureTestingModule({
-    providers: [
-      TransferLinkingService,
-      { provide: TransactionsRepository, useValue: transactionsRepository },
-      { provide: TransfersRepository, useValue: transfersRepository },
-    ],
+  /**
+   * A link is a `Transfer` row, a `transferId` on both legs and both legs' categories cleared
+   * (TICKET-TRF-01) — one fact in two tables, so it is one endpoint in one transaction. The category
+   * clearing is therefore asserted on the *response*: what the legs look like afterwards is what the
+   * server says they look like, and the stores mirror that rather than a client-side guess.
+   */
+  it('linkManually posts both legs as a manual link', async () => {
+    const { sent, body } = await answerLink(
+      service().linkManually(transaction(10), transaction(11)),
+      linkResult(42),
+    );
+
+    expect(sent).toEqual(
+      expect.objectContaining({
+        fromTransactionId: 10,
+        toTransactionId: 11,
+        method: 'manual',
+        confidence: 'manual',
+      }),
+    );
+    expect(body.transfer.id).toBe(42);
   });
 
-  return {
-    service: TestBed.inject(TransferLinkingService),
-    transactionsRepository,
-    transfersRepository,
-  };
-};
+  it('linkManually returns both legs as the endpoint left them', async () => {
+    const { body } = await answerLink(
+      service().linkManually(transaction(10), transaction(11)),
+      linkResult(42),
+    );
 
-describe('TransferLinkingService: category is cleared on link (TICKET-TRF-01)', () => {
-  // Linking runs inside `appDb.transaction('rw', ...)`; stub it to synchronously invoke the scope so
-  // we exercise the repository calls without a real IndexedDB.
-  beforeEach(() => {
-    vi.spyOn(appDb, 'transaction').mockImplementation(((...args: unknown[]) =>
-      (args[args.length - 1] as () => unknown)()) as never);
+    expect(body.updatedTransactions.map((leg) => leg.transferId)).toEqual([42, 42]);
+    expect(body.updatedTransactions.every((leg) => leg.categoryId === undefined)).toBe(true);
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it('linkAuto posts an auto-iban high-confidence link (FR-TRF-2)', async () => {
+    const { sent } = await answerLink(
+      service().linkAuto(transaction(10), transaction(11), 'auto-iban', 'high'),
+      linkResult(42),
+    );
+
+    expect(sent).toEqual(expect.objectContaining({ method: 'auto-iban', confidence: 'high' }));
   });
 
-  it('linkManually clears categoryId and categoryManual on both sides atomically with transferId', async () => {
-    const ctx = setup();
-    const from = transaction({ id: 1, categoryId: 5, categoryManual: true });
-    const to = transaction({ id: 2, categoryId: 5 });
+  it('linkAuto posts an auto-amountdate medium-confidence link (FR-TRF-3)', async () => {
+    const { sent } = await answerLink(
+      service().linkAuto(transaction(10), transaction(11), 'auto-amountdate', 'medium'),
+      linkResult(42),
+    );
 
-    const result = await ctx.service.linkManually(from, to);
-
-    const clearedCategory = { transferId: 42, categoryId: undefined, categoryManual: undefined };
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, clearedCategory);
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(2, clearedCategory);
-    expect(result.updatedTransactions[0].categoryId).toBeUndefined();
-    expect(result.updatedTransactions[0].categoryManual).toBeUndefined();
-    expect(result.updatedTransactions[1].categoryId).toBeUndefined();
-    expect(appDb.transaction).toHaveBeenCalled();
+    expect(sent).toEqual(
+      expect.objectContaining({ method: 'auto-amountdate', confidence: 'medium' }),
+    );
   });
 
-  it('linkAuto (auto-iban high confidence) clears the category on both sides', async () => {
-    const ctx = setup();
-    const from = transaction({ id: 1, categoryId: 3 });
-    const to = transaction({ id: 2, categoryId: 3 });
+  it('stamps the link with the moment it was made', async () => {
+    const { sent } = await answerLink(
+      service().linkManually(transaction(10), transaction(11)),
+      linkResult(42),
+    );
 
-    await ctx.service.linkAuto(from, to, 'auto-iban', 'high');
-
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, {
-      transferId: 42,
-      categoryId: undefined,
-      categoryManual: undefined,
-    });
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(2, {
-      transferId: 42,
-      categoryId: undefined,
-      categoryManual: undefined,
-    });
+    expect(Date.parse(sent['linkedAt'] as string)).not.toBeNaN();
   });
 
-  it('linkAuto (auto-amountdate medium confidence) clears the category on both sides', async () => {
-    const ctx = setup();
-    const from = transaction({ id: 1, categoryId: 3 });
-    const to = transaction({ id: 2, categoryId: 3 });
-
-    await ctx.service.linkAuto(from, to, 'auto-amountdate', 'medium');
-
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, {
-      transferId: 42,
-      categoryId: undefined,
-      categoryManual: undefined,
-    });
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(2, {
-      transferId: 42,
-      categoryId: undefined,
-      categoryManual: undefined,
-    });
+  const candidate = (from: number, to: number): TransferCandidate => ({
+    from: transaction(from),
+    to: transaction(to),
+    method: 'auto-iban',
+    confidence: 'high',
   });
 
-  it('link with no prior category still writes the cleared fields (idempotent)', async () => {
-    const ctx = setup();
-    const from = transaction({ id: 1 });
-    const to = transaction({ id: 2 });
+  /**
+   * A whole auto-match pass is one request and one transaction (TICKET-PERF-04): one candidate's
+   * write failing aborts the pass rather than leaving the dataset half-linked. Two candidates in one
+   * body is what makes that true — `expectOne` fails if the pass is issued as a request per link.
+   */
+  it('linkAutoBatch sends the whole pass as one request', async () => {
+    const settled = service().linkAutoBatch([candidate(10, 11), candidate(12, 13)]);
+    const request = http().expectOne('/api/transfers/link/batch');
 
-    await ctx.service.linkManually(from, to);
+    expect(request.request.method).toBe('POST');
+    const sent = request.request.body as Record<string, unknown>[];
+    expect(sent).toHaveLength(2);
+    request.flush([linkResult(42), linkResult(43)]);
 
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, {
-      transferId: 42,
-      categoryId: undefined,
-      categoryManual: undefined,
-    });
+    expect((await settled).map((link) => link.transfer.id)).toEqual([42, 43]);
   });
 
-  it('unlink only clears transferId — the decision is to leave the category empty rather than restore or re-suggest one', async () => {
-    const ctx = setup();
+  it('linkAutoBatch stamps every link of a pass with the same instant', async () => {
+    const settled = service().linkAutoBatch([candidate(10, 11), candidate(12, 13)]);
+    const request = http().expectOne('/api/transfers/link/batch');
+    const sent = request.request.body as { linkedAt: string }[];
 
-    await ctx.service.unlink({
-      id: 42,
-      fromTransactionId: 1,
-      toTransactionId: 2,
-      method: 'manual',
-      confidence: 'manual',
-      linkedAt: '2026-06-01T00:00:00.000Z',
-    });
-
-    expect(ctx.transfersRepository.remove).toHaveBeenCalledWith(42);
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, { transferId: undefined });
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(2, { transferId: undefined });
-    // No categoryId key present in either update call — unlink never touches category.
-    expect(
-      ctx.transactionsRepository.update.mock.calls.every(
-        ([, changes]) => !('categoryId' in changes),
-      ),
-    ).toBe(true);
+    expect(sent[0].linkedAt).toBe(sent[1].linkedAt);
+    request.flush([linkResult(42), linkResult(43)]);
+    await settled;
   });
 
-  it('unlink clears a dangling reimbursementTransferId on any transaction that referenced this transfer (TICKET-TXN-03)', async () => {
-    const ctx = setup();
-    const referencing = transaction({
-      id: 5,
-      attributionOverride: { mode: 'shared', jointAccountId: 1, reimbursementTransferId: 42 },
-    });
-    ctx.transactionsRepository.getByReimbursementTransferId.mockResolvedValue([referencing]);
+  it('linkAutoBatch surfaces a refused pass as a rejection carrying the server message', async () => {
+    const settled = service().linkAutoBatch([candidate(10, 11), candidate(12, 13)]);
+    http()
+      .expectOne('/api/transfers/link/batch')
+      .flush({ error: 'Not found' }, { status: 404, statusText: 'Not Found' });
 
-    const result = await ctx.service.unlink({
-      id: 42,
-      fromTransactionId: 1,
-      toTransactionId: 2,
-      method: 'manual',
-      confidence: 'manual',
-      linkedAt: '2026-06-01T00:00:00.000Z',
-    });
-
-    expect(ctx.transactionsRepository.getByReimbursementTransferId).toHaveBeenCalledWith(42);
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(5, {
-      attributionOverride: {
-        mode: 'shared',
-        jointAccountId: 1,
-        reimbursementTransferId: undefined,
-      },
-    });
-    expect(result.clearedAttributionOverrides).toEqual([
-      {
-        id: 5,
-        attributionOverride: {
-          mode: 'shared',
-          jointAccountId: 1,
-          reimbursementTransferId: undefined,
-        },
-      },
-    ]);
+    await expect(settled).rejects.toThrow('Not found');
   });
 
-  it('linkAutoBatch links every candidate inside a single Dexie transaction (TICKET-PERF-04)', async () => {
-    const ctx = setup();
-    ctx.transfersRepository.add.mockResolvedValueOnce(101).mockResolvedValueOnce(102);
-    const pairA = { from: transaction({ id: 1 }), to: transaction({ id: 2 }) };
-    const pairB = { from: transaction({ id: 3 }), to: transaction({ id: 4 }) };
+  /**
+   * Unlinking leaves the category **empty** rather than re-running the rules engine (TICKET-TRF-01):
+   * no pre-link category is persisted, so exact restoration is not possible. It also clears any
+   * dangling `attributionOverride.reimbursementTransferId` that named this transfer (TICKET-TXN-03),
+   * in the same transaction — and reports which rows it touched, since the stores mirror them.
+   */
+  it('unlink posts to the transfer that is being undone and reports the cleared overrides', async () => {
+    const settled = service().unlink({ id: 42 } as Transfer);
+    const request = http().expectOne('/api/transfers/42/unlink');
 
-    const results = await ctx.service.linkAutoBatch([
-      { ...pairA, method: 'auto-iban', confidence: 'high' },
-      { ...pairB, method: 'auto-amountdate', confidence: 'medium' },
-    ]);
-
-    // One transaction wraps the whole pass, not one per candidate.
-    expect(appDb.transaction).toHaveBeenCalledTimes(1);
-    expect(results.map((r) => r.transfer.id)).toEqual([101, 102]);
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, {
-      transferId: 101,
-      categoryId: undefined,
-      categoryManual: undefined,
+    expect(request.request.method).toBe('POST');
+    request.flush({
+      clearedAttributionOverrides: [{ id: 20, attributionOverride: { mode: 'shared' } }],
     });
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(3, {
-      transferId: 102,
-      categoryId: undefined,
-      categoryManual: undefined,
+
+    expect(await settled).toEqual({
+      clearedAttributionOverrides: [{ id: 20, attributionOverride: { mode: 'shared' } }],
     });
   });
 
-  it('linkAutoBatch aborts the whole pass when a candidate mid-pass fails, leaving later candidates unlinked', async () => {
-    const ctx = setup();
-    ctx.transfersRepository.add
-      .mockResolvedValueOnce(101)
-      .mockRejectedValueOnce(new Error('write failed'));
-    const pairA = { from: transaction({ id: 1 }), to: transaction({ id: 2 }) };
-    const pairB = { from: transaction({ id: 3 }), to: transaction({ id: 4 }) };
-    const pairC = { from: transaction({ id: 5 }), to: transaction({ id: 6 }) };
+  it('unlink reports nothing cleared when no transaction referenced the transfer', async () => {
+    const settled = service().unlink({ id: 42 } as Transfer);
+    http().expectOne('/api/transfers/42/unlink').flush({ clearedAttributionOverrides: [] });
 
-    await expect(
-      ctx.service.linkAutoBatch([
-        { ...pairA, method: 'auto-iban' as const, confidence: 'high' as const },
-        { ...pairB, method: 'auto-iban' as const, confidence: 'high' as const },
-        { ...pairC, method: 'auto-iban' as const, confidence: 'high' as const },
-      ]),
-    ).rejects.toThrow('write failed');
-
-    // The third candidate never runs — the failure propagates out of the shared transaction scope.
-    expect(ctx.transactionsRepository.update).not.toHaveBeenCalledWith(5, expect.anything());
-    expect(ctx.transactionsRepository.update).not.toHaveBeenCalledWith(6, expect.anything());
-  });
-
-  it('unlink leaves other transactions’ attributionOverride untouched when nothing referenced this transfer', async () => {
-    const ctx = setup();
-
-    const result = await ctx.service.unlink({
-      id: 42,
-      fromTransactionId: 1,
-      toTransactionId: 2,
-      method: 'manual',
-      confidence: 'manual',
-      linkedAt: '2026-06-01T00:00:00.000Z',
-    });
-
-    expect(result.clearedAttributionOverrides).toEqual([]);
-    expect(
-      ctx.transactionsRepository.update.mock.calls.every(
-        ([, changes]) => !('attributionOverride' in changes),
-      ),
-    ).toBe(true);
+    expect(await settled).toEqual({ clearedAttributionOverrides: [] });
   });
 });

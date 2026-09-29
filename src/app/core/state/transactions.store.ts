@@ -19,7 +19,7 @@ import {
 import { TransactionsRepository, type Transaction } from '@/core/data-access';
 import { TransactionDeletionService, type RemoveTransactionsResult } from '@/core/transactions';
 import { isSavingsMovement } from '@/core/transfers';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 const transactionConfig = entityConfig({
   entity: type<Transaction>(),
@@ -87,9 +87,16 @@ export const TransactionsStore = signalStore(
        */
       hydrate: (options?: { force?: boolean }): Promise<void> => {
         if (!hydration || options?.force) {
-          hydration = transactionsRepository.getAll().then((transactions) => {
-            patchState(store, setAllEntities(transactions, transactionConfig), { hydrated: true });
-          });
+          hydration = retryOnFailure(
+            transactionsRepository.getAll().then((transactions) => {
+              patchState(store, setAllEntities(transactions, transactionConfig), {
+                hydrated: true,
+              });
+            }),
+            () => {
+              hydration = null;
+            },
+          );
         }
         return hydration;
       },

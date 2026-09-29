@@ -5,6 +5,7 @@ import type { Loan, Transaction } from '@/core/data-access';
 import { projectLoanWhatIf, type LoanProgress, type WhatIfScenario } from '@/core/loans';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { buildLoanWhatIfChartOption, LoanWhatIfComponent } from './loan-what-if.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 /**
  * Same selector and `options` input as the real echarts directive, so the template binding stays
@@ -95,7 +96,10 @@ describe('LoanWhatIfComponent (TICKET-LOAN-13)', () => {
   let fixture: ComponentFixture<LoanWhatIfComponent>;
 
   const setUp = async (loan: Loan, payments: Transaction[] = []): Promise<void> => {
-    await TestBed.configureTestingModule({ imports: [LoanWhatIfComponent] })
+    await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
+      imports: [LoanWhatIfComponent],
+    })
       .overrideComponent(LoanWhatIfComponent, {
         remove: { imports: [NgxEchartsDirective] },
         add: { imports: [EchartsStubDirective] },
@@ -169,7 +173,10 @@ describe('LoanWhatIfComponent lump sums and fees (TICKET-LOAN-14)', () => {
   let fixture: ComponentFixture<LoanWhatIfComponent>;
 
   const setUp = async (): Promise<void> => {
-    await TestBed.configureTestingModule({ imports: [LoanWhatIfComponent] })
+    await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
+      imports: [LoanWhatIfComponent],
+    })
       .overrideComponent(LoanWhatIfComponent, {
         remove: { imports: [NgxEchartsDirective] },
         add: { imports: [EchartsStubDirective] },

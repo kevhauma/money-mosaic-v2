@@ -5,7 +5,6 @@ import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
-  appDb,
   CategoriesRepository,
   TransactionsRepository,
   type Account,
@@ -34,6 +33,7 @@ import {
   summariseMoneyFlow,
   type MoneyFlowClickTarget,
 } from './money-flow-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -435,9 +435,7 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
   // The privacy-mode test below writes the real `appSettings` singleton row through the real store.
   // Vitest runs with `isolate: false`, so an uncleared row survives into the next spec file in this
   // worker and breaks whoever expects an empty table (app-settings.repository.spec.ts).
-  afterEach(async () => {
-    await appDb.appSettings.clear();
-  });
+  afterEach(async () => {});
 
   const createFixture = async (
     transactions: Transaction[],
@@ -447,6 +445,7 @@ describe('MoneyFlowPanelComponent (TICKET-EXP-02)', () => {
     await TestBed.configureTestingModule({
       imports: [MoneyFlowPanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         {

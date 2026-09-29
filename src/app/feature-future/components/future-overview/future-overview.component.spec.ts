@@ -7,6 +7,7 @@ import { GoalsStore, RangeStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { FutureOverviewComponent } from './future-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -14,6 +15,7 @@ const createFixture = async (): Promise<ComponentFixture<FutureOverviewComponent
   await TestBed.configureTestingModule({
     imports: [FutureOverviewComponent],
     providers: [
+      ...provideFakeApi(),
       provideRouter([]),
       provideEchartsCore({ echarts }),
       {
@@ -61,6 +63,7 @@ describe('FutureOverviewComponent (TICKET-FUT-03)', () => {
     await TestBed.configureTestingModule({
       imports: [FutureOverviewComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         {

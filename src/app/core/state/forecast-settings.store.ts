@@ -14,7 +14,7 @@ import {
   type ForecastSettings,
 } from '@/core/data-access';
 import type { SavingBasis } from '@/core/stats';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 /**
  * The forecast's own parameters (TICKET-FUT-02, FR-FUT-2), edited by TICKET-FUT-06.
@@ -48,9 +48,14 @@ export const ForecastSettingsStore = signalStore(
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = forecastSettingsRepository.get().then((settings) => {
-          patchState(store, settings);
-        });
+        hydration = retryOnFailure(
+          forecastSettingsRepository.get().then((settings) => {
+            patchState(store, settings);
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

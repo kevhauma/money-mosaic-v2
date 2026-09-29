@@ -7,7 +7,7 @@ import {
   type DashboardRowId,
 } from '@/core/data-access';
 import { moveDashboardRow, resolveDashboardRowOrder } from './dashboard-row-order';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 /**
  * The user's Dashboard row order and hidden-row set (TICKET-STAT-14), persisted so it survives a
@@ -29,9 +29,12 @@ export const DashboardLayoutSettingsStore = signalStore(
       /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
       hydrate: (): Promise<void> => {
         if (!hydration) {
-          hydration = dashboardLayoutSettingsRepository
-            .get()
-            .then((settings) => patchState(store, settings));
+          hydration = retryOnFailure(
+            dashboardLayoutSettingsRepository.get().then((settings) => patchState(store, settings)),
+            () => {
+              hydration = null;
+            },
+          );
         }
         return hydration;
       },

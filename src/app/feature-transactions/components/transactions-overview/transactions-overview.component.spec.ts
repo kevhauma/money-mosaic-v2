@@ -19,6 +19,7 @@ import type { TransactionFilters } from '../../transaction-filters';
 import type { TransactionRowVm } from '../../transaction-row-vm';
 import type { CategorySelectOption } from '../../category-picker';
 import { TransactionsOverviewComponent } from './transactions-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 /** Protected surface we reach into for selection/bulk/filter assertions. */
 type Internals = {
@@ -99,6 +100,7 @@ describe('TransactionsOverviewComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TransactionsOverviewComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: AccountsRepository, useValue: accountsRepository },

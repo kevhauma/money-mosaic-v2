@@ -8,6 +8,7 @@ import {
   type Transaction,
 } from '@/core/data-access';
 import { AttributionOverrideFieldsetComponent } from './attribution-override-fieldset.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -60,6 +61,7 @@ describe('AttributionOverrideFieldsetComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AttributionOverrideFieldsetComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         { provide: TransfersRepository, useValue: transfersRepository },
       ],

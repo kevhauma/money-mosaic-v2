@@ -1,13 +1,21 @@
-import { Injectable } from '@angular/core';
-import { appDb, type Loan } from './app-db';
+import { inject, Injectable } from '@angular/core';
+import { ApiClient } from './api-client';
+import type { Loan } from './entities';
 
+const PATH = '/loans';
+
+/** See `accounts.repository.ts` for the shape, and for what `update`'s `Promise<number>` means. */
 @Injectable({ providedIn: 'root' })
 export class LoansRepository {
-  getAll = (): Promise<Loan[]> => appDb.loans.toArray();
+  private readonly api = inject(ApiClient);
 
-  add = (loan: Loan): Promise<number> => appDb.loans.add(loan);
+  getAll = (): Promise<Loan[]> => this.api.get<Loan[]>(PATH);
 
-  update = (id: number, changes: Partial<Loan>): Promise<number> => appDb.loans.update(id, changes);
+  add = (loan: Loan): Promise<number> =>
+    this.api.post<{ id: number }>(PATH, loan).then(({ id }) => id);
 
-  remove = (id: number): Promise<void> => appDb.loans.delete(id);
+  update = (id: number, changes: Partial<Loan>): Promise<number> =>
+    this.api.patch<Loan>(`${PATH}/${id}`, changes).then(() => 1);
+
+  remove = (id: number): Promise<void> => this.api.delete(`${PATH}/${id}`);
 }

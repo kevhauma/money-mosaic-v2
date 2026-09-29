@@ -15,6 +15,7 @@ import { CategoriesStore } from './categories.store';
 import { TransactionsStore } from './transactions.store';
 import { TransfersStore } from './transfers.store';
 import { AccountsStore } from './accounts.store';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -52,6 +53,7 @@ describe('AccountsStore: savings movements still count toward balances (TICKET-T
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
       ],
@@ -92,6 +94,7 @@ describe('AccountsStore: dataReady mirrors TransactionsStore/TransfersStore hydr
     transfersRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: TransfersRepository, useValue: transfersRepository },
@@ -144,6 +147,7 @@ describe('AccountsStore: archive/unarchive round-trip (TICKET-NG-04)', () => {
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
       ],
@@ -186,6 +190,7 @@ describe('AccountsStore: manual account ordering (TICKET-ACC-04)', () => {
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
       ],
@@ -262,6 +267,7 @@ describe('AccountsStore: contribution-based net worth for joint accounts (TICKET
     categoriesRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: TransfersRepository, useValue: transfersRepository },
@@ -384,6 +390,7 @@ describe('AccountsStore: manual attributionOverride reweights net worth (TICKET-
     categoriesRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: TransfersRepository, useValue: transfersRepository },
@@ -482,6 +489,7 @@ describe('AccountsStore: nullified transactions do not affect net worth (TICKET-
     categoriesRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: TransfersRepository, useValue: transfersRepository },
@@ -549,6 +557,7 @@ describe('AccountsStore: removeAccount cascades to entities, transactions, and t
     categoriesRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: TransfersRepository, useValue: transfersRepository },
@@ -620,6 +629,7 @@ describe('AccountsStore: per-account net-worth contributions (TICKET-FUT-08)', (
     categoriesRepository.getAll.mockResolvedValue([]);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: TransfersRepository, useValue: transfersRepository },

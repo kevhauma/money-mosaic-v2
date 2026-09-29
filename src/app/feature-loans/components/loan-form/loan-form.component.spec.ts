@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import { CategoriesRepository, type Category, type Loan } from '@/core/data-access';
 import { CategoriesStore } from '@/core/state';
 import { LoanFormComponent, type LoanFormValue } from './loan-form.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const category = (id: number, name: string): Category => ({
   id,
@@ -38,6 +39,7 @@ const setup = async (existingLoans: Loan[] = []): Promise<ComponentFixture<LoanF
   await TestBed.configureTestingModule({
     imports: [LoanFormComponent],
     providers: [
+      ...provideFakeApi(),
       {
         provide: CategoriesRepository,
         useValue: { getAll: vi.fn().mockResolvedValue(categories) },

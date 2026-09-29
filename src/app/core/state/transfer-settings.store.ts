@@ -5,7 +5,7 @@ import {
   TransferSettingsRepository,
   type TransferSettings,
 } from '@/core/data-access';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 export const TransferSettingsStore = signalStore(
   { providedIn: 'root' },
@@ -21,9 +21,14 @@ export const TransferSettingsStore = signalStore(
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = transferSettingsRepository.get().then((settings) => {
-          patchState(store, settings);
-        });
+        hydration = retryOnFailure(
+          transferSettingsRepository.get().then((settings) => {
+            patchState(store, settings);
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

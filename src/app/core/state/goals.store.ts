@@ -18,7 +18,7 @@ import {
 } from '@ngrx/signals/entities';
 import { GoalsRepository, type SavingsGoal } from '@/core/data-access';
 import { computeReorderUpdates, sortedBySortOrder, withArchivable } from '@/shared/utils';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 const goalConfig = entityConfig({
   entity: type<SavingsGoal>(),
@@ -51,9 +51,14 @@ export const GoalsStore = signalStore(
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = goalsRepository.getAll().then((goals) => {
-          patchState(store, setAllEntities(goals, goalConfig), { hydrated: true });
-        });
+        hydration = retryOnFailure(
+          goalsRepository.getAll().then((goals) => {
+            patchState(store, setAllEntities(goals, goalConfig), { hydrated: true });
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

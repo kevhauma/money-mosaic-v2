@@ -13,6 +13,7 @@ import {
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { IncomeStore } from '../../income.store';
 import { SalaryDetailsPageComponent } from './salary-details-page.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('SalaryDetailsPageComponent (FR-INC-10, TICKET-INC-18)', () => {
   const accountsRepository = { getAll: vi.fn() };
@@ -45,6 +46,7 @@ describe('SalaryDetailsPageComponent (FR-INC-10, TICKET-INC-18)', () => {
     await TestBed.configureTestingModule({
       imports: [SalaryDetailsPageComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },

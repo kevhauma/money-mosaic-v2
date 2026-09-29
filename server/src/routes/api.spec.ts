@@ -79,15 +79,15 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
   },
   TransfersRepository: {
     getAll: ['GET', '/api/transfers'],
-    getByIds: ['GET', '/api/transfers?ids=1,2'],
     add: ['POST', '/api/transfers'],
-    // NOT the endpoint TICKET-SRV-05 should wire `remove` to. This raw delete removes the
-    // `Transfer` row and leaves both legs' `transferId` stamped, which is the orphan state
-    // TICKET-SRV-04 exists to prevent — `POST /api/transfers/:id/unlink` is the one that cleans
-    // up. `TransfersRepository.remove` has no caller outside `TransferCleanupService`, whose whole
-    // body is now server-side, so SRV-05 should **delete the method** rather than port it. Listed
-    // here only because the endpoint exists and this registry enumerates the surface.
-    remove: ['DELETE', '/api/transfers/1'],
+    // `getByIds` is gone too: its only caller was `TransferCleanupService`, deleted with `remove`
+    // below, and the surface spec pinning it was the only thing keeping it alive.
+    // `remove` is gone (TICKET-SRV-05). `DELETE /api/transfers/1` still exists, but it removes the
+    // `Transfer` row and leaves both legs' `transferId` stamped — the orphan state TICKET-SRV-04
+    // exists to prevent, where `POST /api/transfers/:id/unlink` is the one that cleans up. The
+    // method's only caller was `TransferCleanupService`, whose whole body is server-side now, so it
+    // was deleted rather than ported into a trap. This map is compared to the repository's real
+    // methods in both directions, so an entry here would fail rather than document anything.
   },
   RecurringOverridesRepository: {
     getAll: ['GET', '/api/recurringOverrides'],
@@ -112,11 +112,11 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
     update: ['PATCH', '/api/transactions/1'],
     bulkAdd: ['POST', '/api/transactions/bulk'],
     bulkUpdate: ['PATCH', '/api/transactions/bulk'],
-    // Same caveat as `TransfersRepository.remove` above: this deletes rows without the transfer
-    // cleanup, so a surviving leg keeps a `transferId` pointing at a transfer that cascaded away.
-    // `POST /api/transactions/delete` is the one with the cleanup. Its only caller is
-    // `TransactionDeletionService`, so SRV-05 should delete the method rather than wire it here.
-    bulkRemove: ['DELETE', '/api/transactions/bulk'],
+    // `bulkRemove` is gone for the same reason as `TransfersRepository.remove` above
+    // (TICKET-SRV-05): `DELETE /api/transactions/bulk` deletes rows without the transfer cleanup,
+    // so a surviving leg would keep a `transferId` pointing at a transfer that cascaded away.
+    // `POST /api/transactions/delete` is the one with the cleanup, and
+    // `TransactionDeletionService.removeMany` — the method's only caller — is what calls it.
   },
   CategoryModelRepository: {
     get: ['GET', '/api/categoryModel'],

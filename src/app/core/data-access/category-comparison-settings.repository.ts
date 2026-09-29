@@ -1,15 +1,20 @@
-import { Injectable } from '@angular/core';
-import {
-  appDb,
-  DEFAULT_CATEGORY_COMPARISON_SETTINGS,
-  type CategoryComparisonSettings,
-} from './app-db';
+import { inject, Injectable } from '@angular/core';
+import { ApiClient } from './api-client';
+import type { CategoryComparisonSettings } from './entities';
+import { DEFAULT_CATEGORY_COMPARISON_SETTINGS } from './seed-data';
 
+const PATH = '/settings/categoryComparisonSettings';
+
+/** See `transfer-settings.repository.ts` for why the response is spread over the `DEFAULT_*`. */
 @Injectable({ providedIn: 'root' })
 export class CategoryComparisonSettingsRepository {
-  get = async (): Promise<CategoryComparisonSettings> =>
-    (await appDb.categoryComparisonSettings.get(1)) ?? DEFAULT_CATEGORY_COMPARISON_SETTINGS;
+  private readonly api = inject(ApiClient);
+
+  get = (): Promise<CategoryComparisonSettings> =>
+    this.api
+      .get<Partial<CategoryComparisonSettings>>(PATH)
+      .then((settings) => ({ ...DEFAULT_CATEGORY_COMPARISON_SETTINGS, ...settings }));
 
   setExcludedCategoryIds = (excludedCategoryIds: number[]): Promise<number> =>
-    appDb.categoryComparisonSettings.put({ id: 1, excludedCategoryIds });
+    this.api.patch<CategoryComparisonSettings>(PATH, { excludedCategoryIds }).then(() => 1);
 }

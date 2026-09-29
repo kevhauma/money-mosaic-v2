@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { appDb, CategoriesRepository, type Category } from '@/core/data-access';
+import { CategoriesRepository, type Category } from '@/core/data-access';
 import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { formatDate } from '@/shared/utils';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { CategoryComparisonPanelComponent } from './category-comparison-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const groceries: Category = {
   id: 1,
@@ -29,6 +30,7 @@ describe('CategoryComparisonPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [CategoryComparisonPanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         {
           provide: CategoriesRepository,
@@ -46,11 +48,6 @@ describe('CategoryComparisonPanelComponent', () => {
 
   afterEach(async () => {
     vi.useRealTimers();
-    // The "excluding categories" describe block below writes through the real
-    // CategoryComparisonSettingsStore/repository to the shared `appDb` (fake-indexeddb is a
-    // global singleton and Vitest runs with isolate:false), so leftover rows here leak into
-    // other spec files unless cleared.
-    await appDb.categoryComparisonSettings.clear();
   });
 
   it('should create', () => {

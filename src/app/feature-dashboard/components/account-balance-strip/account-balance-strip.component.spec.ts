@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { AccountBalanceStripComponent } from './account-balance-strip.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('AccountBalanceStripComponent', () => {
   let fixture: ComponentFixture<AccountBalanceStripComponent>;
@@ -9,7 +10,7 @@ describe('AccountBalanceStripComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AccountBalanceStripComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AccountBalanceStripComponent);

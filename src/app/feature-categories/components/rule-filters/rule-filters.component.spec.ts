@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import type { RuleFilters } from '../../rule-filters';
 import { RuleFiltersComponent } from './rule-filters.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 /** Protected surface we reach into for form/behaviour assertions. */
 type Internals = {
@@ -15,6 +16,7 @@ describe('RuleFiltersComponent', () => {
 
   const setup = async (): Promise<void> => {
     await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
       imports: [RuleFiltersComponent],
     }).compileComponents();
 

@@ -1,13 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { computeFingerprint } from '@/shared/utils';
 import {
-  appDb,
-  ImportBatchesRepository,
+  ApiClient,
   TransactionsRepository,
   type ImportBatch,
   type Transaction,
 } from '@/core/data-access';
-import { TransferCleanupService } from '@/core/transfers';
 import type { ParsedRowResult } from './csv-row-mapper';
 
 type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
@@ -73,6 +71,12 @@ export type UndoImportResult = {
   clearedTransferTransactionIds: number[];
 };
 
+/** What `POST /api/import/commit` answers with — `CommitImportResult` minus the backfill echo. */
+type CommitImportResponse = Pick<
+  CommitImportResult,
+  'batch' | 'addedTransactions' | 'duplicateCount'
+>;
+
 const occurrenceKey = (fingerprint: string, occurrence: number): string =>
   `${fingerprint}|${occurrence}`;
 
@@ -135,8 +139,7 @@ export const partitionByFingerprint = <T extends { fingerprint: string }>(
 @Injectable({ providedIn: 'root' })
 export class ImportService {
   private readonly transactionsRepository = inject(TransactionsRepository);
-  private readonly importBatchesRepository = inject(ImportBatchesRepository);
-  private readonly transferCleanupService = inject(TransferCleanupService);
+  private readonly api = inject(ApiClient);
 
   /** The rows paired with their base fingerprint — shared by the preview and the commit so the two
    * can never compute sameness differently (TICKET-IMP-14). */
@@ -220,8 +223,13 @@ export class ImportService {
     const dateFrom = bookingDates[0] ?? createdAt.slice(0, 10);
     const dateTo = bookingDates[bookingDates.length - 1] ?? createdAt.slice(0, 10);
 
-    return appDb.transaction('rw', [appDb.transactions, appDb.importBatches], async () => {
-      const batchId = await this.importBatchesRepository.add({
+    // The batch, its rows and the backfill patches are **one** request and one SQLite transaction
+    // (TICKET-SRV-04): split across calls, the gap between them is where a dropped connection leaves
+    // transactions pointing at a batch that was never written. The rows go without an
+    // `importBatchId` — the endpoint assigns it from the batch it has just created, and hands them
+    // back carrying it.
+    const committed = await this.api.post<CommitImportResponse>('/import/commit', {
+      batch: {
         accountId: input.accountId,
         fileName: input.fileName,
         mappingProfileId: input.mappingProfileId,
@@ -232,70 +240,42 @@ export class ImportService {
         rowsDuplicateImported: recognisedAcceptedCount || undefined,
         dateFrom,
         dateTo,
-      });
-
-      const transactionsToAdd: Transaction[] = accepted.map(({ row, fingerprint }) => ({
+      },
+      transactions: accepted.map(({ row, fingerprint }) => ({
         ...row.transaction,
         accountId: input.accountId,
-        importBatchId: batchId,
         fingerprint,
         createdAt,
-      }));
-
-      const ids = await this.transactionsRepository.bulkAdd(transactionsToAdd);
-      const addedTransactions = transactionsToAdd.map((transaction, index) => ({
-        ...transaction,
-        id: ids[index],
-      }));
-
-      if (backfillUpdates.length > 0) {
-        await this.transactionsRepository.bulkUpdate(backfillUpdates);
-      }
-
-      const batch = await this.importBatchesRepository.getById(batchId);
-      if (!batch) throw new Error('Import batch failed to persist');
-
-      return { batch, addedTransactions, duplicateCount, backfilledTransactions: backfillUpdates };
+      })),
+      backfill: backfillUpdates,
     });
+
+    return {
+      batch: committed.batch,
+      addedTransactions: committed.addedTransactions,
+      duplicateCount: committed.duplicateCount,
+      // The locally-computed patches rather than the endpoint's echo of them: they are the same
+      // `{ id, changes }` objects, and this side of them carries the `Pick<Transaction, 'rawLine' |
+      // 'rawRow'>` type that `TransactionsStore.patchMany` is typed against.
+      backfilledTransactions: backfillUpdates,
+    };
   };
 
   /**
    * What `undoImport` would do to this batch, without doing it (TICKET-IMP-13) — so the confirm
    * dialog can state the cost rather than asking the user to guess it.
    *
-   * Read-only, and reads the same rows the undo will delete: `getByImportBatch` is the one query
-   * both go through, so the count shown and the count removed cannot disagree.
+   * Read-only, and reads the same rows the undo will delete: one user-scoped query serves both
+   * endpoints server-side, so the count shown and the count removed cannot disagree.
    *
    * A batch that has already been undone reports zero of everything, which is what makes a second
    * undo a stated no-op instead of a surprise.
    */
-  previewUndo = async (importBatchId: number): Promise<UndoImportImpact> => {
-    const transactions = await this.transactionsRepository.getByImportBatch(importBatchId);
-
-    return {
-      rowCount: transactions.length,
-      manuallyCategorisedCount: transactions.filter((transaction) => transaction.categoryManual)
-        .length,
-      transferLinkedCount: transactions.filter((transaction) => transaction.transferId != null)
-        .length,
-    };
-  };
+  previewUndo = (importBatchId: number): Promise<UndoImportImpact> =>
+    this.api.get<UndoImportImpact>(`/import/${importBatchId}/undo-preview`);
 
   // A removed transaction may have been auto-linked to a transaction from a *different* import
   // (FR-TRF-2 re-links across the whole dataset) — the shared cleanup handles that surviving side.
-  undoImport = async (importBatchId: number): Promise<UndoImportResult> =>
-    appDb.transaction(
-      'rw',
-      [appDb.transactions, appDb.importBatches, appDb.transfers],
-      async () => {
-        const transactions = await this.transactionsRepository.getByImportBatch(importBatchId);
-
-        const { unlinkedTransferIds, clearedTransferTransactionIds } =
-          await this.transferCleanupService.removeTransactionsWithTransferCleanup(transactions);
-
-        await this.importBatchesRepository.remove(importBatchId);
-
-        return { unlinkedTransferIds, clearedTransferTransactionIds };
-      },
-    );
+  undoImport = (importBatchId: number): Promise<UndoImportResult> =>
+    this.api.post<UndoImportResult>(`/import/${importBatchId}/undo`, {});
 }

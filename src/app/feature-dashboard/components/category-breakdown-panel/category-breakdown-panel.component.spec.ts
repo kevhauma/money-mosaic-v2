@@ -7,6 +7,7 @@ import { echarts } from '@/shared/echarts';
 import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { CategoryBreakdownPanelComponent } from './category-breakdown-panel.component';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // jsdom has no ResizeObserver; the echarts directive needs one to observe its host element.
 class ResizeObserverStub {
@@ -49,6 +50,7 @@ describe('CategoryBreakdownPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [CategoryBreakdownPanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         {

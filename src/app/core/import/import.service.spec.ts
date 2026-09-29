@@ -1,16 +1,16 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import {
-  appDb,
-  ImportBatchesRepository,
-  TransactionsRepository,
-  TransfersRepository,
-  type ImportBatch,
-  type Transaction,
-} from '@/core/data-access';
-import { TransferCleanupService } from '@/core/transfers';
+import { TransactionsRepository, type ImportBatch, type Transaction } from '@/core/data-access';
+import { untilRequested } from '@/core/data-access/api-client.testing';
 import type { ParsedRowResult } from './csv-row-mapper';
-import { ImportService, partitionByFingerprint, type CommitImportInput } from './import.service';
+import {
+  ImportService,
+  partitionByFingerprint,
+  type CommitImportInput,
+  type CommitImportResult,
+} from './import.service';
 
 type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
 
@@ -26,139 +26,111 @@ const validRow = (overrides: Partial<ValidParsedRow['transaction']> = {}): Valid
   },
 });
 
+/** What the commit endpoint receives — the batch, the accepted rows, and the backfill patches. */
+type CommitBody = {
+  batch: ImportBatch;
+  transactions: Transaction[];
+  backfill: { id: number; changes: Partial<Transaction> }[];
+};
+
+/** The providers every describe here needs: the real service, a stubbed read, a fake backend. */
+const importProviders = (transactionsRepository: unknown): unknown[] => [
+  ImportService,
+  { provide: TransactionsRepository, useValue: transactionsRepository },
+  provideHttpClient(),
+  provideHttpClientTesting(),
+];
+
+/**
+ * Commits, answering `POST /api/import/commit` the way the endpoint does — the batch with an id, the
+ * rows carrying it — and hands back **what was sent**, which is where the client's remaining half of
+ * the import now lives: the dedupe partition, the batch counts and TICKET-TXN-06's backfill patches.
+ */
+const commitAgainstApi = async (
+  service: ImportService,
+  input: CommitImportInput,
+): Promise<{ sent: CommitBody; result: CommitImportResult }> => {
+  const settled = service.commitImport(input);
+  // The commit reads the account's existing rows before it posts, so the request is one turn away.
+  await untilRequested();
+  const request = TestBed.inject(HttpTestingController).expectOne('/api/import/commit');
+  const sent = request.request.body as CommitBody;
+
+  request.flush({
+    batch: { ...sent.batch, id: 1 },
+    addedTransactions: sent.transactions.map((row, index) => ({
+      ...row,
+      id: index + 100,
+      importBatchId: 1,
+    })),
+    duplicateCount: sent.batch.rowsDuplicate,
+  });
+
+  return { sent, result: await settled };
+};
+
 describe('ImportService: undoImport', () => {
-  // The undo runs inside `appDb.transaction('rw', ...)`; stub it to synchronously invoke the scope
-  // so we exercise the repository calls without a real IndexedDB.
-  beforeEach(() => {
-    vi.spyOn(appDb, 'transaction').mockImplementation(((...args: unknown[]) =>
-      (args[args.length - 1] as () => unknown)()) as never);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  const setup = (transactions: Partial<Transaction>[]) => {
-    const transactionsRepository = {
-      getByImportBatch: vi.fn().mockResolvedValue(transactions),
-      bulkRemove: vi.fn().mockResolvedValue(undefined),
-    };
-    const importBatchesRepository = {
-      remove: vi.fn().mockResolvedValue(undefined),
-    };
-    const transferCleanupService = {
-      removeTransactionsWithTransferCleanup: vi.fn().mockResolvedValue({
-        removedTransactionIds: transactions.map((transaction) => transaction.id!),
-        unlinkedTransferIds: [5],
-        clearedTransferTransactionIds: [20],
-      }),
-    };
-
-    TestBed.configureTestingModule({
-      providers: [
-        ImportService,
-        { provide: TransactionsRepository, useValue: transactionsRepository },
-        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
-        { provide: TransferCleanupService, useValue: transferCleanupService },
-      ],
-    });
-
-    return {
-      service: TestBed.inject(ImportService),
-      transactionsRepository,
-      importBatchesRepository,
-      transferCleanupService,
-    };
+  const setup = (): ImportService => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: importProviders({}) });
+    return TestBed.inject(ImportService);
   };
 
-  it('delegates the cross-import transfer cleanup to TransferCleanupService and removes the batch', async () => {
-    // One of the removed transactions was auto-linked to a transaction from a *different* import
-    // batch (FR-TRF-2 links across the whole dataset) — the shared cleanup handles that surviving side.
-    const transactions = [{ id: 10, transferId: 5 }, { id: 11 }];
-    const ctx = setup(transactions);
+  /** Answers `POST /api/import/:batchId/undo` with the cleanup report the endpoint produces. */
+  const undoAgainstApi = async (
+    service: ImportService,
+    batchId: number,
+    report: { unlinkedTransferIds: number[]; clearedTransferTransactionIds: number[] },
+  ): Promise<unknown> => {
+    const settled = service.undoImport(batchId);
+    const request = TestBed.inject(HttpTestingController).expectOne(`/api/import/${batchId}/undo`);
 
-    const result = await ctx.service.undoImport(99);
+    expect(request.request.method).toBe('POST');
+    request.flush(report);
 
-    expect(ctx.transferCleanupService.removeTransactionsWithTransferCleanup).toHaveBeenCalledWith(
-      transactions,
-    );
-    expect(ctx.importBatchesRepository.remove).toHaveBeenCalledWith(99);
-    expect(result).toEqual({ unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] });
+    return settled;
+  };
+
+  /**
+   * The undo deletes the batch's transactions, the transfers that linked them and the batch row —
+   * three tables, one transaction, so it is one endpoint (TICKET-SRV-04) rather than a sequence of
+   * repository calls this service orchestrates. What is asserted here is that it calls that endpoint
+   * for the batch it was given.
+   */
+  it('undoes the batch through its own endpoint, in one request', async () => {
+    await undoAgainstApi(setup(), 99, {
+      unlinkedTransferIds: [],
+      clearedTransferTransactionIds: [],
+    });
   });
 
-  it('undoImport unlinks a transfer whose other leg belongs to a different import batch', async () => {
-    // Batch 99's transaction (id 10) was auto-linked to transaction 20, which was imported in a
-    // different batch entirely — wired with the *real* TransferCleanupService (not a stub) so this
-    // test proves the surviving leg is actually found and unlinked, not just delegated to.
-    const removedTransactions: Partial<Transaction>[] = [{ id: 10, transferId: 5 }];
-    const transactionsRepository = {
-      getByImportBatch: vi.fn().mockResolvedValue(removedTransactions),
-      bulkRemove: vi.fn().mockResolvedValue(undefined),
-      update: vi.fn().mockResolvedValue(1),
-    };
-    const importBatchesRepository = {
-      remove: vi.fn().mockResolvedValue(undefined),
-    };
-    const transfersRepository = {
-      getByIds: vi.fn().mockResolvedValue([{ id: 5, fromTransactionId: 10, toTransactionId: 20 }]),
-      remove: vi.fn().mockResolvedValue(undefined),
-    };
-
-    TestBed.configureTestingModule({
-      providers: [
-        ImportService,
-        TransferCleanupService,
-        { provide: TransactionsRepository, useValue: transactionsRepository },
-        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
-        { provide: TransfersRepository, useValue: transfersRepository },
-      ],
+  /**
+   * A removed transaction may have been auto-linked to one from a *different* import (FR-TRF-2 links
+   * across the whole dataset), so the surviving leg is un-linked rather than left dangling. That
+   * cleanup is the endpoint's — `server/src/operations/transfer-cleanup.ts`, where the ported specs
+   * cover it — and what this service owes its callers is the report, forwarded verbatim, because
+   * `TransfersStore` and `TransactionsStore` mirror it.
+   */
+  it('forwards the cross-import cleanup report verbatim, for the stores to mirror', async () => {
+    const result = await undoAgainstApi(setup(), 99, {
+      unlinkedTransferIds: [5],
+      clearedTransferTransactionIds: [20],
     });
-    const service = TestBed.inject(ImportService);
 
-    const result = await service.undoImport(99);
-
-    expect(transfersRepository.remove).toHaveBeenCalledWith(5);
-    expect(transactionsRepository.update).toHaveBeenCalledWith(20, { transferId: undefined });
-    expect(transactionsRepository.bulkRemove).toHaveBeenCalledWith([10]);
     expect(result).toEqual({ unlinkedTransferIds: [5], clearedTransferTransactionIds: [20] });
   });
 });
 
 describe('ImportService: commitImport rawLine/rawRow handling (TICKET-TXN-06)', () => {
-  beforeEach(() => {
-    vi.spyOn(appDb, 'transaction').mockImplementation(((...args: unknown[]) =>
-      (args[args.length - 1] as () => unknown)()) as never);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  const setup = (existingTransactions: Transaction[]) => {
-    const transactionsRepository = {
-      getByAccount: vi.fn().mockResolvedValue(existingTransactions),
-      bulkAdd: vi
-        .fn()
-        .mockImplementation((rows: Transaction[]) =>
-          Promise.resolve(rows.map((_, index) => index + 100)),
-        ),
-      bulkUpdate: vi.fn().mockResolvedValue(0),
-    };
-    const importBatchesRepository = {
-      add: vi.fn().mockResolvedValue(1),
-      getById: vi.fn().mockResolvedValue({ id: 1 } as ImportBatch),
-    };
-
+  const setup = (existingTransactions: Transaction[]): ImportService => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [
-        ImportService,
-        { provide: TransactionsRepository, useValue: transactionsRepository },
-        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
-        { provide: TransferCleanupService, useValue: {} },
-      ],
+      providers: importProviders({
+        getByAccount: vi.fn().mockResolvedValue(existingTransactions),
+      }),
     });
 
-    return { service: TestBed.inject(ImportService), transactionsRepository };
+    return TestBed.inject(ImportService);
   };
 
   const baseInput = (validRows: ValidParsedRow[]): CommitImportInput => ({
@@ -180,9 +152,10 @@ describe('ImportService: commitImport rawLine/rawRow handling (TICKET-TXN-06)', 
   };
 
   it('persists rawLine and rawRow onto every newly-added transaction', async () => {
-    const { service, transactionsRepository } = setup([]);
+    const service = setup([]);
 
-    await service.commitImport(
+    const { sent } = await commitAgainstApi(
+      service,
       baseInput([
         validRow({
           rawLine: '01/07/2026;-10,00;Carrefour Market',
@@ -191,12 +164,23 @@ describe('ImportService: commitImport rawLine/rawRow handling (TICKET-TXN-06)', 
       ]),
     );
 
-    expect(transactionsRepository.bulkAdd).toHaveBeenCalledWith([
+    expect(sent.transactions).toEqual([
       expect.objectContaining({
         rawLine: '01/07/2026;-10,00;Carrefour Market',
         rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' },
       }),
     ]);
+  });
+
+  // The rows go **without** an `importBatchId`: the endpoint assigns it from the batch it has just
+  // created in the same transaction, and a row that arrived carrying one would be naming another.
+  it('leaves the batch id to the endpoint that creates the batch', async () => {
+    const service = setup([]);
+
+    const { sent, result } = await commitAgainstApi(service, baseInput([validRow()]));
+
+    expect(sent.transactions[0]).not.toHaveProperty('importBatchId');
+    expect(result.addedTransactions[0].importBatchId).toBe(1);
   });
 
   it('backfills rawLine and rawRow onto a legacy duplicate transaction that has neither yet', async () => {
@@ -215,11 +199,11 @@ describe('ImportService: commitImport rawLine/rawRow handling (TICKET-TXN-06)', 
       createdAt: '2026-06-01T00:00:00.000Z',
     };
 
-    const { service, transactionsRepository } = setup([legacy]);
+    const service = setup([legacy]);
 
-    const result = await service.commitImport(baseInput([row]));
+    const { sent, result } = await commitAgainstApi(service, baseInput([row]));
 
-    expect(transactionsRepository.bulkAdd).toHaveBeenCalledWith([]);
+    expect(sent.transactions).toEqual([]);
     const expectedChanges = {
       id: 42,
       changes: {
@@ -227,7 +211,7 @@ describe('ImportService: commitImport rawLine/rawRow handling (TICKET-TXN-06)', 
         rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' },
       },
     };
-    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledWith([expectedChanges]);
+    expect(sent.backfill).toEqual([expectedChanges]);
     expect(result.backfilledTransactions).toEqual([expectedChanges]);
   });
 
@@ -248,15 +232,15 @@ describe('ImportService: commitImport rawLine/rawRow handling (TICKET-TXN-06)', 
       createdAt: '2026-06-01T00:00:00.000Z',
     };
 
-    const { service, transactionsRepository } = setup([legacy]);
+    const service = setup([legacy]);
 
-    const result = await service.commitImport(baseInput([row]));
+    const { sent, result } = await commitAgainstApi(service, baseInput([row]));
 
     const expectedChanges = {
       id: 42,
       changes: { rawRow: { Date: '01/07/2026', Amount: '-10,00', Desc: 'Carrefour Market' } },
     };
-    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledWith([expectedChanges]);
+    expect(sent.backfill).toEqual([expectedChanges]);
     expect(result.backfilledTransactions).toEqual([expectedChanges]);
   });
 
@@ -278,11 +262,11 @@ describe('ImportService: commitImport rawLine/rawRow handling (TICKET-TXN-06)', 
       createdAt: '2026-06-01T00:00:00.000Z',
     };
 
-    const { service, transactionsRepository } = setup([legacy]);
+    const service = setup([legacy]);
 
-    const result = await service.commitImport(baseInput([row]));
+    const { sent, result } = await commitAgainstApi(service, baseInput([row]));
 
-    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
+    expect(sent.backfill).toEqual([]);
     expect(result.backfilledTransactions).toEqual([]);
   });
 });
@@ -361,47 +345,17 @@ describe('partitionByFingerprint: dedupe partitioning', () => {
  * function, so these cover the preview's counts and the two commit modes together.
  */
 describe('ImportService: duplicate preview and handling (TICKET-IMP-14)', () => {
-  beforeEach(() => {
-    vi.spyOn(appDb, 'transaction').mockImplementation(((...args: unknown[]) =>
-      (args[args.length - 1] as () => unknown)()) as never);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   const setup = (existingTransactions: Transaction[]) => {
     // Several of these cases commit once to seed "already there", then re-configure with what was
     // stored — two TestBeds in one test, which needs the first torn down first.
     TestBed.resetTestingModule();
     const transactionsRepository = {
       getByAccount: vi.fn().mockResolvedValue(existingTransactions),
-      bulkAdd: vi
-        .fn()
-        .mockImplementation((rows: Transaction[]) =>
-          Promise.resolve(rows.map((_, index) => index + 100)),
-        ),
-      bulkUpdate: vi.fn().mockResolvedValue(0),
-    };
-    const importBatchesRepository = {
-      add: vi.fn().mockResolvedValue(1),
-      getById: vi.fn().mockResolvedValue({ id: 1 } as ImportBatch),
     };
 
-    TestBed.configureTestingModule({
-      providers: [
-        ImportService,
-        { provide: TransactionsRepository, useValue: transactionsRepository },
-        { provide: ImportBatchesRepository, useValue: importBatchesRepository },
-        { provide: TransferCleanupService, useValue: {} },
-      ],
-    });
+    TestBed.configureTestingModule({ providers: importProviders(transactionsRepository) });
 
-    return {
-      service: TestBed.inject(ImportService),
-      transactionsRepository,
-      importBatchesRepository,
-    };
+    return { service: TestBed.inject(ImportService), transactionsRepository };
   };
 
   const row = (overrides: Partial<Transaction> = {}): ValidParsedRow =>
@@ -419,7 +373,7 @@ describe('ImportService: duplicate preview and handling (TICKET-IMP-14)', () => 
   /** Commits the given rows once and hands back what was stored, to seed "already there". */
   const commitFirst = async (rows: ValidParsedRow[]): Promise<Transaction[]> => {
     const { service } = setup([]);
-    const result = await service.commitImport({
+    const { result } = await commitAgainstApi(service, {
       accountId: 1,
       fileName: 'first.csv',
       totalRowsRead: rows.length,
@@ -475,9 +429,9 @@ describe('ImportService: duplicate preview and handling (TICKET-IMP-14)', () => 
 
   it('skip (the default) imports exactly the new rows and leaves the existing ones untouched', async () => {
     const stored = await commitFirst([row(), row({ amount: -20 })]);
-    const { service, transactionsRepository, importBatchesRepository } = setup(stored);
+    const { service } = setup(stored);
 
-    const result = await service.commitImport({
+    const { sent, result } = await commitAgainstApi(service, {
       accountId: 1,
       fileName: 'second.csv',
       totalRowsRead: 3,
@@ -488,19 +442,17 @@ describe('ImportService: duplicate preview and handling (TICKET-IMP-14)', () => 
     expect(result.addedTransactions[0].rawDescription).toBe('New one');
     expect(result.duplicateCount).toBe(2);
     // Nothing about an existing row is rewritten — no category, no categoryManual, no transferId.
-    // The only bulkUpdate this path can ever make is TICKET-TXN-06's rawLine/rawRow backfill, and
-    // these rows carry neither, so it makes none at all.
-    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
-    expect(importBatchesRepository.add).toHaveBeenCalledWith(
-      expect.objectContaining({ rowsAdded: 1, rowsDuplicate: 2 }),
-    );
+    // The only patch this path can ever send is TICKET-TXN-06's rawLine/rawRow backfill, and these
+    // rows carry neither, so it sends none at all.
+    expect(sent.backfill).toEqual([]);
+    expect(sent.batch).toEqual(expect.objectContaining({ rowsAdded: 1, rowsDuplicate: 2 }));
   });
 
   it('import-anyway admits every row, on fingerprints that do not collide with the stored ones', async () => {
     const stored = await commitFirst([row(), row({ amount: -20 })]);
-    const { service, transactionsRepository } = setup(stored);
+    const { service } = setup(stored);
 
-    const result = await service.commitImport({
+    const { sent, result } = await commitAgainstApi(service, {
       accountId: 1,
       fileName: 'second.csv',
       totalRowsRead: 2,
@@ -514,14 +466,14 @@ describe('ImportService: duplicate preview and handling (TICKET-IMP-14)', () => 
     for (const added of result.addedTransactions) {
       expect(storedKeys.has(added.fingerprint)).toBe(false);
     }
-    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
+    expect(sent.backfill).toEqual([]);
   });
 
   it('records the knowingly re-imported rows on the batch, so the audit stays honest', async () => {
     const stored = await commitFirst([row(), row({ amount: -20 })]);
-    const { service, importBatchesRepository } = setup(stored);
+    const { service } = setup(stored);
 
-    await service.commitImport({
+    const { sent } = await commitAgainstApi(service, {
       accountId: 1,
       fileName: 'second.csv',
       totalRowsRead: 2,
@@ -532,24 +484,24 @@ describe('ImportService: duplicate preview and handling (TICKET-IMP-14)', () => 
     // rowsDuplicate stays "not added", so rowsRead = rowsAdded + rowsDuplicate still holds; the
     // recognised-but-added rows get their own figure, or a batch of 2 knowingly re-imported rows
     // would look exactly like a batch of 2 genuinely new ones.
-    expect(importBatchesRepository.add).toHaveBeenCalledWith(
+    expect(sent.batch).toEqual(
       expect.objectContaining({ rowsAdded: 2, rowsDuplicate: 0, rowsDuplicateImported: 2 }),
     );
   });
 
+  // Absent, not zero — and `null` on the wire, which is how `ApiClient` says "no value" for a field
+  // a JSON body would otherwise drop entirely.
   it('leaves the field off a batch where nothing was re-imported', async () => {
-    const { service, importBatchesRepository } = setup([]);
+    const { service } = setup([]);
 
-    await service.commitImport({
+    const { sent } = await commitAgainstApi(service, {
       accountId: 1,
       fileName: 'first.csv',
       totalRowsRead: 1,
       validRows: [row()],
     });
 
-    expect(importBatchesRepository.add).toHaveBeenCalledWith(
-      expect.objectContaining({ rowsDuplicateImported: undefined }),
-    );
+    expect(sent.batch.rowsDuplicateImported).toBeNull();
   });
 
   it('counts a second file overlapping the first, once the first has been committed', async () => {
@@ -606,55 +558,74 @@ describe('partitionByFingerprint: import-anyway mode (TICKET-IMP-14)', () => {
  * confirm dialog can state it. Same query as the undo itself, so the two cannot disagree.
  */
 describe('ImportService: previewUndo (TICKET-IMP-13)', () => {
-  const setup = (transactions: Partial<Transaction>[]) => {
+  const setup = (): ImportService => {
     TestBed.resetTestingModule();
-    const transactionsRepository = { getByImportBatch: vi.fn().mockResolvedValue(transactions) };
-
-    TestBed.configureTestingModule({
-      providers: [
-        ImportService,
-        { provide: TransactionsRepository, useValue: transactionsRepository },
-        { provide: ImportBatchesRepository, useValue: {} },
-        { provide: TransferCleanupService, useValue: {} },
-      ],
-    });
-
-    return { service: TestBed.inject(ImportService), transactionsRepository };
+    TestBed.configureTestingModule({ providers: importProviders({}) });
+    return TestBed.inject(ImportService);
   };
 
-  it('counts only the rows this batch created', async () => {
-    const { service, transactionsRepository } = setup([{ id: 1 }, { id: 2 }, { id: 3 }]);
+  /** Answers `GET /api/import/:batchId/undo-preview` with the counts the endpoint reports. */
+  const previewAgainstApi = async (
+    service: ImportService,
+    batchId: number,
+    counts: { rowCount: number; manuallyCategorisedCount: number; transferLinkedCount: number },
+  ) => {
+    const settled = service.previewUndo(batchId);
+    const request = TestBed.inject(HttpTestingController).expectOne(
+      `/api/import/${batchId}/undo-preview`,
+    );
 
-    const impact = await service.previewUndo(99);
+    expect(request.request.method).toBe('GET');
+    request.flush(counts);
 
-    // The batch id is the whole filter — nothing else can reach the count.
-    expect(transactionsRepository.getByImportBatch).toHaveBeenCalledWith(99);
-    expect(impact.rowCount).toBe(3);
-  });
+    return settled;
+  };
 
-  it('counts the rows the user categorised by hand, which re-importing would not restore', async () => {
-    const { service } = setup([
-      { id: 1, categoryManual: true },
-      { id: 2 },
-      { id: 3, categoryManual: true },
-    ]);
+  /**
+   * The counts are the endpoint's, read through the same query the undo deletes by — which is what
+   * makes "the cost the dialog states" and "the rows the undo removes" impossible to disagree
+   * (`server/src/routes/import.ts`, covered there). What this asserts is that the preview asks the
+   * *batch it was given* about, read-only, and reports what it is told.
+   */
+  it('asks the preview endpoint about exactly the batch it was given', async () => {
+    const impact = await previewAgainstApi(setup(), 99, {
+      rowCount: 3,
+      manuallyCategorisedCount: 2,
+      transferLinkedCount: 1,
+    });
 
-    expect((await service.previewUndo(99)).manuallyCategorisedCount).toBe(2);
-  });
-
-  it('counts the rows linked as transfers, whose counterparts the undo unlinks', async () => {
-    const { service } = setup([{ id: 1, transferId: 5 }, { id: 2 }]);
-
-    expect((await service.previewUndo(99)).transferLinkedCount).toBe(1);
+    expect(impact).toEqual({
+      rowCount: 3,
+      manuallyCategorisedCount: 2,
+      transferLinkedCount: 1,
+    });
   });
 
   it('reports zero of everything for a batch that has already been undone', async () => {
-    const { service } = setup([]);
-
-    expect(await service.previewUndo(99)).toEqual({
+    const impact = await previewAgainstApi(setup(), 99, {
       rowCount: 0,
       manuallyCategorisedCount: 0,
       transferLinkedCount: 0,
     });
+
+    expect(impact).toEqual({
+      rowCount: 0,
+      manuallyCategorisedCount: 0,
+      transferLinkedCount: 0,
+    });
+  });
+
+  // Read-only: the preview must never write, so the one request it makes being a GET is the whole
+  // property. `expectOne` above is what fails this if a second request appears.
+  it('makes exactly one read and no write', async () => {
+    const service = setup();
+
+    await previewAgainstApi(service, 7, {
+      rowCount: 1,
+      manuallyCategorisedCount: 0,
+      transferLinkedCount: 0,
+    });
+
+    TestBed.inject(HttpTestingController).verify();
   });
 });

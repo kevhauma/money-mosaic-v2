@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { CategoryComparisonVm } from '../../category-comparison-vm';
 import { ComparisonCategoryCardComponent } from './comparison-category-card.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const baseVm = (overrides: Partial<CategoryComparisonVm> = {}): CategoryComparisonVm => ({
   categoryId: 1,
@@ -25,7 +26,7 @@ describe('ComparisonCategoryCardComponent', () => {
   ): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [ComparisonCategoryCardComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
     fixture = TestBed.createComponent(ComparisonCategoryCardComponent);
     fixture.componentRef.setInput('category', category);

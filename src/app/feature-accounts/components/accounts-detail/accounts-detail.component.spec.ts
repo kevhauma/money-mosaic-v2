@@ -2,12 +2,13 @@ import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
-import { appDb, type Account } from '@/core/data-access';
+import { type Account } from '@/core/data-access';
 import { AccountsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 
 import { AccountsDetailComponent } from './accounts-detail.component';
 import { AccountBalanceChartComponent } from '../account-balance-chart/account-balance-chart.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // Stands in for the real chart, which pulls in echarts/zrender — jsdom has no canvas 2D context,
 // and the header test below seeds a real account, which is exactly what mounts the chart for real.
@@ -31,7 +32,7 @@ describe('AccountsDetailComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AccountsDetailComponent],
-      providers: [provideRouter([]), provideEchartsCore({ echarts })],
+      providers: [...provideFakeApi(), provideRouter([]), provideEchartsCore({ echarts })],
     })
       .overrideComponent(AccountsDetailComponent, {
         remove: { imports: [AccountBalanceChartComponent] },
@@ -71,8 +72,5 @@ describe('AccountsDetailComponent', () => {
     expect(page.querySelector('mm-range-picker')).toBeNull();
   });
 
-  afterEach(async () => {
-    // Real AccountsStore writes land in the shared fake-indexeddb `appDb` (Vitest isolate:false).
-    await appDb.accounts.clear();
-  });
+  afterEach(async () => {});
 });

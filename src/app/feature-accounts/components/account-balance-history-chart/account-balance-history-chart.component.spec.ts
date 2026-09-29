@@ -23,6 +23,7 @@ import {
   AccountBalanceHistoryChartComponent,
 } from './account-balance-history-chart.component';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -52,6 +53,7 @@ describe('AccountBalanceHistoryChartComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AccountBalanceHistoryChartComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         { provide: AccountsRepository, useValue: accountsRepository },
@@ -213,6 +215,7 @@ describe('AccountBalanceHistoryChartComponent: a joint account bands at its real
     await TestBed.configureTestingModule({
       imports: [AccountBalanceHistoryChartComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         {

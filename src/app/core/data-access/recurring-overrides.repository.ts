@@ -1,5 +1,8 @@
-import { Injectable } from '@angular/core';
-import { appDb, type RecurringOverride } from './app-db';
+import { inject, Injectable } from '@angular/core';
+import { ApiClient } from './api-client';
+import type { RecurringOverride } from './entities';
+
+const PATH = '/recurringOverrides';
 
 /**
  * The user's corrections to detected recurring payments (TICKET-REC-11). Thin, like every
@@ -8,9 +11,12 @@ import { appDb, type RecurringOverride } from './app-db';
  */
 @Injectable({ providedIn: 'root' })
 export class RecurringOverridesRepository {
-  getAll = (): Promise<RecurringOverride[]> => appDb.recurringOverrides.toArray();
+  private readonly api = inject(ApiClient);
 
-  add = (override: RecurringOverride): Promise<number> => appDb.recurringOverrides.add(override);
+  getAll = (): Promise<RecurringOverride[]> => this.api.get<RecurringOverride[]>(PATH);
 
-  remove = (id: number): Promise<void> => appDb.recurringOverrides.delete(id);
+  add = (override: RecurringOverride): Promise<number> =>
+    this.api.post<{ id: number }>(PATH, override).then(({ id }) => id);
+
+  remove = (id: number): Promise<void> => this.api.delete(`${PATH}/${id}`);
 }

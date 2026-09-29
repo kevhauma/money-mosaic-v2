@@ -11,13 +11,13 @@ The backend itself — Express, SQLite, Drizzle — and the move of the app's da
 > every `SRV` ticket — decided with the user on 2026-09-23. Don't add them back, and don't
 > treat their absence as an oversight to repair.
 
-**9 tickets** — 4 done.
+**9 tickets** — 5 done.
 
 - [x] [TICKET-SRV-01](./tickets/TICKET-SRV-01-express-sqlite-drizzle-skeleton.md) — Express + SQLite + Drizzle backend skeleton (new — introduces a backend, superseding the "no backend" premise in `CLAUDE.md`) — nothing depends on it yet, but everything in v3 does; build it first · _unreleased_
 - [x] [TICKET-SRV-02](./tickets/TICKET-SRV-02-drizzle-schema-per-user.md) — Every Dexie table as a Drizzle table, owned by a user (ports the data model in `data-model/SKILL.md`) — needs TICKET-SRV-01 and TICKET-AUTH-01 · _unreleased_
 - [x] [TICKET-SRV-03](./tickets/TICKET-SRV-03-rest-api-per-entity.md) — A REST API for every entity, scoped to the signed-in user (mirrors the repository layer) — needs TICKET-SRV-02 · _unreleased_
 - [x] [TICKET-SRV-04](./tickets/TICKET-SRV-04-transactional-write-endpoints.md) — The multi-table write paths become transactional server endpoints (preserves NFR-RESIL-1) — needs TICKET-SRV-03 · _unreleased_
-- [ ] [TICKET-SRV-05](./tickets/TICKET-SRV-05-repositories-over-http.md) — Repositories talk HTTP instead of Dexie (refactor, preserves the repository seam in `CLAUDE.md`) — needs TICKET-SRV-03, TICKET-SRV-04 and TICKET-AUTH-02; this is the point of no return for local-first · _unreleased_
+- [x] [TICKET-SRV-05](./tickets/TICKET-SRV-05-repositories-over-http.md) — Repositories talk HTTP instead of Dexie (refactor, preserves the repository seam in `CLAUDE.md`) — needs TICKET-SRV-03, TICKET-SRV-04 and TICKET-AUTH-02; this is the point of no return for local-first · _unreleased_
 - [ ] [TICKET-SRV-06](./tickets/TICKET-SRV-06-bootstrap-hydration-over-network.md) — Bootstrap and hydration over a network that can fail (replaces NFR-STORE-1 / FR-DAT-4) — needs TICKET-SRV-05 and should ship right behind it · _unreleased_
 - [ ] [TICKET-SRV-07](./tickets/TICKET-SRV-07-migrate-local-database.md) — Move the database already in your browser into your account, once (reuses TICKET-DAT-01's export machinery) — needs TICKET-SRV-04 and TICKET-SRV-05; **must ship before TICKET-SRV-08** · _unreleased_
 - [ ] [TICKET-SRV-08](./tickets/TICKET-SRV-08-retire-dexie.md) — Retire Dexie and rewrite the docs that still say "no backend" (refactor, retires FR-DAT-4 / NFR-STORE-1) — needs TICKET-SRV-05, TICKET-SRV-06 and TICKET-SRV-07 · _unreleased_

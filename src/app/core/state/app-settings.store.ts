@@ -20,7 +20,7 @@ import {
   type AccentColorId,
 } from '@/core/theme';
 import { syncFormatSettings, type CurrencySymbolPosition } from '@/shared/utils';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 export const AppSettingsStore = signalStore(
   { providedIn: 'root' },
@@ -45,9 +45,14 @@ export const AppSettingsStore = signalStore(
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = appSettingsRepository.get().then((settings) => {
-          patchState(store, settings);
-        });
+        hydration = retryOnFailure(
+          appSettingsRepository.get().then((settings) => {
+            patchState(store, settings);
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

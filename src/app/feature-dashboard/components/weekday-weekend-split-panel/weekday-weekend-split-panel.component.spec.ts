@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RangeStore, TransactionsStore } from '@/core/state';
 import { WeekdayWeekendSplitPanelComponent } from './weekday-weekend-split-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('WeekdayWeekendSplitPanelComponent', () => {
   let fixture: ComponentFixture<WeekdayWeekendSplitPanelComponent>;
@@ -9,7 +10,7 @@ describe('WeekdayWeekendSplitPanelComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [WeekdayWeekendSplitPanelComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(WeekdayWeekendSplitPanelComponent);

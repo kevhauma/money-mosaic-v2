@@ -8,6 +8,7 @@ import { echarts } from '@/shared/echarts';
 import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { TrendChartPanelComponent } from './trend-chart-panel.component';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -42,6 +43,7 @@ describe('TrendChartPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TrendChartPanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         {

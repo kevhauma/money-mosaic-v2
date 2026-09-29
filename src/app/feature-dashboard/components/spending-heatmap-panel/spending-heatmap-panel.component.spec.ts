@@ -3,7 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import type { ECElementEvent, EChartsCoreOption } from 'echarts/core';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
-import { appDb, CategoriesRepository, type Category, type Transaction } from '@/core/data-access';
+import { CategoriesRepository, type Category, type Transaction } from '@/core/data-access';
 import {
   AppSettingsStore,
   CategoriesStore,
@@ -18,6 +18,7 @@ import {
   buildHeatmapChartOption,
   SpendingHeatmapPanelComponent,
 } from './spending-heatmap-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -58,6 +59,7 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
     await TestBed.configureTestingModule({
       imports: [SpendingHeatmapPanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         {
@@ -77,18 +79,15 @@ describe('SpendingHeatmapPanelComponent (TICKET-STAT-29)', () => {
 
     fixture = TestBed.createComponent(SpendingHeatmapPanelComponent);
     // Awaited explicitly, not just `whenStable()`: each store's on-injection hydration
-    // (TICKET-PERF-07) only resolves once the shared fake-indexeddb actually opens, which a later
-    // `appDb` write in a test can be what triggers — and a hydration landing mid-test would patch
-    // the seeded transactions straight back to empty.
+    // (TICKET-PERF-07) is a request now, and one landing mid-test would patch the seeded
+    // transactions straight back to empty.
     await TestBed.inject(TransactionsStore).hydrate();
     await TestBed.inject(CategoriesStore).hydrate();
     await TestBed.inject(AppSettingsStore).hydrate();
     await fixture.whenStable();
   });
 
-  afterEach(async () => {
-    await appDb.appSettings.clear();
-  });
+  afterEach(async () => {});
 
   const seedGroceries = async (...transactions: Transaction[]): Promise<void> => {
     await TestBed.inject(CategoriesStore).addCategory(groceries);

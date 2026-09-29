@@ -14,6 +14,7 @@ import {
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { IncomeStore } from '../../income.store';
 import { SalaryMonthModalComponent } from './salary-month-modal.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('SalaryMonthModalComponent (FR-INC-10, TICKET-INC-18)', () => {
   const accountsRepository = { getAll: vi.fn() };
@@ -48,6 +49,7 @@ describe('SalaryMonthModalComponent (FR-INC-10, TICKET-INC-18)', () => {
     await TestBed.configureTestingModule({
       imports: [SalaryMonthModalComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },

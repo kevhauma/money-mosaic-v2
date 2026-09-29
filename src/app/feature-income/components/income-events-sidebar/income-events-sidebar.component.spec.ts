@@ -21,6 +21,7 @@ import {
 } from '@/shared/utils';
 import { IncomeStore } from '../../income.store';
 import { IncomeEventsSidebarComponent } from './income-events-sidebar.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const salary: Category = {
   id: 1,
@@ -92,6 +93,7 @@ describe('IncomeEventsSidebarComponent (FR-INC-14, TICKET-INC-17)', () => {
     await TestBed.configureTestingModule({
       imports: [IncomeEventsSidebarComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },

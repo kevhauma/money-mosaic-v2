@@ -1,4 +1,5 @@
 export * from './app-db';
+export * from './api-client';
 export * from './accounts.repository';
 export * from './transactions.repository';
 export * from './mapping-profiles.repository';

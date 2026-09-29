@@ -29,9 +29,21 @@ export const httpError = (status: number, message: string, code?: string): HttpE
 };
 
 /**
+ * The `clientCode` on that 404, because the client has to tell it from the *other* 404 — the one
+ * `notFoundHandler` answers for a path that matches no route at all, with the same status and the
+ * same JSON shape (TICKET-SRV-05).
+ *
+ * `ApiClient.getOptional` maps "no such row" to `undefined`, the way Dexie's `get` did. Without a
+ * code to check, a mistyped or unmounted URL would read as "this account has no trained model" or
+ * "there is no such import batch" and fail silently forever. Mirrored in
+ * `src/app/core/data-access/api-client.ts`.
+ */
+export const ROW_NOT_FOUND = 'row_not_found';
+
+/**
  * One wording for "no such row", used for a row that does not exist **and** for one belonging to
  * another user — a deliberate 404 rather than a 403 (TICKET-SRV-03). It keeps every handler to a
  * single `where userId = ? and id = ?` with no second branch, and as a side effect the response
  * never confirms that someone else's id exists.
  */
-export const notFound = (): HttpError => httpError(404, 'Not found');
+export const notFound = (): HttpError => httpError(404, 'Not found', ROW_NOT_FOUND);

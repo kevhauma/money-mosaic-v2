@@ -12,6 +12,7 @@ import {
 import { AccountsStore, AppSettingsStore, CategoriesStore, TransactionsStore } from '@/core/state';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { IncomeMainCategoryComponent } from './income-main-category.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const category = (
   id: number,
@@ -57,6 +58,7 @@ describe('IncomeMainCategoryComponent (TICKET-INC-19)', () => {
     await TestBed.configureTestingModule({
       imports: [IncomeMainCategoryComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },

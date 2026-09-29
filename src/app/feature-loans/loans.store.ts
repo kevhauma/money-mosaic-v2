@@ -20,7 +20,7 @@ import { LoansRepository, type Loan } from '@/core/data-access';
 import { computeLoanProgress, type LoanProgress } from '@/core/loans';
 import { TransactionsStore } from '@/core/state';
 import { sortedBySortOrder, withArchivable } from '@/shared/utils';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 const loanConfig = entityConfig({
   entity: type<Loan>(),
@@ -80,9 +80,14 @@ export const LoansStore = signalStore(
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = loansRepository.getAll().then((loans) => {
-          patchState(store, setAllEntities(loans, loanConfig), { hydrated: true });
-        });
+        hydration = retryOnFailure(
+          loansRepository.getAll().then((loans) => {
+            patchState(store, setAllEntities(loans, loanConfig), { hydrated: true });
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

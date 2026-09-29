@@ -16,7 +16,7 @@ import {
 import { TransactionsStore, CategoriesStore } from '@/core/state';
 import { RulesStore } from './rules.store';
 import { CategoryModelService } from './category-model.service';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 export type CategoryModelStatus =
   'untrained' | 'not-enough-data' | 'training' | 'ready' | 'stale' | 'error';
@@ -146,46 +146,51 @@ export const CategoryModelStore = signalStore(
 
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = (async () => {
-          await Promise.all([
-            categoriesStore.hydrate(),
-            transactionsStore.hydrate(),
-            rulesStore.hydrate(),
-          ]);
-          const settings = await repository.getSettings();
-          patchState(store, { trainingWindowYears: settings.trainingWindowYears });
-          if (!stillUntrained()) return;
+        hydration = retryOnFailure(
+          (async () => {
+            await Promise.all([
+              categoriesStore.hydrate(),
+              transactionsStore.hydrate(),
+              rulesStore.hydrate(),
+            ]);
+            const settings = await repository.getSettings();
+            patchState(store, { trainingWindowYears: settings.trainingWindowYears });
+            if (!stillUntrained()) return;
 
-          const artifact = await repository.get();
-          if (!stillUntrained()) return;
-          if (!artifact) {
-            patchState(store, { status: 'untrained' });
-            return;
-          }
+            const artifact = await repository.get();
+            if (!stillUntrained()) return;
+            if (!artifact) {
+              patchState(store, { status: 'untrained' });
+              return;
+            }
 
-          const status: CategoryModelStatus =
-            artifact.taxonomySignature === activeTaxonomySignature() ? 'ready' : 'stale';
+            const status: CategoryModelStatus =
+              artifact.taxonomySignature === activeTaxonomySignature() ? 'ready' : 'stale';
 
-          await service.init(
-            {
-              modelTopology: artifact.modelTopology,
-              weightSpecs: artifact.weightSpecs,
-              weightData: artifact.weightData,
+            await service.init(
+              {
+                modelTopology: artifact.modelTopology,
+                weightSpecs: artifact.weightSpecs,
+                weightData: artifact.weightData,
+                categoryIdByIndex: artifact.categoryIdByIndex,
+              },
+              artifact.featureConfig,
+            );
+            if (!stillUntrained()) return;
+
+            patchState(store, {
+              status,
+              metrics: artifact.metrics,
+              lastTrainedAt: artifact.trainedAt,
               categoryIdByIndex: artifact.categoryIdByIndex,
-            },
-            artifact.featureConfig,
-          );
-          if (!stillUntrained()) return;
+            });
 
-          patchState(store, {
-            status,
-            metrics: artifact.metrics,
-            lastTrainedAt: artifact.trainedAt,
-            categoryIdByIndex: artifact.categoryIdByIndex,
-          });
-
-          if (status === 'ready') await refreshSuggestions();
-        })();
+            if (status === 'ready') await refreshSuggestions();
+          })(),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

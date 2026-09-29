@@ -29,6 +29,7 @@ import { formatCurrency, HIDDEN_AMOUNT_TEXT } from '@/shared/utils';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { ForecastStore } from '../../forecast.store';
 import { NetWorthProjectionChartComponent } from './net-worth-projection-chart.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -94,6 +95,7 @@ const createFixture = async ({
   await TestBed.configureTestingModule({
     imports: [NetWorthProjectionChartComponent],
     providers: [
+      ...provideFakeApi(),
       provideEchartsCore({ echarts }),
       { provide: GoalsRepository, useValue: { getAll: vi.fn().mockResolvedValue(goals) } },
       {

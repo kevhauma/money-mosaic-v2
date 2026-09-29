@@ -3,7 +3,6 @@ import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
 import {
   AccountsRepository,
-  appDb,
   CategoriesRepository,
   TransactionsRepository,
   type Account,
@@ -28,6 +27,7 @@ import {
   spendingMosaicRows,
   type SpendingMosaicRow,
 } from './spending-mosaic-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -429,9 +429,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
   // The privacy-mode tests below write the real `appSettings` singleton row through the real store.
   // Vitest runs with `isolate: false`, so an uncleared row survives into the next spec file in this
   // worker and breaks whoever expects an empty table (app-settings.repository.spec.ts).
-  afterEach(async () => {
-    await appDb.appSettings.clear();
-  });
+  afterEach(async () => {});
 
   const createFixture = async (
     transactions: Transaction[],
@@ -441,6 +439,7 @@ describe('SpendingMosaicPanelComponent (TICKET-EXP-07)', () => {
     await TestBed.configureTestingModule({
       imports: [SpendingMosaicPanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideEchartsCore({ echarts }),
         {
           provide: TransactionsRepository,

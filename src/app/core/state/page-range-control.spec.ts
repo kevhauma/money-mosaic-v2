@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
-import { AccountsRepository, appDb, type Account, type Transaction } from '@/core/data-access';
+import { AccountsRepository, type Account, type Transaction } from '@/core/data-access';
 import {
   quickRangeById,
   resolveQuickRange,
@@ -14,6 +14,7 @@ import { AppSettingsStore } from './app-settings.store';
 import { pageRangeControl } from './page-range-control';
 import { RangeStore, type RangePageKey } from './range-state.store';
 import { TransactionsStore } from './transactions.store';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 1,
@@ -74,21 +75,12 @@ class AccountsRangeHostComponent {
 }
 
 describe('pageRangeControl (TICKET-UI-23)', () => {
-  // `AppSettingsStore` (TICKET-STAT-40's recording) reads/writes the real, module-singleton
-  // `appDb` (Vitest `isolate: false`) — clear on both sides so a row left behind by one test, or
-  // by another spec file in this worker, never leaks in.
-  beforeEach(async () => {
-    await appDb.appSettings.clear();
-  });
-
-  afterEach(async () => {
-    await appDb.appSettings.clear();
-  });
-
+  // `AppSettingsStore` (TICKET-STAT-40's recording) reads and writes through the API now, and each
+  // test's fake backend starts empty — so what used to need clearing on both sides is simply gone.
   const setup = async (queryParams: Record<string, string> = defaultQueryParams()) => {
     await TestBed.configureTestingModule({
       imports: [DashboardRangeHostComponent, AccountsRangeHostComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
     TestBed.overrideProvider(ActivatedRoute, {
       useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } },
@@ -285,9 +277,10 @@ describe('pageRangeControl (TICKET-UI-23)', () => {
     );
   });
 
-  it('covers every declared range-owning page key', () => {
+  it('covers every declared range-owning page key', async () => {
     // A page added to `RangePageKey` without a default entry would read `undefined` at runtime;
     // this fails loudly instead.
+    await setup();
     const rangeStore = TestBed.inject(RangeStore);
     const pages: RangePageKey[] = ['dashboard', 'accounts'];
 

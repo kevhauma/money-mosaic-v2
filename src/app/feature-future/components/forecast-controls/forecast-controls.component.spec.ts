@@ -28,6 +28,7 @@ import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
 import { FutureOverviewComponent } from '../future-overview/future-overview.component';
 import { ForecastControlsComponent } from './forecast-controls.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 stubEchartsBrowserApis();
 
@@ -81,6 +82,7 @@ const createFixture = async (
   await TestBed.configureTestingModule({
     imports: [ForecastControlsComponent],
     providers: [
+      ...provideFakeApi(),
       { provide: ForecastSettingsRepository, useValue: forecastSettingsRepository },
       { provide: AccountsRepository, useValue: { getAll: vi.fn().mockResolvedValue(accounts) } },
       {
@@ -308,6 +310,7 @@ describe('ForecastControlsComponent: the controls move the forecast below them (
     await TestBed.configureTestingModule({
       imports: [FutureOverviewComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         provideEchartsCore({ echarts }),
         { provide: ForecastSettingsRepository, useValue: forecastSettingsRepository },

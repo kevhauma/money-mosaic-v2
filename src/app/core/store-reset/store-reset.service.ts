@@ -95,6 +95,32 @@ export const createStoreReset = <State extends object>(
 };
 
 /**
+ * Wraps a store's memoised hydration so that a **failed** one is not remembered (TICKET-SRV-05).
+ *
+ * The memo exists so the first injection of a store starts one load and every later caller awaits
+ * that same promise. Against Dexie a read effectively never rejected, so caching the promise and
+ * caching a *success* were the same thing. Against HTTP they are not: one 500, one restart, one
+ * dropped connection, and the rejected promise is what every later `hydrate()` re-rejects with — the
+ * store stays empty for the rest of the session, and nothing short of signing out clears it.
+ *
+ * So a rejection forgets itself on the way past, leaving the next `hydrate()` free to try again.
+ * This is only the *retry being possible*; TICKET-SRV-06 owns making the failure visible and giving
+ * somebody a way to trigger that retry.
+ *
+ * ```ts
+ * hydration = retryOnFailure(
+ *   repository.getAll().then((rows) => patchState(store, …)),
+ *   () => { hydration = null; },
+ * );
+ * ```
+ */
+export const retryOnFailure = <T>(work: Promise<T>, forget: () => void): Promise<T> =>
+  work.catch((error: unknown) => {
+    forget();
+    throw error;
+  });
+
+/**
  * Adds a store's `reset()` to the registry. Called from `withHooks({ onInit })` — the first
  * injection of the store — which is both where an injection context exists and the moment the
  * store starts holding data worth clearing.

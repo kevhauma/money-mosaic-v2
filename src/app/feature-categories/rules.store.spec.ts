@@ -12,6 +12,7 @@ import { RulesEngineService } from '@/core/categorisation';
 import { CategoriesStore, TransactionsStore } from '@/core/state';
 import { RulesStore } from './rules.store';
 import type { SharedRulesFile } from './rule-share';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const rule = (overrides: Partial<Rule> = {}): Rule => ({
   id: 1,
@@ -78,6 +79,7 @@ describe('RulesStore: moveRule swaps priority with its neighbour (TICKET-TEST-01
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: RulesRepository, useValue: rulesRepository },
         { provide: RulesEngineService, useValue: rulesEngineService },
         { provide: TransactionsRepository, useValue: transactionsRepository },
@@ -180,6 +182,7 @@ describe('RulesStore: createRuleFromCounterparty creates then backfills matching
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: RulesRepository, useValue: rulesRepository },
         { provide: RulesEngineService, useValue: rulesEngineService },
         { provide: TransactionsRepository, useValue: transactionsRepository },
@@ -248,6 +251,7 @@ describe('RulesStore: createRuleFromConditions persists then backfills (TICKET-C
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: RulesRepository, useValue: rulesRepository },
         { provide: RulesEngineService, useValue: rulesEngineService },
         { provide: TransactionsRepository, useValue: transactionsRepository },
@@ -303,6 +307,7 @@ describe('RulesStore: exportRules resolves categories to portable labels (TICKET
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: RulesRepository, useValue: rulesRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: RulesEngineService, useValue: rulesEngineService },
@@ -364,6 +369,7 @@ describe('RulesStore: importRules matches categories by label with an Uncategori
     categoriesRepository.add.mockResolvedValue(99);
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: RulesRepository, useValue: rulesRepository },
         { provide: CategoriesRepository, useValue: categoriesRepository },
         { provide: RulesEngineService, useValue: rulesEngineService },

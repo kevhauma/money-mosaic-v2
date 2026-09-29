@@ -11,7 +11,7 @@ import { detectRecurringPayments, type RecurringPaymentSeries } from '@/core/sta
 import { savingsAccountIbans } from '@/core/transfers';
 import { RecurringOverridesRepository, type RecurringOverride } from '@/core/data-access';
 import { AccountsStore, CategoriesStore, TransactionsStore } from '@/core/state';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 import { anchorOf, applyRecurringOverrides, mergeCandidatePairs } from './recurring-overrides';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -133,9 +133,14 @@ export const RecurringSeriesStore = signalStore(
       /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
       hydrate: (): Promise<void> => {
         if (!hydration) {
-          hydration = repository.getAll().then((overrides) => {
-            patchState(store, { overrides, hydrated: true });
-          });
+          hydration = retryOnFailure(
+            repository.getAll().then((overrides) => {
+              patchState(store, { overrides, hydrated: true });
+            }),
+            () => {
+              hydration = null;
+            },
+          );
         }
         return hydration;
       },

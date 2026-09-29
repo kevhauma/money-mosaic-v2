@@ -27,7 +27,7 @@ import {
   type UndoImportImpact,
 } from '@/core/import';
 import { CoOwnerContributionService, RulesEngineService } from '@/core/categorisation';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 /** Applies `{ id, categoryId }` updates onto their matching transactions, leaving the rest untouched. */
 const applyCategoryUpdates = (
@@ -99,9 +99,14 @@ export const ImportBatchesStore = signalStore(
       /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
       hydrate: (): Promise<void> => {
         if (!hydration) {
-          hydration = importBatchesRepository.getAll().then((batches) => {
-            patchState(store, setAllEntities(batches, importBatchConfig), { hydrated: true });
-          });
+          hydration = retryOnFailure(
+            importBatchesRepository.getAll().then((batches) => {
+              patchState(store, setAllEntities(batches, importBatchConfig), { hydrated: true });
+            }),
+            () => {
+              hydration = null;
+            },
+          );
         }
         return hydration;
       },

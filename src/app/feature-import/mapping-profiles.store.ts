@@ -8,7 +8,7 @@ import {
   withEntities,
 } from '@ngrx/signals/entities';
 import { MappingProfilesRepository, type MappingProfile } from '@/core/data-access';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 export const matchTemplateForHeaders = (
   profiles: MappingProfile[],
@@ -46,9 +46,14 @@ export const MappingProfilesStore = signalStore(
      */
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = mappingProfilesRepository.getAll().then((profiles) => {
-          patchState(store, setAllEntities(profiles, mappingProfileConfig));
-        });
+        hydration = retryOnFailure(
+          mappingProfilesRepository.getAll().then((profiles) => {
+            patchState(store, setAllEntities(profiles, mappingProfileConfig));
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

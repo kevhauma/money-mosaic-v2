@@ -5,6 +5,7 @@ import { CategoriesRepository, TransactionsRepository, type Category } from '@/c
 import { CategoriesStore } from '@/core/state';
 import type { TransactionFilters } from '../../transaction-filters';
 import { TransactionFiltersComponent } from './transaction-filters.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 /** Protected surface we reach into for form/behaviour assertions. */
 type Internals = {
@@ -30,7 +31,7 @@ describe('TransactionFiltersComponent', () => {
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [TransactionFiltersComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransactionFiltersComponent);
@@ -357,6 +358,7 @@ describe('TransactionFiltersComponent: applicability-aware category list (TICKET
     await TestBed.configureTestingModule({
       imports: [TransactionFiltersComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
         {

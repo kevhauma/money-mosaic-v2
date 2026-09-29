@@ -4,13 +4,14 @@ import { provideRouter } from '@angular/router';
 import { vi, type Mock } from 'vitest';
 import type { CommitImportResult, ParsedRowResult } from '@/core/import';
 import { CsvImportService } from '@/core/import';
-import { AccountsRepository, appDb } from '@/core/data-access';
+import { AccountsRepository } from '@/core/data-access';
 import { AccountsStore, ImportBatchesStore, TransactionsStore } from '@/core/state';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportWizardComponent } from './import-wizard.component';
 import { ImportSelectStepComponent } from '../import-select-step/import-select-step.component';
 import { ImportMapStepComponent } from '../import-map-step/import-map-step.component';
 import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // Light stand-ins for the step children so the wizard's own control-flow is what's under test —
 // the real steps pull in the CSV service, Dexie repos, and detection logic we don't want here.
@@ -100,6 +101,7 @@ describe('ImportWizardComponent: combined map + preview step', () => {
     await TestBed.configureTestingModule({
       imports: [ImportWizardComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: CsvImportService, useValue: { parse } },
         {
@@ -529,6 +531,7 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
     await TestBed.configureTestingModule({
       imports: [ImportWizardComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         { provide: CsvImportService, useValue: { parse } },
         {
@@ -759,7 +762,11 @@ describe('ImportWizardComponent: commit-flow invariants (TICKET-TEST-03)', () =>
 
     await TestBed.configureTestingModule({
       imports: [ImportWizardComponent],
-      providers: [provideRouter([]), { provide: CsvImportService, useValue: { parse } }],
+      providers: [
+        ...provideFakeApi(),
+        provideRouter([]),
+        { provide: CsvImportService, useValue: { parse } },
+      ],
     })
       .overrideComponent(ImportWizardComponent, {
         remove: {
@@ -775,15 +782,7 @@ describe('ImportWizardComponent: commit-flow invariants (TICKET-TEST-03)', () =>
     component = fixture.componentInstance;
   });
 
-  afterEach(async () => {
-    // The real stores above all persist through the shared, global `appDb` (fake-indexeddb is a
-    // singleton and Vitest runs with isolate:false) — clear every table a test in this block could
-    // have written to, so nothing leaks into a later test.
-    await appDb.transactions.clear();
-    await appDb.importBatches.clear();
-    await appDb.accounts.clear();
-    await appDb.transfers.clear();
-  });
+  afterEach(async () => {});
 
   it('invariant 1: commits exactly one import batch per file under batch auto-advance', async () => {
     enterStep2WithQueue([11, 22, 33]);

@@ -5,6 +5,7 @@ import { CsvImportService } from '@/core/import';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportSelectStepComponent } from './import-select-step.component';
 import type { PendingAccountDraft, QueuedImportFile } from '../../import-queue';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 /** Protected surface we reach into for TICKET-IMP-08 assertions. */
 type Internals = {
@@ -46,6 +47,7 @@ describe('ImportSelectStepComponent: quick-create a new account (TICKET-IMP-08)'
     await TestBed.configureTestingModule({
       imports: [ImportSelectStepComponent],
       providers: [
+        ...provideFakeApi(),
         { provide: CsvImportService, useValue: { detectHeaders, previewRawRows } },
         { provide: MappingProfilesStore, useValue: { detectTemplateForFile } },
       ],

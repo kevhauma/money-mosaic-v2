@@ -21,7 +21,7 @@ import { TransfersRepository, type Transaction, type Transfer } from '@/core/dat
 import { TransferLinkingService, TransferMatchingService } from '@/core/transfers';
 import { TransactionsStore } from './transactions.store';
 import { TransferSettingsStore } from './transfer-settings.store';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 const transferConfig = entityConfig({
   entity: type<Transfer>(),
@@ -60,9 +60,14 @@ export const TransfersStore = signalStore(
       /** Idempotent; `force: true` re-fetches (used by the dev seed after writing new transfers). */
       hydrate: (options?: { force?: boolean }): Promise<void> => {
         if (!hydration || options?.force) {
-          hydration = transfersRepository.getAll().then((transfers) => {
-            patchState(store, setAllEntities(transfers, transferConfig), { hydrated: true });
-          });
+          hydration = retryOnFailure(
+            transfersRepository.getAll().then((transfers) => {
+              patchState(store, setAllEntities(transfers, transferConfig), { hydrated: true });
+            }),
+            () => {
+              hydration = null;
+            },
+          );
         }
         return hydration;
       },

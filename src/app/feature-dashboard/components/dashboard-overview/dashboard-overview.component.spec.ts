@@ -7,12 +7,13 @@ import {
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import { vi } from 'vitest';
-import { appDb, TransfersRepository, type Transaction } from '@/core/data-access';
+import { TransfersRepository, type Transaction } from '@/core/data-access';
 import { AccountsStore, AppSettingsStore, RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
 import { formatCurrency } from '@/shared/utils';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
 import { DashboardOverviewComponent } from './dashboard-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -62,7 +63,7 @@ HTMLCanvasElement.prototype.getContext = (() =>
 const configureTestBed = async (): Promise<void> => {
   await TestBed.configureTestingModule({
     imports: [DashboardOverviewComponent],
-    providers: [provideRouter([]), provideEchartsCore({ echarts })],
+    providers: [...provideFakeApi(), provideRouter([]), provideEchartsCore({ echarts })],
     // Below-fold panels are wrapped in `@defer (on viewport)` (TICKET-PERF-06); jsdom has no real
     // IntersectionObserver to fire that trigger, so tests render deferred content explicitly via
     // the defer-block testing API instead of waiting on a trigger that would never fire.
@@ -107,12 +108,7 @@ describe('DashboardOverviewComponent', () => {
     await fixture.whenStable();
   });
 
-  afterEach(async () => {
-    // Writes through the real DashboardLayoutSettingsStore/repository to the shared `appDb`
-    // (fake-indexeddb is a global singleton and Vitest runs with isolate:false), so leftover rows
-    // here leak into other spec files unless cleared.
-    await appDb.dashboardLayoutSettings.clear();
-  });
+  afterEach(async () => {});
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -247,6 +243,7 @@ describe('DashboardOverviewComponent', () => {
       await TestBed.configureTestingModule({
         imports: [DashboardOverviewComponent],
         providers: [
+          ...provideFakeApi(),
           provideRouter([]),
           provideEchartsCore({ echarts }),
           {
@@ -538,9 +535,7 @@ describe('DashboardOverviewComponent', () => {
         ) as NodeListOf<HTMLButtonElement>,
       ).find((button) => /amounts/.test(button.textContent ?? '')) as HTMLButtonElement;
 
-    afterEach(async () => {
-      await appDb.appSettings.clear();
-    });
+    afterEach(async () => {});
 
     it('names the toggle in visible text, like the settings button beside it (TICKET-STAT-25)', () => {
       seedOneTransaction();

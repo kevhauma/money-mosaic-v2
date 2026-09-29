@@ -1,6 +1,6 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
-// Deep import (not the `@/core/accounts` barrel) avoids a barrel cycle: that barrel's
-// account-deletion.service.ts imports `@/core/transfers` for TransferCleanupService.
+// Deep import (not the `@/core/accounts` barrel): kept from when that barrel's
+// account-deletion.service.ts imported `@/core/transfers`, which made the pair a cycle.
 import { resolveCoOwnerByIban } from '@/core/accounts/joint-owner-lookup';
 import { normalizeIban } from '@/shared/utils';
 

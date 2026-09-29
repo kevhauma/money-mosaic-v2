@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
-import { appDb } from './app-db';
+import { inject, Injectable } from '@angular/core';
+import { ApiClient } from './api-client';
 
 /**
  * `tables` is keyed by table name at runtime (`Record`, not a per-table union) so export/import
- * automatically covers every current and future `appDb` table without needing this file updated
- * whenever a new table is added (FR-DAT-1, FR-DAT-2).
+ * automatically covers every current and future table without needing this file updated whenever a
+ * new one is added (FR-DAT-1, FR-DAT-2).
  */
 export type AppDataExport = {
   schemaVersion: number;
@@ -14,57 +14,31 @@ export type AppDataExport = {
 
 export type ImportMode = 'replace' | 'merge';
 
+const PATH = '/data';
+
+/**
+ * The whole-dataset three (FR-DAT-1/2/3), each one endpoint over the signed-in user's rows and each
+ * one SQLite transaction (TICKET-SRV-04) — so a failure part-way through still leaves every table
+ * exactly as it was, which is the property `appDb.transaction('rw', appDb.tables, …)` used to give.
+ *
+ * Two things that used to happen here happen server-side now: the `schemaVersion` guard (a backup
+ * from a newer data model is refused **before** the transaction opens, and the refusal arrives here
+ * as a rejection carrying that sentence), and the `replace`-vs-`merge` decision.
+ *
+ * `categoryModel` is not in the document, and never was: `JSON.stringify` turns an `ArrayBuffer`
+ * into `{}`, so the export has always silently lost the trained weights (TICKET-DAT-05's closing
+ * note). A `replace` import and `deleteAll` both still clear the row, because it describes a dataset
+ * that is being replaced.
+ */
 @Injectable({ providedIn: 'root' })
 export class DataManagementRepository {
-  /** Reads every `appDb` table inside one read transaction (NFR-STORE-1 records the schema version). */
-  exportAll = async (): Promise<AppDataExport> => {
-    const tables: Record<string, unknown[]> = {};
-    await appDb.transaction('r', appDb.tables, async () => {
-      for (const table of appDb.tables) {
-        tables[table.name] = await table.toArray();
-      }
-    });
-    return { schemaVersion: appDb.verno, exportedAt: new Date().toISOString(), tables };
-  };
+  private readonly api = inject(ApiClient);
 
-  /**
-   * `replace` clears every table before repopulating; `merge` upserts without clearing. Both modes
-   * use `bulkPut` (not `bulkAdd`) so imported rows keep their original ids and cross-table foreign
-   * keys (`accountId`/`categoryId`/`transferId`/...) stay valid. The schema-version check runs before
-   * the transaction opens, and the whole write is one `appDb.transaction('rw', ...)` so a failure
-   * partway through leaves every table exactly as it was (NFR-RESIL-1) — Dexie rolls back the entire
-   * transaction on any thrown error.
-   */
+  exportAll = (): Promise<AppDataExport> => this.api.get<AppDataExport>(`${PATH}/export`);
+
   importAll = async (data: AppDataExport, mode: ImportMode): Promise<void> => {
-    if (data.schemaVersion > appDb.verno) {
-      throw new Error(
-        `This backup was created with a newer database schema (v${data.schemaVersion}) than this app supports (v${appDb.verno}). Update the app before importing.`,
-      );
-    }
-
-    await appDb.transaction('rw', appDb.tables, async () => {
-      for (const table of appDb.tables) {
-        const rows = data.tables[table.name];
-        if (mode === 'replace') {
-          await table.clear();
-        }
-        if (rows?.length) {
-          await table.bulkPut(rows);
-        }
-      }
-    });
+    await this.api.post<void>(`${PATH}/import`, { mode, data });
   };
 
-  /**
-   * Clears every `appDb` table inside one write transaction (FR-DAT-3). A failure partway through
-   * leaves every table exactly as it was (NFR-RESIL-1) — Dexie rolls back the entire transaction on
-   * any thrown error.
-   */
-  deleteAll = async (): Promise<void> => {
-    await appDb.transaction('rw', appDb.tables, async () => {
-      for (const table of appDb.tables) {
-        await table.clear();
-      }
-    });
-  };
+  deleteAll = (): Promise<void> => this.api.delete(PATH);
 }

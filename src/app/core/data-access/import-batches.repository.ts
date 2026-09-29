@@ -1,13 +1,21 @@
-import { Injectable } from '@angular/core';
-import { appDb, type ImportBatch } from './app-db';
+import { inject, Injectable } from '@angular/core';
+import { ApiClient } from './api-client';
+import type { ImportBatch } from './entities';
+
+const PATH = '/importBatches';
 
 @Injectable({ providedIn: 'root' })
 export class ImportBatchesRepository {
-  getAll = (): Promise<ImportBatch[]> => appDb.importBatches.toArray();
+  private readonly api = inject(ApiClient);
 
-  getById = (id: number): Promise<ImportBatch | undefined> => appDb.importBatches.get(id);
+  getAll = (): Promise<ImportBatch[]> => this.api.get<ImportBatch[]>(PATH);
 
-  add = (batch: ImportBatch): Promise<number> => appDb.importBatches.add(batch);
+  /** `undefined` for a batch that is not there, exactly as `Dexie.Table.get()` answered. */
+  getById = (id: number): Promise<ImportBatch | undefined> =>
+    this.api.getOptional<ImportBatch>(`${PATH}/${id}`);
 
-  remove = (id: number): Promise<void> => appDb.importBatches.delete(id);
+  add = (batch: ImportBatch): Promise<number> =>
+    this.api.post<{ id: number }>(PATH, batch).then(({ id }) => id);
+
+  remove = (id: number): Promise<void> => this.api.delete(`${PATH}/${id}`);
 }

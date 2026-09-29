@@ -1,9 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { appDb, DEFAULT_APP_SETTINGS } from '@/core/data-access';
+import { DEFAULT_APP_SETTINGS } from '@/core/data-access';
 import { AppSettingsStore } from '@/core/state';
 import { PrivacyToggleComponent } from './privacy-toggle.component';
+import { FakeApiBackend, provideFakeApi, seedApi } from '@/core/data-access/fake-api.testing';
+
+/** The one endpoint this section's setting lives behind. */
+const APP_SETTINGS_URL = '/api/settings/appSettings';
 
 describe('PrivacyToggleComponent (TICKET-PRIV-02)', () => {
   let fixture: ComponentFixture<PrivacyToggleComponent>;
@@ -13,14 +17,8 @@ describe('PrivacyToggleComponent (TICKET-PRIV-02)', () => {
     // this control never takes a `link`.
     await TestBed.configureTestingModule({
       imports: [PrivacyToggleComponent],
-      providers: [provideRouter([])],
+      providers: [...provideFakeApi(), provideRouter([])],
     }).compileComponents();
-  });
-
-  afterEach(async () => {
-    // fake-indexeddb is a global singleton and Vitest runs with isolate:false, so a row written
-    // here would otherwise leak into other spec files.
-    await appDb.appSettings.clear();
   });
 
   const render = (): HTMLButtonElement => {
@@ -76,7 +74,7 @@ describe('PrivacyToggleComponent (TICKET-PRIV-02)', () => {
   it('opens on the persisted setting rather than the default, once the store hydrates', async () => {
     // Spread the defaults rather than enumerating every field — `AppSettings` grows an additive
     // optional field most versions, and this test cares about exactly one of them.
-    await appDb.appSettings.put({ ...DEFAULT_APP_SETTINGS, privacyMode: true });
+    seedApi(APP_SETTINGS_URL, { ...DEFAULT_APP_SETTINGS, privacyMode: true });
     const button = render();
     await TestBed.inject(AppSettingsStore).hydrate();
     fixture.detectChanges();
@@ -84,13 +82,17 @@ describe('PrivacyToggleComponent (TICKET-PRIV-02)', () => {
     expect(button.textContent?.trim()).toBe('Show amounts');
   });
 
-  it('persists through the store, never touching the appSettings table itself', () => {
+  // The toggle goes through the store, which goes through the repository — it never writes the
+  // setting itself. With the database gone, "never wrote it directly" is "made no request of its
+  // own": the only call the click may produce is the one the stubbed store no longer makes.
+  it('persists through the store, never calling the settings endpoint itself', () => {
     const button = render();
-    const put = vi.spyOn(appDb.appSettings, 'put');
+    const backend = TestBed.inject(FakeApiBackend);
     vi.spyOn(TestBed.inject(AppSettingsStore), 'setPrivacyMode').mockResolvedValue();
+    const before = backend.calls.length;
 
     button.click();
 
-    expect(put).not.toHaveBeenCalled();
+    expect(backend.calls.slice(before)).toEqual([]);
   });
 });

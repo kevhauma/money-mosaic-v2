@@ -5,6 +5,7 @@ import { CategoriesRepository, type Category } from '@/core/data-access';
 import { CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
 import { TopTransactionsPanelComponent } from './top-transactions-panel.component';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const groceries: Category = {
   id: 1,
@@ -27,6 +28,7 @@ describe('TopTransactionsPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TopTransactionsPanelComponent],
       providers: [
+        ...provideFakeApi(),
         provideRouter([]),
         {
           provide: CategoriesRepository,

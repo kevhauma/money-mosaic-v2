@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import { CategoriesRepository, type Category } from '@/core/data-access';
 import { CategoriesStore } from '@/core/state';
 import { CategoryExclusionDropdownComponent } from './category-exclusion-dropdown.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const category = (id: number, name: string, overrides: Partial<Category> = {}): Category => ({
   id,
@@ -28,6 +29,7 @@ describe('CategoryExclusionDropdownComponent (TICKET-STAT-32)', () => {
     await TestBed.configureTestingModule({
       imports: [CategoryExclusionDropdownComponent],
       providers: [
+        ...provideFakeApi(),
         {
           provide: CategoriesRepository,
           useValue: {

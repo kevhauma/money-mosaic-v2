@@ -19,6 +19,7 @@ import {
   syncFormatSettings,
 } from '@/shared/utils';
 import { buildIncomeGrowthCard, IncomeGrowthPanelComponent } from './income-growth-panel.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const comparisonWindow = (from: string, to: string, total: number, pct: number | null) => ({
   from,
@@ -171,6 +172,7 @@ describe('IncomeGrowthPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [IncomeGrowthPanelComponent],
       providers: [
+        ...provideFakeApi(),
         // The cards link to `/transactions` since TICKET-INC-15, so `routerLink` needs a router.
         provideRouter([]),
         { provide: AccountsRepository, useValue: accountsRepository },

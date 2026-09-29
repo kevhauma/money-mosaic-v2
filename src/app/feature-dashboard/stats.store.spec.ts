@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import type { Transaction } from '@/core/data-access';
 import { RangeStore, TransactionsStore } from '@/core/state';
 import { StatsStore } from './stats.store';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -17,7 +18,9 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
 
 describe('StatsStore', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
+    });
   });
 
   it('recomputes periodStats when transactions change, with no manual invalidation (FR-STAT-5)', () => {

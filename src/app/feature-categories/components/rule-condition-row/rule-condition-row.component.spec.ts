@@ -9,6 +9,7 @@ import {
   type ConditionGroup,
 } from '../../rule-condition-editor';
 import { RuleConditionRowComponent } from './rule-condition-row.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const formBuilder = new FormBuilder();
 
@@ -52,7 +53,10 @@ describe('RuleConditionRowComponent', () => {
   const setup = async (group: ConditionGroup, canRemove = true): Promise<HTMLElement> => {
     await TestBed.configureTestingModule({
       imports: [RuleConditionRowComponent],
-      providers: [{ provide: AccountsRepository, useValue: accountsRepository }],
+      providers: [
+        ...provideFakeApi(),
+        { provide: AccountsRepository, useValue: accountsRepository },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(RuleConditionRowComponent);
     fixture.componentRef.setInput('group', group);

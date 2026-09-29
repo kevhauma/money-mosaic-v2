@@ -1,422 +1,64 @@
-import { vi } from 'vitest';
-import { appDb, type Account, type Category } from './app-db';
+import { TestBed } from '@angular/core/testing';
+import { callApi, failApiCall, withApiTesting } from './api-client.testing';
 import { DataManagementRepository, type AppDataExport } from './data-management.repository';
 
-const account = (overrides: Partial<Account> = {}): Account => ({
-  name: 'Checking',
-  type: 'checking',
-  currency: 'EUR',
-  openingBalance: 0,
-  openingBalanceDate: '2026-01-01',
-  color: '#000000',
-  icon: 'bank',
-  archived: false,
-  ...overrides,
-});
-
-const category = (overrides: Partial<Category> = {}): Category => ({
-  name: 'Custom',
-  kind: 'expense',
-  color: '#111111',
-  icon: 'tag',
-  archived: false,
-  isSystem: false,
-  ...overrides,
+const document = (): AppDataExport => ({
+  schemaVersion: 16,
+  exportedAt: '2026-07-01T00:00:00.000Z',
+  tables: { accounts: [{ id: 1, name: 'Checking' }], transactions: [] },
 });
 
 describe('DataManagementRepository', () => {
-  const repository = new DataManagementRepository();
+  withApiTesting();
 
-  // `importAll(..., 'replace')` clears every appDb table, including ones seeded by `on('populate')`
-  // (categories, mappingProfiles, transferSettings) that other spec files rely on. Snapshot the whole
-  // DB up front and restore it after every test so this file never leaks state across the suite.
-  let snapshot: Record<string, unknown[]>;
+  const repository = (): DataManagementRepository => TestBed.inject(DataManagementRepository);
 
-  beforeAll(async () => {
-    snapshot = {};
-    for (const table of appDb.tables) {
-      snapshot[table.name] = await table.toArray();
-    }
+  it('exportAll reads the whole-dataset export', async () => {
+    expect(
+      await callApi(
+        () => repository().exportAll(),
+        { method: 'GET', url: '/api/data/export' },
+        document(),
+      ),
+    ).toEqual(document());
   });
 
-  afterEach(async () => {
-    vi.restoreAllMocks();
-    for (const table of appDb.tables) {
-      await table.clear();
-      const rows = snapshot[table.name];
-      if (rows.length) await table.bulkPut(rows);
-    }
-  });
+  it.each(['replace', 'merge'] as const)(
+    'importAll posts the document in %s mode',
+    async (mode) => {
+      await expect(
+        callApi(() => repository().importAll(document(), mode), {
+          method: 'POST',
+          url: '/api/data/import',
+          body: { mode, data: document() },
+        }),
+      ).resolves.toBeUndefined();
+    },
+  );
 
-  describe('exportAll', () => {
-    it('reads every table and records the schema version + an ISO export timestamp', async () => {
-      await appDb.accounts.clear();
-      await appDb.accounts.bulkAdd([account({ name: 'A' }), account({ name: 'B' })]);
-
-      const result = await repository.exportAll();
-
-      expect(result.schemaVersion).toBe(appDb.verno);
-      expect(new Date(result.exportedAt).toISOString()).toBe(result.exportedAt);
-      expect(Object.keys(result.tables).sort()).toEqual(
-        appDb.tables.map((table) => table.name).sort(),
-      );
-      expect(result.tables['accounts']).toHaveLength(2);
-    });
-  });
-
-  describe('exportAll -> importAll(replace) round trip', () => {
-    it('reproduces an identical snapshot for every table', async () => {
-      await appDb.accounts.clear();
-      await appDb.categories.clear();
-      await appDb.accounts.bulkAdd([account({ name: 'Checking' }), account({ name: 'Savings' })]);
-      await appDb.categories.bulkAdd([category({ name: 'Groceries' })]);
-
-      const exported = await repository.exportAll();
-
-      // Mutate the DB after export so the round trip through import is what restores it, not luck.
-      await appDb.accounts.clear();
-      await appDb.categories.clear();
-      await appDb.accounts.add(account({ name: 'Unrelated' }));
-
-      await repository.importAll(exported, 'replace');
-
-      const accountsAfter = await appDb.accounts.toArray();
-      const categoriesAfter = await appDb.categories.toArray();
-      expect(accountsAfter.map((a) => a.name).sort()).toEqual(['Checking', 'Savings']);
-      expect(categoriesAfter.map((c) => c.name)).toEqual(['Groceries']);
-    });
-  });
-
-  describe('non-indexed Category applicability window (TICKET-CAT-10)', () => {
-    // Same reasoning as the `appSettings` block below: `.stores()` declares indexes, not fields, and
-    // export/import moves whole rows — so `activeFrom`/`activeUntil` need no repository change. A
-    // round trip that silently dropped them would look exactly like the user never set a window.
-    it('round-trips through export → import intact', async () => {
-      await appDb.categories.clear();
-      await appDb.categories.bulkAdd([
-        category({ name: 'Rent', activeFrom: '2020-01-01', activeUntil: '2023-06-30' }),
-        category({ name: 'Groceries' }), // no window — must come back with neither field invented
-      ]);
-
-      const exported = await repository.exportAll();
-      await appDb.categories.clear();
-      await repository.importAll(exported, 'replace');
-
-      const restored = await appDb.categories.toArray();
-      const rent = restored.find(({ name }) => name === 'Rent');
-      const groceries = restored.find(({ name }) => name === 'Groceries');
-
-      expect(rent?.activeFrom).toBe('2020-01-01');
-      expect(rent?.activeUntil).toBe('2023-06-30');
-      expect(groceries?.activeFrom).toBeUndefined();
-      expect(groceries?.activeUntil).toBeUndefined();
-    });
-  });
-
-  describe('non-indexed appSettings fields', () => {
-    // `.stores()` declares indexes, not fields, and export/import moves whole rows — so an additive
-    // field like these needs no repository change. Asserted rather than assumed, because a
-    // round-trip that silently drops a setting looks exactly like the user never set it
-    // (TICKET-INC-03/TICKET-INC-04).
-    it('round-trips through export → import intact', async () => {
-      await appDb.appSettings.put({
-        id: 1,
-        primaryColor: undefined,
-        currencySymbol: undefined,
-        currencySymbolPosition: undefined,
-        locale: undefined,
-        excludedIncomeCategoryIds: [7],
-        careerStartDate: '2019-09-01',
-        smoothedBonusCategoryIds: [3, 5],
-        grossColor: 'violet',
-        mainIncomeCategoryId: 7,
-        seenGuideSlugs: ['getting-started-with-the-income-page'],
-        heatmapExcludedCategoryIds: [4],
-        privacyMode: true,
-        fiscalYearStartMonth: 4,
-        recentRanges: [{ fromExpr: 'now-30d', toExpr: 'now' }],
-      });
-
-      const exported = await repository.exportAll();
-      await appDb.appSettings.clear();
-      await repository.importAll(exported, 'replace');
-
-      const restored = await appDb.appSettings.get(1);
-      expect(restored?.smoothedBonusCategoryIds).toEqual([3, 5]);
-      expect(restored?.excludedIncomeCategoryIds).toEqual([7]);
-      expect(restored?.careerStartDate).toBe('2019-09-01');
-      expect(restored?.grossColor).toBe('violet');
-      expect(restored?.mainIncomeCategoryId).toBe(7);
-      expect(restored?.seenGuideSlugs).toEqual(['getting-started-with-the-income-page']);
-      expect(restored?.heatmapExcludedCategoryIds).toEqual([4]);
-      expect(restored?.privacyMode).toBe(true);
-      expect(restored?.fiscalYearStartMonth).toBe(4);
-      expect(restored?.recentRanges).toEqual([{ fromExpr: 'now-30d', toExpr: 'now' }]);
-    });
-  });
-
-  describe('salaryMetadata (TICKET-INC-10)', () => {
-    it('round-trips through export → clear → import, without the repository knowing about it', async () => {
-      // Export/import iterate `appDb.tables`, so a new table needs no change here — asserted rather
-      // than assumed, since a silently-dropped table looks exactly like data the user never entered.
-      await appDb.salaryMetadata.bulkPut([
-        { id: 1, yearMonth: '2026-02', grossWage: 3500, bonus: 900 },
-        { id: 2, yearMonth: '2026-03', grossWage: 3600 },
-      ]);
-
-      const exported = await repository.exportAll();
-      await appDb.salaryMetadata.clear();
-      await repository.importAll(exported, 'replace');
-
-      expect(await appDb.salaryMetadata.orderBy('yearMonth').toArray()).toEqual([
-        { id: 1, yearMonth: '2026-02', grossWage: 3500, bonus: 900 },
-        { id: 2, yearMonth: '2026-03', grossWage: 3600 },
-      ]);
-    });
-
-    it('accepts an older backup that predates the table', async () => {
-      // A v12 export has no `salaryMetadata` key at all; importing it must not throw, and in
-      // `replace` mode simply leaves the new table empty.
-      await appDb.salaryMetadata.put({ id: 1, yearMonth: '2026-02', grossWage: 3500 });
-
-      const olderBackup: AppDataExport = {
-        schemaVersion: 12,
-        exportedAt: new Date().toISOString(),
-        tables: { accounts: [account({ id: 1, name: 'Imported' })] },
-      };
-
-      await expect(repository.importAll(olderBackup, 'replace')).resolves.toBeUndefined();
-      expect(await appDb.salaryMetadata.toArray()).toEqual([]);
-    });
-  });
-
-  describe('savingsGoals + forecastSettings (TICKET-FUT-02)', () => {
-    it('round-trips goals with their funding order intact', async () => {
-      // Export/import iterate `appDb.tables`, so the two v14 tables need no change here — asserted
-      // rather than assumed, because a backup that silently drops the plan is worse than no backup.
-      // The order matters more than the rows: it is what every ETA in FUT-05 reads.
-      await appDb.savingsGoals.bulkPut([
-        {
-          id: 1,
-          name: 'Camera',
-          targetAmount: 1200,
-          sortOrder: 1,
-          archived: false,
-          createdAt: '2026-08-01',
+  /**
+   * The `schemaVersion` guard moved to the side that now owns the schema (TICKET-SRV-04): it runs
+   * before the transaction opens, so nothing is written, and its sentence is what the user is shown.
+   */
+  it('rejects a backup from a newer schema with the server sentence, having written nothing', async () => {
+    const message = await failApiCall(
+      () => repository().importAll({ ...document(), schemaVersion: 99 }, 'merge'),
+      { method: 'POST', url: '/api/data/import' },
+      {
+        status: 400,
+        body: {
+          error:
+            'This backup was created with a newer database schema (v99) than this server supports (v16). Update the server before importing.',
         },
-        {
-          id: 2,
-          name: 'Holiday',
-          targetAmount: 3000,
-          sortOrder: 0,
-          targetDate: '2027-06-01',
-          archived: false,
-          createdAt: '2026-08-02',
-        },
-      ]);
+      },
+    );
 
-      const exported = await repository.exportAll();
-      await appDb.savingsGoals.clear();
-      await repository.importAll(exported, 'replace');
-
-      const restored = await appDb.savingsGoals.orderBy('sortOrder').toArray();
-      expect(restored.map((entry) => entry.name)).toEqual(['Holiday', 'Camera']);
-      expect(restored[0].targetDate).toBe('2027-06-01');
-    });
-
-    it('round-trips the forecast settings row', async () => {
-      await appDb.forecastSettings.put({
-        id: 1,
-        lookbackMonths: 12,
-        basis: 'savings-transfers',
-        safetyNetAmount: 2000,
-        mode: 'when-affordable',
-        scopeAccountIds: [3],
-      });
-
-      const exported = await repository.exportAll();
-      await appDb.forecastSettings.clear();
-      await repository.importAll(exported, 'replace');
-
-      expect(await appDb.forecastSettings.get(1)).toEqual({
-        id: 1,
-        lookbackMonths: 12,
-        basis: 'savings-transfers',
-        safetyNetAmount: 2000,
-        mode: 'when-affordable',
-        scopeAccountIds: [3],
-      });
-    });
-
-    it('wipes both tables with the rest of the database', async () => {
-      await appDb.savingsGoals.put({
-        id: 1,
-        name: 'Camera',
-        targetAmount: 1200,
-        archived: false,
-        createdAt: '2026-08-01',
-      });
-      await appDb.forecastSettings.put({
-        id: 1,
-        lookbackMonths: 6,
-        basis: 'net-cash-flow',
-        safetyNetAmount: 0,
-      });
-
-      await repository.deleteAll();
-
-      expect(await appDb.savingsGoals.toArray()).toEqual([]);
-      expect(await appDb.forecastSettings.toArray()).toEqual([]);
-    });
-
-    it('accepts an older backup that predates both tables', async () => {
-      const olderBackup: AppDataExport = {
-        schemaVersion: 13,
-        exportedAt: new Date().toISOString(),
-        tables: { accounts: [account({ id: 1, name: 'Imported' })] },
-      };
-
-      await expect(repository.importAll(olderBackup, 'replace')).resolves.toBeUndefined();
-      expect(await appDb.savingsGoals.toArray()).toEqual([]);
-    });
+    expect(message).toContain('newer database schema (v99)');
   });
 
-  describe('importAll merge mode', () => {
-    it('upserts imported rows without clearing pre-existing non-colliding rows', async () => {
-      await appDb.accounts.clear();
-      const existingId = await appDb.accounts.add(account({ name: 'Existing' }));
-
-      const data: AppDataExport = {
-        schemaVersion: appDb.verno,
-        exportedAt: new Date().toISOString(),
-        tables: { accounts: [account({ id: 9999, name: 'Imported' })] },
-      };
-
-      await repository.importAll(data, 'merge');
-
-      const rows = await appDb.accounts.toArray();
-      expect(rows.map((r) => r.name).sort()).toEqual(['Existing', 'Imported']);
-      expect(rows.find((r) => r.id === existingId)?.name).toBe('Existing');
-    });
-
-    it('overwrites in place when an imported row collides with an existing id', async () => {
-      await appDb.accounts.clear();
-      const id = await appDb.accounts.add(account({ name: 'Original' }));
-
-      const data: AppDataExport = {
-        schemaVersion: appDb.verno,
-        exportedAt: new Date().toISOString(),
-        tables: { accounts: [account({ id, name: 'Renamed' })] },
-      };
-
-      await repository.importAll(data, 'merge');
-
-      const rows = await appDb.accounts.toArray();
-      expect(rows).toHaveLength(1);
-      expect(rows[0].name).toBe('Renamed');
-    });
-  });
-
-  describe('schema version guard', () => {
-    it('rejects an import whose schemaVersion is newer than the running app, before any write', async () => {
-      await appDb.accounts.clear();
-      await appDb.accounts.add(account({ name: 'Untouched' }));
-      const transactionSpy = vi.spyOn(appDb, 'transaction');
-
-      const data: AppDataExport = {
-        schemaVersion: appDb.verno + 1,
-        exportedAt: new Date().toISOString(),
-        tables: { accounts: [account({ name: 'ShouldNotLand' })] },
-      };
-
-      await expect(repository.importAll(data, 'replace')).rejects.toThrow(/newer/i);
-
-      expect(transactionSpy).not.toHaveBeenCalled();
-      const rows = await appDb.accounts.toArray();
-      expect(rows.map((r) => r.name)).toEqual(['Untouched']);
-    });
-  });
-
-  describe('deleteAll', () => {
-    it('clears every appDb table inside one write transaction', async () => {
-      await appDb.accounts.bulkAdd([account({ name: 'A' }), account({ name: 'B' })]);
-      await appDb.categories.bulkAdd([category({ name: 'Groceries' })]);
-      const transactionSpy = vi.spyOn(appDb, 'transaction');
-
-      await repository.deleteAll();
-
-      for (const table of appDb.tables) {
-        expect(await table.count()).toBe(0);
-      }
-      expect(transactionSpy).toHaveBeenCalledExactlyOnceWith(
-        'rw',
-        appDb.tables,
-        expect.any(Function),
-      );
-    });
-
-    it('leaves every table exactly as it was if a clear fails partway through', async () => {
-      await appDb.accounts.clear();
-      await appDb.categories.clear();
-      await appDb.accounts.add(account({ name: 'Survives' }));
-      await appDb.categories.add(category({ name: 'AlsoSurvives' }));
-
-      // `categories` sorts after `accounts` in appDb.tables, so failing its clear() proves the
-      // earlier accounts.clear() in the same transaction gets rolled back too.
-      const tableProto = Object.getPrototypeOf(appDb.categories);
-      const originalClear = tableProto.clear;
-      vi.spyOn(tableProto, 'clear').mockImplementation(function (this: { name: string }) {
-        if (this.name === 'categories') {
-          return Promise.reject(new Error('forced failure'));
-        }
-        return originalClear.apply(this);
-      });
-
-      await expect(repository.deleteAll()).rejects.toThrow('forced failure');
-
-      const accountsAfter = await appDb.accounts.toArray();
-      const categoriesAfter = await appDb.categories.toArray();
-      expect(accountsAfter.map((a) => a.name)).toEqual(['Survives']);
-      expect(categoriesAfter.map((c) => c.name)).toEqual(['AlsoSurvives']);
-    });
-  });
-
-  describe('mid-import failure', () => {
-    it('leaves every table exactly as it was before the import started', async () => {
-      await appDb.accounts.clear();
-      await appDb.categories.clear();
-      await appDb.accounts.add(account({ name: 'BeforeFailure' }));
-
-      // `appDb.tables` hands back a fresh `Table` wrapper per call (not the same object as
-      // `appDb.categories`), so spying on the instance property wouldn't intercept the loop below —
-      // spy on the shared `Table.prototype` instead, scoped to the `categories` table by name.
-      // `categories` sorts after `accounts` in appDb.tables, so this fails on a later table than the
-      // one whose write we assert survives.
-      const tableProto = Object.getPrototypeOf(appDb.categories);
-      const originalBulkPut = tableProto.bulkPut;
-      vi.spyOn(tableProto, 'bulkPut').mockImplementation(function (
-        this: { name: string },
-        ...args: unknown[]
-      ) {
-        if (this.name === 'categories') {
-          return Promise.reject(new Error('forced failure'));
-        }
-        return originalBulkPut.apply(this, args);
-      });
-
-      const data: AppDataExport = {
-        schemaVersion: appDb.verno,
-        exportedAt: new Date().toISOString(),
-        tables: {
-          accounts: [account({ name: 'AfterFailureShouldNotLand' })],
-          categories: [category({ name: 'AlsoShouldNotLand' })],
-        },
-      };
-
-      await expect(repository.importAll(data, 'replace')).rejects.toThrow('forced failure');
-
-      const accountsAfter = await appDb.accounts.toArray();
-      expect(accountsAfter.map((a) => a.name)).toEqual(['BeforeFailure']);
-    });
+  it('deleteAll clears the signed-in user rows', async () => {
+    await expect(
+      callApi(() => repository().deleteAll(), { method: 'DELETE', url: '/api/data' }),
+    ).resolves.toBeUndefined();
   });
 });

@@ -52,7 +52,7 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
 const setup = () => {
   const accountsRepository = { getAll: vi.fn().mockResolvedValue([jointAccount()]) };
   const categoriesRepository = { getAll: vi.fn().mockResolvedValue([partnerCategory()]) };
-  const transactionsRepository = { update: vi.fn().mockResolvedValue(1) };
+  const transactionsRepository = { bulkUpdate: vi.fn().mockResolvedValue(1) };
 
   TestBed.configureTestingModule({
     providers: [
@@ -92,12 +92,23 @@ describe('CoOwnerContributionService', () => {
     expect(updates).toEqual([]);
   });
 
-  it('persists resolved updates through the transactions repository', async () => {
+  it('persists resolved updates in one transactional call, not one request each', async () => {
     const ctx = setup();
 
-    const updates = await ctx.service.runAndPersist([transaction({ id: 1 })]);
+    const updates = await ctx.service.runAndPersist([
+      transaction({ id: 1 }),
+      transaction({ id: 2 }),
+    ]);
 
-    expect(updates).toEqual([{ id: 1, categoryId: 99 }]);
-    expect(ctx.transactionsRepository.update).toHaveBeenCalledWith(1, { categoryId: 99 });
+    expect(updates).toEqual([
+      { id: 1, categoryId: 99 },
+      { id: 2, categoryId: 99 },
+    ]);
+    // One endpoint, one SQLite transaction (TICKET-SRV-05): as N separate PATCHes, a failure partway
+    // through would leave the import half-categorised with nothing saying which half.
+    expect(ctx.transactionsRepository.bulkUpdate).toHaveBeenCalledExactlyOnceWith([
+      { id: 1, changes: { categoryId: 99 } },
+      { id: 2, changes: { categoryId: 99 } },
+    ]);
   });
 });

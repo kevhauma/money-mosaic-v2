@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { RulesRepository } from '@/core/data-access';
 
 import { RulesOverviewComponent } from './rules-overview.component';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 describe('RulesOverviewComponent', () => {
   let fixture: ComponentFixture<RulesOverviewComponent>;
@@ -11,7 +12,7 @@ describe('RulesOverviewComponent', () => {
   const setup = async (providers: unknown[] = []): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [RulesOverviewComponent],
-      providers: [provideRouter([]), ...providers],
+      providers: [...provideFakeApi(), provideRouter([]), ...providers],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RulesOverviewComponent);

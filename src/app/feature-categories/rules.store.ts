@@ -20,7 +20,7 @@ import {
   type SharedRulesFile,
   type SkippedRuleEntry,
 } from './rule-share';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 export type ImportRulesResult = { added: number; skipped: SkippedRuleEntry[] };
 
@@ -51,9 +51,14 @@ export const RulesStore = signalStore(
     /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
     const hydrate = (): Promise<void> => {
       if (!hydration) {
-        hydration = rulesRepository.getAll().then((rules) => {
-          patchState(store, setAllEntities(rules, ruleConfig), { hydrated: true });
-        });
+        hydration = retryOnFailure(
+          rulesRepository.getAll().then((rules) => {
+            patchState(store, setAllEntities(rules, ruleConfig), { hydrated: true });
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

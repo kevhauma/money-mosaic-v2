@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { appDb, DEFAULT_APP_SETTINGS } from '@/core/data-access';
+import { DEFAULT_APP_SETTINGS } from '@/core/data-access';
 import { AppSettingsStore } from '@/core/state';
 import {
   DEFAULT_CURRENCY_SYMBOL,
@@ -9,19 +9,21 @@ import {
   syncFormatSettings,
 } from '@/shared/utils';
 import { SettingsCurrencyLocaleSectionComponent } from './settings-currency-locale-section.component';
+import { provideFakeApi, seedApi } from '@/core/data-access/fake-api.testing';
+
+/** The one endpoint this section's setting lives behind. */
+const APP_SETTINGS_URL = '/api/settings/appSettings';
 
 describe('SettingsCurrencyLocaleSectionComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
       imports: [SettingsCurrencyLocaleSectionComponent],
     }).compileComponents();
   });
 
   afterEach(async () => {
-    // fake-indexeddb is a global singleton and Vitest runs with isolate:false, so a row written
-    // here would otherwise leak into other spec files.
-    await appDb.appSettings.clear();
-    // Same isolate:false leakage risk for format-settings.ts's module-level signals
+    // isolate:false leakage risk for format-settings.ts's module-level signals
     // (TICKET-SET-03/TICKET-SET-04/TICKET-NG-10).
     syncFormatSettings({
       currencySymbol: DEFAULT_CURRENCY_SYMBOL,
@@ -103,7 +105,7 @@ describe('SettingsCurrencyLocaleSectionComponent', () => {
   it('reflects a hydrated locale in both the select and the currency preview', async () => {
     // Spread the defaults rather than enumerating every field — `AppSettings` grows an additive
     // optional field most versions, and this test cares about exactly one of them.
-    await appDb.appSettings.put({ ...DEFAULT_APP_SETTINGS, locale: 'en-BE' });
+    seedApi(APP_SETTINGS_URL, { ...DEFAULT_APP_SETTINGS, locale: 'en-BE' });
     const fixture = TestBed.createComponent(SettingsCurrencyLocaleSectionComponent);
     fixture.detectChanges();
     await TestBed.inject(AppSettingsStore).hydrate();

@@ -29,7 +29,7 @@ import {
   withArchivable,
   withPersistedCrud,
 } from '@/shared/utils';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 const accountConfig = entityConfig({
   entity: type<Account>(),
@@ -193,9 +193,14 @@ export const AccountsStore = signalStore(
      */
     const hydrate = (options?: { force?: boolean }): Promise<void> => {
       if (!hydration || options?.force) {
-        hydration = accountsRepository.getAll().then((accounts) => {
-          patchState(store, setAllEntities(accounts, accountConfig), { hydrated: true });
-        });
+        hydration = retryOnFailure(
+          accountsRepository.getAll().then((accounts) => {
+            patchState(store, setAllEntities(accounts, accountConfig), { hydrated: true });
+          }),
+          () => {
+            hydration = null;
+          },
+        );
       }
       return hydration;
     };

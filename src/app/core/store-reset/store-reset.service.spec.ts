@@ -4,6 +4,7 @@ import { AccountsRepository, TransactionsRepository, type Account } from '@/core
 import { AccountsStore, TransactionsStore } from '@/core/state';
 import { AuthApiService, SessionStore, type PublicUser } from '@/core/auth';
 import { StoreResetService } from './store-reset.service';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 const account = (id: number, name: string): Account => ({
   id,
@@ -85,6 +86,7 @@ describe('StoreResetService: a second user never sees the first user’s data', 
     vi.clearAllMocks();
     TestBed.configureTestingModule({
       providers: [
+        ...provideFakeApi(),
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: transactionsRepository },
         { provide: AuthApiService, useValue: authApi },
@@ -153,5 +155,45 @@ describe('StoreResetService: a second user never sees the first user’s data', 
     await accountsStore.hydrate();
 
     expect(accountsStore.accounts().map((entry) => entry.name)).toEqual(["B's current account"]);
+  });
+});
+
+describe('retryOnFailure: a failed hydration is not remembered (TICKET-SRV-05)', () => {
+  const accountsRepository = { getAll: vi.fn(), update: vi.fn().mockResolvedValue(1) };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.configureTestingModule({
+      providers: [
+        ...provideFakeApi(),
+        { provide: AccountsRepository, useValue: accountsRepository },
+      ],
+    });
+  });
+
+  it('lets the next hydrate try again after the first one rejects', async () => {
+    // Against Dexie a read effectively never rejected, so memoising the promise and memoising a
+    // *success* were the same thing. Over HTTP they are not — and a cached rejection would answer
+    // every later hydrate, leaving the store empty until sign-out.
+    accountsRepository.getAll.mockRejectedValueOnce(new Error('Http failure response: 500'));
+    const store = TestBed.inject(AccountsStore);
+
+    await expect(store.hydrate()).rejects.toThrow('Http failure response: 500');
+    expect(store.accounts()).toEqual([]);
+
+    accountsRepository.getAll.mockResolvedValue([account(1, 'Back again')]);
+    await store.hydrate();
+
+    expect(store.accounts().map((entry) => entry.name)).toEqual(['Back again']);
+    expect(accountsRepository.getAll).toHaveBeenCalledTimes(2);
+  });
+
+  it('still memoises a successful hydration', async () => {
+    accountsRepository.getAll.mockResolvedValue([account(1, 'Once only')]);
+    const store = TestBed.inject(AccountsStore);
+
+    await Promise.all([store.hydrate(), store.hydrate(), store.hydrate()]);
+
+    expect(accountsRepository.getAll).toHaveBeenCalledOnce();
   });
 });

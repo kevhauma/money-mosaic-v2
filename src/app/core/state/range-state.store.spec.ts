@@ -1,13 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { RangeStore } from './range-state.store';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // Every case below runs against the `dashboard` page; the page argument is the only thing
 // TICKET-UI-23 changed about these behaviours, and the isolation describe at the bottom is what
 // proves the second page is a genuinely separate range rather than an alias of the first.
 describe('RangeStore', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
+    });
   });
 
   it('setPreset applies the preset range', () => {
@@ -153,7 +156,9 @@ describe('RangeStore', () => {
 
 describe('RangeStore: one range per page (TICKET-UI-23)', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
+    });
   });
 
   it('every range-owning page starts on this-month', () => {
@@ -237,7 +242,9 @@ describe('RangeStore: one range per page (TICKET-UI-23)', () => {
 
 describe('RangeStore: expression-backed state (TICKET-STAT-36)', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [...provideFakeApi()],
+    });
     vi.useFakeTimers({ toFake: ['Date'] });
   });
 

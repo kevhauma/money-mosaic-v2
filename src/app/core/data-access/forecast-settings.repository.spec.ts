@@ -1,79 +1,88 @@
-import { appDb, DEFAULT_FORECAST_SETTINGS } from './app-db';
+import { TestBed } from '@angular/core/testing';
+import { callApi, withApiTesting } from './api-client.testing';
 import { ForecastSettingsRepository } from './forecast-settings.repository';
+import { DEFAULT_FORECAST_SETTINGS } from './seed-data';
+
+const PATH = '/api/settings/forecastSettings';
 
 describe('ForecastSettingsRepository', () => {
-  const repository = new ForecastSettingsRepository();
+  withApiTesting();
 
-  // Cleared on both sides: `appDb` is a module-level singleton and Vitest runs with `isolate:
-  // false`, so a row left behind by an earlier spec file would break the "unwritten" assertion.
-  beforeEach(async () => {
-    await appDb.forecastSettings.clear();
+  const repository = (): ForecastSettingsRepository => TestBed.inject(ForecastSettingsRepository);
+
+  it('get falls back to the defaults for a row nobody has written', async () => {
+    expect(await callApi(() => repository().get(), { method: 'GET', url: PATH }, {})).toEqual(
+      DEFAULT_FORECAST_SETTINGS,
+    );
   });
 
-  afterEach(async () => {
-    await appDb.forecastSettings.clear();
+  it('get layers the stored row over the defaults', async () => {
+    expect(
+      await callApi(() => repository().get(), { method: 'GET', url: PATH }, { lookbackMonths: 3 }),
+    ).toEqual({ ...DEFAULT_FORECAST_SETTINGS, lookbackMonths: 3 });
   });
 
-  it('falls back to the defaults before anything is written — 6 months, net-cash-flow, no safety net', async () => {
-    expect(await repository.get()).toEqual(DEFAULT_FORECAST_SETTINGS);
-    expect(DEFAULT_FORECAST_SETTINGS).toEqual({
-      id: 1,
-      lookbackMonths: 6,
-      basis: 'net-cash-flow',
-      safetyNetAmount: 0,
-      mode: 'when-affordable',
-    });
+  // One field per request: the read-merge-put these five used to do is the server's merge now, so
+  // two of them racing can no longer lose one another's field.
+  it('setLookbackMonths patches only the lookback', async () => {
+    expect(
+      await callApi(
+        () => repository().setLookbackMonths(6),
+        { method: 'PATCH', url: PATH, body: { lookbackMonths: 6 } },
+        DEFAULT_FORECAST_SETTINGS,
+      ),
+    ).toBe(1);
   });
 
-  it('writes the singleton row when none exists yet', async () => {
-    await repository.setLookbackMonths(12);
-
-    expect(await appDb.forecastSettings.count()).toBe(1);
-    expect((await repository.get()).lookbackMonths).toBe(12);
+  it('setBasis patches only the basis', async () => {
+    expect(
+      await callApi(
+        () => repository().setBasis('savings-transfers'),
+        { method: 'PATCH', url: PATH, body: { basis: 'savings-transfers' } },
+        DEFAULT_FORECAST_SETTINGS,
+      ),
+    ).toBe(1);
   });
 
-  it('read-merge-puts, so setting one field never clobbers the other two', async () => {
-    await repository.setLookbackMonths(3);
-    await repository.setBasis('savings-transfers');
-    await repository.setSafetyNetAmount(2000);
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      lookbackMonths: 3,
-      basis: 'savings-transfers',
-      safetyNetAmount: 2000,
-      mode: 'when-affordable',
-    });
+  it('setSafetyNetAmount patches only the safety net', async () => {
+    expect(
+      await callApi(
+        () => repository().setSafetyNetAmount(1500),
+        { method: 'PATCH', url: PATH, body: { safetyNetAmount: 1500 } },
+        DEFAULT_FORECAST_SETTINGS,
+      ),
+    ).toBe(1);
   });
 
-  it('overwrites the singleton row rather than adding a second one', async () => {
-    await repository.setSafetyNetAmount(500);
-    await repository.setSafetyNetAmount(750);
-
-    expect(await appDb.forecastSettings.count()).toBe(1);
-    expect((await repository.get()).safetyNetAmount).toBe(750);
+  it('setMode patches only the mode', async () => {
+    expect(
+      await callApi(
+        () => repository().setMode('required-rate'),
+        { method: 'PATCH', url: PATH, body: { mode: 'required-rate' } },
+        DEFAULT_FORECAST_SETTINGS,
+      ),
+    ).toBe(1);
   });
 
-  it('writes the mode without touching the other settings (TICKET-FUT-09)', async () => {
-    await repository.setLookbackMonths(12);
-    await repository.setBasis('savings-transfers');
-
-    await repository.setMode('required-rate');
-
-    expect(await repository.get()).toEqual({
-      id: 1,
-      lookbackMonths: 12,
-      basis: 'savings-transfers',
-      safetyNetAmount: 0,
-      mode: 'required-rate',
-    });
+  it('setScopeAccountIds patches the chosen accounts', async () => {
+    expect(
+      await callApi(
+        () => repository().setScopeAccountIds([1, 2]),
+        { method: 'PATCH', url: PATH, body: { scopeAccountIds: [1, 2] } },
+        DEFAULT_FORECAST_SETTINGS,
+      ),
+    ).toBe(1);
   });
 
-  it('preserves a field the current code has no setter for yet (FUT-08’s scopeAccountIds)', async () => {
-    await appDb.forecastSettings.put({ ...DEFAULT_FORECAST_SETTINGS, scopeAccountIds: [1, 2] });
-
-    await repository.setLookbackMonths(9);
-
-    expect((await repository.get()).scopeAccountIds).toEqual([1, 2]);
+  // "All accounts" has one representation, and clearing a field is `null` on the wire — dropping
+  // the key, which is what `JSON.stringify` does with `undefined`, would patch nothing at all.
+  it('setScopeAccountIds clears the field for an empty selection', async () => {
+    expect(
+      await callApi(
+        () => repository().setScopeAccountIds([]),
+        { method: 'PATCH', url: PATH, body: { scopeAccountIds: null } },
+        DEFAULT_FORECAST_SETTINGS,
+      ),
+    ).toBe(1);
   });
 });

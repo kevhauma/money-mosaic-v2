@@ -21,6 +21,7 @@ import {
   syncFormatSettings,
 } from '@/shared/utils';
 import { IncomeStore } from './income.store';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // Hydrating `AppSettingsStore` fires its `syncFormatSettings` effect, and those are process-global
 // module signals (Vitest runs with isolate:false) — reset them so specs that assume the default
@@ -133,6 +134,7 @@ const setup = async (
   appSettingsRepository.setMainIncomeCategoryId.mockResolvedValue(1);
   TestBed.configureTestingModule({
     providers: [
+      ...provideFakeApi(),
       { provide: CategoriesRepository, useValue: categoriesRepository },
       { provide: AccountsRepository, useValue: accountsRepository },
       { provide: TransactionsRepository, useValue: transactionsRepository },

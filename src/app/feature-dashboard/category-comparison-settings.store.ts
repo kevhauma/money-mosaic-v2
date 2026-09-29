@@ -5,7 +5,7 @@ import {
   DEFAULT_CATEGORY_COMPARISON_SETTINGS,
   type CategoryComparisonSettings,
 } from '@/core/data-access';
-import { createStoreReset, registerStoreReset } from '@/core/store-reset';
+import { createStoreReset, registerStoreReset, retryOnFailure } from '@/core/store-reset';
 
 /**
  * The user's optional category-exclusion list for the dashboard's category period comparison
@@ -28,9 +28,14 @@ export const CategoryComparisonSettingsStore = signalStore(
       /** Idempotent — triggered on first injection (`withHooks` below, TICKET-PERF-07). */
       hydrate: (): Promise<void> => {
         if (!hydration) {
-          hydration = categoryComparisonSettingsRepository
-            .get()
-            .then((settings) => patchState(store, settings));
+          hydration = retryOnFailure(
+            categoryComparisonSettingsRepository
+              .get()
+              .then((settings) => patchState(store, settings)),
+            () => {
+              hydration = null;
+            },
+          );
         }
         return hydration;
       },
