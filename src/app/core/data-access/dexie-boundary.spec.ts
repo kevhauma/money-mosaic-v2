@@ -16,8 +16,10 @@ import { join } from 'node:path';
  * through the folder's own barrel would pass an import-path check and fail this one.
  *
  * `app-db.ts` itself survives until TICKET-SRV-08 deletes it, because TICKET-SRV-07's one-time
- * migration reads the old database to upload it. That file and its spec are the exemptions, and the
- * migration helper joins them when it lands.
+ * migration reads the old database to upload it. That file and its spec are this folder's only
+ * exemptions — the migration reader deliberately went *outside* the folder, to
+ * `core/local-migration/local-database.ts`, so this rule could stay absolute rather than grow a
+ * third name. TICKET-SRV-08 deletes both sides.
  */
 const DATA_ACCESS = join(process.cwd(), 'src', 'app', 'core', 'data-access');
 

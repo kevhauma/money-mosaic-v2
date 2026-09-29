@@ -46,6 +46,22 @@ export const PER_USER_TABLES: readonly PerUserTable[] = (Object.values(schema) a
   .map((table) => table as PerUserTable);
 
 /**
+ * Every table a **JSON document** can carry — `PER_USER_TABLES` minus `categoryModel`.
+ *
+ * The model is megabytes of `Float32` weights in three blob columns, and a JSON document is the one
+ * shape they cannot survive: `JSON.stringify` turns an `ArrayBuffer` into `{}`, which is how the
+ * Dexie export silently lost every trained weight it ever wrote (TICKET-DAT-05's closing note). It
+ * travels as bytes through `/api/categoryModel` instead, on both the backup path (TICKET-SRV-04)
+ * and the browser-database migration (TICKET-SRV-07).
+ *
+ * Lives here next to the list it is derived from, rather than in either of the two route modules
+ * that would otherwise each own a copy.
+ */
+export const TRANSPORT_TABLES: readonly PerUserTable[] = PER_USER_TABLES.filter(
+  (table) => getTableName(table) !== 'categoryModel',
+);
+
+/**
  * Deletes every row this user owns, in every table — `DELETE /api/data`, a `replace` import's first
  * half, and the data half of deleting the account itself.
  *

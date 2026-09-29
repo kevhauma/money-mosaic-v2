@@ -15,13 +15,17 @@ import {
 } from '../http/validate.js';
 import { authUserOf } from '../middleware/require-auth.js';
 import {
+  migrateLocalDatabase,
+  readMigrationState,
+  type MigrationDocument,
+} from '../operations/migrate-local.js';
+import {
   clearUserRows,
   idOf,
   ownerOf,
-  PER_USER_TABLES,
+  TRANSPORT_TABLES,
   type PerUserTable,
 } from '../operations/user-rows.js';
-import { categoryModel } from '../schema/category-model.js';
 import { transactions } from '../schema/transactions.js';
 import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.js';
 
@@ -54,10 +58,17 @@ import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.j
  */
 export const DATA_SCHEMA_VERSION = 16;
 
-/** Everything a JSON document can carry — see the note about `categoryModel` above. */
-const TRANSPORT_TABLES: readonly PerUserTable[] = PER_USER_TABLES.filter(
-  (table) => table !== (categoryModel as unknown as PerUserTable),
-);
+/**
+ * The one route whose body is a whole browser database (TICKET-SRV-07), and the ceiling it gets.
+ *
+ * `JSON_BODY_LIMIT` is 10 MB, which is generous for a CSV import's worth of transactions and not
+ * generous at all for a decade of them carrying `rawLine`/`rawRow` — and the failure mode is a bare
+ * 413 with nothing in it, on the one operation a user only ever performs once. `app.ts` mounts this
+ * parser in front of the app-wide one for this path alone, so every other endpoint keeps the
+ * smaller ceiling.
+ */
+export const MIGRATE_LOCAL_PATH = '/api/data/migrate-local';
+export const MIGRATE_LOCAL_BODY_LIMIT = '256mb';
 
 /** Columns the server computes, which are neither exported nor accepted back (`ParseOptions`). */
 const derivedOf = (table: PerUserTable): readonly string[] =>
@@ -273,6 +284,39 @@ export const createDataRouter = (db: DrizzleDb): Router => {
     importDocument(db, payload, user.id);
 
     res.status(204).end();
+  });
+
+  /**
+   * What the account already holds (TICKET-SRV-07) — the question the migration dialog asks before
+   * it offers anything, since "this account is empty" and "this account has four years of data in
+   * it" are two very different offers.
+   */
+  router.get('/migrate-local', (req, res) => {
+    const user = authUserOf(req);
+    res.json(readMigrationState(db, user.id));
+  });
+
+  /**
+   * The one-time move of a browser database into this account (TICKET-SRV-07).
+   *
+   * Same envelope as `/import`, and deliberately **not** the same endpoint: `/import` preserves the
+   * ids a backup carries, and a browser database's ids were assigned by a different counter in a
+   * different id space. Every row here is inserted with a fresh id and every reference rewritten —
+   * `operations/migrate-local.ts` — inside one transaction, so a failure part-way leaves the
+   * account exactly as it was and the whole thing can simply be run again.
+   */
+  router.post('/migrate-local', (req, res) => {
+    const user = authUserOf(req);
+    const { mode, document } = asImportBody(req.body);
+
+    const report = db.transaction((tx) => {
+      // As in `importDocument`: the document's rows reference each other in both directions, so the
+      // per-statement check has to move to COMMIT. `clearUserRows` needs it too.
+      tx.run(sql`PRAGMA defer_foreign_keys = ON`);
+      return migrateLocalDatabase(tx, document.tables as MigrationDocument, mode, user.id);
+    });
+
+    res.json(report);
   });
 
   /** FR-DAT-3, scoped: every row of the signed-in user, and nobody else's. */

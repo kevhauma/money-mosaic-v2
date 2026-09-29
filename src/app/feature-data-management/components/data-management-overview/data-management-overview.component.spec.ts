@@ -1,6 +1,8 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { DataManagementRepository, type AppDataExport } from '@/core/data-access';
+import { LocalMigrationService } from '@/core/local-migration';
 import { StorageStatusService } from '@/core/storage';
 import { DataManagementOverviewComponent } from './data-management-overview.component';
 
@@ -285,6 +287,41 @@ describe('DataManagementOverviewComponent', () => {
       expect(reload).not.toHaveBeenCalled();
 
       Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
+    });
+  });
+
+  /**
+   * The re-entry point for TICKET-SRV-07's one-time migration: the card exists only for a browser
+   * that still has a database to move, and pressing it re-opens the shell's dialog through the
+   * shared service rather than starting a second conversation here.
+   */
+  describe('the browser-database migration card', () => {
+    it('is absent when this browser has nothing left to move', async () => {
+      await setup();
+
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+        "Move this browser's older data",
+      );
+    });
+
+    it('offers the move again once the service has found a database', async () => {
+      await setup();
+      const service = TestBed.inject(LocalMigrationService);
+      const offerAgain = vi.spyOn(service, 'offerAgain').mockResolvedValue(undefined);
+      // Stood in before the component is created, not after: `available` is readonly on the service
+      // and the template is OnPush, so a signal swapped in afterwards is one the template never
+      // registered a dependency on and no amount of `detectChanges` would show it.
+      Object.defineProperty(service, 'available', { value: signal(true).asReadonly() });
+
+      const withDatabase = TestBed.createComponent(DataManagementOverviewComponent);
+      withDatabase.detectChanges();
+
+      const button = [
+        ...(withDatabase.nativeElement as HTMLElement).querySelectorAll('button'),
+      ].find((candidate) => candidate.textContent?.includes('Move it into my account'));
+      button?.click();
+
+      expect(offerAgain).toHaveBeenCalledTimes(1);
     });
   });
 

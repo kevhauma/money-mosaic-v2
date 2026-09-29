@@ -376,10 +376,11 @@ class AppDb extends Dexie {
   }
 }
 
-// Reason: genuinely referenced by nothing since TICKET-SRV-06 took `appDb.open()` out of
-// `provideAppInitializer` — the last line of code that touched it. The class and its version
-// history survive on purpose: TICKET-SRV-07 reads this database once, to migrate a dataset already
-// sitting in somebody's browser onto the server, and TICKET-SRV-08 deletes the whole apparatus
-// afterwards. Deleting it here would take that migration's only source with it.
-// fallow-ignore-next-line unused-export
+// Referenced by exactly one module in the app (TICKET-SRV-07):
+// `core/local-migration/local-database.ts`, which opens this database once to upload a dataset
+// already sitting in somebody's browser and is loaded by a dynamic `import()` so Dexie and this
+// schema history stay out of every other chunk. Nothing else has touched it since TICKET-SRV-06
+// took `appDb.open()` out of `provideAppInitializer`, and `dexie-boundary.spec.ts` keeps it that
+// way for this folder. TICKET-SRV-08 deletes the whole apparatus, both sides, once the migration
+// has had its release to run in.
 export const appDb = new AppDb();

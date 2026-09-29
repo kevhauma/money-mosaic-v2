@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DataManagementRepository, type AppDataExport, type ImportMode } from '@/core/data-access';
+import { LocalMigrationService } from '@/core/local-migration';
 import { StorageStatusService } from '@/core/storage';
 import {
   AlertComponent,
@@ -64,6 +65,14 @@ const describeOmissions = (omitted: Record<string, string[]>): string | null => 
 export class DataManagementOverviewComponent {
   private readonly dataManagementRepository = inject(DataManagementRepository);
   private readonly storageStatusService = inject(StorageStatusService);
+  /**
+   * The re-entry point for TICKET-SRV-07's one-time migration. The offer itself is made once, on
+   * sign-in, from the app shell; this is where someone who declined it — or whose attempt failed —
+   * comes back to it, which is why the same service opens the same dialog rather than this page
+   * owning a second copy of that conversation. The card is absent entirely unless this browser
+   * still has a database to move.
+   */
+  protected readonly localMigration = inject(LocalMigrationService);
   protected readonly storageStatus = this.storageStatusService.status;
 
   constructor() {

@@ -148,6 +148,8 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
     exportAll: ['GET', '/api/data/export'],
     importAll: ['POST', '/api/data/import'],
     deleteAll: ['DELETE', '/api/data'],
+    localMigrationState: ['GET', '/api/data/migrate-local'],
+    migrateLocalDatabase: ['POST', '/api/data/migrate-local'],
   },
   AppSettingsRepository: settingsRepository('/api/settings/appSettings', [
     'setPrimaryColor',

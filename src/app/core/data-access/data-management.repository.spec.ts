@@ -56,6 +56,44 @@ describe('DataManagementRepository', () => {
     expect(message).toContain('newer database schema (v99)');
   });
 
+  it('localMigrationState reads what the account already holds', async () => {
+    const state = { counts: { transactions: 4 }, hasExistingData: true };
+
+    expect(
+      await callApi(
+        () => repository().localMigrationState(),
+        { method: 'GET', url: '/api/data/migrate-local' },
+        state,
+      ),
+    ).toEqual(state);
+  });
+
+  /**
+   * A different endpoint from `importAll`, deliberately, and the spec says so: the same document
+   * goes to `/migrate-local`, where every id is reassigned rather than preserved (TICKET-SRV-07).
+   */
+  it('migrateLocalDatabase posts the browser database and resolves the report', async () => {
+    const report = {
+      migrated: { accounts: 2 },
+      reused: { categories: 1 },
+      skipped: {},
+      clearedReferences: 0,
+      categoryIds: { 1: 44 },
+    };
+
+    expect(
+      await callApi(
+        () => repository().migrateLocalDatabase(document(), 'merge'),
+        {
+          method: 'POST',
+          url: '/api/data/migrate-local',
+          body: { mode: 'merge', data: document() },
+        },
+        report,
+      ),
+    ).toEqual(report);
+  });
+
   it('deleteAll clears the signed-in user rows', async () => {
     await expect(
       callApi(() => repository().deleteAll(), { method: 'DELETE', url: '/api/data' }),

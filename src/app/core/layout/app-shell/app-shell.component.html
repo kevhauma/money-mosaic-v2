@@ -70,6 +70,11 @@
            page inset instead of needing its own (TICKET-AUTH-04). Renders nothing at all for anyone
            but an admin still on the seeded password. -->
       <app-default-password-notice />
+
+      <!-- The one-time offer to move a pre-v3 browser database into this account (TICKET-SRV-07).
+           A `<dialog>` that renders nothing until the service has found something to offer, mounted
+           here rather than on a page so that it can appear wherever a sign-in happens to land. -->
+      <app-local-migration-dialog />
       <router-outlet />
     </main>
   </div>

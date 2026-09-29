@@ -60,6 +60,19 @@
   </mm-paper>
 </div>
 
+@if (localMigration.available()) {
+  <mm-paper elevation="flat" bodyClass="card-body gap-3" class="mt-4">
+    <h2 class="card-title text-base">Move this browser's older data</h2>
+    <mm-text as="p" class="text-sm text-base-content/60">
+      This browser still holds data from before Money Mosaic had accounts. Move it into the account
+      you are signed in as — it uploads in one step, and nothing changes if it fails.
+    </mm-text>
+    <mm-button color="primary" class="w-fit" (click)="localMigration.offerAgain()">
+      Move it into my account
+    </mm-button>
+  </mm-paper>
+}
+
 <mm-paper elevation="flat" bodyClass="card-body gap-2" class="mt-4">
   <mm-flex align="center" gap="2">
     <h2 class="card-title text-base">Persistent storage</h2>

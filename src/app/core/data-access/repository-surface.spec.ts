@@ -13,6 +13,8 @@ import {
   DataManagementRepository,
   type AppDataExport,
   type ImportMode,
+  type LocalMigrationReport,
+  type LocalMigrationState,
 } from './data-management.repository';
 import type {
   Account,
@@ -248,6 +250,11 @@ type SettingsPins = [
       exportAll: () => Promise<AppDataExport>;
       importAll: (data: AppDataExport, mode: ImportMode) => Promise<void>;
       deleteAll: () => Promise<void>;
+      localMigrationState: () => Promise<LocalMigrationState>;
+      migrateLocalDatabase: (
+        data: AppDataExport,
+        mode: ImportMode,
+      ) => Promise<LocalMigrationReport>;
     }
   >,
 ];
@@ -339,7 +346,13 @@ const ARITIES: readonly [string, new () => object, Arities][] = [
   [
     'DataManagementRepository',
     DataManagementRepository,
-    { exportAll: 0, importAll: 2, deleteAll: 0 },
+    {
+      exportAll: 0,
+      importAll: 2,
+      deleteAll: 0,
+      localMigrationState: 0,
+      migrateLocalDatabase: 2,
+    },
   ],
 ];
 

@@ -1,0 +1,216 @@
+<mm-modal [open]="service.open()" (openChange)="onOpenChange($event)" class="max-w-xl">
+  <span mm-modal-title>Move this browser's data into your account</span>
+
+  @switch (service.status()) {
+    @case ('offered') {
+      @if (service.alreadyMoved()) {
+        <!-- Reached by re-opening the offer from the Data section after a successful move: the
+             browser copy is only deleted if the user asks for it, so the entry point outlives the
+             migration. Saying so is the whole point — accepting again would add a second complete
+             copy of everything beside the first, and nothing server-side refuses it. -->
+        <mm-alert status="warning" variant="soft" class="mt-3 mb-1">
+          This browser's data has already been moved into this account. Moving it again would add a
+          second copy of everything — every account, transaction and rule — beside the first.
+        </mm-alert>
+      }
+
+      <mm-text as="p" variant="caption" class="py-3">
+        This browser still holds data from before Money Mosaic had accounts:
+        {{ foundLine() }} Moving it uploads all of it into the account you are signed in as. Your
+        browser copy is left untouched until you say otherwise.
+      </mm-text>
+
+      @if (hasTrainedModel()) {
+        <mm-text as="p" variant="caption" class="pb-3">
+          It also holds a trained auto-categoriser, which moves with the rest.
+        </mm-text>
+      }
+
+      @if (needsModeChoice()) {
+        @if (needsChoice()) {
+          <mm-alert status="warning" variant="soft" class="mb-3">
+            This account is not empty — it already holds {{ existingLine() }}. Choose what should
+            happen to it.
+          </mm-alert>
+        }
+
+        <div class="flex flex-col gap-1">
+          <label class="flex cursor-pointer items-start gap-3">
+            <input
+              type="radio"
+              name="local-migration-mode"
+              class="radio radio-sm mt-1"
+              [checked]="mode() === 'merge'"
+              (change)="setMode('merge')"
+            />
+            <span>
+              <mm-text as="p" weight="medium">Merge into what is there</mm-text>
+              <mm-text as="p" class="text-xs text-base-content/60">
+                Everything already in the account stays, and this browser's data is added beside it.
+              </mm-text>
+            </span>
+          </label>
+          <label class="flex cursor-pointer items-start gap-3">
+            <input
+              type="radio"
+              name="local-migration-mode"
+              class="radio radio-sm mt-1"
+              [checked]="mode() === 'replace'"
+              (change)="setMode('replace')"
+            />
+            <span>
+              <mm-text as="p" weight="medium">Replace everything</mm-text>
+              <mm-text as="p" class="text-xs text-base-content/60">
+                Erase what the account holds first, then move this browser's data in.
+              </mm-text>
+            </span>
+          </label>
+        </div>
+
+        @if (mode() === 'replace') {
+          <mm-alert status="error" class="mt-3">
+            <label class="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                class="checkbox checkbox-sm mt-1"
+                [checked]="replaceConfirmed()"
+                (change)="replaceConfirmed.set(!replaceConfirmed())"
+              />
+              <span>
+                I understand this permanently erases the {{ existingLine() }}, and that it cannot be
+                undone.
+              </span>
+            </label>
+          </mm-alert>
+        }
+      }
+
+      <div class="modal-action flex-wrap">
+        <mm-button type="button" (click)="service.neverAskAgain()">
+          Never ask again on this browser
+        </mm-button>
+        <mm-button type="button" (click)="service.remindLater()">Remind me later</mm-button>
+        <mm-button
+          type="button"
+          [color]="mode() === 'replace' ? 'error' : 'primary'"
+          [disabled]="!canMove()"
+          (click)="move()"
+        >
+          Move it now
+        </mm-button>
+      </div>
+    }
+
+    @case ('running') {
+      <mm-text as="p" variant="caption" class="py-3">
+        Moving your data. This happens in one step on the server — if anything goes wrong, your
+        account is left exactly as it is now.
+      </mm-text>
+      <progress class="progress progress-primary w-full"></progress>
+    }
+
+    @case ('done') {
+      <mm-alert status="success" variant="soft" class="my-3">Your data has been moved.</mm-alert>
+
+      <mm-text as="p" weight="medium">What landed</mm-text>
+      <ul class="mt-1 list-inside list-disc text-sm text-base-content/70">
+        @for (entry of migratedTallies(); track entry.label) {
+          <li>{{ entry.count }} {{ entry.label }}</li>
+        }
+      </ul>
+
+      @if (reusedTallies().length) {
+        <mm-text as="p" weight="medium" class="mt-3">Matched to what was already here</mm-text>
+        <ul class="mt-1 list-inside list-disc text-sm text-base-content/70">
+          @for (entry of reusedTallies(); track entry.label) {
+            <li>{{ entry.count }} {{ entry.label }}</li>
+          }
+        </ul>
+      }
+
+      @if (displacedTallies().length) {
+        <!-- Separate from "matched to what was already here": that means the same row was found, and
+             this means the browser's version of it was thrown away. -->
+        <mm-alert status="warning" variant="soft" class="mt-3">
+          <span>
+            @for (entry of displacedTallies(); track entry.label) {
+              {{ entry.count }} {{ entry.label }} were already recorded in this account, so what
+              this browser held for them was not moved.
+            }
+          </span>
+        </mm-alert>
+      }
+
+      @if (skippedTallies().length || clearedReferences() > 0) {
+        <mm-alert status="warning" variant="soft" class="mt-3">
+          <span>
+            Some rows referred to things that were not in the browser database.
+            @for (entry of skippedTallies(); track entry.label) {
+              {{ entry.count }} {{ entry.label }} could not be moved.
+            }
+            @if (clearedReferences() > 0) {
+              {{ clearedReferences() }} links were cleared.
+            }
+          </span>
+        </mm-alert>
+      }
+
+      @switch (service.modelOutcome()) {
+        @case ('moved') {
+          <mm-text as="p" variant="caption" class="mt-3">
+            Your trained auto-categoriser moved with it.
+          </mm-text>
+        }
+        @case ('failed') {
+          <mm-alert status="warning" variant="soft" class="mt-3">
+            The trained auto-categoriser could not be uploaded. Retrain it from the Learning page —
+            none of your transactions were affected.
+          </mm-alert>
+        }
+      }
+
+      @if (service.localCopyPresent()) {
+        <mm-text as="p" weight="medium" class="mt-4">The copy in this browser</mm-text>
+        <mm-text as="p" variant="caption">
+          Your account now holds this data. The browser copy is still there and is no longer read by
+          anything — keeping it is a free backup, but it will never be updated again. Consider
+          exporting a file from the Data page before deleting it.
+        </mm-text>
+      } @else {
+        <mm-alert status="info" variant="soft" class="mt-4">
+          The browser copy has been deleted. Your account holds the only copy now.
+        </mm-alert>
+      }
+
+      <div class="modal-action flex-wrap">
+        @if (service.localCopyPresent()) {
+          <mm-button
+            type="button"
+            color="error"
+            variant="outline"
+            [disabled]="deletingLocalCopy()"
+            (click)="deleteLocalCopy()"
+          >
+            Delete the browser copy
+          </mm-button>
+        }
+        <mm-button type="button" color="primary" (click)="service.dismiss()">
+          {{ service.localCopyPresent() ? 'Keep it for now' : 'Close' }}
+        </mm-button>
+      </div>
+    }
+
+    @case ('failed') {
+      <mm-alert status="error" class="my-3">{{ service.error() }}</mm-alert>
+      <mm-text as="p" variant="caption">
+        Nothing was changed — the move runs as one step, so a failure leaves your account exactly as
+        it was. You can try again now, or later from the Data page.
+      </mm-text>
+
+      <div class="modal-action">
+        <mm-button type="button" (click)="service.dismiss()">Close</mm-button>
+        <mm-button type="button" color="primary" (click)="move()">Try again</mm-button>
+      </div>
+    }
+  }
+</mm-modal>
