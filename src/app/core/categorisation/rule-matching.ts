@@ -26,8 +26,9 @@ const fieldValue = (transaction: Transaction, field: RuleCondition['field']): st
 /** `null` covers both a non-regex condition and an invalid pattern — either way the regex branch fails closed. */
 const compileRegex = (value: RuleCondition['value']): RegExp | null => {
   try {
-    // Non-literal pattern (CWE-1333/ReDoS candidate, fallow f3f188c9d91b5d51): the only "attacker" in
-    // this local-first app is the user's own rule. Mitigated per TICKET-PERF-02 — `prepareRules`
+    // Non-literal pattern (CWE-1333/ReDoS candidate, fallow f3f188c9d91b5d51): the pattern is typed
+    // by the signed-in user into their own rule and runs in their own browser, so the only
+    // "attacker" here is themselves. Mitigated per TICKET-PERF-02 — `prepareRules`
     // compiles each pattern once per pass instead of once per transaction, and the rule form caps
     // regex condition input at `MAX_REGEX_PATTERN_LENGTH` (200 chars) as cheap ReDoS damage limitation.
     // Backtracking-safety analysis itself is out of scope (unreliable) per the ticket.

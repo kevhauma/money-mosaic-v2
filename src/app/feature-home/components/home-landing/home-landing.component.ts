@@ -80,9 +80,9 @@ const ACCOUNT_CARDS: readonly AccountCard[] = [
 const VALUE_PROPS: readonly ValueProp[] = [
   {
     icon: 'tablerShieldLock',
-    title: 'Nothing to breach, because nothing leaves your device',
+    title: 'Nothing to breach, because nothing leaves your network',
     description:
-      "Your transactions live in your browser's own database. There's no server to hack, no company to get acquired, no shutdown that takes your history down with it.",
+      'Your transactions live in one SQLite file on hardware you own. There is no company to get acquired, no cloud account anyone else can reach, and no shutdown that takes your history down with it.',
   },
   {
     icon: 'tablerCoin',
@@ -205,7 +205,7 @@ const FEATURE_GROUPS: readonly FeatureGroup[] = [
     items: [
       'Full backup and restore as a plain JSON file, with a choice of replace or merge on import',
       'Delete everything in one confirmed action',
-      'Request persistent browser storage so your data survives routine browser cleanups',
+      'Every account on the server keeps its own separate data, so a household shares one install without sharing figures',
     ],
   },
 ];

@@ -9,7 +9,8 @@ const SETTINGS_PATH = '/settings/categoryModelSettings';
 
 /**
  * The three `ArrayBuffer` fields of `CategoryModelArtifact`, in the order the envelope writes them.
- * Both sides pass the same list, which is what makes the body self-describing rather than positional.
+ * Both sides pass the same list, which is what makes the body self-describing rather than
+ * positional.
  */
 const BLOB_FIELDS = ['modelTopology', 'weightSpecs', 'weightData'] as const;
 

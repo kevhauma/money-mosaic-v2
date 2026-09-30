@@ -48,7 +48,7 @@ Subagents in `.claude/agents/`: `conventions-reviewer` (diff review against proj
 
 - **Never raise `maximumWarning`/`maximumError` bundle budgets in `angular.json`.** Solve size problems with lazy-loading or dependency dieting instead.
 - **Schema changes go through Drizzle migrations**: edit `server/src/schema/`, then `npm run server:migrate`. Rename the generated `NNNN_<random>.sql` descriptively and update its `tag` in `server/drizzle/meta/_journal.json`. **Never edit a shipped migration** — add another one.
-- Components/stores never call the API directly (no `HttpClient`, no `ApiClient`) — always go through a repository in `core/data-access/`, which is the one seam that knows a server exists.
+- Components/stores never call the API directly (no `HttpClient`, no `ApiClient`) — always go through a repository in `core/data-access/`, which is the seam that knows a server exists. The only sanctioned `ApiClient` callers outside that folder are the four multi-table operation services in `core/` (`import`, `transfers`, `transactions`, `accounts`), each owning one transactional endpoint a per-entity repository cannot express — don't "fix" those back.
 - Every entity table carries a `userId`; every query filters on the session's user, which comes from the cookie and from nowhere else — never from a body, query string or path.
 - Rules must never overwrite a category the user set manually (`categoryManual` flag on `Transaction`).
 - Cross-feature imports go through the feature's `index.ts` barrel (`@/feature-x`), never deep paths. Two exceptions already in place — don't "fix" either back:

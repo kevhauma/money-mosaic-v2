@@ -21,7 +21,7 @@ import { defer, type Observable } from 'rxjs';
  *
  * So these specs get a backend that answers the way an **empty account** would: lists are empty,
  * unwritten singletons are `{}` (the repository layers its `DEFAULT_*` over that), a create is
- * echoed back with an id. That is exactly the state `appDb.<table>.clear()` used to put them in,
+ * echoed back with an id. That is exactly the state an emptied local table used to put them in,
  * which is why this replaces those hooks one for one rather than each spec growing a stub per
  * repository.
  *
@@ -172,7 +172,7 @@ export class FakeApiBackend implements HttpBackend {
 
 /**
  * Makes a row already exist, for a spec whose subject is what a *stored* value renders as — the
- * replacement for the `appDb.<table>.put(...)` those specs used to seed with. Call it after the
+ * replacement for the direct table write those specs used to seed with. Call it after the
  * TestBed is configured and before the component is created, like the write it replaces.
  */
 export const seedApi = (url: string, body: unknown): void => {
@@ -181,7 +181,7 @@ export const seedApi = (url: string, body: unknown): void => {
 
 /**
  * Every request the fake backend answered, in order — for a spec asserting what was *not* written.
- * The replacement for the `expect(await appDb.<table>.count()).toBe(0)` such specs used, and a
+ * The replacement for the row-count assertion such specs used against the local table, and a
  * stricter one: it sees the request, so it fails on a write the server would have rejected too.
  */
 export const apiCalls = (): readonly { method: string; url: string; body: unknown }[] =>

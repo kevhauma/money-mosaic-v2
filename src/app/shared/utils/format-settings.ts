@@ -28,9 +28,9 @@ export const DEFAULT_LOCALE = 'en-BE';
  *
  * TICKET-SET-10 considered deriving this from `navigator.language` and rejected it: the browser
  * language of a Belgian user is routinely `en-US`, which is a supported preset, so detection would
- * hand that user back the exact `MM/DD/YYYY` ordering this ticket exists to remove. A single-user
- * local-first app with one documented locale gains nothing from guessing, and the Settings →
- * Currency & locale select overrides this in one click either way.
+ * hand that user back the exact `MM/DD/YYYY` ordering this ticket exists to remove. An app with
+ * one documented locale gains nothing from guessing, and the Settings → Currency & locale select
+ * overrides this in one click either way.
  *
  * Kept as a function rather than inlining `DEFAULT_LOCALE` at the two call sites so the decision
  * has one named home if a future ticket does want detection.

@@ -5,8 +5,9 @@ import { createStoreReset, retryOnFailure } from './store-reset.service';
 /**
  * The loading/error pair every hydrating store carries since TICKET-SRV-06.
  *
- * Against a local database a hydration resolved in a microtask and could not fail, so "empty" and "not
- * loaded yet" were the same thing for about a frame and nobody could tell. Against a server they
+ * Against a local database a hydration resolved in a microtask and could not fail, so "empty" and
+ * "not loaded yet" were the same thing for about a frame and nobody could tell. Against a server
+ * they
  * are minutes apart and one of them is a lie: a dashboard that renders €0 because the request
  * failed is worse than one that says it failed, because the user believes the number.
  */

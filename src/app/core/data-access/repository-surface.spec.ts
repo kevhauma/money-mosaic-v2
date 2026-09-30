@@ -54,8 +54,8 @@ import { TransfersRepository } from './transfers.repository';
  *
  * Seventeen repositories were reimplemented by hand over HTTP, and the promise that made that
  * survivable was that **not one caller changes**: the same method names, the same parameters, the
- * same return types, down to the `Promise<number>` the old table's `update` answered with. That promise is
- * exactly the kind a hand port breaks quietly — a `Promise<void>` becomes a `Promise<number>` and a
+ * same return types, down to the `Promise<number>` the old table's `update` answered with. That
+ * promise is exactly the kind a hand port breaks quietly — a `Promise<void>` becomes a `Promise<number>` and a
  * caller's `if` starts always-truthing — so it is written down here rather than trusted.
  *
  * **The pins below are compile-time.** `Pinned<Repository, Expected>` is `never` unless the two are

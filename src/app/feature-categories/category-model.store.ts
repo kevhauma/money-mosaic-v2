@@ -56,9 +56,10 @@ const initialState: CategoryModelState = {
 
 /**
  * Root store tying the auto-categoriser together (FR-ML-7): status machine, suggestions, and rule
- * proposals. Never writes through a repository of its own and never sets a category itself — `acceptSuggestion`/
- * `acceptProposal` always delegate to `TransactionsStore.bulkAssignCategory`/
- * `RulesStore.createRuleFromCounterparty`, the same paths already audited for FR-CAT rules.
+ * proposals. It owns the trained artifact and its settings, through `CategoryModelRepository` —
+ * but it never categorises anything itself: `acceptSuggestion`/`acceptProposal` always delegate to
+ * `TransactionsStore.bulkAssignCategory`/`RulesStore.createRuleFromCounterparty`, the same paths
+ * already audited for FR-CAT rules.
  */
 export const CategoryModelStore = signalStore(
   { providedIn: 'root' },

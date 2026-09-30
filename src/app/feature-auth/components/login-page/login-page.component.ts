@@ -5,8 +5,8 @@ import { SessionStore } from '@/core/auth';
 // Imported straight from their files rather than through the `@/shared/ui` barrel: that barrel
 // re-exports `mm-privacy-toggle`, which injects `AppSettingsStore` — importing it here would drag
 // `@/core/state` (and every repository behind it) into the login chunk, which is meant to carry
-// nothing but
-// the form (TICKET-AUTH-02). Same reasoning as `app.config.ts`'s note about the shell barrel.
+// nothing but the form (TICKET-AUTH-02). Same reasoning as `app.config.ts`'s note about the shell
+// barrel.
 import { AlertComponent } from '@/shared/ui/alert/alert.component';
 import { ButtonComponent } from '@/shared/ui/button/button.component';
 import { FieldsetComponent } from '@/shared/ui/fieldset/fieldset.component';

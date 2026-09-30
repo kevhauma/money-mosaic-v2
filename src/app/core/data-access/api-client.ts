@@ -6,8 +6,9 @@ import { httpStatusOf, ServerUnreachableError } from '@/core/server-status';
 /**
  * The one place a repository turns into an HTTP call (TICKET-SRV-05).
  *
- * Every repository in this folder used to wrap a browser-database table; each now wraps a route of the API
- * from TICKET-SRV-03/04. What they share is this client: the `/api` base path, the JSON handling,
+ * Every repository in this folder used to wrap a browser-database table; each now wraps a route
+ * of the API from TICKET-SRV-03/04. What they share is this client: the `/api` base path, the JSON
+ * handling,
  * and — the reason it is one class rather than seventeen copies of `firstValueFrom` — a single
  * place that turns a failure response into a rejected promise carrying **the server's own
  * message**. A repository that built its own request would each have to remember that, and the one

@@ -4,8 +4,9 @@
 @plugin 'daisyui';
 
 /**
- * Self-hosted display faces, one per theme style that needs a non-system face (this is a
- * local-first app — no font-CDN requests). Importing every @font-face up front is cheap: the
+ * Self-hosted display faces, one per theme style that needs a non-system face (this app makes no
+ * request to anything the user does not run — a font CDN included). Importing every @font-face up
+ * front is cheap: the
  * browser only downloads a font file once rendered text actually uses that family, and only the
  * active theme's `--font-display`/body font ever references it.
  */

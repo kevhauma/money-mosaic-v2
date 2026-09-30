@@ -40,8 +40,9 @@ export class CoOwnerContributionService {
     ]);
     const updates = this.applyToTransactions(transactions, accounts, categories);
     // One transactional endpoint, not one PATCH per transaction (TICKET-SRV-05). As a `Promise.all`
-    // over the browser database this was N cheap local writes; over HTTP it is N round trips, and a failure partway
-    // through would leave the import half-categorised with nothing saying which half.
+    // over the browser database this was N cheap local writes; over HTTP it is N round trips, and
+    // a failure partway through would leave the import half-categorised with nothing saying which
+    // half.
     await this.transactionsRepository.bulkUpdate(
       updates.map(({ id, categoryId }) => ({ id, changes: { categoryId } })),
     );

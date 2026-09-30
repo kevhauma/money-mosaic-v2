@@ -130,8 +130,8 @@ const defaultStoreState = (): RangeStoreState => ({
  * and makes the isolation testable in one place.
  *
  * Ephemeral UI state only — nothing is persisted, and it resets to the current-month default on
- * reload. Bucket
- * granularity is not part of this store: it is per-chart, seeded from a page's range on first mount
+ * reload. Bucket granularity is not part of this store: it is per-chart, seeded from a page's range
+ * on first mount
  * via `pickGranularityForSpan` (TICKET-STAT-15) and then held for the session by `ChartOptionsStore`
  * (TICKET-STAT-27), alongside each chart's hidden series and dragged zoom window.
  */

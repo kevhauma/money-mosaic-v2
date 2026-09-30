@@ -79,10 +79,13 @@ Produce a concrete implementation plan **mapped to the acceptance criteria** —
 components/stores/repositories/services change, which unit tests get added (name the cases),
 and which UI is touched. Respect the repo's hard rules while planning:
 
-- Persistence goes through a repository/store in `core/data-access/` — **never** direct
-  `appDb` table writes from components/stores.
-- Dexie schema changes are **additive** (`.version(n+1).stores(...)` + `.upgrade()`), never
-  edit a shipped version block.
+- Persistence goes through a repository/store in `core/data-access/` — a component or store
+  **never** calls the API itself (no `HttpClient`, no `ApiClient`).
+- Schema changes go through Drizzle: edit `server/src/schema/`, run `npm run server:migrate`,
+  rename the generated migration descriptively and update its `tag` in
+  `server/drizzle/meta/_journal.json`. **Never** edit a shipped migration — add another one.
+- Every entity table carries a `userId`, and every query filters on the session's user, taken
+  from the cookie and never from a body, query string or path.
 - Rules never overwrite a user-set category (`categoryManual`).
 - Cross-feature imports go through the feature barrel (`@/feature-x`), not deep paths.
 - **Never** raise `angular.json` bundle budgets — lazy-load or diet dependencies instead.

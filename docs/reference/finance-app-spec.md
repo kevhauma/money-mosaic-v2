@@ -9,7 +9,7 @@
 
 ## 1. Vision & Principles
 
-A private, local-first web app that turns raw bank CSV exports into an honest picture of your money: what comes in, what goes out, where it goes, and what you're actually worth across all your accounts.
+A private, self-hosted web app that turns raw bank CSV exports into an honest picture of your money: what comes in, what goes out, where it goes, and what you're actually worth across all your accounts.
 
 **Core loop:** Import CSV → auto-categorise & auto-link transfers → see the truth in stats.
 

@@ -44,13 +44,22 @@ describe('HomeLandingComponent', () => {
     expect(link?.rel).toBe('noopener noreferrer');
   });
 
-  it('mentions the local-first/no-backend data model', () => {
+  /**
+   * The page's central claim, and the one worth pinning: it said "local-first" and "never leaves
+   * your browser" until v3 put the data on a server, at which point the copy was selling a
+   * guarantee the app no longer makes. What replaced it is a narrower, true one — the server is
+   * the user's own — so the assertion checks for that rather than for the absence of the old
+   * wording, which would pass on a page that said nothing at all.
+   */
+  it('claims the self-hosted data model, not the retired browser-only one', () => {
     const fixture = TestBed.createComponent(HomeLandingComponent);
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toMatch(/local-first/i);
-    expect(text).toMatch(/never leaves your browser/i);
+    expect(text).toMatch(/self-hosted/i);
+    expect(text).toMatch(/never leaves your own machine/i);
+    expect(text).not.toMatch(/local-first/i);
+    expect(text).not.toMatch(/leaves your browser/i);
   });
 
   it('lists every positioning value prop and process step', () => {

@@ -65,8 +65,9 @@ describe('AppSettingsRepository', () => {
 
   /**
    * The stored row is layered **over** the defaults rather than returned as it stands — a change
-   * from the pre-TICKET-SRV-05 fallback, and a deliberate one: `AppSettingsStore` derives its signal members
-   * from the seed object's keys, so a body missing a key would produce a store missing a member
+   * from the pre-TICKET-SRV-05 fallback, and a deliberate one: `AppSettingsStore` derives its
+   * signal members from the seed object's keys, so a body missing a key would produce a store
+   * missing a member
    * (the `withState`-needs-every-key gotcha from v2.2).
    */
   it('get layers the stored row over the defaults, keeping every key', async () => {

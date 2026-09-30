@@ -60,7 +60,7 @@ As a <role>, I want <capability>, so <benefit>.
 ## Acceptance criteria
 
 - [ ] <Specific, testable outcome.>
-- [ ] <Persistence goes through the store/repository, never direct Dexie table writes — if data is touched.>
+- [ ] <Persistence goes through the store/repository, never a direct API call from a component or store — if data is touched.>
 - [ ] <Unit tests cover: … (name the cases).>
 - [ ] <Verified via the fallow skill and coding-conventions skill>
 
@@ -72,7 +72,7 @@ As a <role>, I want <capability>, so <benefit>.
 Writing rules:
 - **User story** is the classic `As a <role>, I want <capability>, so <benefit>` line — this is now the one and only place the story text lives (it no longer also lives in `overview.md`).
 - **As-is** must reference actual code with clickable relative links and, for bugs, name the exact root cause (function, early return, wrong binding). Grep the codebase to find the real files — don't invent paths.
-- **Acceptance criteria** are checkboxes, each independently verifiable. Fold in the repo's Definition of Done touchpoints where relevant: store/repository (not raw table) writes, `categoryManual` preservation if categories are involved, additive Dexie migrations, unit tests naming their cases, and a live browser check for UI changes. Never propose raising the `angular.json` bundle budget.
+- **Acceptance criteria** are checkboxes, each independently verifiable. Fold in the repo's Definition of Done touchpoints where relevant: writes through a repository rather than a direct API call, `categoryManual` preservation if categories are involved, a new Drizzle migration (never an edit to a shipped one) if the schema moves, unit tests naming their cases, and a live browser check for UI changes. Never propose raising the `angular.json` bundle budget.
 - Match the concise, traceable style of the existing tickets — no filler.
 
 ## Step 4 — Add the ticket to `overview.md`
