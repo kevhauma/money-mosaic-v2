@@ -73,6 +73,28 @@ describe('DataManagementOverviewComponent', () => {
       expect(text).not.toContain('Persistent storage');
       expect(text).not.toMatch(/evict/i);
     });
+
+    /**
+     * TICKET-SRV-09 asks for this warning to be unmissable rather than a footnote, and the README
+     * carries the same one. It is asserted because what it costs to lose is not cosmetic: the
+     * server has no TLS, no CSRF tokens, no rate limiting and no session expiry, so somebody who
+     * port-forwards it has published their bank history.
+     */
+    it('warns, unmissably, that the server must not be exposed to the internet', async () => {
+      await setup();
+      const host = fixture.nativeElement as HTMLElement;
+
+      // In an alert rather than in body copy — the difference between a warning and a sentence.
+      // Matched on the alert's own text rather than on any warning alert in the template, so the
+      // import note appearing cannot stand in for this one.
+      const warnings = [...host.querySelectorAll('mm-alert[status="warning"]')];
+      const exposure = warnings.find((alert) =>
+        /must not be exposed to the internet/.test(alert.textContent ?? ''),
+      );
+
+      expect(exposure).toBeTruthy();
+      expect(exposure?.textContent).toMatch(/no rate limiting/);
+    });
   });
 
   describe('export', () => {

@@ -1,7 +1,22 @@
 # Deployment
 
-MoneyMosaicVibe is a fully client-side SPA (no backend, all data in the browser's IndexedDB), so
-"deploying" is just: build the static files and let Caddy serve them. This repo deploys via a
+> ## ⚠️ This document describes the pre-v3 deploy and no longer works
+>
+> **Superseded 2026-09-30 by [TICKET-SRV-09](docs/server/tickets/TICKET-SRV-09-single-process-local-hosting.md).**
+> Everything below deploys a **static `dist/`** behind Caddy, which had a working app in it as long
+> as the data lived in the browser. Since v3 every read goes to `/api`, so a static deploy now
+> serves a shell with nothing in it and no way to sign in.
+>
+> **For how to actually run it, see [Hosting it on your own machine](README.md#hosting-it-on-your-own-machine)
+> in the README** — one command, one port, plus where the database file is and how to back it up.
+>
+> This file is kept because the self-hosted-runner and Caddy setup it describes is still real, and
+> anyone wanting to put the v3 server behind that reverse proxy would start from it. Doing so is
+> explicitly **not** in SRV-09's scope: the server has no TLS, no CSRF protection and no rate
+> limiting, and is not built to face the internet at all. Read the README's warning first.
+
+MoneyMosaicVibe **was** a fully client-side SPA (no backend, all data in the browser's IndexedDB), so
+"deploying" was just: build the static files and let Caddy serve them. This repo deploys via a
 **self-hosted GitHub Actions runner installed on the same machine as Caddy** — the workflow builds
 the app and copies the output straight into Caddy's webroot on disk. No SSH, no registry, no
 network hop.

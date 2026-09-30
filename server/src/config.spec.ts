@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import path from 'node:path';
 
-import { DEFAULT_PORT, SERVER_ROOT, resolveConfig, resolveDbFile, resolvePort } from './config.js';
+import {
+  DEFAULT_PORT,
+  SERVER_ROOT,
+  resolveConfig,
+  resolveDbFile,
+  resolvePort,
+  resolveWebRoot,
+} from './config.js';
 
 describe('config: resolvePort', () => {
   it('falls back to 4300 when PORT is unset', () => {
@@ -41,12 +48,44 @@ describe('config: resolveDbFile', () => {
   });
 });
 
+describe('config: resolveWebRoot', () => {
+  /** `dist/<project>/browser` is the `@angular/build:application` layout, one level above `server/`. */
+  it('defaults to the Angular build output', () => {
+    expect(resolveWebRoot({})).toBe(
+      path.join(SERVER_ROOT, '..', 'dist', 'money-mosaic-vibe', 'browser'),
+    );
+  });
+
+  it('honours a WEB_ROOT override, resolving a relative path against the server root', () => {
+    expect(resolveWebRoot({ WEB_ROOT: 'public-build' })).toBe(
+      path.join(SERVER_ROOT, 'public-build'),
+    );
+  });
+
+  it('honours an absolute WEB_ROOT override unchanged', () => {
+    const absolute = path.resolve(SERVER_ROOT, '..', 'somewhere', 'browser');
+    expect(resolveWebRoot({ WEB_ROOT: absolute })).toBe(absolute);
+  });
+
+  it('treats a blank WEB_ROOT as unset rather than as the server root', () => {
+    expect(resolveWebRoot({ WEB_ROOT: '   ' })).toBe(resolveWebRoot({}));
+  });
+});
+
 describe('config: resolveConfig', () => {
-  it('combines both overrides and reads dev from NODE_ENV', () => {
-    expect(resolveConfig({ PORT: '4999', DB_FILE: ':memory:', NODE_ENV: 'production' })).toEqual({
+  it('combines the overrides and reads dev from NODE_ENV', () => {
+    expect(
+      resolveConfig({
+        PORT: '4999',
+        DB_FILE: ':memory:',
+        WEB_ROOT: '/srv/app',
+        NODE_ENV: 'production',
+      }),
+    ).toEqual({
       port: 4999,
       dbFile: ':memory:',
       isDev: false,
+      webRoot: path.resolve('/srv/app'),
     });
     expect(resolveConfig({}).isDev).toBe(true);
   });

@@ -8,6 +8,7 @@ Stack: Angular 21 (standalone, signals, zoneless-style OnPush), @ngrx/signals, @
 
 ```bash
 npm run dev                           # both: ng serve on 4210 + the API server on 4300
+npm run start:local                   # production: build the app, then serve it with the API on one port (4300)
 ng serve                              # the Angular app alone (preview launch config "dev", port 4210)
 ng build --configuration development  # fast compile check (also catches worker-bundling issues)
 ng test                               # Vitest unit tests (Angular workspace)

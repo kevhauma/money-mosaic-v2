@@ -18,6 +18,7 @@ first time on a given machine.
 
 ```bash
 npm run dev                  # repo root: ng serve on 4210 + this server on 4300
+npm run start:local          # repo root: build the app, then serve it with /api on one port
 npm run server               # this server alone
 npm run server:migrate       # generate SQL from src/schema, then apply it
 npm run test:server          # backend tests (in-memory SQLite)
@@ -27,7 +28,29 @@ npm run test:server          # backend tests (in-memory SQLite)
 | --------- | ----------------------------- | ---------------------------------------------------- |
 | `PORT`    | `4300`                        | HTTP port. 4300 stays clear of 4210/4200.            |
 | `DB_FILE` | `server/data/money-mosaic.sqlite` | SQLite file; relative paths resolve against `server/`. |
-| `NODE_ENV`| unset (dev)                   | `production` turns the request logger off.           |
+| `WEB_ROOT`| `../dist/money-mosaic-vibe/browser` | The built app to serve (the repo-root `dist/`); relative paths resolve against `server/`. |
+| `NODE_ENV`| unset (dev)                   | `production` turns the request logger off **and serves the built app** (TICKET-SRV-09). |
+
+## Serving the app too (TICKET-SRV-09)
+
+In production the server also serves the Angular build from `WEB_ROOT`, on the same port as
+`/api` — one process, one URL, which is what `npm run start:local` starts. It binds `0.0.0.0` and
+prints every URL it is reachable on, LAN address included, because "open it on your phone" is the
+whole point and nobody can derive their own subnet.
+
+Hashed build artifacts (`main-<hash>.js`, `chunk-<hash>.js`, `styles-<hash>.css`, `media/*`) are
+served `immutable` for a year — the name changes when the contents do, so a redeploy needs no cache
+clear. `index.html` is `no-store`, because it is the one name that survives a redeploy and it names
+all the others. Anything unhashed (the favicons) revalidates.
+
+Any non-`/api` path that is not a file falls back to `index.html`, so a deep link like
+`/transactions/482` survives a refresh. **`/api` never falls through**: an unknown API path is a
+JSON 404, which is what makes a typo in a `fetch` debuggable rather than a parse error somewhere
+else entirely. `http/static-site.spec.ts` asserts both halves.
+
+Development does **not** serve it: `ng serve` owns the documents and proxies `/api` here, so a
+stale `dist/` cannot shadow the app being worked on. A production boot with nothing built yet stays
+API-only and says so, rather than answering every page with a 500 about a missing `index.html`.
 
 The database file and its directory are created on first boot, pending migrations are applied
 before the server listens, and `server/data/` is gitignored — the schema lives in
@@ -135,7 +158,10 @@ Belfius mapping-profile templates, the default categories, the default transfer 
 the hash and salt never appear in a response.
 
 This server is **deliberately unsecured for LAN hosting**: no HTTPS, no CSRF tokens, no rate
-limiting, no session expiry. Do not put it on the public internet.
+limiting, no session expiry. **Do not port-forward it, point a public DNS name at it, or give it a
+public IP.** To reach it from outside the network, put yourself on that network with a VPN instead
+of putting the server on the internet — see the root README's hosting section, which says the same
+thing to whoever is running the box rather than to whoever is reading the code.
 
 In development the Angular dev server proxies `/api` here (`proxy.conf.json`), so the browser sees
 one origin and no CORS configuration is needed.

@@ -77,6 +77,22 @@
     figures. Backing that file up is the server operator's job; the export above is your own copy of
     it.
   </mm-text>
+  <!-- TICKET-SRV-09 asks for this warning to be unmissable rather than a footnote, in the README
+       and here. An alert rather than another paragraph for exactly that reason: whoever set the
+       server up is the person who needs to read it, and this page is where they come to think
+       about where their data is. -->
+  <mm-alert status="warning" class="mt-1 text-left">
+    <div class="flex flex-col gap-1">
+      <mm-text as="span" weight="semibold"
+        >This server must not be exposed to the internet.</mm-text
+      >
+      <mm-text as="span" class="text-sm">
+        It is built for one household's network: plain HTTP, no CSRF protection, no rate limiting
+        and no session expiry. Keep it on your local network — to reach it from elsewhere, use a VPN
+        rather than port-forwarding it.
+      </mm-text>
+    </div>
+  </mm-alert>
 </mm-paper>
 
 <mm-paper elevation="flat" borderColor="error/40" bodyClass="card-body gap-2" class="mt-4">

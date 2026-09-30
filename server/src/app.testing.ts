@@ -36,6 +36,8 @@ export type TestAppOptions = {
   readonly isDev?: boolean;
   /** Seed the first-boot `admin` / `admin` account, exactly as `index.ts` does. */
   readonly seed?: boolean;
+  /** A directory of built app files to serve beside `/api`, as production does (TICKET-SRV-09). */
+  readonly webRoot?: string;
 };
 
 export type TestApp = {
@@ -53,13 +55,15 @@ export type TestApp = {
 export const startTestAppWithDb = async ({
   isDev = false,
   seed = true,
+  webRoot,
 }: TestAppOptions = {}): Promise<TestApp> => {
   const handle = openDatabase(':memory:');
   onTestFinished(() => handle.close());
   runMigrations(handle);
   if (seed) await seedAdminUser(handle.db);
 
-  const baseUrl = await startTestServer(createApp({ handle, isDev }));
+  const app = createApp({ handle, isDev, ...(webRoot === undefined ? {} : { webRoot }) });
+  const baseUrl = await startTestServer(app);
   return { baseUrl, handle, db: handle.db };
 };
 

@@ -10,6 +10,7 @@
     "test:server": "npm --prefix server run test",
     "lint": "ng lint",
     "dev": "node scripts/dev.mjs",
+    "start:local": "node scripts/start-local.mjs",
     "server": "npm --prefix server run start",
     "server:install": "npm --prefix server install",
     "server:migrate": "npm --prefix server run migrate",
