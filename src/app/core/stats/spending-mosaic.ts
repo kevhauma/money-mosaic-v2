@@ -189,7 +189,7 @@ const groupFor = (name: string, members: readonly MosaicNode[]): MosaicNode => {
  *
  * A group's colour is its heaviest member's, the `money-flow-graph` precedent — a group should read
  * as the category that dominates it rather than as an arbitrary palette slot. Pure and theme-free:
- * no DI, no store, no Dexie, no `shared/echarts` import.
+ * no DI, no store, no persistence, no `shared/echarts` import.
  *
  * **A third level, when asked for** (TICKET-EXP-08): passing
  * `computeCategoryExpenseTransactions()`'s map hangs a category's individual payments under it, so a

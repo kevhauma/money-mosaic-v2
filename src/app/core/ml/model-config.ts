@@ -12,7 +12,7 @@ export const DEFAULT_FEATURE_CONFIG: FeatureConfig = {
   charNgramMax: 4,
 };
 
-/** Versions the persisted artifact shape/feature config (ML-04) — distinct from the Dexie table's own schema version, so an incompatible `FeatureConfig`/worker-protocol change can invalidate old models without a migration. */
+/** Versions the persisted artifact shape/feature config (ML-04) — distinct from the data model's own schema version, so an incompatible `FeatureConfig`/worker-protocol change can invalidate old models without a migration. */
 export const MODEL_SCHEMA_VERSION = 1;
 
 /** Cold-start floor: fewer categorised transactions than this ⇒ 'not-enough-data'. */

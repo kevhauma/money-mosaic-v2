@@ -22,7 +22,7 @@ import type { AppDataExport } from '@/core/data-access';
 export type QrTable = readonly [readonly string[], readonly unknown[][]];
 
 export type QrTransferPayload = {
-  /** Payload shape version, independent of the Dexie `schemaVersion` the export carries. */
+  /** Payload shape version, independent of the data-model `schemaVersion` the export carries. */
   v: 1;
   schemaVersion: number;
   exportedAt: string;

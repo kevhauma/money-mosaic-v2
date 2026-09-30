@@ -114,7 +114,7 @@ const entryIn = (
  * category tiles and payment tiles are built from, so a payment classified at its full amount inside
  * a category weighted by `ownershipShare` would put more payments in a box than the box holds.
  *
- * Pure: no DI, no store, no Dexie.
+ * Pure: no DI, no store, no persistence.
  */
 export const computeCategoryExpenseTransactions = (
   transactions: Transaction[],

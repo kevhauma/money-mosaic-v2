@@ -135,7 +135,7 @@ const newLumpSumRow = (): LumpSumRow =>
  * fact about the loan. Saving it would make every other surface — the overview cards, the
  * ahead/behind badge, all of which report *real* progress — disagree with a scenario the app had
  * started to believe. So the scenario and the fee model live in this component's own controls and
- * die with it, and there is no store write or Dexie touch anywhere in this component.
+ * die with it, and there is no store write or repository call anywhere in this component.
  *
  * `today` is captured once at construction and passed into the engine, keeping `core/loans` pure —
  * no function there reads the clock.

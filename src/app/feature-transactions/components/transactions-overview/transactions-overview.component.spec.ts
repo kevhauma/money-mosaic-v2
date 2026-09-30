@@ -92,8 +92,8 @@ describe('TransactionsOverviewComponent', () => {
 
   // Deterministic, not the real repository — this component's `formatDate` reads the shared,
   // settings-driven locale (TICKET-NG-10), and the real AppSettingsStore hydrates from the shared
-  // fake-indexeddb singleton (Vitest isolate:false), which can carry a non-default locale left
-  // behind by whatever spec ran last. Row-label assertions below assume the default (en-BE) locale.
+  // fake backend, which under Vitest's `isolate: false` can carry a non-default locale left behind
+  // by whatever spec ran last. Row-label assertions below assume the default (en-BE) locale.
   const appSettingsRepository = { get: vi.fn().mockResolvedValue({ id: 1 }) };
 
   const setup = async (queryParams: Record<string, string> = {}): Promise<void> => {

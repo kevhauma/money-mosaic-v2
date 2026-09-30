@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 /**
  * The harness every repository spec runs on (TICKET-SRV-05).
  *
- * The repositories stopped being Dexie wrappers, so their specs stopped being database round trips:
+ * The repositories stopped wrapping local tables, so their specs stopped being database round trips:
  * what a repository is responsible for now is **which request it makes and what it turns the
  * response into**. Whether SQLite then upserts by month, or falls back to a `DEFAULT_*`, or applies
  * a reorder atomically, is the server's behaviour and is covered by its own tests — asserting it

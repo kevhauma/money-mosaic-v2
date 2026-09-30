@@ -37,8 +37,8 @@ export const idOf = (table: PerUserTable): SQLiteColumn | undefined => columnOf(
 /**
  * Every table whose rows belong to a user, read off the schema in its own declaration order.
  *
- * Widened to `unknown` first, the way `dexie-parity.spec.ts` does it: `Object.values` on the barrel
- * yields a union of every concrete table type, which no single type predicate is assignable to.
+ * Widened to `unknown` first: `Object.values` on the barrel yields a union of every concrete table
+ * type, which no single type predicate is assignable to.
  */
 export const PER_USER_TABLES: readonly PerUserTable[] = (Object.values(schema) as unknown[])
   .filter((value): value is SQLiteTable => is(value, SQLiteTable))
@@ -50,9 +50,8 @@ export const PER_USER_TABLES: readonly PerUserTable[] = (Object.values(schema) a
  *
  * The model is megabytes of `Float32` weights in three blob columns, and a JSON document is the one
  * shape they cannot survive: `JSON.stringify` turns an `ArrayBuffer` into `{}`, which is how the
- * Dexie export silently lost every trained weight it ever wrote (TICKET-DAT-05's closing note). It
- * travels as bytes through `/api/categoryModel` instead, on both the backup path (TICKET-SRV-04)
- * and the browser-database migration (TICKET-SRV-07).
+ * pre-v3 export silently lost every trained weight it ever wrote (TICKET-DAT-05's closing note). It
+ * travels as bytes through `/api/categoryModel` instead (TICKET-SRV-04).
  *
  * Lives here next to the list it is derived from, rather than in either of the two route modules
  * that would otherwise each own a copy.

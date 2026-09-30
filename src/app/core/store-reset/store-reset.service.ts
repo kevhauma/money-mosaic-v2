@@ -12,23 +12,25 @@ import { getState, patchState, type WritableStateSource } from '@ngrx/signals';
  *
  * Registration is **runtime**, from each store's own `onInit`, rather than a hand-written list of
  * store classes here: a list would have to inject all seventeen stores to reset them, which would
- * drag every feature store (and Dexie behind them) into the eager bundle and undo the lazy-loading
- * the route table exists for. A store that was never injected holds no data, so a store that never
- * ran `onInit` has nothing to reset.
+ * drag every feature store (and the repositories behind them) into the eager bundle and undo the
+ * lazy-loading the route table exists for. A store that was never injected holds no data, so a
+ * store that never ran `onInit` has nothing to reset.
  *
  * `store-reset-registry.spec.ts` is what keeps this honest: it fails when a hydrating store ships
  * without a `registerStoreReset` call.
  *
- * ## What this does *not* do, until TICKET-SRV-05
+ * ## What this does
  *
- * It empties **in-memory signal state** and clears each store's memoised hydration promise. That
- * is all. Entity data still lives in the one un-namespaced `money-mosaic` IndexedDB, shared by
- * everyone who uses this browser — so the next person to sign in rehydrates from the *same*
- * database and sees the previous user's accounts and transactions again.
+ * It empties **in-memory signal state** and clears each store's memoised hydration promise. That is
+ * all it needs to do since TICKET-SRV-05: entity data lives on the server behind the session, so the
+ * next person to sign in rehydrates from their own rows rather than from anything left in this
+ * browser.
  *
- * Until TICKET-SRV-05 moves entity data onto the server, **sign-out is a UI boundary, not a data
- * boundary**, and anyone who opens devtools can read the previous user's figures regardless. The
- * plumbing here is what SRV-05 needs in place; it is not the guarantee on its own.
+ * Between TICKET-AUTH-02 and TICKET-SRV-05 this was a UI boundary rather than a data one — the
+ * entity data sat in one un-namespaced browser database that every account on the machine shared,
+ * so anyone with devtools could read the previous user's figures whatever this service emptied.
+ * That database is gone (TICKET-SRV-08) and the boundary is now the session cookie the server
+ * checks on every read; what is left here is the in-memory half of it.
  */
 type StoreRegistration = {
   /** Empties the store back to its initial state and forgets its memoised hydration. */
@@ -102,10 +104,11 @@ export const createStoreReset = <State extends object>(
  * Wraps a store's memoised hydration so that a **failed** one is not remembered (TICKET-SRV-05).
  *
  * The memo exists so the first injection of a store starts one load and every later caller awaits
- * that same promise. Against Dexie a read effectively never rejected, so caching the promise and
- * caching a *success* were the same thing. Against HTTP they are not: one 500, one restart, one
- * dropped connection, and the rejected promise is what every later `hydrate()` re-rejects with — the
- * store stays empty for the rest of the session, and nothing short of signing out clears it.
+ * that same promise. Against the old browser database a read effectively never rejected, so caching
+ * the promise and caching a *success* were the same thing. Against HTTP they are not: one 500, one
+ * restart, one dropped connection, and the rejected promise is what every later `hydrate()`
+ * re-rejects with — the store stays empty for the rest of the session, and nothing short of signing
+ * out clears it.
  *
  * So a rejection forgets itself on the way past, leaving the next `hydrate()` free to try again.
  * This is only the *retry being possible*; TICKET-SRV-06 made the failure visible and gave somebody

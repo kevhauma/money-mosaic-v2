@@ -34,7 +34,7 @@ export class CategoryModelRepository {
     return { ...entity, ...blobs, id: 1 } as CategoryModelArtifact;
   };
 
-  /** Resolves to `1`, the key Dexie's `put` answered with — training replaces, it never merges. */
+  /** Resolves to `1`, the singleton key the old table's `put` answered with — training replaces, it never merges. */
   save = async (artifact: CategoryModelArtifact): Promise<1> => {
     const { modelTopology, weightSpecs, weightData, ...entity } = artifact;
     await this.api.putBytes(

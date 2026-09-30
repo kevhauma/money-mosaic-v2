@@ -46,7 +46,7 @@ const RENAME_FAILED = 'Could not save your display name. Please try again.';
  *
  * Lives in `core/auth/` rather than `core/state/` even though several features read it: the guard
  * and the interceptor are eager, and `@/core/state`'s barrel re-exports every entity store, so
- * reaching the session through that barrel would drag Dexie and all of them into the initial
+ * reaching the session through that barrel would drag every one of them into the initial
  * bundle — exactly what the lazily-loaded shell exists to avoid.
  */
 export const SessionStore = signalStore(

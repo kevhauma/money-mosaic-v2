@@ -260,7 +260,7 @@ export const GUIDES: readonly Guide[] = [
       {
         title: 'Choose Merge or Replace, then reload',
         description:
-          'A completed scan lands in the same confirmation as a file import. Merge adds the incoming rows to what is already there; Replace erases what this browser already holds. If the transfer left the original CSV rows behind, the dialog says so — and merging will clear them on transactions this browser already has, so use the file export instead when you care about keeping them. Reload when prompted to see the result. If a scan is corrupted it is refused on its checksum and nothing is imported — just run the transfer again.',
+          'A completed scan lands in the same confirmation as a file import. Merge adds the incoming rows to what is already there; Replace erases what your account already holds. If the transfer left the original CSV rows behind, the dialog says so — and merging will clear them on transactions your account already has, so use the file export instead when you care about keeping them. Reload when prompted to see the result. If a scan is corrupted it is refused on its checksum and nothing is imported — just run the transfer again.',
       },
     ],
     tryItLabel: 'Try it — go to Settings',

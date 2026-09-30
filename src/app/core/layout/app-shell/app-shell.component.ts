@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  effect,
   ElementRef,
   inject,
   Injector,
@@ -32,7 +31,6 @@ import {
   tablerUsers,
 } from '@ng-icons/tabler-icons';
 import { SessionStore } from '@/core/auth';
-import { LocalMigrationDialogComponent, LocalMigrationService } from '@/core/local-migration';
 import { ServerStatusService } from '@/core/server-status';
 import { AppSettingsStore, TransactionsStore } from '@/core/state';
 // Imported directly (not via the @/shared/ui barrel) to keep the rest of shared/ui — and the
@@ -78,7 +76,6 @@ const SKIP_LINK_CLASS =
     AlertComponent,
     ButtonComponent,
     DefaultPasswordNoticeComponent,
-    LocalMigrationDialogComponent,
     TypographyComponent,
   ],
   templateUrl: './app-shell.component.html',
@@ -118,7 +115,6 @@ export class AppShellComponent {
   // nothing in the persistent app shell did, so those settings silently never applied outside of
   // whichever page load happened to visit /settings first.
   private readonly appSettingsStore = inject(AppSettingsStore);
-  private readonly localMigration = inject(LocalMigrationService);
 
   /** Mobile drawer open state — the toggle button and the checkbox-driven CSS drawer both read/write this. */
   protected readonly drawerOpen = signal(false);
@@ -131,25 +127,13 @@ export class AppShellComponent {
   private readonly navRegion = viewChild.required<ElementRef<HTMLElement>>('navRegion');
 
   constructor() {
-    // The one-time offer to move a pre-v3 browser database into this account (TICKET-SRV-07).
-    // Asked here for the same reason the dev seed below is: the shell is the first thing that
-    // renders only once somebody is signed in, and the offer is keyed by user id. An `effect`
-    // rather than a straight read, because `restore()` may still be in flight when a deep link
-    // creates this shell — and it is memoised per id inside the service's own choice storage, so a
-    // second firing for the same user is a no-op. Failures are swallowed: a browser that will not
-    // answer "is there a database?" is not a reason to break the app around it.
-    effect(() => {
-      const userId = this.sessionStore.user()?.id;
-      if (userId !== undefined) void this.localMigration.offerIfNeeded(userId);
-    });
-
     // Dev-only sample-data seed (TICKET-DEV-01), moved here from `provideAppInitializer` by
     // TICKET-SRV-06. It cannot run at bootstrap any more: the data it writes lives on the server
     // behind a session, so seeding before anyone is signed in would be a handful of 401s. The
     // shell is the first thing that renders only once somebody *is* signed in, which makes it the
-    // earliest correct moment. The dynamic import keeps the seed module and its dataset in a
-    // separate chunk a production build never references, and `isDevMode()` gates it out at
-    // runtime regardless.
+    // earliest correct moment. The dynamic import keeps the seed module and its dataset in a chunk
+    // of their own, and `isDevMode()` is what stops a production browser ever requesting it — a
+    // runtime gate, so the chunk is emitted either way (TICKET-SRV-08 measured it: ~4.4 kB).
     if (isDevMode()) {
       void import('@/dev-seed/dev-seed.service')
         .then(({ DevSeedService }) => this.injector.get(DevSeedService).seedIfEmpty())

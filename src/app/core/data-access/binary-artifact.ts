@@ -10,7 +10,7 @@
  * **Why not JSON.** `CategoryModelArtifact` carries three `ArrayBuffer`s of `Float32` weights,
  * megabytes of them. Base64 in a JSON body costs a third more bytes plus an encode/decode pass at
  * each end, and `JSON.stringify` on an `ArrayBuffer` produces `{}` — which is exactly how the
- * Dexie-era export silently lost every trained weight it ever wrote (TICKET-DAT-05's closing note).
+ * pre-v3 export silently lost every trained weight it ever wrote (TICKET-DAT-05's closing note).
  *
  * Hand-mirrored rather than shared, like every other wire type: `src/**` and `server/**` may not
  * import each other, and the repo-root `shared/` workspace is for what both sides *persist*.

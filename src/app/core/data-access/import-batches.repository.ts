@@ -10,7 +10,7 @@ export class ImportBatchesRepository {
 
   getAll = (): Promise<ImportBatch[]> => this.api.get<ImportBatch[]>(PATH);
 
-  /** `undefined` for a batch that is not there, exactly as `Dexie.Table.get()` answered. */
+  /** `undefined` for a batch that is not there, exactly as the old table `get()` answered. */
   getById = (id: number): Promise<ImportBatch | undefined> =>
     this.api.getOptional<ImportBatch>(`${PATH}/${id}`);
 

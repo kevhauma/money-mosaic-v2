@@ -94,7 +94,7 @@ describe('TransactionsRepository', () => {
     ).toBe(1);
   });
 
-  // Dexie's `update` deleted a property set to `undefined`; `null` is how that reads on the wire,
+  // The old table's `update` deleted a property set to `undefined`; `null` is how that reads on the wire,
   // and it is what `TransactionsStore.bulkClearCategory` depends on to actually clear a category.
   it('bulkUpdate sends a cleared field as null rather than dropping it', async () => {
     expect(

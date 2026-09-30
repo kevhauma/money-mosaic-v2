@@ -43,7 +43,7 @@ class ResizeObserverStub {
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
 
 // jsdom has no real canvas 2D context. That's normally harmless for a chart that only ever gets
-// change-detected once, but this spec's row-hiding tests await a real (fake-indexeddb) store
+// change-detected once, but this spec's row-hiding tests await a real store
 // write before a second `detectChanges()`, and that second pass drives the still-mounted trend
 // chart's echarts directive into zrender's real paint path, which needs one.
 const noopCanvasContext = new Proxy(
@@ -79,7 +79,7 @@ describe('DashboardOverviewComponent', () => {
   /**
    * The zero-transaction empty state (TICKET-STAT-22) replaces the whole row switch, so every test
    * about row rendering has to put at least one transaction in the store first — hydrating against
-   * the empty fake-indexeddb-backed repo alone would land on the empty branch instead.
+   * the empty fake backend alone would land on the empty branch instead.
    */
   const seedOneTransaction = (): void => {
     TestBed.inject(TransactionsStore).addMany([transaction()]);
@@ -271,7 +271,7 @@ describe('DashboardOverviewComponent', () => {
 
   describe('periodized sub-labels (TICKET-STAT-21)', () => {
     // The 'stats' row gates on `statsStore.dataReady()` (TICKET-PERF-05), which the outer
-    // `beforeEach`'s hydrate against the empty fake-indexeddb-backed repo already satisfies before
+    // `beforeEach`'s hydrate against the empty fake backend already satisfies before
     // each test's `addMany` seeds local state — otherwise the row would show its loading skeleton
     // instead of the real stat cards.
 

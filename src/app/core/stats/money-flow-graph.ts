@@ -468,7 +468,7 @@ const orderNodes = (nodes: ReadonlyMap<string, FlowNode>, links: FlowLink[]): Fl
  *   enters a node leaves it. Handing ECharts unbalanced data doesn't raise an error, it silently
  *   rebalances the layout — and then ribbon widths stop meaning anything.
  *
- * Pure and theme-free — no DI, no store, no Dexie, and no `shared/echarts` import.
+ * Pure and theme-free — no DI, no store, no persistence, and no `shared/echarts` import.
  */
 export const computeMoneyFlowGraph = (
   transactions: Transaction[],

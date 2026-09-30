@@ -14,7 +14,7 @@ import { ImportSummaryStepComponent } from '../import-summary-step/import-summar
 import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // Light stand-ins for the step children so the wizard's own control-flow is what's under test —
-// the real steps pull in the CSV service, Dexie repos, and detection logic we don't want here.
+// the real steps pull in the CSV service, the repositories, and detection logic we don't want here.
 @Component({ selector: 'app-import-select-step', template: '' })
 class SelectStubComponent {
   readonly accounts = input<unknown[]>([]);
@@ -705,8 +705,8 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
  * `CsvImportService.parse` is stubbed (it drives a real Web Worker); every store the wizard talks to
  * — `AccountsStore`, `ImportBatchesStore`, `MappingProfilesStore`, `TransactionsStore`, and everything
  * they call through to (`ImportService`, `RulesEngineService`, `TransfersStore`, ...) — is the real,
- * `providedIn: 'root'` instance backed by the global fake-indexeddb (`src/test-setup.ts`), so each
- * invariant is asserted against what's actually persisted, not against a mock's call count.
+ * `providedIn: 'root'` instance backed by `provideFakeApi()`'s in-memory backend, so each invariant
+ * is asserted against what was actually written, not against a mock's call count.
  */
 describe('ImportWizardComponent: commit-flow invariants (TICKET-TEST-03)', () => {
   let fixture: ComponentFixture<ImportWizardComponent>;

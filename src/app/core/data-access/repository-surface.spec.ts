@@ -13,8 +13,6 @@ import {
   DataManagementRepository,
   type AppDataExport,
   type ImportMode,
-  type LocalMigrationReport,
-  type LocalMigrationState,
 } from './data-management.repository';
 import type {
   Account,
@@ -56,7 +54,7 @@ import { TransfersRepository } from './transfers.repository';
  *
  * Seventeen repositories were reimplemented by hand over HTTP, and the promise that made that
  * survivable was that **not one caller changes**: the same method names, the same parameters, the
- * same return types, down to the `Promise<number>` Dexie's `update` answered with. That promise is
+ * same return types, down to the `Promise<number>` the old table's `update` answered with. That promise is
  * exactly the kind a hand port breaks quietly — a `Promise<void>` becomes a `Promise<number>` and a
  * caller's `if` starts always-truthing — so it is written down here rather than trusted.
  *
@@ -250,11 +248,6 @@ type SettingsPins = [
       exportAll: () => Promise<AppDataExport>;
       importAll: (data: AppDataExport, mode: ImportMode) => Promise<void>;
       deleteAll: () => Promise<void>;
-      localMigrationState: () => Promise<LocalMigrationState>;
-      migrateLocalDatabase: (
-        data: AppDataExport,
-        mode: ImportMode,
-      ) => Promise<LocalMigrationReport>;
     }
   >,
 ];
@@ -350,8 +343,6 @@ const ARITIES: readonly [string, new () => object, Arities][] = [
       exportAll: 0,
       importAll: 2,
       deleteAll: 0,
-      localMigrationState: 0,
-      migrateLocalDatabase: 2,
     },
   ],
 ];
@@ -366,7 +357,7 @@ const methodsOf = (repository: object): Arities =>
 describe('the repository layer keeps the surface every caller was written against', () => {
   withApiTesting();
 
-  it('has the same method names, parameters and return types it had against Dexie', () => {
+  it('has the same method names, parameters and return types it had against the browser database', () => {
     // The assertion is the two types above: neither tuple compiles unless each repository's public
     // surface is *identical* to the one pinned for it. This line is what makes that a spec.
     const pins: Pins = [true, true, true, true, true, true, true, true, true, true, true, true];

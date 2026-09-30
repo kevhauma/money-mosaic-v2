@@ -12,9 +12,11 @@ import {
 
 /**
  * Dev-only sample-data seed (TICKET-DEV-01). Reached solely through a dynamic import behind an
- * `isDevMode()` guard in app.config.ts, so it (and its dataset) tree-shake out of the production
- * bundle. Writes go through the repository/store layer — never direct `appDb` table writes — so the
- * hydrated stores reflect the seeded rows without a reload.
+ * `isDevMode()` guard in `core/layout/app-shell` — the earliest point at which somebody is signed
+ * in, since every write below now lands on the server as *their* data (TICKET-SRV-06) — so it and
+ * its dataset ride a chunk of their own that no production browser ever requests. Writes go through
+ * the repository/store layer, never straight to the API, so the hydrated stores reflect the seeded
+ * rows without a reload.
  */
 @Injectable({ providedIn: 'root' })
 export class DevSeedService {

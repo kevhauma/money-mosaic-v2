@@ -77,7 +77,7 @@ export const createCategoryModelRouter = (db: DrizzleDb): Router => {
   router.delete('/', (req, res) => {
     const user = authUserOf(req);
     // Idempotent: clearing a model that was never trained leaves the client in the state it asked
-    // for, exactly as `CategoryModelRepository.clear` does against Dexie.
+    // for, which is the contract `CategoryModelRepository.clear` has always had.
     db.delete(categoryModel).where(eq(categoryModel.userId, user.id)).run();
 
     res.status(204).end();

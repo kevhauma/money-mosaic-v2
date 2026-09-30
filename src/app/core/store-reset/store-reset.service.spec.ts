@@ -172,7 +172,8 @@ describe('retryOnFailure: a failed hydration is not remembered (TICKET-SRV-05)',
   });
 
   it('lets the next hydrate try again after the first one rejects', async () => {
-    // Against Dexie a read effectively never rejected, so memoising the promise and memoising a
+    // Against the old browser database a read effectively never rejected, so memoising the promise
+    // and memoising a
     // *success* were the same thing. Over HTTP they are not — and a cached rejection would answer
     // every later hydrate, leaving the store empty until sign-out.
     accountsRepository.getAll.mockRejectedValueOnce(new Error('Http failure response: 500'));

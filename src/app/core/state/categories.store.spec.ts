@@ -209,7 +209,7 @@ describe('CategoriesStore: applicability window (TICKET-CAT-10)', () => {
     });
   });
 
-  it('persists a window through the repository, not by writing Dexie directly', async () => {
+  it('persists a window through the repository, not by calling the API directly', async () => {
     const store = TestBed.inject(CategoriesStore);
     await store.hydrate();
 

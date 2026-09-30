@@ -6,7 +6,6 @@ import { requestLogger } from './middleware/request-logger.js';
 import { createRequireAuth } from './middleware/require-auth.js';
 import { createApiRouters } from './routes/api.js';
 import { createAuthRouter } from './routes/auth.js';
-import { MIGRATE_LOCAL_BODY_LIMIT, MIGRATE_LOCAL_PATH } from './routes/data.js';
 import { createHealthRouter } from './routes/health.js';
 
 /** Ceiling on a request body — see the note in `createApp`. */
@@ -31,11 +30,6 @@ export const createApp = ({ handle, isDev }: CreateAppOptions): Express => {
   // Express' 100kB default is generous for a single entity but not for the bulk writes
   // TICKET-SRV-04 carries (a CSV import's worth of transactions in one transactional request),
   // where it would show up as a bare 413 rather than anything diagnosable.
-  // One route is exempt, and mounts its own parser in front of the app-wide one: the browser-database
-  // migration (TICKET-SRV-07) posts an entire IndexedDB database as a single document, which is the
-  // only body here that can run to hundreds of megabytes. `express.json` marks a request it has
-  // parsed, so the general parser below leaves this one alone rather than re-reading it.
-  app.use(MIGRATE_LOCAL_PATH, express.json({ limit: MIGRATE_LOCAL_BODY_LIMIT }));
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
   if (isDev) app.use(requestLogger());
 

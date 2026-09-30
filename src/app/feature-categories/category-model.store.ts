@@ -56,7 +56,7 @@ const initialState: CategoryModelState = {
 
 /**
  * Root store tying the auto-categoriser together (FR-ML-7): status machine, suggestions, and rule
- * proposals. Never writes to `appDb` and never sets a category itself — `acceptSuggestion`/
+ * proposals. Never writes through a repository of its own and never sets a category itself — `acceptSuggestion`/
  * `acceptProposal` always delegate to `TransactionsStore.bulkAssignCategory`/
  * `RulesStore.createRuleFromCounterparty`, the same paths already audited for FR-CAT rules.
  */

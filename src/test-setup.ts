@@ -1,10 +1,11 @@
 // Global Vitest setup (angular.json's `test.options.setupFiles`), run before any spec module.
-// Polyfills IndexedDB (jsdom doesn't implement it) so specs that exercise a real Dexie/`appDb`
-// round-trip (e.g. category-model.repository.spec.ts) work regardless of module load order —
-// `appDb` is a module-level singleton, so this must be installed before the first spec file
-// imports `app-db.ts`, not from within an individual spec file.
-import 'fake-indexeddb/auto';
-
+//
+// It installed a browser-database polyfill until TICKET-SRV-08: the repositories were wrappers over
+// a local database, so a repository spec was a real round trip and jsdom implements no such storage
+// API. They are HTTP clients now and `withApiTesting()`/`provideFakeApi()` stand in for the
+// backend, so there is nothing global left to install — but the note below still applies, and it is
+// the reason this file exists at all.
+//
 // NOTE (2026-08-01): this file cannot reset `shared/utils/format-settings.ts`'s module-level
 // signals, however natural a home for that it looks like. It used to try, and the attempt was a
 // silent no-op for its whole life: the builder pre-bundles each spec through the Angular compiler

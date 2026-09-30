@@ -2,7 +2,7 @@
 
 **Status:** Draft for review
 **Stack:** Angular (signals-first), Tailwind CSS, daisyUI
-**Persistence:** Local-first (IndexedDB, no backend)
+**Persistence:** Self-hosted server — Express + SQLite (Drizzle ORM), one account per user (v3, `docs/server/`). ~~Local-first, browser-only, serverless~~ through v2, superseded 2026-09-29 — see the note in §1
 **Scope of this doc:** Vision, scope, functional requirements, data model, non-functional requirements, and a phased roadmap. Open decisions are listed at the end.
 
 ---
@@ -15,7 +15,8 @@ A private, local-first web app that turns raw bank CSV exports into an honest pi
 
 **Guiding principles**
 
-1. **Local-first & private.** All financial data lives in the browser (IndexedDB). Nothing is ever sent to a server. This is a feature, not a limitation.
+1. ~~**Local-first & private.** All financial data lives in the browser. Nothing is ever sent to a server. This is a feature, not a limitation.~~
+   **Superseded by v3 (2026-09-29, TICKET-SRV-01…08): self-hosted & private.** The data now lives on a Money Mosaic server the user runs themselves — typically on their own machine or home network — in one SQLite file, scoped to the signed-in account. What the principle was protecting is unchanged and still binding: nothing is sent to a third party, there is no cloud service, and no analytics touch financial content. What changed is that "the browser" became "a machine you control", which buys multi-device access and multiple household members at the cost of something to run and back up. The rest of this document was written against the original design; where a requirement below states otherwise it carries its own dated note.
 2. **Correctness over cleverness.** The numbers must be trustworthy. Internal transfers must never inflate income or expense.
 3. **Signals as the source of truth.** A small set of writable source signals; every statistic is a `computed()` derivation. The UI is a projection of state.
 4. **Robust import over pretty import.** Bank formats change and vary. A generic, remappable importer beats a fragile hardcoded one.
@@ -47,7 +48,7 @@ A private, local-first web app that turns raw bank CSV exports into an honest pi
 
 - **The reconciler** — imports monthly from 2–3 accounts, wants an accurate income/expense picture and to catch overspending.
 - **The saver** — cares about savings rate and net-worth-over-time, moves money between checking/savings frequently (transfer correctness matters most here).
-- **The privacy-conscious** — refuses cloud finance tools; local-first is the reason they'll use this at all.
+- **The privacy-conscious** — refuses cloud finance tools; that the whole thing runs on hardware they own is the reason they'll use this at all.
 
 ---
 
@@ -109,13 +110,13 @@ IDs are stable references for later discussion.
 - **FR-DAT-1** Full **export** of all data to a single JSON file (backup / device migration).
 - **FR-DAT-2** **Import** of such a JSON file (restore / merge), with a clear replace-vs-merge choice.
 - **FR-DAT-3** "Delete all data" with confirmation.
-- **FR-DAT-4** The app requests **persistent storage** so the browser won't silently evict the database.
+- **FR-DAT-4** ~~The app requests **persistent storage** so the browser won't silently evict the database.~~ **Retired 2026-09-29 (TICKET-SRV-08)** — there is no browser database left to evict, so the request, the service behind it and the Data page's status panel are gone. What replaced it on that page is a statement of where the data actually is, and the durability requirement it stood for now belongs to whoever backs up the server's SQLite file (see `docs/server/`).
 
 ---
 
 ## 5. Data Model
 
-Source-of-truth entities (persisted in IndexedDB). Everything statistical is derived, not stored.
+Source-of-truth entities, persisted server-side, one set of rows per user account. Everything statistical is derived, not stored. The tables are in `server/src/schema/` and the types in `shared/entities.ts`; the **data-model** skill is the current reference and this section is the original statement of intent.
 
 **Account**
 `id, name, type (checking|savings|joint|invest), iban?, currency ('EUR'), openingBalance, openingBalanceDate, color, icon, archived`
@@ -156,13 +157,13 @@ Source-of-truth entities (persisted in IndexedDB). Everything statistical is der
 
 ## 6. Non-Functional Requirements
 
-- **NFR-PRIV-1** No network transmission of financial data. No third-party analytics on financial content.
+- **NFR-PRIV-1** No transmission of financial data beyond the user's own server. No third-party analytics on financial content, and no outbound request to anything the user does not run. _(Amended 2026-09-29, TICKET-SRV-08: the app now talks to a backend, which is the user's own.)_
 - **NFR-PERF-1** Smooth interaction with ~10k+ transactions. Aggregates memoized per account/month so a single edit does not recompute all history.
 - **NFR-PERF-2** CSV parsing runs without freezing the UI (Web Worker for large files).
-- **NFR-STORE-1** Versioned IndexedDB schema with forward migrations. Every export records its schema version.
+- **NFR-STORE-1** Versioned schema with forward-only migrations — `server/drizzle/`, generated from `server/src/schema/`, applied on boot before the server listens. A shipped migration is never edited. Every export records its schema version (`DATA_SCHEMA_VERSION`), and an import from a newer one is refused rather than half-applied. _(Amended 2026-09-29, TICKET-SRV-08: was the browser-database version of this line.)_
 - **NFR-A11Y-1** Keyboard-navigable, screen-reader-labelled, WCAG AA contrast (daisyUI themes chosen accordingly).
 - **NFR-RESP-1** Responsive from mobile to desktop.
-- **NFR-RESIL-1** Import is transactional: a failed import leaves the database unchanged.
+- **NFR-RESIL-1** Import is transactional: a failed import leaves the database unchanged. Since v3 that is one SQLite transaction server-side, so a dropped connection part-way cannot leave a half-import behind.
 
 ---
 
@@ -170,7 +171,7 @@ Source-of-truth entities (persisted in IndexedDB). Everything statistical is der
 
 - **Source signals:** `accounts`, `transactions`, `categories`, `rules`, `mappingProfiles`, `importBatches`, `settings`.
 - **Derived (`computed`) signals:** account balances, net worth, per-bucket income/expense/net/savings rate (bucketed by the active date range + grouping granularity), category breakdowns, uncategorised queue, transfer-review queue, range/account trends.
-- **Persistence layer:** an `effect()` (or explicit service calls) mirrors source-signal changes into IndexedDB; on boot, the DB hydrates the source signals.
+- **Persistence layer:** each store calls a repository in `core/data-access/`, which is one `/api` route per entity; a store hydrates itself on first injection rather than at boot, and a multi-row write is a single transactional endpoint. _(Amended 2026-09-29, TICKET-SRV-05/06/08.)_
 - **Memoization:** heavy aggregates keyed by `(accountId, granularity, bucketKey)` — e.g. `(accountId, 'month', '2026-07')` or `(accountId, 'week', '2026-W27')` — so edits invalidate only the touched buckets, and switching grouping granularity doesn't require recomputing buckets that are already cached at that granularity.
 
 ---
@@ -178,7 +179,7 @@ Source-of-truth entities (persisted in IndexedDB). Everything statistical is der
 ## 8. Roadmap
 
 **v1 — MVP (this doc)**
-Accounts (4 types as cash ledgers) · CSV import (presets + wizard + saved profiles) · dedupe · manual + rules categorisation · auto transfer linking (IBAN-first) · core stats with custom date range + grouping (day/week/month/quarter) · JSON backup · local-first IndexedDB.
+Accounts (4 types as cash ledgers) · CSV import (presets + wizard + saved profiles) · dedupe · manual + rules categorisation · auto transfer linking (IBAN-first) · core stats with custom date range + grouping (day/week/month/quarter) · JSON backup · local-first browser storage _(replaced by the v3 server, 2026-09-29)_.
 
 **v1.5 — Refinements**
 Account manager (per-account colour, priority/display order, initial saldo — assumes no legacy transactions before it, renaming) · joint-account splitting (deposits from the paired account excluded from aggregates; every other transaction counted at a per-account share, default 50/50, configurable per joint account) · category manager (dedicated screen surfacing the rules engine as per-category auto-assign rule sets, e.g. "description contains {store name}") · loading/calculating-state animations (import progress, aggregate recompute).

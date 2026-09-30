@@ -60,9 +60,6 @@ const readBody = (url: string): unknown => {
   if (last === 'count') return { count: 0 };
   if (last === 'export')
     return { schemaVersion: 1, exportedAt: '2026-01-01T00:00:00.000Z', tables: {} };
-  // What an account with nothing but its seed looks like (TICKET-SRV-07) — a component spec that
-  // mounts the shell must not be told it has data to protect from a migration nobody is running.
-  if (last === 'migrate-local') return { counts: {}, hasExistingData: false };
   if (last === 'undo-preview')
     return { rowCount: 0, manuallyCategorisedCount: 0, transferLinkedCount: 0 };
   if (segments[1] === 'settings') return {};

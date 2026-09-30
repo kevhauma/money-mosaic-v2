@@ -77,7 +77,8 @@ describe('ApiClient', () => {
   });
 
   /**
-   * `table.update(id, { field: undefined })` deleted the property in Dexie, and several callers rely
+   * `table.update(id, { field: undefined })` deleted the property in the old browser database, and
+   * several callers rely
    * on it to *clear* a setting. `JSON.stringify` drops an `undefined` value instead, so the patch
    * would name no field and change nothing — hence the conversion, one level or many deep.
    */

@@ -55,10 +55,8 @@ module.exports = defineConfig([
                 '@/*',
                 '@angular/*',
                 // And their dependencies. Blocking only the workspaces left the more likely
-                // mistake open: importing Dexie or Drizzle *directly* here would couple every
-                // consumer of shared/ to a persistence library without ever naming a workspace.
-                'dexie',
-                'dexie/*',
+                // mistake open: importing Drizzle *directly* here would couple every consumer of
+                // shared/ to a persistence library without ever naming a workspace.
                 'drizzle-orm',
                 'drizzle-orm/*',
                 'drizzle-kit',

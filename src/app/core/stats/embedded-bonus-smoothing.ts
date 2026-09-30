@@ -13,8 +13,8 @@ const yearOf = (bucketKey: string): string => bucketKey.slice(0, 4);
  *
  * Negative rather than `null`, which already means "Uncategorised" to `computeGrossNetRatio`'s
  * counted-series filter, and rather than a `synthetic?: true` flag on `CategorySeriesEntry`, which
- * is shared with the dashboard's composition trend. Dexie auto-increment ids start at 1, so this can
- * never collide with a real category.
+ * is shared with the dashboard's composition trend. Auto-increment ids start at 1, so this can never
+ * collide with a real category.
  */
 export const SMOOTHED_BONUS_CATEGORY_ID = -1;
 

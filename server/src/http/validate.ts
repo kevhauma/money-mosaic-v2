@@ -164,8 +164,8 @@ export const parseEntityBody = (
 /**
  * Fills in an explicit `null` for every optional column the caller left out, turning a validated
  * body into a **replacement** for the whole row rather than a patch of it. `SalaryMetadataRepository
- * .upsert` is a Dexie `put`, so its endpoint has to mean "this is the row now", clearing a note the
- * caller omitted instead of quietly keeping the old one.
+ * .upsert` has always meant "this is the row now" rather than "patch these fields", so its endpoint
+ * has to mean the same — clearing a note the caller omitted instead of quietly keeping the old one.
  */
 export const asReplacement = (table: SQLiteTable, values: EntityValues): EntityValues => {
   const replacement: EntityValues = { ...values };

@@ -60,7 +60,7 @@ const uniformRepository = (path: string): Record<string, Endpoint> => ({
   remove: ['DELETE', `${path}/1`],
 });
 
-/** Repository method -> the endpoint it will call once TICKET-SRV-05 rewires it. */
+/** Repository method -> the endpoint it calls (wired by TICKET-SRV-05). */
 const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
   AccountsRepository: uniformRepository('/api/accounts'),
   CategoriesRepository: uniformRepository('/api/categories'),
@@ -148,8 +148,6 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
     exportAll: ['GET', '/api/data/export'],
     importAll: ['POST', '/api/data/import'],
     deleteAll: ['DELETE', '/api/data'],
-    localMigrationState: ['GET', '/api/data/migrate-local'],
-    migrateLocalDatabase: ['POST', '/api/data/migrate-local'],
   },
   AppSettingsRepository: settingsRepository('/api/settings/appSettings', [
     'setPrimaryColor',
@@ -169,7 +167,7 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
 };
 
 /**
- * Service method -> the endpoint it will call once TICKET-SRV-05 rewires its body (TICKET-SRV-04).
+ * Service method -> the endpoint it calls (TICKET-SRV-04 built them, TICKET-SRV-05 wired them up).
  *
  * `previewImport` is the odd one out, deliberately: it is pure arithmetic over one read the list
  * endpoint already answers, and the point of the duplicate preview is that it decides sameness with

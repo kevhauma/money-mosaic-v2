@@ -2,14 +2,14 @@
 
 ![Fallow health](https://raw.githubusercontent.com/kevhauma/money-mosaic-v2/main/.github/badges/fallow-health.svg)
 
-A local-first personal finance app. Import bank CSV exports, categorize transactions with rules (or a trained auto-categoriser), link inter-account transfers, track joint/shared accounts, and view dashboard insights — **no backend, no server, no account**. All data lives in [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (via [Dexie.js](https://dexie.org/)) inside your browser.
+A self-hosted personal finance app. Import bank CSV exports, categorize transactions with rules (or a trained auto-categoriser), link inter-account transfers, track joint/shared accounts, and view dashboard insights. It is **two workspaces** — an Angular SPA in `src/` and its own Express + SQLite backend in `server/` — and every byte of your data lives in one SQLite file on the server you run, scoped to the account you sign in as. Nothing is sent anywhere else, and it is meant for your own machine or home network rather than the public internet.
 
 ## Stack
 
 - **Angular 21** — standalone components, Signals, zoneless-style `OnPush`
 - **@ngrx/signals** — component/feature stores
 - **@angular/cdk** — drag-drop (used for the dashboard's customizable row order)
-- **Dexie 4** — IndexedDB wrapper (schema in `src/app/core/data-access/app-db.ts`)
+- **Express 5 + SQLite (better-sqlite3) + Drizzle ORM** — the `server/` workspace; schema in `server/src/schema/`, migrations in `server/drizzle/`
 - **Tailwind CSS 4 + daisyUI 5** — styling
 - **ngx-echarts** — charts
 - **PapaParse** — CSV parsing, run inside a Web Worker
@@ -31,9 +31,9 @@ npm start        # same as `ng serve`
 
 Open `http://localhost:4200/`. The app rebuilds and reloads automatically as you edit source files.
 
-In development mode, if IndexedDB is empty (no accounts and no transactions), the app auto-seeds a small demo dataset — two accounts with sample transactions and a transfer pair — so the UI isn't empty on first run (`src/app/dev-seed/`). This never touches or overwrites real data; it only fires when the local database is genuinely empty.
+In development mode, once you are signed in, if the account is empty (no accounts and no transactions) the app auto-seeds a small demo dataset — two accounts with sample transactions and a transfer pair — so the UI isn't empty on first run (`src/app/dev-seed/`). This never touches or overwrites real data; it only fires when the account is genuinely empty.
 
-To start over with a clean database, clear IndexedDB for `localhost:4200` in your browser's DevTools (Application → IndexedDB) and reload — the seed will run again.
+To start over with a clean database, stop the server and delete its SQLite file (`server/data/money-mosaic.sqlite` by default) — it is recreated and migrated on the next boot, and the seed runs again.
 
 ## Everyday commands
 
@@ -63,7 +63,7 @@ ng build --configuration development
 ```
 src/app/
   core/                  # cross-cutting logic: no UI
-    data-access/         #   Dexie schema + repositories (only place that touches appDb tables)
+    data-access/         #   one repository per entity over the /api routes (the only place that calls the server)
     import/               #   CSV parsing/mapping (PapaParse Web Worker)
     ml/                    #   auto-categoriser: feature hashing, training worker, rule-proposal mining
     accounts/, categorisation/, stats/, transactions/, transfers/
@@ -79,7 +79,7 @@ src/app/
   dev-seed/               # dev-only sample-data seeding (tree-shaken from prod builds)
 ```
 
-Components and stores never touch `appDb` tables directly — always go through a repository in `core/data-access/`. Cross-feature imports go through each feature's `index.ts` barrel (`@/feature-x`), never deep paths.
+Components and stores never call the API directly — always go through a repository in `core/data-access/`. Cross-feature imports go through each feature's `index.ts` barrel (`@/feature-x`), never deep paths.
 
 ## Where to look for more context
 
@@ -88,7 +88,8 @@ Rather than re-deriving these by exploring the code, read:
 | Topic | Source |
 |---|---|
 | Coding conventions (naming, folders, styling, forms, testing) | `.claude/skills/coding-conventions/SKILL.md` |
-| Dexie schema, entities, versioning rules, repositories | `.claude/skills/data-model/SKILL.md` |
+| Data model: entities, the Drizzle schema, migrations, the repository layer | `.claude/skills/data-model/SKILL.md` |
+| Running the server, backing it up, and the endpoint list | `server/README.md` |
 | Feature/store/service map — what lives where | `.claude/skills/project-map/SKILL.md` |
 | Functional requirements (FR-TXN-\*, FR-CAT-\*, FR-TRF-\*, ...) | `docs/reference/finance-app-spec.md`, `docs/releases/v1.0_foundation/overview.md` |
 | UI layout spec | `docs/reference/ui-layout-spec.md` |
@@ -123,8 +124,8 @@ The `spec-navigator` subagent answers FR-*/requirement questions from `docs/` wh
 ## Hard rules
 
 - **Never raise `maximumWarning`/`maximumError` bundle budgets in `angular.json`.** Solve size problems with lazy-loading or dependency dieting instead.
-- **Dexie schema changes are additive**: add a new `.version(n + 1).stores(...)` block (+ `.upgrade()` if data must transform). Never edit a shipped version block.
-- Components/stores never touch `appDb` tables directly — always go through a repository in `core/data-access/`.
+- **Schema changes go through Drizzle migrations**: edit `server/src/schema/`, then `npm run server:migrate`. Never edit a shipped migration — add another one.
+- Components/stores never call the API directly — always go through a repository in `core/data-access/`.
 - Rules must never overwrite a category the user set manually (the `categoryManual` flag on `Transaction`).
 - Cross-feature imports go through the feature's `index.ts` barrel (`@/feature-x`), never deep paths. One documented exception: `app.routes.ts` imports `feature-transactions/transactions.routes` directly to break a barrel cycle — that's intentional.
 
@@ -150,10 +151,10 @@ Unit tests use Vitest with jsdom. There is no e2e test suite configured.
 ng build
 ```
 
-Compiles and optimizes the app into `dist/`. Since this is a fully client-side app (IndexedDB, no backend), the `dist/` output can be deployed to any static host. This repo auto-deploys to a Caddy-served host via GitHub Actions on every push to `main` — see [DEPLOYMENT.md](DEPLOYMENT.md).
+Compiles and optimizes the Angular app into `dist/`. **The v3 backend changed what a deployment is** — a static `dist/` on its own no longer has any data to show, since every read goes to `/api`. Hosting instructions (running the server, where the SQLite file lives, how to back it up) are TICKET-SRV-09's to write; [DEPLOYMENT.md](DEPLOYMENT.md) still describes the pre-v3 static deploy and is stale until then.
 
 ## Additional resources
 
 - [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli)
-- [Dexie.js documentation](https://dexie.org/docs/)
+- [Drizzle ORM documentation](https://orm.drizzle.team/docs/overview)
 - [Vitest documentation](https://vitest.dev/)

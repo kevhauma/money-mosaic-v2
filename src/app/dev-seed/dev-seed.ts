@@ -4,11 +4,14 @@ import type { Account, Transaction } from '@/core/data-access';
 /**
  * Pure, framework-free building blocks for the dev-only sample-data seed (TICKET-DEV-01).
  * Kept separate from the Angular service so the seed decision and dataset shape are unit-testable
- * without a real IndexedDB — and so the whole module tree-shakes out of the production path, since
- * it's only ever reached through a dynamic import behind an `isDevMode()` guard in app.config.ts.
+ * without a backend, and so the dataset stays in a chunk of its own: it is reached only through a
+ * dynamic `import()` behind an `isDevMode()` guard in `core/layout/app-shell`. **The chunk is still
+ * emitted by a production build** — `isDevMode()` is a runtime call, not a build-time constant, so
+ * esbuild cannot fold the branch away — but no production browser ever requests it (measured
+ * 2026-09-29, TICKET-SRV-08: ~4.4 kB, referenced only from that guarded `import()`).
  */
 
-/** Account row awaiting an auto-incremented id from Dexie. */
+/** Account row awaiting the id the server assigns it. */
 export type SeedAccount = Omit<Account, 'id'>;
 
 /** Transaction row awaiting an auto-incremented id; `fingerprint` here is the *base* hash (no `|occurrence` suffix yet). */

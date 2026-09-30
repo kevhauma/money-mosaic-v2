@@ -150,8 +150,8 @@ export class RuleFormComponent {
 
     this.form.patchValue({
       name: existing?.name ?? '',
-      // A pre-filled draft (TICKET-CAT-07) carries a `0` sentinel setCategoryId — Dexie
-      // autoIncrement ids never assign 0, so this leaves the category genuinely unselected.
+      // A pre-filled draft (TICKET-CAT-07) carries a `0` sentinel setCategoryId — auto-increment
+      // ids never assign 0, so this leaves the category genuinely unselected.
       categoryId: existing?.action.setCategoryId ? String(existing.action.setCategoryId) : '',
       priority: existing?.priority ?? this.defaultPriority(),
       enabled: existing?.enabled ?? true,

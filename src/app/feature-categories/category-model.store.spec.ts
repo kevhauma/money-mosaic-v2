@@ -380,7 +380,7 @@ describe('CategoryModelStore', () => {
       expect(store.trainingWindowYears()).toBe(3);
     });
 
-    it('setTrainingWindowYears updates the signal and persists through the repository, not appDb directly', async () => {
+    it('setTrainingWindowYears updates the signal and persists through the repository, not the API directly', async () => {
       await hydrateCollaborators();
       const store = TestBed.inject(CategoryModelStore);
 
@@ -551,7 +551,7 @@ describe('CategoryModelStore', () => {
       expect(store.suggestions().get(5)).toEqual({ categoryId: 1, confidence: 0.77 });
     });
 
-    it('acceptSuggestion delegates to TransactionsStore.bulkAssignCategory with exactly the one id, and never touches appDb/repositories directly', async () => {
+    it('acceptSuggestion delegates to TransactionsStore.bulkAssignCategory with exactly the one id, and never touches the repositories directly', async () => {
       const store = await setupReadyStoreWithSuggestion();
       const transactionsStore = TestBed.inject(TransactionsStore);
       const bulkAssignCategorySpy = vi.spyOn(transactionsStore, 'bulkAssignCategory');

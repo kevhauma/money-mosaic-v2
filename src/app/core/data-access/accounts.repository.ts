@@ -4,15 +4,16 @@ import type { Account } from './entities';
 
 /**
  * The archetype of every repository in this folder (TICKET-SRV-05): the same four verbs it wrapped
- * a Dexie table with, now one `/api` call each. Two things about the shape are deliberate and hold
+ * a browser-database table with, now one `/api` call each. Two things about the shape are deliberate and hold
  * for all seventeen.
  *
- * **The public surface is byte-identical to the Dexie version**, down to the `Promise<number>` that
+ * **The public surface is byte-identical to the pre-TICKET-SRV-05 version**, down to the `Promise<number>` that
  * `update` answers with. Every caller — twenty-odd features, their stores and their specs — was
  * written against it and none of them changed. `repository-surface.spec.ts` pins the whole surface,
  * so a signature cannot drift quietly.
  *
- * **`update` resolves to 1, and a missing row rejects.** Dexie answered the count of rows changed,
+ * **`update` resolves to 1, and a missing row rejects.** The old table answered the count of rows
+ * changed,
  * which for a keyed update is 1 — or 0 for a key that was not there. The API answers 404 for that
  * case, so it surfaces as a rejection instead of a silent zero. Nothing in the app branches on the
  * count (checked at every caller), so the difference is visible only as an error where there used

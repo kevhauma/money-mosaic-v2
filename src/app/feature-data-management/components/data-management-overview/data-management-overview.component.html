@@ -1,6 +1,6 @@
 <mm-text variant="heading" as="h2">Data</mm-text>
 <mm-text as="p" variant="caption" class="mt-1">
-  Back up your data to a file, or restore it on another browser or device.
+  Back up your account's data to a file, or restore it from one.
 </mm-text>
 
 @if (errorMessage()) {
@@ -11,8 +11,16 @@
   <mm-paper elevation="flat" bodyClass="card-body gap-3">
     <h2 class="card-title text-base">Export data</h2>
     <mm-text as="p" class="text-sm text-base-content/60">
-      Download everything — accounts, transactions, categories, rules, and settings — as one JSON
-      file. Nothing leaves your browser except the file you save.
+      Download everything in your account — accounts, transactions, categories, rules, and settings
+      — as one JSON file, saved straight to this device.
+    </mm-text>
+    <!-- Said here rather than left to be discovered after a restore (TICKET-SRV-08): the trained
+         model is megabytes of Float32 weights, and JSON.stringify turns an ArrayBuffer into `{}`,
+         so a backup has never carried it. What it costs is one retraining, not any data — but
+         silence about it is what TICKET-DAT-05 closed on, and this ticket must not inherit it. -->
+    <mm-text as="p" class="text-xs text-base-content/50">
+      The trained auto-categoriser is not in the file — it is megabytes of weights that JSON cannot
+      carry. Your categorised transactions are, so retraining after a restore rebuilds it.
     </mm-text>
     <mm-button color="primary" class="w-fit" [disabled]="exporting()" (click)="exportData()">
       {{ exporting() ? 'Exporting…' : 'Export data' }}
@@ -60,56 +68,21 @@
   </mm-paper>
 </div>
 
-@if (localMigration.available()) {
-  <mm-paper elevation="flat" bodyClass="card-body gap-3" class="mt-4">
-    <h2 class="card-title text-base">Move this browser's older data</h2>
-    <mm-text as="p" class="text-sm text-base-content/60">
-      This browser still holds data from before Money Mosaic had accounts. Move it into the account
-      you are signed in as — it uploads in one step, and nothing changes if it fails.
-    </mm-text>
-    <mm-button color="primary" class="w-fit" (click)="localMigration.offerAgain()">
-      Move it into my account
-    </mm-button>
-  </mm-paper>
-}
-
 <mm-paper elevation="flat" bodyClass="card-body gap-2" class="mt-4">
-  <mm-flex align="center" gap="2">
-    <h2 class="card-title text-base">Persistent storage</h2>
-    @switch (storageStatus()) {
-      @case ('granted') {
-        <mm-badge color="success" variant="soft">Active</mm-badge>
-      }
-      @case ('denied') {
-        <mm-badge color="warning" variant="soft">Not active</mm-badge>
-      }
-      @default {
-        <mm-badge color="neutral" variant="soft">Unavailable</mm-badge>
-      }
-    }
-  </mm-flex>
+  <h2 class="card-title text-base">Where your data lives</h2>
   <mm-text as="p" class="text-sm text-base-content/60">
-    @switch (storageStatus()) {
-      @case ('granted') {
-        Your browser has exempted this app's data from automatic storage cleanup.
-      }
-      @case ('denied') {
-        Your browser hasn't granted persistent storage yet. Most browsers grant it automatically for
-        sites you visit often or install/bookmark — this may resolve on its own over time.
-      }
-      @default {
-        Your browser doesn't support requesting persistent storage. Your data is still saved
-        locally, but may be subject to automatic cleanup under storage pressure.
-      }
-    }
+    Everything you import or enter is stored on the Money Mosaic server you are signed in to, in a
+    single SQLite file. Your browser keeps nothing but your session — signing in from another
+    browser or device shows you the same data. Backing that file up is the server operator's job;
+    the export above is your own copy of it.
   </mm-text>
 </mm-paper>
 
 <mm-paper elevation="flat" borderColor="error/40" bodyClass="card-body gap-2" class="mt-4">
   <h2 class="card-title text-base text-error">Delete all data</h2>
   <mm-text as="p" class="text-sm text-base-content/60">
-    Permanently erase every account, transaction, category, rule, and setting stored in this
-    browser. This cannot be undone.
+    Permanently erase every account, transaction, category, rule, and setting in your account on the
+    server. This cannot be undone.
   </mm-text>
   <mm-button
     color="error"
@@ -174,7 +147,7 @@
 
   @if (importMode() === 'replace') {
     <mm-alert status="error" class="mt-2">
-      This erases your entire current database and replaces it with the imported file's data. This
+      This erases everything in your account and replaces it with the imported file's data. This
       can't be undone.
     </mm-alert>
   }
@@ -206,7 +179,7 @@
 <mm-confirm-dialog
   [(open)]="deleteDialogOpen"
   title="Delete all data?"
-  message="Consider exporting a backup first using Export data above. This permanently erases every account, transaction, category, rule, and setting — it cannot be undone."
+  message="Consider exporting a backup first using Export data above. This permanently erases every account, transaction, category, rule, and setting in your account — it cannot be undone."
   confirmLabel="Delete everything"
   confirmPhrase="DELETE"
   [danger]="true"

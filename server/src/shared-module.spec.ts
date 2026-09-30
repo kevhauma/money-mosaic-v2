@@ -25,9 +25,9 @@ const importsOf = (file: string): string[] => {
 };
 
 describe('shared/: dependency freedom', () => {
-  it('entities.ts imports nothing at all — no Angular, no Dexie, no Drizzle', () => {
-    // The 29 entity types only ever referenced Dexie through `app-db.ts`'s `AppDb` class, never in
-    // a type definition, which is what made this move possible in the first place.
+  it('entities.ts imports nothing at all — no Angular, no Drizzle, no persistence library', () => {
+    // The 29 entity types only ever named the client's old database class from outside themselves,
+    // never in a type definition, which is what made this move possible in the first place.
     expect(importsOf(sharedFile('entities.ts'))).toEqual([]);
   });
 

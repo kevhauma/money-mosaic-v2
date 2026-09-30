@@ -65,7 +65,7 @@ describe('AppSettingsRepository', () => {
 
   /**
    * The stored row is layered **over** the defaults rather than returned as it stands — a change
-   * from the Dexie fallback, and a deliberate one: `AppSettingsStore` derives its signal members
+   * from the pre-TICKET-SRV-05 fallback, and a deliberate one: `AppSettingsStore` derives its signal members
    * from the seed object's keys, so a body missing a key would produce a store missing a member
    * (the `withState`-needs-every-key gotcha from v2.2).
    */
@@ -91,7 +91,7 @@ describe('AppSettingsRepository', () => {
   });
 
   // `JSON.stringify` drops an `undefined` value, which would turn a clear into a patch naming no
-  // field at all — so `ApiClient` puts it on the wire as `null`, which is what Dexie's `update`
+  // field at all — so `ApiClient` puts it on the wire as `null`, which is what the old `update`
   // meant by deleting the property.
   it.each(CLEARERS)('set%s clears the field by sending null', async (_name, call, field) => {
     expect(

@@ -35,7 +35,7 @@ before the server listens, and `server/data/` is gitignored — the schema lives
 
 `src/schema/` is one Drizzle table per module, re-exported from `schema/index.ts` (which is what
 `drizzle.config.ts` diffs against — a table missing from the barrel never reaches a migration).
-Every entity table carries an indexed, cascading `userId`; the seven Dexie singletons are one row
+Every entity table carries an indexed, cascading `userId`; the seven settings singletons are one row
 per user keyed on the owner. After `migrate:generate`, rename the generated `NNNN_<random>.sql` to
 something descriptive and update the matching `tag` in `drizzle/meta/_journal.json`. A shipped
 migration is never edited.
@@ -130,8 +130,8 @@ The identifier is literally `admin` — the login field is free text, not a vali
 Seeding only ever runs against an empty `users` table, so it cannot resurrect a deleted admin or
 reset a changed password. A newly created account also gets its first-run data — the KBC and
 Belfius mapping-profile templates, the default categories, the default transfer settings — from
-`seedUserDefaults` (TICKET-SRV-02), which is Dexie's per-database `populate` hook reworked into a
-per-user one. Passwords are hashed with `scrypt` from `node:crypto` and a per-user salt;
+`seedUserDefaults` (TICKET-SRV-02) — the same `shared/seed-data.ts` constants the client's
+`DEFAULT_*` fallbacks are built from, written once per user rather than once per database. Passwords are hashed with `scrypt` from `node:crypto` and a per-user salt;
 the hash and salt never appear in a response.
 
 This server is **deliberately unsecured for LAN hosting**: no HTTPS, no CSRF tokens, no rate

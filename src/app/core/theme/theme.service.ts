@@ -36,7 +36,7 @@ function clearLegacyStorage(): void {
 /**
  * Owns the app's single appearance axis: which theme `style` from `THEME_STYLES` renders it,
  * resolved straight to a daisyUI `data-theme` attribute on `<html>`. Deliberately `localStorage`-
- * only, not the Dexie-backed `appSettings` table v2's TICKET-SET-01 would introduce — appearance
+ * only, not the portable `appSettings` row TICKET-SET-01 introduced — appearance
  * is a per-browser preference, not portable data.
  */
 @Injectable({ providedIn: 'root' })

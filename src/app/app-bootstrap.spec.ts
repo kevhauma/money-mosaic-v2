@@ -96,23 +96,15 @@ describe('startApp', () => {
 });
 
 /**
- * Read as source rather than exercised, because what this asserts is an *absence* — two things
- * bootstrap must no longer do (TICKET-SRV-06). A runtime test can only show that opening the
- * database did not break anything, which it would not, right up until somebody's browser had no
- * IndexedDB. `app-db.ts` and `StorageStatusService` both survive until TICKET-SRV-08 deletes them;
- * the point is that nothing on the startup path reaches for either.
+ * Read as source rather than exercised, because what this asserts is an *absence*: bootstrap does
+ * one thing (TICKET-SRV-06). The two companion cases that pinned the *other* two things it used to
+ * do — opening the browser database and asking for persistent storage — went with the code they
+ * named, since TICKET-SRV-08 deleted both modules and neither can be reached from anywhere now.
+ * What is left is the one that can still regress: a second initializer, quietly loading data before
+ * render again.
  */
 describe('app.config.ts: bootstrap resolves the session and nothing else', () => {
   const source = readFileSync(join(process.cwd(), 'src', 'app', 'app.config.ts'), 'utf-8');
-
-  it('does not open the database', () => {
-    expect(source).not.toContain('appDb');
-    expect(source).not.toContain('app-db');
-  });
-
-  it('does not ask for persistent storage — the data is not in this browser any more', () => {
-    expect(source).not.toContain('StorageStatusService');
-  });
 
   it('runs exactly one initializer, and it is the session', () => {
     expect(source.match(/provideAppInitializer\(/g)).toHaveLength(1);

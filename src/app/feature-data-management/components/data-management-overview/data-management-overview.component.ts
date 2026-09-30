@@ -1,14 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DataManagementRepository, type AppDataExport, type ImportMode } from '@/core/data-access';
-import { LocalMigrationService } from '@/core/local-migration';
-import { StorageStatusService } from '@/core/storage';
 import {
   AlertComponent,
-  BadgeComponent,
   ButtonComponent,
   ConfirmDialogComponent,
   FieldsetComponent,
-  FlexComponent,
   LabelComponent,
   MmModalComponent,
   PaperComponent,
@@ -27,8 +23,8 @@ const OMITTED_FIELD_LABELS: Record<string, string> = {
 };
 
 /**
- * A QR transfer leaves the bulky source-CSV fields behind unless the sender opted in, and `bulkPut`
- * replaces a whole row — so a merge can *clear* those fields on transactions this browser already
+ * A QR transfer leaves the bulky source-CSV fields behind unless the sender opted in, and an import
+ * replaces a whole row — so a merge can *clear* those fields on transactions the account already
  * has. Worth one sentence at the point of no return rather than a surprise afterwards.
  */
 const describeOmissions = (omitted: Record<string, string[]>): string | null => {
@@ -47,11 +43,9 @@ const describeOmissions = (omitted: Record<string, string[]>): string | null => 
   selector: 'app-data-management-overview',
   imports: [
     AlertComponent,
-    BadgeComponent,
     ButtonComponent,
     ConfirmDialogComponent,
     FieldsetComponent,
-    FlexComponent,
     LabelComponent,
     MmModalComponent,
     PaperComponent,
@@ -64,25 +58,6 @@ const describeOmissions = (omitted: Record<string, string[]>): string | null => 
 })
 export class DataManagementOverviewComponent {
   private readonly dataManagementRepository = inject(DataManagementRepository);
-  private readonly storageStatusService = inject(StorageStatusService);
-  /**
-   * The re-entry point for TICKET-SRV-07's one-time migration. The offer itself is made once, on
-   * sign-in, from the app shell; this is where someone who declined it — or whose attempt failed —
-   * comes back to it, which is why the same service opens the same dialog rather than this page
-   * owning a second copy of that conversation. The card is absent entirely unless this browser
-   * still has a database to move.
-   */
-  protected readonly localMigration = inject(LocalMigrationService);
-  protected readonly storageStatus = this.storageStatusService.status;
-
-  constructor() {
-    // Asked here rather than at bootstrap (TICKET-SRV-06): the service's status starts at
-    // `'unsupported'` and is only ever written by this call, so with nothing invoking it the panel
-    // below would report "not supported" on every browser regardless of the truth. The page that
-    // shows the answer is the page that should ask the question — and asking on each visit is
-    // deliberate, since the browser's decision can change between them.
-    void this.storageStatusService.checkAndRequest();
-  }
 
   protected readonly exporting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);

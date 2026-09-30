@@ -1,6 +1,3 @@
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
 import { describe, expect, it } from 'vitest';
 
 import { abortOn, apiFetch, apiJson, type TestApp, type TestSession } from '../app.testing.js';
@@ -15,10 +12,6 @@ import { startTwoUserApp, transactionBody } from './samples.testing.js';
  * place a request means "every table", so a missing `where userId = ?` would hand one household's
  * finances to another rather than merely leaking one row.
  */
-
-const APP_DB_FILE = fileURLToPath(
-  new URL('../../../src/app/core/data-access/app-db.ts', import.meta.url),
-);
 
 type Row = { id: number } & Record<string, unknown>;
 
@@ -44,16 +37,6 @@ const addTransaction = (app: TestApp, as: TestSession, accountId: number) =>
     method: 'POST',
     body: transactionBody(accountId, { rawDescription: 'Exported' }),
   });
-
-describe('the schema version an export declares', () => {
-  it("matches the Dexie schema this server's tables are a port of", () => {
-    const source = fs.readFileSync(APP_DB_FILE, 'utf8');
-    const versions = [...source.matchAll(/\.version\((\d+)\)/g)].map((match) => Number(match[1]));
-
-    expect(versions.length).toBeGreaterThan(0);
-    expect(DATA_SCHEMA_VERSION).toBe(Math.max(...versions));
-  });
-});
 
 describe('GET /api/data/export', () => {
   it("returns only the signed-in user's rows, in both directions", async () => {

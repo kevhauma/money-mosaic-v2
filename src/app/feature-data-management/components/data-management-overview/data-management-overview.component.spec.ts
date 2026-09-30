@@ -1,9 +1,6 @@
-import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { DataManagementRepository, type AppDataExport } from '@/core/data-access';
-import { LocalMigrationService } from '@/core/local-migration';
-import { StorageStatusService } from '@/core/storage';
 import { DataManagementOverviewComponent } from './data-management-overview.component';
 
 type Internals = {
@@ -61,28 +58,38 @@ describe('DataManagementOverviewComponent', () => {
 
   const internals = (): Internals => fixture.componentInstance as unknown as Internals;
 
-  describe('persistent-storage panel', () => {
-    it('asks the browser for its storage status on arrival, rather than reporting a stale default', () => {
-      // The regression this pins (TICKET-SRV-06): `checkAndRequest` used to be called at bootstrap,
-      // and when that call moved out, nothing invoked it — so `status` sat at its `'unsupported'`
-      // initial value and the panel reported "not supported" on every browser, forever. Nothing
-      // failed, because nothing asserted it.
-      const checkAndRequest = vi.fn().mockResolvedValue(undefined);
-      TestBed.configureTestingModule({
-        imports: [DataManagementOverviewComponent],
-        providers: [
-          { provide: DataManagementRepository, useValue: dataManagementRepository },
-          { provide: StorageStatusService, useValue: { checkAndRequest, status: () => 'granted' } },
-        ],
-      });
+  /**
+   * The panel this replaced asked the browser for persistent storage and reported whether the
+   * database here was safe from eviction (FR-DAT-4). There is no database here to evict since
+   * TICKET-SRV-08, so the page says where the data actually is instead — and the wrong half of
+   * that is the half that would survive a careless edit, so it is asserted rather than read.
+   */
+  describe('where the data lives', () => {
+    it('says the data is on the server, and claims nothing about this browser', async () => {
+      await setup();
+      const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
-      TestBed.createComponent(DataManagementOverviewComponent).detectChanges();
-
-      expect(checkAndRequest).toHaveBeenCalledOnce();
+      expect(text).toContain('stored on the Money Mosaic server');
+      expect(text).not.toContain('Persistent storage');
+      expect(text).not.toMatch(/evict/i);
     });
   });
 
   describe('export', () => {
+    /**
+     * The one thing a backup silently leaves behind (TICKET-DAT-05's closing note): the trained
+     * model is three `ArrayBuffer`s and `JSON.stringify` turns each into `{}`. That has always been
+     * true; what TICKET-SRV-08 fixes is that the page never said so, and a user restoring a backup
+     * found out by noticing the suggestions were gone.
+     */
+    it('says the trained model is not in the file, rather than dropping it silently', async () => {
+      await setup();
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'The trained auto-categoriser is not in the file',
+      );
+    });
+
     it('downloads the exported data as a JSON file, no network request involved', async () => {
       await setup();
       const createObjectURL = vi.fn().mockReturnValue('blob:mock');
@@ -287,41 +294,6 @@ describe('DataManagementOverviewComponent', () => {
       expect(reload).not.toHaveBeenCalled();
 
       Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
-    });
-  });
-
-  /**
-   * The re-entry point for TICKET-SRV-07's one-time migration: the card exists only for a browser
-   * that still has a database to move, and pressing it re-opens the shell's dialog through the
-   * shared service rather than starting a second conversation here.
-   */
-  describe('the browser-database migration card', () => {
-    it('is absent when this browser has nothing left to move', async () => {
-      await setup();
-
-      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
-        "Move this browser's older data",
-      );
-    });
-
-    it('offers the move again once the service has found a database', async () => {
-      await setup();
-      const service = TestBed.inject(LocalMigrationService);
-      const offerAgain = vi.spyOn(service, 'offerAgain').mockResolvedValue(undefined);
-      // Stood in before the component is created, not after: `available` is readonly on the service
-      // and the template is OnPush, so a signal swapped in afterwards is one the template never
-      // registered a dependency on and no amount of `detectChanges` would show it.
-      Object.defineProperty(service, 'available', { value: signal(true).asReadonly() });
-
-      const withDatabase = TestBed.createComponent(DataManagementOverviewComponent);
-      withDatabase.detectChanges();
-
-      const button = [
-        ...(withDatabase.nativeElement as HTMLElement).querySelectorAll('button'),
-      ].find((candidate) => candidate.textContent?.includes('Move it into my account'));
-      button?.click();
-
-      expect(offerAgain).toHaveBeenCalledTimes(1);
     });
   });
 

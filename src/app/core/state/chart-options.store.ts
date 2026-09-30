@@ -79,7 +79,7 @@ const EMPTY_ENTRY: ChartOptionsEntry = { hiddenSeries: [] };
  * outlive a navigation.
  *
  * **In-memory only, deliberately** (TICKET-STAT-27 note): "per session" is the requirement, so
- * there is no repository and no Dexie table behind this — it resets on reload exactly as
+ * there is no repository and nothing persisted behind this — it resets on reload exactly as
  * `RangeStore` does. A hidden-account filter surviving a browser restart is a different product
  * decision: someone who forgot they hid an account would read the chart as simply wrong.
  */

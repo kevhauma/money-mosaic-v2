@@ -5,7 +5,7 @@ const HAS_VISITED_KEY = 'mm-has-visited';
 /**
  * Tracks whether this browser has already reached the dashboard once, so the landing page
  * (TICKET-PUB-01) only shows itself to a genuine first-time visitor. Deliberately `localStorage`-
- * only, not the Dexie-backed `appSettings` table — this is ephemeral, per-browser UI state, not
+ * only, not the server-side `appSettings` row — this is ephemeral, per-browser UI state, not
  * data a restored backup should carry across (a fresh browser restoring a backup should still see
  * the landing page once).
  */

@@ -7,7 +7,7 @@ const PATH = '/transactions';
 /**
  * The three extra reads are **query parameters on the list endpoint** rather than paths of their
  * own: each is the same "give me my transactions" question with a narrower `where`, which is how the
- * Dexie indexes behind them read too.
+ * indexes behind them read too.
  *
  * There is deliberately **no `bulkRemove`**. `DELETE /api/transactions/bulk` exists, but it deletes
  * rows without repairing the transfers that linked them, leaving a surviving leg stamped with a

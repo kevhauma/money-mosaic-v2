@@ -290,7 +290,7 @@ export class TransactionsOverviewComponent {
   /**
    * Converts the active filter into a starting `RuleCondition[]` and opens the shared rule-form
    * modal pre-filled with it — the target category is left for the user to pick (0 sentinel,
-   * never a real Dexie id) and any inconvertible axes (date range/category) are called out via
+   * never a real id) and any inconvertible axes (date range/category) are called out via
    * `ruleFormExcludedNote` (TICKET-CAT-07).
    */
   protected openRuleFromFilter(): void {

@@ -15,7 +15,7 @@ const PATH = '/settings/appSettings';
  *   fields at the same moment can no longer lose one of them.
  * - **A setter given `undefined` still clears its field.** `ApiClient` puts an explicitly-`undefined`
  *   value on the wire as `null` — `JSON.stringify` would drop it, turning "clear this" into a patch
- *   that names no field at all. That is Dexie's `update` semantics kept, not a new convention.
+ *   that names no field at all. That is the old `update` semantics kept, not a new convention.
  *
  * See `transfer-settings.repository.ts` for why `get` spreads the response over the `DEFAULT_*`.
  */

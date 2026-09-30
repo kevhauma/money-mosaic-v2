@@ -51,7 +51,7 @@ export type Step2View = 'not-ready' | 'manual-map' | 'batch-mismatch' | 'batch-w
 // keystroke (NFR-PERF-2 — parsing runs in a Web Worker, but rapid re-parses are still wasteful).
 const PARSE_DEBOUNCE_MS = 300;
 
-// Never a real Dexie id (autoIncrement starts at 1) — passed to the map step for a file whose
+// Never a real id (auto-increment starts at 1) — passed to the map step for a file whose
 // account is still a pending draft, so step 2 renders without a persisted account yet (TICKET-IMP-08).
 const PENDING_ACCOUNT_PLACEHOLDER_ID = -1;
 
@@ -229,7 +229,7 @@ export class ImportWizardSession {
    * stream-based boundaries" rule, and the two operators are the whole justification: `switchMap`
    * drops a superseded scan's late result the way the parse pipeline drops a superseded parse, and
    * `startWith` makes "scanning" a state the UI can render rather than a gap. Same caveat as the
-   * parse pipeline, and worth repeating: `switchMap` does not cancel the Dexie read, it only stops
+   * parse pipeline, and worth repeating: `switchMap` does not cancel the request, it only stops
    * anyone listening to it.
    */
   private readonly duplicateScanInput = computed<{

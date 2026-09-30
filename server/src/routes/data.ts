@@ -15,11 +15,6 @@ import {
 } from '../http/validate.js';
 import { authUserOf } from '../middleware/require-auth.js';
 import {
-  migrateLocalDatabase,
-  readMigrationState,
-  type MigrationDocument,
-} from '../operations/migrate-local.js';
-import {
   clearUserRows,
   idOf,
   ownerOf,
@@ -32,17 +27,16 @@ import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.j
 /**
  * `/api/data` (TICKET-SRV-04) — export everything, import everything, delete everything, each over
  * the signed-in user's rows and each in one SQLite transaction. The endpoints behind
- * `DataManagementRepository` (FR-DAT-1/2/3) and the transport TICKET-SRV-07's one-time migration
- * will use.
+ * `DataManagementRepository` (FR-DAT-1/2/3).
  *
- * **The table list is derived, never written down.** `exportAll`/`importAll`/`deleteAll` were
- * generic over `appDb.tables` for exactly this reason: a table added later is covered without anyone
+ * **The table list is derived, never written down.** The client's three operations were generic over
+ * the whole database for exactly this reason: a table added later is covered without anyone
  * remembering this file. It lives in `operations/user-rows.ts`, which the admin panel's delete-user
  * endpoint shares (TICKET-AUTH-03).
  *
  * **`categoryModel` is exported and imported by `/api/categoryModel`, not here.** It is megabytes of
  * `Float32` weights in three blob columns, and a JSON document is the one shape they cannot survive
- * — `JSON.stringify` turns an `ArrayBuffer` into `{}`, which is how the Dexie export silently lost
+ * — `JSON.stringify` turns an `ArrayBuffer` into `{}`, which is how the pre-v3 export silently lost
  * every trained weight it ever wrote (recorded at the bottom of TICKET-DAT-05). A backup carries the
  * transactions the model is trained *from*, so what it costs is one retraining rather than any data.
  * A `replace` import still clears the row, because it is the user's previous dataset's model and
@@ -50,25 +44,18 @@ import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.j
  */
 
 /**
- * The Dexie `appDb.verno` this schema is a port of (TICKET-SRV-02), and the version an export
- * declares. It is **not** the migration count — `/api/health` reports that — because the number a
- * backup carries has to mean "which shape of the data model is this", which is the question
- * `importAll` has always asked it. `data.spec.ts` pins it against `app-db.ts`, so porting a future
- * Dexie version without raising it fails there.
+ * The shape of the data model an export declares, and the highest version this server will accept
+ * back. It is **not** the migration count — `/api/health` reports that — because the number a backup
+ * carries has to mean "which shape of the data model is this", which is the question `importAll` has
+ * always asked it.
+ *
+ * It starts at 16 because that is the version the pre-v3 browser database had reached when
+ * TICKET-SRV-02 ported its schema, so a backup written by that app imports here unchanged. Raise it
+ * in the same change as any migration that alters what a document carries — `data.spec.ts` pins the
+ * refusal of a higher number, not the number itself, since there is no second declaration of the
+ * schema left to compare against.
  */
 export const DATA_SCHEMA_VERSION = 16;
-
-/**
- * The one route whose body is a whole browser database (TICKET-SRV-07), and the ceiling it gets.
- *
- * `JSON_BODY_LIMIT` is 10 MB, which is generous for a CSV import's worth of transactions and not
- * generous at all for a decade of them carrying `rawLine`/`rawRow` — and the failure mode is a bare
- * 413 with nothing in it, on the one operation a user only ever performs once. `app.ts` mounts this
- * parser in front of the app-wide one for this path alone, so every other endpoint keeps the
- * smaller ceiling.
- */
-export const MIGRATE_LOCAL_PATH = '/api/data/migrate-local';
-export const MIGRATE_LOCAL_BODY_LIMIT = '256mb';
 
 /** Columns the server computes, which are neither exported nor accepted back (`ParseOptions`). */
 const derivedOf = (table: PerUserTable): readonly string[] =>
@@ -172,7 +159,7 @@ const upsertRow = (
   // `values` carries only the keys the document had, and `toEntity` strips nulls on the way out —
   // so setting it directly would be a patch, leaving a field the backup does not have standing on
   // the stored row. `asReplacement` fills the absent nullable columns back in as null, which is
-  // what Dexie's `put` does by writing the whole object.
+  // what writing the whole object gives you, and what `merge` has always meant here.
   tx.update(table)
     .set(asReplacement(table, values) as never)
     .where(key)
@@ -284,39 +271,6 @@ export const createDataRouter = (db: DrizzleDb): Router => {
     importDocument(db, payload, user.id);
 
     res.status(204).end();
-  });
-
-  /**
-   * What the account already holds (TICKET-SRV-07) — the question the migration dialog asks before
-   * it offers anything, since "this account is empty" and "this account has four years of data in
-   * it" are two very different offers.
-   */
-  router.get('/migrate-local', (req, res) => {
-    const user = authUserOf(req);
-    res.json(readMigrationState(db, user.id));
-  });
-
-  /**
-   * The one-time move of a browser database into this account (TICKET-SRV-07).
-   *
-   * Same envelope as `/import`, and deliberately **not** the same endpoint: `/import` preserves the
-   * ids a backup carries, and a browser database's ids were assigned by a different counter in a
-   * different id space. Every row here is inserted with a fresh id and every reference rewritten —
-   * `operations/migrate-local.ts` — inside one transaction, so a failure part-way leaves the
-   * account exactly as it was and the whole thing can simply be run again.
-   */
-  router.post('/migrate-local', (req, res) => {
-    const user = authUserOf(req);
-    const { mode, document } = asImportBody(req.body);
-
-    const report = db.transaction((tx) => {
-      // As in `importDocument`: the document's rows reference each other in both directions, so the
-      // per-statement check has to move to COMMIT. `clearUserRows` needs it too.
-      tx.run(sql`PRAGMA defer_foreign_keys = ON`);
-      return migrateLocalDatabase(tx, document.tables as MigrationDocument, mode, user.id);
-    });
-
-    res.json(report);
   });
 
   /** FR-DAT-3, scoped: every row of the signed-in user, and nobody else's. */

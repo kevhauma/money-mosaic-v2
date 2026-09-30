@@ -202,7 +202,7 @@ describe('LoanDetailComponent: edit (loan feedback)', () => {
     expect(form?.textContent).toContain('Save changes');
   });
 
-  it('persists an edit through LoansStore.updateLoan, never appDb directly', async () => {
+  it('persists an edit through LoansStore.updateLoan, never the API directly', async () => {
     const fixture = await createFixture([loan({ id: 1 })], '1');
 
     await fixture.componentInstance['saveEdit']({
@@ -229,7 +229,7 @@ describe('LoanDetailComponent: edit (loan feedback)', () => {
 
 describe('LoanDetailComponent: archive/unarchive/delete (TICKET-LOAN-11)', () => {
   for (const loanType of ['mortgage', 'auto'] as const) {
-    it(`archives a ${loanType}-type loan through LoansStore.archiveLoan, never appDb directly`, async () => {
+    it(`archives a ${loanType}-type loan through LoansStore.archiveLoan, never the API directly`, async () => {
       const fixture = await createFixture([loan({ id: 1, loanType, archived: false })], '1');
       const host = fixture.nativeElement as HTMLElement;
 
@@ -242,7 +242,7 @@ describe('LoanDetailComponent: archive/unarchive/delete (TICKET-LOAN-11)', () =>
       expect(loansRepository.update).toHaveBeenCalledWith(1, { archived: true });
     });
 
-    it(`unarchives an already-archived ${loanType}-type loan through LoansStore.unarchiveLoan, never appDb directly`, async () => {
+    it(`unarchives an already-archived ${loanType}-type loan through LoansStore.unarchiveLoan, never the API directly`, async () => {
       const fixture = await createFixture([loan({ id: 1, loanType, archived: true })], '1');
       const host = fixture.nativeElement as HTMLElement;
 

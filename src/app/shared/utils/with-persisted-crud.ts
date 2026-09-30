@@ -29,8 +29,8 @@ export type PersistedCrudRepository<Entity> = {
  * `activeAccounts`/`archivedAccounts` etc.
  *
  * Takes the repository's injection token (not an instance) so it can `inject()` it inside the store's
- * own injection context, and always a repository — never a Dexie table — so persistence still goes
- * exclusively through the repository layer.
+ * own injection context, and always a repository — never `ApiClient`, never `HttpClient` — so
+ * persistence still goes exclusively through the repository layer.
  */
 export function withPersistedCrud<Entity extends { id?: number }>(
   repositoryToken: Type<PersistedCrudRepository<Entity>>,

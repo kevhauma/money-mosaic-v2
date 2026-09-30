@@ -14,43 +14,13 @@ export type AppDataExport = {
 
 export type ImportMode = 'replace' | 'merge';
 
-/** What the signed-in account already holds, before a browser database is moved into it. */
-export type LocalMigrationState = {
-  /** Rows per table, so the offer can say what it would be merging into. */
-  readonly counts: Record<string, number>;
-  /** Whether any of it is the user's rather than the first-run seed's. */
-  readonly hasExistingData: boolean;
-};
-
-/** What a completed move actually did — mirrors `MigrationReport` in `server/src/operations/migrate-local.ts`. */
-export type LocalMigrationReport = {
-  readonly migrated: Record<string, number>;
-  /** Rows matched to a row the account already had (a seeded category) instead of duplicated. */
-  readonly reused: Record<string, number>;
-  /**
-   * Rows whose incoming content was dropped in favour of one the account already held — a salary
-   * month recorded on both sides. Counted apart from `reused`, which means "the same row", because
-   * this one means "your figures were discarded".
-   */
-  readonly displaced: Record<string, number>;
-  /** Rows dropped because a row they cannot exist without was not in the browser database. */
-  readonly skipped: Record<string, number>;
-  /** Optional references cleared for the same reason. */
-  readonly clearedReferences: number;
-  /**
-   * Local category id -> the id it was given. The trained model's `categoryIdByIndex` is a list of
-   * category ids and travels separately, as bytes, so this is the one map that has to come back.
-   */
-  readonly categoryIds: Record<number, number>;
-};
-
 const PATH = '/data';
-const MIGRATE_LOCAL_PATH = `${PATH}/migrate-local`;
 
 /**
  * The whole-dataset three (FR-DAT-1/2/3), each one endpoint over the signed-in user's rows and each
  * one SQLite transaction (TICKET-SRV-04) — so a failure part-way through still leaves every table
- * exactly as it was, which is the property `appDb.transaction('rw', appDb.tables, …)` used to give.
+ * exactly as it was, which is the property the browser database's own all-tables write transaction
+ * used to give before TICKET-SRV-05.
  *
  * Two things that used to happen here happen server-side now: the `schemaVersion` guard (a backup
  * from a newer data model is refused **before** the transaction opens, and the refusal arrives here
@@ -72,20 +42,4 @@ export class DataManagementRepository {
   };
 
   deleteAll = (): Promise<void> => this.api.delete(PATH);
-
-  /** What this account already holds — the question TICKET-SRV-07's offer is worded from. */
-  localMigrationState = (): Promise<LocalMigrationState> =>
-    this.api.get<LocalMigrationState>(MIGRATE_LOCAL_PATH);
-
-  /**
-   * Moves a whole browser database into this account, once (TICKET-SRV-07).
-   *
-   * Deliberately **not** `importAll`, even though the document is the same shape. An import
-   * preserves the ids a backup carries, because they are this account's own; a browser database's
-   * ids came from Dexie's `++id` in an id space that has nothing to do with this one and *will*
-   * collide. The server inserts every row afresh, rewrites every reference, and answers with what
-   * landed — all in one transaction, so a failure leaves the account exactly as it was.
-   */
-  migrateLocalDatabase = (data: AppDataExport, mode: ImportMode): Promise<LocalMigrationReport> =>
-    this.api.post<LocalMigrationReport>(MIGRATE_LOCAL_PATH, { mode, data });
 }

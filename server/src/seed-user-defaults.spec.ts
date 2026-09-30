@@ -16,12 +16,12 @@ import { users } from './schema/users.js';
 import { seedUserDefaults } from './seed-user-defaults.js';
 
 /**
- * `seedUserDefaults` against the very constants Dexie's `populate` hook writes (TICKET-SRV-02).
+ * `seedUserDefaults` against the very constants the client assumes a new account starts with
+ * (TICKET-SRV-02).
  *
  * The comparison is deliberately against `shared/seed-data.ts` — the module
- * `src/app/core/data-access/seed-data.ts` re-exports and `app-db.ts` re-exports in turn, so these
- * are literally the objects a fresh browser database is populated from. A second hand-written copy
- * here would only prove that two hand-written copies agree.
+ * `src/app/core/data-access/seed-data.ts` re-exports, so these are literally the objects both sides
+ * read. A second hand-written copy here would only prove that two hand-written copies agree.
  */
 
 /** A row as the seed constants describe it: without the server's own `id` and `userId`. */
@@ -32,7 +32,7 @@ const withoutOwnership = <T extends { id?: unknown; userId?: unknown }>({
 }: T) => rest;
 
 describe('seedUserDefaults', () => {
-  it('writes the same categories a fresh Dexie database is populated with', () => {
+  it('writes the same categories the shared seed declares', () => {
     const { db } = freshDatabase();
     const userId = createTestUser(db, 'a');
 

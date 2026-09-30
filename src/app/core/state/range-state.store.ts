@@ -129,7 +129,8 @@ const defaultStoreState = (): RangeStoreState => ({
  * root consumer after it) route-scoped too. A `Record<pageKey, …>` keeps the injector graph as-is
  * and makes the isolation testable in one place.
  *
- * Ephemeral UI state only — not Dexie-backed, resets to the current-month default on reload. Bucket
+ * Ephemeral UI state only — nothing is persisted, and it resets to the current-month default on
+ * reload. Bucket
  * granularity is not part of this store: it is per-chart, seeded from a page's range on first mount
  * via `pickGranularityForSpan` (TICKET-STAT-15) and then held for the session by `ChartOptionsStore`
  * (TICKET-STAT-27), alongside each chart's hidden series and dragged zoom window.

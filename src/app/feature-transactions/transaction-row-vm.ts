@@ -7,7 +7,7 @@ import type { MoneyTextColor } from '@/shared/utils';
  * instead of running `.find()` lookups and string concatenation per change-detection pass.
  */
 export type TransactionRowVm = {
-  /** The transaction's Dexie id, resolved once here so `@for`'s track and the selection toggle
+  /** The transaction's id, resolved once here so `@for`'s track and the selection toggle
    * don't each need a `!` assertion on the optional `transaction.id`. */
   id: number;
   transaction: Transaction;

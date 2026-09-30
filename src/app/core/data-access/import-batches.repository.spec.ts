@@ -29,7 +29,7 @@ describe('ImportBatchesRepository', () => {
     ).toEqual(batch);
   });
 
-  it('getById resolves to undefined for a batch that is not there, as Dexie get() did', async () => {
+  it('getById resolves to undefined for a batch that is not there, as the old table get() did', async () => {
     const settled = repository().getById(99);
     const request = TestBed.inject(HttpTestingController).expectOne('/api/importBatches/99');
     request.flush(

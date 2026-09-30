@@ -88,7 +88,7 @@ describe('LoansOverviewComponent: add-loan wiring (TICKET-LOAN-03)', () => {
     expect(fixture.componentInstance['formOpen']()).toBe(true);
   });
 
-  it('delegates a new loan to LoansStore.addLoan, never appDb directly', async () => {
+  it('delegates a new loan to LoansStore.addLoan, never the API directly', async () => {
     const fixture = await createFixture();
 
     await fixture.componentInstance['saveLoan']({

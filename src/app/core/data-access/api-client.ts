@@ -6,7 +6,7 @@ import { httpStatusOf, ServerUnreachableError } from '@/core/server-status';
 /**
  * The one place a repository turns into an HTTP call (TICKET-SRV-05).
  *
- * Every repository in this folder used to wrap a Dexie table; each now wraps a route of the API
+ * Every repository in this folder used to wrap a browser-database table; each now wraps a route of the API
  * from TICKET-SRV-03/04. What they share is this client: the `/api` base path, the JSON handling,
  * and — the reason it is one class rather than seventeen copies of `firstValueFrom` — a single
  * place that turns a failure response into a rejected promise carrying **the server's own
@@ -58,7 +58,7 @@ const safeJson = (text: string): unknown => {
 /**
  * A field explicitly set to `undefined` means **clear it**, which on the wire is `null`.
  *
- * This is Dexie's semantics, kept: `table.update(id, { transferId: undefined })` deleted the
+ * This is the old table's semantics, kept: `update(id, { transferId: undefined })` deleted the
  * property, and `TransactionsStore.bulkClearCategory` and the fourteen `AppSettings` setters all
  * rely on it. `JSON.stringify` drops an `undefined` value instead, which would turn every "clear
  * this" into a patch that names no field — a silent no-op. Recursive, because `bulkUpdate` sends
@@ -101,7 +101,7 @@ export class ApiClient {
   }
 
   /**
-   * A `GET` whose 404 means "no such row" rather than a failure — the shape `Dexie.Table.get()`
+   * A `GET` whose 404 means "no such row" rather than a failure — the shape a table `get()`
    * had, and what `ImportBatchesRepository.getById` and `CategoryModelRepository.get` promise.
    * Every other status still rejects.
    */
@@ -152,7 +152,7 @@ export class ApiClient {
   }
 
   /**
-   * A 404 read as "there is no such row", not as a failure — the shape Dexie's `get` had.
+   * A 404 read as "there is no such row", not as a failure — the shape the old table `get` had.
    *
    * Keyed on the server's `clientCode`, not on the status, because 404 is also what a path matching
    * no route answers, with the same JSON shape. Were the status enough, a mistyped or unmounted URL
