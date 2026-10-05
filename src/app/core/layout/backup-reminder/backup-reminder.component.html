@@ -1,0 +1,20 @@
+@if (visible()) {
+  <!-- `role="status"` and `info` rather than `warning`: nothing is wrong and nothing just
+       happened. The default-password notice beside this one is a warning because something
+       genuinely is insecure; this is a thing worth knowing once. -->
+  <mm-alert status="info" variant="soft" class="mb-4" role="status">
+    <!-- One child, so daisyUI's grid `.alert` lays out a single track — the same reason the
+         default-password notice wraps its contents this way. -->
+    <div class="flex flex-wrap items-center gap-3">
+      <mm-text as="p" variant="caption" class="min-w-60 flex-1">
+        Your figures are stored on the Money Mosaic server you signed in to, in a single file — not
+        in this browser. That file is the only copy, and nothing backs it up on its own. Export a
+        copy of your data from the Data page whenever it would hurt to lose.
+      </mm-text>
+      <span class="flex shrink-0 gap-2">
+        <mm-button link="/settings" color="info" size="sm">Back it up</mm-button>
+        <mm-button variant="ghost" size="sm" (click)="dismiss()">Got it</mm-button>
+      </span>
+    </div>
+  </mm-alert>
+}

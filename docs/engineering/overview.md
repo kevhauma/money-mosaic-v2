@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**33 tickets** — 30 done, 3 open.
+**33 tickets** — 31 done, 2 open.
 
 ## CLEANUP
 
@@ -32,7 +32,7 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-PERF-02](./tickets/TICKET-PERF-02-rules-compile-once.md) — Sort rules and compile regexes once per run-rules pass · _v1.3 Code review (CR3)_
 - [x] [TICKET-PERF-03](./tickets/TICKET-PERF-03-import-batch-id-index.md) — Index `importBatchId` (and `attributionOverride.reimbursementTransferId`) on transactions · _v1.3 Code review (CR3)_
 - [x] [TICKET-PERF-04](./tickets/TICKET-PERF-04-batch-hot-write-paths.md) — Batch the hot write paths into bulk transactions · _v1.3 Code review (CR3)_
-- [ ] [TICKET-PERF-05](./tickets/TICKET-PERF-05-hydrate-on-demand.md) — Hydrate stores on demand instead of all upfront · _v1.3 Code review (CR3)_
+- [x] [TICKET-PERF-05](./tickets/TICKET-PERF-05-hydrate-on-demand.md) — Hydrate stores on demand instead of all upfront · _v1.3 Code review (CR3)_
 - [x] [TICKET-PERF-06](./tickets/TICKET-PERF-06-defer-dashboard-panels.md) — Defer below-fold dashboard panels with `@defer (on viewport)` · _v1.3 Code review (CR3)_
 - [x] [TICKET-PERF-07](./tickets/TICKET-PERF-07-store-hydration-on-injection.md) — Move store hydration onto first injection (bundle split) · _v1.3 Code review (CR3)_
 

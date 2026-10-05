@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**12 tickets** — 11 done, 1 open.
+**12 tickets** — 12 done.
 
 ## CHG
 
@@ -14,7 +14,7 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-PUB-01](./tickets/TICKET-PUB-01-home-landing-page.md) — Public home/landing page · _v2_
 - [x] [TICKET-PUB-02](./tickets/TICKET-PUB-02-how-to-guides.md) — How-to guides for using the app · _v2_
 - [x] [TICKET-PUB-03](./tickets/TICKET-PUB-03-faq.md) — FAQ for complex features · _v2_
-- [ ] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Inform users their data stays local, and how to move it · _v2_
+- [x] [TICKET-PUB-04](./tickets/TICKET-PUB-04-local-data-migration-messaging.md) — Tell users where their data actually is, and how to back it up · _v2_
 - [x] [TICKET-PUB-05](./tickets/TICKET-PUB-05-roadmap-page.md) — Roadmap tab (on the Changelog page), kept current by the ticket workflow · _v2_
 - [x] [TICKET-PUB-06](./tickets/TICKET-PUB-06-github-repo-link.md) — GitHub repository link · _v2_
 - [x] [TICKET-PUB-07](./tickets/TICKET-PUB-07-income-page-getting-started-guide.md) — Getting started with the Income page: the content · _v1.6 Income & growth_

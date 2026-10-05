@@ -40,6 +40,7 @@ import { AppSettingsStore, TransactionsStore } from '@/core/state';
 import { AlertComponent } from '@/shared/ui/alert/alert.component';
 import { ButtonComponent } from '@/shared/ui/button/button.component';
 import { TypographyComponent } from '@/shared/ui/typography/typography.component';
+import { BackupReminderComponent } from '../backup-reminder/backup-reminder.component';
 import { DefaultPasswordNoticeComponent } from '../default-password-notice/default-password-notice.component';
 
 /** Sidebar nav item — default look is Deformable UI's soft rounded (not full-pill — TICKET-UI-21) primary tint on `.menu-active` (docs/releases/v1.9_deformable_ui_redesign/design-language.md §7); the `mm-nav-item` marker is a theme-style hook other themes' scoped CSS restyles (every other theme sets its own `.mm-nav-item` radius, so this base class only governs the default theme). Defined once and bound identically to every nav `<a>` rather than repeating the same utility string per item. */
@@ -75,6 +76,7 @@ const SKIP_LINK_CLASS =
     NgIcon,
     AlertComponent,
     ButtonComponent,
+    BackupReminderComponent,
     DefaultPasswordNoticeComponent,
     TypographyComponent,
   ],

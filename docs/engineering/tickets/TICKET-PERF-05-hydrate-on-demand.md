@@ -27,7 +27,7 @@ An app initializer opens Dexie and hydrates **eleven** stores in sequence-then-p
 
 ## Acceptance criteria
 
-- [ ] ~~Landing on `/dashboard` hydrates only the stores the dashboard consumes (assert via spies in a spec, or a hydration log in dev); navigating to `/import` then hydrates its stores on first injection.~~ **Not delivered here — see Notes.** Re-ticketed as [TICKET-PERF-07](./TICKET-PERF-07-store-hydration-on-injection.md).
+- [x] ~~Landing on `/dashboard` hydrates only the stores the dashboard consumes (assert via spies in a spec, or a hydration log in dev); navigating to `/import` then hydrates its stores on first injection.~~ **Not delivered here — see Notes.** Re-ticketed as [TICKET-PERF-07](./TICKET-PERF-07-store-hydration-on-injection.md), **which has since shipped** (6/6 criteria, checked off in the area overview) — so this is resolved by deferral rather than still owed, and the box is ticked to say so. Closed 2026-10-05.
 - [x] No visible regression on any route entered directly by URL (dashboard, transactions with query params, accounts detail, categories, learning, import) — live browser check for each, watching for flash-of-empty-state regressions.
 - [x] The dev seed (TICKET-DEV-01) still runs once, after `appDb.open()`, before any store reads stale emptiness — its ordering contract is specced.
 - [x] `commitImport`/`runAutoLink`/stats flows behave identically when their stores hydrated lazily (existing orchestrator-store specs from TICKET-TEST-01 pass; add a case entering the flow with a not-yet-hydrated dependency).

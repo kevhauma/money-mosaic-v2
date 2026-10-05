@@ -1,41 +1,93 @@
-# TICKET-PUB-04 — Inform users their data stays local, and how to move it
+# TICKET-PUB-04 — Tell users where their data actually is, and how to back it up
 
 - **Area:** Public / Onboarding
 - **Released in:** [v2](../../releases/v2/overview.md)
 - **Type:** Feature
-- **Traceability:** new capability from [v9999_ideas/requirements.md](../../v9999_ideas/requirements.md) ("Public Ready" — make sure the user gets informed about data never leaving the browser, use export/import to migrate to another browser). Ties to NFR-PRIV-1 (no network transmission) and FR-DAT-1/FR-DAT-2 (export/import, built by [v1.4 TICKET-DAT-01](../../data-management/tickets/TICKET-DAT-01-full-data-export-import.md)).
+- **Traceability:** new capability from [v9999_ideas/requirements.md](../../v9999_ideas/requirements.md) ("Public Ready"). Ties to NFR-PRIV-1 (as amended) and FR-DAT-1/FR-DAT-2 (export/import, built by [v1.4 TICKET-DAT-01](../../data-management/tickets/TICKET-DAT-01-full-data-export-import.md)).
+
+> **Rewritten 2026-10-05 — v3 reversed this ticket's premise.** It was written to tell users their
+> data "never leaves the browser", which [TICKET-SRV-05](../../server/tickets/TICKET-SRV-05-repositories-over-http.md)
+> and [TICKET-SRV-08](../../server/tickets/TICKET-SRV-08-retire-dexie.md) made false: the data now
+> lives in one SQLite file on a server the user runs. Built as originally written, this ticket
+> would ship a privacy claim the app no longer honours — so the mechanism half is rewritten below
+> and the original wording kept struck through. **The user story is unchanged and is the reason the
+> ticket survives rather than being closed:** someone still cannot see where their money data is
+> kept, and still needs telling how not to lose it. If anything the stakes rose — a browser profile
+> was at least being caught by whatever backs up the machine, and a SQLite file the user has never
+> heard of is not.
 
 ## User story
 
-As a privacy-conscious user, I want the app to clearly tell me my data never leaves my browser and show me how to back it up or move it elsewhere, so I trust the app with my financial data and don't lose it if I switch browsers or devices.
+As a privacy-conscious user, I want the app to clearly tell me where my data is kept and show me how to back it up or move it elsewhere, so I trust the app with my financial data and don't lose it.
 
 ## Description
 
-This ticket is the "make it visible" half of the local-first privacy story — the actual mechanism (full export/import) is built by v1.4's TICKET-DAT-01; this ticket makes sure a user actually discovers it and understands the guarantee behind it, since an unexplained privacy property might as well not exist from the user's perspective.
+This ticket is the "make it visible" half of the privacy-and-durability story — the mechanism (full export/import) is built by v1.4's TICKET-DAT-01; this ticket makes sure a user actually discovers it and understands where their data sits, since an unexplained property might as well not exist from the user's perspective, and an unknown single point of failure is worse than that.
 
 ## Current situation (as-is)
 
-- **Depends on [TICKET-DAT-01](../../data-management/tickets/TICKET-DAT-01-full-data-export-import.md) existing** — before that ticket lands, there is no export/import feature to point users at, so this ticket cannot be meaningfully completed first. If build order across versions puts this ticket before DAT-01, treat it as blocked and pick a different next ticket.
-- No messaging about the local-first/no-backend data model exists anywhere in the UI today — this is only documented in `NFR-PRIV-1` ([finance-app-spec.md:159](../../reference/finance-app-spec.md)) and this project's `CLAUDE.md`, both developer-facing.
-- TICKET-PUB-01's landing page will carry a short mention of this; TICKET-PUB-03's FAQ will carry a short Q&A entry that links here — this ticket owns the *authoritative*, fuller explanation both of those point to, plus the actual discoverability of the Export/Import UI itself.
+Most of what this ticket asked for arrived while it sat open — not by anyone working it, but as
+fallout from v3 having to re-state every claim it falsified. What is left is the one piece nobody
+else had a reason to build.
+
+**Already true (2026-10-05), and not to be rebuilt:**
+
+- The **Data page carries the explanation**, in a "Where your data lives" panel added by
+  [TICKET-SRV-08](../../server/tickets/TICKET-SRV-08-retire-dexie.md) — the server, the single
+  SQLite file, what the browser does and does not keep — sitting directly above the Export/Import
+  cards, which is where this ticket wanted it
+  ([`data-management-overview.component.html`](../../../src/app/feature-data-management/components/data-management-overview/data-management-overview.component.html)).
+- The **export card says what a backup leaves out** (the trained model), so a restore holds no
+  surprises.
+- The **FAQ answers it** — "Is my data ever sent anywhere?" in
+  [`faq.ts`](../../../src/app/feature-help/data/faq.ts) — and the **landing page** states the
+  self-hosted model rather than the browser-only one it shipped with.
+- **`server/README.md` and the root README** carry the operator-facing half: where the file is, how
+  to copy it safely, and how to restore it ([TICKET-SRV-09](../../server/tickets/TICKET-SRV-09-single-process-local-hosting.md)).
+
+**Still missing — and the whole of what is left to build:**
+
+- **Nothing surfaces any of it to a user who never opens the Data page.** Every statement above is
+  somewhere the user has to go looking. A person who imports a year of transactions and never
+  visits Settings has no idea their finances now depend on one file nobody has told them to copy.
+- ~~Depends on TICKET-DAT-01 existing~~ — it shipped in v1.4; the dependency is satisfied.
+- ~~No messaging about the local-first/no-backend data model exists anywhere in the UI today.~~
 
 ## Desired result (to-be)
 
-- A clear, prominent explanation lives alongside the Export/Import UI from TICKET-DAT-01 (in the Data Management / Settings section): what "local-first" means in concrete terms (all data lives in this browser's storage, nothing is ever sent to a server, closing the tab doesn't lose data but clearing browser data does), and that Export produces a portable backup file usable to restore in this browser or move to another browser/device via Import.
-- A one-time, dismissible banner or callout (shown once, e.g. gated by the same kind of "seen it" `localStorage` flag pattern TICKET-PUB-01 uses for its landing page, but a separate flag) surfaces this message to new users within the main app itself — not only on the landing page a returning user may never revisit — with a direct link to the Export/Import UI. Dismissing it persists so it doesn't reappear every session.
-- TICKET-PUB-01's landing page and TICKET-PUB-03's FAQ privacy entry both link to this ticket's fuller explanation/Export-Import UI rather than duplicating the full explanation inline (single source of truth for the detailed copy).
+- ~~A clear, prominent explanation lives alongside the Export/Import UI… (all data lives in this browser's storage, nothing is ever sent to a server)~~ — **done, and with true copy**, by TICKET-SRV-08. Not this ticket's work any more; see as-is.
+- **A one-time, dismissible callout inside the app** tells the user where their data is kept and
+  that backing it up is on them, with a direct link to the Data page's Export. Gated by its own
+  persisted "seen" flag, distinct from TICKET-PUB-01's landing-page flag, following the same
+  `localStorage` pattern and for the same reason ([`VisitedService`](../../../src/app/core/onboarding/visited.service.ts)):
+  this is per-browser UI state, not data a restored backup should carry across.
+- **It is shown when it is worth reading, not on an empty account.** A brand-new account has
+  nothing to lose and a banner there is noise competing with the Import call-to-action
+  ([TICKET-STAT-22](../../dashboard/tickets/TICKET-STAT-22-empty-dashboard-state.md) owns that
+  surface). It appears once the account actually holds transactions — the first moment the warning
+  is about something real.
+- **The copy states the durability risk, not just the privacy property.** "Nobody else can read
+  this" was the v1 message; "nobody else is backing this up" is the v3 one, and it is the half a
+  user cannot infer. It names where the data is in one sentence and what to do about it in one
+  more.
+- TICKET-PUB-01's landing page and TICKET-PUB-03's FAQ privacy entry link to the Data page rather
+  than duplicating the explanation (single source of truth for the detailed copy).
 
 ## Acceptance criteria
 
-- [ ] A clear explanation of the local-first/no-backend data model is visible directly alongside the Export/Import UI (from TICKET-DAT-01).
-- [ ] A one-time dismissible in-app banner/callout surfaces this message with a direct link to Export/Import, gated by its own persisted "seen/dismissed" flag distinct from TICKET-PUB-01's landing-page flag.
-- [ ] Dismissing the banner persists — it does not reappear on the next app load.
-- [ ] TICKET-PUB-01's landing page and TICKET-PUB-03's FAQ privacy answer both link to this ticket's explanation/UI rather than restating it in full (verify no content duplication once all three exist).
-- [ ] Unit tests cover: the dismiss action persisting the "seen" flag; the banner not rendering when the flag is already set.
-- [ ] Verified via the fallow skill and coding-conventions skill.
-- [ ] Verified live in the browser: clear the relevant `localStorage` flag, load the app, confirm the banner appears with a working link to Export/Import; dismiss it, reload, confirm it stays dismissed.
+- [x] An explanation of where the data is kept is visible alongside the Export/Import UI. (Inherited from TICKET-SRV-08 rather than built here — **verified**, not rewritten: the "Where your data lives" panel sits directly above the Export/Import cards on the Data page and names the server, the single SQLite file and what the browser does keep. Seen rendering at `/settings` on 2026-10-05, and pinned by `data-management-overview.component.spec.ts` — "says the data is on the server, and claims nothing about this browser".)
+- [x] A one-time dismissible in-app callout surfaces that message with a direct link to Export, gated by its own persisted "seen/dismissed" flag distinct from TICKET-PUB-01's landing-page flag. (`core/layout/backup-reminder/`, mounted in the shell beside the default-password notice. Its flag is `mm-backup-reminder-dismissed`, and `backup-reminder.service.spec.ts` asserts the separation both ways — setting `mm-has-visited` does not dismiss it, and dismissing it does not disturb `mm-has-visited`. That matters because the landing-page flag is set the first time anyone reaches the dashboard, which is *before* this callout can have anything to say: sharing a key would dismiss a notice nobody had seen.)
+- [x] Dismissing it persists — it does not reappear on the next app load, in that browser. (Verified live 2026-10-05: clicked "Got it", the banner went and `mm-backup-reminder-dismissed` read `true`; a full reload of `/dashboard` came back without it. Clearing the key brought it back on the next load, which is the other half of the same claim.)
+- [x] It does **not** appear on an empty account, where there is nothing to lose and the Import call-to-action owns the screen. (`visible` requires `transactions().length > 0`, covered by "stays away from an empty account". It also requires `hydrated()` — an un-hydrated store reads as empty, so without that the banner would be absent on load and appear when the data arrived, which reads as a glitch rather than a notice; covered by "waits for the store to hydrate rather than flashing in afterwards".)
+- [x] The copy names the durability risk (this file is the only copy; backing it up is yours to do), not only the privacy property. ("That file is the only copy, and nothing backs it up on its own." The privacy half is one clause — "not in this browser" — because privacy is the part a user already assumed and durability is the part they cannot infer. Asserted on `/only copy/i`.)
+- [x] No claim anywhere in the callout contradicts the v3 data model — specifically, nothing says or implies the data stays in this browser. (Asserted as an absence as well as a presence: the spec requires the text to match neither `/never leaves (your|this) browser/i` nor `/local-first/i`. Written that way because this ticket's original copy said exactly those things, and a spec that only checked the new sentence would pass on a page that kept both.)
+- [x] TICKET-PUB-01's landing page and TICKET-PUB-03's FAQ privacy answer point at the Data page rather than restating the explanation in full. (The FAQ's "Is my data ever sent anywhere?" ends by sending the reader to the Data page for the export and to the server's database file for the whole-installation copy; the landing page carries a one-line chip — "Your data never leaves your own machine" — and no fuller explanation to duplicate. Both were corrected in the TICKET-SRV-08 follow-up; neither restates this ticket's copy.)
+- [x] Unit tests cover: the dismiss action persisting the flag; the callout not rendering when the flag is set; the callout not rendering on an empty account. (**9 tests across two new spec files**, all passing: `backup-reminder.component.spec.ts` covers the copy, the link target, the empty account, the hydration gate, dismiss-then-gone-and-persisted, and already-dismissed-on-load; `backup-reminder.service.spec.ts` covers the round trip, the flag separation, and a `localStorage` that throws in either direction — a private window or blocked site data should cost you a repeated reminder, never the shell.)
+- [x] Verified via the fallow skill and coding-conventions skill. (Both gates exit 0: `npx fallow dead-code --baseline .fallow-baseline.json --fail-on-issues --quiet` and `npx fallow health --complexity --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000 --fail-on-issues --quiet`. Conventions: own folder per component, `OnPush` + `inject()` + native `@if`, `shared/ui` primitives imported by file rather than through the barrel — the same note `app-shell` and the default-password notice carry, since a barrel import would pull all of `shared/ui` into the shell's chunk — and the service sits in `core/onboarding/` next to `VisitedService`, exported from its barrel.)
+- [x] Verified live in the browser: clear the flag, load the app with a non-empty account, confirm the callout appears with a working link to Export; dismiss it, reload, confirm it stays dismissed. (Done 2026-10-05 against `npm run dev`, signed in as the seeded admin with the dev seed's 41 transactions. The banner rendered above the dashboard under the password notice; "Back it up" navigated to `/settings` with the Export card present; "Got it" removed it and wrote the flag; a reload came back clean; clearing the key brought it back. One thing worth recording for the next person: the banner lives in the app shell, so it does **not** render on `/` — the landing page is outside the shell — and a first sign-in lands there, not on the dashboard.)
 
 ## Notes
 
-- **Hard dependency on v1.4's TICKET-DAT-01** — this ticket has nothing real to point users at until export/import exists. Sequence it after DAT-01 regardless of how the two versions' numbering suggests ordering.
-- Uses the same `localStorage`-flag pattern as TICKET-PUB-01 for "shown once" state, for the same reason: this is ephemeral UI state, not financial data that belongs in a TICKET-DAT-01 export.
+- ~~Hard dependency on v1.4's TICKET-DAT-01~~ — satisfied; export/import shipped in v1.4.
+- Uses the same `localStorage`-flag pattern as TICKET-PUB-01 for "shown once" state, for the same reason: this is ephemeral per-browser UI state, not financial data that belongs in a TICKET-DAT-01 export. It therefore reappears for the same user in a different browser, which is correct — the thing being taught is about the installation, and the second browser is a second person as often as not.
+- **The per-account export is not the whole-installation backup.** This callout points at the Export on the Data page, which is one account's data. Whoever runs the server still has to copy the SQLite file; that is the README's job ([TICKET-SRV-09](../../server/tickets/TICKET-SRV-09-single-process-local-hosting.md)) and the callout should not imply otherwise to a non-admin who cannot do it.

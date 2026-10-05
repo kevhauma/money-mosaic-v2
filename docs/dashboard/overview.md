@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**47 tickets** — 45 done, 1 open, 1 won't do.
+**47 tickets** — 46 done, 1 won't do.
 
 - [x] [TICKET-STAT-01](./tickets/TICKET-STAT-01-custom-range-enable.md) — ~~Enable custom range when "Custom" preset is selected (bug)~~ · _v1.0 Foundation_
 - [x] [TICKET-STAT-02](./tickets/TICKET-STAT-02-per-account-networth.md) — Account balance-history charts (detail + overview) · _v1.0 Foundation_
@@ -25,7 +25,7 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-STAT-19](./tickets/TICKET-STAT-19-comparison-bar-tooltip-date-range.md) — Show period date range in category comparison bar tooltips · _v1.3 Dashboard insights_
 - [x] [TICKET-STAT-20](./tickets/TICKET-STAT-20-trend-chart-accessible-numbers.md) — Expose the trend chart's key numbers as DOM text · _v1.3 Code review (CR3)_
 - [x] [TICKET-STAT-21](./tickets/TICKET-STAT-21-periodized-headline-sublabels.md) — Periodized sub-labels for Income/Expense/Savings/Cash-flow, retiring the Spending rate card · _v1.3 Dashboard insights_
-- [ ] [TICKET-STAT-22](./tickets/TICKET-STAT-22-empty-dashboard-state.md) — Empty dashboard state directing to Import · _v2_
+- [x] [TICKET-STAT-22](./tickets/TICKET-STAT-22-empty-dashboard-state.md) — Empty dashboard state directing to Import · _v2_
 - [x] [TICKET-STAT-23](./tickets/TICKET-STAT-23-comparison-panel-vm-and-card.md) — Finish the comparison panel's VM and extract the category card · _v2 Code review (CR4)_
 - [x] [TICKET-STAT-24](./tickets/TICKET-STAT-24-classify-for-stats-decision-table.md) — Decision-table spec for `classifyForStats` · _v2 Code review (CR4)_
 - [x] [TICKET-STAT-25](./tickets/TICKET-STAT-25-dashboard-page-header.md) — Dashboard header: a named "Dashboard settings" button, its own date range, net worth stays · _v1.6.2 Interface polish_
