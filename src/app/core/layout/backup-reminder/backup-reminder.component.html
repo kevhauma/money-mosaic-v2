@@ -6,10 +6,14 @@
     <!-- One child, so daisyUI's grid `.alert` lays out a single track — the same reason the
          default-password notice wraps its contents this way. -->
     <div class="flex flex-wrap items-center gap-3">
+      <!-- The two halves are kept apart deliberately, as they are on Settings → Data: the export
+           is this account's own copy and anyone can take it, while the file underneath belongs to
+           whoever runs the server. Collapsing them would hand a member a duty they cannot
+           discharge. -->
       <mm-text as="p" variant="caption" class="min-w-60 flex-1">
-        Your figures are stored on the Money Mosaic server you signed in to, in a single file — not
-        in this browser. That file is the only copy, and nothing backs it up on its own. Export a
-        copy of your data from the Data page whenever it would hurt to lose.
+        Your figures are stored on the Money Mosaic server you signed in to, not in this browser.
+        Export your own copy from Settings → Data whenever it would hurt to lose — and if you are
+        the one running the server, back up its database file too, because nothing else is.
       </mm-text>
       <span class="flex shrink-0 gap-2">
         <mm-button link="/settings" color="info" size="sm">Back it up</mm-button>

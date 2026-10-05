@@ -452,3 +452,44 @@ describe('AppShellComponent: the user area', () => {
     expect(navigateByUrl).toHaveBeenCalledWith('/login');
   });
 });
+
+/**
+ * The shell is where the two standing notices mount, and neither of them is reachable from any
+ * other spec — delete the element from the template and the component's own suite still passes.
+ * This pins the mount itself, and with it the fact that the rest of this file's a11y assertions run
+ * against a shell with no banner in it (every other case here uses an empty account, where the
+ * backup reminder deliberately stays away).
+ */
+describe('AppShellComponent: the standing notices it mounts', () => {
+  const backupReminder = (fixture: ComponentFixture<AppShellComponent>): Element | null =>
+    (fixture.nativeElement as HTMLElement).querySelector('app-backup-reminder mm-alert');
+
+  it('mounts the backup reminder once the signed-in account holds transactions', async () => {
+    transactionsRepository.getAll.mockResolvedValue([uncategorised(1)]);
+    authApi.login.mockResolvedValue(ADMIN);
+    await TestBed.inject(SessionStore).login('admin@example.com', 'admin');
+    await TestBed.inject(TransactionsStore).hydrate();
+
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(backupReminder(fixture)).not.toBeNull();
+    localStorage.removeItem(`mm-backup-reminder-dismissed:${ADMIN.id}`);
+  });
+
+  it('keeps it away from an empty account, where the Import call-to-action owns the screen', async () => {
+    transactionsRepository.getAll.mockResolvedValue([]);
+    authApi.login.mockResolvedValue(ADMIN);
+    await TestBed.inject(SessionStore).login('admin@example.com', 'admin');
+    await TestBed.inject(TransactionsStore).hydrate();
+
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(backupReminder(fixture)).toBeNull();
+  });
+});
