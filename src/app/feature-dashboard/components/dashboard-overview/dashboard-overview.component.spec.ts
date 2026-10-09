@@ -10,6 +10,7 @@ import { vi } from 'vitest';
 import { appDb, TransfersRepository, type Transaction } from '@/core/data-access';
 import { AccountsStore, AppSettingsStore, RangeStore, TransactionsStore } from '@/core/state';
 import { echarts } from '@/shared/echarts';
+import { stubEchartsBrowserApis } from '@/shared/echarts/echarts-jsdom.testing';
 import { formatCurrency } from '@/shared/utils';
 import { DashboardLayoutSettingsStore } from '../../dashboard-layout-settings.store';
 import { DashboardOverviewComponent } from './dashboard-overview.component';
@@ -32,32 +33,11 @@ const renderAllDeferBlocks = async (fixture: ComponentFixture<unknown>): Promise
   }
 };
 
-// jsdom has no ResizeObserver; the trend chart's echarts directive needs one to observe its host element.
-class ResizeObserverStub {
-  observe = (): void => {};
-  unobserve = (): void => {};
-  disconnect = (): void => {};
-}
-globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
-
-// jsdom has no real canvas 2D context. That's normally harmless for a chart that only ever gets
-// change-detected once, but this spec's row-hiding tests await a real (fake-indexeddb) store
-// write before a second `detectChanges()`, and that second pass drives the still-mounted trend
-// chart's echarts directive into zrender's real paint path, which needs one.
-const noopCanvasContext = new Proxy(
-  {},
-  {
-    get: (target: Record<string, unknown>, prop: string) =>
-      prop in target ? target[prop] : (): void => {},
-    set: (target: Record<string, unknown>, prop: string, value: unknown) => {
-      target[prop] = value;
-      return true;
-    },
-  },
-);
-// jsdom's own `getContext` is defined but always returns null, so `??=` wouldn't replace it.
-HTMLCanvasElement.prototype.getContext = (() =>
-  noopCanvasContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+// The trend chart's echarts directive needs a ResizeObserver and a canvas 2D context, neither of
+// which jsdom has. This spec's row-hiding tests await a real (fake-indexeddb) store write before a
+// second `detectChanges()`, and that second pass drives the still-mounted chart into zrender's real
+// paint path. Shared stub, never a local copy; see the helper's own note on why.
+stubEchartsBrowserApis();
 
 const configureTestBed = async (): Promise<void> => {
   await TestBed.configureTestingModule({
