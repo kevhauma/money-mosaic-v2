@@ -11,8 +11,9 @@ export const routes: Routes = [
     loadChildren: () => import('@/feature-auth').then((m) => m.AUTH_ROUTES),
   },
   {
-    // First-time visitor lands on the public landing page (TICKET-PUB-01); a returning visitor
-    // (homeRedirectGuard sees the `mm-has-visited` flag already set) is redirected to /dashboard.
+    // First-time visitor lands on the public landing page (TICKET-PUB-01); a returning one
+    // (homeRedirectGuard sees the account's `hasVisited` flag already set) is redirected to
+    // /dashboard.
     path: '',
     pathMatch: 'full',
     canActivate: [authGuard, homeRedirectGuard],

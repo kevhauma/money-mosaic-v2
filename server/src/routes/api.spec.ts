@@ -43,7 +43,7 @@ const OPERATION_FILES: readonly string[] = [
 
 type Endpoint = readonly [method: string, path: string];
 
-/** `get` plus "every setter patches the same row" — the shape of all six settings repositories. */
+/** `get` plus "every setter patches the same row" — the shape of all seven settings repositories. */
 const settingsRepository = (
   path: string,
   setters: readonly string[],
@@ -164,6 +164,11 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
     'setFiscalYearStartMonth',
     'setRecentRanges',
   ]),
+  UiPreferencesRepository: settingsRepository('/api/settings/uiPreferences', [
+    'setThemeStyle',
+    'setHasVisited',
+    'setBackupReminderDismissed',
+  ]),
 };
 
 /**
@@ -221,7 +226,7 @@ describe('every repository method has an endpoint', () => {
   const methods = repositoryMethods();
 
   it('finds every repository in the folder', () => {
-    expect(Object.keys(methods)).toHaveLength(18);
+    expect(Object.keys(methods)).toHaveLength(19);
     expect(Object.keys(ENDPOINTS).sort()).toEqual(Object.keys(methods).sort());
   });
 

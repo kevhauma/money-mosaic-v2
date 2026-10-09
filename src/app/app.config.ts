@@ -14,6 +14,8 @@ import { authInterceptor, SessionStore } from './core/auth';
 // eager bundle, which the shell's own lazy `loadComponent` exists to avoid.
 import { AppTitleStrategy } from './core/layout/app-title.strategy';
 import { serverStatusInterceptor } from './core/server-status';
+import { ThemeService } from './core/theme';
+import { UiPreferencesService } from './core/ui-preferences';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -30,14 +32,28 @@ export const appConfig: ApplicationConfig = {
     // Appends the brand to each route's own `title` (TICKET-TXN-12). Without a strategy the router
     // would set `document.title` to the bare page name, dropping "Money Mosaic" from every tab.
     { provide: TitleStrategy, useClass: AppTitleStrategy },
-    // Resolving the session is the whole of bootstrap (TICKET-SRV-06). No database is opened, no
-    // storage permission is asked for, and no data is loaded: every store hydrates itself on first
-    // injection (`withHooks({ onInit })`, TICKET-PERF-07), so data arrives per store, per route.
+    // Resolving the session is almost the whole of bootstrap (TICKET-SRV-06). No database is
+    // opened, no storage permission is asked for, and no entity data is loaded: every store hydrates
+    // itself on first injection (`withHooks({ onInit })`, TICKET-PERF-07), so data arrives per
+    // store, per route.
+    //
+    // The one read that cannot wait for a route is the account's interface state (TICKET-SRV-10):
+    // its theme has to be on `<html>` before the first paint, and the landing-page guard reads its
+    // `hasVisited` synchronously. It is chained *after* the session — it needs to know whether
+    // there is an account to ask, and Angular runs separate initializers concurrently — and
+    // `ThemeService` is constructed here so the attribute is applied from bootstrap even on the
+    // signed-out screens that never load the shell.
     //
     // The returned promise is deliberately allowed to reject. `restore()` rejects for exactly one
     // reason — the server did not answer — and `app-bootstrap.ts` turns that rejection into the
     // "can't reach the server" screen. A signed-out visitor is not a failure: that resolves, and
-    // `authGuard` sends them to `/login`.
-    provideAppInitializer(() => inject(SessionStore).restore()),
+    // `authGuard` sends them to `/login`. The preferences read never rejects; a theme is not worth
+    // failing a boot over.
+    provideAppInitializer(() => {
+      const session = inject(SessionStore);
+      const preferences = inject(UiPreferencesService);
+      inject(ThemeService);
+      return session.restore().then(() => preferences.restore());
+    }),
   ],
 };

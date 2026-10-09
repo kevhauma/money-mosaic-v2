@@ -476,7 +476,6 @@ describe('AppShellComponent: the standing notices it mounts', () => {
     fixture.detectChanges();
 
     expect(backupReminder(fixture)).not.toBeNull();
-    localStorage.removeItem(`mm-backup-reminder-dismissed:${ADMIN.id}`);
   });
 
   it('keeps it away from an empty account, where the Import call-to-action owns the screen', async () => {

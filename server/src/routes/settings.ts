@@ -9,6 +9,7 @@ import {
   DEFAULT_DASHBOARD_LAYOUT_SETTINGS,
   DEFAULT_FORECAST_SETTINGS,
   DEFAULT_TRANSFER_SETTINGS,
+  DEFAULT_UI_PREFERENCES,
 } from 'shared/seed-data.js';
 
 import type { DbOrTx, DrizzleDb } from '../db.js';
@@ -22,6 +23,7 @@ import { categoryModelSettings } from '../schema/category-model-settings.js';
 import { dashboardLayoutSettings } from '../schema/dashboard-layout-settings.js';
 import { forecastSettings } from '../schema/forecast-settings.js';
 import { transferSettings } from '../schema/transfer-settings.js';
+import { uiPreferences } from '../schema/ui-preferences.js';
 
 /**
  * `/api/settings/<name>` (TICKET-SRV-03) — one `GET` and one `PATCH` per singleton table.
@@ -38,7 +40,7 @@ import { transferSettings } from '../schema/transfer-settings.js';
  * same constant when it creates the row. The constants live in `shared/seed-data.ts` precisely so
  * there is one definition of them rather than one per side.
  *
- * The seventh singleton, `categoryModel`, is not here: it is megabytes of trained weights and gets
+ * The one singleton that is not here is `categoryModel`: it is megabytes of trained weights and gets
  * binary endpoints of its own in `category-model.ts` rather than a JSON body.
  */
 
@@ -86,6 +88,7 @@ export const SETTINGS_TABLES: readonly SingletonSettings[] = [
     table: categoryModelSettings,
     defaults: withoutId(DEFAULT_CATEGORY_MODEL_SETTINGS),
   },
+  { name: 'uiPreferences', table: uiPreferences, defaults: withoutId(DEFAULT_UI_PREFERENCES) },
 ];
 
 /** The stored row layered over the defaults, which is what an unwritten field means. */

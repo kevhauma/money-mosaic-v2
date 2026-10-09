@@ -1,14 +1,11 @@
-export type ThemeStyleId =
-  | 'deformable'
-  | 'deformable-dark'
-  | 'neumorphism'
-  | 'neumorphism-dark'
-  | 'liquid-glass'
-  | 'cyberpunk'
-  | 'skeuomorphism'
-  | 'anti-polish'
-  | 'memphis'
-  | 'retro-futurism';
+/**
+ * Declared in `shared/entities.ts` and re-exported here, where the catalogue lives (TICKET-SRV-10):
+ * `UiPreferences.themeStyle` stores one of these ids and the server pins the column to the same
+ * list, and that shared module may not import anything — so the union is defined there and this
+ * module, which owns what each id looks like, hands it on. The `accent-colors.ts` arrangement.
+ */
+export type { ThemeStyleId } from '@/core/data-access/entities';
+import type { ThemeStyleId } from '@/core/data-access/entities';
 
 export type ThemeStyle = {
   id: ThemeStyleId;

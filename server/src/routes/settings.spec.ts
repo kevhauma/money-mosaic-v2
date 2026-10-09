@@ -5,7 +5,7 @@ import { SETTINGS_TABLES } from './settings.js';
 import { startTwoUserApp } from './samples.testing.js';
 
 /**
- * The six singleton settings endpoints (TICKET-SRV-03).
+ * The seven singleton settings endpoints (TICKET-SRV-03, `uiPreferences` since TICKET-SRV-10).
  *
  * Two properties matter more than the CRUD: an **unwritten** row has to read exactly like the
  * `DEFAULT_*` the Dexie repository falls back to — the tri-state the ngrx stores depend on — and a
@@ -89,6 +89,25 @@ describe.each(eachSettings)('/api/settings/%s', (name, settings) => {
   });
 });
 
+/**
+ * The theme is the one value here a client sends from a catalogue that can change under it: a
+ * build that still offers a retired theme must get a 400 it can read, not a CHECK-constraint 500.
+ */
+describe('/api/settings/uiPreferences', () => {
+  it('refuses a theme id that is not in the catalogue', async () => {
+    const { app, alice } = await startTwoUserApp();
+
+    const response = await apiJson<{ error: string }>(app, '/api/settings/uiPreferences', {
+      as: alice.session,
+      method: 'PATCH',
+      body: { themeStyle: 'not-a-theme' },
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain('themeStyle');
+  });
+});
+
 /** Two independent fields per singleton — enough to prove a merge rather than a replace. */
 const PATCHES: Record<string, Record<string, unknown>> = {
   appSettings: { locale: 'en-BE', privacyMode: true },
@@ -97,6 +116,7 @@ const PATCHES: Record<string, Record<string, unknown>> = {
   categoryComparisonSettings: { excludedCategoryIds: [1, 2] },
   dashboardLayoutSettings: { hiddenRowIds: ['stats'], rowOrder: ['stats'] },
   categoryModelSettings: { trainingWindowYears: 3 },
+  uiPreferences: { themeStyle: 'cyberpunk', hasVisited: true },
 };
 
 describe('concurrent patches', () => {

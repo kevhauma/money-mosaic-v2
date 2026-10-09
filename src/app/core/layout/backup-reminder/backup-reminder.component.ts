@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { SessionStore } from '@/core/auth';
 import { BackupReminderService } from '@/core/onboarding';
 import { TransactionsStore } from '@/core/state';
@@ -46,30 +46,21 @@ export class BackupReminderComponent {
   private readonly transactionsStore = inject(TransactionsStore);
 
   /**
-   * Re-read per signed-in user rather than seeded once, because the flag is per account: signing
-   * out and back in as somebody else has to re-evaluate it, and a `signal` captured at construction
-   * would carry the previous user's answer.
-   */
-  private readonly dismissedFor = signal<number | null>(null);
-
-  private readonly userId = computed(() => this.sessionStore.user()?.id ?? null);
-
-  /**
    * `hydrated` is what keeps this from flashing: an un-hydrated store reads as empty, so without it
    * the banner would be hidden on load, appear when the transactions arrived, and look like a
    * glitch rather than a notice.
+   *
+   * The dismissal is a signal read on the signed-in account's own preferences (TICKET-SRV-10), so
+   * signing out and back in as somebody else re-evaluates it with nothing tracked here — the reset
+   * that empties the stores resets that flag too, and the sign-in re-reads the new account's.
    */
   protected readonly visible = computed(() => {
-    const userId = this.userId();
-    if (userId === null) return false;
-    if (this.dismissedFor() === userId || this.reminder.isDismissed(userId)) return false;
+    if (this.sessionStore.user() === null) return false;
+    if (this.reminder.isDismissed()) return false;
     return this.transactionsStore.hydrated() && this.transactionsStore.transactions().length > 0;
   });
 
   protected dismiss(): void {
-    const userId = this.userId();
-    if (userId === null) return;
-    this.reminder.dismiss(userId);
-    this.dismissedFor.set(userId);
+    void this.reminder.dismiss();
   }
 }

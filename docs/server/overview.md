@@ -11,7 +11,7 @@ The backend itself — Express, SQLite, Drizzle — and the move of the app's da
 > every `SRV` ticket — decided with the user on 2026-09-23. Don't add them back, and don't
 > treat their absence as an oversight to repair.
 
-**9 tickets** — 9 done.
+**10 tickets** — 10 done.
 
 - [x] [TICKET-SRV-01](./tickets/TICKET-SRV-01-express-sqlite-drizzle-skeleton.md) — Express + SQLite + Drizzle backend skeleton (new — introduces a backend, superseding the "no backend" premise in `CLAUDE.md`) — nothing depends on it yet, but everything in v3 does; build it first · _unreleased_
 - [x] [TICKET-SRV-02](./tickets/TICKET-SRV-02-drizzle-schema-per-user.md) — Every Dexie table as a Drizzle table, owned by a user (ports the data model in `data-model/SKILL.md`) — needs TICKET-SRV-01 and TICKET-AUTH-01 · _unreleased_
@@ -22,3 +22,4 @@ The backend itself — Express, SQLite, Drizzle — and the move of the app's da
 - [x] [TICKET-SRV-07](./tickets/TICKET-SRV-07-migrate-local-database.md) — Move the database already in your browser into your account, once (reuses TICKET-DAT-01's export machinery) — needs TICKET-SRV-04 and TICKET-SRV-05; **must ship before TICKET-SRV-08** · _unreleased_
 - [x] [TICKET-SRV-08](./tickets/TICKET-SRV-08-retire-dexie.md) — Retire Dexie and rewrite the docs that still say "no backend" (refactor, retires FR-DAT-4 / NFR-STORE-1) — needs TICKET-SRV-05, TICKET-SRV-06 and TICKET-SRV-07 · _unreleased_
 - [x] [TICKET-SRV-09](./tickets/TICKET-SRV-09-single-process-local-hosting.md) — One command, one port: Express serves the built app (new — hosting and backup documentation) — technically only needs TICKET-SRV-01, but its README is only honest after TICKET-SRV-08, so sequence it last · _unreleased_
+- [x] [TICKET-SRV-10](./tickets/TICKET-SRV-10-ui-preferences-off-localstorage.md) — The last `localStorage` keys (theme, landing-page flag, backup-reminder dismissal) move to a per-account `uiPreferences` row (refactor, reverses the per-browser calls in SET-05 / PUB-01 / PUB-04) — needs TICKET-SRV-08 · _unreleased_

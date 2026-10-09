@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { AppSettingsRepository } from '@/core/data-access';
 import { ThemeService } from '@/core/theme';
+import { fakeUiPreferences } from '@/core/ui-preferences/ui-preferences.testing';
 import {
   DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_CURRENCY_SYMBOL_POSITION,
@@ -34,7 +35,11 @@ describe('AppSettingsStore', () => {
     repository.setRecentRanges.mockResolvedValue(1);
 
     TestBed.configureTestingModule({
-      providers: [{ provide: AppSettingsRepository, useValue: repository }],
+      // `AppSettingsStore` reads `ThemeService`, which reads the account's interface state.
+      providers: [
+        { provide: AppSettingsRepository, useValue: repository },
+        ...fakeUiPreferences().providers,
+      ],
     });
   });
 
@@ -235,12 +240,15 @@ describe('AppSettingsStore: --color-primary override (TICKET-SET-02)', () => {
     repository.setPrimaryColor.mockResolvedValue(1);
 
     TestBed.configureTestingModule({
-      providers: [{ provide: AppSettingsRepository, useValue: repository }],
+      // `AppSettingsStore` reads `ThemeService`, which reads the account's interface state.
+      providers: [
+        { provide: AppSettingsRepository, useValue: repository },
+        ...fakeUiPreferences().providers,
+      ],
     });
   });
 
   afterEach(() => {
-    localStorage.removeItem('mm-theme-style');
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.style.removeProperty('--color-primary');
     document.documentElement.style.removeProperty('--color-primary-content');
@@ -248,7 +256,7 @@ describe('AppSettingsStore: --color-primary override (TICKET-SET-02)', () => {
 
   it('applies the selected swatch while the Default Light theme is active', async () => {
     const store = TestBed.inject(AppSettingsStore);
-    TestBed.inject(ThemeService).select('deformable');
+    await TestBed.inject(ThemeService).select('deformable');
 
     await store.setPrimaryColor('sky');
     TestBed.tick();
@@ -260,7 +268,7 @@ describe('AppSettingsStore: --color-primary override (TICKET-SET-02)', () => {
 
   it('applies the dark-mode pair while the Default Dark theme is active', async () => {
     const store = TestBed.inject(AppSettingsStore);
-    TestBed.inject(ThemeService).select('deformable-dark');
+    await TestBed.inject(ThemeService).select('deformable-dark');
 
     await store.setPrimaryColor('sky');
     TestBed.tick();
@@ -272,7 +280,7 @@ describe('AppSettingsStore: --color-primary override (TICKET-SET-02)', () => {
 
   it('leaves --color-primary unset while a non-default theme is active', async () => {
     const store = TestBed.inject(AppSettingsStore);
-    TestBed.inject(ThemeService).select('cyberpunk');
+    await TestBed.inject(ThemeService).select('cyberpunk');
 
     await store.setPrimaryColor('sky');
     TestBed.tick();
@@ -282,7 +290,7 @@ describe('AppSettingsStore: --color-primary override (TICKET-SET-02)', () => {
 
   it('clears the override when the color is unset back to Default', async () => {
     const store = TestBed.inject(AppSettingsStore);
-    TestBed.inject(ThemeService).select('deformable');
+    await TestBed.inject(ThemeService).select('deformable');
     await store.setPrimaryColor('sky');
     TestBed.tick();
 
@@ -295,12 +303,12 @@ describe('AppSettingsStore: --color-primary override (TICKET-SET-02)', () => {
   it('switching from a default theme to another theme clears the override', async () => {
     const themeService = TestBed.inject(ThemeService);
     const store = TestBed.inject(AppSettingsStore);
-    themeService.select('deformable');
+    await themeService.select('deformable');
     await store.setPrimaryColor('rose');
     TestBed.tick();
     expect(document.documentElement.style.getPropertyValue('--color-primary')).not.toBe('');
 
-    themeService.select('anti-polish');
+    await themeService.select('anti-polish');
     TestBed.tick();
 
     expect(document.documentElement.style.getPropertyValue('--color-primary')).toBe('');

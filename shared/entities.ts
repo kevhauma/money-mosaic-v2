@@ -374,8 +374,8 @@ export type CategoryModelSettings = {
 
 /**
  * Singleton row (id always 1) for app-wide settings that are genuinely portable/exportable data
- * (currency, locale, privacy default, etc.) — as opposed to `ThemeService`'s per-browser
- * appearance preference, which stays `localStorage`-only by design (TICKET-SET-05). Starts empty;
+ * (currency, locale, privacy default, etc.) — as opposed to the interface's own state (the chosen
+ * theme, the onboarding flags), which lives in `UiPreferences` beside it (TICKET-SRV-10). Starts empty;
  * SET-02/SET-03/SET-04/PRIV-01 each add their own additive optional field on top later.
  */
 export type AppSettings = {
@@ -512,8 +512,8 @@ export type AppSettings = {
    * Additive field (TICKET-PRIV-01) — whether privacy mode is on, blurring every figure on the
    * Dashboard so the page survives a screen-share. `undefined` means off, which is what an unset
    * field already means; `AppSettingsStore.privacyModeEnabled` resolves the `?? false` once so no
-   * consumer has to. Stored here rather than in `localStorage` alongside `ThemeService`'s appearance
-   * preference because it is a portable/exportable user preference, not a per-browser one.
+   * consumer has to. A setting the user chooses on the Settings page, so it belongs on this row
+   * rather than in `UiPreferences` with the interface's own state.
    *
    * Same "additive optional field, no version bump" reasoning as the fields above.
    * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
@@ -652,4 +652,67 @@ export type Loan = {
   categoryId: number;
   archived: boolean;
   sortOrder: number;
+};
+
+/**
+ * Which theme from `core/theme/theme-styles.ts`'s catalogue renders the app. Declared here, rather
+ * than beside the catalogue that owns it, for the same reason `AccentColorId` is
+ * (TICKET-SRV-02): `UiPreferences.themeStyle` stores one of these ids, and this shared module may
+ * not import anything — so the union lives here and `theme-styles.ts` re-exports it. Consumers
+ * keep importing it from `@/core/theme`.
+ */
+export type ThemeStyleId =
+  | 'deformable'
+  | 'deformable-dark'
+  | 'neumorphism'
+  | 'neumorphism-dark'
+  | 'liquid-glass'
+  | 'cyberpunk'
+  | 'skeuomorphism'
+  | 'anti-polish'
+  | 'memphis'
+  | 'retro-futurism';
+
+/**
+ * Per-user interface state — the three flags that used to be the app's last `localStorage` keys.
+ *
+ * Until this table they were per-*browser*, each with a prose justification for why that was the
+ * right scope. They are per-*account* now, deliberately: a self-hosted app that keeps every byte of
+ * a user's data in one SQLite file and then quietly keeps three more in whichever browser they
+ * happened to use is not one system, it is two, and the second one has no backup, no export and no
+ * way to answer "why does this install look different on my laptop". So picking a theme, seeing the
+ * landing page and waving the backup reminder away now travel with the account, which is what
+ * every other preference in this app already does.
+ *
+ * Kept apart from `AppSettings` rather than folded into it: that row is the user's *portable
+ * settings* — currency, locale, fiscal year, the things a person would recognise on a settings
+ * page. These three are state the interface keeps about itself, and nobody edits `hasVisited`.
+ * Separate tables keep each row's meaning readable, which matters more than saving a join nobody
+ * is making.
+ *
+ * Every field is nullable/`undefined` on exactly the `AppSettings` tri-state convention — an unset
+ * field means "never chosen" and falls back to `DEFAULT_UI_PREFERENCES`, so a user with no row at
+ * all reads identically to a user whose row is all NULLs.
+ */
+export type UiPreferences = {
+  id: number;
+  /**
+   * The chosen theme, or `undefined` for "never picked one" — which reads as `DEFAULT_STYLE`.
+   * Required-but-possibly-`undefined` rather than optional, the `withState` accessor-optionality
+   * pitfall `AppSettings.primaryColor` documents.
+   */
+  themeStyle: ThemeStyleId | undefined;
+  /**
+   * Whether this account has reached the dashboard at least once, which is what stops the landing
+   * page (TICKET-PUB-01) showing itself again at `/`.
+   */
+  hasVisited: boolean | undefined;
+  /**
+   * Whether this account has been told where its data lives and who is responsible for backing it
+   * up (TICKET-PUB-04). A separate flag from `hasVisited`, deliberately: that one is set on the
+   * very first visit, long before this reminder has anything to say — it waits for an account that
+   * actually holds transactions. One flag would mean the reminder was dismissed by somebody who
+   * never saw it.
+   */
+  backupReminderDismissed: boolean | undefined;
 };

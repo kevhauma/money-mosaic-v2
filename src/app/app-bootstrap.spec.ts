@@ -96,18 +96,27 @@ describe('startApp', () => {
 });
 
 /**
- * Read as source rather than exercised, because what this asserts is an *absence*: bootstrap does
- * one thing (TICKET-SRV-06). The two companion cases that pinned the *other* two things it used to
+ * Read as source rather than exercised, because what this asserts is an *absence*: bootstrap loads
+ * no data (TICKET-SRV-06). The two companion cases that pinned the *other* two things it used to
  * do — opening the browser database and asking for persistent storage — went with the code they
  * named, since TICKET-SRV-08 deleted both modules and neither can be reached from anywhere now.
  * What is left is the one that can still regress: a second initializer, quietly loading data before
  * render again.
+ *
+ * Since TICKET-SRV-10 the one initializer does two things in order — the session, then that
+ * account's interface state (its theme has to be on `<html>` before the first paint, and the
+ * landing-page guard reads `hasVisited` synchronously). That is the whole of the exception: the
+ * chain is pinned exactly, and no store is hydrated here.
  */
-describe('app.config.ts: bootstrap resolves the session and nothing else', () => {
+describe('app.config.ts: bootstrap resolves the session, then its interface state, and nothing else', () => {
   const source = readFileSync(join(process.cwd(), 'src', 'app', 'app.config.ts'), 'utf-8');
 
-  it('runs exactly one initializer, and it is the session', () => {
+  it('runs exactly one initializer: the session, then the account’s preferences', () => {
     expect(source.match(/provideAppInitializer\(/g)).toHaveLength(1);
-    expect(source).toContain('inject(SessionStore).restore()');
+    expect(source).toContain('return session.restore().then(() => preferences.restore());');
+  });
+
+  it('hydrates no store before render', () => {
+    expect(source).not.toMatch(/\.hydrate\(|rehydrateAll\(/);
   });
 });

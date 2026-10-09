@@ -55,7 +55,6 @@ describe('IncomeGrossColorComponent (TICKET-SET-08)', () => {
   });
 
   afterEach(() => {
-    localStorage.removeItem('mm-theme-style');
     document.documentElement.removeAttribute('data-theme');
   });
 

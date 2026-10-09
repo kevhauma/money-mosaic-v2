@@ -1,8 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionStore, type SessionUser } from '@/core/auth';
+import { BackupReminderService } from '@/core/onboarding';
 import { TransactionsStore } from '@/core/state';
 import type { Transaction } from '@/core/data-access';
 import { BackupReminderComponent } from './backup-reminder.component';
@@ -14,20 +15,29 @@ const ALICE: SessionUser = {
   role: 'user',
   usingDefaultPassword: false,
 };
-const BOB: SessionUser = { ...ALICE, id: 2, email: 'bob', displayName: 'Bob' };
-
-const KEY = (user: SessionUser): string => `mm-backup-reminder-dismissed:${user.id}`;
 
 /**
  * Only the members the component reads. The real stores are `@ngrx/signals` stores behind a
  * repository and an HTTP session; standing them up here would test them rather than the rule this
  * component owns — which is *when* the reminder is worth showing, and to whom.
+ *
+ * The dismissal is faked at `BackupReminderService` for the same reason. Whose dismissal it is —
+ * that Alice waving it away does not wave it away for Bob — is the account's row on the server and
+ * the sign-out reset in front of it, and `ui-preferences.service.spec.ts` is where that is pinned.
  */
 const fakeTransactions = {
   hydrated: signal(false),
   transactions: signal<Transaction[]>([]),
 };
 const fakeSession = { user: signal<SessionUser | null>(null) };
+const dismissed = signal(false);
+const fakeReminder = {
+  isDismissed: () => dismissed(),
+  dismiss: vi.fn(() => {
+    dismissed.set(true);
+    return Promise.resolve();
+  }),
+};
 
 /** One row, since nothing here reads a field of it — only that the account is not empty. */
 const someTransactions = (): Transaction[] => [{ id: 1 } as Transaction];
@@ -44,7 +54,8 @@ describe('BackupReminderComponent: when the backup reminder is worth showing', (
   };
 
   beforeEach(async () => {
-    [ALICE, BOB].forEach((user) => localStorage.removeItem(KEY(user)));
+    vi.clearAllMocks();
+    dismissed.set(false);
     fakeTransactions.hydrated.set(true);
     fakeTransactions.transactions.set(someTransactions());
     fakeSession.user.set(ALICE);
@@ -55,12 +66,10 @@ describe('BackupReminderComponent: when the backup reminder is worth showing', (
         provideRouter([]),
         { provide: TransactionsStore, useValue: fakeTransactions },
         { provide: SessionStore, useValue: fakeSession },
+        { provide: BackupReminderService, useValue: fakeReminder },
       ],
     }).compileComponents();
   });
-
-  // `isolate: false` means this process is shared — leave no keys behind for the next spec file.
-  afterEach(() => [ALICE, BOB].forEach((user) => localStorage.removeItem(KEY(user))));
 
   it('tells an account with data where that data is, and what is not backing it up', () => {
     render();
@@ -129,7 +138,7 @@ describe('BackupReminderComponent: when the backup reminder is worth showing', (
     expect(banner()).toBeNull();
   });
 
-  it('goes away when dismissed, and persists that', () => {
+  it('goes away when dismissed, and saves that to the account', () => {
     render();
     expect(banner()).not.toBeNull();
 
@@ -139,26 +148,14 @@ describe('BackupReminderComponent: when the backup reminder is worth showing', (
     dismiss?.click();
     fixture.detectChanges();
 
-    expect(banner()).toBeNull();
-    expect(localStorage.getItem(KEY(ALICE))).toBe('true');
-  });
-
-  it('does not come back on the next load once dismissed', () => {
-    localStorage.setItem(KEY(ALICE), 'true');
-    render();
-
+    expect(fakeReminder.dismiss).toHaveBeenCalledOnce();
     expect(banner()).toBeNull();
   });
 
-  /**
-   * The shared-browser case: Alice dismissing it must not dismiss it for Bob, whose own account is
-   * just as un-backed-up and who has never been told.
-   */
-  it('still shows for the next person to sign in on the same browser', () => {
-    localStorage.setItem(KEY(ALICE), 'true');
-    fakeSession.user.set(BOB);
+  it('does not come back for an account that already dismissed it', () => {
+    dismissed.set(true);
     render();
 
-    expect(banner()).not.toBeNull();
+    expect(banner()).toBeNull();
   });
 });

@@ -18,7 +18,7 @@ import { PaperComponent, TypographyComponent } from '@/shared/ui';
  * Settings' Theme section (TICKET-SET-07): one flat list of every catalogue theme, plus the
  * accent-color row for the two default themes (TICKET-SET-02), which renders *inside* the theme
  * grid right after the last default entry so it sits under those two cards. Picking a theme
- * applies it immediately (`ThemeService.select`). Each option renders a live mini preview by
+ * saves it to the account and applies it as soon as the server has it (`ThemeService.select`). Each option renders a live mini preview by
  * nesting the style's `data-theme` attribute — daisyUI tokens and the `--mm-*` hooks resolve from
  * the nearest `data-theme` ancestor, so the swatch shows the real palette/radius/type without
  * screenshots.
@@ -48,7 +48,7 @@ export class SettingsThemeSectionComponent {
   }
 
   protected onSelect(id: ThemeStyleId): void {
-    this.themeService.select(id);
+    void this.themeService.select(id);
   }
 
   protected isAccentSelected(id: AccentColorId | undefined): boolean {

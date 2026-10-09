@@ -1,93 +1,77 @@
+import { TestBed } from '@angular/core/testing';
+import type { UiPreferences } from '@/core/data-access';
+import { StoreResetService } from '@/core/store-reset';
+import { UiPreferencesService } from '@/core/ui-preferences';
+import { fakeUiPreferences } from '@/core/ui-preferences/ui-preferences.testing';
 import { ThemeService } from './theme.service';
 
-const STYLE_KEY = 'mm-theme-style';
-const LEGACY_MODE_KEY = 'mm-theme';
-const LEGACY_LIGHT_KEY = 'mm-style-light';
-const LEGACY_DARK_KEY = 'mm-style-dark';
+const dataTheme = (): string | null => document.documentElement.getAttribute('data-theme');
 
 describe('ThemeService', () => {
+  /** Restores the account's preferences first, as the app initializer does before anything renders. */
+  const setup = async (stored: Partial<UiPreferences> = {}) => {
+    const fake = fakeUiPreferences(stored);
+    TestBed.configureTestingModule({ providers: fake.providers });
+    await TestBed.inject(UiPreferencesService).restore();
+    const service = TestBed.inject(ThemeService);
+    TestBed.tick();
+    return { ...fake, service };
+  };
+
   afterEach(() => {
-    localStorage.removeItem(STYLE_KEY);
-    localStorage.removeItem(LEGACY_MODE_KEY);
-    localStorage.removeItem(LEGACY_LIGHT_KEY);
-    localStorage.removeItem(LEGACY_DARK_KEY);
     document.documentElement.removeAttribute('data-theme');
   });
 
-  it('defaults to the default light style when nothing is stored', () => {
-    const service = new ThemeService();
+  it('defaults to the default light style when the account has never picked one', async () => {
+    const { service } = await setup();
 
     expect(service.style()).toBe('deformable');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('deformable');
+    expect(dataTheme()).toBe('deformable');
   });
 
-  it('restores a stored style choice', () => {
-    localStorage.setItem(STYLE_KEY, 'cyberpunk');
-
-    const service = new ThemeService();
+  it("applies the account's stored style", async () => {
+    const { service } = await setup({ themeStyle: 'cyberpunk' });
 
     expect(service.style()).toBe('cyberpunk');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('cyberpunk');
+    expect(dataTheme()).toBe('cyberpunk');
   });
 
-  it('ignores an unknown/removed stored style id', () => {
-    localStorage.setItem(STYLE_KEY, 'not-a-real-style');
-
-    const service = new ThemeService();
+  /** A theme retired after somebody picked it must not leave their page unthemed. */
+  it('reads a stored id the catalogue no longer has as the default', async () => {
+    const { service } = await setup({ themeStyle: 'not-a-real-style' as never });
 
     expect(service.style()).toBe('deformable');
+    expect(dataTheme()).toBe('deformable');
   });
 
-  it('select() applies and persists the chosen style', () => {
-    const service = new ThemeService();
+  it('select() saves the pick to the account, then applies it', async () => {
+    const { service, repository } = await setup();
 
-    service.select('skeuomorphism');
+    await service.select('skeuomorphism');
+    TestBed.tick();
 
+    expect(repository.setThemeStyle).toHaveBeenCalledWith('skeuomorphism');
     expect(service.style()).toBe('skeuomorphism');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('skeuomorphism');
-    expect(localStorage.getItem(STYLE_KEY)).toBe('skeuomorphism');
+    expect(dataTheme()).toBe('skeuomorphism');
   });
 
-  it('select() rejects an unknown style id', () => {
-    const service = new ThemeService();
+  it('select() refuses an unknown style id without asking the server', async () => {
+    const { service, repository } = await setup();
 
-    service.select('not-a-real-style' as never);
+    await service.select('not-a-real-style' as never);
 
+    expect(repository.setThemeStyle).not.toHaveBeenCalled();
     expect(service.style()).toBe('deformable');
   });
 
-  it('migrates a legacy light-mode style pick on first read, then clears legacy keys', () => {
-    localStorage.setItem(LEGACY_MODE_KEY, 'light');
-    localStorage.setItem(LEGACY_LIGHT_KEY, 'memphis');
-    localStorage.setItem(LEGACY_DARK_KEY, 'neumorphism');
+  /** The theme is the account's, so a signed-out screen is the app's default — not the last user's. */
+  it('goes back to the default when the account signs out', async () => {
+    const { service } = await setup({ themeStyle: 'memphis' });
 
-    const service = new ThemeService();
+    TestBed.inject(StoreResetService).resetAll();
+    TestBed.tick();
 
-    expect(service.style()).toBe('memphis');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('memphis');
-    expect(localStorage.getItem(LEGACY_MODE_KEY)).toBeNull();
-    expect(localStorage.getItem(LEGACY_LIGHT_KEY)).toBeNull();
-    expect(localStorage.getItem(LEGACY_DARK_KEY)).toBeNull();
-    expect(localStorage.getItem(STYLE_KEY)).toBe('memphis');
-  });
-
-  it('migrates a legacy dark-mode "deformable" pick onto the new "deformable-dark" entry', () => {
-    localStorage.setItem(LEGACY_MODE_KEY, 'dark');
-    localStorage.setItem(LEGACY_DARK_KEY, 'deformable');
-
-    const service = new ThemeService();
-
-    expect(service.style()).toBe('deformable-dark');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('deformable-dark');
-  });
-
-  it('prefers a current-format stored style over legacy keys', () => {
-    localStorage.setItem(STYLE_KEY, 'liquid-glass');
-    localStorage.setItem(LEGACY_MODE_KEY, 'light');
-    localStorage.setItem(LEGACY_LIGHT_KEY, 'memphis');
-
-    const service = new ThemeService();
-
-    expect(service.style()).toBe('liquid-glass');
+    expect(service.style()).toBe('deformable');
+    expect(dataTheme()).toBe('deformable');
   });
 });

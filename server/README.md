@@ -92,7 +92,8 @@ reads a `userId` from a body, a query string or a path, and one in a body is ign
 - **Goals**: `PATCH /api/goals/sort-order` with the full `{ id, sortOrder }[]`, applied atomically.
 - **Salary metadata**: `PUT /api/salaryMetadata` upserts by `yearMonth` and **replaces** the row.
 - **Settings singletons** — `appSettings`, `transferSettings`, `forecastSettings`,
-  `categoryComparisonSettings`, `dashboardLayoutSettings`, `categoryModelSettings`:
+  `categoryComparisonSettings`, `dashboardLayoutSettings`, `categoryModelSettings`,
+  `uiPreferences` (theme + onboarding flags, TICKET-SRV-10):
   `GET`/`PATCH /api/settings/<name>`. A user with no row reads the shared `DEFAULT_*` constant; a
   patch merges into the row server-side, inside a transaction, creating it if absent.
 - **The trained model**: `GET`/`PUT`/`DELETE /api/categoryModel`, `application/octet-stream` rather

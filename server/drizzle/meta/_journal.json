@@ -15,6 +15,13 @@
       "when": 1790279300316,
       "tag": "0001_entities_per_user",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791234849707,
+      "tag": "0002_ui_preferences",
+      "breakpoints": true
     }
   ]
 }

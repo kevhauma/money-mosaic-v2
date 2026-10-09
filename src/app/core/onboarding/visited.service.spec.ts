@@ -1,30 +1,45 @@
+import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
+import type { UiPreferences } from '@/core/data-access';
+import { UiPreferencesService } from '@/core/ui-preferences';
+import { fakeUiPreferences } from '@/core/ui-preferences/ui-preferences.testing';
 import { VisitedService } from './visited.service';
 
-const HAS_VISITED_KEY = 'mm-has-visited';
-
 describe('VisitedService', () => {
-  afterEach(() => {
-    localStorage.removeItem(HAS_VISITED_KEY);
-  });
+  const setup = async (stored: Partial<UiPreferences> = {}) => {
+    const fake = fakeUiPreferences(stored);
+    TestBed.configureTestingModule({ providers: fake.providers });
+    await TestBed.inject(UiPreferencesService).restore();
+    return { ...fake, service: TestBed.inject(VisitedService) };
+  };
 
-  it('reports not visited when nothing is stored', () => {
-    const service = new VisitedService();
+  it('reports not visited for an account that has never reached the dashboard', async () => {
+    const { service } = await setup();
 
     expect(service.hasVisited()).toBe(false);
   });
 
-  it('markVisited() persists the flag', () => {
-    const service = new VisitedService();
+  it("reads the account's stored flag", async () => {
+    const { service } = await setup({ hasVisited: true });
+
+    expect(service.hasVisited()).toBe(true);
+  });
+
+  it('markVisited() saves the flag to the account', async () => {
+    const { service, repository } = await setup();
+
+    service.markVisited();
+    await vi.waitFor(() => expect(service.hasVisited()).toBe(true));
+
+    expect(repository.setHasVisited).toHaveBeenCalledExactlyOnceWith(true);
+  });
+
+  /** The dashboard guard calls this on every visit; one write is enough to set a flag for good. */
+  it('markVisited() does not write again once the flag is set', async () => {
+    const { service, repository } = await setup({ hasVisited: true });
 
     service.markVisited();
 
-    expect(service.hasVisited()).toBe(true);
-    expect(localStorage.getItem(HAS_VISITED_KEY)).toBe('true');
-  });
-
-  it('a fresh instance still reads the persisted flag', () => {
-    new VisitedService().markVisited();
-
-    expect(new VisitedService().hasVisited()).toBe(true);
+    expect(repository.setHasVisited).not.toHaveBeenCalled();
   });
 });

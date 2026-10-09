@@ -24,6 +24,7 @@ import {
   transactions,
   transferSettings,
   transfers,
+  uiPreferences,
   users,
 } from './index.js';
 
@@ -53,7 +54,7 @@ const AWKWARD_RAW_ROW: Record<string, string> = {
   'Tab\tseparated': 'a\tb',
 };
 
-/** One row in every one of the eighteen tables, all owned by `userId`. */
+/** One row in every one of the nineteen tables, all owned by `userId`. */
 const insertEveryTable = (db: DrizzleDb, userId: number): { transactionId: number } => {
   const accountId = db
     .insert(accounts)
@@ -195,6 +196,9 @@ const insertEveryTable = (db: DrizzleDb, userId: number): { transactionId: numbe
       excludedIncomeCategoryIds: [categoryId],
       recentRanges: [{ fromExpr: 'now-30d', toExpr: 'now' }],
     })
+    .run();
+  db.insert(uiPreferences)
+    .values({ userId, themeStyle: 'memphis', hasVisited: true, backupReminderDismissed: false })
     .run();
   db.insert(salaryMetadata).values({ userId, yearMonth: '2026-02', grossWage: 4200 }).run();
   db.insert(savingsGoals)
@@ -409,7 +413,7 @@ describe('schema: reimbursement lookup', () => {
 });
 
 describe('schema: per-user isolation', () => {
-  it('gives each user their own rows in all eighteen tables, invisible to the other', () => {
+  it('gives each user their own rows in all nineteen tables, invisible to the other', () => {
     const { db } = freshDatabase();
     const first = createTestUser(db, 'a');
     const second = createTestUser(db, 'b');
@@ -435,7 +439,7 @@ describe('schema: per-user isolation', () => {
 });
 
 describe('schema: user deletion', () => {
-  it('cascades across all eighteen tables and leaves the other user untouched', () => {
+  it('cascades across all nineteen tables and leaves the other user untouched', () => {
     const { sqlite, db } = freshDatabase();
     expect(sqlite.pragma('foreign_keys', { simple: true })).toBe(1);
 

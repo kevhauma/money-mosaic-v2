@@ -18,8 +18,8 @@ const SYMBOL_POSITIONS: readonly [CurrencySymbolPosition, ...CurrencySymbolPosit
 
 /**
  * App-wide portable settings (TICKET-SET-05) — one row per user, ported from Dexie's `appSettings`
- * singleton (TICKET-SRV-02). Portable/exportable preferences only; `ThemeService`'s appearance
- * choice stays `localStorage`-only by design and has no column here.
+ * singleton (TICKET-SRV-02). Portable/exportable preferences only; the interface's own state — the
+ * chosen theme and the onboarding flags — is `uiPreferences`, next door (TICKET-SRV-10).
  *
  * **Every column is nullable, and that is the whole design of this row.** Each field is
  * `T | undefined` on `AppSettings` precisely so an unset value falls back to the reader's

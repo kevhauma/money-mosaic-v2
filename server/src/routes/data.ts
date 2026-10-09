@@ -49,13 +49,14 @@ import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.j
  * carries has to mean "which shape of the data model is this", which is the question `importAll` has
  * always asked it.
  *
- * It starts at 16 because that is the version the pre-v3 browser database had reached when
+ * It started at 16 because that is the version the pre-v3 browser database had reached when
  * TICKET-SRV-02 ported its schema, so a backup written by that app imports here unchanged. Raise it
  * in the same change as any migration that alters what a document carries — `data.spec.ts` pins the
  * refusal of a higher number, not the number itself, since there is no second declaration of the
- * schema left to compare against.
+ * schema left to compare against. 17 is TICKET-SRV-10's `uiPreferences`, a table the document now
+ * carries; a v16 backup simply arrives without it, which reads as the unwritten row it was.
  */
-export const DATA_SCHEMA_VERSION = 16;
+export const DATA_SCHEMA_VERSION = 17;
 
 /** Columns the server computes, which are neither exported nor accepted back (`ParseOptions`). */
 const derivedOf = (table: PerUserTable): readonly string[] =>

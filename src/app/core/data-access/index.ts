@@ -20,3 +20,4 @@ export * from './goals.repository';
 export * from './forecast-settings.repository';
 export * from './loans.repository';
 export * from './recurring-overrides.repository';
+export * from './ui-preferences.repository';

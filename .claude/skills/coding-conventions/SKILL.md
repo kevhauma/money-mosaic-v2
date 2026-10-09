@@ -23,7 +23,7 @@ ng generate component feature-{name}/components/{Name}  # scaffold a standalone 
 - `shared/ui/` — shared standalone components wrapping Tailwind/daisyUI primitives
 - `shared/utils/` — shared signals, pipes, directives, and utilities
 
-Persistence is the `server/` workspace, reached over HTTP (v3, TICKET-SRV-05): everything the app fetches or writes goes through a repository in `core/data-access/`, and there is no API codegen or axios client — one hand-written repository per entity over a shared `ApiClient`. See **Data Access** and **HTTP** below. Nothing in the browser persists entity data; `localStorage` holds per-browser UI preferences only.
+Persistence is the `server/` workspace, reached over HTTP (v3, TICKET-SRV-05): everything the app fetches or writes goes through a repository in `core/data-access/`, and there is no API codegen or axios client — one hand-written repository per entity over a shared `ApiClient`. See **Data Access** and **HTTP** below. Nothing in the browser persists anything: no `localStorage`, no `sessionStorage`, no IndexedDB. Interface state that has to survive a reload — the theme, the onboarding flags — is a per-account row (`uiPreferences`, via `core/ui-preferences/UiPreferencesService`, TICKET-SRV-10); state that only has to survive navigation stays in an in-memory root store (`RangeStore`, `ChartOptionsStore`).
 
 ## Feature Folder Structure
 

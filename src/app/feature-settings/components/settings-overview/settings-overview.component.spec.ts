@@ -22,7 +22,6 @@ describe('SettingsOverviewComponent', () => {
   });
 
   afterEach(async () => {
-    localStorage.removeItem('mm-theme-style');
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.style.removeProperty('--color-primary');
     document.documentElement.style.removeProperty('--color-primary-content');

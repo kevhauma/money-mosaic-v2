@@ -19,7 +19,9 @@ import type {
   DashboardRowId,
   ForecastSettings,
   MappingProfile,
+  ThemeStyleId,
   TransferSettings,
+  UiPreferences,
 } from './entities.js';
 
 /** Name of the seeded `neutral`-kind system category (TICKET-CAT-02), used to find it on both first-run seeding and the `.version(6)` backfill. */
@@ -275,4 +277,40 @@ export const DEFAULT_FORECAST_SETTINGS: ForecastSettings = {
   // seeds `ForecastSettingsStore`'s `withState`, and ngrx derives its signal members from the seed's
   // *keys* — an omitted key means no signal at all, so a later `patchState` would be unreadable.
   scopeAccountIds: undefined,
+};
+
+/**
+ * Every selectable theme id, as a non-empty tuple so the server's CHECK constraint and Drizzle's
+ * `enum` both get the full list and TypeScript refuses a member that is not in {@link ThemeStyleId}.
+ *
+ * The labels, taglines and `data-theme` values that go with each id stay in
+ * `src/app/core/theme/theme-styles.ts`, where they are rendered — only the ids are shared, because
+ * only the ids are stored.
+ */
+export const THEME_STYLE_IDS: readonly [ThemeStyleId, ...ThemeStyleId[]] = [
+  'deformable',
+  'deformable-dark',
+  'neumorphism',
+  'neumorphism-dark',
+  'liquid-glass',
+  'cyberpunk',
+  'skeuomorphism',
+  'anti-polish',
+  'memphis',
+  'retro-futurism',
+];
+
+/**
+ * What the per-user interface state reads as before anyone has written it (TICKET-SRV-10): no theme
+ * picked, the landing page not yet seen, the backup reminder not yet dismissed.
+ *
+ * Every key is declared as `undefined` rather than omitted — the `DEFAULT_APP_SETTINGS` convention.
+ * Nothing here seeds a `withState` today, but the repository spreads a `{}` response over this
+ * object and a missing key would read back as `undefined` from a signal that does not exist.
+ */
+export const DEFAULT_UI_PREFERENCES: UiPreferences = {
+  id: 1,
+  themeStyle: undefined,
+  hasVisited: undefined,
+  backupReminderDismissed: undefined,
 };
