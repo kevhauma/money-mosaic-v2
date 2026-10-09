@@ -1,3 +1,6 @@
+import { mkdtemp, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { onTestFinished } from 'vitest';
 import type { Express } from 'express';
 
@@ -45,12 +48,21 @@ export type TestApp = {
   readonly handle: DatabaseHandle;
   /** The same Drizzle instance the app is serving, so a spec can assert on rows directly. */
   readonly db: DrizzleDb;
+  /**
+   * The temporary directory this app stages uploads in (TICKET-SRV-11), so a spec can assert that a
+   * staged file was cleaned up. Never `server/data/` — see `startTestAppWithDb`.
+   */
+  readonly stagedImportDir: string;
 };
 
 /**
  * Boots the real app against a migrated **in-memory** database — a backend spec never touches
  * `server/data/` — and seeds it the way a first boot would. Both the server and the database close
  * when the test ends.
+ *
+ * The staging directory for imports is temporary and per-test for the same reason the database is
+ * in-memory: a spec that wrote into `server/data/staged-imports` would be sharing a directory with
+ * the developer's own server, and its sweep would delete their abandoned uploads.
  */
 export const startTestAppWithDb = async ({
   isDev = false,
@@ -62,9 +74,17 @@ export const startTestAppWithDb = async ({
   runMigrations(handle);
   if (seed) await seedAdminUser(handle.db);
 
-  const app = createApp({ handle, isDev, ...(webRoot === undefined ? {} : { webRoot }) });
+  const stagedImportDir = await mkdtemp(path.join(os.tmpdir(), 'mm-staged-'));
+  onTestFinished(() => rm(stagedImportDir, { recursive: true, force: true }));
+
+  const app = createApp({
+    handle,
+    isDev,
+    stagedImportDir,
+    ...(webRoot === undefined ? {} : { webRoot }),
+  });
   const baseUrl = await startTestServer(app);
-  return { baseUrl, handle, db: handle.db };
+  return { baseUrl, handle, db: handle.db, stagedImportDir };
 };
 
 /** `startTestAppWithDb` for the specs that only need the URL. */

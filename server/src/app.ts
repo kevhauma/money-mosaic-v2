@@ -23,13 +23,24 @@ export type CreateAppOptions = {
    * API-only server rather than a 500 on every page.
    */
   readonly webRoot?: string;
+  /**
+   * Where `POST /api/data/import/staged` writes (TICKET-SRV-11). Passed in rather than read from
+   * the config so a spec gets a temporary directory of its own — a backend spec never touches
+   * `server/data/`.
+   */
+  readonly stagedImportDir: string;
 };
 
 /**
  * Builds the Express app. Everything it needs is passed in, so a test can mount it against an
  * in-memory database without booting `index.ts`.
  */
-export const createApp = ({ handle, isDev, webRoot }: CreateAppOptions): Express => {
+export const createApp = ({
+  handle,
+  isDev,
+  webRoot,
+  stagedImportDir,
+}: CreateAppOptions): Express => {
   const app = express();
 
   // Nothing gains from announcing the server framework on every response.
@@ -38,6 +49,12 @@ export const createApp = ({ handle, isDev, webRoot }: CreateAppOptions): Express
   // Express' 100kB default is generous for a single entity but not for the bulk writes
   // TICKET-SRV-04 carries (a CSV import's worth of transactions in one transactional request),
   // where it would show up as a bare 413 rather than anything diagnosable.
+  //
+  // It is deliberately **not** sized for a whole-database restore, which is larger still. This
+  // parser is mounted before `requireAuth` below, so its ceiling is what a *signed-out* caller on
+  // the LAN can make the server allocate; raising it to fit a backup would hand that allowance to
+  // everyone who can reach the port. A restore streams to disk instead and is bounded separately
+  // (TICKET-SRV-11, `http/staged-upload.ts`).
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
   if (isDev) app.use(requestLogger());
 
@@ -48,7 +65,7 @@ export const createApp = ({ handle, isDev, webRoot }: CreateAppOptions): Express
   // entity router mounts behind `requireAuth` (TICKET-SRV-03). The middleware is applied per router
   // rather than blanket-mounted on `/api`, so an unknown path still answers 404 rather than 401.
   const requireAuth = createRequireAuth(handle.db);
-  for (const { path, router } of createApiRouters(handle.db)) {
+  for (const { path, router } of createApiRouters(handle.db, stagedImportDir)) {
     app.use(path, requireAuth, router);
   }
 

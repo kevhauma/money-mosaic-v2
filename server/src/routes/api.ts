@@ -54,7 +54,7 @@ const UNIFORM_ENTITIES: readonly (readonly [string, OwnedTable])[] = [
   ['recurringOverrides', recurringOverrides],
 ];
 
-export const createApiRouters = (db: DrizzleDb): ApiRouter[] => [
+export const createApiRouters = (db: DrizzleDb, stagedImportDir: string): ApiRouter[] => [
   ...UNIFORM_ENTITIES.map(([name, table]) => ({
     path: `/api/${name}`,
     router: createEntityRouter({ db, table }),
@@ -64,7 +64,7 @@ export const createApiRouters = (db: DrizzleDb): ApiRouter[] => [
   { path: '/api/transactions', router: createTransactionsRouter(db) },
   { path: '/api/transfers', router: createTransfersRouter(db) },
   { path: '/api/import', router: createImportRouter(db) },
-  { path: '/api/data', router: createDataRouter(db) },
+  { path: '/api/data', router: createDataRouter(db, stagedImportDir) },
   { path: '/api/goals', router: createGoalsRouter(db) },
   { path: '/api/salaryMetadata', router: createSalaryMetadataRouter(db) },
   { path: '/api/categoryModel', router: createCategoryModelRouter(db) },

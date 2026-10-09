@@ -6,6 +6,14 @@ import { toEntity } from '../http/entity-response.js';
 import { httpError } from '../http/errors.js';
 import { assertReferencesOwned } from '../http/ownership.js';
 import {
+  asUploadId,
+  discardStagedUpload,
+  readStagedUpload,
+  refuseOversizedUpload,
+  stageUpload,
+  sweepStagedUploads,
+} from '../http/staged-upload.js';
+import {
   asArray,
   asRecord,
   asReplacement,
@@ -28,6 +36,14 @@ import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.j
  * `/api/data` (TICKET-SRV-04) — export everything, import everything, delete everything, each over
  * the signed-in user's rows and each in one SQLite transaction. The endpoints behind
  * `DataManagementRepository` (FR-DAT-1/2/3).
+ *
+ * **An import is two requests, and still one transaction** (TICKET-SRV-11). `POST /import/staged`
+ * streams the backup to a file in the staging directory; `POST /import` names that file and applies
+ * it. The split exists because the document is the one payload whose size scales with the user's
+ * whole database, and the app-wide body parser is mounted before authentication — so its ceiling
+ * cannot be raised to fit a restore without raising it for signed-out callers too. Streaming rows
+ * directly into the transaction was the alternative, and would hold a write lock open across a
+ * network upload; `http/staged-upload.ts` records that reasoning in full.
  *
  * **The table list is derived, never written down.** The client's three operations were generic over
  * the whole database for exactly this reason: a table added later is covered without anyone
@@ -82,11 +98,21 @@ const asMode = (value: unknown): ImportMode => {
 };
 
 /**
- * The payload of `POST /import`, before any row of it meets a table. The document is exactly what
- * `GET /export` produced, so a backup file is uploaded as it stands rather than being reshaped.
+ * The payload of `POST /import` — which no longer carries the backup itself (TICKET-SRV-11). The
+ * document was streamed to disk by `POST /import/staged`; this names it and says what to do with
+ * it, so the request that opens a write transaction is a few bytes rather than a whole database.
  */
-const asImportBody = (body: unknown): { mode: ImportMode; document: DataDocument } => {
-  const { mode, data } = asRecord(body);
+const asImportBody = (body: unknown): { mode: ImportMode; uploadId: string } => {
+  const { mode, uploadId } = asRecord(body);
+  return { mode: asMode(mode), uploadId: asUploadId(uploadId) };
+};
+
+/**
+ * The staged bytes as a backup document, before any row of it meets a table. The document is
+ * exactly what `GET /export` produced, so a backup file is uploaded as it stands rather than being
+ * reshaped.
+ */
+const asImportDocument = (data: unknown): DataDocument => {
   const { schemaVersion, tables } = asRecord(data);
 
   if (typeof schemaVersion !== 'number' || !Number.isInteger(schemaVersion) || schemaVersion < 1)
@@ -103,14 +129,24 @@ const asImportBody = (body: unknown): { mode: ImportMode; document: DataDocument
 
   const document = asRecord(tables);
   return {
-    mode: asMode(mode),
-    document: {
-      schemaVersion,
-      tables: Object.fromEntries(
-        Object.entries(document).map(([name, rows]) => [name, asArray(rows)]),
-      ),
-    },
+    schemaVersion,
+    tables: Object.fromEntries(
+      Object.entries(document).map(([name, rows]) => [name, asArray(rows)]),
+    ),
   };
+};
+
+/**
+ * The staged file's text as JSON. A file that is not JSON at all never reached a document — the
+ * caller uploaded something that is not a backup — so it is a 400 naming that, not the generic
+ * "malformed payload" a bad *field* gets.
+ */
+const parseStagedDocument = (text: string): unknown => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw httpError(400, 'This file is not a Money Mosaic backup: it is not valid JSON.');
+  }
 };
 
 /** Every row of one table that belongs to this user, in entity shape. */
@@ -243,7 +279,7 @@ const importDocument = (
   });
 };
 
-export const createDataRouter = (db: DrizzleDb): Router => {
+export const createDataRouter = (db: DrizzleDb, stagedImportDir: string): Router => {
   const router = Router();
 
   /** Every table read in one transaction, so the document is a single consistent moment. */
@@ -263,13 +299,45 @@ export const createDataRouter = (db: DrizzleDb): Router => {
     });
   });
 
-  router.post('/import', (req, res) => {
+  /**
+   * The bytes of a backup, streamed to disk and named for later (TICKET-SRV-11).
+   *
+   * No body parser: the client sends `application/octet-stream`, which the app-wide `express.json()`
+   * declines anyway, and the point is that nothing between the socket and the file holds the whole
+   * document. Mounted before `/import` so the literal path wins, and behind `requireAuth` like
+   * every other route on this router — which is what makes the generous ceiling here defensible
+   * when the app-wide one has to stay small.
+   */
+  router.post('/import/staged', async (req, res) => {
+    const user = authUserOf(req);
+    refuseOversizedUpload(req.headers);
+
+    // Housekeeping for uploads nobody applied, done here because it is the one moment the server is
+    // certainly awake and about to write to this directory. Never fails the upload.
+    await sweepStagedUploads(stagedImportDir);
+
+    const uploadId = await stageUpload(stagedImportDir, user.id, req);
+    res.status(201).json({ uploadId });
+  });
+
+  router.post('/import', async (req, res) => {
     const user = authUserOf(req);
     // Shape and version are checked before the transaction opens: neither depends on any row, and a
     // rejected document must not have had a `BEGIN` of its own.
-    const payload = asImportBody(req.body);
+    const { mode, uploadId } = asImportBody(req.body);
 
-    importDocument(db, payload, user.id);
+    try {
+      const text = await readStagedUpload(stagedImportDir, user.id, uploadId);
+      const document = asImportDocument(parseStagedDocument(text));
+
+      importDocument(db, { mode, document }, user.id);
+    } finally {
+      // An upload is consumed by the *attempt*, not by its success: a rejected document is not made
+      // valid by being applied again, and leaving the file behind would both leak disk and let the
+      // same id be replayed. The path is built from this caller's own id, so a discard can only ever
+      // remove their own staged file.
+      await discardStagedUpload(stagedImportDir, user.id, uploadId);
+    }
 
     res.status(204).end();
   });

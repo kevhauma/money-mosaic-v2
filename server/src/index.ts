@@ -40,6 +40,7 @@ const main = async (): Promise<void> => {
   const app = createApp({
     handle,
     isDev: config.isDev,
+    stagedImportDir: config.stagedImportDir,
     ...(serveApp ? { webRoot: config.webRoot } : {}),
   });
 

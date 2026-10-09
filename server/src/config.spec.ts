@@ -7,6 +7,7 @@ import {
   resolveConfig,
   resolveDbFile,
   resolvePort,
+  resolveStagedImportDir,
   resolveWebRoot,
 } from './config.js';
 
@@ -72,6 +73,27 @@ describe('config: resolveWebRoot', () => {
   });
 });
 
+describe('config: resolveStagedImportDir', () => {
+  it('defaults to data/staged-imports beside the database', () => {
+    expect(resolveStagedImportDir({})).toBe(path.join(SERVER_ROOT, 'data', 'staged-imports'));
+  });
+
+  it('honours a STAGED_IMPORT_DIR override, resolving a relative path against the server root', () => {
+    expect(resolveStagedImportDir({ STAGED_IMPORT_DIR: 'scratch' })).toBe(
+      path.join(SERVER_ROOT, 'scratch'),
+    );
+  });
+
+  it('honours an absolute STAGED_IMPORT_DIR override unchanged', () => {
+    const absolute = path.resolve(SERVER_ROOT, '..', 'elsewhere', 'staged');
+    expect(resolveStagedImportDir({ STAGED_IMPORT_DIR: absolute })).toBe(absolute);
+  });
+
+  it('treats a blank STAGED_IMPORT_DIR as unset rather than as the server root', () => {
+    expect(resolveStagedImportDir({ STAGED_IMPORT_DIR: '   ' })).toBe(resolveStagedImportDir({}));
+  });
+});
+
 describe('config: resolveConfig', () => {
   it('combines the overrides and reads dev from NODE_ENV', () => {
     expect(
@@ -79,6 +101,7 @@ describe('config: resolveConfig', () => {
         PORT: '4999',
         DB_FILE: ':memory:',
         WEB_ROOT: '/srv/app',
+        STAGED_IMPORT_DIR: '/srv/staged',
         NODE_ENV: 'production',
       }),
     ).toEqual({
@@ -86,6 +109,7 @@ describe('config: resolveConfig', () => {
       dbFile: ':memory:',
       isDev: false,
       webRoot: path.resolve('/srv/app'),
+      stagedImportDir: path.resolve('/srv/staged'),
     });
     expect(resolveConfig({}).isDev).toBe(true);
   });

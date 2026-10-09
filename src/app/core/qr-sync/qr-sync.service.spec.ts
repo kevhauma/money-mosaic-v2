@@ -1,7 +1,7 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { DataManagementRepository, type AppDataExport } from '@/core/data-access';
-import { withApiTesting } from '@/core/data-access/api-client.testing';
+import { untilRequested, withApiTesting } from '@/core/data-access/api-client.testing';
 import { QR_FORMAT_ID, QR_FRAME_CHAR_CEILING, parseQrFrame } from './qr-frames';
 import { QrSyncService } from './qr-sync.service';
 
@@ -137,25 +137,36 @@ describe('QrSyncService: the schema-version guard applies to QR payloads too', (
   withApiTesting();
 
   /**
-   * The guard itself moved to the side that owns the schema (TICKET-SRV-04): `POST /api/data/import`
-   * refuses a document from a newer data model **before** its transaction opens, so nothing is
-   * written. What is still this service's business is that a QR-delivered document reaches that
-   * endpoint unchanged — version and all — and that the refusal arrives back as a rejection carrying
-   * the sentence the user is shown.
+   * The guard itself moved to the side that owns the schema (TICKET-SRV-04): the import refuses a
+   * document from a newer data model **before** its transaction opens, so nothing is written. What
+   * is still this service's business is that a QR-delivered document reaches the server unchanged —
+   * version and all — and that the refusal arrives back as a rejection carrying the sentence the
+   * user is shown.
+   *
+   * Since TICKET-SRV-11 the document travels as staged bytes and the refusal comes back on the
+   * second request, so "unchanged" is asserted against what was staged rather than against a JSON
+   * body. A QR transfer is far too small to need staging — 250 frames is a quarter of a megabyte —
+   * but it shares the one import path on purpose, so it is this path it has to survive.
    */
   it('hands a newer-schema export to the endpoint unchanged, and surfaces its refusal', async () => {
     const service = new QrSyncService();
     const repository = TestBed.inject(DataManagementRepository);
+    const http = TestBed.inject(HttpTestingController);
     const frames = await service.encode(bigExport(50, 99));
 
     const { data } = await service.decode(new Map(frames.map((frame, index) => [index, frame])));
     expect(data.schemaVersion).toBe(99);
 
     const settled = repository.importAll(data, 'merge');
-    const request = TestBed.inject(HttpTestingController).expectOne('/api/data/import');
 
-    expect((request.request.body as { data: AppDataExport }).data.schemaVersion).toBe(99);
-    request.flush(
+    const staged = http.expectOne('/api/data/import/staged');
+    const document = JSON.parse(await (staged.request.body as Blob).text()) as AppDataExport;
+    expect(document.schemaVersion).toBe(99);
+    staged.flush({ uploadId: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6' });
+
+    await untilRequested();
+
+    http.expectOne('/api/data/import').flush(
       {
         error:
           'This backup was created with a newer database schema (v99) than this server supports (v16). Update the server before importing.',

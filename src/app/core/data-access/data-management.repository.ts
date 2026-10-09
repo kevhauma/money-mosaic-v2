@@ -30,6 +30,12 @@ const PATH = '/data';
  * into `{}`, so the export has always silently lost the trained weights (TICKET-DAT-05's closing
  * note). A `replace` import and `deleteAll` both still clear the row, because it describes a dataset
  * that is being replaced.
+ *
+ * **`importAll` is two requests** (TICKET-SRV-11): the document's bytes are staged to a file on the
+ * server, and a second, tiny request names that file and says `replace` or `merge`. It stays one
+ * method because the split is transport, not behaviour — the dialog, the QR receive path and the
+ * `schemaVersion` guard all see exactly what they saw when it was one POST, including the rejection
+ * sentence, which still arrives from the apply step.
  */
 @Injectable({ providedIn: 'root' })
 export class DataManagementRepository {
@@ -38,7 +44,16 @@ export class DataManagementRepository {
   exportAll = (): Promise<AppDataExport> => this.api.get<AppDataExport>(`${PATH}/export`);
 
   importAll = async (data: AppDataExport, mode: ImportMode): Promise<void> => {
-    await this.api.post<void>(`${PATH}/import`, { mode, data });
+    // A `Blob` rather than a string, so the request carries a `Content-Length` the server can refuse
+    // on before reading a byte — which is what makes an over-sized restore fail with a sentence
+    // instead of a reset connection.
+    const document = new Blob([JSON.stringify(data)], { type: 'application/octet-stream' });
+    const { uploadId } = await this.api.postBytes<{ uploadId: string }>(
+      `${PATH}/import/staged`,
+      document,
+    );
+
+    await this.api.post<void>(`${PATH}/import`, { mode, uploadId });
   };
 
   deleteAll = (): Promise<void> => this.api.delete(PATH);

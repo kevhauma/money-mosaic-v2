@@ -278,7 +278,7 @@ describe('authentication', () => {
   it('answers 401 on every mounted router when there is no session', async () => {
     const { app } = await startTwoUserApp();
 
-    for (const { path } of createApiRouters(app.db)) {
+    for (const { path } of createApiRouters(app.db, app.stagedImportDir)) {
       const response = await apiFetch(app, path);
       expect(response.status, path).toBe(401);
     }
@@ -297,7 +297,7 @@ describe('test coverage of the registry itself', () => {
   it('has a sample body for every entity router', async () => {
     const { app } = await startTwoUserApp();
 
-    const entityPaths = createApiRouters(app.db)
+    const entityPaths = createApiRouters(app.db, app.stagedImportDir)
       .map(({ path }) => path)
       // The settings singletons, the binary model artifact, the two operation-only routers
       // (`/api/import`, `/api/data`) and the admin panel's account management (`/api/admin/users`,

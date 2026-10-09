@@ -1,12 +1,19 @@
+import { readdir } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import { abortOn, apiFetch, apiJson, type TestApp, type TestSession } from '../app.testing.js';
+import { JSON_BODY_LIMIT } from '../app.js';
 import { DATA_SCHEMA_VERSION } from './data.js';
 import { startTwoUserApp, transactionBody } from './samples.testing.js';
 
 /**
  * `GET /api/data/export`, `POST /api/data/import` and `DELETE /api/data` (TICKET-SRV-04) — the three
  * whole-dataset operations, each over the signed-in user's rows only.
+ *
+ * An import is two requests since TICKET-SRV-11 — the document is staged to disk, then applied — so
+ * `importAs` below drives both, and every case written against the single-request shape still reads
+ * the same. The staging endpoint's own cases are in the last two `describe`s; the size ceiling it
+ * enforces is asserted in `http/staged-upload.spec.ts`, at a limit a test can afford to exceed.
  *
  * The isolation cases matter more here than anywhere else in the API: these endpoints are the one
  * place a request means "every table", so a missing `where userId = ?` would hand one household's
@@ -24,12 +31,44 @@ type Document = {
 const exportAs = (app: TestApp, as: TestSession): Promise<{ status: number; body: Document }> =>
   apiJson<Document>(app, '/api/data/export', { as });
 
-const importAs = (
+/** `POST /import/staged` on its own: the document's bytes, as `application/octet-stream`. */
+const stageAs = (
+  app: TestApp,
+  as: TestSession,
+  document: string,
+): Promise<{ status: number; body: { uploadId: string; error?: string } }> =>
+  apiJson<{ uploadId: string; error?: string }>(app, '/api/data/import/staged', {
+    as,
+    method: 'POST',
+    binary: new TextEncoder().encode(document),
+  });
+
+/** `POST /import` on its own: a mode and the id of something already staged. */
+const applyAs = (
   app: TestApp,
   as: TestSession,
   body: unknown,
 ): Promise<{ status: number; body: { error?: string } }> =>
   apiJson<{ error?: string }>(app, '/api/data/import', { as, method: 'POST', body });
+
+/**
+ * The two requests one import takes, so a case that only cares what the import *did* reads as one
+ * call. Staging is asserted here rather than returned: a case below that wants to drive the two
+ * endpoints apart uses `stageAs` and `applyAs` directly.
+ */
+const importAs = async (
+  app: TestApp,
+  as: TestSession,
+  { mode, data }: { mode: unknown; data: unknown },
+): Promise<{ status: number; body: { error?: string } }> => {
+  const staged = await stageAs(app, as, JSON.stringify(data));
+  expect(staged.status, 'staging the document').toBe(201);
+
+  return applyAs(app, as, { mode, uploadId: staged.body.uploadId });
+};
+
+/** A well-formed id that was never staged, for the cases that need one. */
+const UNSTAGED_UPLOAD_ID = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
 
 const addTransaction = (app: TestApp, as: TestSession, accountId: number) =>
   apiJson<Row>(app, '/api/transactions', {
@@ -244,6 +283,144 @@ describe('POST /api/data/import', () => {
     expect(
       (await apiJson<Row[]>(app, '/api/transactions', { as: alice.session })).body,
     ).toHaveLength(2);
+  });
+});
+
+describe('POST /api/data/import/staged', () => {
+  it('accepts a document larger than the app-wide JSON body limit', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const backup = (await exportAs(app, alice.session)).body;
+
+    // Pinned to the constant rather than to "10mb": if the app-wide ceiling ever moves, this should
+    // be re-read rather than quietly stop proving anything.
+    expect(JSON_BODY_LIMIT).toBe('10mb');
+    const padding = 'x'.repeat(11 * 1024 * 1024);
+    const first = backup.tables['transactions']![0]!;
+    first['rawLine'] = padding;
+
+    const restored = await importAs(app, alice.session, { mode: 'replace', data: backup });
+
+    expect(restored.status).toBe(204);
+    const rows = await apiJson<Row[]>(app, '/api/transactions', { as: alice.session });
+    expect(rows.body.find((row) => row.id === first.id)?.['rawLine']).toHaveLength(padding.length);
+  });
+
+  it('requires a session, like every other route on this router', async () => {
+    const { app } = await startTwoUserApp();
+
+    const response = await apiFetch(app, '/api/data/import/staged', {
+      method: 'POST',
+      binary: new TextEncoder().encode('{}'),
+    });
+
+    expect(response.status).toBe(401);
+    expect(await readdir(app.stagedImportDir)).toEqual([]);
+  });
+
+  it('leaves no staged file behind once the import has been applied', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const backup = (await exportAs(app, alice.session)).body;
+
+    expect((await importAs(app, alice.session, { mode: 'merge', data: backup })).status).toBe(204);
+
+    expect(await readdir(app.stagedImportDir)).toEqual([]);
+  });
+
+  it('leaves no staged file behind when the import fails', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const backup = (await exportAs(app, alice.session)).body;
+    abortOn(app, 'INSERT', 'transactions');
+
+    expect((await importAs(app, alice.session, { mode: 'replace', data: backup })).status).toBe(
+      500,
+    );
+
+    // An upload is consumed by the attempt, not by its success — otherwise a rejected document
+    // would sit in the data directory until the sweep got to it.
+    expect(await readdir(app.stagedImportDir)).toEqual([]);
+  });
+});
+
+describe('POST /api/data/import — the staged document', () => {
+  it('refuses an upload staged by another account', async () => {
+    const { app, alice, bob } = await startTwoUserApp();
+    const staged = await stageAs(
+      app,
+      alice.session,
+      JSON.stringify((await exportAs(app, alice.session)).body),
+    );
+
+    const stolen = await applyAs(app, bob.session, {
+      mode: 'merge',
+      uploadId: staged.body.uploadId,
+    });
+
+    // A 404 rather than a 403, and worded so it does not confirm the id is real for somebody else
+    // (the rule TICKET-SRV-03 set).
+    expect(stolen.status).toBe(404);
+    // Alice's upload is still hers to apply, so a request from Bob cannot consume it either.
+    expect(
+      (await applyAs(app, alice.session, { mode: 'merge', uploadId: staged.body.uploadId })).status,
+    ).toBe(204);
+  });
+
+  it('refuses an id that was never staged, and one that is not an id at all', async () => {
+    const { app, alice } = await startTwoUserApp();
+
+    expect(
+      (await applyAs(app, alice.session, { mode: 'merge', uploadId: UNSTAGED_UPLOAD_ID })).status,
+    ).toBe(404);
+    for (const uploadId of ['../../money-mosaic.sqlite', '', 17, null]) {
+      expect(
+        (await applyAs(app, alice.session, { mode: 'merge', uploadId })).status,
+        String(uploadId),
+      ).toBe(404);
+    }
+  });
+
+  it('cannot apply the same upload twice', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const backup = (await exportAs(app, alice.session)).body;
+    const staged = await stageAs(app, alice.session, JSON.stringify(backup));
+
+    const first = await applyAs(app, alice.session, {
+      mode: 'merge',
+      uploadId: staged.body.uploadId,
+    });
+    const second = await applyAs(app, alice.session, {
+      mode: 'merge',
+      uploadId: staged.body.uploadId,
+    });
+
+    expect(first.status).toBe(204);
+    expect(second.status).toBe(404);
+  });
+
+  it('rejects a staged file that is not JSON at all', async () => {
+    const { app, alice } = await startTwoUserApp();
+    // What someone uploads when they pick the wrong file: a bank CSV instead of a backup.
+    const staged = await stageAs(app, alice.session, 'date;amount;description');
+
+    const applied = await applyAs(app, alice.session, {
+      mode: 'merge',
+      uploadId: staged.body.uploadId,
+    });
+
+    expect(applied.status).toBe(400);
+    expect(applied.body.error).toContain('not valid JSON');
+  });
+
+  it('rejects valid JSON that is not a backup document', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const staged = await stageAs(app, alice.session, JSON.stringify({ hello: 'world' }));
+
+    const applied = await applyAs(app, alice.session, {
+      mode: 'merge',
+      uploadId: staged.body.uploadId,
+    });
+
+    expect(applied.status).toBe(400);
+    expect(applied.body.error).toContain('schemaVersion');
   });
 });
 

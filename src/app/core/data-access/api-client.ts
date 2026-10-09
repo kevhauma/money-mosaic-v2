@@ -129,6 +129,20 @@ export class ApiClient {
     return this.settled(this.http.put<T>(this.url(path), withClearedFields(body)));
   }
 
+  /**
+   * Bytes out, JSON back. A whole-database import is streamed to a staging file on the server
+   * rather than parsed as a request body (TICKET-SRV-11), so it must *not* be sent as JSON: the
+   * app-wide parser would buffer the entire document to apply a ceiling sized for the pre-auth
+   * surface, which is the limit the staging endpoint exists to get out from under.
+   */
+  postBytes<T>(path: string, body: Blob): Promise<T> {
+    return this.settled(
+      this.http.post<T>(this.url(path), body, {
+        headers: { 'Content-Type': 'application/octet-stream' },
+      }),
+    );
+  }
+
   /** Bytes, not JSON: a trained model is megabytes of weights (see `binary-artifact.ts`). */
   async putBytes(path: string, body: ArrayBuffer): Promise<void> {
     await this.settled(

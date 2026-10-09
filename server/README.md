@@ -29,6 +29,7 @@ npm run test:server          # backend tests (in-memory SQLite)
 | `PORT`    | `4300`                        | HTTP port. 4300 stays clear of 4210/4200.            |
 | `DB_FILE` | `server/data/money-mosaic.sqlite` | SQLite file; relative paths resolve against `server/`. |
 | `WEB_ROOT`| `../dist/money-mosaic-vibe/browser` | The built app to serve (the repo-root `dist/`); relative paths resolve against `server/`. |
+| `STAGED_IMPORT_DIR` | `server/data/staged-imports` | Scratch space for a database import's bytes before they are applied (TICKET-SRV-11); relative paths resolve against `server/`. Nothing here is worth backing up — a file lives for the seconds between the two requests of one import, and anything left over is swept after an hour. |
 | `NODE_ENV`| unset (dev)                   | `production` turns the request logger off **and serves the built app** (TICKET-SRV-09). |
 
 ## Serving the app too (TICKET-SRV-09)
@@ -141,7 +142,9 @@ cannot change hands between the check and the write.
   category instead of the bare 500 SQLite's NO ACTION constraint would produce. Built from a query,
   not from a caught constraint message.
 - **The whole dataset** — `GET /api/data/export` → `{ schemaVersion, exportedAt, tables }` over the
-  signed-in user's rows; `POST /api/data/import` takes `{ mode: 'replace' | 'merge', data }` and
+  signed-in user's rows; an import is **two requests** (TICKET-SRV-11) — `POST /api/data/import/staged`
+  streams the backup's bytes to a file and answers `{ uploadId }`, then `POST /api/data/import` takes
+  `{ mode: 'replace' | 'merge', uploadId }` and applies it in one transaction — and still
   rejects a `schemaVersion` newer than the server's before writing anything; `DELETE /api/data` clears
   this user's rows and nobody else's. Ids are preserved, so cross-table references survive a restore —
   which also means an id already belonging to another account is a 409 (TICKET-SRV-07 is what
