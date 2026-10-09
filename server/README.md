@@ -146,10 +146,13 @@ cannot change hands between the check and the write.
   streams the backup's bytes to a file and answers `{ uploadId }`, then `POST /api/data/import` takes
   `{ mode: 'replace' | 'merge', uploadId }` and applies it in one transaction — and still
   rejects a `schemaVersion` newer than the server's before writing anything; `DELETE /api/data` clears
-  this user's rows and nobody else's. Ids are preserved, so cross-table references survive a restore —
-  which also means an id already belonging to another account is a 409 (TICKET-SRV-07 is what
-  reconciles a browser database's ids). `categoryModel` is not in the document: megabytes of weights
-  cannot survive JSON, and `/api/categoryModel` carries them as bytes.
+  this user's rows and nobody else's. Ids are preserved, so cross-table references survive a restore
+  — which also means **an import takes over a row whose id belongs to another account, and that
+  account loses it** (TICKET-SRV-12; it was a 409 refusing the whole document until then). There is
+  no id remapping on this path: the engine that did that was TICKET-SRV-07's and was deleted with
+  Dexie in TICKET-SRV-08, so restoring a backup into an account other than the one it came from is a
+  destructive operation on whoever else holds those ids. `categoryModel` is not in the document:
+  megabytes of weights cannot survive JSON, and `/api/categoryModel` carries them as bytes.
 
 
 **First boot seeds one account: `admin` / `admin`** (role `admin`, display name "Administrator").

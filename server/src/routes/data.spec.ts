@@ -228,23 +228,32 @@ describe('POST /api/data/import', () => {
     expect(noId.body.error).toContain('no id');
   });
 
-  it('refuses to overwrite a row whose id belongs to another account', async () => {
+  /**
+   * The exact inverse of what this asserted until TICKET-SRV-12, which is why that ticket records a
+   * data-loss path rather than a convenience. Ids are preserved by this endpoint, so a backup taken
+   * from one account and restored into another collides on every row — and the importer now wins
+   * every collision. Pinned deliberately: if this ever starts passing by accident again, the
+   * behaviour being asserted is somebody losing their data.
+   */
+  it('takes over a row whose id belongs to another account, and that account loses it', async () => {
     const { app, alice, bob } = await startTwoUserApp();
     const theirBackup = (await exportAs(app, bob.session)).body;
 
-    const rejected = await importAs(app, alice.session, { mode: 'merge', data: theirBackup });
+    const imported = await importAs(app, alice.session, { mode: 'merge', data: theirBackup });
 
-    expect(rejected.status).toBe(409);
-    expect(rejected.body.error).toContain('another account');
-    // Bob's rows are untouched, and Alice gained nothing.
+    expect(imported.status).toBe(204);
+    // The row is Alice's now, under the same id Bob's backup carried — it changed hands rather than
+    // being copied, so there is one row where there was one row.
     expect(
-      (await apiJson<Row>(app, `/api/accounts/${bob.fixtures.accountId}`, { as: bob.session }))
+      (await apiJson<Row>(app, `/api/accounts/${bob.fixtures.accountId}`, { as: alice.session }))
         .body['name'],
     ).toBe('Checking');
+    // And Bob cannot see it any more. His backup described his whole account, so he is left with
+    // nothing: this is the cost the ticket and `upsertRow` both state outright.
     expect(
-      (await apiFetch(app, `/api/accounts/${bob.fixtures.accountId}`, { as: alice.session }))
-        .status,
+      (await apiFetch(app, `/api/accounts/${bob.fixtures.accountId}`, { as: bob.session })).status,
     ).toBe(404);
+    expect((await apiJson<Row[]>(app, '/api/accounts', { as: bob.session })).body).toEqual([]);
   });
 
   it('rejects a document whose rows reference rows it does not contain', async () => {

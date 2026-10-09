@@ -176,15 +176,6 @@ const upsertRow = (
     .where(key)
     .get() as { userId: number } | undefined;
 
-  // Ids are unique per table across all users here, where a browser database's were unique to its
-  // one owner. Reconciling that is TICKET-SRV-07's job; refusing to overwrite a stranger's row is
-  // this endpoint's, and a 409 says which row rather than letting the upsert land on it.
-  if (existing !== undefined && existing.userId !== userId)
-    throw httpError(
-      409,
-      `This backup cannot be imported as it stands: id ${id} in "${getTableName(table)}" already belongs to another account.`,
-    );
-
   if (existing === undefined) {
     tx.insert(table)
       .values({ ...values, ...(id === undefined ? {} : { id }), userId } as never)
@@ -197,8 +188,25 @@ const upsertRow = (
   // so setting it directly would be a patch, leaving a field the backup does not have standing on
   // the stored row. `asReplacement` fills the absent nullable columns back in as null, which is
   // what writing the whole object gives you, and what `merge` has always meant here.
+  //
+  // **`userId` is written with it, so a row whose id belongs to another account changes hands**
+  // (TICKET-SRV-12). Ids are unique per table across all users here, where a browser database's
+  // were unique to its one owner, so a backup restored into a different account collides by
+  // construction — and this endpoint preserves ids rather than remapping them, because every
+  // `accountId` / `categoryId` / `transferId` in the document points at them.
+  //
+  // What that costs is written down because it cannot be undone: **the other account loses the
+  // row.** Its contents become the backup's and its ownership moves to the importer, so a row that
+  // account still holds pointing at this id now references something it does not own — SQLite's
+  // foreign keys still resolve, since the row is there, but the reference stops meaning what it
+  // meant. Until TICKET-SRV-12 this was a 409 naming the row and nothing was written.
+  //
+  // Taking ownership rather than merely overwriting is the deliberate half. `assertReferencesOwned`
+  // runs after these writes and rejects a document that references a row the importer does not own,
+  // so leaving `userId` where it was would corrupt the other account *and* still fail the import —
+  // the worst of both. For a row that is already the importer's, writing `userId` is a no-op.
   tx.update(table)
-    .set(asReplacement(table, values) as never)
+    .set({ ...asReplacement(table, values), userId } as never)
     .where(key)
     .run();
 };
