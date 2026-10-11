@@ -20,6 +20,10 @@
   // `fallow-ignore-file unused-file` does *not* work for this (3.3.0 marks it stale, once per line
   // of the file), which is the "say what handles it instead" half of the house rule above.
   "ignorePatterns": ["**/*.spec.ts", "**/*.testing.ts", "**/*.d.ts"],
+  // The mutation-testing harness (`npx stryker run`). Both are real entry points that nothing in
+  // the repo imports: Vitest loads the config, and the config loads the setup file. Declaring them
+  // as entries is what clears the `unused-file` finding.
+  "entry": ["vitest.stryker.config.ts", "stryker/angular-test-setup.ts"],
   "production": false,
   "ignoreExportsUsedInFile": true, // clears the in-file/spec-used "unused export" family (§5.1)
   "ignoreDependencies": ["tailwindcss"], // build-time-only Tailwind 4 dep, correct in devDependencies (§5.3)

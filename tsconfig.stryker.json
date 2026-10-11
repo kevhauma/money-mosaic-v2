@@ -1,0 +1,15 @@
+/* TypeScript program for the Stryker mutation-testing run only (see `stryker.config.mjs`).
+   `ng test` compiles the specs through `@angular/build:unit-test`, which pre-bundles them and
+   never hands Vitest the TypeScript sources. Stryker's Vitest runner needs the opposite — Vitest
+   itself has to transform the (mutated) sources — so that run compiles through
+   `@analogjs/vite-plugin-angular`, and the Angular compiler it drives needs one program holding
+   the app, the specs and the Stryker setup file at once. `tsconfig.spec.json` lists only the
+   specs, so it cannot be that program. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/stryker",
+    "types": ["vitest/globals"]
+  },
+  "include": ["src/**/*.ts", "shared/**/*.ts", "stryker/**/*.ts"]
+}
