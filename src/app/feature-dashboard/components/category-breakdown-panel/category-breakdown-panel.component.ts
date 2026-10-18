@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { type CategoryBreakdownEntry } from '@/core/stats';
-import { AppSettingsStore, CategoriesStore, RangeStore } from '@/core/state';
+import { AppSettingsStore, CategoriesStore } from '@/core/state';
 import {
   resolveChartAnimation,
   CHART_NO_COLOR_FALLBACK,
@@ -141,7 +141,6 @@ const soleEntryVm = (kind: BreakdownKind, entry: BreakdownEntryVm): SoleEntryVm 
 export class CategoryBreakdownPanelComponent {
   private readonly statsStore = inject(StatsStore);
   private readonly categoriesStore = inject(CategoriesStore);
-  protected readonly rangeStore = inject(RangeStore);
 
   /** Blurs the per-category totals/shares while privacy mode is on (TICKET-PRIV-01); the donut and the category names stay. */
   protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
@@ -150,9 +149,7 @@ export class CategoryBreakdownPanelComponent {
   protected readonly dataReady = this.statsStore.dataReady;
 
   /** Combined range key so `expandedColumns` below resets whenever either bound changes. */
-  private readonly rangeKey = computed(
-    () => `${this.rangeStore.from('dashboard')}|${this.rangeStore.to('dashboard')}`,
-  );
+  private readonly rangeKey = computed(() => `${this.statsStore.from()}|${this.statsStore.to()}`);
 
   /**
    * Per-column "show more" state (TICKET-STAT-13) â€” expanding one column never affects the
@@ -196,15 +193,13 @@ export class CategoryBreakdownPanelComponent {
     };
   });
 
-  protected readonly viewAllQueryParams = computed(() => ({
-    from: this.rangeStore.from('dashboard'),
-    to: this.rangeStore.to('dashboard'),
-  }));
+  protected readonly viewAllQueryParams = computed(() =>
+    buildTransactionDrilldownParams(this.statsStore.drilldownScope()),
+  );
 
   protected drilldownParams(categoryId: number | null): Record<string, string> {
     return buildTransactionDrilldownParams({
-      from: this.rangeStore.from('dashboard'),
-      to: this.rangeStore.to('dashboard'),
+      ...this.statsStore.drilldownScope(),
       categoryId: categoryId ?? UNCATEGORISED_SENTINEL,
     });
   }

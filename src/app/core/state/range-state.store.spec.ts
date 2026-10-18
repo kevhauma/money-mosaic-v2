@@ -223,6 +223,29 @@ describe('RangeStore: one range per page (TICKET-UI-23)', () => {
     expect(rangeStore.from('dashboard')).toBe(dashboardFrom);
   });
 
+  it('the account-detail range is its own: setting it moves no other page, and no other page moves it (TICKET-ACC-14)', () => {
+    const rangeStore = TestBed.inject(RangeStore);
+    const defaultFrom = rangeStore.from('dashboard');
+
+    expect(rangeStore.preset('account-detail')).toBe('this-month');
+    expect(rangeStore.from('account-detail')).toBe(defaultFrom);
+
+    rangeStore.setCustomRange('account-detail', '2025-01-01', '2025-03-31');
+
+    expect(rangeStore.from('account-detail')).toBe('2025-01-01');
+    for (const page of ['dashboard', 'accounts', 'explore'] as const) {
+      expect(rangeStore.preset(page)).toBe('this-month');
+      expect(rangeStore.from(page)).toBe(defaultFrom);
+    }
+
+    rangeStore.setPreset('dashboard', 'previous-year');
+    rangeStore.setCustomRange('accounts', '2024-02-01', '2024-02-29');
+    rangeStore.shiftRange('explore', -1);
+
+    expect(rangeStore.from('account-detail')).toBe('2025-01-01');
+    expect(rangeStore.to('account-detail')).toBe('2025-03-31');
+  });
+
   it('all-time resolves per page from the caller-supplied full-history range', () => {
     const rangeStore = TestBed.inject(RangeStore);
 

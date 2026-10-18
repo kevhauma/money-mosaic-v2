@@ -1,5 +1,6 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { computeCategoryBreakdown, type CategoryBreakdown } from './category-breakdown';
+import type { StatsJointMode } from './classify-for-stats';
 import { bucketDateBoundaries, bucketKeysInRange, type Granularity } from '@/shared/utils';
 
 const UNCATEGORISED_NAME = 'Uncategorised';
@@ -36,6 +37,7 @@ export const computePerBucketBreakdowns = (
   granularity: Granularity,
   ownSavingsIbans: ReadonlySet<string>,
   accountsById: ReadonlyMap<number, Account>,
+  jointMode: StatsJointMode = 'share',
 ): CategoryBreakdown[] =>
   bucketKeys.map((bucketKey) => {
     const { start, end } = bucketDateBoundaries(bucketKey, granularity);
@@ -46,6 +48,7 @@ export const computePerBucketBreakdowns = (
       end,
       ownSavingsIbans,
       accountsById,
+      jointMode,
     );
   });
 
@@ -85,7 +88,7 @@ export const buildCategorySeries = (
  * (matches `category-period-comparison.ts`'s existing top-N convention). `computeCategoryBreakdown()`
  * is reused once per bucket (via `bucketKeysInRange`/`bucketDateBoundaries`) — never
  * reimplemented — so this can't drift from the app's transfer/nullified/savings-movement/joint-
- * ownership/signed-netting rules.
+ * ownership/signed-netting rules. `jointMode` reaches every one of those calls (TICKET-ACC-14).
  */
 export const computeCategoryCompositionTrend = (
   transactions: Transaction[],
@@ -95,6 +98,7 @@ export const computeCategoryCompositionTrend = (
   granularity: Granularity,
   ownSavingsIbans: ReadonlySet<string> = new Set(),
   accountsById: ReadonlyMap<number, Account> = new Map(),
+  jointMode: StatsJointMode = 'share',
 ): CategoryCompositionTrend => {
   const wholeRangeBreakdown = computeCategoryBreakdown(
     transactions,
@@ -103,6 +107,7 @@ export const computeCategoryCompositionTrend = (
     to,
     ownSavingsIbans,
     accountsById,
+    jointMode,
   );
 
   const bucketKeys = bucketKeysInRange(from, to, granularity);
@@ -113,6 +118,7 @@ export const computeCategoryCompositionTrend = (
     granularity,
     ownSavingsIbans,
     accountsById,
+    jointMode,
   );
 
   const topCategoryIds = (kind: CategoryBreakdownKind): (number | null)[] =>

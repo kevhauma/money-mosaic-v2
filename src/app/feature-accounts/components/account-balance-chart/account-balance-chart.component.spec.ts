@@ -74,7 +74,7 @@ describe('AccountBalanceChartComponent', () => {
     const rangeStore = TestBed.inject(RangeStore);
     // A year-wide range used to seed the picker to Month via `pickGranularityForSpan`, which is why
     // the chart opened coarse and had to be set back to Day every visit.
-    rangeStore.setCustomRange('accounts', '2026-01-01', '2026-12-31');
+    rangeStore.setCustomRange('account-detail', '2026-01-01', '2026-12-31');
     expect(pickGranularityForSpan('2026-01-01', '2026-12-31')).not.toBe('day');
 
     const bucketKeys = fixture.componentInstance['points']().map((point) => point.bucketKey);

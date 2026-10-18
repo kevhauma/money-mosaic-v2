@@ -289,7 +289,7 @@ describe('pageRangeControl (TICKET-UI-23)', () => {
     // A page added to `RangePageKey` without a default entry would read `undefined` at runtime;
     // this fails loudly instead.
     const rangeStore = TestBed.inject(RangeStore);
-    const pages: RangePageKey[] = ['dashboard', 'accounts'];
+    const pages: RangePageKey[] = ['dashboard', 'accounts', 'account-detail'];
 
     for (const page of pages) {
       expect(rangeStore.preset(page)).toBe('this-month');

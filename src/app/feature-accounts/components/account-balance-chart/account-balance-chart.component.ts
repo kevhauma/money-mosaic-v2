@@ -65,7 +65,10 @@ export class AccountBalanceChartComponent {
 
   private readonly router = inject(Router);
 
-  private readonly trend = balanceTrendSignals(computed(() => [this.account()]));
+  private readonly trend = balanceTrendSignals(
+    computed(() => [this.account()]),
+    'account-detail',
+  );
   protected readonly points = computed(() => this.trend.series()[0]?.points ?? []);
 
   protected readonly chartOption = computed<EChartsCoreOption>(() =>

@@ -22,6 +22,11 @@ export type ChartOptionsKey =
   | 'dashboard-trend'
   | 'dashboard-trend-income'
   | 'dashboard-trend-expense'
+  // Account detail's copy of the Dashboard trend panel (TICKET-ACC-14) — its own keys, so the two
+  // pages never fight over one granularity or one set of hidden series.
+  | 'account-detail-trend'
+  | 'account-detail-trend-income'
+  | 'account-detail-trend-expense'
   | 'dashboard-heatmap'
   | 'explore-money-flow'
   | 'explore-spending-mosaic'

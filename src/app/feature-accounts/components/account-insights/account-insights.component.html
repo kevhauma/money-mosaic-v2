@@ -1,0 +1,114 @@
+<!-- The Dashboard's insight layer for this one account (TICKET-ACC-14). Fixed order — the Dashboard's
+     customize/reorder mode is not carried over — and no balance strip, action queue or heatmap. -->
+@if (!statsStore.dataReady()) {
+  <mm-paper [fullHeight]="true">
+    <mm-loading-skeleton [rows]="2" />
+  </mm-paper>
+} @else if (hasNoTransactions()) {
+  <!-- The import wizard has no way to preselect an account yet, so this lands on its first step. -->
+  <mm-empty-state
+    title="No transactions on this account yet"
+    message="Import a bank CSV export for this account and its income, expense and category charts fill in here."
+  >
+    <ng-icon icon name="tablerFileImport" size="40" aria-hidden="true" />
+    <mm-button action color="primary" class="mt-2" link="/import">Import transactions</mm-button>
+  </mm-empty-state>
+} @else {
+  @if (hasNoneInRange()) {
+    <mm-empty-state title="No transactions in this range" [message]="noneInRangeMessage()" />
+  } @else {
+    <div class="flex flex-wrap gap-6 py-2">
+      <mm-stat-card
+        label="Income"
+        [value]="incomeValue()"
+        [definition]="incomeExpenseDefinition"
+        link="/transactions"
+        [queryParams]="drilldownParams()"
+        tilt="a"
+        [blurred]="privacyMode()"
+      />
+      <mm-stat-card
+        label="Expense"
+        [value]="expenseValue()"
+        link="/transactions"
+        [queryParams]="drilldownParams()"
+        tilt="b"
+        [blurred]="privacyMode()"
+      />
+      <mm-stat-card
+        label="Net cash flow"
+        [value]="netValue()"
+        [color]="netColor()"
+        link="/transactions"
+        [queryParams]="drilldownParams()"
+        tilt="a"
+        [blurred]="privacyMode()"
+      />
+      <mm-stat-card
+        label="Transfers in / out"
+        [value]="transfersValue()"
+        [subLabel]="transfersSubLabel()"
+        [definition]="transfersDefinition"
+        link="/transactions"
+        [queryParams]="drilldownParams()"
+        tilt="b"
+        [blurred]="privacyMode()"
+      />
+    </div>
+  }
+
+  <!-- Full history, scrubbed to this page's range (TICKET-ACC-14) — kept even for an empty range. -->
+  <div class="mt-6">
+    <app-account-balance-chart [account]="account()" />
+  </div>
+
+  @if (!hasNoneInRange()) {
+    <div class="mt-6">
+      @defer (on viewport; prefetch on idle) {
+        <app-trend-chart-panel />
+      } @placeholder {
+        <mm-paper [fullHeight]="true">
+          <h2 class="card-title text-base">Trend</h2>
+          <div class="skeleton mt-2 h-72 w-full"></div>
+        </mm-paper>
+      }
+    </div>
+    <div class="mt-6">
+      @defer (on viewport; prefetch on idle) {
+        <app-category-breakdown-panel />
+      } @placeholder {
+        <mm-paper [fullHeight]="true">
+          <h2 class="card-title text-base">Category breakdown</h2>
+          <mm-loading-skeleton [rows]="4" class="mt-2" />
+        </mm-paper>
+      }
+    </div>
+    <div class="mt-6">
+      @defer (on viewport; prefetch on idle) {
+        <app-category-comparison-panel />
+      } @placeholder {
+        <mm-paper [fullHeight]="true">
+          <h2 class="card-title text-base">Category period comparison</h2>
+          <mm-loading-skeleton [rows]="4" class="mt-4" />
+        </mm-paper>
+      }
+    </div>
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      @defer (on viewport; prefetch on idle) {
+        <app-weekday-weekend-split-panel />
+      } @placeholder {
+        <mm-paper [fullHeight]="true">
+          <mm-loading-skeleton [rows]="3" />
+        </mm-paper>
+      }
+      @defer (on viewport; prefetch on idle) {
+        <app-top-transactions-panel />
+      } @placeholder {
+        <mm-paper [fullHeight]="true">
+          <h2 class="card-title text-base">Biggest transactions</h2>
+          <mm-loading-skeleton [rows]="3" class="mt-2" />
+        </mm-paper>
+      }
+    </div>
+  }
+}

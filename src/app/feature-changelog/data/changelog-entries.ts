@@ -1250,4 +1250,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Tick a box to send those rows too, and see the new count before you start',
     ],
   },
+  {
+    date: '2026-10-18',
+    release: 'unreleased',
+    ticketIds: ['TICKET-ACC-14'],
+    title: "Each account's page is now a dashboard for that one account",
+    area: 'Accounts',
+    details: [
+      'Income, expense, net cash flow and the money moved to and from your other accounts',
+      "The Dashboard's trend chart, category breakdown, comparison, weekday split and biggest transactions, for this account alone",
+      'Its own date range, separate from the Dashboard and the Accounts page',
+      'A joint account shows the whole pot, not just your share',
+      'Every figure opens the matching transactions for this account',
+    ],
+  },
 ];

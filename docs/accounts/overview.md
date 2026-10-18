@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**13 tickets** — 13 done.
+**14 tickets** — 14 done.
 
 - [x] [TICKET-ACC-01](./tickets/TICKET-ACC-01-clear-account-transactions.md) — Clear an account's transactions without deleting the account · _v1.0 Foundation_
 - [x] [TICKET-ACC-02](./tickets/TICKET-ACC-02-joint-ownership-share.md) — Ownership/contribution share on joint accounts · _v1.1 Joint accounts_
@@ -17,3 +17,4 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-ACC-11](./tickets/TICKET-ACC-11-accounts-chart-day-hover-transactions.md) — Hovering a day on a balance chart shows that day's transactions · _v1.6.2 Interface polish_
 - [x] [TICKET-ACC-12](./tickets/TICKET-ACC-12-unstack-balance-history-chart.md) — Balance history plots each account at cumulative height · _v2.3 UX review_
 - [x] [TICKET-ACC-13](./tickets/TICKET-ACC-13-last-imported-on-account-cards.md) — Show when each account was last imported · _v2.3 UX review_
+- [x] [TICKET-ACC-14](./tickets/TICKET-ACC-14-account-detail-dashboard.md) — Account detail becomes a dashboard for that one account (ui-layout-spec §4.2, FR-STAT-2..4/6 per account) — independent, built on `main`; TICKET-SRV-13 carries it onto v3 · _unreleased_

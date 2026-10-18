@@ -9,7 +9,7 @@ import {
   type ChartZoomWindow,
   type DayTransactionIndex,
 } from '@/core/stats';
-import { RangeStore, TransactionsStore } from '@/core/state';
+import { RangeStore, TransactionsStore, type RangePageKey } from '@/core/state';
 import type { Granularity } from '@/shared/utils';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
@@ -48,12 +48,16 @@ export type BalanceTrendSignals = {
  * every active account) and their final ECharts option builder. Must be called from an injection
  * context (a component field initializer), since it injects its own store dependencies rather than
  * taking them as parameters.
+ *
+ * `rangePage` is whose range scrubs the initial zoom: the overview's chart follows `'accounts'`,
+ * and account detail's follows its own `'account-detail'` range since that page gained a picker
+ * (TICKET-ACC-14) — it used to borrow the overview's.
  */
-export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSignals => {
+export const balanceTrendSignals = (
+  accounts: Signal<Account[]>,
+  rangePage: RangePageKey,
+): BalanceTrendSignals => {
   const transactionsStore = inject(TransactionsStore);
-  // Always the `accounts` range (TICKET-UI-23): both callers are Accounts routes — the overview's
-  // all-accounts chart and the account-detail chart — and the detail route deliberately has no range
-  // control of its own, so it scrubs from whatever the overview's header was left on.
   const rangeStore = inject(RangeStore);
 
   const range = computed(() =>
@@ -75,8 +79,8 @@ export const balanceTrendSignals = (accounts: Signal<Account[]>): BalanceTrendSi
   const zoomWindow = computed(() =>
     computeZoomWindow(
       series()[0]?.points.map((point) => point.bucketKey) ?? [],
-      rangeStore.from('accounts'),
-      rangeStore.to('accounts'),
+      rangeStore.from(rangePage),
+      rangeStore.to(rangePage),
       BALANCE_GRANULARITY,
     ),
   );

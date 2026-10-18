@@ -15,9 +15,10 @@ export type StatsClassification =
  * excluded and the rest is weighted by `ownershipShare`, exactly as before this mode existed.
  *
  * `'raw'` disregards attribution entirely: the full transaction amount, for every account type, with
- * no exclusion. Recurring detection is its one caller, because "what repeats" is not a question
- * about whose money it was — a €90 joint utility bill is one €90 rhythm, not a €45 one, and a leg
- * attributed to a co-owner is still a payment that happens every month. It is a mode on this
+ * no exclusion. Recurring detection asks for it because "what repeats" is not a question about
+ * whose money it was — a €90 joint utility bill is one €90 rhythm, not a €45 one, and a leg
+ * attributed to a co-owner is still a payment that happens every month. Account detail asks for it
+ * too (TICKET-ACC-14): one account's page shows what moved through that account, the whole pot. It is a mode on this
  * function rather than a second classifier on purpose: CR3-2.1 centralised the exclusion *order*
  * (`nullified` before savings, transfer-link below it) precisely so two aggregates could not drift
  * on it, and everything except attribution is shared between the two modes here.

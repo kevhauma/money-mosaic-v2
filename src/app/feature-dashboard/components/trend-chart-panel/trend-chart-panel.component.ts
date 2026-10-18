@@ -8,14 +8,7 @@ import {
   type CategorySeriesEntry,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-import {
-  AccountsStore,
-  CategoriesStore,
-  chartGranularity,
-  chartSeriesFilter,
-  RangeStore,
-  TransactionsStore,
-} from '@/core/state';
+import { AccountsStore, CategoriesStore, chartGranularity, chartSeriesFilter } from '@/core/state';
 import {
   resolveChartAnimation,
   formatAxisTooltip,
@@ -34,6 +27,8 @@ import {
   formatCurrency,
   UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
+import { STATS_SCOPE } from '../../stats-scope';
+import { StatsStore } from '../../stats.store';
 
 /** Every series' value at one bucket index, summed â€” the stacked-bar total for that bucket. */
 const bucketTotal = (series: CategorySeriesEntry[], bucketIndex: number): number =>
@@ -105,10 +100,11 @@ const buildColumnChartOption = (
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrendChartPanelComponent {
-  private readonly transactionsStore = inject(TransactionsStore);
   private readonly accountsStore = inject(AccountsStore);
   private readonly categoriesStore = inject(CategoriesStore);
-  private readonly rangeStore = inject(RangeStore);
+  /** Root on the Dashboard, account-scoped on account detail (TICKET-ACC-14) — range, account and joint mode all come from here. */
+  private readonly statsStore = inject(StatsStore);
+  private readonly scope = inject(STATS_SCOPE);
   private readonly router = inject(Router);
 
   /**
@@ -117,8 +113,8 @@ export class TrendChartPanelComponent {
    * away and back doesn't re-derive it from the range (TICKET-STAT-27). One id for both columns —
    * this is a single picker driving both.
    */
-  private readonly granularityControl = chartGranularity('dashboard-trend', () =>
-    pickGranularityForSpan(this.rangeStore.from('dashboard'), this.rangeStore.to('dashboard')),
+  private readonly granularityControl = chartGranularity(this.scope.trendChartKey, () =>
+    pickGranularityForSpan(this.statsStore.from(), this.statsStore.to()),
   );
   protected readonly granularity = this.granularityControl.value;
   protected readonly setGranularity = this.granularityControl.set;
@@ -129,13 +125,14 @@ export class TrendChartPanelComponent {
 
   private readonly composition = computed(() =>
     computeCategoryCompositionTrend(
-      this.transactionsStore.transactions(),
+      this.statsStore.transactions(),
       this.categoriesStore.categoriesById(),
-      this.rangeStore.from('dashboard'),
-      this.rangeStore.to('dashboard'),
+      this.statsStore.from(),
+      this.statsStore.to(),
       this.granularity(),
       this.ownSavingsIbans(),
       this.accountsStore.accountsById(),
+      this.scope.jointMode,
     ),
   );
 
@@ -149,11 +146,11 @@ export class TrendChartPanelComponent {
 
   /** One filter per column (TICKET-STAT-27): the two legends list different categories, and hiding one on the left says nothing about the right. */
   private readonly incomeFilter = chartSeriesFilter(
-    'dashboard-trend-income',
+    `${this.scope.trendChartKey}-income`,
     computed(() => this.composition().incomeSeries.map((entry) => entry.name)),
   );
   private readonly expenseFilter = chartSeriesFilter(
-    'dashboard-trend-expense',
+    `${this.scope.trendChartKey}-expense`,
     computed(() => this.composition().expenseSeries.map((entry) => entry.name)),
   );
 
@@ -197,8 +194,7 @@ export class TrendChartPanelComponent {
   });
 
   private readonly rangeLabel = computed(
-    () =>
-      `${this.granularity()}, ${this.rangeStore.from('dashboard')}â€“${this.rangeStore.to('dashboard')}`,
+    () => `${this.granularity()}, ${this.statsStore.from()}â€“${this.statsStore.to()}`,
   );
 
   protected readonly incomeChartAriaLabel = computed(
@@ -226,6 +222,7 @@ export class TrendChartPanelComponent {
     const { start, end } = bucketDateBoundaries(bucketKey, this.granularity());
     void this.router.navigate(['/transactions'], {
       queryParams: buildTransactionDrilldownParams({
+        ...this.statsStore.drilldownScope(),
         from: start,
         to: end,
         categoryId: category.categoryId ?? UNCATEGORISED_SENTINEL,

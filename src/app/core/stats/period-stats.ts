@@ -1,5 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
-import { classifyForStats } from './classify-for-stats';
+import { classifyForStats, type StatsJointMode } from './classify-for-stats';
 
 export type PeriodStats = {
   income: number;
@@ -18,6 +18,10 @@ export type PeriodStats = {
  * Income/expense/savings/net for [from, to]. Every per-transaction exclusion/routing/bucketing
  * decision is delegated to the shared `classifyForStats` pipeline (CR3-2.1) — this aggregation only
  * accumulates the three running totals and derives `net`/`savingsRate` from them.
+ *
+ * `jointMode` is passed straight through to that pipeline (TICKET-REC-09's dial). `'share'` is every
+ * whole-household caller; account detail asks `'raw'` (TICKET-ACC-14), because one account's page
+ * shows the money that moved through it, the whole pot, not my stake in it.
  */
 export const computePeriodStats = (
   transactions: Transaction[],
@@ -26,6 +30,7 @@ export const computePeriodStats = (
   ownSavingsIbans: ReadonlySet<string> = new Set(),
   categoriesById: ReadonlyMap<number, Category> = new Map(),
   accountsById: ReadonlyMap<number, Account> = new Map(),
+  jointMode: StatsJointMode = 'share',
 ): PeriodStats => {
   let income = 0;
   let expense = 0;
@@ -39,6 +44,7 @@ export const computePeriodStats = (
       ownSavingsIbans,
       categoriesById,
       accountsById,
+      jointMode,
     );
     if (result.kind === 'savings') savings += result.amount;
     else if (result.kind === 'income') income += result.amount;

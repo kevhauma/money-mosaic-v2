@@ -1,5 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
-import { classifyForStats } from './classify-for-stats';
+import { classifyForStats, type StatsJointMode } from './classify-for-stats';
 import { bucketKeysInRange } from '@/shared/utils';
 
 export type DayTypeSpend = {
@@ -30,7 +30,8 @@ const isWeekendDate = (isoDate: string): boolean => {
  *
  * Every per-transaction exclusion/routing/bucketing decision is delegated to the shared
  * `classifyForStats` pipeline (CR3-2.1) — this aggregation only accumulates `expense`-classified
- * amounts into the weekday/weekend bucket for the transaction's own `bookingDate`.
+ * amounts into the weekday/weekend bucket for the transaction's own `bookingDate`. `jointMode` is
+ * passed through to it unchanged (TICKET-ACC-14).
  */
 export const computeWeekdayWeekendSplit = (
   transactions: Transaction[],
@@ -39,6 +40,7 @@ export const computeWeekdayWeekendSplit = (
   ownSavingsIbans: ReadonlySet<string> = new Set(),
   categoriesById: ReadonlyMap<number, Category> = new Map(),
   accountsById: ReadonlyMap<number, Account> = new Map(),
+  jointMode: StatsJointMode = 'share',
 ): WeekdayWeekendSplit | null => {
   const dayKeys = bucketKeysInRange(from, to, 'day');
   if (dayKeys.length < MIN_DAYS_FOR_SPLIT) return null;
@@ -61,6 +63,7 @@ export const computeWeekdayWeekendSplit = (
       ownSavingsIbans,
       categoriesById,
       accountsById,
+      jointMode,
     );
     if (result.kind !== 'expense') continue;
 

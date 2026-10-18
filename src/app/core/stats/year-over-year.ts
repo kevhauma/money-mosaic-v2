@@ -1,4 +1,5 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
+import type { StatsJointMode } from './classify-for-stats';
 import { computePeriodStats, type PeriodStats } from './period-stats';
 
 export type YearOverYearPriorYear = {
@@ -69,7 +70,7 @@ const earliestBookingDate = (transactions: Transaction[]): string | null => {
  * isn't account-scoped), so it never returns an all-zero "prior year" pretending to be real data.
  * `delta` compares `current` to only the immediately-prior year (`priorYears[0]`); `yearsBack` is a
  * soft cap on how many additional years to surface for context, not a requirement to have that
- * much history.
+ * much history. `jointMode` reaches every `computePeriodStats` call unchanged (TICKET-ACC-14).
  */
 export const computeYearOverYearComparison = (
   transactions: Transaction[],
@@ -79,6 +80,7 @@ export const computeYearOverYearComparison = (
   categoriesById: ReadonlyMap<number, Category> = new Map(),
   accountsById: ReadonlyMap<number, Account> = new Map(),
   yearsBack = 3,
+  jointMode: StatsJointMode = 'share',
 ): YearOverYearComparison => {
   const current = computePeriodStats(
     transactions,
@@ -87,6 +89,7 @@ export const computeYearOverYearComparison = (
     ownSavingsIbans,
     categoriesById,
     accountsById,
+    jointMode,
   );
 
   const priorYears: YearOverYearPriorYear[] = [];
@@ -108,6 +111,7 @@ export const computeYearOverYearComparison = (
           ownSavingsIbans,
           categoriesById,
           accountsById,
+          jointMode,
         ),
       });
     }

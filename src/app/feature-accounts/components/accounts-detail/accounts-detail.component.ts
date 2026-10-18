@@ -17,12 +17,15 @@ import {
   FlexComponent,
   PageHeaderComponent,
   PaperComponent,
+  PrivacyToggleComponent,
+  RangePickerComponent,
   TypographyComponent,
 } from '@/shared/ui';
 import { SignedAmountPipe } from '@/shared/utils';
-import { AccountsStore, ImportBatchesStore } from '@/core/state';
+import { AccountsStore, ImportBatchesStore, pageRangeControl } from '@/core/state';
+import { provideStatsScope } from '@/feature-dashboard';
 import { AccountBalanceBlockComponent } from '../account-balance-block/account-balance-block.component';
-import { AccountBalanceChartComponent } from '../account-balance-chart/account-balance-chart.component';
+import { AccountInsightsComponent } from '../account-insights/account-insights.component';
 import {
   AccountFormComponent,
   type AccountFormValue,
@@ -37,7 +40,7 @@ import { lastImportStatus } from '../../last-import-status';
     SignedAmountPipe,
     AccountFormComponent,
     AccountBalanceBlockComponent,
-    AccountBalanceChartComponent,
+    AccountInsightsComponent,
     BadgeComponent,
     ButtonComponent,
     ConfirmDialogComponent,
@@ -45,12 +48,26 @@ import { lastImportStatus } from '../../last-import-status';
     FlexComponent,
     PageHeaderComponent,
     PaperComponent,
+    PrivacyToggleComponent,
+    RangePickerComponent,
     TypographyComponent,
   ],
   templateUrl: './accounts-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
     provideIcons({ tablerPencil, tablerArchive, tablerArchiveOff, tablerEraser, tablerTrash }),
+  ],
+  // This account, under this page's range, at full amount (TICKET-ACC-14): a joint account's page
+  // shows the whole pot, as its balance does (TICKET-ACC-07), while the Dashboard keeps my share.
+  // The factory runs when `app-account-insights` first injects the store, after this component
+  // exists — which is why this component itself never injects `StatsStore`.
+  providers: [
+    provideStatsScope(() => ({
+      rangePage: 'account-detail',
+      accountId: inject(AccountsDetailComponent).accountId,
+      jointMode: 'raw',
+      trendChartKey: 'account-detail-trend',
+    })),
   ],
 })
 export class AccountsDetailComponent {
@@ -64,6 +81,15 @@ export class AccountsDetailComponent {
   protected readonly account = computed(
     () => this.accountsStore.accounts().find((account) => String(account.id) === this.id()) ?? null,
   );
+
+  /** What this page's scoped `StatsStore` filters on — read by the `providers` factory above. */
+  readonly accountId = computed(() => this.account()?.id ?? null);
+
+  /**
+   * This page's own range (TICKET-ACC-14) — one for every account's detail page, independent of
+   * the Dashboard's, the Accounts overview's and Explore's, and mirrored to `from`/`to` in the URL.
+   */
+  protected readonly range = pageRangeControl('account-detail');
 
   protected readonly balance = computed(() => {
     const account = this.account();
