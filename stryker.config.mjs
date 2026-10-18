@@ -14,7 +14,7 @@
  */
 const config = {
   packageManager: 'npm',
-  reporters: ['html', 'clear-text', 'progress'],
+  reporters: ['html', 'clear-text', 'progress','json'],
   mutate: [
     'src/**/*.ts',
     '!src/**/*.spec.ts',
@@ -51,5 +51,14 @@ const config = {
     configFile: 'vitest.stryker.config.ts',
   },
   coverageAnalysis: 'perTest',
+  // Static mutants only run while modules load and cannot be attributed to an individual test.
+  // Ignore them rather than letting their full-suite reruns time out and count as killed.
+  ignoreStatic: true,
+  // Keep a generous ceiling for slow mutant test runs. Before `ignoreStatic`, 15 of the first 16
+  // module-load mutants in `shared/` timed out at the 5s default; all 163 completed at this value.
+  //
+  // A mutant that genuinely hangs is abandoned after five minutes instead of seconds. Stryker also
+  // caps how many times a mutant may be hit, which catches a runaway loop on hit count.
+  timeoutMS: 300000,
 };
 export default config;
