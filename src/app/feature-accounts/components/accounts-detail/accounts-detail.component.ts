@@ -57,15 +57,16 @@ import { lastImportStatus } from '../../last-import-status';
   viewProviders: [
     provideIcons({ tablerPencil, tablerArchive, tablerArchiveOff, tablerEraser, tablerTrash }),
   ],
-  // This account, under this page's range, at full amount (TICKET-ACC-14): a joint account's page
-  // shows the whole pot, as its balance does (TICKET-ACC-07), while the Dashboard keeps my share.
-  // The factory runs when `app-account-insights` first injects the store, after this component
+  // This account, under this page's range, read as a statement (TICKET-ACC-14): `'cashflow'` makes
+  // every positive amount income and every negative one expense, transfers included and categories
+  // ignored, at full amount — a joint account shows the whole pot, as its balance does
+  // (TICKET-ACC-07). The Dashboard keeps its category-based `'share'` reading. The factory runs when `app-account-insights` first injects the store, after this component
   // exists — which is why this component itself never injects `StatsStore`.
   providers: [
     provideStatsScope(() => ({
       rangePage: 'account-detail',
       accountId: inject(AccountsDetailComponent).accountId,
-      jointMode: 'raw',
+      mode: 'cashflow',
       trendChartKey: 'account-detail-trend',
     })),
   ],

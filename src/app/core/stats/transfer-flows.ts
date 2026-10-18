@@ -13,11 +13,10 @@ const inRange = (transaction: Transaction, from: string, to: string): boolean =>
 
 /**
  * The money `[from, to]` moved between my own accounts, split by direction (TICKET-ACC-14) — the
- * exact rows `classifyForStats` keeps *out* of income/expense under FR-TRF-1: linked transfer legs
+ * rows the Dashboard's readings keep *out* of income/expense under FR-TRF-1: linked transfer legs
  * (`transferId`) and savings movements (a counterparty that is one of my savings IBANs, linked or
- * not). On the whole-household Dashboard the two legs cancel and hiding them is right; on one
- * account they are half the story — a savings account would otherwise read €0 in and €0 out
- * forever — so account detail shows them as their own figure.
+ * not). Account detail reads `'cashflow'`, which counts them *in*, and shows this as the "of which"
+ * breakdown — how much of an account's money in and out was only moving between my own accounts.
  *
  * Skips `nullified` and zero-amount rows for the same reason `classifyForStats` does. No joint-mode
  * dial: a transfer is attributed to nobody, so its full amount is the only reading there is.

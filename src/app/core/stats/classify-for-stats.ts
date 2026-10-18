@@ -15,15 +15,29 @@ export type StatsClassification =
  * excluded and the rest is weighted by `ownershipShare`, exactly as before this mode existed.
  *
  * `'raw'` disregards attribution entirely: the full transaction amount, for every account type, with
- * no exclusion. Recurring detection asks for it because "what repeats" is not a question about
- * whose money it was — a €90 joint utility bill is one €90 rhythm, not a €45 one, and a leg
- * attributed to a co-owner is still a payment that happens every month. Account detail asks for it
- * too (TICKET-ACC-14): one account's page shows what moved through that account, the whole pot. It is a mode on this
- * function rather than a second classifier on purpose: CR3-2.1 centralised the exclusion *order*
+ * no exclusion. Recurring detection is its one caller, because "what repeats" is not a question
+ * about whose money it was — a €90 joint utility bill is one €90 rhythm, not a €45 one, and a leg
+ * attributed to a co-owner is still a payment that happens every month. (Account detail wants the
+ * whole pot too, but reads `'cashflow'` — see `StatsMode`.) It is a mode on this function rather
+ * than a second classifier on purpose: CR3-2.1 centralised the exclusion *order*
  * (`nullified` before savings, transfer-link below it) precisely so two aggregates could not drift
  * on it, and everything except attribution is shared between the two modes here.
  */
 export type StatsJointMode = 'share' | 'raw';
+
+/**
+ * Every reading `classifyForStats` offers: the two joint modes above, plus `'cashflow'`
+ * (TICKET-ACC-14) — one account's money in and money out, with no interpretation at all. A positive
+ * amount is income and a negative one is expense, whatever its category says, and transfers and
+ * savings movements count like any other row: on one account's page they are real money arriving
+ * and leaving, and the user reads that page as a statement, not as a budget. Only `nullified` and
+ * zero-amount rows are still skipped, since those are not money that moved. Attribution is off as
+ * in `'raw'` — the whole pot.
+ *
+ * Not a joint mode, which is why it is a separate type: the Explore mosaic's "my share only"
+ * switch (`ChartOptionsStore.jointMode`) still only ever offers the two above.
+ */
+export type StatsMode = StatsJointMode | 'cashflow';
 
 const inRange = (transaction: Transaction, from: string, to: string): boolean =>
   transaction.bookingDate >= from && transaction.bookingDate <= to;
@@ -32,6 +46,20 @@ const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
   transactionsById: new Map(),
   accountsById: new Map(),
   transfersById: new Map(),
+};
+
+/** `'cashflow'`'s whole rule: the sign decides the bucket, the category only labels it. */
+const classifyByAmountSign = (
+  transaction: Transaction,
+  categoriesById: ReadonlyMap<number, Category>,
+): StatsClassification => {
+  const categoryId =
+    transaction.categoryId != null
+      ? (categoriesById.get(transaction.categoryId)?.id ?? null)
+      : null;
+  return transaction.amount > 0
+    ? { kind: 'income', amount: transaction.amount, categoryId }
+    : { kind: 'expense', amount: -transaction.amount, categoryId };
 };
 
 /**
@@ -57,9 +85,10 @@ const emptyJointLegContext: Omit<JointLegContext, 'categoriesById'> = {
  * `amount` is always the signed delta the caller adds to its running total — it can be negative
  * when a leg nets a bucket down (a payback/refund) rather than up.
  *
- * `jointMode` (TICKET-REC-09) is the one dial on all of this, and it turns **only** the
- * joint/override branch off: `'raw'` reads every account at its full amount, and every exclusion
- * above that branch — range, `nullified`, zero, savings, transfer link — plus the
+ * `mode` is the one dial on all of this. `'cashflow'` (TICKET-ACC-14) bypasses everything below
+ * `nullified`/zero and buckets by amount sign alone — see `StatsMode`. The joint modes
+ * (TICKET-REC-09) turn **only** the joint/override branch off: `'raw'` reads every account at its
+ * full amount, and every exclusion above that branch — range, `nullified`, zero, savings, transfer link — plus the
  * `categoryKindContribution` netting below it apply identically in both modes.
  */
 export const classifyForStats = (
@@ -69,11 +98,12 @@ export const classifyForStats = (
   ownSavingsIbans: ReadonlySet<string>,
   categoriesById: ReadonlyMap<number, Category>,
   accountsById: ReadonlyMap<number, Account>,
-  jointMode: StatsJointMode = 'share',
+  mode: StatsMode = 'share',
 ): StatsClassification => {
   if (!inRange(transaction, from, to)) return { kind: 'skip' };
   if (transaction.nullified) return { kind: 'skip' };
   if (transaction.amount === 0) return { kind: 'skip' };
+  if (mode === 'cashflow') return classifyByAmountSign(transaction, categoriesById);
   if (isSavingsMovement(transaction, ownSavingsIbans)) {
     // Money moved into savings (negative amount) adds to savings; a withdrawal (positive amount)
     // subtracts, so an emergency withdrawal isn't mistaken for income and round-trips net to zero.
@@ -87,7 +117,7 @@ export const classifyForStats = (
 
   const account = accountsById.get(transaction.accountId);
   if (
-    jointMode === 'share' &&
+    mode === 'share' &&
     account &&
     (account.type === 'joint' || transaction.attributionOverride)
   ) {

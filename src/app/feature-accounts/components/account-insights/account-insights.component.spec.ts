@@ -88,7 +88,7 @@ describe('AccountInsightsComponent (TICKET-ACC-14)', () => {
         provideStatsScope(() => ({
           rangePage: 'account-detail',
           accountId: signal(1),
-          jointMode: 'raw',
+          mode: 'cashflow',
           trendChartKey: 'account-detail-trend',
         })),
         {
@@ -131,7 +131,7 @@ describe('AccountInsightsComponent (TICKET-ACC-14)', () => {
     expect(page.querySelector('app-account-balance-chart')).not.toBeNull();
   });
 
-  it("shows this account's income, expense, net and transfers, each drilling into it for the range", async () => {
+  it("shows this account's money in and out by sign, transfers included, each drilling into it for the range", async () => {
     const page = await render([
       transaction({ id: 1, amount: -100 }),
       transaction({ id: 2, amount: 2000, rawDescription: 'Salary' }),
@@ -142,8 +142,8 @@ describe('AccountInsightsComponent (TICKET-ACC-14)', () => {
 
     expect(cards.map((card) => card.querySelector('.stat-value')?.textContent?.trim())).toEqual([
       formatCurrency(2000),
-      formatCurrency(100),
-      formatCurrency(1900),
+      formatCurrency(350),
+      formatCurrency(1650),
       `${formatCurrency(0)} / ${formatCurrency(250)}`,
     ]);
     for (const card of cards) {

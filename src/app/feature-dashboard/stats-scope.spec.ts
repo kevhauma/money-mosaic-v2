@@ -41,7 +41,7 @@ const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
 const accountDetailScope = (accountId: number): StatsScope => ({
   rangePage: 'account-detail',
   accountId: signal(accountId),
-  jointMode: 'raw',
+  mode: 'cashflow',
   trendChartKey: 'account-detail-trend',
 });
 
@@ -101,13 +101,13 @@ describe('StatsStore: scoped by STATS_SCOPE (TICKET-ACC-14)', () => {
     expect(root.periodStats()).toMatchObject({ income: 2000, expense: 290 });
   });
 
-  it("reads a joint account at full amount in 'raw' mode, and at my share in 'share' mode", () => {
-    const raw = scopedStatsStore(accountDetailScope(3));
-    const share = scopedStatsStore({ ...accountDetailScope(3), jointMode: 'share' });
+  it("reads a joint account at full amount under account detail's 'cashflow', and at my share in 'share' mode", () => {
+    const cashflow = scopedStatsStore(accountDetailScope(3));
+    const share = scopedStatsStore({ ...accountDetailScope(3), mode: 'share' });
 
-    expect(raw.periodStats().expense).toBe(300);
+    expect(cashflow.periodStats().expense).toBe(300);
     expect(share.periodStats().expense).toBe(150);
-    expect(raw.categoryBreakdown().expenseByCategory[0]?.total).toBe(300);
+    expect(cashflow.categoryBreakdown().expenseByCategory[0]?.total).toBe(300);
   });
 
   it("follows the 'account-detail' range, independent of the Dashboard's", () => {
@@ -128,7 +128,7 @@ describe('StatsStore: scoped by STATS_SCOPE (TICKET-ACC-14)', () => {
     expect(scoped.from()).toBe('2026-08-01');
   });
 
-  it('sums the account’s linked transfer legs in both directions, kept out of income/expense', () => {
+  it("counts the account's transfer legs as income/expense under 'cashflow', and breaks them out in transferFlows", () => {
     TestBed.inject(TransactionsStore).addMany([
       transaction({ id: 10, accountId: 2, amount: 500, transferId: 1 }),
       transaction({ id: 11, accountId: 2, amount: -120, transferId: 2 }),
@@ -137,7 +137,12 @@ describe('StatsStore: scoped by STATS_SCOPE (TICKET-ACC-14)', () => {
     const savings = scopedStatsStore(accountDetailScope(2));
 
     expect(savings.transferFlows()).toEqual({ in: 500, out: 120 });
-    expect(savings.periodStats()).toMatchObject({ income: 0, expense: 40 });
+    expect(savings.periodStats()).toMatchObject({ income: 500, expense: 160, net: 340 });
+    expect(savings.topTransactions().map((t) => t.id)).toEqual([11, 3]);
+    // The Dashboard's reading of the same rows still leaves the transfer legs out.
+    expect(
+      scopedStatsStore({ ...accountDetailScope(2), mode: 'share' }).periodStats(),
+    ).toMatchObject({ income: 0, expense: 40 });
   });
 
   it('adds the account to every drill-down, which the root scope leaves off', () => {

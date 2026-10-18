@@ -1,6 +1,6 @@
 import type { Account, Category, Transaction } from '@/core/data-access';
 import { computeCategoryBreakdown } from './category-breakdown';
-import type { StatsJointMode } from './classify-for-stats';
+import type { StatsMode } from './classify-for-stats';
 import type { ComparisonWindowPeriod } from './period-window';
 
 const UNCATEGORISED_NAME = 'Uncategorised';
@@ -52,7 +52,7 @@ const percentDelta = (current: number, base: number): number | null =>
  * category still counts as a genuine `0`. `hasEnoughData` folds in the "fewer than 2 periods with
  * data" empty-state rule so the UI never has to re-derive it.
  *
- * `jointMode` reaches every breakdown call unchanged (TICKET-ACC-14).
+ * `mode` reaches every breakdown call unchanged (TICKET-ACC-14).
  */
 export const computeCategoryPeriodComparison = (
   transactions: Transaction[],
@@ -61,7 +61,7 @@ export const computeCategoryPeriodComparison = (
   ownSavingsIbans: ReadonlySet<string> = new Set(),
   accountsById: ReadonlyMap<number, Account> = new Map(),
   excludedCategoryIds: ReadonlySet<number> = new Set(),
-  jointMode: StatsJointMode = 'share',
+  mode: StatsMode = 'share',
 ): CategoryPeriodComparison => {
   const selectedPeriod = window.find((period) => period.isSelected) ?? window[window.length - 1];
   const selectedIndex = window.indexOf(selectedPeriod);
@@ -73,7 +73,7 @@ export const computeCategoryPeriodComparison = (
     selectedPeriod.to,
     ownSavingsIbans,
     accountsById,
-    jointMode,
+    mode,
   );
   const topCategoryIds = selectedBreakdown.expenseByCategory
     .filter((entry) => entry.categoryId == null || !excludedCategoryIds.has(entry.categoryId))
@@ -88,7 +88,7 @@ export const computeCategoryPeriodComparison = (
       period.to,
       ownSavingsIbans,
       accountsById,
-      jointMode,
+      mode,
     ),
   );
   const periodHasData = periodBreakdowns.map(

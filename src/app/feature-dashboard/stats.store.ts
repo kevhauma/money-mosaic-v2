@@ -34,7 +34,7 @@ const todayIso = (): string => new Date().toISOString().slice(0, 10);
  * it injects (`TransactionsStore`/`AccountsStore`/`CategoriesStore`) live in `core/state` themselves.
  *
  * What it is a picture *of* comes from `STATS_SCOPE` (TICKET-ACC-14): the root instance reads the
- * Dashboard's default — every account, the `'dashboard'` range, `'share'` joint mode — and a page
+ * Dashboard's default — every account, the `'dashboard'` range, `'share'` mode — and a page
  * provides a scoped instance with `provideStatsScope` below. Scoping filters the transaction list
  * *before* it reaches the `core/stats` functions, so those stay exactly the functions the Dashboard
  * calls.
@@ -69,7 +69,7 @@ export const StatsStore = signalStore(
         ownSavingsIbans(),
         categoriesStore.categoriesById(),
         accountsStore.accountsById(),
-        scope.jointMode,
+        scope.mode,
       ),
     );
 
@@ -81,7 +81,7 @@ export const StatsStore = signalStore(
         to(),
         ownSavingsIbans(),
         accountsStore.accountsById(),
-        scope.jointMode,
+        scope.mode,
       ),
     );
 
@@ -93,12 +93,19 @@ export const StatsStore = signalStore(
         ownSavingsIbans(),
         categoriesStore.categoriesById(),
         accountsStore.accountsById(),
-        scope.jointMode,
+        scope.mode,
       ),
     );
 
     const topTransactions = computed(() =>
-      computeTopTransactions(transactions(), from(), to(), ownSavingsIbans()),
+      computeTopTransactions(
+        transactions(),
+        from(),
+        to(),
+        ownSavingsIbans(),
+        undefined,
+        scope.mode,
+      ),
     );
 
     const yearOverYear = computed(() =>
@@ -110,7 +117,7 @@ export const StatsStore = signalStore(
         categoriesStore.categoriesById(),
         accountsStore.accountsById(),
         undefined,
-        scope.jointMode,
+        scope.mode,
       ),
     );
 
@@ -136,13 +143,14 @@ export const StatsStore = signalStore(
         ownSavingsIbans(),
         accountsStore.accountsById(),
         new Set(categoryComparisonSettingsStore.excludedCategoryIds()),
-        scope.jointMode,
+        scope.mode,
       );
     });
 
     /**
-     * Money moved between my own accounts (TICKET-ACC-14) — what income/expense leave out. Always
-     * zero-sum across the household, so only a scoped page shows it.
+     * Money moved between my own accounts (TICKET-ACC-14). The Dashboard's income/expense leave it
+     * out and it nets to zero there; account detail's `'cashflow'` income/expense include it, and
+     * this is the "of which" figure telling the user how much of that was their own money moving.
      */
     const transferFlows = computed(() =>
       computeTransferFlows(transactions(), from(), to(), ownSavingsIbans()),

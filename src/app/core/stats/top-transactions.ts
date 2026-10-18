@@ -1,5 +1,6 @@
 import type { Transaction } from '@/core/data-access';
 import { isSavingsMovement } from '@/core/transfers';
+import type { StatsMode } from './classify-for-stats';
 
 /** Default number of transactions surfaced by `computeTopTransactions` when the caller doesn't pass one. */
 export const DEFAULT_TOP_TRANSACTIONS_LIMIT = 5;
@@ -17,6 +18,10 @@ const inRange = (transaction: Transaction, from: string, to: string): boolean =>
  * rather than a resolved view model — category name/colour are joined at the UI layer via
  * `CategoriesStore`, same as `computeCategoryBreakdown`'s `categoryId`-only entries.
  *
+ * Under `'cashflow'` (TICKET-ACC-14, one account's page) the transfer and savings exclusions are
+ * off — a €1,200 move to savings is that account's biggest outgoing, and hiding it would misread
+ * the statement. The joint modes don't change this list: it already shows raw amounts.
+ *
  * Sorted strictly by `Math.abs(amount)` descending; two transactions of equal size are ordered by
  * `bookingDate` descending (most recent first) as a stable, documented tie-break.
  */
@@ -26,12 +31,14 @@ export const computeTopTransactions = (
   to: string,
   ownSavingsIbans: ReadonlySet<string> = new Set(),
   limit: number = DEFAULT_TOP_TRANSACTIONS_LIMIT,
+  mode: StatsMode = 'share',
 ): Transaction[] => {
+  const isOwnMovement = (transaction: Transaction): boolean =>
+    transaction.transferId != null || isSavingsMovement(transaction, ownSavingsIbans);
   const expenses = transactions.filter(
     (transaction) =>
       inRange(transaction, from, to) &&
-      transaction.transferId == null &&
-      !isSavingsMovement(transaction, ownSavingsIbans) &&
+      (mode === 'cashflow' || !isOwnMovement(transaction)) &&
       transaction.amount < 0,
   );
 

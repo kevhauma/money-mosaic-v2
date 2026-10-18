@@ -106,12 +106,12 @@ export class AccountInsightsComponent {
 
   protected readonly transfersSubLabel = computed(() => {
     const flows = this.statsStore.transferFlows();
-    return `Net ${formatCurrency(flows.in - flows.out, { signed: true })} with your other accounts`;
+    return `Already in the figures above · net ${formatCurrency(flows.in - flows.out, { signed: true })}`;
   });
 
   protected readonly incomeExpenseDefinition =
-    'Everything that came in or went out of this account at its full amount, joint or not. Moves between your own accounts are counted under Transfers instead.';
+    'Every amount that came into this account, and every amount that left it, whatever its category — moves between your own accounts included, and joint accounts at their full amount.';
 
   protected readonly transfersDefinition =
-    'Money moved in from, and out to, your other accounts, savings included. It is not income or expense, so it is counted here and nowhere else.';
+    'The part of the income and expense above that was money moving between your own accounts, savings included.';
 }

@@ -132,7 +132,7 @@ export class TrendChartPanelComponent {
       this.granularity(),
       this.ownSavingsIbans(),
       this.accountsStore.accountsById(),
-      this.scope.jointMode,
+      this.scope.mode,
     ),
   );
 
