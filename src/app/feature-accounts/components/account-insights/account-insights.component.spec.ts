@@ -10,7 +10,10 @@ import {
   type Account,
   type Transaction,
 } from '@/core/data-access';
+import { provideFakeApi } from '@/core/data-access/fake-api.testing';
+import { ServerUnreachableError } from '@/core/server-status';
 import { AccountsStore, RangeStore, TransactionsStore } from '@/core/state';
+import { StoreResetService } from '@/core/store-reset';
 import { provideStatsScope } from '@/feature-dashboard';
 import { formatCurrency } from '@/shared/utils';
 import { withCleanFormatSettings } from '@/shared/utils/format-settings.testing';
@@ -20,7 +23,12 @@ import { AccountInsightsComponent } from './account-insights.component';
 // The real balance chart pulls in echarts/zrender, which jsdom can't paint; it has its own spec.
 @Component({ selector: 'app-account-balance-chart', template: '' })
 class AccountBalanceChartStubComponent {
+  /** Instances built so far — a detached one never shows up in a DOM query (TICKET-SRV-13). */
+  static created = 0;
   readonly account = input<Account>();
+  constructor() {
+    AccountBalanceChartStubComponent.created++;
+  }
 }
 
 // `@defer (on viewport)` registers an IntersectionObserver even under `DeferBlockBehavior.Manual`,
@@ -84,6 +92,10 @@ describe('AccountInsightsComponent (TICKET-ACC-14)', () => {
     await TestBed.configureTestingModule({
       imports: [AccountInsightsComponent],
       providers: [
+        // Answers every read the fakes below don't cover — e.g. the category-comparison settings
+        // the scoped stats read, and the app settings behind privacy mode — the way an empty
+        // account would (TICKET-SRV-13).
+        ...provideFakeApi(),
         provideRouter([]),
         provideStatsScope(() => ({
           rangePage: 'account-detail',
@@ -151,5 +163,99 @@ describe('AccountInsightsComponent (TICKET-ACC-14)', () => {
         '/transactions?from=2026-07-01&to=2026-07-31&accountId=1',
       );
     }
+  });
+
+  describe('against a server that can be slow, down, or someone else (TICKET-SRV-13)', () => {
+    const mount = (): HTMLElement => {
+      TestBed.inject(RangeStore).setCustomRange('account-detail', '2026-07-01', '2026-07-31');
+      fixture = TestBed.createComponent(AccountInsightsComponent);
+      fixture.componentRef.setInput('account', checking);
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    };
+
+    const buttonLabels = (page: HTMLElement): (string | undefined)[] =>
+      Array.from(page.querySelectorAll('button')).map((button) => button.textContent?.trim());
+
+    it('shows a skeleton, and no empty state, while transactions are still loading', () => {
+      transactionsRepository.getAll.mockReturnValue(new Promise<Transaction[]>(() => undefined));
+      const page = mount();
+
+      // The boundary's own skeleton — a direct child — not the section's inner fallback one.
+      expect(page.querySelector('mm-hydration-boundary > mm-loading-skeleton')).not.toBeNull();
+      expect(page.querySelector('mm-empty-state')).toBeNull();
+      expect(statCards(page)).toHaveLength(0);
+    });
+
+    it('builds no chart while another store is still loading, so echarts never sizes a detached canvas', async () => {
+      // Transactions are in, categories are not: the boundary still shows its skeleton, so anything
+      // this template builds now would sit outside the document.
+      TestBed.overrideProvider(CategoriesRepository, {
+        useValue: { getAll: () => new Promise<never>(() => undefined) },
+      });
+      transactionsRepository.getAll.mockResolvedValue([transaction({ amount: 2000 })]);
+      AccountBalanceChartStubComponent.created = 0;
+      const page = mount();
+      await TestBed.inject(TransactionsStore).hydrate();
+      fixture.detectChanges();
+
+      expect(page.querySelector('mm-hydration-boundary > mm-loading-skeleton')).not.toBeNull();
+      expect(AccountBalanceChartStubComponent.created).toBe(0);
+    });
+
+    it('reports a failed load with Try again rather than an empty range, and Try again recovers it', async () => {
+      // Every read fails until just before Try again, so recovering without the click is impossible.
+      transactionsRepository.getAll.mockRejectedValue(new ServerUnreachableError());
+      const page = mount();
+      const store = TestBed.inject(TransactionsStore);
+      await store.hydrate().catch(() => undefined);
+      fixture.detectChanges();
+
+      expect(page.textContent).toContain('Cannot reach the server. Is it running?');
+      expect(page.querySelector('mm-empty-state')).toBeNull();
+      expect(page.textContent).not.toContain('No transactions');
+      expect(buttonLabels(page)).toContain('Try again');
+
+      const tryAgain = Array.from(page.querySelectorAll('button')).find(
+        (button) => button.textContent?.trim() === 'Try again',
+      );
+      transactionsRepository.getAll.mockResolvedValue([transaction({ amount: 2000 })]);
+      expect(tryAgain).toBeDefined();
+      tryAgain!.click();
+      // The click itself started the re-read; awaiting `hydrate()` now joins it.
+      expect(store.loading()).toBe(true);
+      await store.hydrate();
+      fixture.detectChanges();
+
+      expect(page.textContent).not.toContain('Cannot reach the server');
+      expect(statCards(page)[0].querySelector('.stat-value')?.textContent?.trim()).toBe(
+        formatCurrency(2000),
+      );
+    });
+
+    it("shows the next user's figures after a sign-out, never the previous user's", async () => {
+      const page = await render([transaction({ amount: 2000 })]);
+      expect(statCards(page)[0].querySelector('.stat-value')?.textContent?.trim()).toBe(
+        formatCurrency(2000),
+      );
+
+      // Signing out empties every registered store; the next sign-in rehydrates them from that
+      // account's rows (TICKET-AUTH-02). The scoped stats hold nothing of their own to clear.
+      const resets = TestBed.inject(StoreResetService);
+      transactionsRepository.getAll.mockResolvedValue([transaction({ amount: 75 })]);
+      resets.resetAll();
+      fixture.detectChanges();
+
+      expect(page.textContent).not.toContain(formatCurrency(2000));
+      expect(page.querySelector('mm-empty-state')).toBeNull();
+
+      await resets.rehydrateAll();
+      fixture.detectChanges();
+
+      expect(statCards(page)[0].querySelector('.stat-value')?.textContent?.trim()).toBe(
+        formatCurrency(75),
+      );
+      expect(page.textContent).not.toContain(formatCurrency(2000));
+    });
   });
 });

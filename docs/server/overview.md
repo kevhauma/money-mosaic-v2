@@ -11,7 +11,7 @@ The backend itself — Express, SQLite, Drizzle — and the move of the app's da
 > every `SRV` ticket — decided with the user on 2026-09-23. Don't add them back, and don't
 > treat their absence as an oversight to repair.
 
-**12 tickets** — 11 done.
+**13 tickets** — 12 done.
 
 - [x] [TICKET-SRV-01](./tickets/TICKET-SRV-01-express-sqlite-drizzle-skeleton.md) — Express + SQLite + Drizzle backend skeleton (new — introduces a backend, superseding the "no backend" premise in `CLAUDE.md`) — nothing depends on it yet, but everything in v3 does; build it first · _unreleased_
 - [x] [TICKET-SRV-02](./tickets/TICKET-SRV-02-drizzle-schema-per-user.md) — Every Dexie table as a Drizzle table, owned by a user (ports the data model in `data-model/SKILL.md`) — needs TICKET-SRV-01 and TICKET-AUTH-01 · _unreleased_
@@ -25,3 +25,4 @@ The backend itself — Express, SQLite, Drizzle — and the move of the app's da
 - [x] [TICKET-SRV-10](./tickets/TICKET-SRV-10-ui-preferences-off-localstorage.md) — The last `localStorage` keys (theme, landing-page flag, backup-reminder dismissal) move to a per-account `uiPreferences` row (refactor, reverses the per-browser calls in SET-05 / PUB-01 / PUB-04) — needs TICKET-SRV-08 · _unreleased_
 - [x] [TICKET-SRV-11](./tickets/TICKET-SRV-11-staged-import-upload.md) — A full-database import is staged to disk instead of buffered as a JSON body (bug fix, FR-DAT-2 — the whole document is posted as one `express.json()` body, so a restore is bounded by the app-wide 10mb pre-auth ceiling and fails with body-parser's bare `request entity too large`) — needs TICKET-SRV-04 and TICKET-SRV-05, both shipped; independent, can ship any time · _unreleased_
 - [ ] [TICKET-SRV-12](./tickets/TICKET-SRV-12-import-takes-over-colliding-ids.md) — An import takes over a colliding id instead of refusing the document (FR-DAT-2 — removes the cross-account 409 `upsertRow` threw; **destructive by design**, the other account loses the row) — needs TICKET-SRV-04, and sits on TICKET-SRV-11 · _unreleased_
+- [x] [TICKET-SRV-13](./tickets/TICKET-SRV-13-port-account-detail-dashboard-to-v3.md) — Bring the account-detail dashboard onto the v3 server branch (refactor, carries TICKET-ACC-14 — keeps SRV-06 hydration, AUTH-02 sign-out wipe and SRV-10 no-browser-storage intact) — needs TICKET-ACC-14; superseded if v3 merges into `main` first · _unreleased_

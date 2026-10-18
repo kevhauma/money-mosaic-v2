@@ -7,6 +7,7 @@ import {
   CategoryBreakdownPanelComponent,
   CategoryComparisonPanelComponent,
   StatsStore,
+  statsInputsHydration,
   TopTransactionsPanelComponent,
   TrendChartPanelComponent,
   WeekdayWeekendSplitPanelComponent,
@@ -14,6 +15,7 @@ import {
 import {
   ButtonComponent,
   EmptyStateComponent,
+  HydrationBoundaryComponent,
   LoadingSkeletonComponent,
   PaperComponent,
   StatCardComponent,
@@ -44,6 +46,7 @@ import { AccountBalanceChartComponent } from '../account-balance-chart/account-b
     AccountBalanceChartComponent,
     ButtonComponent,
     EmptyStateComponent,
+    HydrationBoundaryComponent,
     LoadingSkeletonComponent,
     PaperComponent,
     StatCardComponent,
@@ -61,6 +64,27 @@ export class AccountInsightsComponent {
   readonly account = input.required<Account>();
 
   protected readonly statsStore = inject(StatsStore);
+
+  /**
+   * Every store the scoped `StatsStore` derives from (TICKET-SRV-13), joined into the one state the
+   * section renders: against the server a failed read leaves them empty, and an empty store here
+   * reads as "No transactions in this range" — the same lie the Dashboard's boundary exists to stop
+   * (TICKET-SRV-06). `TransfersStore` is among them because each transfer's slice is named after
+   * the account at its other end, which only the transfer itself can say.
+   */
+  protected readonly hydration = statsInputsHydration();
+
+  /**
+   * Whether the boundary is actually showing its content. Projected content is built by *this*
+   * template whether or not the boundary renders its `<ng-content>`, so without this the balance
+   * chart would mount detached — transactions loaded, categories still loading — and echarts would
+   * size its canvas to zero and stay there. The Dashboard escapes it only because its charts sit in
+   * `@defer (on viewport)`; the balance chart here is not deferred.
+   */
+  protected readonly contentShown = computed(
+    () =>
+      this.statsStore.dataReady() && !this.hydration.loading() && this.hydration.error() === null,
+  );
 
   /** Same blur the panels below apply (TICKET-PRIV-01), so the cards don't stand out unblurred. */
   protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;

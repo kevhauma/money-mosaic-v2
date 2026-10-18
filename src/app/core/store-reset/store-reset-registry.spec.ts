@@ -43,7 +43,7 @@ const HOLDS_NO_USER_DATA: Record<string, string> = {
     'per-page date ranges and quick-range ids — UI choice, not data',
   'core/state/chart-options.store.ts': 'granularity, zoom and series toggles — UI choice, not data',
   'feature-dashboard/stats.store.ts':
-    'pure withComputed over the entity stores — no withState/withEntities of its own, so it empties when they do',
+    'pure withComputed over the entity stores — no withState/withEntities of its own, so it empties when they do; the same holds for the per-page instances provideStatsScope creates (account detail, TICKET-SRV-13), which die with their page',
   'feature-future/forecast.store.ts':
     'pure withComputed over the entity stores — no withState/withEntities of its own, so it empties when they do',
 };

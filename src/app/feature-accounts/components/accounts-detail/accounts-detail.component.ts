@@ -15,13 +15,15 @@ import {
   ConfirmDialogComponent,
   EmptyStateComponent,
   FlexComponent,
+  HydrationBoundaryComponent,
+  LoadingSkeletonComponent,
   PageHeaderComponent,
   PaperComponent,
   PrivacyToggleComponent,
   RangePickerComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import { SignedAmountPipe } from '@/shared/utils';
+import { hydrationOf, SignedAmountPipe } from '@/shared/utils';
 import { AccountsStore, ImportBatchesStore, pageRangeControl } from '@/core/state';
 import { provideStatsScope } from '@/feature-dashboard';
 import { AccountBalanceBlockComponent } from '../account-balance-block/account-balance-block.component';
@@ -46,6 +48,8 @@ import { lastImportStatus } from '../../last-import-status';
     ConfirmDialogComponent,
     EmptyStateComponent,
     FlexComponent,
+    HydrationBoundaryComponent,
+    LoadingSkeletonComponent,
     PageHeaderComponent,
     PaperComponent,
     PrivacyToggleComponent,
@@ -78,6 +82,25 @@ export class AccountsDetailComponent {
   protected readonly accountsStore = inject(AccountsStore);
   /** For the "last import" line under the balance (TICKET-ACC-13); injecting it hydrates it. */
   private readonly importBatchesStore = inject(ImportBatchesStore);
+
+  /**
+   * `AccountsStore` alone decides whether this page can say anything (TICKET-ACC-15): until it has
+   * answered, an empty `accounts()` means "not read yet" or "could not read", not "no such account".
+   * The other stores the page reads gate their own corners — the balance block on `dataReady`, the
+   * last-import line on `ImportBatchesStore.hydrated`, the insight section on its own boundary.
+   */
+  protected readonly hydration = hydrationOf(this.accountsStore);
+
+  /**
+   * The boundary showing its content *and* the store holding a real answer. Gating the page on this
+   * rather than on the boundary alone means nothing below is built while the boundary hides it (a
+   * detached chart would size itself to zero — TICKET-SRV-13), and covers the moment after a
+   * sign-out's reset, when the store is neither loading nor loaded.
+   */
+  protected readonly accountsReady = computed(
+    () =>
+      this.accountsStore.hydrated() && !this.hydration.loading() && this.hydration.error() === null,
+  );
 
   protected readonly account = computed(
     () => this.accountsStore.accounts().find((account) => String(account.id) === this.id()) ?? null,

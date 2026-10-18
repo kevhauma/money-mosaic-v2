@@ -1,118 +1,132 @@
-@if (account(); as account) {
-  <!-- Back-to-parent and the date range are scope controls by the TICKET-UI-24 rule — they change
+<!-- "Account not found" is a claim about what the server holds, so it waits until the server has
+     answered (TICKET-ACC-15): loading and a failed read get the boundary, never the empty state. -->
+<mm-hydration-boundary
+  [loading]="hydration.loading()"
+  [error]="hydration.error()"
+  [rows]="4"
+  (retry)="hydration.retry()"
+>
+  @if (!accountsReady()) {
+    <!-- Between a sign-out's reset and the next read starting: neither loading nor loaded. -->
+    <mm-loading-skeleton [rows]="4" />
+  } @else if (account(); as account) {
+    <!-- Back-to-parent and the date range are scope controls by the TICKET-UI-24 rule — they change
        what you are looking at — so they sit beside the title; everything that acts on this account
        stays right. The range is this page's own (TICKET-ACC-14). -->
-  <mm-page-header [title]="account.name">
-    <mm-button actions-start variant="ghost" size="sm" link="/accounts">Back to accounts</mm-button>
-    <mm-range-picker
-      actions-start
-      [value]="range.value()"
-      (presetChange)="range.onPresetChange($event)"
-      (customRangeChange)="range.onCustomRangeChange($event)"
-      (rangeShift)="range.onRangeShift($event)"
-    />
-    <mm-flex actions-end align="center" gap="2">
-      <!-- The one Data page with the toggle (TICKET-ACC-14): the insight section below reuses the
+    <mm-page-header [title]="account.name">
+      <mm-button actions-start variant="ghost" size="sm" link="/accounts"
+        >Back to accounts</mm-button
+      >
+      <mm-range-picker
+        actions-start
+        [value]="range.value()"
+        (presetChange)="range.onPresetChange($event)"
+        (customRangeChange)="range.onCustomRangeChange($event)"
+        (rangeShift)="range.onRangeShift($event)"
+      />
+      <mm-flex actions-end align="center" gap="2">
+        <!-- The one Data page with the toggle (TICKET-ACC-14): the insight section below reuses the
            Dashboard's panels, which blur under privacy mode, so the switch has to be reachable here.
            The balance block above them stays unblurred — it is still where you reconcile. -->
-      <mm-privacy-toggle />
-      <mm-button size="sm" (click)="formOpen.set(true)">
-        <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
-        Edit
-      </mm-button>
-      <mm-button size="sm" (click)="toggleArchive()">
-        <ng-icon [name]="archiveToggle().icon" size="14" aria-hidden="true" />
-        {{ archiveToggle().label }}
-      </mm-button>
-      <mm-button
-        variant="outline"
-        size="sm"
-        [disabled]="transactionCount() === 0"
-        (click)="clearConfirmOpen.set(true)"
-      >
-        <ng-icon name="tablerEraser" size="14" aria-hidden="true" />
-        Clear transactions
-      </mm-button>
-      <mm-button variant="outline" color="error" size="sm" (click)="deleteConfirmOpen.set(true)">
-        <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
-        Delete
-      </mm-button>
-    </mm-flex>
-  </mm-page-header>
+        <mm-privacy-toggle />
+        <mm-button size="sm" (click)="formOpen.set(true)">
+          <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
+          Edit
+        </mm-button>
+        <mm-button size="sm" (click)="toggleArchive()">
+          <ng-icon [name]="archiveToggle().icon" size="14" aria-hidden="true" />
+          {{ archiveToggle().label }}
+        </mm-button>
+        <mm-button
+          variant="outline"
+          size="sm"
+          [disabled]="transactionCount() === 0"
+          (click)="clearConfirmOpen.set(true)"
+        >
+          <ng-icon name="tablerEraser" size="14" aria-hidden="true" />
+          Clear transactions
+        </mm-button>
+        <mm-button variant="outline" color="error" size="sm" (click)="deleteConfirmOpen.set(true)">
+          <ng-icon name="tablerTrash" size="14" aria-hidden="true" />
+          Delete
+        </mm-button>
+      </mm-flex>
+    </mm-page-header>
 
-  <mm-paper elevation="flat">
-    <mm-text as="p" class="text-sm text-base-content/60">Current balance</mm-text>
-    <app-account-balance-block
-      size="lg"
-      [dataReady]="accountsStore.dataReady()"
-      [balance]="balance()"
-      [hasShare]="hasShare()"
-      [shareDisplay]="shareDisplay()"
-    />
-    @if (account.iban) {
-      <mm-text as="p" class="mt-2 text-sm text-base-content/60"
-        >IBAN ···· {{ account.iban.slice(-4) }}</mm-text
-      >
-    }
-
-    <!-- Same line, same helper and same type style as the account cards (TICKET-ACC-13), marked
-         the same way, and absent until the batches have loaded. -->
-    @if (lastImport(); as lastImport) {
-      @if (lastImport.needsAttention) {
-        <mm-badge variant="outline" color="warning" size="sm" class="mt-2 w-fit">
-          {{ lastImport.label }}
-        </mm-badge>
-      } @else {
-        <mm-text as="p" variant="caption" class="mt-2">{{ lastImport.label }}</mm-text>
+    <mm-paper elevation="flat">
+      <mm-text as="p" class="text-sm text-base-content/60">Current balance</mm-text>
+      <app-account-balance-block
+        size="lg"
+        [dataReady]="accountsStore.dataReady()"
+        [balance]="balance()"
+        [hasShare]="hasShare()"
+        [shareDisplay]="shareDisplay()"
+      />
+      @if (account.iban) {
+        <mm-text as="p" class="mt-2 text-sm text-base-content/60"
+          >IBAN ···· {{ account.iban.slice(-4) }}</mm-text
+        >
       }
-    }
-  </mm-paper>
 
-  @if (contributorBreakdown(); as breakdown) {
-    <mm-paper elevation="flat" bodyClass="card-body gap-2" class="mt-4">
-      <mm-text as="p" class="text-sm text-base-content/60">Contributions</mm-text>
-      <ul class="space-y-1 text-sm">
-        <li class="flex justify-between">
-          <span>Mine</span>
-          <span>{{ breakdown.mine | signedAmount }}</span>
-        </li>
-        @for (entry of breakdown.byCoOwner | keyvalue; track entry.key) {
-          <li class="flex justify-between">
-            <span>{{ entry.key }}</span>
-            <span>{{ entry.value | signedAmount }}</span>
-          </li>
+      <!-- Same line, same helper and same type style as the account cards (TICKET-ACC-13), marked
+         the same way, and absent until the batches have loaded. -->
+      @if (lastImport(); as lastImport) {
+        @if (lastImport.needsAttention) {
+          <mm-badge variant="outline" color="warning" size="sm" class="mt-2 w-fit">
+            {{ lastImport.label }}
+          </mm-badge>
+        } @else {
+          <mm-text as="p" variant="caption" class="mt-2">{{ lastImport.label }}</mm-text>
         }
-        @if (breakdown.unattributed !== 0) {
-          <li class="flex justify-between text-base-content/60">
-            <span>Unattributed</span>
-            <span>{{ breakdown.unattributed | signedAmount }}</span>
-          </li>
-        }
-      </ul>
+      }
     </mm-paper>
+
+    @if (contributorBreakdown(); as breakdown) {
+      <mm-paper elevation="flat" bodyClass="card-body gap-2" class="mt-4">
+        <mm-text as="p" class="text-sm text-base-content/60">Contributions</mm-text>
+        <ul class="space-y-1 text-sm">
+          <li class="flex justify-between">
+            <span>Mine</span>
+            <span>{{ breakdown.mine | signedAmount }}</span>
+          </li>
+          @for (entry of breakdown.byCoOwner | keyvalue; track entry.key) {
+            <li class="flex justify-between">
+              <span>{{ entry.key }}</span>
+              <span>{{ entry.value | signedAmount }}</span>
+            </li>
+          }
+          @if (breakdown.unattributed !== 0) {
+            <li class="flex justify-between text-base-content/60">
+              <span>Unattributed</span>
+              <span>{{ breakdown.unattributed | signedAmount }}</span>
+            </li>
+          }
+        </ul>
+      </mm-paper>
+    }
+
+    <app-account-insights class="mt-6 block" [account]="account" />
+
+    <app-account-form [(open)]="formOpen" [account]="account" (saved)="saveAccount($event)" />
+    <mm-confirm-dialog
+      [(open)]="deleteConfirmOpen"
+      title="Delete this account?"
+      [message]="deleteMessage()"
+      confirmLabel="Delete account"
+      [danger]="true"
+      (confirmed)="deleteConfirmed()"
+    />
+    <mm-confirm-dialog
+      [(open)]="clearConfirmOpen"
+      title="Clear this account's transactions?"
+      [message]="clearMessage()"
+      confirmLabel="Clear transactions"
+      [danger]="true"
+      (confirmed)="clearConfirmed()"
+    />
+  } @else {
+    <mm-empty-state title="Account not found" message="It may have been deleted or archived away.">
+      <mm-button action color="primary" class="mt-2" link="/accounts">Back to accounts</mm-button>
+    </mm-empty-state>
   }
-
-  <app-account-insights class="mt-6 block" [account]="account" />
-
-  <app-account-form [(open)]="formOpen" [account]="account" (saved)="saveAccount($event)" />
-  <mm-confirm-dialog
-    [(open)]="deleteConfirmOpen"
-    title="Delete this account?"
-    [message]="deleteMessage()"
-    confirmLabel="Delete account"
-    [danger]="true"
-    (confirmed)="deleteConfirmed()"
-  />
-  <mm-confirm-dialog
-    [(open)]="clearConfirmOpen"
-    title="Clear this account's transactions?"
-    [message]="clearMessage()"
-    confirmLabel="Clear transactions"
-    [danger]="true"
-    (confirmed)="clearConfirmed()"
-  />
-} @else {
-  <mm-empty-state title="Account not found" message="It may have been deleted or archived away.">
-    <mm-button action color="primary" class="mt-2" link="/accounts">Back to accounts</mm-button>
-  </mm-empty-state>
-}
+</mm-hydration-boundary>

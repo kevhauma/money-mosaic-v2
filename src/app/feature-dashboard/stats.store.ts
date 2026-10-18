@@ -18,7 +18,7 @@ import {
   TransactionsStore,
   TransfersStore,
 } from '@/core/state';
-import type { TransactionDrilldownParams } from '@/shared/utils';
+import { hydrationOf, type HydrationStatus, type TransactionDrilldownParams } from '@/shared/utils';
 import { CategoryComparisonSettingsStore } from './category-comparison-settings.store';
 import { STATS_SCOPE, type StatsScope } from './stats-scope';
 import { transferCategories, withTransferCategories } from './transfer-categories';
@@ -264,3 +264,19 @@ export const provideStatsScope = (scope: () => StatsScope): Provider[] => [
   { provide: STATS_SCOPE, useFactory: scope },
   StatsStore,
 ];
+
+/**
+ * The joined hydration of every store `StatsStore` derives from (TICKET-SRV-13) — what a page
+ * showing its figures gates its `mm-hydration-boundary` on. Kept beside the `inject()` calls above
+ * so the two lists can't drift apart, and so a consumer outside this feature gates on the
+ * comparison settings without being handed the store itself. Call it in an injection context; the
+ * stores are all root-provided, so a scoped `StatsStore` reads the very instances this joins.
+ */
+export const statsInputsHydration = (): HydrationStatus =>
+  hydrationOf(
+    inject(TransactionsStore),
+    inject(AccountsStore),
+    inject(CategoriesStore),
+    inject(CategoryComparisonSettingsStore),
+    inject(TransfersStore),
+  );
