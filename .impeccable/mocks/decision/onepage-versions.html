@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>One page: three versions</title>
+    <style>
+      body {
+        margin: 0;
+        background: #2a2030;
+        color: #f8f5ec;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+      }
+      header {
+        padding: 24px 32px 4px;
+      }
+      h1 {
+        margin: 0;
+        font:
+          800 24px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      header p,
+      section p {
+        color: #cfc6d4;
+        margin: 6px 0 12px;
+        max-width: 90ch;
+      }
+      section {
+        padding: 22px 32px;
+      }
+      h2 {
+        margin: 0;
+        font: 700 19px/1.2 system-ui;
+        color: #f0645a;
+      }
+      .frame {
+        width: 1152px;
+        height: 1462px;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px #0006;
+      }
+      iframe {
+        width: 1440px;
+        height: 1828px;
+        border: 0;
+        transform: scale(0.8);
+        transform-origin: 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>One page, top to bottom: three versions</h1>
+      <p>
+        Each shows the same page twice: while you import, and when it is done. Same September data
+        throughout.
+      </p>
+    </header>
+    <section>
+      <h2>A · Folding receipt</h2>
+      <p>
+        One narrow column. Finished sections fold to a line; a section with nothing to ask skips
+        itself; the overview opens in place at the bottom.
+      </p>
+      <div class="frame">
+        <iframe
+          srcdoc='<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Folding receipt</title>
+<style>
+:root{--b1:#f8f5ec;--b2:#efeadc;--b3:#dfd8c6;--ink:#2a2030;--mute:#6f6676;--pri:#f0645a;--sec:#7a6ee0;--acc:#3fd6a8;--pos:#2f9e5b;--neg:#d6336c;--warn:#e9b730}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#d9d2c0}
+.state{display:flex;height:900px;background:var(--b2);margin-bottom:28px;position:relative}
+.label{position:absolute;right:16px;top:12px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--b1);padding:5px 10px;border-radius:8px}
+nav{width:232px;background:var(--b1);border-right:1px solid var(--b3);padding:20px 14px;flex:none}
+.brand{font:800 22px/1 "Trebuchet MS",sans-serif;margin:0 8px 26px}.brand b{color:var(--pri)}
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:18px 8px 6px}
+nav a{display:block;padding:8px 10px;border-radius:10px}nav a.on{background:var(--pri);color:#fff;font-weight:600}
+main{flex:1;padding:24px 28px;display:grid;grid-template-columns:1fr 720px 1fr;gap:26px;overflow:hidden}
+.col{display:flex;flex-direction:column;gap:10px}
+.hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+h1{font:800 26px/1.1 "Trebuchet MS",sans-serif}
+h2{font:700 18px/1.2 system-ui}
+.s{font-size:12.5px;color:var(--mute)}
+.link{font-size:12.5px;color:var(--sec);font-weight:600}
+.sec{background:var(--b1);border-radius:16px;box-shadow:0 1px 0 var(--b3)}
+.fold{display:flex;align-items:center;gap:14px;padding:13px 18px}
+.fold .sum{flex:1}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none;background:var(--acc)}
+.act{padding:18px 20px;outline:2px solid var(--pri)}
+.act .num{background:var(--pri);color:#fff}
+.head{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.ghost{display:flex;gap:14px;align-items:center;padding:13px 18px;border:2px dashed var(--b3);border-radius:16px;color:var(--mute)}
+.ghost .num{background:transparent;border:2px solid var(--b3);color:var(--mute)}
+.frow{display:grid;grid-template-columns:1.1fr 24px 1.4fr;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--b2)}
+.fn{font-weight:700;font-size:13px}
+.chip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:color-mix(in oklab,var(--acc) 24%,transparent)}
+.chip.w{background:color-mix(in oklab,var(--warn) 30%,transparent)}
+.flds{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.fld{font-size:13px;font-weight:600;background:var(--b2);border:1px solid var(--b3);border-radius:10px;padding:6px 10px}
+.btn{display:inline-block;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;background:var(--b2)}
+.btn.p{background:var(--pri);color:#fff}
+.note{font-size:12.5px;color:var(--mute);border-left:2px solid var(--b3);padding-left:12px;line-height:1.5}
+.note b{color:var(--ink)}
+.big{font:800 30px/1.05 "Trebuchet MS",sans-serif;font-variant-numeric:tabular-nums}
+.io{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.io div{background:var(--b2);border-radius:12px;padding:9px 12px}.io b{font:800 19px/1.2 "Trebuchet MS",sans-serif;display:block;font-variant-numeric:tabular-nums}
+.n{color:var(--neg)}.p{color:var(--pos)}
+.res{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--b2);margin-top:8px}
+.res i{font-style:normal;font-weight:800;width:20px;text-align:center}
+.res span{flex:1}.res b{display:block}
+.res.w{background:color-mix(in oklab,var(--warn) 22%,transparent)}
+.res.t{background:color-mix(in oklab,var(--sec) 14%,transparent)}
+.acts{display:flex;gap:10px;align-items:center;margin-top:16px}
+</style></head><body>
+
+<div class="state"><span class="label">While you import</span>
+<nav><div class="brand">Money<b>Mosaic</b></div>
+<div class="grp">Insights</div><a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+<div class="grp">Data</div><a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+<div class="grp">More</div><a>FAQ</a><a>Settings</a></nav>
+<main>
+<div class="col" style="padding-top:80px">
+<p class="note"><b>One column, read top to bottom.</b> No stepper, no Back and Next. Only the section you are in is open.</p>
+<p class="note" style="margin-top:40px"><b>Finished sections fold to one line</b> saying what was decided. Click one to reopen it; everything below it waits.</p>
+<p class="note" style="margin-top:40px"><b>A section that has nothing to ask is skipped.</b> Both files are recognised, so Columns folded itself.</p>
+</div>
+<div class="col">
+<div class="hd"><h1>Import</h1><span class="link">Past imports (8)</span></div>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>2 files</b> <span class="s">· export-kbc-2026-09.csv, belfius-spaar-2026-09.csv</span></span><span class="link">add more</span></div>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>Columns: recognised</b> <span class="s">· KBC (your saved mapping), Belfius (preset)</span></span><span class="link">adjust</span></div>
+<div class="sec act">
+<div class="head"><span class="num">3</span><h2>Which account does each file go into?</h2></div>
+<div class="frow"><span><span class="fn">export-kbc-2026-09.csv</span><br><span class="s">142 rows</span></span><span>→</span><span><b>KBC Checking</b> <span class="chip">matched by IBAN</span><br><span class="link">change</span></span></div>
+<div class="frow"><span><span class="fn">belfius-spaar-2026-09.csv</span><br><span class="s">4 rows</span></span><span>→</span><span><b>A new account</b> <span class="chip w">IBAN not seen before</span>
+<div class="flds"><span class="fld">Belfius Savings</span><span class="fld">Savings ▾</span><span class="fld" style="color:var(--mute)">BE71 0689 4410 2369</span></div>
+<span class="s">Name and type are guessed from the file. Created when you import.</span></span></div>
+<div class="acts"><span class="btn p">Continue</span><span class="s">or press Enter</span></div>
+</div>
+<div class="ghost"><span class="num">4</span><span><b style="color:var(--ink)">Check</b> · new rows and overlap, per file</span></div>
+<div class="ghost"><span class="num">5</span><span><b style="color:var(--ink)">What changed</b> · lands here after the import</span></div>
+</div>
+<div class="col" style="padding-top:220px">
+<p class="note"><b>Accounts come before the check</b> because the overlap count depends on the account. A matched account is pre-filled, so most months this section needs one Enter.</p>
+<p class="note" style="margin-top:40px"><b>An unknown file</b> opens Columns instead, which widens past the column for the mapper and narrows again when it folds.</p>
+</div>
+</main></div>
+
+<div class="state"><span class="label">When it&apos;s done</span>
+<nav><div class="brand">Money<b>Mosaic</b></div>
+<div class="grp">Insights</div><a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+<div class="grp">Data</div><a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+<div class="grp">More</div><a>FAQ</a><a>Settings</a></nav>
+<main>
+<div class="col" style="padding-top:80px">
+<p class="note"><b>The whole import stays on the page</b> as four folded lines, a receipt of what you did.</p>
+</div>
+<div class="col">
+<div class="hd"><h1>Import</h1><span class="link">Past imports (9)</span></div>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>2 files</b> <span class="s">· export-kbc-2026-09.csv, belfius-spaar-2026-09.csv</span></span></div>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>Columns: recognised</b> <span class="s">· KBC, Belfius</span></span></div>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>KBC Checking</b>, and <b>Belfius Savings</b> <span class="s">(created)</span></span></div>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>134 added</b> <span class="s">· 12 already here, skipped</span></span></div>
+<div class="sec act">
+<div class="head"><span class="num">5</span><h2>What changed</h2></div>
+<div class="big">134 transactions, 1–30 September</div>
+<div class="io"><div><span class="s">Money in</span><b class="p">+€3,420.00</b></div><div><span class="s">Money out</span><b class="n">−€2,692.18</b></div></div>
+<div class="res"><i>✓</i><span><b>108 categorised by your rules</b><span class="s">Groceries, utilities, salary and 9 more</span></span></div>
+<div class="res w"><i>?</i><span><b>26 need a category</b><span class="s">Mostly one-off shops</span></span><span class="link">Sort them →</span></div>
+<div class="res t"><i>⇄</i><span><b>7 transfers linked</b><span class="s">Including €600 to Belfius Savings, now both sides are in</span></span><span class="link">Check →</span></div>
+<div class="acts"><span class="btn p">Sort the 26 →</span><span class="btn">Dashboard</span><span class="link" style="margin-left:auto;color:var(--mute)">Undo this import</span></div>
+</div>
+<p class="s" style="text-align:center;margin-top:6px"><span class="link">Import more files</span> starts a fresh page.</p>
+</div>
+<div class="col" style="padding-top:420px">
+<p class="note"><b>The overview opens in place</b>, under everything that led to it, with the one thing to do next as the main button.</p>
+</div>
+</main></div>
+</body></html>
+'
+        ></iframe>
+      </div>
+    </section>
+    <section>
+      <h2>B · Fill-in sentence</h2>
+      <p>
+        Each file is one sentence the app fills in. Coloured words can be changed, dashed blanks are
+        the only things it needs from you, and the overview continues the story.
+      </p>
+      <div class="frame">
+        <iframe
+          srcdoc='<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Fill-in sentence</title>
+<style>
+:root{--b1:#f8f5ec;--b2:#efeadc;--b3:#dfd8c6;--ink:#2a2030;--mute:#6f6676;--pri:#f0645a;--sec:#7a6ee0;--acc:#3fd6a8;--pos:#2f9e5b;--neg:#d6336c;--warn:#e9b730}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#d9d2c0}
+.state{display:flex;height:900px;background:var(--b2);margin-bottom:28px;position:relative}
+.label{position:absolute;right:16px;top:12px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--b1);padding:5px 10px;border-radius:8px}
+nav{width:232px;background:var(--b1);border-right:1px solid var(--b3);padding:20px 14px;flex:none}
+.brand{font:800 22px/1 "Trebuchet MS",sans-serif;margin:0 8px 26px}.brand b{color:var(--pri)}
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:18px 8px 6px}
+nav a{display:block;padding:8px 10px;border-radius:10px}nav a.on{background:var(--pri);color:#fff;font-weight:600}
+main{flex:1;padding:28px 70px 28px 0;overflow:hidden;display:flex;justify-content:flex-end}
+.page{width:860px;display:flex;flex-direction:column;gap:18px}
+.hd{display:flex;justify-content:space-between;align-items:baseline}
+h1{font:800 26px/1.1 "Trebuchet MS",sans-serif}
+.s{font-size:12.5px;color:var(--mute)}
+.link{font-size:12.5px;color:var(--sec);font-weight:600}
+.para{background:var(--b1);border-radius:18px;padding:22px 26px;box-shadow:0 1px 0 var(--b3);position:relative}
+.say{font:500 24px/1.75 Georgia,"Times New Roman",serif}
+.say b{font-weight:700}
+.tok{font:700 21px/1 system-ui,sans-serif;padding:4px 10px;border-radius:10px;background:color-mix(in oklab,var(--acc) 22%,transparent);border-bottom:2px solid var(--acc);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tok.file{background:var(--b2);border-bottom-color:var(--b3);font-weight:600;font-size:18px}
+.tok.blank{background:color-mix(in oklab,var(--pri) 14%,transparent);border:2px dashed var(--pri);color:var(--pri)}
+.tok.w{background:color-mix(in oklab,var(--warn) 26%,transparent);border-bottom-color:var(--warn)}
+.tok.t{background:color-mix(in oklab,var(--sec) 16%,transparent);border-bottom-color:var(--sec)}
+.under{display:flex;gap:16px;margin-top:10px}
+.pop{position:absolute;left:330px;top:84px;width:380px;background:var(--b1);border-radius:14px;box-shadow:0 12px 32px #2a203033,0 0 0 1px var(--b3);padding:8px;z-index:2}
+.pop div{padding:10px 12px;border-radius:10px;font-size:13.5px}
+.pop div.on{background:color-mix(in oklab,var(--pri) 12%,transparent)}
+.pop small{display:block;color:var(--mute);font-size:12px}
+.bar{display:flex;align-items:center;gap:14px;margin-top:4px}
+.btn{display:inline-block;padding:11px 20px;border-radius:12px;font-weight:700;font-size:14px;background:var(--b2)}
+.btn.p{background:var(--pri);color:#fff}
+.btn.off{background:var(--b3);color:var(--mute)}
+.done{font:800 15px/1 system-ui;color:var(--pos);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.io{display:flex;gap:28px;margin-top:14px;font-variant-numeric:tabular-nums}
+.io b{font:800 26px/1.1 "Trebuchet MS",sans-serif;display:block}
+.n{color:var(--neg)}.p{color:var(--pos)}
+.dim{opacity:.55}
+.note{font-size:12.5px;color:var(--mute);line-height:1.5;max-width:210px;position:absolute}
+.note b{color:var(--ink)}
+</style></head><body>
+
+<div class="state"><span class="label">While you import</span>
+<nav><div class="brand">Money<b>Mosaic</b></div>
+<div class="grp">Insights</div><a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+<div class="grp">Data</div><a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+<div class="grp">More</div><a>FAQ</a><a>Settings</a></nav>
+<main>
+<p class="note" style="left:256px;top:120px"><b>Each file is one sentence</b>, filled in by the app. Every coloured word can be clicked to change it.</p>
+<p class="note" style="left:256px;top:330px"><b>A dashed word is the only thing it needs from you.</b> The button says how many are left.</p>
+<p class="note" style="left:256px;top:560px"><b>An unknown file says so</b> in the same voice, with one way forward.</p>
+<div class="page">
+<div class="hd"><h1>Import</h1><span><span class="link">+ drop more files</span> · <span class="link">Past imports (8)</span></span></div>
+
+<div class="para"><p class="say"><span class="tok file">export-kbc-2026-09.csv</span> goes into <span class="tok">KBC Checking</span>. It has <span class="tok">130 new transactions</span> from <span class="tok">1–30 September</span>, and <span class="tok">skips 12</span> you already have.</p>
+<div class="under"><span class="link">See the rows</span><span class="s">KBC format, your saved mapping</span></div></div>
+
+<div class="para"><p class="say"><span class="tok file">belfius-spaar-2026-09.csv</span> goes into <span class="tok blank">which account?</span>. It has <span class="tok">4 new transactions</span> from <span class="tok">1–30 September</span>.</p>
+<div class="pop">
+<div class="on"><b>New account: Belfius Savings</b><small>Savings · IBAN BE71 0689 4410 2369, from the file</small></div>
+<div>KBC Checking<small>BE68 …7034</small></div>
+<div>KBC Joint<small>BE29 …2210</small></div>
+</div>
+<div class="under"><span class="link">See the rows</span><span class="s">Belfius format, preset</span></div></div>
+
+<div class="para"><p class="say"><span class="tok file">argenta-export.csv</span> is a format we haven&apos;t seen. <span class="tok blank">Show us the columns</span> and it joins the others, or <span class="link" style="font:600 18px system-ui">leave it out</span>.</p></div>
+
+<div class="bar"><span class="btn off">Add 134 transactions</span><span class="s">2 blanks left</span></div>
+</div>
+</main></div>
+
+<div class="state"><span class="label">When it&apos;s done</span>
+<nav><div class="brand">Money<b>Mosaic</b></div>
+<div class="grp">Insights</div><a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+<div class="grp">Data</div><a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+<div class="grp">More</div><a>FAQ</a><a>Settings</a></nav>
+<main>
+<p class="note" style="left:256px;top:120px"><b>The sentences stay</b>, dimmed, in the past tense: the record of what went in.</p>
+<p class="note" style="left:256px;top:330px"><b>The overview continues the story</b> underneath. Each number is a link to the rows it counts.</p>
+<div class="page">
+<div class="hd"><h1>Import</h1><span class="link">Past imports (9)</span></div>
+<div class="para dim"><p class="say" style="font-size:19px"><b>export-kbc-2026-09.csv</b> went into KBC Checking: 130 added, 12 skipped.<br><b>belfius-spaar-2026-09.csv</b> went into Belfius Savings (new): 4 added.<br><b>argenta-export.csv</b> was left out.</p></div>
+
+<div class="para">
+<p class="done">✓ Done</p>
+<p class="say">Your rules sorted <span class="tok">108</span> of the 134. <span class="tok w">26 still need a category</span>. <span class="tok t">7 transfers</span> were linked, so the €600 to Belfius Savings no longer counts as spending.</p>
+<div class="io"><span><span class="s">Money in, September</span><b class="p">+€3,420.00</b></span><span><span class="s">Money out</span><b class="n">−€2,692.18</b></span></div>
+</div>
+<div class="bar"><span class="btn p">Sort the 26 →</span><span class="btn">Dashboard</span><span class="link">Import the Argenta file</span><span class="link" style="margin-left:auto;color:var(--mute)">Undo this import</span></div>
+</div>
+</main></div>
+</body></html>
+'
+        ></iframe>
+      </div>
+    </section>
+    <section>
+      <h2>C · Page and running total</h2>
+      <p>
+        Sections on the left, a dark summary on the right that totals what will happen, holds the
+        Import button, and turns into the overview. Afterwards the left becomes the import history.
+      </p>
+      <div class="frame">
+        <iframe
+          srcdoc='<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Page and running total</title>
+<style>
+:root{--b1:#f8f5ec;--b2:#efeadc;--b3:#dfd8c6;--ink:#2a2030;--mute:#6f6676;--pri:#f0645a;--sec:#7a6ee0;--acc:#3fd6a8;--pos:#2f9e5b;--neg:#d6336c;--warn:#e9b730}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#d9d2c0}
+.state{display:flex;height:900px;background:var(--b2);margin-bottom:28px;position:relative}
+.label{position:absolute;right:16px;top:12px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--b1);padding:5px 10px;border-radius:8px;z-index:3}
+nav{width:232px;background:var(--b1);border-right:1px solid var(--b3);padding:20px 14px;flex:none}
+.brand{font:800 22px/1 "Trebuchet MS",sans-serif;margin:0 8px 26px}.brand b{color:var(--pri)}
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:18px 8px 6px}
+nav a{display:block;padding:8px 10px;border-radius:10px}nav a.on{background:var(--pri);color:#fff;font-weight:600}
+main{flex:1;padding:24px 28px;display:grid;grid-template-columns:1fr 380px;gap:24px;overflow:hidden}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+h1{font:800 26px/1.1 "Trebuchet MS",sans-serif;margin-bottom:6px}
+h2{font:700 17px/1.2 system-ui}
+.s{font-size:12.5px;color:var(--mute)}
+.link{font-size:12.5px;color:var(--sec);font-weight:600}
+.sec{background:var(--b1);border-radius:16px;box-shadow:0 1px 0 var(--b3)}
+.fold{display:flex;align-items:center;gap:14px;padding:13px 18px}.fold .sum{flex:1}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none;background:var(--acc)}
+.act{padding:16px 18px;outline:2px solid var(--pri)}
+.act .num{background:var(--pri);color:#fff}
+.head{display:flex;gap:14px;align-items:center;margin-bottom:10px}
+.ghost{display:flex;gap:14px;align-items:center;padding:13px 18px;border:2px dashed var(--b3);border-radius:16px;color:var(--mute)}
+.ghost .num{background:transparent;border:2px solid var(--b3);color:var(--mute)}
+.ask{font:800 22px/1.15 "Trebuchet MS",sans-serif;margin:4px 0 4px}.ask em{font-style:normal;color:var(--pri)}
+.pills{display:flex;gap:6px;font-size:12px;font-weight:700;margin:8px 0 12px}
+.pills span{padding:3px 10px;border-radius:999px;background:var(--b2);color:var(--mute)}
+.pills .d{background:color-mix(in oklab,var(--acc) 24%,transparent);color:var(--ink)}.pills .c{background:var(--pri);color:#fff}
+table{border-collapse:collapse;font-size:12.5px;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:left;white-space:nowrap;border-right:1px solid var(--b2)}
+thead th{background:var(--b2);font-size:12px;vertical-align:bottom}
+td{border-top:1px solid var(--b2)}
+.lbl{display:block;height:18px;margin-bottom:3px;font-size:10.5px;font-weight:800}
+.lbl span{padding:2px 8px;border-radius:999px;background:var(--acc)}
+th.hov{background:color-mix(in oklab,var(--pri) 22%,transparent);outline:2px solid var(--pri);outline-offset:-2px}
+th.hov .lbl span{background:var(--pri);color:#fff}
+.mut{color:var(--mute)}
+.wrap{border:1px solid var(--b3);border-radius:12px;overflow:hidden}
+.rail{background:var(--ink);color:var(--b1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px;align-self:start}
+.rail .s{color:#cfc6d4}
+.rail h2{font:800 13px/1 system-ui;letter-spacing:.08em;text-transform:uppercase;color:#cfc6d4}
+.rl{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #ffffff1f;font-variant-numeric:tabular-nums}
+.rl b{display:block}
+.tot{font:800 34px/1 "Trebuchet MS",sans-serif;font-variant-numeric:tabular-nums}
+.btn{display:inline-block;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;background:var(--b2);color:var(--ink);text-align:center}
+.btn.p{background:var(--pri);color:#fff}
+.btn.off{background:#ffffff26;color:#cfc6d4}
+.wait{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:color-mix(in oklab,var(--warn) 60%,transparent);color:var(--ink)}
+.okc{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--acc);color:var(--ink)}
+.res{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:#ffffff14}
+.res span{flex:1}.res b{display:block}
+.p{color:var(--acc)}.n{color:#ff8fa8}
+.hist td{padding:9px 10px}
+.new td{background:color-mix(in oklab,var(--acc) 16%,transparent)}
+</style></head><body>
+
+<div class="state"><span class="label">While you import</span>
+<nav><div class="brand">Money<b>Mosaic</b></div>
+<div class="grp">Insights</div><a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+<div class="grp">Data</div><a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+<div class="grp">More</div><a>FAQ</a><a>Settings</a></nav>
+<main>
+<div class="col">
+<h1>Import</h1>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>3 files</b> <span class="s">· two recognised, argenta-export.csv is new to us</span></span><span class="link">add more</span></div>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>Accounts</b> <span class="s">· KBC Checking, Belfius Savings (new)</span></span><span class="link">change</span></div>
+<div class="sec act">
+<div class="head"><span class="num">3</span><h2>Columns for argenta-export.csv</h2><span class="s" style="margin-left:auto">; separated · comma decimals · <span class="link">change</span></span></div>
+<p class="ask">Click the column with the <em>amount</em></p>
+<div class="pills"><span class="d">✓ Date</span><span class="c">Amount</span><span>Description</span><span style="background:none">then optional extras</span></div>
+<div class="wrap"><table>
+<thead><tr><th><span class="lbl"></span>Rekening</th><th><span class="lbl"><span>DATE</span></span>Boekingsdatum</th><th><span class="lbl"></span>Valutadatum</th><th class="hov"><span class="lbl"><span>AMOUNT?</span></span>Bedrag</th><th><span class="lbl"></span>Omschrijving</th></tr></thead>
+<tbody>
+<tr><td class="mut">BE12 9730 …</td><td>30/09/2026</td><td class="mut">30/09/2026</td><td>-84,12</td><td>COLRUYT GENT BETALING MET KAART</td></tr>
+<tr><td class="mut">BE12 9730 …</td><td>29/09/2026</td><td class="mut">29/09/2026</td><td>-104,80</td><td>FLUVIUS DOMICILIERING</td></tr>
+<tr><td class="mut">BE12 9730 …</td><td>28/09/2026</td><td class="mut">28/09/2026</td><td>3120,00</td><td>ACME NV LOON SEPTEMBER</td></tr>
+</tbody></table></div>
+<p class="s" style="margin-top:10px">Remembered as "Argenta" for next time.</p>
+</div>
+<div class="ghost"><span class="num">4</span><span><b style="color:var(--ink)">Overlap</b> · only asked if a file has rows you already have</span></div>
+</div>
+
+<aside class="rail">
+<h2>What will happen</h2>
+<div class="tot">134 <span style="font-size:18px">new transactions</span></div>
+<span class="s">ready now, 1–30 September</span>
+<div class="rl"><span><b>KBC Checking</b><span class="s">130 new · 12 skipped</span></span><span class="okc">Ready</span></div>
+<div class="rl"><span><b>Belfius Savings</b><span class="s">created on import · 4 new</span></span><span class="okc">Ready</span></div>
+<div class="rl"><span><b>argenta-export.csv</b><span class="s">214 rows, waiting for columns</span></span><span class="wait">Needs you</span></div>
+<span class="btn p">Add the 134 ready ones</span>
+<span class="s" style="text-align:center">or finish the Argenta file and add all 348</span>
+</aside>
+</main></div>
+
+<div class="state"><span class="label">When it&apos;s done</span>
+<nav><div class="brand">Money<b>Mosaic</b></div>
+<div class="grp">Insights</div><a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+<div class="grp">Data</div><a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+<div class="grp">More</div><a>FAQ</a><a>Settings</a></nav>
+<main>
+<div class="col">
+<h1>Import</h1>
+<div class="sec fold"><span class="num">✓</span><span class="sum"><b>Imported 348 transactions</b> <span class="s">· 3 files, 3 accounts, 12 skipped</span></span><span class="link">Import more files</span></div>
+<div class="sec" style="padding:16px 18px">
+<h2 style="margin-bottom:10px">Past imports</h2>
+<table class="hist">
+<thead><tr><th>Imported</th><th>File</th><th>Account</th><th>Rows</th><th></th></tr></thead>
+<tbody>
+<tr class="new"><td>Just now</td><td><b>export-kbc-2026-09.csv</b></td><td>KBC Checking</td><td>130 added · 12 skipped</td><td class="link">Undo</td></tr>
+<tr class="new"><td>Just now</td><td><b>belfius-spaar-2026-09.csv</b></td><td>Belfius Savings</td><td>4 added</td><td class="link">Undo</td></tr>
+<tr class="new"><td>Just now</td><td><b>argenta-export.csv</b></td><td>Argenta Checking</td><td>214 added</td><td class="link">Undo</td></tr>
+<tr><td class="mut">2 Sep</td><td>export-kbc-2026-08.csv</td><td>KBC Checking</td><td>151 added</td><td class="link">Undo</td></tr>
+<tr><td class="mut">2 Sep</td><td>kbc-gezamenlijk-2026-08.csv</td><td>KBC Joint</td><td>61 added</td><td class="link">Undo</td></tr>
+</tbody></table>
+<p class="s" style="margin-top:10px">This import is now the top of the history, where it can be undone file by file.</p>
+</div>
+</div>
+
+<aside class="rail">
+<h2>What changed</h2>
+<div class="tot">348 <span style="font-size:18px">transactions in</span></div>
+<span class="s">1–30 September, 3 accounts</span>
+<div class="rl"><span class="s">Money in</span><b class="p">+€5,980.00</b></div>
+<div class="rl" style="padding-top:0;border:0"><span class="s">Money out</span><b class="n">−€5,071.40</b></div>
+<div class="res"><span><b>291 categorised by your rules</b></span>✓</div>
+<div class="res"><span><b>57 need a category</b><span class="s">most from the new Argenta file</span></span>?</div>
+<div class="res"><span><b>9 transfers linked</b><span class="s">kept out of income and spending</span></span>⇄</div>
+<span class="btn p">Sort the 57 →</span>
+<span class="btn" style="background:#ffffff1f;color:var(--b1)">Dashboard</span>
+</aside>
+</main></div>
+</body></html>
+'
+        ></iframe>
+      </div>
+    </section>
+  </body>
+</html>

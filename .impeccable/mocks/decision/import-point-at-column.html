@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Point at the column</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+        flex: none;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      h1 {
+        font:
+          800 24px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .link {
+        font-size: 12px;
+        color: var(--sec);
+        font-weight: 600;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      .ask {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .ask h2 {
+        font:
+          800 28px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      .ask h2 em {
+        font-style: normal;
+        color: var(--pri);
+      }
+      .dots {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .dots span {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--b2);
+        color: var(--mute);
+      }
+      .dots .done {
+        background: color-mix(in oklab, var(--acc) 24%, transparent);
+        color: var(--ink);
+      }
+      .dots .now {
+        background: var(--pri);
+        color: #fff;
+      }
+      .settings {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .settings b {
+        color: var(--ink);
+        background: var(--b2);
+        padding: 3px 9px;
+        border-radius: 8px;
+        font-weight: 600;
+      }
+      .grid {
+        overflow: hidden;
+        border-radius: 12px;
+        border: 1px solid var(--b3);
+      }
+      table {
+        border-collapse: collapse;
+        font-size: 12.5px;
+        font-variant-numeric: tabular-nums;
+        width: 100%;
+      }
+      th,
+      td {
+        padding: 8px 12px;
+        text-align: left;
+        white-space: nowrap;
+        border-right: 1px solid var(--b2);
+      }
+      thead th {
+        background: var(--b2);
+        font-weight: 700;
+        font-size: 12px;
+        position: relative;
+        vertical-align: bottom;
+      }
+      td {
+        border-top: 1px solid var(--b2);
+      }
+      .lbl {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        margin-bottom: 4px;
+        height: 18px;
+      }
+      .lbl span {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--acc);
+        color: var(--ink);
+      }
+      col.hov {
+        background: color-mix(in oklab, var(--pri) 10%, transparent);
+      }
+      th.hov {
+        background: color-mix(in oklab, var(--pri) 22%, transparent);
+        outline: 2px solid var(--pri);
+        outline-offset: -2px;
+        cursor: pointer;
+      }
+      th.hov .lbl span {
+        background: var(--pri);
+        color: #fff;
+      }
+      col.set {
+        background: color-mix(in oklab, var(--acc) 10%, transparent);
+      }
+      .mut {
+        color: var(--mute);
+      }
+      .below {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 18px;
+        flex: 1;
+        min-height: 0;
+      }
+      .k {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 0;
+        border-top: 1px solid var(--b2);
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+      .n {
+        color: var(--neg);
+      }
+      .p {
+        color: var(--pos);
+      }
+      .q {
+        color: var(--mute);
+        font-style: italic;
+      }
+      .opt {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 12px;
+        border-radius: 12px;
+        background: var(--b2);
+        margin-top: 8px;
+        font-size: 13px;
+      }
+      .btn {
+        display: inline-block;
+        padding: 9px 16px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 13px;
+        background: var(--b2);
+      }
+      .btn.p {
+        background: var(--pri);
+        color: #fff;
+      }
+      .tip {
+        position: absolute;
+        top: -34px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: #fff;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 8px;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="top">
+        <div>
+          <p class="s">argenta-export.csv · an unfamiliar file, so we ask three things</p>
+          <h1 style="margin-top: 4px">Import</h1>
+        </div>
+        <div class="settings">
+          Read as <b>; separated</b><b>comma decimals</b><b>UTF-8</b>
+          <span class="link">change</span>
+        </div>
+      </div>
+
+      <div class="card" style="display: flex; flex-direction: column; gap: 16px">
+        <div class="ask">
+          <h2>Which column has the <em>amount</em>?</h2>
+          <div class="dots">
+            <span class="done">✓ Date</span><span class="now">Amount</span><span>Description</span
+            ><span style="background: none">then optional extras</span>
+          </div>
+        </div>
+        <p class="s" style="margin-top: -8px">
+          Click its header. Positive and negative numbers in one column, or separate in and out
+          columns, both work.
+        </p>
+
+        <div class="grid">
+          <table>
+            <colgroup>
+              <col />
+              <col class="set" />
+              <col />
+              <col class="hov" />
+              <col />
+              <col />
+            </colgroup>
+            <thead>
+              <tr>
+                <th><span class="lbl"></span>Rekening</th>
+                <th>
+                  <span class="lbl"><span>DATE</span></span
+                  >Boekingsdatum
+                </th>
+                <th><span class="lbl"></span>Valutadatum</th>
+                <th class="hov" style="position: relative">
+                  <span class="tip">Amount: −84,12 reads as −€84.12</span
+                  ><span class="lbl"><span>AMOUNT?</span></span
+                  >Bedrag
+                </th>
+                <th><span class="lbl"></span>Omschrijving</th>
+                <th><span class="lbl"></span>Rekening tegenpartij</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mut">BE12 9730 …</td>
+                <td>30/09/2026</td>
+                <td class="mut">30/09/2026</td>
+                <td>-84,12</td>
+                <td>COLRUYT GENT BETALING MET KAART</td>
+                <td class="mut"></td>
+              </tr>
+              <tr>
+                <td class="mut">BE12 9730 …</td>
+                <td>29/09/2026</td>
+                <td class="mut">29/09/2026</td>
+                <td>-104,80</td>
+                <td>FLUVIUS DOMICILIERING</td>
+                <td class="mut">BE40 0910 …</td>
+              </tr>
+              <tr>
+                <td class="mut">BE12 9730 …</td>
+                <td>28/09/2026</td>
+                <td class="mut">28/09/2026</td>
+                <td>3120,00</td>
+                <td>ACME NV LOON SEPTEMBER</td>
+                <td class="mut">BE71 0961 …</td>
+              </tr>
+              <tr>
+                <td class="mut">BE12 9730 …</td>
+                <td>27/09/2026</td>
+                <td class="mut">27/09/2026</td>
+                <td>-600,00</td>
+                <td>NAAR SPAARREKENING</td>
+                <td class="mut">BE68 5390 …</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="below">
+        <div class="card">
+          <div class="k">How these rows will import</div>
+          <div class="row">
+            <span>30 Sep 2026</span><span class="q">description next</span
+            ><span class="n">−€84.12</span>
+          </div>
+          <div class="row">
+            <span>29 Sep 2026</span><span class="q">description next</span
+            ><span class="n">−€104.80</span>
+          </div>
+          <div class="row">
+            <span>28 Sep 2026</span><span class="q">description next</span
+            ><span class="p">+€3,120.00</span>
+          </div>
+          <div class="row">
+            <span>27 Sep 2026</span><span class="q">description next</span
+            ><span class="n">−€600.00</span>
+          </div>
+          <p class="s" style="margin-top: 10px">
+            Fills in as you answer. 214 rows in the file, 0 problems so far.
+          </p>
+        </div>
+        <div class="card" style="display: flex; flex-direction: column">
+          <div class="k">Optional, after the three</div>
+          <div class="opt"><span>Who it was with</span><span class="s">helps rules</span></div>
+          <div class="opt"><span>Their IBAN</span><span class="s">finds transfers</span></div>
+          <div class="opt"><span>Running balance</span><span class="s">checks totals</span></div>
+          <div
+            style="
+              margin-top: auto;
+              display: flex;
+              gap: 10px;
+              align-items: center;
+              padding-top: 12px;
+            "
+          >
+            <span class="btn">Skip extras</span
+            ><span class="s">Saved as "Argenta" for next time</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+<!-- round b24020a9 -->

@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Folding receipt</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: #d9d2c0;
+      }
+      .state {
+        display: flex;
+        height: 900px;
+        background: var(--b2);
+        margin-bottom: 28px;
+        position: relative;
+      }
+      .label {
+        position: absolute;
+        right: 16px;
+        top: 12px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: var(--ink);
+        color: var(--b1);
+        padding: 5px 10px;
+        border-radius: 8px;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+        flex: none;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 24px 28px;
+        display: grid;
+        grid-template-columns: 1fr 720px 1fr;
+        gap: 26px;
+        overflow: hidden;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .hd {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 6px;
+      }
+      h1 {
+        font:
+          800 26px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      h2 {
+        font: 700 18px/1.2 system-ui;
+      }
+      .s {
+        font-size: 12.5px;
+        color: var(--mute);
+      }
+      .link {
+        font-size: 12.5px;
+        color: var(--sec);
+        font-weight: 600;
+      }
+      .sec {
+        background: var(--b1);
+        border-radius: 16px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .fold {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 18px;
+      }
+      .fold .sum {
+        flex: 1;
+      }
+      .num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 13px;
+        flex: none;
+        background: var(--acc);
+      }
+      .act {
+        padding: 18px 20px;
+        outline: 2px solid var(--pri);
+      }
+      .act .num {
+        background: var(--pri);
+        color: #fff;
+      }
+      .head {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .ghost {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        padding: 13px 18px;
+        border: 2px dashed var(--b3);
+        border-radius: 16px;
+        color: var(--mute);
+      }
+      .ghost .num {
+        background: transparent;
+        border: 2px solid var(--b3);
+        color: var(--mute);
+      }
+      .frow {
+        display: grid;
+        grid-template-columns: 1.1fr 24px 1.4fr;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-top: 1px solid var(--b2);
+      }
+      .fn {
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--acc) 24%, transparent);
+      }
+      .chip.w {
+        background: color-mix(in oklab, var(--warn) 30%, transparent);
+      }
+      .flds {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+      }
+      .fld {
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--b2);
+        border: 1px solid var(--b3);
+        border-radius: 10px;
+        padding: 6px 10px;
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        background: var(--b2);
+      }
+      .btn.p {
+        background: var(--pri);
+        color: #fff;
+      }
+      .note {
+        font-size: 12.5px;
+        color: var(--mute);
+        border-left: 2px solid var(--b3);
+        padding-left: 12px;
+        line-height: 1.5;
+      }
+      .note b {
+        color: var(--ink);
+      }
+      .big {
+        font:
+          800 30px/1.05 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .io {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 14px 0;
+      }
+      .io div {
+        background: var(--b2);
+        border-radius: 12px;
+        padding: 9px 12px;
+      }
+      .io b {
+        font:
+          800 19px/1.2 'Trebuchet MS',
+          sans-serif;
+        display: block;
+        font-variant-numeric: tabular-nums;
+      }
+      .n {
+        color: var(--neg);
+      }
+      .p {
+        color: var(--pos);
+      }
+      .res {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--b2);
+        margin-top: 8px;
+      }
+      .res i {
+        font-style: normal;
+        font-weight: 800;
+        width: 20px;
+        text-align: center;
+      }
+      .res span {
+        flex: 1;
+      }
+      .res b {
+        display: block;
+      }
+      .res.w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .res.t {
+        background: color-mix(in oklab, var(--sec) 14%, transparent);
+      }
+      .acts {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="state">
+      <span class="label">While you import</span>
+      <nav>
+        <div class="brand">Money<b>Mosaic</b></div>
+        <div class="grp">Insights</div>
+        <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+        <div class="grp">Data</div>
+        <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+        <div class="grp">More</div>
+        <a>FAQ</a><a>Settings</a>
+      </nav>
+      <main>
+        <div class="col" style="padding-top: 80px">
+          <p class="note">
+            <b>One column, read top to bottom.</b> No stepper, no Back and Next. Only the section
+            you are in is open.
+          </p>
+          <p class="note" style="margin-top: 40px">
+            <b>Finished sections fold to one line</b> saying what was decided. Click one to reopen
+            it; everything below it waits.
+          </p>
+          <p class="note" style="margin-top: 40px">
+            <b>A section that has nothing to ask is skipped.</b> Both files are recognised, so
+            Columns folded itself.
+          </p>
+        </div>
+        <div class="col">
+          <div class="hd">
+            <h1>Import</h1>
+            <span class="link">Past imports (8)</span>
+          </div>
+          <div class="sec fold">
+            <span class="num">✓</span
+            ><span class="sum"
+              ><b>2 files</b>
+              <span class="s">· export-kbc-2026-09.csv, belfius-spaar-2026-09.csv</span></span
+            ><span class="link">add more</span>
+          </div>
+          <div class="sec fold">
+            <span class="num">✓</span
+            ><span class="sum"
+              ><b>Columns: recognised</b>
+              <span class="s">· KBC (your saved mapping), Belfius (preset)</span></span
+            ><span class="link">adjust</span>
+          </div>
+          <div class="sec act">
+            <div class="head">
+              <span class="num">3</span>
+              <h2>Which account does each file go into?</h2>
+            </div>
+            <div class="frow">
+              <span
+                ><span class="fn">export-kbc-2026-09.csv</span><br /><span class="s"
+                  >142 rows</span
+                ></span
+              ><span>→</span
+              ><span
+                ><b>KBC Checking</b> <span class="chip">matched by IBAN</span><br /><span
+                  class="link"
+                  >change</span
+                ></span
+              >
+            </div>
+            <div class="frow">
+              <span
+                ><span class="fn">belfius-spaar-2026-09.csv</span><br /><span class="s"
+                  >4 rows</span
+                ></span
+              ><span>→</span
+              ><span
+                ><b>A new account</b> <span class="chip w">IBAN not seen before</span>
+                <div class="flds">
+                  <span class="fld">Belfius Savings</span><span class="fld">Savings ▾</span
+                  ><span class="fld" style="color: var(--mute)">BE71 0689 4410 2369</span>
+                </div>
+                <span class="s"
+                  >Name and type are guessed from the file. Created when you import.</span
+                ></span
+              >
+            </div>
+            <div class="acts">
+              <span class="btn p">Continue</span><span class="s">or press Enter</span>
+            </div>
+          </div>
+          <div class="ghost">
+            <span class="num">4</span
+            ><span><b style="color: var(--ink)">Check</b> · new rows and overlap, per file</span>
+          </div>
+          <div class="ghost">
+            <span class="num">5</span
+            ><span
+              ><b style="color: var(--ink)">What changed</b> · lands here after the import</span
+            >
+          </div>
+        </div>
+        <div class="col" style="padding-top: 220px">
+          <p class="note">
+            <b>Accounts come before the check</b> because the overlap count depends on the account.
+            A matched account is pre-filled, so most months this section needs one Enter.
+          </p>
+          <p class="note" style="margin-top: 40px">
+            <b>An unknown file</b> opens Columns instead, which widens past the column for the
+            mapper and narrows again when it folds.
+          </p>
+        </div>
+      </main>
+    </div>
+
+    <div class="state">
+      <span class="label">When it's done</span>
+      <nav>
+        <div class="brand">Money<b>Mosaic</b></div>
+        <div class="grp">Insights</div>
+        <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+        <div class="grp">Data</div>
+        <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+        <div class="grp">More</div>
+        <a>FAQ</a><a>Settings</a>
+      </nav>
+      <main>
+        <div class="col" style="padding-top: 80px">
+          <p class="note">
+            <b>The whole import stays on the page</b> as four folded lines, a receipt of what you
+            did.
+          </p>
+        </div>
+        <div class="col">
+          <div class="hd">
+            <h1>Import</h1>
+            <span class="link">Past imports (9)</span>
+          </div>
+          <div class="sec fold">
+            <span class="num">✓</span
+            ><span class="sum"
+              ><b>2 files</b>
+              <span class="s">· export-kbc-2026-09.csv, belfius-spaar-2026-09.csv</span></span
+            >
+          </div>
+          <div class="sec fold">
+            <span class="num">✓</span
+            ><span class="sum"
+              ><b>Columns: recognised</b> <span class="s">· KBC, Belfius</span></span
+            >
+          </div>
+          <div class="sec fold">
+            <span class="num">✓</span
+            ><span class="sum"
+              ><b>KBC Checking</b>, and <b>Belfius Savings</b>
+              <span class="s">(created)</span></span
+            >
+          </div>
+          <div class="sec fold">
+            <span class="num">✓</span
+            ><span class="sum"
+              ><b>134 added</b> <span class="s">· 12 already here, skipped</span></span
+            >
+          </div>
+          <div class="sec act">
+            <div class="head">
+              <span class="num">5</span>
+              <h2>What changed</h2>
+            </div>
+            <div class="big">134 transactions, 1–30 September</div>
+            <div class="io">
+              <div><span class="s">Money in</span><b class="p">+€3,420.00</b></div>
+              <div><span class="s">Money out</span><b class="n">−€2,692.18</b></div>
+            </div>
+            <div class="res">
+              <i>✓</i
+              ><span
+                ><b>108 categorised by your rules</b
+                ><span class="s">Groceries, utilities, salary and 9 more</span></span
+              >
+            </div>
+            <div class="res w">
+              <i>?</i
+              ><span><b>26 need a category</b><span class="s">Mostly one-off shops</span></span
+              ><span class="link">Sort them →</span>
+            </div>
+            <div class="res t">
+              <i>⇄</i
+              ><span
+                ><b>7 transfers linked</b
+                ><span class="s"
+                  >Including €600 to Belfius Savings, now both sides are in</span
+                ></span
+              ><span class="link">Check →</span>
+            </div>
+            <div class="acts">
+              <span class="btn p">Sort the 26 →</span><span class="btn">Dashboard</span
+              ><span class="link" style="margin-left: auto; color: var(--mute)"
+                >Undo this import</span
+              >
+            </div>
+          </div>
+          <p class="s" style="text-align: center; margin-top: 6px">
+            <span class="link">Import more files</span> starts a fresh page.
+          </p>
+        </div>
+        <div class="col" style="padding-top: 420px">
+          <p class="note">
+            <b>The overview opens in place</b>, under everything that led to it, with the one thing
+            to do next as the main button.
+          </p>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

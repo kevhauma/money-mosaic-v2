@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>C · Read it back as a transaction</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+        flex: none;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .narrow {
+        width: 720px;
+      }
+      .wide {
+        width: 1060px;
+      }
+      .hd {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      h1 {
+        font:
+          800 26px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      h2 {
+        font: 700 18px/1.2 system-ui;
+      }
+      .s {
+        font-size: 12.5px;
+        color: var(--mute);
+      }
+      .link {
+        font-size: 12.5px;
+        color: var(--sec);
+        font-weight: 600;
+      }
+      .sec {
+        background: var(--b1);
+        border-radius: 16px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .fold {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 18px;
+      }
+      .fold .sum {
+        flex: 1;
+      }
+      .num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 13px;
+        flex: none;
+        background: var(--acc);
+      }
+      .act {
+        padding: 18px 22px;
+        outline: 2px solid var(--pri);
+      }
+      .act .num {
+        background: var(--pri);
+        color: #fff;
+      }
+      .head {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .ghost {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        padding: 12px 18px;
+        border: 2px dashed var(--b3);
+        border-radius: 16px;
+        color: var(--mute);
+      }
+      .ghost .num {
+        background: transparent;
+        border: 2px solid var(--b3);
+        color: var(--mute);
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        background: var(--b2);
+      }
+      .btn.p {
+        background: var(--pri);
+        color: #fff;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--acc) 24%, transparent);
+      }
+      .chip.w {
+        background: color-mix(in oklab, var(--warn) 32%, transparent);
+      }
+      .chip.g {
+        background: var(--b2);
+        color: var(--mute);
+      }
+      .n {
+        color: var(--neg);
+      }
+      .p {
+        color: var(--pos);
+      }
+      .mut {
+        color: var(--mute);
+      }
+      .foot {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="narrow hd">
+        <h1>Import</h1>
+        <span class="link">Past imports (8)</span>
+      </div>
+      <div class="sec fold narrow">
+        <span class="num">✓</span
+        ><span class="sum"
+          ><b>argenta-export.csv</b>
+          <span class="s">· 214 rows · a format we have not seen</span></span
+        ><span class="link">change</span>
+      </div>
+      <style>
+        .stage {
+          display: grid;
+          grid-template-columns: 1.15fr 1fr;
+          gap: 28px;
+          align-items: start;
+        }
+        .tx {
+          background: var(--b2);
+          border-radius: 18px;
+          padding: 22px;
+        }
+        .tx .row1 {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          gap: 14px;
+        }
+        .part {
+          border-radius: 10px;
+          padding: 3px 8px;
+          outline: 2px dashed transparent;
+          cursor: pointer;
+        }
+        .part.ok {
+          outline-color: color-mix(in oklab, var(--acc) 70%, transparent);
+        }
+        .part.bad {
+          outline-color: var(--pri);
+          background: color-mix(in oklab, var(--pri) 12%, transparent);
+        }
+        .desc {
+          font: 700 20px/1.25 system-ui;
+        }
+        .amt {
+          font:
+            800 30px/1 'Trebuchet MS',
+            sans-serif;
+          font-variant-numeric: tabular-nums;
+        }
+        .meta {
+          display: flex;
+          gap: 10px;
+          margin-top: 14px;
+          font-size: 13px;
+          color: var(--mute);
+          flex-wrap: wrap;
+        }
+        .pager {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 16px;
+          font-size: 12.5px;
+          color: var(--mute);
+        }
+        .pager b {
+          color: var(--ink);
+        }
+        .pop {
+          background: var(--b1);
+          border-radius: 16px;
+          box-shadow:
+            0 12px 32px #2a203026,
+            0 0 0 1px var(--b3);
+          padding: 16px;
+        }
+        .pop h3 {
+          font: 700 15px/1.3 system-ui;
+          margin-bottom: 4px;
+        }
+        .opt {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 10px;
+          padding: 9px 10px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-variant-numeric: tabular-nums;
+        }
+        .opt.on {
+          background: color-mix(in oklab, var(--pri) 12%, transparent);
+          font-weight: 700;
+        }
+        .fix {
+          margin-top: 10px;
+          padding: 10px 12px;
+          border-radius: 12px;
+          background: color-mix(in oklab, var(--warn) 22%, transparent);
+          font-size: 13px;
+        }
+        .legend {
+          display: flex;
+          gap: 16px;
+          font-size: 12px;
+          color: var(--mute);
+          margin-top: 14px;
+        }
+        .legend i {
+          display: inline-block;
+          width: 14px;
+          height: 10px;
+          border-radius: 4px;
+          margin-right: 6px;
+          vertical-align: middle;
+        }
+      </style>
+      <div class="sec act wide">
+        <div class="head">
+          <span class="num">2</span>
+          <h2>Does this look like a transaction?</h2>
+          <span class="s" style="margin-left: auto"
+            >argenta-export.csv · row 1 of 214, shown the way Money Mosaic would show it</span
+          >
+        </div>
+        <div class="stage">
+          <div>
+            <div class="tx">
+              <div class="row1">
+                <span class="part ok desc">COLRUYT GENT</span
+                ><span class="part bad amt">€8,412.00</span>
+              </div>
+              <div
+                class="part ok"
+                style="display: inline-block; margin-top: 6px; font-size: 13.5px"
+              >
+                BETALING MET KAART 29/09
+              </div>
+              <div class="meta">
+                <span class="part ok">30 Sep 2026</span><span class="part ok">from BE12 9730 …</span
+                ><span class="part" style="outline-color: var(--b3)">their IBAN: none</span>
+              </div>
+            </div>
+            <div class="pager">
+              <span>‹ previous</span
+              ><span>Row <b>1</b> of 214 · <span class="link">show a random row</span></span
+              ><span>next ›</span>
+            </div>
+            <div class="legend">
+              <span><i style="outline: 2px dashed var(--acc)"></i>looks right</span
+              ><span
+                ><i
+                  style="
+                    background: color-mix(in oklab, var(--pri) 20%, transparent);
+                    outline: 2px dashed var(--pri);
+                  "
+                ></i
+                >looks wrong, click it</span
+              ><span><i style="outline: 2px dashed var(--b3)"></i>not found, optional</span>
+            </div>
+            <div class="foot">
+              <span class="btn p">Yes, import like this</span
+              ><span class="s">We also check every row before you confirm.</span>
+            </div>
+          </div>
+          <div class="pop">
+            <h3>The amount: which column?</h3>
+            <p class="s" style="margin-bottom: 8px">This row's values:</p>
+            <div class="opt on"><span>Bedrag</span><span>-84,12</span></div>
+            <div class="opt"><span>Saldo</span><span>2.316,40</span></div>
+            <div class="opt"><span>Valutadatum</span><span>30/09/2026</span></div>
+            <div class="fix">
+              <b>€8,412.00 looks too big.</b> This file uses a comma for decimals, so -84,12 means
+              −€84.12. <span class="link">Read commas as decimals</span>
+            </div>
+            <p class="s" style="margin-top: 10px">
+              File settings are never asked up front. They appear here, as a fix, only when a value
+              reads wrong.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="ghost narrow">
+        <span class="num">3</span
+        ><span
+          ><b style="color: var(--ink)">Account</b> · usually picked for you from the IBAN</span
+        >
+      </div>
+      <div class="ghost narrow">
+        <span class="num">4</span
+        ><span
+          ><b style="color: var(--ink)">Check</b>, then
+          <b style="color: var(--ink)">What changed</b></span
+        >
+      </div>
+    </main>
+  </body>
+</html>

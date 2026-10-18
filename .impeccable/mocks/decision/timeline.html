@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Spending timeline</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --yel: #e9b730;
+        --blu: #4ba3d9;
+        --pos: #2f9e5b;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      h1 {
+        font:
+          800 28px/1 'Trebuchet MS',
+          sans-serif;
+        margin-right: 8px;
+      }
+      .pick {
+        display: flex;
+        gap: 6px;
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 6px 8px;
+      }
+      .pick span {
+        padding: 2px 10px;
+      }
+      .pick .cur {
+        background: var(--ink);
+        color: var(--b1);
+        border-radius: 999px;
+      }
+      .sp {
+        flex: 1;
+      }
+      .btn {
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 7px 14px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 18px 22px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr) 1.2fr;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .k {
+        font-size: 12px;
+        color: var(--mute);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .v {
+        font:
+          800 22px/1.1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .fix {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        justify-content: center;
+      }
+      .fix a {
+        padding: 6px 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .w {
+        background: color-mix(in oklab, var(--yel) 22%, transparent);
+      }
+      .i {
+        background: color-mix(in oklab, var(--sec) 16%, transparent);
+      }
+      .ch {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      .big {
+        font:
+          800 40px/1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .leg {
+        display: flex;
+        gap: 14px;
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .leg b {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        margin-right: 5px;
+      }
+      .plot {
+        position: relative;
+        height: 300px;
+        margin: 18px 0 6px 44px;
+        border-bottom: 1px solid var(--b3);
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+      }
+      .gl {
+        position: absolute;
+        left: -44px;
+        right: 0;
+        border-top: 1px dashed var(--b3);
+        font-size: 11px;
+        color: var(--mute);
+      }
+      .col {
+        flex: 1;
+        display: flex;
+        flex-direction: column-reverse;
+        border-radius: 6px 6px 0 0;
+        overflow: hidden;
+        position: relative;
+      }
+      .col i {
+        display: block;
+      }
+      .g {
+        background: var(--pri);
+      }
+      .h {
+        background: var(--sec);
+      }
+      .e {
+        background: var(--yel);
+      }
+      .t {
+        background: var(--blu);
+      }
+      .o {
+        background: var(--b3);
+      }
+      .col.cut::after {
+        content: '≈';
+        position: absolute;
+        top: 2px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: #fff;
+        font-weight: 800;
+        background: var(--sec);
+      }
+      .col.sel {
+        outline: 2px solid var(--ink);
+        outline-offset: 2px;
+      }
+      .cap {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .days {
+        display: flex;
+        gap: 10px;
+        margin-left: 44px;
+        font-size: 11px;
+        color: var(--mute);
+      }
+      .days span {
+        flex: 1;
+        text-align: center;
+      }
+      .below {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        margin-top: 18px;
+      }
+      .r {
+        display: grid;
+        grid-template-columns: 14px 1fr 70px 90px;
+        gap: 10px;
+        align-items: center;
+        padding: 7px 0;
+        border-top: 1px solid var(--b2);
+        font-variant-numeric: tabular-nums;
+      }
+      .r b {
+        text-align: right;
+      }
+      .r small {
+        text-align: right;
+        color: var(--mute);
+      }
+      .r i {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+      }
+      .tx {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 0;
+        border-top: 1px solid var(--b2);
+        font-variant-numeric: tabular-nums;
+      }
+      .tx small {
+        color: var(--mute);
+        margin-left: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <header>
+        <h1>Dashboard</h1>
+        <div class="pick">
+          <span>‹</span><span class="cur">This month</span><span>Last full month</span
+          ><span>Custom</span><span>›</span>
+        </div>
+        <div class="sp"></div>
+        <span class="btn">Hide amounts</span><span class="btn">Dashboard settings</span>
+      </header>
+      <div class="strip">
+        <div class="card">
+          <div class="k">Net worth · today</div>
+          <div class="v">€48,916</div>
+        </div>
+        <div class="card">
+          <div class="k">Income</div>
+          <div class="v">€3,420</div>
+        </div>
+        <div class="card">
+          <div class="k">Net cash flow</div>
+          <div class="v" style="color: var(--pos)">+€1,578</div>
+        </div>
+        <div class="card">
+          <div class="k">Moved to savings</div>
+          <div class="v">17.5%</div>
+        </div>
+        <div class="card fix">
+          <a class="w">14 uncategorised · €211.40 →</a><a class="i">2 transfers to review →</a>
+        </div>
+      </div>
+      <section class="card">
+        <div class="ch">
+          <div>
+            <div class="k">Spent each day · 1–18 October</div>
+            <div class="big">€1,842.30</div>
+          </div>
+          <div class="leg">
+            <span><b class="g"></b>Groceries</span><span><b class="h"></b>Housing</span
+            ><span><b class="e"></b>Eating out</span><span><b class="t"></b>Transport</span
+            ><span><b class="o"></b>Other</span>
+          </div>
+        </div>
+        <div class="plot">
+          <span class="gl" style="bottom: 100%">€200</span
+          ><span class="gl" style="bottom: 50%">€100</span>
+          <div class="col cut" style="height: 100%">
+            <span class="cap">€482</span><i class="h" style="height: 92%"></i
+            ><i class="o" style="height: 8%"></i>
+          </div>
+          <div class="col" style="height: 19%">
+            <i class="g" style="height: 70%"></i><i class="e" style="height: 30%"></i>
+          </div>
+          <div class="col" style="height: 73%">
+            <i class="g" style="height: 62%"></i><i class="t" style="height: 38%"></i>
+          </div>
+          <div class="col" style="height: 11%"><i class="e" style="height: 100%"></i></div>
+          <div class="col" style="height: 36%"><i class="o" style="height: 100%"></i></div>
+          <div class="col" style="height: 6%"><i class="g" style="height: 100%"></i></div>
+          <div class="col" style="height: 1%"><i class="o" style="height: 100%"></i></div>
+          <div class="col" style="height: 32%">
+            <i class="g" style="height: 55%"></i><i class="e" style="height: 45%"></i>
+          </div>
+          <div class="col" style="height: 44%">
+            <i class="g" style="height: 80%"></i><i class="o" style="height: 20%"></i>
+          </div>
+          <div class="col sel" style="height: 100%">
+            <span class="cap">€211</span><i class="g" style="height: 60%"></i
+            ><i class="t" style="height: 30%"></i><i class="e" style="height: 10%"></i>
+          </div>
+          <div class="col" style="height: 20%"><i class="e" style="height: 100%"></i></div>
+          <div class="col" style="height: 52%"><i class="o" style="height: 100%"></i></div>
+          <div class="col" style="height: 10%"><i class="g" style="height: 100%"></i></div>
+          <div class="col" style="height: 28%">
+            <i class="g" style="height: 70%"></i><i class="e" style="height: 30%"></i>
+          </div>
+          <div class="col" style="height: 17%"><i class="o" style="height: 100%"></i></div>
+          <div class="col" style="height: 48%">
+            <i class="g" style="height: 65%"></i><i class="e" style="height: 35%"></i>
+          </div>
+          <div class="col" style="height: 89%">
+            <i class="g" style="height: 50%"></i><i class="t" style="height: 30%"></i
+            ><i class="e" style="height: 20%"></i>
+          </div>
+          <div class="col" style="height: 16%"><i class="e" style="height: 100%"></i></div>
+        </div>
+        <div class="days">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span
+          ><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span
+          ><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span
+          ><span>18</span>
+        </div>
+        <div class="below">
+          <div>
+            <div class="k">Where it went</div>
+            <div class="r">
+              <i class="g"></i><span>Groceries</span><small>33%</small><b>€612.40</b>
+            </div>
+            <div class="r">
+              <i class="h"></i><span>Housing</span><small>25%</small><b>€455.00</b>
+            </div>
+            <div class="r">
+              <i class="e"></i><span>Eating out</span><small>13%</small><b>€231.80</b>
+            </div>
+            <div class="r">
+              <i class="t"></i><span>Transport</span><small>8%</small><b>€142.10</b>
+            </div>
+          </div>
+          <div>
+            <div class="k">Friday 10 October · €211.35</div>
+            <div class="tx">
+              <span>Colruyt Gent<small>Groceries</small></span
+              ><b>€126.45</b>
+            </div>
+            <div class="tx">
+              <span>Shell Merelbeke<small>Transport</small></span
+              ><b>€64.90</b>
+            </div>
+            <div class="tx">
+              <span>Panos<small>Eating out</small></span
+              ><b>€20.00</b>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

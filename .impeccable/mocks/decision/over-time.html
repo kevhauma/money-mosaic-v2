@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Twelve months, in and out</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 0 28px 22px;
+        overflow: hidden;
+      }
+      .kept {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        height: 64px;
+        margin-bottom: 16px;
+        border-bottom: 2px dashed var(--b3);
+        color: var(--mute);
+        font-size: 13px;
+      }
+      .kept span {
+        background: var(--b1);
+        border-radius: 12px;
+        padding: 8px 14px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 18px 22px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      h2 {
+        font:
+          700 17px/1.2 system-ui,
+          sans-serif;
+      }
+      .hd {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .leg {
+        display: flex;
+        gap: 16px;
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .leg b {
+        display: inline-block;
+        width: 12px;
+        height: 10px;
+        border-radius: 3px;
+        margin-right: 6px;
+        vertical-align: -1px;
+      }
+      .wrap {
+        display: grid;
+        grid-template-columns: 110px repeat(12, 1fr);
+        column-gap: 0;
+      }
+      .plot {
+        grid-column: 2/14;
+        position: relative;
+        height: 280px;
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        align-items: end;
+        border-bottom: 1px solid var(--b3);
+      }
+      .axis {
+        grid-column: 1;
+        position: relative;
+        height: 280px;
+        font-size: 11px;
+        color: var(--mute);
+      }
+      .axis span {
+        position: absolute;
+        right: 12px;
+      }
+      .m {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 4px;
+        height: 100%;
+        padding: 0 8px;
+        position: relative;
+      }
+      .m.sel {
+        background: color-mix(in oklab, var(--pri) 9%, transparent);
+        border-radius: 10px 10px 0 0;
+      }
+      .in,
+      .out {
+        width: 40%;
+        border-radius: 5px 5px 0 0;
+      }
+      .in {
+        background: var(--acc);
+      }
+      .out {
+        background: var(--pri);
+      }
+      svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .row {
+        display: contents;
+      }
+      .row div {
+        padding: 8px 6px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        border-bottom: 1px solid var(--b2);
+        font-size: 13px;
+      }
+      .row div:first-child {
+        text-align: left;
+        font-weight: 600;
+        color: var(--mute);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .row .s {
+        background: color-mix(in oklab, var(--pri) 9%, transparent);
+        font-weight: 700;
+      }
+      .mh div {
+        font-weight: 700;
+        color: var(--ink);
+        font-size: 12px;
+        border-bottom: 2px solid var(--b3);
+      }
+      .p {
+        color: var(--pos);
+      }
+      .n {
+        color: var(--neg);
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--mute);
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="kept">
+        ↑ Unchanged above:
+        <span>Net worth · Income · Expense · Net cash flow · Moved to savings</span
+        ><span>Category breakdown, income and expense pies</span>
+      </div>
+      <section class="card">
+        <div class="hd">
+          <h2>Twelve months, in and out</h2>
+          <div class="leg">
+            <span><b style="background: var(--acc)"></b>Income</span
+            ><span><b style="background: var(--pri)"></b>Expense</span
+            ><span><b style="background: var(--ink); height: 3px"></b>Net</span
+            ><span><b style="background: var(--sec); height: 3px"></b>Saved %</span>
+          </div>
+        </div>
+        <div class="wrap">
+          <div class="axis">
+            <span style="top: 0">€5k</span><span style="top: 46%">€2.5k</span
+            ><span style="bottom: -6px">0</span>
+          </div>
+          <div class="plot">
+            <div class="m">
+              <span class="in" style="height: 66%"></span
+              ><span class="out" style="height: 50%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 66%"></span
+              ><span class="out" style="height: 56%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 67%"></span
+              ><span class="out" style="height: 47%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 66%"></span
+              ><span class="out" style="height: 61%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 68%"></span
+              ><span class="out" style="height: 48%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 68%"></span
+              ><span class="out" style="height: 53%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 68%"></span
+              ><span class="out" style="height: 87%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 94%"></span
+              ><span class="out" style="height: 52%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 68%"></span
+              ><span class="out" style="height: 50%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 68%"></span
+              ><span class="out" style="height: 49%"></span>
+            </div>
+            <div class="m">
+              <span class="in" style="height: 68%"></span
+              ><span class="out" style="height: 51%"></span>
+            </div>
+            <div class="m sel">
+              <span class="in" style="height: 68%"></span
+              ><span class="out" style="height: 37%"></span>
+            </div>
+            <svg viewBox="0 0 1200 280" preserveAspectRatio="none">
+              <polyline
+                fill="none"
+                stroke="#2a2030"
+                stroke-width="2.5"
+                points="50,234 150,250 250,227 350,266 450,225 550,239 650,330 750,163 850,230 950,227 1050,233 1150,192"
+              />
+              <polyline
+                fill="none"
+                stroke="#7a6ee0"
+                stroke-width="2.5"
+                stroke-dasharray="6 4"
+                points="50,180 150,190 250,176 350,198 450,170 550,182 650,226 750,140 850,176 950,180 1050,184 1150,168"
+              />
+            </svg>
+          </div>
+          <div class="row mh">
+            <div></div>
+            <div>Nov</div>
+            <div>Dec</div>
+            <div>Jan</div>
+            <div>Feb</div>
+            <div>Mar</div>
+            <div>Apr</div>
+            <div>May</div>
+            <div>Jun</div>
+            <div>Jul</div>
+            <div>Aug</div>
+            <div>Sep</div>
+            <div class="s">Oct ·18d</div>
+          </div>
+          <div class="row">
+            <div>Income</div>
+            <div>€3,310</div>
+            <div>€3,320</div>
+            <div>€3,360</div>
+            <div>€3,305</div>
+            <div>€3,395</div>
+            <div>€3,395</div>
+            <div>€3,395</div>
+            <div>€4,710</div>
+            <div>€3,395</div>
+            <div>€3,395</div>
+            <div>€3,395</div>
+            <div class="s">€3,420</div>
+          </div>
+          <div class="row">
+            <div>Expense</div>
+            <div>€2,480</div>
+            <div>€2,790</div>
+            <div>€2,350</div>
+            <div>€3,050</div>
+            <div>€2,397</div>
+            <div>€2,639</div>
+            <div>€4,359</div>
+            <div>€2,593</div>
+            <div>€2,520</div>
+            <div>€2,460</div>
+            <div>€2,545</div>
+            <div class="s">€1,842</div>
+          </div>
+          <div class="row">
+            <div>Net</div>
+            <div class="p">+€830</div>
+            <div class="p">+€530</div>
+            <div class="p">+€1,010</div>
+            <div class="p">+€255</div>
+            <div class="p">+€998</div>
+            <div class="p">+€756</div>
+            <div class="n">−€964</div>
+            <div class="p">+€2,117</div>
+            <div class="p">+€875</div>
+            <div class="p">+€935</div>
+            <div class="p">+€850</div>
+            <div class="s p">+€1,578</div>
+          </div>
+          <div class="row">
+            <div>Saved %</div>
+            <div>18%</div>
+            <div>14%</div>
+            <div>21%</div>
+            <div>9%</div>
+            <div>22%</div>
+            <div>19%</div>
+            <div>3%</div>
+            <div>31%</div>
+            <div>20%</div>
+            <div>21%</div>
+            <div>22%</div>
+            <div class="s">17.5%</div>
+          </div>
+        </div>
+        <p class="hint">
+          Click a month to set the dashboard's range to it. The shaded column is the range you have
+          selected now.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

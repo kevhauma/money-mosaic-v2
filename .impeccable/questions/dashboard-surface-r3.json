@@ -1,0 +1,43 @@
+{
+  "title": "Dashboard: what sits below the first view",
+  "question": "The first view stays as it is: summary cards plus the income and expense pie charts. Each of these three replaces everything below it, and each cuts the money a different way: over time, ahead, by account. All ten themes carry each one. Lock one, steer, or re-roll.",
+  "options": [
+    {
+      "id": "over-time",
+      "label": "Twelve months, in and out",
+      "kicker": "THE ROLL",
+      "lineage": "the yearly overview at the back of a household account book",
+      "thesis": "Income against spending, month by month for a year. The bars and their figures share columns, and a click on a month sets the range.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "ngx-echarts, mm-paper, mm-table"],
+      "viewport": "Under the pies, one wide panel. For each of the last 12 months, an income bar and an expense bar side by side, with net and savings rate lines over them. Directly beneath, a table row per measure aligned to the same columns, and the selected range shaded. Biggest transactions follows as a compact list. Trend and category comparison fold into this panel; the heatmap and weekday split move to Explore.",
+      "risk": "With fewer than three months imported it looks sparse, so it needs an honest short-history state.",
+      "html": ".impeccable/mocks/decision/over-time.html"
+    },
+    {
+      "id": "ahead",
+      "label": "What's coming",
+      "lineage": "the bills pinned beside the calendar on the fridge",
+      "thesis": "The next 30 days: known payments in date order, and your current account's balance stepping down through them.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "ngx-echarts, mm-paper, mm-badge"],
+      "viewport": "Under the pies, a projected-balance line for the next 30 days, each recurring payment and loan instalment a labelled step. Beside it, the same payments as a dated list with running balance. Below, goal progress and anything to fix.",
+      "risk": "It overlaps the Future page, so the two need a clear split: the next 30 days here, the long horizon there.",
+      "html": ".impeccable/mocks/decision/ahead.html"
+    },
+    {
+      "id": "accounts",
+      "label": "Account by account",
+      "lineage": "the account summary page of a bank statement",
+      "thesis": "Each account as its own card (balance, money in and out in the range, how fresh its import is), with transfers drawn between them.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "mm-paper, mm-stat-card, mm-badge"],
+      "viewport": "Under the pies, a row of account cards: Checking, Savings, Joint, Invest. Each carries its balance, in and out for the range, a balance sparkline and its last-import date; a joint card shows each person's share. Arrows between the cards carry the range's transfers (€600 checking to savings). Biggest transactions and the review queue sit below.",
+      "risk": "It reads thin with one account and wraps with more than five, so the row needs a scroll-or-stack rule.",
+      "html": ".impeccable/mocks/decision/accounts.html"
+    }
+  ],
+  "reroll": true,
+  "buildPath": { "value": "code" },
+  "steer": true
+}

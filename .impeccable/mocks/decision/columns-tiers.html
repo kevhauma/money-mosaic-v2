@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>D · Needed, smarter, file settings</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+        flex: none;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .narrow {
+        width: 720px;
+      }
+      .wide {
+        width: 1060px;
+      }
+      .hd {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      h1 {
+        font:
+          800 26px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      h2 {
+        font: 700 18px/1.2 system-ui;
+      }
+      .s {
+        font-size: 12.5px;
+        color: var(--mute);
+      }
+      .link {
+        font-size: 12.5px;
+        color: var(--sec);
+        font-weight: 600;
+      }
+      .sec {
+        background: var(--b1);
+        border-radius: 16px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .fold {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 18px;
+      }
+      .fold .sum {
+        flex: 1;
+      }
+      .num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 13px;
+        flex: none;
+        background: var(--acc);
+      }
+      .act {
+        padding: 18px 22px;
+        outline: 2px solid var(--pri);
+      }
+      .act .num {
+        background: var(--pri);
+        color: #fff;
+      }
+      .head {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .ghost {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        padding: 12px 18px;
+        border: 2px dashed var(--b3);
+        border-radius: 16px;
+        color: var(--mute);
+      }
+      .ghost .num {
+        background: transparent;
+        border: 2px solid var(--b3);
+        color: var(--mute);
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        background: var(--b2);
+      }
+      .btn.p {
+        background: var(--pri);
+        color: #fff;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--acc) 24%, transparent);
+      }
+      .chip.w {
+        background: color-mix(in oklab, var(--warn) 32%, transparent);
+      }
+      .chip.g {
+        background: var(--b2);
+        color: var(--mute);
+      }
+      .n {
+        color: var(--neg);
+      }
+      .p {
+        color: var(--pos);
+      }
+      .mut {
+        color: var(--mute);
+      }
+      .foot {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="narrow hd">
+        <h1>Import</h1>
+        <span class="link">Past imports (8)</span>
+      </div>
+      <div class="sec fold narrow">
+        <span class="num">✓</span
+        ><span class="sum"
+          ><b>argenta-export.csv</b>
+          <span class="s">· 214 rows · a format we have not seen</span></span
+        ><span class="link">change</span>
+      </div>
+      <style>
+        .tier {
+          display: grid;
+          grid-template-columns: 200px 1fr;
+          gap: 20px;
+          padding: 14px 0;
+          border-top: 1px solid var(--b2);
+        }
+        .tier.first {
+          border-top: 0;
+          padding-top: 0;
+        }
+        .tl b {
+          display: block;
+          font-size: 15px;
+        }
+        .tl .s {
+          display: block;
+          margin-top: 2px;
+        }
+        .f {
+          display: grid;
+          grid-template-columns: 200px 220px 1fr;
+          gap: 12px;
+          align-items: center;
+          padding: 5px 0;
+          font-size: 13.5px;
+        }
+        .f .k {
+          font-weight: 700;
+        }
+        .sel {
+          background: var(--b2);
+          border: 1px solid var(--b3);
+          border-radius: 10px;
+          padding: 7px 10px;
+          display: flex;
+          justify-content: space-between;
+          font-weight: 600;
+        }
+        .sel.empty {
+          color: var(--mute);
+          font-weight: 500;
+          border-style: dashed;
+        }
+        .sel.need {
+          border: 2px dashed var(--pri);
+          color: var(--pri);
+          font-weight: 700;
+        }
+        .why {
+          font-size: 12.5px;
+          color: var(--mute);
+        }
+        .seg {
+          display: inline-flex;
+          background: var(--b2);
+          border-radius: 10px;
+          padding: 3px;
+          font-size: 11.5px;
+          font-weight: 700;
+          margin-left: 6px;
+          vertical-align: middle;
+        }
+        .seg span {
+          padding: 3px 8px;
+          border-radius: 8px;
+        }
+        .seg .on {
+          background: var(--b1);
+          box-shadow: 0 1px 2px #0002;
+        }
+        .closed {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          flex-wrap: wrap;
+        }
+        .closed span.v {
+          background: var(--b2);
+          border-radius: 8px;
+          padding: 3px 9px;
+          font-weight: 600;
+        }
+      </style>
+      <div class="sec act wide">
+        <div class="head">
+          <span class="num">2</span>
+          <h2>Columns for argenta-export.csv</h2>
+          <span class="s" style="margin-left: auto"
+            >3 needed · 4 optional · file settings guessed</span
+          >
+        </div>
+        <div class="tier first">
+          <div class="tl">
+            <b>Needed</b><span class="s">Without these there is no transaction.</span>
+          </div>
+          <div>
+            <div class="f">
+              <span class="k">Date</span
+              ><span class="sel">Boekingsdatum <span class="mut">▾</span></span
+              ><span class="why">30/09/2026 → 30 Sep 2026</span>
+            </div>
+            <div class="f">
+              <span class="k"
+                >Amount
+                <span class="seg"
+                  ><span class="on">one column</span><span>in + out</span></span
+                ></span
+              ><span class="sel">Bedrag <span class="mut">▾</span></span
+              ><span class="why">-84,12 → <b class="n">−€84.12</b></span>
+            </div>
+            <div class="f">
+              <span class="k">Description</span
+              ><span class="sel need">pick a column <span>▾</span></span
+              ><span class="why">The text you'll recognise the payment by</span>
+            </div>
+          </div>
+        </div>
+        <div class="tier">
+          <div class="tl">
+            <b>Makes it smarter</b><span class="s">Optional. Each one says what it gives you.</span>
+          </div>
+          <div>
+            <div class="f">
+              <span class="k">Who it was with</span
+              ><span class="sel">Naam tegenpartij <span class="mut">▾</span></span
+              ><span class="why">Rules can match on the shop or person</span>
+            </div>
+            <div class="f">
+              <span class="k">Their IBAN</span
+              ><span class="sel">Rekening tegenpartij <span class="mut">▾</span></span
+              ><span class="why">Finds transfers between your own accounts</span>
+            </div>
+            <div class="f">
+              <span class="k">Your IBAN</span><span class="sel empty">none <span>▾</span></span
+              ><span class="why">Picks the right account for you next time</span>
+            </div>
+            <div class="f">
+              <span class="k">Running balance</span
+              ><span class="sel empty">none <span>▾</span></span
+              ><span class="why">Checks the app's totals against the bank's</span>
+            </div>
+          </div>
+        </div>
+        <div class="tier">
+          <div class="tl">
+            <b>How the file is written</b
+            ><span class="s">Guessed. Open only if dates or amounts read wrong.</span>
+          </div>
+          <div class="closed">
+            <span class="v">; separated</span><span class="v">comma decimals</span
+            ><span class="v">DD/MM/YYYY</span><span class="v">UTF-8</span
+            ><span class="v">1 header row</span><span class="v">minus = money out</span
+            ><span class="link" style="margin-left: auto">open ▾</span>
+          </div>
+        </div>
+        <div class="foot">
+          <span class="btn" style="background: var(--b3); color: var(--mute)">Continue</span
+          ><span class="s">1 needed column left</span>
+        </div>
+      </div>
+
+      <div class="ghost narrow">
+        <span class="num">3</span
+        ><span
+          ><b style="color: var(--ink)">Account</b> · usually picked for you from the IBAN</span
+        >
+      </div>
+      <div class="ghost narrow">
+        <span class="num">4</span
+        ><span
+          ><b style="color: var(--ink)">Check</b>, then
+          <b style="color: var(--ink)">What changed</b></span
+        >
+      </div>
+    </main>
+  </body>
+</html>

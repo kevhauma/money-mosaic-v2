@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Month pivot</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        font:
+          800 28px/1 'Trebuchet MS',
+          sans-serif;
+        margin-right: 8px;
+      }
+      .pick {
+        display: flex;
+        gap: 6px;
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 6px 8px;
+      }
+      .pick span {
+        padding: 2px 10px;
+      }
+      .pick .cur {
+        background: var(--ink);
+        color: var(--b1);
+        border-radius: 999px;
+      }
+      .sp {
+        flex: 1;
+      }
+      .btn {
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 7px 14px;
+      }
+      .strip {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 16px 20px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .k {
+        font-size: 12px;
+        color: var(--mute);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .v {
+        font:
+          800 26px/1.1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .hero .v {
+        font-size: 40px;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .pace {
+        color: var(--pos);
+        font-weight: 600;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-variant-numeric: tabular-nums;
+      }
+      th {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--mute);
+        text-align: right;
+        padding: 10px 12px;
+        border-bottom: 2px solid var(--b3);
+      }
+      th:first-child,
+      td:first-child {
+        text-align: left;
+      }
+      td {
+        padding: 9px 12px;
+        text-align: right;
+        border-bottom: 1px solid var(--b2);
+      }
+      td:first-child {
+        font-weight: 600;
+      }
+      th.live {
+        color: var(--ink);
+        background: color-mix(in oklab, var(--pri) 12%, transparent);
+        border-radius: 10px 10px 0 0;
+      }
+      td.live {
+        background: color-mix(in oklab, var(--pri) 6%, transparent);
+        box-shadow:
+          inset 2px 0 var(--pri),
+          inset -2px 0 var(--pri);
+        font-weight: 700;
+      }
+      tr:last-child td.live {
+        box-shadow:
+          inset 2px 0 var(--pri),
+          inset -2px 0 var(--pri),
+          inset 0 -2px var(--pri);
+      }
+      .h1 {
+        background: color-mix(in oklab, var(--neg) 14%, transparent);
+      }
+      .h2 {
+        background: color-mix(in oklab, var(--neg) 28%, transparent);
+      }
+      .c1 {
+        background: color-mix(in oklab, var(--pos) 14%, transparent);
+      }
+      .c2 {
+        background: color-mix(in oklab, var(--pos) 26%, transparent);
+      }
+      td.med {
+        color: var(--mute);
+      }
+      tfoot td {
+        font-weight: 800;
+        border-top: 2px solid var(--b3);
+        border-bottom: 0;
+      }
+      .thead2 {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 6px;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .legend b {
+        display: inline-block;
+        width: 14px;
+        height: 12px;
+        border-radius: 3px;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+      .flag {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--neg);
+        margin-left: 4px;
+      }
+      .note {
+        display: inline-block;
+        background: color-mix(in oklab, var(--warn) 24%, transparent);
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <header>
+        <h1>Dashboard</h1>
+        <div class="pick">
+          <span>‹</span><span class="cur">This month</span><span>Last full month</span
+          ><span>Custom</span><span>›</span>
+        </div>
+        <div class="sp"></div>
+        <span class="btn">Hide amounts</span><span class="btn">Dashboard settings</span>
+      </header>
+      <div class="strip">
+        <div class="card hero">
+          <div class="k">Spent in October · 18 of 31 days</div>
+          <div class="v">€1,842.30</div>
+          <div class="s"><span class="pace">▼ €214 under</span> September at the same day</div>
+        </div>
+        <div class="card">
+          <div class="k">Income</div>
+          <div class="v">€3,420</div>
+          <div class="s">€190/day</div>
+        </div>
+        <div class="card">
+          <div class="k">Net cash flow</div>
+          <div class="v" style="color: var(--pos)">+€1,578</div>
+          <div class="s">46% of income kept</div>
+        </div>
+        <div class="card">
+          <div class="k">Moved to savings</div>
+          <div class="v">17.5%</div>
+          <div class="s">€600 this month</div>
+        </div>
+        <div class="card">
+          <div class="k">Net worth · today</div>
+          <div class="v">€48,916</div>
+          <div class="s">5 accounts</div>
+        </div>
+      </div>
+      <section class="card">
+        <div class="thead2">
+          <div class="k">
+            Spending by category, last six months
+            <span class="note">14 uncategorised · €211 not in a row yet →</span>
+          </div>
+          <div class="legend">
+            <span><b class="c2"></b>below its usual</span
+            ><span><b class="h2"></b>above its usual</span
+            ><span><b style="box-shadow: inset 0 0 0 2px var(--pri)"></b>month in progress</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>May</th>
+              <th>Jun</th>
+              <th>Jul</th>
+              <th>Aug</th>
+              <th>Sep</th>
+              <th class="live">Oct · 18/31</th>
+              <th>Usual (median)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Groceries</td>
+              <td>€988</td>
+              <td>€1,012</td>
+              <td class="h1">€1,140</td>
+              <td>€1,002</td>
+              <td>€1,034</td>
+              <td class="live">€612</td>
+              <td class="med">€1,012</td>
+            </tr>
+            <tr>
+              <td>Housing</td>
+              <td>€455</td>
+              <td>€455</td>
+              <td>€455</td>
+              <td>€455</td>
+              <td>€455</td>
+              <td class="live">€455</td>
+              <td class="med">€455</td>
+            </tr>
+            <tr>
+              <td>Eating out</td>
+              <td>€221</td>
+              <td class="c1">€174</td>
+              <td class="h2">€412</td>
+              <td>€248</td>
+              <td>€303</td>
+              <td class="live h1">€232<span class="flag">▲</span></td>
+              <td class="med">€248</td>
+            </tr>
+            <tr>
+              <td>Utilities</td>
+              <td>€264</td>
+              <td>€258</td>
+              <td>€249</td>
+              <td>€266</td>
+              <td>€272</td>
+              <td class="live">€168</td>
+              <td class="med">€264</td>
+            </tr>
+            <tr>
+              <td>Transport</td>
+              <td>€186</td>
+              <td>€201</td>
+              <td class="h1">€288</td>
+              <td class="c1">€142</td>
+              <td>€207</td>
+              <td class="live">€142</td>
+              <td class="med">€201</td>
+            </tr>
+            <tr>
+              <td>Holidays</td>
+              <td class="c2">€0</td>
+              <td>€310</td>
+              <td class="h2">€1,480</td>
+              <td>€220</td>
+              <td class="c2">€0</td>
+              <td class="live">€0</td>
+              <td class="med">€220</td>
+            </tr>
+            <tr>
+              <td>Subscriptions</td>
+              <td>€92</td>
+              <td>€92</td>
+              <td>€97</td>
+              <td>€97</td>
+              <td>€97</td>
+              <td class="live">€97</td>
+              <td class="med">€97</td>
+            </tr>
+            <tr>
+              <td>Health</td>
+              <td>€40</td>
+              <td>€15</td>
+              <td>€62</td>
+              <td>€30</td>
+              <td>€13</td>
+              <td class="live h2">€84<span class="flag">▲</span></td>
+              <td class="med">€30</td>
+            </tr>
+            <tr>
+              <td>Other · 6</td>
+              <td>€151</td>
+              <td>€122</td>
+              <td>€176</td>
+              <td>€133</td>
+              <td>€139</td>
+              <td class="live">€52</td>
+              <td class="med">€139</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total spent</td>
+              <td>€2,397</td>
+              <td>€2,639</td>
+              <td>€4,359</td>
+              <td>€2,593</td>
+              <td>€2,520</td>
+              <td class="live">€1,842</td>
+              <td class="med">€2,593</td>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+    </main>
+  </body>
+</html>

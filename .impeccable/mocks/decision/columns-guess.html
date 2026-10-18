@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>A · We guess, you check</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+        flex: none;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .narrow {
+        width: 720px;
+      }
+      .wide {
+        width: 1060px;
+      }
+      .hd {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      h1 {
+        font:
+          800 26px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      h2 {
+        font: 700 18px/1.2 system-ui;
+      }
+      .s {
+        font-size: 12.5px;
+        color: var(--mute);
+      }
+      .link {
+        font-size: 12.5px;
+        color: var(--sec);
+        font-weight: 600;
+      }
+      .sec {
+        background: var(--b1);
+        border-radius: 16px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .fold {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 18px;
+      }
+      .fold .sum {
+        flex: 1;
+      }
+      .num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 13px;
+        flex: none;
+        background: var(--acc);
+      }
+      .act {
+        padding: 18px 22px;
+        outline: 2px solid var(--pri);
+      }
+      .act .num {
+        background: var(--pri);
+        color: #fff;
+      }
+      .head {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .ghost {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        padding: 12px 18px;
+        border: 2px dashed var(--b3);
+        border-radius: 16px;
+        color: var(--mute);
+      }
+      .ghost .num {
+        background: transparent;
+        border: 2px solid var(--b3);
+        color: var(--mute);
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        background: var(--b2);
+      }
+      .btn.p {
+        background: var(--pri);
+        color: #fff;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--acc) 24%, transparent);
+      }
+      .chip.w {
+        background: color-mix(in oklab, var(--warn) 32%, transparent);
+      }
+      .chip.g {
+        background: var(--b2);
+        color: var(--mute);
+      }
+      .n {
+        color: var(--neg);
+      }
+      .p {
+        color: var(--pos);
+      }
+      .mut {
+        color: var(--mute);
+      }
+      .foot {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="narrow hd">
+        <h1>Import</h1>
+        <span class="link">Past imports (8)</span>
+      </div>
+      <div class="sec fold narrow">
+        <span class="num">✓</span
+        ><span class="sum"
+          ><b>argenta-export.csv</b>
+          <span class="s">· 214 rows · a format we have not seen</span></span
+        ><span class="link">change</span>
+      </div>
+      <style>
+        .map {
+          display: grid;
+          grid-template-columns: 160px 22px 220px 1fr 120px;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 6px;
+          border-top: 1px solid var(--b2);
+          font-size: 13.5px;
+        }
+        .map .k {
+          font-weight: 700;
+        }
+        .map .src {
+          font-weight: 600;
+          background: var(--b2);
+          border: 1px solid var(--b3);
+          border-radius: 10px;
+          padding: 6px 10px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .map .smp {
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .map .chip {
+          justify-self: end;
+        }
+        .map.chk {
+          background: color-mix(in oklab, var(--warn) 14%, transparent);
+          border-radius: 12px;
+          border-top-color: transparent;
+        }
+        .tier {
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--mute);
+          margin: 14px 0 2px;
+        }
+        .read {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          font-size: 12.5px;
+          color: var(--mute);
+          padding: 10px 12px;
+          background: var(--b2);
+          border-radius: 12px;
+          margin-top: 14px;
+        }
+        .read b {
+          color: var(--ink);
+          font-weight: 600;
+        }
+      </style>
+      <div class="sec act wide">
+        <div class="head">
+          <span class="num">2</span>
+          <h2>Columns for argenta-export.csv</h2>
+          <span class="s" style="margin-left: auto"
+            >We read the headers and the first rows. Check the one we were unsure about.</span
+          >
+        </div>
+        <div class="tier">Needed</div>
+        <div class="map">
+          <span class="k">Date</span><span>←</span
+          ><span class="src">Boekingsdatum <span class="mut">▾</span></span
+          ><span class="smp">30/09/2026 reads as <b>30 Sep 2026</b></span
+          ><span class="chip">✓ sure</span>
+        </div>
+        <div class="map">
+          <span class="k">Amount</span><span>←</span
+          ><span class="src">Bedrag <span class="mut">▾</span></span
+          ><span class="smp">-84,12 reads as <b class="n">−€84.12</b></span
+          ><span class="chip">✓ sure</span>
+        </div>
+        <div class="map chk">
+          <span class="k">Description</span><span>←</span
+          ><span class="src">Mededeling <span class="mut">▾</span></span
+          ><span class="smp"
+            >BETALING MET KAART 29/09 &nbsp;<span class="s">or maybe: Omschrijving</span></span
+          ><span class="chip w">check this</span>
+        </div>
+        <div class="tier">Also found: these make rules and transfers smarter</div>
+        <div class="map">
+          <span class="k">Who it was with</span><span>←</span
+          ><span class="src">Naam tegenpartij <span class="mut">▾</span></span
+          ><span class="smp">COLRUYT GENT</span><span class="chip">✓ sure</span>
+        </div>
+        <div class="map">
+          <span class="k">Their IBAN</span><span>←</span
+          ><span class="src">Rekening tegenpartij <span class="mut">▾</span></span
+          ><span class="smp">BE40 0910 0002 3456</span><span class="chip">✓ sure</span>
+        </div>
+        <div class="map">
+          <span class="k">Your IBAN</span><span>←</span
+          ><span class="src">Rekening <span class="mut">▾</span></span
+          ><span class="smp">BE12 9730 …, the same on every row</span
+          ><span class="chip">✓ sure</span>
+        </div>
+        <div class="map" style="opacity: 0.6">
+          <span class="k">Running balance</span><span>←</span
+          ><span class="src">none found <span class="mut">▾</span></span
+          ><span class="smp s">Optional. Only used to check totals.</span
+          ><span class="chip g">skipped</span>
+        </div>
+        <div class="read">
+          Read as <b>; separated</b>·<b>comma decimals</b>·<b>DD/MM/YYYY</b>·<b>UTF-8</b>·<b
+            >1 header row</b
+          >·<b>minus means money out</b><span class="link" style="margin-left: auto">change</span>
+        </div>
+        <div class="foot">
+          <span class="btn p">Looks right</span
+          ><span class="s">Saved as "Argenta", so this kind of file is recognised next time.</span>
+        </div>
+      </div>
+
+      <div class="ghost narrow">
+        <span class="num">3</span
+        ><span
+          ><b style="color: var(--ink)">Account</b> · usually picked for you from the IBAN</span
+        >
+      </div>
+      <div class="ghost narrow">
+        <span class="num">4</span
+        ><span
+          ><b style="color: var(--ink)">Check</b>, then
+          <b style="color: var(--ink)">What changed</b></span
+        >
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Two-month statement</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+        color: var(--ink);
+        text-decoration: none;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        font:
+          800 28px/1 'Trebuchet MS',
+          sans-serif;
+        margin-right: 8px;
+      }
+      .pick {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 6px 8px;
+      }
+      .pick span {
+        padding: 2px 10px;
+      }
+      .pick .cur {
+        background: var(--ink);
+        color: var(--b1);
+        border-radius: 999px;
+      }
+      .sp {
+        flex: 1;
+      }
+      .btn {
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 7px 14px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 20px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 20px 22px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .lead {
+        font-size: 15px;
+        color: var(--mute);
+      }
+      .big {
+        font:
+          800 46px/1.05 'Trebuchet MS',
+          sans-serif;
+        margin: 6px 0 4px;
+        font-variant-numeric: tabular-nums;
+      }
+      .big small {
+        font-size: 20px;
+        color: var(--mute);
+        font-weight: 600;
+      }
+      .pace {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        background: color-mix(in oklab, var(--pos) 14%, transparent);
+        color: var(--pos);
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 13px;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 150px 1fr;
+        margin: 22px 0 8px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--mute);
+      }
+      .cols div:first-child {
+        text-align: right;
+        padding-right: 12px;
+      }
+      .cols div:last-child {
+        padding-left: 12px;
+      }
+      .cols div:nth-child(2) {
+        text-align: center;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 150px 1fr;
+        align-items: center;
+        height: 38px;
+        border-top: 1px solid var(--b2);
+        font-variant-numeric: tabular-nums;
+      }
+      .l {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        padding-right: 12px;
+      }
+      .r {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-left: 12px;
+        position: relative;
+      }
+      .bar {
+        height: 16px;
+        border-radius: 6px;
+      }
+      .now {
+        background: var(--pri);
+      }
+      .was {
+        background: color-mix(in oklab, var(--sec) 55%, var(--b2));
+      }
+      .tick {
+        position: absolute;
+        top: 8px;
+        width: 2px;
+        height: 22px;
+        background: var(--ink);
+      }
+      .cat {
+        text-align: center;
+        font-weight: 600;
+      }
+      .cat i {
+        display: block;
+        font-style: normal;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .up {
+        color: var(--neg);
+      }
+      .dn {
+        color: var(--pos);
+      }
+      .legend {
+        display: flex;
+        gap: 18px;
+        font-size: 12px;
+        color: var(--mute);
+        margin-top: 12px;
+      }
+      .legend b {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+      .rail {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .k {
+        font-size: 12px;
+        color: var(--mute);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .v {
+        font:
+          800 26px/1.1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .fix a {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-radius: 12px;
+        margin-top: 8px;
+        text-decoration: none;
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .i {
+        background: color-mix(in oklab, var(--sec) 16%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <header>
+        <h1>Dashboard</h1>
+        <div class="pick">
+          <span>‹</span><span class="cur">This month</span><span>Last full month</span
+          ><span>Custom</span><span>›</span>
+        </div>
+        <div class="sp"></div>
+        <span class="btn">Hide amounts</span><span class="btn">Dashboard settings</span>
+      </header>
+      <div class="grid">
+        <section class="card">
+          <p class="lead">October so far · 18 of 31 days</p>
+          <p class="big">€1,842.30 <small>spent</small></p>
+          <span class="pace">▼ €214 less than by 18 September</span>
+          <div class="cols">
+            <div>October so far</div>
+            <div>Category</div>
+            <div>September, full month</div>
+          </div>
+          <div class="row">
+            <div class="l">€612.40 <span class="bar now" style="width: 62%"></span></div>
+            <div class="cat">Groceries<i class="dn">−8% pace</i></div>
+            <div class="r">
+              <span class="bar was" style="width: 88%"></span>€1,034.10<span
+                class="tick"
+                style="left: calc(12px + 52%)"
+              ></span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="l">€455.00 <span class="bar now" style="width: 46%"></span></div>
+            <div class="cat">Housing<i>same</i></div>
+            <div class="r">
+              <span class="bar was" style="width: 46%"></span>€455.00<span
+                class="tick"
+                style="left: calc(12px + 46%)"
+              ></span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="l">€231.80 <span class="bar now" style="width: 24%"></span></div>
+            <div class="cat">Eating out<i class="up">+31% pace</i></div>
+            <div class="r">
+              <span class="bar was" style="width: 30%"></span>€302.60<span
+                class="tick"
+                style="left: calc(12px + 18%)"
+              ></span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="l">€168.25 <span class="bar now" style="width: 17%"></span></div>
+            <div class="cat">Utilities<i class="dn">−4% pace</i></div>
+            <div class="r">
+              <span class="bar was" style="width: 27%"></span>€271.90<span
+                class="tick"
+                style="left: calc(12px + 18%)"
+              ></span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="l">€142.10 <span class="bar now" style="width: 14%"></span></div>
+            <div class="cat">Transport<i class="up">+12% pace</i></div>
+            <div class="r">
+              <span class="bar was" style="width: 21%"></span>€207.45<span
+                class="tick"
+                style="left: calc(12px + 13%)"
+              ></span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="l">€96.75 <span class="bar now" style="width: 10%"></span></div>
+            <div class="cat">Subscriptions<i>same</i></div>
+            <div class="r">
+              <span class="bar was" style="width: 10%"></span>€96.75<span
+                class="tick"
+                style="left: calc(12px + 10%)"
+              ></span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="l">€84.00 <span class="bar now" style="width: 9%"></span></div>
+            <div class="cat">Health<i class="up">new</i></div>
+            <div class="r"><span class="bar was" style="width: 2%"></span>€12.50</div>
+          </div>
+          <div class="row">
+            <div class="l">€52.00 <span class="bar now" style="width: 5%"></span></div>
+            <div class="cat">Other · 6<i class="dn">−40% pace</i></div>
+            <div class="r">
+              <span class="bar was" style="width: 14%"></span>€139.20<span
+                class="tick"
+                style="left: calc(12px + 8%)"
+              ></span>
+            </div>
+          </div>
+          <div class="legend">
+            <span><b style="background: var(--pri)"></b>This month to date</span
+            ><span
+              ><b style="background: color-mix(in oklab, var(--sec) 55%, var(--b2))"></b>Last full
+              month</span
+            ><span
+              ><b style="background: var(--ink); width: 3px"></b>Where last month stood on day
+              18</span
+            >
+          </div>
+        </section>
+        <aside class="rail">
+          <div class="card">
+            <div class="k">Net worth · today</div>
+            <div class="v">€48,915.62</div>
+            <div class="s">Across 5 accounts</div>
+          </div>
+          <div class="card pair">
+            <div>
+              <div class="k">Income</div>
+              <div class="v">€3,420</div>
+              <div class="s">Sept: €3,395</div>
+            </div>
+            <div>
+              <div class="k">Net cash flow</div>
+              <div class="v" style="color: var(--pos)">+€1,578</div>
+              <div class="s">46% of income kept</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="k">Moved to savings</div>
+            <div class="v">€600 <small class="s">· 17.5%</small></div>
+            <div class="s">Sept: €750 · 22.1%</div>
+          </div>
+          <div class="card fix">
+            <div class="k">Before you trust these numbers</div>
+            <a class="w" href="#">14 uncategorised <span>€211.40 →</span></a>
+            <a class="i" href="#">2 transfers to review <span>→</span></a>
+            <a class="i" href="#">Belfius Savings last import 34 days ago <span>→</span></a>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </body>
+</html>

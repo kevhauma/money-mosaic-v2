@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Confirm, don't configure</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+        flex: none;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      h1 {
+        font:
+          800 24px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      .lede {
+        color: var(--mute);
+        font-size: 13px;
+        max-width: 70ch;
+      }
+      .strip {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr 1.15fr;
+        gap: 18px;
+        flex: 1;
+        min-height: 0;
+      }
+      .frame {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 0;
+      }
+      .tag {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        font-weight: 700;
+      }
+      .tag b {
+        color: var(--ink);
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 1px 0 var(--b3);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 0;
+      }
+      .drop {
+        flex: 1;
+        border: 2px dashed var(--b3);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        text-align: center;
+        padding: 20px;
+      }
+      .drop h3 {
+        font: 700 18px/1.2 system-ui;
+      }
+      .btn {
+        display: inline-block;
+        padding: 9px 16px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 13px;
+        background: var(--b2);
+      }
+      .btn.p {
+        background: var(--pri);
+        color: #fff;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .link {
+        font-size: 12px;
+        color: var(--sec);
+        font-weight: 600;
+      }
+      .chip {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--acc) 22%, transparent);
+      }
+      .big {
+        font:
+          800 34px/1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px solid var(--b2);
+        font-size: 13px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      td {
+        padding: 5px 4px;
+        border-top: 1px solid var(--b2);
+        white-space: nowrap;
+      }
+      td.r {
+        text-align: right;
+      }
+      .n {
+        color: var(--neg);
+      }
+      .p {
+        color: var(--pos);
+      }
+      .dim td {
+        color: var(--mute);
+        text-decoration: line-through;
+      }
+      .res {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--b2);
+      }
+      .res i {
+        font-style: normal;
+        font-weight: 800;
+        width: 22px;
+        text-align: center;
+      }
+      .res b {
+        display: block;
+      }
+      .res.w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .res.t {
+        background: color-mix(in oklab, var(--sec) 14%, transparent);
+      }
+      .io {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .io div {
+        background: var(--b2);
+        border-radius: 12px;
+        padding: 8px 12px;
+      }
+      .io b {
+        font:
+          800 18px/1.2 'Trebuchet MS',
+          sans-serif;
+        display: block;
+        font-variant-numeric: tabular-nums;
+      }
+      .foot {
+        margin-top: auto;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .arrow {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div>
+        <h1>Import</h1>
+        <p class="lede">
+          A recognised file never shows the mapper. You see what will happen, in one sentence and
+          five rows, and confirm. The column mapper only opens for an unknown file, or when you ask
+          for it.
+        </p>
+      </div>
+      <div class="strip">
+        <div class="frame">
+          <span class="tag"><b>1</b> · Drop</span>
+          <div class="card">
+            <div class="drop">
+              <h3>Drop your bank exports</h3>
+              <p class="s">
+                CSV from KBC, Belfius or any other bank.<br />Several at once is fine.
+              </p>
+              <span class="btn">Choose files</span>
+              <p class="s" style="max-width: 30ch">
+                Overlap with an earlier export is fine: rows you already have are recognised and
+                skipped.
+              </p>
+            </div>
+            <div class="line">
+              <span class="s">Last import · KBC Checking · 2 Sep</span
+              ><span class="link">Past imports (8) →</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="frame">
+          <span class="tag"><b>2</b> · Check</span>
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span class="chip">✓ KBC export · your saved mapping</span
+              ><span class="s">export-kbc-2026-09.csv</span>
+            </div>
+            <div>
+              <div class="big">130 new transactions</div>
+              <p class="s" style="margin-top: 6px">
+                1–30 September, into <b style="color: var(--ink)">KBC Checking</b> (matched by IBAN
+                …7034)
+              </p>
+            </div>
+            <table>
+              <tr>
+                <td>30 Sep</td>
+                <td>Colruyt Gent</td>
+                <td class="r n">−€84.12</td>
+              </tr>
+              <tr>
+                <td>29 Sep</td>
+                <td>Fluvius</td>
+                <td class="r n">−€104.80</td>
+              </tr>
+              <tr>
+                <td>28 Sep</td>
+                <td>Salary · Acme NV</td>
+                <td class="r p">+€3,120.00</td>
+              </tr>
+              <tr>
+                <td>27 Sep</td>
+                <td>To Belfius Savings</td>
+                <td class="r n">−€600.00</td>
+              </tr>
+              <tr class="dim">
+                <td>1 Sep</td>
+                <td>Rent · J. Peeters</td>
+                <td class="r">−€455.00</td>
+              </tr>
+            </table>
+            <p class="s">
+              12 rows from 1–2 Sep are already here and will be skipped.
+              <span class="link">Show them</span>
+            </p>
+            <div class="foot">
+              <span class="btn p">Import 130 transactions</span
+              ><span class="link">Something off? Adjust columns</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="frame">
+          <span class="tag"><b>3</b> · Overview</span>
+          <div class="card">
+            <div>
+              <div class="big" style="font-size: 26px">Done: 130 transactions in KBC Checking</div>
+              <p class="s" style="margin-top: 6px">1–30 September 2026</p>
+            </div>
+            <div class="io">
+              <div><span class="s">Money in</span><b class="p">+€3,420.00</b></div>
+              <div><span class="s">Money out</span><b class="n">−€3,292.18</b></div>
+            </div>
+            <div class="res">
+              <i>✓</i
+              ><span
+                ><b>104 categorised by your rules</b
+                ><span class="s">Groceries, utilities, salary and 9 more</span></span
+              >
+            </div>
+            <div class="res w">
+              <i>?</i
+              ><span
+                ><b>26 need a category</b
+                ><span class="s">Mostly one-off shops. Two minutes of sorting.</span></span
+              >
+            </div>
+            <div class="res t">
+              <i>⇄</i
+              ><span
+                ><b>7 transfers linked</b
+                ><span class="s">Kept out of income and spending</span></span
+              >
+            </div>
+            <div class="foot">
+              <span class="btn p">Sort the 26 →</span><span class="btn">Dashboard</span
+              ><span class="link" style="margin-left: auto; color: var(--mute)">Undo import</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+<!-- round b24020a9 -->

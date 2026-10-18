@@ -1,0 +1,49 @@
+{
+  "title": "Dashboard: three structures",
+  "question": "Each one answers \"what have I spent this month, or last full month?\" first. They all use the same shared components, so all ten themes carry each of them. Lock one, steer, or re-roll.",
+  "options": [
+    {
+      "id": "statement",
+      "label": "Two-month statement",
+      "kicker": "THE ROLL",
+      "lineage": "a bank's period-comparison statement",
+      "thesis": "This month so far, set against the last full month, category by category on one shared spine.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "mm-paper, mm-stat-card, mm-table"],
+      "viewport": "A sentence headline (spent so far, against the same day last month), then back-to-back category bars: this month grows left, last month grows right, the change between them. A right rail holds income, net cash flow, savings, net worth and anything that needs fixing.",
+      "raised": [
+        {
+          "from": "transit diagram (declined)",
+          "raise": "One chart grammar for the whole page: every bar shares one baseline, one scale and one gap, so the eye compares lengths, never styles."
+        }
+      ],
+      "risk": "Early in the month the left side is short, so it needs a 'by this day last month' tick to stay fair.",
+      "html": ".impeccable/mocks/decision/statement.html"
+    },
+    {
+      "id": "pivot",
+      "label": "Month pivot",
+      "lineage": "the spreadsheet pivot you would build by hand",
+      "thesis": "Six months of spending in one table. This month is the live column, and each category is measured against its own usual.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "mm-table, mm-paper, mm-badge"],
+      "viewport": "The month's total and pace up top. Below, a categories-by-months table: cells shade by how far they sit from that row's median, the current month is outlined as '18 of 31 days', and any cell drills into its transactions.",
+      "risk": "A table first can read as a spreadsheet. Without a clear headline, it buries the one number you came for.",
+      "html": ".impeccable/mocks/decision/pivot.html"
+    },
+    {
+      "id": "calendar",
+      "label": "Spending calendar",
+      "lineage": "a wall calendar with the month's receipts pinned to it",
+      "thesis": "The month as a calendar: what you spent each day, with the rest of the month's known payments already pencilled in.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "mm-paper, daisyUI calendar grid"],
+      "viewport": "Month total and pace headline. A 7-by-5 day grid, each cell showing that day's spend with a fill bar. Future days show expected recurring payments in dashed outline. A right rail ranks the month's categories and lists the selected day's transactions.",
+      "risk": "Days lead and categories follow, so 'where did it go' depends on the right rail.",
+      "html": ".impeccable/mocks/decision/calendar.html"
+    }
+  ],
+  "reroll": true,
+  "buildPath": { "value": "code" },
+  "steer": true
+}

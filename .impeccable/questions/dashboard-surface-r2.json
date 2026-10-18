@@ -1,0 +1,43 @@
+{
+  "title": "Dashboard: three new structures",
+  "question": "Re-rolled on your steer: the first graph plainly shows spending in the selected range, with no comparison against other months. All three work in all ten themes. Lock one, steer, or re-roll.",
+  "options": [
+    {
+      "id": "payees",
+      "label": "Who you paid",
+      "kicker": "THE ROLL",
+      "lineage": "the payee list on a bank statement",
+      "thesis": "Spending in the range, ranked by who received it: shops, the landlord, the energy company.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "mm-paper, mm-tabs, mm-badge"],
+      "viewport": "The range's total spent, large. Below it a ranked payee list: amount bar, number of payments, category chip, and a strip of ticks marking the day each payment landed. A tab switches to the same list by category. A right rail holds income, net cash flow, savings, net worth and anything to fix.",
+      "risk": "Bank CSV counterparty names are messy (card-terminal codes), so payees need grouping or the list splinters.",
+      "html": ".impeccable/mocks/decision/payees.html"
+    },
+    {
+      "id": "fixed-flexible",
+      "label": "Fixed and flexible",
+      "lineage": "the two halves of every household budget",
+      "thesis": "Spending in the range split in two: what was committed (rent, loans, subscriptions) and what was a choice.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "mm-paper, mm-stat-card"],
+      "viewport": "One wide split bar for total spent, in two parts, fixed and flexible. Under it, two columns, each listing its categories and payments with bars. The usual figures sit in a compact strip above.",
+      "risk": "It leans on recurring-payment detection. A payment it misses lands in the wrong half.",
+      "html": ".impeccable/mocks/decision/fixed-flexible.html"
+    },
+    {
+      "id": "timeline",
+      "label": "Spending timeline",
+      "lineage": "a till roll laid out along the calendar",
+      "thesis": "Every day of the range as a bar of what you spent, stacked by category, with the totals ranked underneath.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["your active theme's tokens (all 10)", "ngx-echarts, mm-paper"],
+      "viewport": "A full-width stacked bar chart of daily spend (weekly or monthly bars for longer ranges), total in the corner. Beneath it, the category ranking with amounts and shares beside the selected day's transactions. Stat cards sit in a compact strip above.",
+      "risk": "Rent day dwarfs every other bar, so the axis needs a clipped treatment to keep normal days readable.",
+      "html": ".impeccable/mocks/decision/timeline.html"
+    }
+  ],
+  "reroll": true,
+  "buildPath": { "value": "code" },
+  "steer": true
+}

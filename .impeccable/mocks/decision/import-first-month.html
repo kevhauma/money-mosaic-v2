@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Your first month</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+        flex: none;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 22px;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 0;
+      }
+      .tag {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        font-weight: 700;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 1px 0 var(--b3);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 0;
+      }
+      h1 {
+        font:
+          800 30px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      .s {
+        font-size: 12.5px;
+        color: var(--mute);
+      }
+      .link {
+        font-size: 12.5px;
+        color: var(--sec);
+        font-weight: 600;
+      }
+      .step {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 14px;
+        padding: 12px 0;
+        border-top: 1px solid var(--b2);
+      }
+      .num {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        background: var(--b2);
+      }
+      .step.now .num {
+        background: var(--pri);
+        color: #fff;
+      }
+      .step b {
+        display: block;
+        font-size: 15px;
+      }
+      .banks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .banks span {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 5px 11px;
+        border-radius: 999px;
+        background: var(--b2);
+      }
+      .banks span.on {
+        background: var(--ink);
+        color: var(--b1);
+      }
+      .tip {
+        margin-top: 8px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--b2);
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
+      .drop {
+        border: 2px dashed var(--pri);
+        border-radius: 14px;
+        padding: 16px;
+        text-align: center;
+        margin-top: 8px;
+        background: color-mix(in oklab, var(--pri) 6%, transparent);
+      }
+      .btn {
+        display: inline-block;
+        padding: 9px 16px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 13px;
+        background: var(--b2);
+      }
+      .btn.p {
+        background: var(--pri);
+        color: #fff;
+      }
+      .skip {
+        margin-top: auto;
+        font-size: 12.5px;
+        color: var(--mute);
+      }
+      .io {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+      }
+      .io div {
+        background: var(--b2);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+      .io b {
+        font:
+          800 20px/1.2 'Trebuchet MS',
+          sans-serif;
+        display: block;
+        font-variant-numeric: tabular-nums;
+      }
+      .n {
+        color: var(--neg);
+      }
+      .p {
+        color: var(--pos);
+      }
+      .cat {
+        display: grid;
+        grid-template-columns: 110px 1fr 80px;
+        gap: 10px;
+        align-items: center;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+      .cat i {
+        display: block;
+        height: 12px;
+        border-radius: 6px;
+        background: var(--sec);
+      }
+      .cat .r {
+        text-align: right;
+      }
+      .nx {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 10px 12px;
+        border-radius: 12px;
+      }
+      .nx b {
+        display: block;
+      }
+      .w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .t {
+        background: color-mix(in oklab, var(--sec) 14%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="col">
+        <span class="tag">Before · an account with nothing imported yet</span>
+        <div class="card">
+          <div>
+            <h1>Get your first month in</h1>
+            <p class="s" style="margin-top: 8px">
+              Three steps, about five minutes. You only see this once.
+            </p>
+          </div>
+          <div class="step now">
+            <span class="num">1</span>
+            <div>
+              <b>Download a CSV from your bank</b
+              ><span class="s">One account, the last month or two is plenty to start.</span>
+              <div class="banks">
+                <span class="on">KBC</span><span>Belfius</span><span>ING</span
+                ><span>BNP Paribas Fortis</span><span>Argenta</span><span>Another bank</span>
+              </div>
+              <div class="tip">
+                KBC's export is recognised automatically. Pick the CSV option, not PDF.
+                <span class="s">(Per-bank wording to be written from real exports.)</span>
+              </div>
+            </div>
+          </div>
+          <div class="step now">
+            <span class="num">2</span>
+            <div>
+              <b>Drop it here</b
+              ><span class="s"
+                >The account is created from the IBAN in the file. You just name it.</span
+              >
+              <div class="drop">
+                <b>Drop the CSV</b> <span class="s">or</span>
+                <span class="btn" style="margin-left: 6px">Choose file</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <span class="num">3</span>
+            <div>
+              <b>See where it went</b
+              ><span class="s"
+                >Income, spending and the biggest categories for that month, right after the
+                import.</span
+              >
+            </div>
+          </div>
+          <p class="skip">
+            Done this before? <span class="link">Hide the guide and show the plain importer</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="col">
+        <span class="tag">After · the first import's overview</span>
+        <div class="card">
+          <div>
+            <h1>Your September, from 130 transactions</h1>
+            <p class="s" style="margin-top: 8px">KBC Checking · 1–30 September 2026</p>
+          </div>
+          <div class="io">
+            <div><span class="s">Money in</span><b class="p">+€3,420.00</b></div>
+            <div><span class="s">Money out</span><b class="n">−€3,292.18</b></div>
+            <div><span class="s">Kept</span><b>€127.82</b></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span class="tag">Biggest spending, so far</span>
+            <div class="cat">
+              <span>Housing</span><i style="width: 100%"></i><span class="r">€1,215.00</span>
+            </div>
+            <div class="cat">
+              <span>Groceries</span><i style="width: 46%"></i><span class="r">€562.40</span>
+            </div>
+            <div class="cat">
+              <span>Utilities</span><i style="width: 24%"></i><span class="r">€291.30</span>
+            </div>
+            <div class="cat">
+              <span>Uncategorised</span><i style="width: 36%; background: var(--warn)"></i
+              ><span class="r">€438.90</span>
+            </div>
+          </div>
+          <div class="nx w">
+            <span>①</span
+            ><span
+              ><b>Give 26 transactions a category</b
+              ><span class="s"
+                >Each one you sort can become a rule, so next month sorts itself.</span
+              ></span
+            >
+          </div>
+          <div class="nx t">
+            <span>②</span
+            ><span
+              ><b>Import your savings account next</b
+              ><span class="s"
+                >The €600 that went there is counted as spending until both sides are in.</span
+              ></span
+            >
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: auto">
+            <span class="btn p">Sort the 26 →</span><span class="btn">Import another account</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+<!-- round b24020a9 -->

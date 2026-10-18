@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Who you paid</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        font:
+          800 28px/1 'Trebuchet MS',
+          sans-serif;
+        margin-right: 8px;
+      }
+      .pick {
+        display: flex;
+        gap: 6px;
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 6px 8px;
+      }
+      .pick span {
+        padding: 2px 10px;
+      }
+      .pick .cur {
+        background: var(--ink);
+        color: var(--b1);
+        border-radius: 999px;
+      }
+      .sp {
+        flex: 1;
+      }
+      .btn {
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 7px 14px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 310px;
+        gap: 20px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 20px 22px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .k {
+        font-size: 12px;
+        color: var(--mute);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .big {
+        font:
+          800 44px/1.05 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        background: var(--b2);
+        border-radius: 999px;
+        padding: 4px;
+      }
+      .tabs span {
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .tabs .on {
+        background: var(--b1);
+        box-shadow: 0 1px 2px #0002;
+      }
+      .th,
+      .row {
+        display: grid;
+        grid-template-columns: 28px 210px 1fr 300px 90px;
+        align-items: center;
+        gap: 14px;
+      }
+      .th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--mute);
+        padding-bottom: 6px;
+        border-bottom: 2px solid var(--b3);
+      }
+      .row {
+        height: 52px;
+        border-bottom: 1px solid var(--b2);
+        font-variant-numeric: tabular-nums;
+      }
+      .rk {
+        color: var(--mute);
+        font-weight: 700;
+        text-align: right;
+      }
+      .nm b {
+        display: block;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--sec) 16%, transparent);
+        color: var(--sec);
+      }
+      .bar {
+        height: 14px;
+        border-radius: 6px;
+        background: var(--pri);
+      }
+      .rug {
+        position: relative;
+        height: 22px;
+        border-bottom: 1px solid var(--b3);
+      }
+      .rug i {
+        position: absolute;
+        bottom: 0;
+        width: 3px;
+        border-radius: 2px 2px 0 0;
+        background: var(--ink);
+      }
+      .amt {
+        text-align: right;
+        font-weight: 700;
+      }
+      .amt small {
+        display: block;
+        font-weight: 400;
+        color: var(--mute);
+        font-size: 11px;
+      }
+      .axis {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--mute);
+      }
+      .more {
+        margin-top: 12px;
+        font-weight: 600;
+        color: var(--sec);
+      }
+      .rail {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .v {
+        font:
+          800 26px/1.1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .fix a {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-radius: 12px;
+        margin-top: 8px;
+        font-weight: 600;
+      }
+      .w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .i {
+        background: color-mix(in oklab, var(--sec) 16%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <header>
+        <h1>Dashboard</h1>
+        <div class="pick">
+          <span>‹</span><span class="cur">This month</span><span>Last full month</span
+          ><span>Custom</span><span>›</span>
+        </div>
+        <div class="sp"></div>
+        <span class="btn">Hide amounts</span><span class="btn">Dashboard settings</span>
+      </header>
+      <div class="grid">
+        <section class="card">
+          <div class="head">
+            <div>
+              <div class="k">Spent · 1–18 October</div>
+              <div class="big">€1,842.30</div>
+              <div class="s">94 payments to 41 payees</div>
+            </div>
+            <div class="tabs"><span class="on">By payee</span><span>By category</span></div>
+          </div>
+          <div class="th">
+            <span></span><span>Payee</span><span>Amount</span
+            ><span>When it was paid · 1 → 18 Oct</span><span style="text-align: right">Total</span>
+          </div>
+          <div class="row">
+            <span class="rk">1</span
+            ><span class="nm"><b>Landlord · J. Peeters</b><span class="chip">Housing</span></span
+            ><span class="bar" style="width: 100%"></span
+            ><span class="rug"><i style="left: 0%; height: 22px"></i></span
+            ><span class="amt">€455.00<small>1 payment</small></span>
+          </div>
+          <div class="row">
+            <span class="rk">2</span
+            ><span class="nm"><b>Colruyt</b><span class="chip">Groceries</span></span
+            ><span class="bar" style="width: 84%"></span
+            ><span class="rug"
+              ><i style="left: 6%; height: 14px"></i><i style="left: 30%; height: 18px"></i
+              ><i style="left: 52%; height: 22px"></i><i style="left: 70%; height: 12px"></i
+              ><i style="left: 93%; height: 16px"></i></span
+            ><span class="amt">€381.60<small>5 payments</small></span>
+          </div>
+          <div class="row">
+            <span class="rk">3</span
+            ><span class="nm"><b>Delhaize</b><span class="chip">Groceries</span></span
+            ><span class="bar" style="width: 51%"></span
+            ><span class="rug"
+              ><i style="left: 12%; height: 9px"></i><i style="left: 24%; height: 7px"></i
+              ><i style="left: 41%; height: 10px"></i><i style="left: 58%; height: 6px"></i
+              ><i style="left: 76%; height: 11px"></i><i style="left: 88%; height: 8px"></i></span
+            ><span class="amt">€230.80<small>6 payments</small></span>
+          </div>
+          <div class="row">
+            <span class="rk">4</span
+            ><span class="nm"><b>Fluvius</b><span class="chip">Utilities</span></span
+            ><span class="bar" style="width: 23%"></span
+            ><span class="rug"><i style="left: 64%; height: 22px"></i></span
+            ><span class="amt">€104.80<small>1 payment</small></span>
+          </div>
+          <div class="row">
+            <span class="rk">5</span
+            ><span class="nm"><b>Shell</b><span class="chip">Transport</span></span
+            ><span class="bar" style="width: 21%"></span
+            ><span class="rug"
+              ><i style="left: 47%; height: 20px"></i><i style="left: 88%; height: 12px"></i></span
+            ><span class="amt">€96.20<small>2 payments</small></span>
+          </div>
+          <div class="row">
+            <span class="rk">6</span
+            ><span class="nm"><b>Proximus</b><span class="chip">Utilities</span></span
+            ><span class="bar" style="width: 16%"></span
+            ><span class="rug"><i style="left: 23%; height: 22px"></i></span
+            ><span class="amt">€71.30<small>1 payment</small></span>
+          </div>
+          <div class="row">
+            <span class="rk">7</span
+            ><span class="nm"><b>Takeaway.com</b><span class="chip">Eating out</span></span
+            ><span class="bar" style="width: 15%"></span
+            ><span class="rug"
+              ><i style="left: 17%; height: 10px"></i><i style="left: 53%; height: 12px"></i
+              ><i style="left: 82%; height: 9px"></i><i style="left: 99%; height: 11px"></i></span
+            ><span class="amt">€68.45<small>4 payments</small></span>
+          </div>
+          <div class="row">
+            <span class="rk">8</span
+            ><span class="nm"><b>Apotheek Lievens</b><span class="chip">Health</span></span
+            ><span class="bar" style="width: 13%"></span
+            ><span class="rug"
+              ><i style="left: 35%; height: 14px"></i><i style="left: 76%; height: 8px"></i></span
+            ><span class="amt">€58.00<small>2 payments</small></span>
+          </div>
+          <div
+            class="axis"
+            style="
+              margin-left: calc(
+                28px + 210px + 14px + 14px + (100% - 28px - 210px - 300px - 90px - 56px)
+              );
+              width: 300px;
+            "
+          >
+            <span>1 Oct</span><span>9</span><span>18 Oct</span>
+          </div>
+          <p class="more">33 more payees · €376.15 →</p>
+        </section>
+        <aside class="rail">
+          <div class="card">
+            <div class="k">Net worth · today</div>
+            <div class="v">€48,915.62</div>
+            <div class="s">Across 5 accounts</div>
+          </div>
+          <div class="card pair">
+            <div>
+              <div class="k">Income</div>
+              <div class="v">€3,420</div>
+              <div class="s">€190/day</div>
+            </div>
+            <div>
+              <div class="k">Net cash flow</div>
+              <div class="v" style="color: var(--pos)">+€1,578</div>
+              <div class="s">46% kept</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="k">Moved to savings</div>
+            <div class="v">€600 <small class="s">· 17.5% of income</small></div>
+          </div>
+          <div class="card fix">
+            <div class="k">Needs a look</div>
+            <a class="w">14 uncategorised <span>€211.40 →</span></a>
+            <a class="i">2 transfers to review <span>→</span></a>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </body>
+</html>

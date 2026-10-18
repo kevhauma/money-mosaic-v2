@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>What's coming</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 0 28px 22px;
+        overflow: hidden;
+      }
+      .kept {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        height: 64px;
+        margin-bottom: 16px;
+        border-bottom: 2px dashed var(--b3);
+        color: var(--mute);
+        font-size: 13px;
+      }
+      .kept span {
+        background: var(--b1);
+        border-radius: 12px;
+        padding: 8px 14px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 18px 22px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      h2 {
+        font:
+          700 17px/1.2 system-ui,
+          sans-serif;
+      }
+      .k {
+        font-size: 12px;
+        color: var(--mute);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .v {
+        font:
+          800 24px/1.1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 18px;
+      }
+      .hd {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 10px;
+      }
+      .nums {
+        display: flex;
+        gap: 28px;
+      }
+      .plot {
+        position: relative;
+        height: 330px;
+        margin-left: 46px;
+        border-bottom: 1px solid var(--b3);
+        border-left: 1px solid var(--b3);
+      }
+      .gl {
+        position: absolute;
+        left: -46px;
+        right: 0;
+        border-top: 1px dashed var(--b3);
+        font-size: 11px;
+        color: var(--mute);
+      }
+      .lbl {
+        position: absolute;
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--b1);
+        padding: 1px 6px;
+        border-radius: 6px;
+        border: 1px solid var(--b3);
+        white-space: nowrap;
+      }
+      .days {
+        display: flex;
+        justify-content: space-between;
+        margin-left: 46px;
+        font-size: 11px;
+        color: var(--mute);
+        padding-top: 4px;
+      }
+      .tx {
+        display: grid;
+        grid-template-columns: 52px 1fr 80px 84px;
+        gap: 8px;
+        align-items: center;
+        padding: 9px 0;
+        border-top: 1px solid var(--b2);
+        font-variant-numeric: tabular-nums;
+      }
+      .tx .d {
+        font-weight: 700;
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .tx b {
+        text-align: right;
+      }
+      .tx .bal {
+        text-align: right;
+        color: var(--mute);
+        font-size: 12px;
+      }
+      .chip {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--sec);
+        display: block;
+      }
+      .inc b {
+        color: var(--pos);
+      }
+      .goals {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr) 1.2fr;
+        gap: 14px;
+        margin-top: 16px;
+      }
+      .prog {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--b2);
+        margin: 8px 0 4px;
+      }
+      .prog i {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+        background: var(--sec);
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .fix a {
+        display: block;
+        padding: 7px 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      .w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .i {
+        background: color-mix(in oklab, var(--sec) 16%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="kept">
+        ↑ Unchanged above:
+        <span>Net worth · Income · Expense · Net cash flow · Moved to savings</span
+        ><span>Category breakdown, income and expense pies</span>
+      </div>
+      <div class="grid">
+        <section class="card">
+          <div class="hd">
+            <div>
+              <h2>Next 30 days · KBC Checking</h2>
+              <div class="s">Projected from 11 recurring payments and 1 loan</div>
+            </div>
+            <div class="nums">
+              <div>
+                <div class="k">Balance today</div>
+                <div class="v">€2,316</div>
+              </div>
+              <div>
+                <div class="k">Still to pay</div>
+                <div class="v">€1,403</div>
+              </div>
+              <div>
+                <div class="k">Lowest point</div>
+                <div class="v">€913 <span class="s">· 24 Oct</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="plot">
+            <span class="gl" style="bottom: 100%">€4k</span
+            ><span class="gl" style="bottom: 50%">€2k</span
+            ><span class="gl" style="bottom: 0%">0</span>
+            <svg
+              viewBox="0 0 1000 330"
+              preserveAspectRatio="none"
+              style="position: absolute; inset: 0; width: 100%; height: 100%"
+            >
+              <path
+                d="M0,139 H70 V155 H200 V167 H230 V211 H330 V255 H430 V255 H460 V40 H560 V40 H600 V95 H720 V110 H800 V125 H1000"
+                fill="none"
+                stroke="#7a6ee0"
+                stroke-width="3"
+              />
+              <path
+                d="M0,139 H70 V155 H200 V167 H230 V211 H330 V255 H430 V255 H460 V40 H560 V40 H600 V95 H720 V110 H800 V125 H1000 V330 H0Z"
+                fill="#7a6ee0"
+                opacity=".1"
+              />
+            </svg>
+            <span class="lbl" style="left: 6%; top: 120px">Car insurance −€62</span>
+            <span class="lbl" style="left: 21%; top: 180px">Ethias −€184</span>
+            <span class="lbl" style="left: 32%; top: 262px">KBC loan −€410</span>
+            <span class="lbl" style="left: 46%; top: 14px; color: var(--pos)">Salary +€3,395</span>
+            <span class="lbl" style="left: 60%; top: 66px">Rent −€455</span>
+            <span class="lbl" style="left: 72%; top: 132px">Proximus −€71</span>
+          </div>
+          <div class="days">
+            <span>19 Oct</span><span>26 Oct</span><span>2 Nov</span><span>9 Nov</span
+            ><span>17 Nov</span>
+          </div>
+        </section>
+        <aside class="card">
+          <div class="k">Coming up</div>
+          <div class="tx">
+            <span class="d">20 Oct</span
+            ><span>Car insurance<span class="chip">Insurance</span></span
+            ><b>−€62.40</b><span class="bal">€2,254</span>
+          </div>
+          <div class="tx">
+            <span class="d">22 Oct</span><span>Ethias<span class="chip">Insurance</span></span
+            ><b>−€184.40</b><span class="bal">€2,069</span>
+          </div>
+          <div class="tx">
+            <span class="d">23 Oct</span><span>Basic-Fit<span class="chip">Sport</span></span
+            ><b>−€29.99</b><span class="bal">€2,039</span>
+          </div>
+          <div class="tx">
+            <span class="d">24 Oct</span
+            ><span>KBC car loan<span class="chip">Loan · 31 of 60</span></span
+            ><b>−€410.00</b><span class="bal">€1,629</span>
+          </div>
+          <div class="tx">
+            <span class="d">25 Oct</span
+            ><span>Savings order<span class="chip">Transfer to Belfius</span></span
+            ><b>−€600.00</b><span class="bal">€1,029</span>
+          </div>
+          <div class="tx inc">
+            <span class="d">27 Oct</span
+            ><span>Salary · Acme NV<span class="chip">Income</span></span
+            ><b>+€3,395</b><span class="bal">€4,424</span>
+          </div>
+          <div class="tx">
+            <span class="d">1 Nov</span
+            ><span>Rent · J. Peeters<span class="chip">Housing</span></span
+            ><b>−€455.00</b><span class="bal">€3,969</span>
+          </div>
+          <div class="tx">
+            <span class="d">5 Nov</span><span>Proximus<span class="chip">Utilities</span></span
+            ><b>−€71.30</b><span class="bal">€3,898</span>
+          </div>
+        </aside>
+      </div>
+      <div class="goals">
+        <div class="card">
+          <div class="k">Goal · Emergency fund</div>
+          <div class="prog"><i style="width: 72%"></i></div>
+          <div class="s">€7,200 of €10,000</div>
+        </div>
+        <div class="card">
+          <div class="k">Goal · New laptop</div>
+          <div class="prog"><i style="width: 40%"></i></div>
+          <div class="s">€600 of €1,500 · March</div>
+        </div>
+        <div class="card">
+          <div class="k">Car loan left</div>
+          <div class="v">€11,890</div>
+          <div class="s">29 instalments</div>
+        </div>
+        <div class="card fix">
+          <div class="k">Needs a look</div>
+          <a class="w">14 uncategorised · €211.40 →</a><a class="i">2 transfers to review →</a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

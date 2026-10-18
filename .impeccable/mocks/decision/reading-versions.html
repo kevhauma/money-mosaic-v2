@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reading and columns</title>
+    <style>
+      body {
+        margin: 0;
+        background: #2a2030;
+        color: #f8f5ec;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+      }
+      header {
+        padding: 24px 32px 4px;
+      }
+      h1 {
+        margin: 0;
+        font:
+          800 24px/1.1 'Trebuchet MS',
+          sans-serif;
+      }
+      header p,
+      section p {
+        color: #cfc6d4;
+        margin: 6px 0 12px;
+        max-width: 95ch;
+      }
+      section {
+        padding: 22px 32px;
+      }
+      h2 {
+        margin: 0;
+        font: 700 19px/1.2 system-ui;
+        color: #f0645a;
+      }
+      .frame {
+        width: 1152px;
+        height: 720px;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px #0006;
+      }
+      iframe {
+        width: 1440px;
+        height: 900px;
+        border: 0;
+        transform: scale(0.8);
+        transform-origin: 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Reading the file, then the columns</h1>
+      <p>
+        The page now runs: Files → How the file is read → Columns → Account → Check → What changed.
+        For a recognised KBC or Belfius file, steps 2 and 3 both fold themselves.
+      </p>
+    </header>
+    <section>
+      <h2>Step 2 · How the file is read</h2>
+      <p>
+        Its own section, before Columns. Each of the six settings is a plain statement with the
+        evidence from your file. Only the uncertain one asks (here the encoding, with both readings
+        side by side). When everything is sure, the section folds itself into one "Read as" line and
+        you never stop here.
+      </p>
+      <div class="frame">
+        <iframe
+          srcdoc='<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>How the file is read</title>
+<style>:root{--b1:#f8f5ec;--b2:#efeadc;--b3:#dfd8c6;--ink:#2a2030;--mute:#6f6676;--pri:#f0645a;--sec:#7a6ee0;--acc:#3fd6a8;--pos:#2f9e5b;--neg:#d6336c;--warn:#e9b730}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--b2);display:flex}
+nav{width:232px;background:var(--b1);border-right:1px solid var(--b3);padding:20px 14px;flex:none}
+.brand{font:800 22px/1 "Trebuchet MS",sans-serif;margin:0 8px 26px}.brand b{color:var(--pri)}
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:18px 8px 6px}
+nav a{display:block;padding:8px 10px;border-radius:10px}nav a.on{background:var(--pri);color:#fff;font-weight:600}
+main{flex:1;padding:22px 28px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:10px}
+.narrow{width:720px}.wide{width:1060px}
+.hd{display:flex;justify-content:space-between;align-items:baseline}
+h1{font:800 26px/1.1 "Trebuchet MS",sans-serif}
+h2{font:700 18px/1.2 system-ui}
+.s{font-size:12.5px;color:var(--mute)}
+.link{font-size:12.5px;color:var(--sec);font-weight:600}
+.sec{background:var(--b1);border-radius:16px;box-shadow:0 1px 0 var(--b3)}
+.fold{display:flex;align-items:center;gap:14px;padding:12px 18px}.fold .sum{flex:1}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none;background:var(--acc)}
+.act{padding:18px 22px;outline:2px solid var(--pri)}
+.act .num{background:var(--pri);color:#fff}
+.head{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.ghost{display:flex;gap:14px;align-items:center;padding:12px 18px;border:2px dashed var(--b3);border-radius:16px;color:var(--mute)}
+.ghost .num{background:transparent;border:2px solid var(--b3);color:var(--mute)}
+.btn{display:inline-block;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;background:var(--b2)}
+.btn.p{background:var(--pri);color:#fff}
+.chip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:color-mix(in oklab,var(--acc) 24%,transparent)}
+.chip.w{background:color-mix(in oklab,var(--warn) 32%,transparent)}
+.chip.g{background:var(--b2);color:var(--mute)}
+.n{color:var(--neg)}.p{color:var(--pos)}
+.mut{color:var(--mute)}
+.foot{display:flex;gap:12px;align-items:center;margin-top:14px}
+</style></head><body>
+<nav><div class="brand">Money<b>Mosaic</b></div>
+<div class="grp">Insights</div><a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+<div class="grp">Data</div><a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+<div class="grp">More</div><a>FAQ</a><a>Settings</a></nav>
+<main>
+<div class="narrow hd"><h1>Import</h1><span class="link">Past imports (8)</span></div>
+<div class="sec fold narrow"><span class="num">✓</span><span class="sum"><b>argenta-export.csv</b> <span class="s">· 214 rows · a format we have not seen</span></span><span class="link">change</span></div>
+<style>
+.raw{font:12.5px/1.7 Consolas,"Cascadia Mono",monospace;background:var(--ink);color:#e9e2ee;border-radius:12px;padding:12px 16px;white-space:pre;overflow:hidden}
+.raw .ln{color:#8d8494;margin-right:14px}
+.raw .d{color:var(--ink);background:var(--acc);border-radius:3px;padding:0 2px;font-weight:700}
+.raw .bad{background:color-mix(in oklab,var(--warn) 85%,transparent);color:var(--ink);border-radius:3px;padding:0 2px}
+.raw .hdr{color:#cfc6d4;font-style:italic}
+.rd{display:grid;grid-template-columns:250px 1fr 120px;gap:14px;align-items:center;padding:9px 6px;border-top:1px solid var(--b2);font-size:13.5px}
+.rd .k{font-weight:700}
+.rd .ev{font-variant-numeric:tabular-nums;color:var(--mute)}
+.rd .ev b{color:var(--ink)}
+.rd .chip{justify-self:end}
+.rd.chk{background:color-mix(in oklab,var(--warn) 14%,transparent);border-radius:12px;border-top-color:transparent;align-items:start}
+.fixes{display:flex;gap:8px;margin-top:8px}
+.opt{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:10px;background:var(--b1);border:1px solid var(--b3)}
+.opt.on{border:2px solid var(--pri);background:color-mix(in oklab,var(--pri) 8%,var(--b1))}
+.lab{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:12px 0 6px}
+.why{display:flex;gap:10px;align-items:center;margin-top:8px}
+</style>
+<div class="sec act wide">
+<div class="head"><span class="num">2</span><h2>How the file is read</h2><span class="s" style="margin-left:auto">Opened because one thing looked off. Usually this folds itself.</span></div>
+<div class="lab">The first lines of argenta-export.csv, as we read them now</div>
+<div class="raw"><span class="ln">1</span><span class="hdr">Rekening<span class="d">;</span>Boekingsdatum<span class="d">;</span>Valutadatum<span class="d">;</span>Bedrag<span class="d">;</span>Munt<span class="d">;</span>Mededeling<span class="d">;</span>Naam tegenpartij<span class="d">;</span>Rekening tegenpartij</span>
+<span class="ln">2</span>BE12 9730 1234 5678<span class="d">;</span>30/09/2026<span class="d">;</span>30/09/2026<span class="d">;</span>-84,12<span class="d">;</span>EUR<span class="d">;</span>BETALING MET KAART 29/09<span class="d">;</span>COLRUYT GENT<span class="d">;</span>
+<span class="ln">3</span>BE12 9730 1234 5678<span class="d">;</span>29/09/2026<span class="d">;</span>29/09/2026<span class="d">;</span>-23,50<span class="d">;</span>EUR<span class="d">;</span>BETALING MET KAART 28/09<span class="d">;</span><span class="bad">CAFÃ‰ RÃ‰SISTANCE</span><span class="d">;</span>
+<span class="ln">4</span>BE12 9730 1234 5678<span class="d">;</span>28/09/2026<span class="d">;</span>28/09/2026<span class="d">;</span>3120,00<span class="d">;</span>EUR<span class="d">;</span>LOON SEPTEMBER<span class="d">;</span>ACME NV<span class="d">;</span>BE71 0961 2345 6769</div>
+
+<div class="lab">What we read from it</div>
+<div class="rd"><span class="k">Columns are split by ;</span><span class="ev">8 columns on every line</span><span class="chip">✓ sure</span></div>
+<div class="rd"><span class="k">Line 1 is the header</span><span class="ev">names, not values · data starts on line 2</span><span class="chip">✓ sure</span></div>
+<div class="rd"><span class="k">Dates are day/month/year</span><span class="ev">30/09/2026 reads as <b>30 Sep 2026</b></span><span class="chip">✓ sure</span></div>
+<div class="rd"><span class="k">A comma marks the decimals</span><span class="ev">-84,12 reads as <b>−€84.12</b></span><span class="chip">✓ sure</span></div>
+<div class="rd"><span class="k">Minus means money out</span><span class="ev">ACME NV salary <b class="p">+€3,120.00</b> comes in, COLRUYT GENT goes out</span><span class="chip">✓ sure</span></div>
+<div class="rd chk"><span class="k">Text encoding</span><span class="ev">Some letters look broken: <b>CAFÃ‰ RÃ‰SISTANCE</b>. Which one reads right?
+<div class="fixes"><span class="opt">UTF-8 · CAFÃ‰ RÃ‰SISTANCE</span><span class="opt on">Windows-1252 · CAFÉ RÉSISTANCE</span></div></span><span class="chip w">check this</span></div>
+<div class="why"><span class="btn p">Read it like this</span><span class="s">Any line can be changed by clicking it. These settings are saved with the columns, under "Argenta".</span></div>
+</div>
+
+<div class="ghost narrow"><span class="num">3</span><span><b style="color:var(--ink)">Columns</b> · guessed from the headers and values</span></div>
+<div class="ghost narrow"><span class="num">4</span><span><b style="color:var(--ink)">Account</b> · usually picked for you from the IBAN</span></div>
+<div class="ghost narrow"><span class="num">5</span><span><b style="color:var(--ink)">Check</b> · then What changed</span></div>
+</main></body></html>
+'
+        ></iframe>
+      </div>
+    </section>
+    <section>
+      <h2>Step 3 · Columns: we guess, you check</h2>
+      <p>
+        Idea A from before, without the settings line, which now lives in step 2 (folded above).
+        Only "Description" asks for a look.
+      </p>
+      <div class="frame">
+        <iframe
+          srcdoc='<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Columns, after reading</title>
+<style>:root{--b1:#f8f5ec;--b2:#efeadc;--b3:#dfd8c6;--ink:#2a2030;--mute:#6f6676;--pri:#f0645a;--sec:#7a6ee0;--acc:#3fd6a8;--pos:#2f9e5b;--neg:#d6336c;--warn:#e9b730}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--b2);display:flex}
+nav{width:232px;background:var(--b1);border-right:1px solid var(--b3);padding:20px 14px;flex:none}
+.brand{font:800 22px/1 "Trebuchet MS",sans-serif;margin:0 8px 26px}.brand b{color:var(--pri)}
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:18px 8px 6px}
+nav a{display:block;padding:8px 10px;border-radius:10px}nav a.on{background:var(--pri);color:#fff;font-weight:600}
+main{flex:1;padding:22px 28px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:10px}
+.narrow{width:720px}.wide{width:1060px}
+.hd{display:flex;justify-content:space-between;align-items:baseline}
+h1{font:800 26px/1.1 "Trebuchet MS",sans-serif}
+h2{font:700 18px/1.2 system-ui}
+.s{font-size:12.5px;color:var(--mute)}
+.link{font-size:12.5px;color:var(--sec);font-weight:600}
+.sec{background:var(--b1);border-radius:16px;box-shadow:0 1px 0 var(--b3)}
+.fold{display:flex;align-items:center;gap:14px;padding:12px 18px}.fold .sum{flex:1}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none;background:var(--acc)}
+.act{padding:18px 22px;outline:2px solid var(--pri)}
+.act .num{background:var(--pri);color:#fff}
+.head{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.ghost{display:flex;gap:14px;align-items:center;padding:12px 18px;border:2px dashed var(--b3);border-radius:16px;color:var(--mute)}
+.ghost .num{background:transparent;border:2px solid var(--b3);color:var(--mute)}
+.btn{display:inline-block;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;background:var(--b2)}
+.btn.p{background:var(--pri);color:#fff}
+.chip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:color-mix(in oklab,var(--acc) 24%,transparent)}
+.chip.w{background:color-mix(in oklab,var(--warn) 32%,transparent)}
+.chip.g{background:var(--b2);color:var(--mute)}
+.n{color:var(--neg)}.p{color:var(--pos)}
+.mut{color:var(--mute)}
+.foot{display:flex;gap:12px;align-items:center;margin-top:14px}
+</style></head><body>
+<nav><div class="brand">Money<b>Mosaic</b></div>
+<div class="grp">Insights</div><a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+<div class="grp">Data</div><a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+<div class="grp">More</div><a>FAQ</a><a>Settings</a></nav>
+<main>
+<div class="narrow hd"><h1>Import</h1><span class="link">Past imports (8)</span></div>
+<div class="sec fold narrow"><span class="num">✓</span><span class="sum"><b>argenta-export.csv</b> <span class="s">· 214 rows · a format we have not seen</span></span><span class="link">change</span></div>
+<div class="sec fold narrow"><span class="num">✓</span><span class="sum"><b>Read as</b> <span class="s">; separated · comma decimals · day/month/year · Windows-1252</span></span><span class="link">change</span></div>
+<style>
+.map{display:grid;grid-template-columns:160px 22px 220px 1fr 120px;align-items:center;gap:12px;padding:10px 6px;border-top:1px solid var(--b2);font-size:13.5px}
+.map .k{font-weight:700}.map .src{font-weight:600;background:var(--b2);border:1px solid var(--b3);border-radius:10px;padding:6px 10px;display:flex;justify-content:space-between}
+.map .smp{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.map .chip{justify-self:end}
+.map.chk{background:color-mix(in oklab,var(--warn) 14%,transparent);border-radius:12px;border-top-color:transparent}
+.tier{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:14px 0 2px}
+.read{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--mute);padding:10px 12px;background:var(--b2);border-radius:12px;margin-top:14px}
+.read b{color:var(--ink);font-weight:600}
+</style>
+<div class="sec act wide">
+<div class="head"><span class="num">3</span><h2>Columns for argenta-export.csv</h2><span class="s" style="margin-left:auto">We read the headers and the first rows. Check the one we were unsure about.</span></div>
+<div class="tier">Needed</div>
+<div class="map"><span class="k">Date</span><span>←</span><span class="src">Boekingsdatum <span class="mut">▾</span></span><span class="smp">30/09/2026 reads as <b>30 Sep 2026</b></span><span class="chip">✓ sure</span></div>
+<div class="map"><span class="k">Amount</span><span>←</span><span class="src">Bedrag <span class="mut">▾</span></span><span class="smp">-84,12 reads as <b class="n">−€84.12</b></span><span class="chip">✓ sure</span></div>
+<div class="map chk"><span class="k">Description</span><span>←</span><span class="src">Mededeling <span class="mut">▾</span></span><span class="smp">BETALING MET KAART 29/09 &amp;nbsp;<span class="s">or maybe: Omschrijving</span></span><span class="chip w">check this</span></div>
+<div class="tier">Also found: these make rules and transfers smarter</div>
+<div class="map"><span class="k">Who it was with</span><span>←</span><span class="src">Naam tegenpartij <span class="mut">▾</span></span><span class="smp">COLRUYT GENT</span><span class="chip">✓ sure</span></div>
+<div class="map"><span class="k">Their IBAN</span><span>←</span><span class="src">Rekening tegenpartij <span class="mut">▾</span></span><span class="smp">BE40 0910 0002 3456</span><span class="chip">✓ sure</span></div>
+<div class="map"><span class="k">Your IBAN</span><span>←</span><span class="src">Rekening <span class="mut">▾</span></span><span class="smp">BE12 9730 …, the same on every row</span><span class="chip">✓ sure</span></div>
+<div class="map" style="opacity:.6"><span class="k">Running balance</span><span>←</span><span class="src">none found <span class="mut">▾</span></span><span class="smp s">Optional. Only used to check totals.</span><span class="chip g">skipped</span></div>
+<div class="foot"><span class="btn p">Looks right</span><span class="s">Saved as "Argenta", so this kind of file is recognised next time.</span></div>
+</div>
+
+<div class="ghost narrow"><span class="num">4</span><span><b style="color:var(--ink)">Account</b> · usually picked for you from the IBAN</span></div>
+</main></body></html>
+'
+        ></iframe>
+      </div>
+    </section>
+  </body>
+</html>

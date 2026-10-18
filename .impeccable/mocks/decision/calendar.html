@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Spending calendar</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      h1 {
+        font:
+          800 28px/1 'Trebuchet MS',
+          sans-serif;
+        margin-right: 8px;
+      }
+      .pick {
+        display: flex;
+        gap: 6px;
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 6px 8px;
+      }
+      .pick span {
+        padding: 2px 10px;
+      }
+      .pick .cur {
+        background: var(--ink);
+        color: var(--b1);
+        border-radius: 999px;
+      }
+      .sp {
+        flex: 1;
+      }
+      .btn {
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 7px 14px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 330px;
+        gap: 18px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 18px 20px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .top {
+        display: flex;
+        align-items: flex-end;
+        gap: 36px;
+        margin-bottom: 14px;
+      }
+      .k {
+        font-size: 12px;
+        color: var(--mute);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .v {
+        font:
+          800 24px/1.1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .big {
+        font:
+          800 42px/1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .ahead {
+        color: var(--mute);
+      }
+      .ahead b {
+        color: var(--ink);
+      }
+      .cal {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+      }
+      .dow {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--mute);
+        padding: 0 8px;
+      }
+      .d {
+        height: 96px;
+        border-radius: 12px;
+        background: var(--b2);
+        padding: 7px 9px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        font-variant-numeric: tabular-nums;
+      }
+      .d .n {
+        font-size: 12px;
+        color: var(--mute);
+        font-weight: 600;
+      }
+      .d .a {
+        margin-top: auto;
+        font-weight: 700;
+      }
+      .d .f {
+        position: absolute;
+        left: 9px;
+        right: 9px;
+        bottom: 6px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--b3);
+      }
+      .d .f i {
+        display: block;
+        height: 100%;
+        border-radius: 2px;
+        background: var(--pri);
+      }
+      .d .tag {
+        font-size: 11px;
+        color: var(--sec);
+        font-weight: 600;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .d.out {
+        background: transparent;
+      }
+      .d.sel {
+        box-shadow: inset 0 0 0 2px var(--ink);
+        background: var(--b1);
+      }
+      .d.today .n {
+        color: var(--b1);
+        background: var(--pri);
+        border-radius: 999px;
+        padding: 0 7px;
+        align-self: flex-start;
+      }
+      .d.fut {
+        background: transparent;
+        border: 1.5px dashed var(--b3);
+      }
+      .d.fut .a {
+        color: var(--mute);
+        font-weight: 600;
+      }
+      .cats .r {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2px 10px;
+        margin-top: 10px;
+        font-variant-numeric: tabular-nums;
+      }
+      .cats .bar {
+        grid-column: 1/3;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--b2);
+      }
+      .cats .bar i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+        background: var(--pri);
+      }
+      .tx {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-top: 1px solid var(--b2);
+        font-variant-numeric: tabular-nums;
+      }
+      .tx span:first-child {
+        font-weight: 600;
+      }
+      .tx small {
+        display: block;
+        font-weight: 400;
+        color: var(--mute);
+      }
+      .rail {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .fix {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .fix a {
+        flex: 1;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .i {
+        background: color-mix(in oklab, var(--sec) 16%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <header>
+        <h1>Dashboard</h1>
+        <div class="pick">
+          <span>‹</span><span class="cur">This month</span><span>Last full month</span
+          ><span>Custom</span><span>›</span>
+        </div>
+        <div class="sp"></div>
+        <span class="btn">Hide amounts</span><span class="btn">Dashboard settings</span>
+      </header>
+      <div class="grid">
+        <section class="card">
+          <div class="top">
+            <div>
+              <div class="k">Spent in October so far</div>
+              <div class="big">€1,842.30</div>
+            </div>
+            <div class="ahead">
+              <div class="k">Still expected this month</div>
+              <div class="v">€638.00</div>
+              <div class="s">6 known payments, pencilled in</div>
+            </div>
+            <div class="ahead">
+              <div class="k">Same day in September</div>
+              <div class="v">€2,056.40</div>
+              <div class="s" style="color: var(--pos); font-weight: 600">▼ €214 less</div>
+            </div>
+          </div>
+          <div class="cal">
+            <div class="dow">Mon</div>
+            <div class="dow">Tue</div>
+            <div class="dow">Wed</div>
+            <div class="dow">Thu</div>
+            <div class="dow">Fri</div>
+            <div class="dow">Sat</div>
+            <div class="dow">Sun</div>
+            <div class="d out"></div>
+            <div class="d out"></div>
+            <div class="d out"></div>
+            <div class="d">
+              <span class="n">1</span><span class="tag">Rent</span><span class="a">€482.10</span
+              ><span class="f"><i style="width: 100%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">2</span><span class="a">€38.60</span
+              ><span class="f"><i style="width: 8%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">3</span><span class="a">€146.90</span
+              ><span class="f"><i style="width: 30%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">4</span><span class="a">€22.00</span
+              ><span class="f"><i style="width: 5%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">5</span><span class="tag">Proximus</span><span class="a">€71.30</span
+              ><span class="f"><i style="width: 15%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">6</span><span class="a">€12.40</span
+              ><span class="f"><i style="width: 3%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">7</span><span class="a">€0.00</span><span class="f"></span>
+            </div>
+            <div class="d">
+              <span class="n">8</span><span class="a">€64.75</span
+              ><span class="f"><i style="width: 13%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">9</span><span class="a">€88.20</span
+              ><span class="f"><i style="width: 18%"></i></span>
+            </div>
+            <div class="d sel">
+              <span class="n">10</span><span class="a">€211.35</span
+              ><span class="f"><i style="width: 44%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">11</span><span class="a">€41.00</span
+              ><span class="f"><i style="width: 9%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">12</span><span class="tag">Fluvius</span><span class="a">€104.80</span
+              ><span class="f"><i style="width: 22%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">13</span><span class="a">€19.90</span
+              ><span class="f"><i style="width: 4%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">14</span><span class="a">€57.15</span
+              ><span class="f"><i style="width: 12%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">15</span><span class="tag">Netflix · Spotify</span
+              ><span class="a">€33.98</span><span class="f"><i style="width: 7%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">16</span><span class="a">€96.40</span
+              ><span class="f"><i style="width: 20%"></i></span>
+            </div>
+            <div class="d">
+              <span class="n">17</span><span class="a">€178.30</span
+              ><span class="f"><i style="width: 37%"></i></span>
+            </div>
+            <div class="d today">
+              <span class="n">18</span><span class="a">€33.17</span
+              ><span class="f"><i style="width: 7%"></i></span>
+            </div>
+            <div class="d fut"><span class="n">19</span></div>
+            <div class="d fut">
+              <span class="n">20</span><span class="tag">Car insurance</span
+              ><span class="a">€62.40</span>
+            </div>
+            <div class="d fut"><span class="n">21</span></div>
+            <div class="d fut"><span class="n">22</span></div>
+            <div class="d fut"><span class="n">23</span></div>
+            <div class="d fut"><span class="n">24</span></div>
+            <div class="d fut">
+              <span class="n">25</span><span class="tag">Loan · KBC</span
+              ><span class="a">€410.00</span>
+            </div>
+          </div>
+        </section>
+        <aside class="rail">
+          <div class="card cats">
+            <div class="k">Where October went</div>
+            <div class="r">
+              <span>Groceries</span><b>€612.40</b
+              ><span class="bar"><i style="width: 100%"></i></span>
+            </div>
+            <div class="r">
+              <span>Housing</span><b>€455.00</b><span class="bar"><i style="width: 74%"></i></span>
+            </div>
+            <div class="r">
+              <span>Eating out</span><b>€231.80</b
+              ><span class="bar"><i style="width: 38%"></i></span>
+            </div>
+            <div class="r">
+              <span>Utilities</span><b>€168.25</b
+              ><span class="bar"><i style="width: 27%"></i></span>
+            </div>
+            <div class="r">
+              <span>Transport</span><b>€142.10</b
+              ><span class="bar"><i style="width: 23%"></i></span>
+            </div>
+            <div class="fix"><a class="w">14 uncategorised →</a><a class="i">2 transfers →</a></div>
+          </div>
+          <div class="card">
+            <div class="k">Friday 10 October · €211.35</div>
+            <div class="tx">
+              <span>Colruyt Gent<small>Groceries</small></span
+              ><b>€126.45</b>
+            </div>
+            <div class="tx">
+              <span>Shell Merelbeke<small>Transport</small></span
+              ><b>€64.90</b>
+            </div>
+            <div class="tx">
+              <span>Panos<small>Eating out</small></span
+              ><b>€20.00</b>
+            </div>
+          </div>
+          <div class="card" style="display: flex; justify-content: space-between">
+            <div>
+              <div class="k">Income</div>
+              <div class="v">€3,420</div>
+            </div>
+            <div>
+              <div class="k">Net worth</div>
+              <div class="v">€48,916</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </body>
+</html>

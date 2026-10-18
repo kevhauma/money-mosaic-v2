@@ -1,0 +1,64 @@
+{
+  "title": "Importer: from choosing a CSV to the overview",
+  "question": "Five ways to make the import calmer. Today every file walks through the same three steps, step 2 shows six file settings, a seven-step column stepper and two tables at once, even for a KBC file the app already recognises, and the summary ends on row counts with no next step. Each card fixes that a different way, and each runs the whole path. Lock one, steer (for example \"1 with the overview from 5\"), or re-roll.",
+  "options": [
+    {
+      "id": "fast-lane",
+      "label": "Confirm, don't configure",
+      "kicker": "MY PICK",
+      "lineage": "a bank app's transfer confirmation: one sentence, the numbers, one button",
+      "thesis": "A recognised file never shows the mapper. Step 2 becomes one sentence (130 new transactions, 1–30 Sep, into KBC Checking), five sample rows, and an Import button. The mapper opens only for an unknown file or on request.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["the existing wizard session and steps", "mm-paper, mm-table, mm-button", "the existing preset and saved-profile detection"],
+      "viewport": "Drop: one big target with a single reassurance line, past imports behind a link. Check: a recognition chip, the count as the headline, the account and how it was matched, five rows with the skipped overlap struck through, then Import. Overview: in and out, then three result lines (categorised by rules, needs a category, transfers linked), and one primary action, Sort the 26.",
+      "risk": "If a bank quietly changes its export, a recognised file can slip through looking fine. The header-mismatch check still catches renamed columns, and the sample rows are the eyeball check.",
+      "html": ".impeccable/mocks/decision/import-fast-lane.html"
+    },
+    {
+      "id": "point-at-column",
+      "label": "Point at the column",
+      "lineage": "a spreadsheet's \"select a range\" prompt",
+      "thesis": "For an unknown file, the raw CSV is the mapper. One question at a time (which column has the date, the amount, the description) and you click the column header. Delimiter, decimals and encoding are guessed and sit in one quiet line.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["the existing column-mapping form and samples", "a clickable mm-table header row", "the delimiter guesser"],
+      "viewport": "A big question at the top with three progress pills. Below it, the file's first rows as a table: answered columns are tagged, and the hovered header previews the reading (-84,12 becomes −€84.12). Underneath, the imported rows fill in as you answer. Beside them, the optional extras (counterparty, their IBAN, balance), each with why it helps, plus Skip extras.",
+      "risk": "It only helps unknown files, which are rare with KBC and Belfius presets in place. Pair it with idea 1 so a recognised file skips it entirely.",
+      "html": ".impeccable/mocks/decision/import-point-at-column.html"
+    },
+    {
+      "id": "one-page",
+      "label": "One page, top to bottom",
+      "lineage": "a checkout that folds each finished section into a single line",
+      "thesis": "No stepper and no Back/Next bar. File, account, check and result are sections on one page; only the current one is open, and each finished one folds to a line saying what you chose. The overview lands in place at the bottom.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["the existing wizard session (its steps become sections)", "mm-paper sections, mm-button", "a plain radio pair for duplicates"],
+      "viewport": "One centred 720px column. Two folded lines: the file (142 rows, KBC format) and the account (matched by IBAN), each with change. The open section: 130 new transactions, three sample rows, the duplicate choice as two cards defaulted to Skip the 12 I already have, and Add 130 transactions. Below, a dashed placeholder for What changed.",
+      "risk": "It loses the wide side-by-side map and preview, so mapping an unknown file needs its own expanded state. With several files the page gets long.",
+      "html": ".impeccable/mocks/decision/import-one-page.html"
+    },
+    {
+      "id": "monthly-pile",
+      "label": "The month's pile",
+      "lineage": "an email inbox's triage: the routine goes through, the odd one waits",
+      "thesis": "Built for the monthly routine of several exports at once. Each dropped file sorts itself out (bank, account by IBAN, overlap) and shows Ready or Needs you. Only the files that need you open up, and the ready ones can be imported straight away.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["the existing queue, batch mapping and account drafts", "mm-paper rows, mm-badge, a dark sticky action bar"],
+      "viewport": "September's exports, four rows. Two KBC files are Ready (130 and 58 new). A Belfius file Needs you: its account form is open, prefilled from the IBAN in the file. An unknown Argenta file Needs you: Map columns, or leave it out. A dark bar reads 2 ready · 2 need you, with Import the 2 ready files. Below, the overview: one row per account with period, added, in, out and what is left to do.",
+      "risk": "The biggest build: per-file status and partial imports change the session's batch logic. With a single file it is just a list of one, so it needs a calm single-file state.",
+      "html": ".impeccable/mocks/decision/import-monthly-pile.html"
+    },
+    {
+      "id": "first-month",
+      "label": "Your first month",
+      "lineage": "a seed packet: three steps on the front, what it will grow into on the back",
+      "thesis": "A first-run guide for an account with nothing imported yet: download from your bank, drop it here, see where it went. The first overview is the aha moment, a real month in and out with top categories and the two next steps that matter most.",
+      "palette": ["#f8f5ec", "#2a2030", "#f0645a", "#7a6ee0", "#3fd6a8"],
+      "materials": ["a seen flag in the per-account uiPreferences row (no localStorage)", "mm-paper, mm-button, simple category bars", "the existing account-from-IBAN detection"],
+      "viewport": "Left, before: Get your first month in, three numbered steps, bank chips with a tip for the chosen bank, the drop target inside step 2, and a link to hide the guide. Right, after: Your September, from 130 transactions; in, out and kept; four category bars with Uncategorised marked; then Give 26 a category and Import your savings account next, each saying why.",
+      "risk": "It only shows on an empty account, so for you it mostly helps a second household member. The per-bank export tips must come from real exports, and ING, BNP Paribas Fortis and Argenta are unverified.",
+      "html": ".impeccable/mocks/decision/import-first-month.html"
+    }
+  ],
+  "reroll": true,
+  "steer": true
+}

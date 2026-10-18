@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fixed and flexible</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --pos: #2f9e5b;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      h1 {
+        font:
+          800 28px/1 'Trebuchet MS',
+          sans-serif;
+        margin-right: 8px;
+      }
+      .pick {
+        display: flex;
+        gap: 6px;
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 6px 8px;
+      }
+      .pick span {
+        padding: 2px 10px;
+      }
+      .pick .cur {
+        background: var(--ink);
+        color: var(--b1);
+        border-radius: 999px;
+      }
+      .sp {
+        flex: 1;
+      }
+      .btn {
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 999px;
+        padding: 7px 14px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 18px 22px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      .strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr) 1.3fr;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .k {
+        font-size: 12px;
+        color: var(--mute);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .v {
+        font:
+          800 24px/1.1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .fix {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        justify-content: center;
+      }
+      .fix a {
+        padding: 6px 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .i {
+        background: color-mix(in oklab, var(--sec) 16%, transparent);
+      }
+      .big {
+        font:
+          800 44px/1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .split {
+        display: flex;
+        height: 56px;
+        border-radius: 14px;
+        overflow: hidden;
+        margin: 16px 0 8px;
+      }
+      .split div {
+        display: flex;
+        align-items: center;
+        padding: 0 18px;
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .fx {
+        background: var(--sec);
+        color: #fff;
+        flex: 0 0 56%;
+      }
+      .fl {
+        background: var(--pri);
+        color: #fff;
+        flex: 1;
+      }
+      .lbl {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--mute);
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 56fr 44fr;
+        gap: 22px;
+        margin-top: 20px;
+      }
+      .col h3 {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font:
+          700 16px/1.2 system-ui,
+          sans-serif;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--b3);
+      }
+      .col h3 span {
+        font-variant-numeric: tabular-nums;
+      }
+      .ln {
+        display: grid;
+        grid-template-columns: 1fr 90px;
+        gap: 4px 12px;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--b2);
+        font-variant-numeric: tabular-nums;
+      }
+      .ln b {
+        text-align: right;
+      }
+      .ln small {
+        color: var(--mute);
+        font-size: 12px;
+      }
+      .ln .bar {
+        grid-column: 1/3;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--b2);
+      }
+      .ln .bar i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+      }
+      .cf .bar i {
+        background: var(--sec);
+      }
+      .cx .bar i {
+        background: var(--pri);
+      }
+      .due {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--sec);
+        margin-left: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <header>
+        <h1>Dashboard</h1>
+        <div class="pick">
+          <span>‹</span><span class="cur">This month</span><span>Last full month</span
+          ><span>Custom</span><span>›</span>
+        </div>
+        <div class="sp"></div>
+        <span class="btn">Hide amounts</span><span class="btn">Dashboard settings</span>
+      </header>
+      <div class="strip">
+        <div class="card">
+          <div class="k">Net worth · today</div>
+          <div class="v">€48,916</div>
+          <div class="s">5 accounts</div>
+        </div>
+        <div class="card">
+          <div class="k">Income</div>
+          <div class="v">€3,420</div>
+          <div class="s">€190/day</div>
+        </div>
+        <div class="card">
+          <div class="k">Net cash flow</div>
+          <div class="v" style="color: var(--pos)">+€1,578</div>
+          <div class="s">46% of income kept</div>
+        </div>
+        <div class="card">
+          <div class="k">Moved to savings</div>
+          <div class="v">17.5%</div>
+          <div class="s">€600</div>
+        </div>
+        <div class="card fix">
+          <a class="w">14 uncategorised · €211.40 →</a><a class="i">2 transfers to review →</a>
+        </div>
+      </div>
+      <section class="card">
+        <div class="k">Spent · 1–18 October</div>
+        <div class="big">€1,842.30</div>
+        <div class="split">
+          <div class="fx">Fixed · €1,031.40</div>
+          <div class="fl">Flexible · €810.90</div>
+        </div>
+        <div class="lbl">
+          <span>Committed before the month began: rent, loans, utilities, subscriptions</span
+          ><span>What you chose to spend</span>
+        </div>
+        <div class="cols">
+          <div class="col cf">
+            <h3>Fixed <span>€1,031.40</span></h3>
+            <div class="ln">
+              <span>Rent · J. Peeters</span><b>€455.00</b
+              ><span class="bar"><i style="width: 100%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Loan · KBC car loan <span class="due">due 25 Oct</span></span
+              ><b>€0.00</b><span class="bar"><i style="width: 0%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Utilities · Fluvius, Proximus, water</span><b>€218.25</b
+              ><span class="bar"><i style="width: 48%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Insurance · Ethias</span><b>€184.40</b
+              ><span class="bar"><i style="width: 40%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Subscriptions · 5</span><b>€96.75</b
+              ><span class="bar"><i style="width: 21%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Gym · Basic-Fit</span><b>€29.99</b
+              ><span class="bar"><i style="width: 7%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Phone · Mobile Vikings</span><b>€47.01</b
+              ><span class="bar"><i style="width: 10%"></i></span>
+            </div>
+          </div>
+          <div class="col cx">
+            <h3>Flexible <span>€810.90</span></h3>
+            <div class="ln">
+              <span>Groceries <small>· 17 payments</small></span
+              ><b>€394.15</b><span class="bar"><i style="width: 100%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Eating out <small>· 9</small></span
+              ><b>€161.80</b><span class="bar"><i style="width: 41%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Transport <small>· 4</small></span
+              ><b>€142.10</b><span class="bar"><i style="width: 36%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Health <small>· 2</small></span
+              ><b>€58.00</b><span class="bar"><i style="width: 15%"></i></span>
+            </div>
+            <div class="ln">
+              <span>Other <small>· 6</small></span
+              ><b>€54.85</b><span class="bar"><i style="width: 14%"></i></span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

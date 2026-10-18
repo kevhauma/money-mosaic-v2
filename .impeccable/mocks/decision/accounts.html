@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Account by account</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 0 28px 22px;
+        overflow: hidden;
+      }
+      .kept {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        height: 64px;
+        margin-bottom: 16px;
+        border-bottom: 2px dashed var(--b3);
+        color: var(--mute);
+        font-size: 13px;
+      }
+      .kept span {
+        background: var(--b1);
+        border-radius: 12px;
+        padding: 8px 14px;
+      }
+      .card {
+        background: var(--b1);
+        border-radius: 18px;
+        padding: 16px 18px;
+        box-shadow: 0 1px 0 var(--b3);
+      }
+      h2 {
+        font:
+          700 17px/1.2 system-ui,
+          sans-serif;
+        margin-bottom: 12px;
+      }
+      .k {
+        font-size: 12px;
+        color: var(--mute);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .v {
+        font:
+          800 26px/1.1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 64px;
+        position: relative;
+      }
+      .acct {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+        z-index: 1;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .badge {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--b2);
+      }
+      .io {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        font-variant-numeric: tabular-nums;
+      }
+      .io div {
+        background: var(--b2);
+        border-radius: 10px;
+        padding: 6px 10px;
+      }
+      .io b {
+        display: block;
+      }
+      .p {
+        color: var(--pos);
+      }
+      .n {
+        color: var(--neg);
+      }
+      svg.sp {
+        width: 100%;
+        height: 44px;
+      }
+      .fresh {
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .stale {
+        color: #9a6a00;
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+        padding: 3px 8px;
+        border-radius: 8px;
+      }
+      .share {
+        display: flex;
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .share i:first-child {
+        background: var(--sec);
+      }
+      .share i:last-child {
+        background: var(--acc);
+      }
+      .arrow {
+        position: absolute;
+        top: 118px;
+        height: 2px;
+        background: var(--ink);
+        z-index: 0;
+      }
+      .arrow::after {
+        content: '';
+        position: absolute;
+        right: -2px;
+        top: -5px;
+        border: 6px solid transparent;
+        border-left: 9px solid var(--ink);
+        border-right: 0;
+      }
+      .arrow span {
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        font-weight: 700;
+        background: var(--b1);
+        border: 1px solid var(--b3);
+        border-radius: 8px;
+        padding: 3px 8px;
+        white-space: nowrap;
+      }
+      .below {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 18px;
+        margin-top: 18px;
+      }
+      .tx {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-top: 1px solid var(--b2);
+        font-variant-numeric: tabular-nums;
+      }
+      .tx small {
+        color: var(--mute);
+        margin-left: 8px;
+      }
+      .fix a {
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 12px;
+        border-radius: 12px;
+        margin-top: 8px;
+        font-weight: 600;
+      }
+      .w {
+        background: color-mix(in oklab, var(--warn) 22%, transparent);
+      }
+      .i {
+        background: color-mix(in oklab, var(--sec) 16%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a class="on">Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a
+      ><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a>Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="kept">
+        ↑ Unchanged above:
+        <span>Net worth · Income · Expense · Net cash flow · Moved to savings</span
+        ><span>Category breakdown, income and expense pies</span>
+      </div>
+      <h2>Accounts · 1–18 October</h2>
+      <div class="row">
+        <span class="arrow" style="left: calc(25% - 58px); width: 60px"
+          ><span>€600 saved</span></span
+        >
+        <span class="arrow" style="left: calc(50% - 26px); width: 60px; transform: scaleX(-1)"
+          ><span style="transform: translateX(-50%) scaleX(-1)">€850 shared costs</span></span
+        >
+        <div class="card acct">
+          <div class="top">
+            <span class="k">KBC Checking</span><span class="badge">Checking</span>
+          </div>
+          <div class="v">€2,316.40</div>
+          <svg class="sp" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline
+              fill="none"
+              stroke="#f0645a"
+              stroke-width="2"
+              points="0,8 10,12 20,13 30,15 40,17 50,18 60,20 70,21 80,22 90,23 100,22"
+            />
+          </svg>
+          <div class="io">
+            <div><span class="s">In</span><b class="p">+€3,420</b></div>
+            <div><span class="s">Out</span><b class="n">−€3,292</b></div>
+          </div>
+          <span class="fresh s">Imported 2 days ago</span>
+        </div>
+        <div class="card acct">
+          <div class="top">
+            <span class="k">Belfius Savings</span><span class="badge">Savings</span>
+          </div>
+          <div class="v">€22,480.00</div>
+          <svg class="sp" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline
+              fill="none"
+              stroke="#3fd6a8"
+              stroke-width="2"
+              points="0,20 40,20 45,12 100,12"
+            />
+          </svg>
+          <div class="io">
+            <div><span class="s">In</span><b class="p">+€600</b></div>
+            <div><span class="s">Out</span><b>€0</b></div>
+          </div>
+          <span class="fresh stale">Last import 34 days ago →</span>
+        </div>
+        <div class="card acct">
+          <div class="top">
+            <span class="k">KBC Joint</span><span class="badge">Joint · 2</span>
+          </div>
+          <div class="v">€1,904.12</div>
+          <svg class="sp" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline
+              fill="none"
+              stroke="#7a6ee0"
+              stroke-width="2"
+              points="0,14 15,6 30,10 45,14 60,16 75,9 90,13 100,15"
+            />
+          </svg>
+          <div class="share"><i style="width: 55%"></i><i style="width: 45%"></i></div>
+          <span class="s">You €850 (55%) · Partner €700 (45%)</span>
+          <span class="fresh s">Imported 2 days ago</span>
+        </div>
+        <div class="card acct">
+          <div class="top">
+            <span class="k">Bolero Invest</span><span class="badge">Invest</span>
+          </div>
+          <div class="v">€22,215.10</div>
+          <svg class="sp" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#2a2030" stroke-width="2" points="0,15 100,15" />
+          </svg>
+          <div class="io">
+            <div><span class="s">In</span><b>€0</b></div>
+            <div><span class="s">Out</span><b>€0</b></div>
+          </div>
+          <span class="fresh s">Imported 12 days ago</span>
+        </div>
+      </div>
+      <div class="below">
+        <div class="card">
+          <div class="k">Biggest transactions in the range</div>
+          <div class="tx">
+            <span>Rent · J. Peeters<small>KBC Checking · Housing</small></span
+            ><b>€455.00</b>
+          </div>
+          <div class="tx">
+            <span>Colruyt Gent<small>KBC Joint · Groceries</small></span
+            ><b>€126.45</b>
+          </div>
+          <div class="tx">
+            <span>Fluvius<small>KBC Checking · Utilities</small></span
+            ><b>€104.80</b>
+          </div>
+        </div>
+        <div class="card fix">
+          <div class="k">Needs a look</div>
+          <a class="w">14 uncategorised <span>€211.40 →</span></a>
+          <a class="i">2 transfers to review <span>→</span></a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>One page, top to bottom</title>
+    <style>
+      :root {
+        --b1: #f8f5ec;
+        --b2: #efeadc;
+        --b3: #dfd8c6;
+        --ink: #2a2030;
+        --mute: #6f6676;
+        --pri: #f0645a;
+        --sec: #7a6ee0;
+        --acc: #3fd6a8;
+        --pos: #2f9e5b;
+        --neg: #d6336c;
+        --warn: #e9b730;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--ink);
+        background: var(--b2);
+        display: flex;
+      }
+      nav {
+        width: 232px;
+        background: var(--b1);
+        border-right: 1px solid var(--b3);
+        padding: 20px 14px;
+        flex: none;
+      }
+      .brand {
+        font:
+          800 22px/1 'Trebuchet MS',
+          sans-serif;
+        margin: 0 8px 26px;
+      }
+      .brand b {
+        color: var(--pri);
+      }
+      .grp {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 18px 8px 6px;
+      }
+      nav a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      nav a.on {
+        background: var(--pri);
+        color: #fff;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        padding: 22px 28px;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr 720px 1fr;
+        gap: 24px;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      h1 {
+        font:
+          800 24px/1.1 'Trebuchet MS',
+          sans-serif;
+        margin-bottom: 6px;
+      }
+      .s {
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .link {
+        font-size: 12px;
+        color: var(--sec);
+        font-weight: 600;
+      }
+      .sec {
+        background: var(--b1);
+        border-radius: 18px;
+        box-shadow: 0 1px 0 var(--b3);
+        position: relative;
+      }
+      .done {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 18px;
+      }
+      .num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 13px;
+        flex: none;
+        background: var(--b2);
+      }
+      .done .num {
+        background: var(--acc);
+      }
+      .done .sum {
+        flex: 1;
+        font-size: 14px;
+      }
+      .done .sum b {
+        font-weight: 700;
+      }
+      .act {
+        padding: 18px;
+        border: 2px solid var(--pri);
+      }
+      .act .head {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .act .num {
+        background: var(--pri);
+        color: #fff;
+      }
+      h2 {
+        font: 700 18px/1.2 system-ui;
+      }
+      .big {
+        font:
+          800 30px/1 'Trebuchet MS',
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .choice {
+        display: flex;
+        gap: 10px;
+        margin: 14px 0;
+      }
+      .choice label {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--b2);
+        font-size: 13px;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .choice label.on {
+        background: color-mix(in oklab, var(--pri) 14%, transparent);
+        outline: 2px solid var(--pri);
+      }
+      .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid var(--mute);
+        flex: none;
+        margin-top: 2px;
+      }
+      .on .dot {
+        border: 4px solid var(--pri);
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        background: var(--b2);
+      }
+      .btn.p {
+        background: var(--pri);
+        color: #fff;
+      }
+      .ghost {
+        padding: 16px 18px;
+        border: 2px dashed var(--b3);
+        background: transparent;
+        box-shadow: none;
+        color: var(--mute);
+      }
+      .ghost .num {
+        background: transparent;
+        border: 2px solid var(--b3);
+        color: var(--mute);
+      }
+      .ghostrow {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .ghostrow i {
+        flex: 1;
+        height: 46px;
+        border-radius: 12px;
+        background: var(--b3);
+        opacity: 0.45;
+      }
+      .note {
+        font-size: 12.5px;
+        color: var(--mute);
+        border-left: 2px solid var(--b3);
+        padding-left: 12px;
+        line-height: 1.5;
+      }
+      .note b {
+        color: var(--ink);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        margin-top: 6px;
+      }
+      td {
+        padding: 5px 4px;
+        border-top: 1px solid var(--b2);
+        white-space: nowrap;
+      }
+      td.r {
+        text-align: right;
+      }
+      .n {
+        color: var(--neg);
+      }
+      .p {
+        color: var(--pos);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Money<b>Mosaic</b></div>
+      <div class="grp">Insights</div>
+      <a>Dashboard</a><a>Income</a><a>Recurring</a><a>Loans</a><a>Explore</a><a>Future</a>
+      <div class="grp">Data</div>
+      <a>Accounts</a><a>Transactions</a><a>Categories</a><a class="on">Import</a>
+      <div class="grp">More</div>
+      <a>FAQ</a><a>Settings</a>
+    </nav>
+    <main>
+      <div class="col" style="padding-top: 70px">
+        <p class="note">
+          <b>No stepper, no Back and Next bar.</b> The page reads top to bottom like a receipt. Only
+          the section you are in is open.
+        </p>
+        <p class="note" style="margin-top: 150px">
+          <b>Finished sections fold to one line</b> that says what you decided. Click a line to
+          reopen it.
+        </p>
+      </div>
+
+      <div class="col">
+        <h1>Import</h1>
+
+        <div class="sec done">
+          <span class="num">✓</span
+          ><span class="sum"
+            ><b>export-kbc-2026-09.csv</b> <span class="s">· 142 rows · KBC format</span></span
+          ><span class="link">change</span>
+        </div>
+        <div class="sec done">
+          <span class="num">✓</span
+          ><span class="sum"
+            >Into <b>KBC Checking</b> <span class="s">· matched by IBAN …7034</span></span
+          ><span class="link">change</span>
+        </div>
+
+        <div class="sec act">
+          <div class="head">
+            <span class="num">3</span>
+            <h2>Ready to add</h2>
+          </div>
+          <div class="big">130 new transactions</div>
+          <p class="s" style="margin-top: 6px">1–30 September 2026</p>
+          <table>
+            <tr>
+              <td>30 Sep</td>
+              <td>Colruyt Gent</td>
+              <td class="r n">−€84.12</td>
+            </tr>
+            <tr>
+              <td>29 Sep</td>
+              <td>Fluvius</td>
+              <td class="r n">−€104.80</td>
+            </tr>
+            <tr>
+              <td>28 Sep</td>
+              <td>Salary · Acme NV</td>
+              <td class="r p">+€3,120.00</td>
+            </tr>
+          </table>
+          <p class="link" style="margin-top: 6px">See all 142 rows</p>
+          <div class="choice">
+            <label class="on"
+              ><span class="dot"></span
+              ><span
+                ><b>Skip the 12 I already have</b><br /><span class="s"
+                  >From your 2 Sep import</span
+                ></span
+              ></label
+            >
+            <label
+              ><span class="dot"></span
+              ><span
+                ><b>Import them anyway</b><br /><span class="s"
+                  >Only if they really happened twice</span
+                ></span
+              ></label
+            >
+          </div>
+          <span class="btn p">Add 130 transactions</span>
+        </div>
+
+        <div class="sec ghost">
+          <div style="display: flex; gap: 14px; align-items: center">
+            <span class="num">4</span
+            ><span
+              ><b style="color: var(--ink)">What changed</b> · appears here after you add them</span
+            >
+          </div>
+          <div class="ghostrow"><i></i><i></i><i></i></div>
+        </div>
+      </div>
+
+      <div class="col" style="padding-top: 300px">
+        <p class="note">
+          <b>Duplicates become a plain choice</b> in the section where it matters, defaulted to the
+          safe answer.
+        </p>
+        <p class="note" style="margin-top: 120px">
+          <b>The overview lands in place</b>, below everything you just did: categorised, needs a
+          category, transfers linked, each with its link onward.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>
+
+<!-- round b24020a9 -->
