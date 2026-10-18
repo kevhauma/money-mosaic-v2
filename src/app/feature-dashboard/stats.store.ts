@@ -11,10 +11,17 @@ import {
   computeYearOverYearComparison,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-import { AccountsStore, CategoriesStore, RangeStore, TransactionsStore } from '@/core/state';
+import {
+  AccountsStore,
+  CategoriesStore,
+  RangeStore,
+  TransactionsStore,
+  TransfersStore,
+} from '@/core/state';
 import type { TransactionDrilldownParams } from '@/shared/utils';
 import { CategoryComparisonSettingsStore } from './category-comparison-settings.store';
 import { STATS_SCOPE, type StatsScope } from './stats-scope';
+import { transferCategories, withTransferCategories } from './transfer-categories';
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -47,19 +54,57 @@ export const StatsStore = signalStore(
     const categoriesStore = inject(CategoriesStore);
     const rangeStore = inject(RangeStore);
     const categoryComparisonSettingsStore = inject(CategoryComparisonSettingsStore);
+    const transfersStore = inject(TransfersStore);
     const scope = inject(STATS_SCOPE);
+
+    /**
+     * Only `'cashflow'` counts moves between my accounts as money in and out, so only it needs
+     * them told apart from spending — every other mode skips them before a category is read.
+     */
+    const transfersAsCategories = scope.mode === 'cashflow';
 
     const ownSavingsIbans = computed(() => savingsAccountIbans(accountsStore.accounts()));
 
     const from = computed(() => rangeStore.from(scope.rangePage));
     const to = computed(() => rangeStore.to(scope.rangePage));
 
-    /** Unscoped, this is `TransactionsStore`'s own array — same reference, so the Dashboard's figures can't move. */
-    const transactions = computed(() => {
+    const scopedTransactions = computed(() => {
       const all = transactionsStore.transactions();
       const accountId = scope.accountId();
       return accountId == null ? all : all.filter((t) => t.accountId === accountId);
     });
+
+    /**
+     * Unscoped, this is `TransactionsStore`'s own array — same reference, so the Dashboard's figures
+     * can't move. Under `'cashflow'` each move between my accounts carries the transfer slice of the
+     * account at its other end in place of its category (`transfer-categories.ts`).
+     */
+    const transactions = computed(() =>
+      transfersAsCategories
+        ? withTransferCategories(scopedTransactions(), {
+            transfersById: transfersStore.transfersById(),
+            transactionsById: transactionsStore.transactionsById(),
+            accounts: accountsStore.accounts(),
+            ownSavingsIbans: ownSavingsIbans(),
+          })
+        : scopedTransactions(),
+    );
+
+    /**
+     * Every category a figure here can name — what every panel joins its names and colours
+     * through. Unscoped it is `CategoriesStore`'s own map; under `'cashflow'` the transfer slices
+     * join it.
+     */
+    const categoriesById = computed(() =>
+      transfersAsCategories
+        ? new Map([
+            ...categoriesStore.categoriesById(),
+            ...transferCategories(accountsStore.accounts()).map(
+              (category) => [category.id!, category] as const,
+            ),
+          ])
+        : categoriesStore.categoriesById(),
+    );
 
     const periodStats = computed(() =>
       computePeriodStats(
@@ -67,7 +112,7 @@ export const StatsStore = signalStore(
         from(),
         to(),
         ownSavingsIbans(),
-        categoriesStore.categoriesById(),
+        categoriesById(),
         accountsStore.accountsById(),
         scope.mode,
       ),
@@ -76,7 +121,7 @@ export const StatsStore = signalStore(
     const categoryBreakdown = computed(() =>
       computeCategoryBreakdown(
         transactions(),
-        categoriesStore.categoriesById(),
+        categoriesById(),
         from(),
         to(),
         ownSavingsIbans(),
@@ -91,7 +136,7 @@ export const StatsStore = signalStore(
         from(),
         to(),
         ownSavingsIbans(),
-        categoriesStore.categoriesById(),
+        categoriesById(),
         accountsStore.accountsById(),
         scope.mode,
       ),
@@ -114,7 +159,7 @@ export const StatsStore = signalStore(
         from(),
         to(),
         ownSavingsIbans(),
-        categoriesStore.categoriesById(),
+        categoriesById(),
         accountsStore.accountsById(),
         undefined,
         scope.mode,
@@ -138,7 +183,7 @@ export const StatsStore = signalStore(
 
       return computeCategoryPeriodComparison(
         transactions(),
-        categoriesStore.categoriesById(),
+        categoriesById(),
         window,
         ownSavingsIbans(),
         accountsStore.accountsById(),
@@ -185,6 +230,7 @@ export const StatsStore = signalStore(
       from,
       to,
       transactions,
+      categoriesById,
       transferFlows,
       hasTransactionsInRange,
       drilldownScope,

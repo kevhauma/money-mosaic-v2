@@ -1,18 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AppSettingsStore, CategoriesStore, RangeStore } from '@/core/state';
+import { AppSettingsStore, RangeStore } from '@/core/state';
 import {
   LoadingSkeletonComponent,
   PaperComponent,
   PrivacyBlurComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import {
-  buildTransactionDrilldownParams,
-  formatCurrency,
-  UNCATEGORISED_SENTINEL,
-} from '@/shared/utils';
+import { buildTransactionDrilldownParams, formatCurrency } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
+import { drilldownCategoryId } from '../../transfer-categories';
 
 /** Transaction with its category name/colour joined in, formatted amount, and its own drill-down link — the template stays method-free (CR-2.5). */
 type TopTransactionVm = {
@@ -48,7 +45,6 @@ const UNCATEGORISED_COLOR = '#9ca3af';
 })
 export class TopTransactionsPanelComponent {
   private readonly statsStore = inject(StatsStore);
-  private readonly categoriesStore = inject(CategoriesStore);
   protected readonly rangeStore = inject(RangeStore);
 
   /** Blurs each row's amount while privacy mode is on (TICKET-PRIV-01); the description and date stay legible. */
@@ -58,7 +54,7 @@ export class TopTransactionsPanelComponent {
   protected readonly dataReady = this.statsStore.dataReady;
 
   protected readonly entries = computed<TopTransactionVm[]>(() => {
-    const categoriesById = this.categoriesStore.categoriesById();
+    const categoriesById = this.statsStore.categoriesById();
 
     return this.statsStore.topTransactions().map((transaction) => {
       const category =
@@ -75,7 +71,7 @@ export class TopTransactionsPanelComponent {
           from: transaction.bookingDate,
           to: transaction.bookingDate,
           accountId: transaction.accountId,
-          categoryId: transaction.categoryId ?? UNCATEGORISED_SENTINEL,
+          categoryId: drilldownCategoryId(transaction.categoryId),
         }),
       };
     });

@@ -1,5 +1,5 @@
 import type { Account, Transaction, Transfer } from '@/core/data-access';
-import { counterpartTransactionId, transferLabelFor } from './transfer-label';
+import { transferLabelFor } from './transfer-label';
 
 const transaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: 1,
@@ -44,17 +44,6 @@ const transactionsById = new Map([
   [1, transaction({ id: 1, accountId: 1, transferId: 7 })],
   [2, transaction({ id: 2, accountId: 2, amount: 500, transferId: 7 })],
 ]);
-
-describe('counterpartTransactionId (TICKET-TRF-06)', () => {
-  it('returns the other leg, whichever end it is asked from', () => {
-    expect(counterpartTransactionId(transfer, 1)).toBe(2);
-    expect(counterpartTransactionId(transfer, 2)).toBe(1);
-  });
-
-  it('is undefined for a transaction the transfer does not name', () => {
-    expect(counterpartTransactionId(transfer, 99)).toBeUndefined();
-  });
-});
 
 describe('transferLabelFor (TICKET-TRF-06)', () => {
   it('names the account at the other end, from either leg', () => {

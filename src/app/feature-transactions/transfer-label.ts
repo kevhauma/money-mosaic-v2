@@ -1,23 +1,8 @@
 import type { Account, Transaction, Transfer } from '@/core/data-access';
+import { counterpartTransactionId } from '@/core/transfers';
 
 /** What a linked row's Category cell says when the counterpart leg can't be resolved. */
 const BARE_TRANSFER_LABEL = 'Transfer';
-
-/**
- * The counterpart leg of a transfer — the other of its two transaction ids (TICKET-TRF-06).
- *
- * Exported for its own test: the transfer stores `from`/`to` and the row can be either one, so
- * "the other one" is the whole of the logic and is the part that would silently return the row
- * itself if the comparison were ever written the wrong way round.
- */
-export const counterpartTransactionId = (
-  transfer: Transfer,
-  transactionId: number,
-): number | undefined => {
-  if (transfer.fromTransactionId === transactionId) return transfer.toTransactionId;
-  if (transfer.toTransactionId === transactionId) return transfer.fromTransactionId;
-  return undefined;
-};
 
 /**
  * What a linked transaction's Category cell reads instead of "Uncategorised" (TICKET-TRF-06).

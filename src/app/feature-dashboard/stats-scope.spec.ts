@@ -8,8 +8,15 @@ import {
   TransfersRepository,
   type Account,
   type Transaction,
+  type Transfer,
 } from '@/core/data-access';
-import { AccountsStore, RangeStore, TransactionsStore } from '@/core/state';
+import {
+  AccountsStore,
+  CategoriesStore,
+  RangeStore,
+  TransactionsStore,
+  TransfersStore,
+} from '@/core/state';
 import type { StatsScope } from './stats-scope';
 import { provideStatsScope, StatsStore } from './stats.store';
 
@@ -45,6 +52,16 @@ const accountDetailScope = (accountId: number): StatsScope => ({
   trendChartKey: 'account-detail-trend',
 });
 
+/** Links checking's €500 out (12) to savings' €500 in (10) — the pair the transfer tests below add. */
+const checkingToSavings: Transfer = {
+  id: 1,
+  fromTransactionId: 12,
+  toTransactionId: 10,
+  method: 'auto-iban',
+  confidence: 'high',
+  linkedAt: '2026-07-10T00:00:00.000Z',
+};
+
 describe('StatsStore: scoped by STATS_SCOPE (TICKET-ACC-14)', () => {
   const accountsRepository = { getAll: vi.fn() };
 
@@ -58,18 +75,22 @@ describe('StatsStore: scoped by STATS_SCOPE (TICKET-ACC-14)', () => {
   beforeEach(async () => {
     accountsRepository.getAll.mockResolvedValue([
       account({ id: 1 }),
-      account({ id: 2, name: 'Savings', type: 'savings' }),
+      account({ id: 2, name: 'Savings', type: 'savings', iban: 'BE22 2222', color: '#22aa22' }),
       account({ id: 3, name: 'Joint', type: 'joint', ownershipShare: 0.5 }),
     ]);
     TestBed.configureTestingModule({
       providers: [
         { provide: AccountsRepository, useValue: accountsRepository },
         { provide: TransactionsRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
-        { provide: TransfersRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
+        {
+          provide: TransfersRepository,
+          useValue: { getAll: vi.fn().mockResolvedValue([checkingToSavings]) },
+        },
         { provide: CategoriesRepository, useValue: { getAll: vi.fn().mockResolvedValue([]) } },
       ],
     });
     await TestBed.inject(AccountsStore).hydrate();
+    await TestBed.inject(TransfersStore).hydrate();
 
     const rangeStore = TestBed.inject(RangeStore);
     rangeStore.setCustomRange('dashboard', '2026-07-01', '2026-07-31');
@@ -155,5 +176,45 @@ describe('StatsStore: scoped by STATS_SCOPE (TICKET-ACC-14)', () => {
       to: '2026-07-31',
       accountId: undefined,
     });
+  });
+
+  it("gives each account a transfer moves to or from its own category under 'cashflow', in that account's colour", () => {
+    TestBed.inject(TransactionsStore).addMany([
+      transaction({ id: 10, accountId: 2, amount: 500, transferId: 1 }),
+      transaction({ id: 12, accountId: 1, amount: -500, transferId: 1 }),
+      // Unlinked, but paid to the savings account's IBAN — the same move, as far as the stats know.
+      transaction({ id: 13, accountId: 1, amount: -75, counterpartyIban: 'be222222' }),
+    ]);
+    const checking = scopedStatsStore(accountDetailScope(1));
+    const savings = scopedStatsStore(accountDetailScope(2));
+
+    const [toSavings] = checking.categoryBreakdown().expenseByCategory;
+    expect(toSavings).toMatchObject({ total: 575, transactionCount: 2 });
+    expect(checking.categoriesById().get(toSavings.categoryId!)).toMatchObject({
+      name: 'Transfer · Savings',
+      color: '#22aa22',
+    });
+    expect(checking.topTransactions()[0]).toMatchObject({
+      id: 12,
+      categoryId: toSavings.categoryId,
+    });
+
+    const fromChecking = savings
+      .categoryBreakdown()
+      .incomeBySource.find((entry) => entry.total === 500);
+    expect(savings.categoriesById().get(fromChecking!.categoryId!)?.name).toBe(
+      'Transfer · Checking',
+    );
+  });
+
+  it('leaves the root instance on the real categories, and its transactions untouched', () => {
+    TestBed.inject(TransactionsStore).addMany([
+      transaction({ id: 12, accountId: 1, amount: -500, transferId: 1 }),
+    ]);
+    const root = TestBed.inject(StatsStore);
+    scopedStatsStore(accountDetailScope(1));
+
+    expect(root.categoriesById()).toBe(TestBed.inject(CategoriesStore).categoriesById());
+    expect(root.transactions().find((t) => t.id === 12)?.categoryId).toBeUndefined();
   });
 });

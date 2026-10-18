@@ -8,7 +8,7 @@ import {
   type CategorySeriesEntry,
 } from '@/core/stats';
 import { savingsAccountIbans } from '@/core/transfers';
-import { AccountsStore, CategoriesStore, chartGranularity, chartSeriesFilter } from '@/core/state';
+import { AccountsStore, chartGranularity, chartSeriesFilter } from '@/core/state';
 import {
   resolveChartAnimation,
   formatAxisTooltip,
@@ -25,10 +25,10 @@ import {
   bucketDateBoundaries,
   buildTransactionDrilldownParams,
   formatCurrency,
-  UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
 import { STATS_SCOPE } from '../../stats-scope';
 import { StatsStore } from '../../stats.store';
+import { drilldownCategoryId } from '../../transfer-categories';
 
 /** Every series' value at one bucket index, summed â€” the stacked-bar total for that bucket. */
 const bucketTotal = (series: CategorySeriesEntry[], bucketIndex: number): number =>
@@ -101,7 +101,6 @@ const buildColumnChartOption = (
 })
 export class TrendChartPanelComponent {
   private readonly accountsStore = inject(AccountsStore);
-  private readonly categoriesStore = inject(CategoriesStore);
   /** Root on the Dashboard, account-scoped on account detail (TICKET-ACC-14) — range, account and joint mode all come from here. */
   private readonly statsStore = inject(StatsStore);
   private readonly scope = inject(STATS_SCOPE);
@@ -126,7 +125,7 @@ export class TrendChartPanelComponent {
   private readonly composition = computed(() =>
     computeCategoryCompositionTrend(
       this.statsStore.transactions(),
-      this.categoriesStore.categoriesById(),
+      this.statsStore.categoriesById(),
       this.statsStore.from(),
       this.statsStore.to(),
       this.granularity(),
@@ -225,7 +224,7 @@ export class TrendChartPanelComponent {
         ...this.statsStore.drilldownScope(),
         from: start,
         to: end,
-        categoryId: category.categoryId ?? UNCATEGORISED_SENTINEL,
+        categoryId: drilldownCategoryId(category.categoryId),
       }),
     });
   }

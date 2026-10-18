@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { type CategoryBreakdownEntry } from '@/core/stats';
-import { AppSettingsStore, CategoriesStore } from '@/core/state';
+import { AppSettingsStore } from '@/core/state';
 import {
   resolveChartAnimation,
   CHART_NO_COLOR_FALLBACK,
@@ -17,13 +17,9 @@ import {
   PrivacyBlurComponent,
   TypographyComponent,
 } from '@/shared/ui';
-import {
-  buildTransactionDrilldownParams,
-  formatCurrency,
-  formatPercent,
-  UNCATEGORISED_SENTINEL,
-} from '@/shared/utils';
+import { buildTransactionDrilldownParams, formatCurrency, formatPercent } from '@/shared/utils';
 import { StatsStore } from '../../stats.store';
+import { drilldownCategoryId } from '../../transfer-categories';
 
 type BreakdownKind = 'expense' | 'income';
 
@@ -140,7 +136,6 @@ const soleEntryVm = (kind: BreakdownKind, entry: BreakdownEntryVm): SoleEntryVm 
 })
 export class CategoryBreakdownPanelComponent {
   private readonly statsStore = inject(StatsStore);
-  private readonly categoriesStore = inject(CategoriesStore);
 
   /** Blurs the per-category totals/shares while privacy mode is on (TICKET-PRIV-01); the donut and the category names stay. */
   protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
@@ -200,7 +195,7 @@ export class CategoryBreakdownPanelComponent {
   protected drilldownParams(categoryId: number | null): Record<string, string> {
     return buildTransactionDrilldownParams({
       ...this.statsStore.drilldownScope(),
-      categoryId: categoryId ?? UNCATEGORISED_SENTINEL,
+      categoryId: drilldownCategoryId(categoryId),
     });
   }
 
@@ -214,7 +209,7 @@ export class CategoryBreakdownPanelComponent {
   }
 
   private mapEntries(raw: CategoryBreakdownEntry[]): BreakdownEntryVm[] {
-    const categoriesById = this.categoriesStore.categoriesById();
+    const categoriesById = this.statsStore.categoriesById();
 
     return raw.map((entry) => {
       const category = entry.categoryId != null ? categoriesById.get(entry.categoryId) : undefined;

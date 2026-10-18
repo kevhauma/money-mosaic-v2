@@ -6,12 +6,12 @@ import {
   formatCurrency,
   formatDate,
   formatPercent,
-  UNCATEGORISED_SENTINEL,
 } from '@/shared/utils';
 import { AppSettingsStore } from '@/core/state';
 import { CategoryComparisonSettingsStore } from '../../category-comparison-settings.store';
 import { StatsStore } from '../../stats.store';
 import type { CategoryComparisonVm, ComparisonBarVm } from '../../category-comparison-vm';
+import { drilldownCategoryId } from '../../transfer-categories';
 import { CategoryExclusionDropdownComponent } from '../category-exclusion-dropdown/category-exclusion-dropdown.component';
 import { ComparisonCategoryCardComponent } from '../comparison-category-card/comparison-category-card.component';
 
@@ -70,7 +70,7 @@ export class CategoryComparisonPanelComponent {
             ...drilldownScope,
             from: period.from,
             to: period.to,
-            categoryId: entry.categoryId ?? UNCATEGORISED_SENTINEL,
+            categoryId: drilldownCategoryId(entry.categoryId),
           }),
         };
       });
