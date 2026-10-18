@@ -37,33 +37,49 @@ const UNSUPPORTED_CONTEXT_TYPES = ['webgl', 'webgl2', 'experimental-webgl', 'web
  *
  * Both are process-global prototype patches, which is exactly why they belong in one place: Vitest
  * runs `isolate: false`, so three hand-copied versions would be three chances to diverge. Call once
- * at the top of a spec file, outside `describe`.
+ * at the top of a spec file, outside `describe`, and never hand-roll a local version of this - one
+ * spec file carrying its own copy is what broke CI on 2026-10-09. zrender asks for a 2D context
+ * once and keeps it in a module-level closure (`platformApi.measureText`), so the *first* context
+ * any chart in the process receives is the one every later chart measures text against. A local
+ * copy whose catch-all returned `undefined` for `measureText` therefore poisoned every chart spec
+ * that happened to run after it, surfacing as 19 unhandled `reading 'width' of undefined` errors in
+ * an unrelated spec file (`spending-mosaic-panel.component.spec.ts`), and only in the file orders
+ * where that copy got there first.
+ *
+ * For the same reason the context is a single module-level object installed once, rather than a
+ * fresh proxy per call: whatever zrender cached stays the thing this module still controls.
  */
-export const stubEchartsBrowserApis = (): void => {
-  class ResizeObserverStub {
-    observe = (): void => {};
-    unobserve = (): void => {};
-    disconnect = (): void => {};
-  }
-  globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
-
-  const noopCanvasContext = new Proxy(
-    {},
-    {
-      get: (target: Record<string, unknown>, prop: string) => {
-        if (prop in target) return target[prop];
-        const returnsValue = CONTEXT_RETURN_VALUES[prop];
-        return returnsValue ? () => returnsValue() : (): void => {};
-      },
-      set: (target: Record<string, unknown>, prop: string, value: unknown) => {
-        target[prop] = value;
-        return true;
-      },
+const noopCanvasContext = new Proxy(
+  {},
+  {
+    get: (target: Record<string, unknown>, prop: string) => {
+      if (prop in target) return target[prop];
+      const returnsValue = CONTEXT_RETURN_VALUES[prop];
+      return returnsValue ? () => returnsValue() : (): void => {};
     },
-  );
-  // Assigned unconditionally, not `??=`: jsdom's own `getContext` is defined, it just returns null.
-  HTMLCanvasElement.prototype.getContext = ((contextType: string) =>
-    UNSUPPORTED_CONTEXT_TYPES.includes(contextType)
-      ? null
-      : noopCanvasContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    set: (target: Record<string, unknown>, prop: string, value: unknown) => {
+      target[prop] = value;
+      return true;
+    },
+  },
+);
+
+class ResizeObserverStub {
+  observe = (): void => {};
+  unobserve = (): void => {};
+  disconnect = (): void => {};
+}
+
+const stubbedGetContext = ((contextType: string) =>
+  UNSUPPORTED_CONTEXT_TYPES.includes(contextType)
+    ? null
+    : noopCanvasContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+
+export const stubEchartsBrowserApis = (): void => {
+  globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+  // Assigned by identity, not `??=`: jsdom's own `getContext` is defined, it just returns null.
+  // Re-assigning the same function on a second call is a no-op, which is the point.
+  if (HTMLCanvasElement.prototype.getContext !== stubbedGetContext) {
+    HTMLCanvasElement.prototype.getContext = stubbedGetContext;
+  }
 };

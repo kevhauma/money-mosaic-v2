@@ -48,6 +48,7 @@ export class CategoryComparisonPanelComponent {
   protected readonly categories = computed<CategoryComparisonVm[]>(() => {
     const comparison = this.comparison();
     if (!comparison) return [];
+    const drilldownScope = this.statsStore.drilldownScope();
 
     return comparison.entries.map((entry) => {
       const max = Math.max(entry.highest, ...entry.perPeriod);
@@ -66,6 +67,7 @@ export class CategoryComparisonPanelComponent {
           heightPercent: max === 0 ? 0 : (total / max) * 100,
           isSelected: period.isSelected,
           queryParams: buildTransactionDrilldownParams({
+            ...drilldownScope,
             from: period.from,
             to: period.to,
             categoryId: entry.categoryId ?? UNCATEGORISED_SENTINEL,

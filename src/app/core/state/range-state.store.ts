@@ -16,9 +16,14 @@ import { AppSettingsStore } from './app-settings.store';
  * The pages that own a date range (TICKET-UI-23). Adding one here is the whole cost of giving a
  * new page its own range; a page that isn't listed has no range control and never reads one.
  */
-export type RangePageKey = 'dashboard' | 'accounts' | 'explore';
+export type RangePageKey = 'dashboard' | 'accounts' | 'account-detail' | 'explore';
 
-const RANGE_PAGE_KEYS: readonly RangePageKey[] = ['dashboard', 'accounts', 'explore'];
+const RANGE_PAGE_KEYS: readonly RangePageKey[] = [
+  'dashboard',
+  'accounts',
+  'account-detail',
+  'explore',
+];
 
 /**
  * `quickRangeId` is a plain id into `quick-ranges.ts`'s `QUICK_RANGES` catalogue (TICKET-STAT-37),

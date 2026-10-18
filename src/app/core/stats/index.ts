@@ -32,6 +32,7 @@ export * from './money-flow-graph';
 export * from './spending-mosaic';
 export * from './category-expense-transactions';
 export * from './top-transactions';
+export * from './transfer-flows';
 export * from './year-over-year';
 export * from './period-window';
 export * from './category-period-comparison';

@@ -1,9 +1,21 @@
 @if (account(); as account) {
-  <!-- Back-to-parent is a scope control by the TICKET-UI-24 rule — it changes what you are looking
-       at — so it sits beside the title; everything that acts on this account stays right. -->
+  <!-- Back-to-parent and the date range are scope controls by the TICKET-UI-24 rule — they change
+       what you are looking at — so they sit beside the title; everything that acts on this account
+       stays right. The range is this page's own (TICKET-ACC-14). -->
   <mm-page-header [title]="account.name">
     <mm-button actions-start variant="ghost" size="sm" link="/accounts">Back to accounts</mm-button>
+    <mm-range-picker
+      actions-start
+      [value]="range.value()"
+      (presetChange)="range.onPresetChange($event)"
+      (customRangeChange)="range.onCustomRangeChange($event)"
+      (rangeShift)="range.onRangeShift($event)"
+    />
     <mm-flex actions-end align="center" gap="2">
+      <!-- The one Data page with the toggle (TICKET-ACC-14): the insight section below reuses the
+           Dashboard's panels, which blur under privacy mode, so the switch has to be reachable here.
+           The balance block above them stays unblurred — it is still where you reconcile. -->
+      <mm-privacy-toggle />
       <mm-button size="sm" (click)="formOpen.set(true)">
         <ng-icon name="tablerPencil" size="14" aria-hidden="true" />
         Edit
@@ -80,9 +92,7 @@
     </mm-paper>
   }
 
-  <div class="mt-6">
-    <app-account-balance-chart [account]="account" />
-  </div>
+  <app-account-insights class="mt-6 block" [account]="account" />
 
   <app-account-form [(open)]="formOpen" [account]="account" (saved)="saveAccount($event)" />
   <mm-confirm-dialog

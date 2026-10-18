@@ -76,7 +76,7 @@ describe('balanceTrendSignals', () => {
       rangeStore.setCustomRange('accounts', '2026-01-01', '2026-12-31');
       expect(pickGranularityForSpan('2026-01-01', '2026-12-31')).not.toBe('day');
 
-      const trend = balanceTrendSignals(signal([account()]));
+      const trend = balanceTrendSignals(signal([account()]), 'accounts');
 
       expect(trend.granularity).toBe(BALANCE_GRANULARITY);
       expect(trend.granularity).toBe('day');
@@ -89,7 +89,7 @@ describe('balanceTrendSignals', () => {
   it("maps the shared range onto the series' own bucket keys for the zoom window", () => {
     TestBed.runInInjectionContext(() => {
       const rangeStore = TestBed.inject(RangeStore);
-      const trend = balanceTrendSignals(signal([account()]));
+      const trend = balanceTrendSignals(signal([account()]), 'accounts');
 
       const expected = computeZoomWindow(
         trend.series()[0]?.points.map((point) => point.bucketKey) ?? [],
@@ -98,6 +98,27 @@ describe('balanceTrendSignals', () => {
         trend.granularity,
       );
       expect(trend.zoomWindow()).toEqual(expected);
+    });
+  });
+
+  it("scrubs from the range page it is given, not the Accounts page's (TICKET-ACC-14)", () => {
+    TestBed.runInInjectionContext(() => {
+      const rangeStore = TestBed.inject(RangeStore);
+      rangeStore.setCustomRange('account-detail', '2026-02-01', '2026-02-28');
+      const trend = balanceTrendSignals(signal([account()]), 'account-detail');
+      const bucketKeys = trend.series()[0]?.points.map((point) => point.bucketKey) ?? [];
+
+      expect(trend.zoomWindow()).toEqual(
+        computeZoomWindow(bucketKeys, '2026-02-01', '2026-02-28', trend.granularity),
+      );
+      expect(trend.zoomWindow()).not.toEqual(
+        computeZoomWindow(
+          bucketKeys,
+          rangeStore.from('accounts'),
+          rangeStore.to('accounts'),
+          trend.granularity,
+        ),
+      );
     });
   });
 
@@ -120,7 +141,7 @@ describe('balanceTrendSignals', () => {
     await TestBed.inject(CategoriesStore).hydrate();
 
     TestBed.runInInjectionContext(() => {
-      const trend = balanceTrendSignals(signal([jointAccount]));
+      const trend = balanceTrendSignals(signal([jointAccount]), 'accounts');
 
       // The whole €200 left the account; the 0.5 ownership share belongs to net worth, not here.
       expect(trend.series()[0]?.points.at(-1)?.balance).toBe(-200);
@@ -134,8 +155,8 @@ describe('balanceTrendSignals', () => {
     transactionsRepository.getAll.mockResolvedValue([]);
 
     TestBed.runInInjectionContext(() => {
-      const trendA = balanceTrendSignals(signal([accountA]));
-      const trendB = balanceTrendSignals(signal([accountA, accountB]));
+      const trendA = balanceTrendSignals(signal([accountA]), 'accounts');
+      const trendB = balanceTrendSignals(signal([accountA, accountB]), 'accounts');
 
       expect(trendA.series()).toHaveLength(1);
       expect(trendB.series()).toHaveLength(2);

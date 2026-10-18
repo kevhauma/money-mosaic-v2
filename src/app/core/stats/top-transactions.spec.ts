@@ -111,4 +111,28 @@ describe('computeTopTransactions', () => {
 
     expect(result.map((t) => t.id)).toEqual([1, 2]);
   });
+
+  it("keeps transfer legs and savings movements under 'cashflow' (TICKET-ACC-14)", () => {
+    const savingsIban = 'BE68539007547034';
+    const transactions = [
+      transaction({ id: 1, amount: -30 }),
+      transaction({ id: 2, amount: -1200, transferId: 9 }),
+      transaction({ id: 3, amount: -500, counterpartyIban: savingsIban }),
+    ];
+    const savings = new Set([savingsIban]);
+
+    expect(
+      computeTopTransactions(transactions, '2026-07-01', '2026-07-31', savings).map((t) => t.id),
+    ).toEqual([1]);
+    expect(
+      computeTopTransactions(
+        transactions,
+        '2026-07-01',
+        '2026-07-31',
+        savings,
+        DEFAULT_TOP_TRANSACTIONS_LIMIT,
+        'cashflow',
+      ).map((t) => t.id),
+    ).toEqual([2, 3, 1]);
+  });
 });

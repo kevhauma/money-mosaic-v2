@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { AppSettingsStore, RangeStore } from '@/core/state';
+import { AppSettingsStore } from '@/core/state';
 import {
   FlexComponent,
   PaperComponent,
@@ -26,7 +26,6 @@ const RATIO_EQUALITY_THRESHOLD = 1.05;
 })
 export class WeekdayWeekendSplitPanelComponent {
   private readonly statsStore = inject(StatsStore);
-  private readonly rangeStore = inject(RangeStore);
 
   /** Blurs the two per-day amounts while privacy mode is on (TICKET-PRIV-01); the bars stay, since a proportion isn't a figure. */
   protected readonly privacyMode = inject(AppSettingsStore).privacyModeEnabled;
@@ -73,9 +72,6 @@ export class WeekdayWeekendSplitPanelComponent {
   });
 
   protected readonly drilldownParams = computed(() =>
-    buildTransactionDrilldownParams({
-      from: this.rangeStore.from('dashboard'),
-      to: this.rangeStore.to('dashboard'),
-    }),
+    buildTransactionDrilldownParams(this.statsStore.drilldownScope()),
   );
 }

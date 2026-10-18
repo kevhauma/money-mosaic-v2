@@ -103,7 +103,7 @@ export class AccountBalanceHistoryChartComponent {
 
   protected readonly accounts = computed(() => this.accountsStore.activeAccounts());
 
-  private readonly trend = balanceTrendSignals(this.accounts);
+  private readonly trend = balanceTrendSignals(this.accounts, 'accounts');
   protected readonly series = this.trend.series;
 
   private readonly seriesFilter = chartSeriesFilter(

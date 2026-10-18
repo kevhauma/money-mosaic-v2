@@ -274,3 +274,79 @@ describe('classifyForStats: manual attributionOverride (TICKET-TXN-03)', () => {
     expect(classify(groceries, new Set(), new Map(), accountsById)).toEqual({ kind: 'skip' });
   });
 });
+
+describe("classifyForStats: 'cashflow' — money in and out by sign (TICKET-ACC-14)", () => {
+  const cashflow = (
+    txn: Transaction,
+    ownSavingsIbans: ReadonlySet<string> = new Set(),
+    categoriesById: ReadonlyMap<number, Category> = new Map(),
+    accountsById: ReadonlyMap<number, Account> = new Map(),
+  ) => classifyForStats(txn, FROM, TO, ownSavingsIbans, categoriesById, accountsById, 'cashflow');
+
+  it('counts a linked transfer leg by its sign instead of skipping it', () => {
+    expect(cashflow(transaction({ amount: -200, transferId: 7 }))).toEqual({
+      kind: 'expense',
+      amount: 200,
+      categoryId: null,
+    });
+    expect(cashflow(transaction({ amount: 200, transferId: 7 }))).toEqual({
+      kind: 'income',
+      amount: 200,
+      categoryId: null,
+    });
+  });
+
+  it('counts a savings movement as expense or income, not as savings', () => {
+    const savingsIban = 'BE68539007547034';
+    expect(
+      cashflow(
+        transaction({ amount: -100, counterpartyIban: savingsIban }),
+        new Set([savingsIban]),
+      ),
+    ).toEqual({ kind: 'expense', amount: 100, categoryId: null });
+  });
+
+  it('ignores the category kind: a refund in an expense category is income, a neutral row counts', () => {
+    const groceries = category({ id: 1, kind: 'expense' });
+    const neutral = category({ id: 2, name: 'Partner contribution', kind: 'neutral' });
+    const categoriesById = new Map([
+      [1, groceries],
+      [2, neutral],
+    ]);
+
+    expect(cashflow(transaction({ amount: 30, categoryId: 1 }), new Set(), categoriesById)).toEqual(
+      {
+        kind: 'income',
+        amount: 30,
+        categoryId: 1,
+      },
+    );
+    expect(
+      cashflow(transaction({ amount: -80, categoryId: 2 }), new Set(), categoriesById),
+    ).toEqual({ kind: 'expense', amount: 80, categoryId: 2 });
+  });
+
+  it('reads a joint account at its full amount', () => {
+    const joint: Account = {
+      id: 1,
+      name: 'Joint',
+      type: 'joint',
+      currency: 'EUR',
+      openingBalance: 0,
+      openingBalanceDate: '2026-01-01',
+      color: '#000000',
+      icon: 'users',
+      archived: false,
+      ownershipShare: 0.5,
+    };
+    expect(
+      cashflow(transaction({ amount: -100 }), new Set(), new Map(), new Map([[1, joint]])),
+    ).toEqual({ kind: 'expense', amount: 100, categoryId: null });
+  });
+
+  it('still skips nullified, zero-amount and out-of-range rows', () => {
+    expect(cashflow(transaction({ nullified: true }))).toEqual({ kind: 'skip' });
+    expect(cashflow(transaction({ amount: 0 }))).toEqual({ kind: 'skip' });
+    expect(cashflow(transaction({ bookingDate: '2026-08-01' }))).toEqual({ kind: 'skip' });
+  });
+});

@@ -289,6 +289,22 @@ describe('computePeriodStats: joint-account share weighting (TICKET-STAT-46)', (
     ).toEqual({ income: 0, expense: 200, savings: 0, net: -200, savingsRate: null });
   });
 
+  it("reads the same joint expense at its full amount in 'raw' mode (TICKET-ACC-14)", () => {
+    const transactions = [transaction({ id: 1, accountId: 1, amount: -400 })];
+
+    expect(
+      computePeriodStats(
+        transactions,
+        '2026-07-01',
+        '2026-07-31',
+        new Set(),
+        new Map(),
+        accountsById,
+        'raw',
+      ),
+    ).toEqual({ income: 0, expense: 400, savings: 0, net: -400, savingsRate: null });
+  });
+
   it('counts my income into the joint account at 100%', () => {
     const transactions = [
       transaction({ id: 1, accountId: 1, amount: 1200, counterpartyIban: 'BE00EMPLOYER' }),

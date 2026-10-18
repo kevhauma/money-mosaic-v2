@@ -282,7 +282,7 @@ describe('pageRangeControl (TICKET-UI-23)', () => {
     // this fails loudly instead.
     await setup();
     const rangeStore = TestBed.inject(RangeStore);
-    const pages: RangePageKey[] = ['dashboard', 'accounts'];
+    const pages: RangePageKey[] = ['dashboard', 'accounts', 'account-detail'];
 
     for (const page of pages) {
       expect(rangeStore.preset(page)).toBe('this-month');
