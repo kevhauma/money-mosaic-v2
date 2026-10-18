@@ -1,0 +1,32 @@
+<!-- Every glyph goes through mm-text at caption size: an mm-text left at its default variant would
+     draw the separator marks a size up from the cells around them. -->
+<mm-paper
+  elevation="flat"
+  background="bg-base-200"
+  bodyClass="overflow-x-auto px-3 py-2 font-mono"
+  data-testid="reading-lines"
+>
+  @for (line of lines(); track line.number) {
+    <div class="whitespace-pre" data-testid="reading-line">
+      <mm-text variant="caption" align="right" [numeric]="true" class="mr-3 inline-block w-5">{{
+        line.number
+      }}</mm-text>
+      @for (cell of line.cells; track $index) {
+        @if (!$first) {
+          <mm-text
+            variant="caption"
+            color="primary"
+            weight="bold"
+            data-testid="reading-separator"
+            >{{ delimiterMark() }}</mm-text
+          >
+        }
+        <mm-text variant="caption" [color]="cell.color" [weight]="cell.weight">{{
+          cell.text
+        }}</mm-text>
+      }
+    </div>
+  } @empty {
+    <mm-text variant="caption">The file has no lines to read.</mm-text>
+  }
+</mm-paper>

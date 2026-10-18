@@ -183,3 +183,53 @@ describe('CsvImportService: detectHeaders / previewRawRows read a sliced head, c
     expect(sliceSpy).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('CsvImportService: readSample (TICKET-IMP-16)', () => {
+  it('reports valid UTF-8 for a UTF-8 file with accented letters', async () => {
+    const ctx = setup();
+    const file = new File(['Desc\nCAFÉ'], 'f.csv');
+
+    expect(await ctx.service.readSample(file)).toEqual({ text: 'Desc\nCAFÉ', utf8Valid: true });
+  });
+
+  it('reports invalid UTF-8 for Windows-1252 bytes', async () => {
+    const ctx = setup();
+    // "CAFÉ" in Windows-1252: É is the single byte 0xC9, never valid UTF-8 on its own.
+    const file = new File([new Uint8Array([0x43, 0x41, 0x46, 0xc9, 0x0a])], 'f.csv');
+
+    expect((await ctx.service.readSample(file)).utf8Valid).toBe(false);
+  });
+
+  it('does not count a multi-byte character cut in half by the slice as invalid', async () => {
+    const ctx = setup();
+    // 'é' is two bytes; place it so the 64 KiB slice ends between them.
+    const prefix = 'x'.repeat(64 * 1024 - 1);
+    const file = new File([`${prefix}é\nmore`], 'cut.csv');
+
+    expect((await ctx.service.readSample(file)).utf8Valid).toBe(true);
+  });
+
+  it('caches the UTF-8 head so the following preview does not re-slice the file', async () => {
+    const ctx = setup();
+    const file = new File(['Date;Desc\n01/01/2026;x'], 'f.csv');
+    const sliceSpy = vi.spyOn(file, 'slice');
+
+    await ctx.service.readSample(file);
+    await ctx.service.previewRawRows(file, ';', 'utf-8');
+
+    expect(sliceSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CsvImportService: readSample is read once per file', () => {
+  it('answers a second call for the same file without re-slicing it', async () => {
+    const ctx = setup();
+    const file = new File(['Date;Desc\n01/01/2026;x'], 'f.csv');
+    const sliceSpy = vi.spyOn(file, 'slice');
+
+    await ctx.service.readSample(file);
+    await ctx.service.readSample(file);
+
+    expect(sliceSpy).toHaveBeenCalledTimes(1);
+  });
+});

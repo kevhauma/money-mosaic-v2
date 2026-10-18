@@ -23,6 +23,8 @@ export class ButtonComponent {
   readonly type = input<'button' | 'submit' | 'reset'>('button');
   readonly disabled = input(false);
   readonly link = input<string>();
+  /** Only read with `link` — e.g. a link straight to a filtered list (TICKET-IMP-18). */
+  readonly queryParams = input<Record<string, string>>();
   readonly ariaLabel = input<string>();
   /**
    * For a button that discloses something (a row's detail, a collapsible section) — native

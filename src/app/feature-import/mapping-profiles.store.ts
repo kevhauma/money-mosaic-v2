@@ -22,6 +22,24 @@ export const matchTemplateForHeaders = (
   );
 };
 
+const signatureKey = (profile: MappingProfile): string =>
+  JSON.stringify(
+    [
+      ...new Set((profile.headerSignature ?? []).map((column) => column.trim().toLowerCase())),
+    ].sort(),
+  );
+
+/**
+ * Whether two profiles describe the same kind of file: the same bank preset, or — for a mapping the
+ * user built for a file no preset knows (TICKET-IMP-17) — the same header line. Keying a custom
+ * mapping on its missing `bankPreset` alone would make every custom mapping of one account the
+ * same row, so remembering a second file type would overwrite the first.
+ */
+const sameFileType = (a: MappingProfile, b: MappingProfile): boolean =>
+  a.bankPreset || b.bankPreset
+    ? a.bankPreset === b.bankPreset
+    : signatureKey(a) !== '[]' && signatureKey(a) === signatureKey(b);
+
 const mappingProfileConfig = entityConfig({
   entity: type<MappingProfile>(),
   selectId: (profile) => profile.id!,
@@ -53,16 +71,16 @@ export const MappingProfilesStore = signalStore(
       retry,
 
       /**
-       * Upserts the remembered mapping for a bank+account so repeated imports keep a single profile
-       * row (and edits to it actually stick) instead of piling up near-duplicates (CR-1.6).
+       * Upserts the remembered mapping for a file type + account so repeated imports keep a single
+       * profile row (and edits to it actually stick) instead of piling up near-duplicates (CR-1.6).
        */
-      upsertForBankAndAccount: async (profile: MappingProfile): Promise<MappingProfile> => {
+      upsertRemembered: async (profile: MappingProfile): Promise<MappingProfile> => {
         const existing = store
           .profiles()
           .find(
             (candidate) =>
-              candidate.bankPreset === profile.bankPreset &&
-              candidate.defaultAccountId === profile.defaultAccountId,
+              candidate.defaultAccountId === profile.defaultAccountId &&
+              sameFileType(candidate, profile),
           );
         if (!existing) {
           const id = await mappingProfilesRepository.add(profile);
@@ -78,16 +96,17 @@ export const MappingProfilesStore = signalStore(
         return { ...profile, id: existing.id };
       },
 
-      findForBankAndAccount: (
-        bankPreset: string | undefined,
-        accountId: number,
-      ): MappingProfile | undefined =>
-        store
-          .profiles()
-          .find(
-            (profile) =>
-              profile.bankPreset === bankPreset && profile.defaultAccountId === accountId,
-          ),
+      /** The mapping remembered for this account and the file type `detected` stands for — which is
+       * `detected` itself when the header match already landed on this account's saved mapping. */
+      findRemembered: (detected: MappingProfile, accountId: number): MappingProfile | undefined =>
+        detected.defaultAccountId === accountId
+          ? detected
+          : store
+              .profiles()
+              .find(
+                (profile) =>
+                  profile.defaultAccountId === accountId && sameFileType(profile, detected),
+              ),
 
       /**
        * Auto-detects the matching bank template, trying each template-declared encoding via the

@@ -53,7 +53,7 @@ A component's own folder may still `import` a sibling within that same folder us
 Two features have a standing shape for the work most likely to land in them next:
 
 - **Settings:** each new setting ships as its own section component under `feature-settings/components/`, composed by `settings-overview` (TICKET-SET-07) — never another block on the page. Bind its control to the store with `linkControlToSetting` from `shared/utils`; that helper is the only place the `emitEvent: false` write-back belongs.
-- **Import mapping:** a new mapping concern goes into a `feature-import` module (`column-mapping.ts`, `mapper-steps.ts`, `import-wizard-session.ts`, ...), not onto the `import-map-step` component class.
+- **Import mapping:** a new mapping concern goes into a `feature-import` module (`column-mapping.ts`, `column-statements.ts`, `reading-statements.ts`, `import-wizard-session.ts`, ...), not onto the `import-map-step` component class. A guess about the file (how it is read, which column is which) is a pure function in `core/import` returning a value plus a confidence; the section that shows it gets a pure view-model module beside it and stays presentational, with its controls bound to the map step's own form.
 
 ## Naming Conventions
 

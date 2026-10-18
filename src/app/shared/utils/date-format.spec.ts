@@ -1,4 +1,10 @@
-import { formatDate, formatMonthName, formatMonthShort, formatWeekdayShort } from './date-format';
+import {
+  formatDate,
+  formatDateSpelled,
+  formatMonthName,
+  formatMonthShort,
+  formatWeekdayShort,
+} from './date-format';
 import { syncFormatSettings } from './format-settings';
 import { withCleanFormatSettings } from './format-settings.testing';
 
@@ -17,6 +23,20 @@ describe('formatDate', () => {
   it('falls back to the default locale when set to an empty string', () => {
     syncFormatSettings({ locale: '' });
     expect(formatDate('2026-07-26')).toBe('26/07/2026');
+  });
+});
+
+describe('formatDateSpelled', () => {
+  withCleanFormatSettings();
+
+  it('names the month, so a day/month mix-up is visible (TICKET-IMP-16)', () => {
+    // ICU versions disagree on "Sep" vs "Sept" for en-BE; either names the month.
+    expect(formatDateSpelled('2026-09-30')).toMatch(/^30 Sept? 2026$/);
+  });
+
+  it('follows the chosen locale', () => {
+    syncFormatSettings({ locale: 'en-US' });
+    expect(formatDateSpelled('2026-09-30')).toBe('Sep 30, 2026');
   });
 });
 

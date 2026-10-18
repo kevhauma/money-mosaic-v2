@@ -2,8 +2,6 @@ import type { MappingProfile, MappingProfileColumns, SignConvention } from '@/co
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
 
-export type MapperSummaryRow = { label: string; column: string; sample?: string };
-
 export const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
   'as-is': 'As-is',
   'debit-negative': 'Debit negative (default)',
@@ -13,52 +11,44 @@ export const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
 /** A column-mapping field's key — one of `MappingProfileColumns`'s own properties. */
 export type ColumnFieldKey = keyof MappingProfileColumns;
 
-export type ColumnFieldDef = { key: ColumnFieldKey; label: string; required: boolean };
+/** `reason` is what an optional field buys, said where the user decides whether to map it. */
+export type ColumnFieldDef = { key: ColumnFieldKey; label: string; reason?: string };
 
-/** Flat per-control definitions — `resolvedSamples`/`duplicateWarnings`/`invalidFieldLabels` still
- * operate at this 9-control granularity regardless of how the guided flow groups them into steps. */
+/** The nine columns in the order the Columns section lists them (TICKET-IMP-17). */
 export const COLUMN_FIELD_DEFS: ColumnFieldDef[] = [
-  { key: 'date', label: 'Date', required: true },
-  { key: 'amount', label: 'Amount', required: false },
-  { key: 'debit', label: 'Debit', required: false },
-  { key: 'credit', label: 'Credit', required: false },
-  { key: 'description', label: 'Description', required: true },
-  { key: 'counterpartyName', label: 'Counterparty name', required: false },
-  { key: 'counterpartyIban', label: 'Counterparty IBAN', required: false },
-  { key: 'ownIban', label: 'Own account number/IBAN', required: false },
-  { key: 'balance', label: 'Running balance', required: false },
+  { key: 'date', label: 'Date' },
+  { key: 'amount', label: 'Amount' },
+  { key: 'debit', label: 'Money out' },
+  { key: 'credit', label: 'Money in' },
+  { key: 'description', label: 'Description' },
+  {
+    key: 'counterpartyName',
+    label: 'Who it was with',
+    reason: 'Lets rules recognise who you paid.',
+  },
+  {
+    key: 'counterpartyIban',
+    label: 'Their IBAN',
+    reason: 'Finds transfers between your own accounts.',
+  },
+  { key: 'ownIban', label: 'Your IBAN', reason: 'Tells which account the file belongs to.' },
+  {
+    key: 'balance',
+    label: 'Running balance',
+    reason: 'Sets a new account’s opening balance.',
+  },
 ];
 
-/** The subset of the mapping form's raw value the pure derivations below need: the header-row
- * offset plus every column-field control, keyed the same as `MappingProfileColumns`. Both are
- * `Partial` because Angular's typed reactive forms widen a `FormGroup`'s `valueChanges` emission
- * to "any control could be disabled," so `toSignal(form.valueChanges, ...)` infers a value that
- * may omit any key even though none of this form's controls are ever actually disabled. */
-export type ColumnMappingFormValue = Partial<Record<ColumnFieldKey, string>> & {
-  headerRows?: number;
-};
+/** The column-field controls of the mapping form's raw value. `Partial` because Angular's typed
+ * reactive forms widen a `FormGroup`'s `valueChanges` emission to "any control could be disabled",
+ * so `toSignal(form.valueChanges, ...)` infers a value that may omit any key even though none of
+ * this form's controls are ever actually disabled. */
+export type ColumnMappingFormValue = Partial<Record<ColumnFieldKey, string>>;
 
-/** The active step's live resolved sample(s) — the first data row's value for whichever column is
- * currently selected, per individual form control (TICKET-IMP-07; unchanged by the step regrouping). */
-export function resolvedSamples(
-  value: ColumnMappingFormValue,
-  headers: string[],
-  previewRows: string[][],
-): Partial<Record<ColumnFieldKey, string>> {
-  const sampleRow = previewRows[value.headerRows ?? 1] ?? [];
-  const samples: Partial<Record<ColumnFieldKey, string>> = {};
-  for (const field of COLUMN_FIELD_DEFS) {
-    const columnName = value[field.key];
-    const index = columnName ? headers.indexOf(columnName) : -1;
-    if (index !== -1 && sampleRow[index] !== undefined) {
-      samples[field.key] = sampleRow[index];
-    }
-  }
-  return samples;
-}
+const labelOf = (key: ColumnFieldKey): string =>
+  COLUMN_FIELD_DEFS.find((field) => field.key === key)!.label;
 
-/** Non-blocking "also mapped to X" warning for any two fields sharing the same source column
- * (TICKET-IMP-07; unchanged by the step regrouping). */
+/** Non-blocking "Also used for X" for any two fields sharing one source column (TICKET-IMP-07). */
 export function duplicateWarnings(
   value: ColumnMappingFormValue,
 ): Partial<Record<ColumnFieldKey, string>> {
@@ -66,44 +56,16 @@ export function duplicateWarnings(
   for (const field of COLUMN_FIELD_DEFS) {
     const columnName = value[field.key];
     if (!columnName) continue;
-    const keys = fieldsByColumn.get(columnName) ?? [];
-    keys.push(field.key);
-    fieldsByColumn.set(columnName, keys);
+    fieldsByColumn.set(columnName, [...(fieldsByColumn.get(columnName) ?? []), field.key]);
   }
 
   const warnings: Partial<Record<ColumnFieldKey, string>> = {};
   for (const keys of fieldsByColumn.values()) {
     if (keys.length < 2) continue;
     for (const key of keys) {
-      const otherLabels = keys
-        .filter((other) => other !== key)
-        .map((other) => COLUMN_FIELD_DEFS.find((field) => field.key === other)!.label);
-      warnings[key] = `Also mapped to ${otherLabels.join(', ')}`;
+      const others = keys.filter((other) => other !== key).map(labelOf);
+      warnings[key] = `Also used for ${others.join(', ')}`;
     }
   }
   return warnings;
-}
-
-/** Required column fields still unmapped — surfaced so the wizard's Confirm/Next button can name
- * what's blocking it (TICKET-IMP-07; unchanged by the step regrouping). */
-export function invalidFieldLabels(value: ColumnMappingFormValue): string[] {
-  return COLUMN_FIELD_DEFS.filter((field) => field.required && !value[field.key]).map(
-    (field) => field.label,
-  );
-}
-
-/** The Summary step's recap — every field that's actually mapped, in `COLUMN_FIELD_DEFS` order. */
-export function summaryRows(
-  value: ColumnMappingFormValue,
-  headers: string[],
-  previewRows: string[][],
-): MapperSummaryRow[] {
-  const samples = resolvedSamples(value, headers, previewRows);
-  const rows: MapperSummaryRow[] = [];
-  for (const field of COLUMN_FIELD_DEFS) {
-    const column = value[field.key];
-    if (!column) continue;
-    rows.push({ label: field.label, column, sample: samples[field.key] });
-  }
-  return rows;
 }

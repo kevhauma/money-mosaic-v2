@@ -1,0 +1,43 @@
+# TICKET-IMP-16 — Guess how a CSV file is written, and only ask when unsure
+
+- **Area:** Import
+- **Released in:** _unreleased_
+- **Type:** Feature
+- **Traceability:** FR-IMP-* (CSV parsing options); design round 2026-10-18 (`.impeccable/mocks/decision/reading-step.html`)
+
+## User story
+
+As someone importing a file the app has not seen before, I want the app to work out the separator, header line, date format, decimal mark and text encoding itself, and show me the evidence, so that I only answer the one thing it is unsure about instead of six technical settings.
+
+## Description
+
+A pure guesser reads the start of the file and returns each of the five reading settings with a confidence. The **How the file is read** section shows the first lines of the file as currently read, then one plain statement per setting with evidence from the file ("A comma marks the decimals: -84,12 reads as −€84.12"). It folds itself when every guess is sure.
+
+## Current situation (as-is)
+
+- Only the delimiter is guessed ([delimiter-guess.ts](../../../src/app/core/import/delimiter-guess.ts)), from the first line alone, so a preamble line before the header defeats it.
+- Encoding, header rows, date format and decimal separator default to fixed values in [import-map-step.component.ts](../../../src/app/feature-import/components/import-map-step/import-map-step.component.ts) and are six form fields the user has to understand.
+
+## Desired result (to-be)
+
+- `guessReadingOptions` (pure, `core/import`): encoding from the bytes (valid UTF-8 → UTF-8, otherwise Windows-1252); delimiter by the most consistent column count over the first lines; header row as the first line with the data's column count and no date in it; date format from the values (a day above 12 settles it, an ISO date settles it, all-ambiguous is unsure); decimal mark from the amount-shaped values (a mark followed by exactly two digits, or the last of two different marks).
+- The section lists the first lines with the separator marked, then the five statements, each with its evidence, a sure / check-this marker, and a control to change it. Changing one re-reads the lines live.
+- Recognised files take the reading from their mapping and the section folds to "Read as ; separated · comma decimals · day/month/year · Windows-1252".
+
+## Acceptance criteria
+
+> **Implementation note (2026-10-18).** TICKET-IMP-15's one-page shell does not exist yet, so the section is built as its own component ([import-reading-section](../../../src/app/feature-import/components/import-reading-section/import-reading-section.component.ts)) and sits at the top of today's [import-map-step](../../../src/app/feature-import/components/import-map-step/import-map-step.component.html), replacing its delimiter / decimal / date-format / encoding / header-rows fields. The sign-convention select stays where it was — removing it is TICKET-IMP-15's call. While the section is open the columns and previews are not rendered and the step's `result` stays `null`, so the wizard's Confirm waits for "Read it like this"; IMP-15 lifts the component into its own section unchanged. The mock's "Minus means money out" statement is not one of the five settings and is not built here. Options are the parser's own values, each with a preview where one is cheap (a date or amount read each way, the first text the encodings disagree on); the separator options have none.
+>
+> **Browser check (2026-10-18), on the dev server at `/import`.** A Windows-1252 file with a comma-laden preamble line, comma decimals with dot thousands, and day/month dates that all fit both orders opened the section with only the date marked "check this". Line 1 was muted as preamble, line 2 bold as the header, separators marked, and `CAFÉ RÉSISTANCE` read right. Switching the encoding to UTF-8 re-read the lines live as `CAF� R�SISTANCE`, highlighted, and month/day/year re-read `01/09/2026` as 9 Jan 2026. While the section was open, Confirm import was disabled and the columns were hidden. "Read it like this" folded it to "Read as ; separated · comma decimals · day/month/year · Windows-1252 · header on line 2", the column choices came from line 2, and all 4 rows previewed valid (`3.120,00` → +€3.120,00). Change reopened the section and disabled Confirm again. A plain UTF-8 comma/ISO file folded by itself ("Guessed from the file"). Nothing was imported. The check found two bugs, both fixed and covered: the separator was marked unsure on that first file, because the comma split it into as many lines by accident, so the guess now counts the longest unbroken block of lines instead of a plain tally (spec: "is sure of the semicolon even when the comma splits as many lines by accident"). And the folded note still said "Opened because…", so it now says "Checked by you" (`readingNote`'s open flag).
+
+- [x] `guessReadingOptions` returns all five settings with a confidence each, from text plus a UTF-8 validity flag. ([reading-guess.ts](../../../src/app/core/import/reading-guess.ts) `guessReadingOptions(text, utf8Valid): ReadingGuess`, each setting a `{ value, confidence: 'sure' | 'unsure' }`; the bytes side is `CsvImportService.readSample`, which validates UTF-8 in streaming mode so a character cut by the 64 KiB slice is not counted invalid — `csv-import.service.spec.ts` "readSample". It replaced `delimiter-guess.ts` in both callers, the map step and the select step.)
+- [x] The section folds itself when every setting is sure, and opens with the unsure ones marked "check this" otherwise. (`import-map-step.component.spec.ts` "how the file is read": "folds itself, with the columns showing, when every guess is sure", "opens with the unsure setting marked, and holds the columns and the result back", "takes a recognised file's reading from its saved mapping and folds"; `import-reading-section.component.spec.ts` "marks each statement sure or check-this and opens only the unsure ones" and "folds to one summary line with a Change action". Folded line from `readingSummary`, e.g. "Read as ; separated · comma decimals · day/month/year · Windows-1252".)
+- [x] Each statement shows evidence taken from the file as read with the current settings, and updates when a setting changes. ([reading-statements.ts](../../../src/app/feature-import/reading-statements.ts) builds every statement from the lines re-read with the current settings, reading dates and amounts through the parser's own `parseDate`/`parseAmount`; `reading-statements.spec.ts` covers each statement and "updates the evidence when a setting changes". The map step re-reads the lines — in both encodings, for the encoding previews — whenever the separator, encoding or header line changes: "re-reads the lines, in both encodings, when the separator changes".)
+- [x] Confirming carries the settings into Columns, the parse and the saved mapping. (The section's radios are bound to the map step's own form controls (`ReadingControls`), so a pick is an ordinary form edit; the columns read their headers from the lines as re-read, and `result.mappingProfile` — what the wizard parses with and what "Remember for this account" saves — carries all five. `import-map-step.component.spec.ts` "carries the confirmed settings into the result that is parsed and saved" and "Change reopens the section and holds the result back until confirmed again".)
+- [x] Unit tests cover: semicolon / comma / tab files, a preamble line before the header, DD/MM vs MM/DD vs ISO dates including the all-ambiguous case, comma vs dot decimals including thousands separators, invalid UTF-8 → Windows-1252, and an empty file. ([reading-guess.spec.ts](../../../src/app/core/import/reading-guess.spec.ts), 24 cases: one describe per setting plus "an empty file"; also contradicting dates, mixed marks, three-digit ambiguity and a mixed-encoding file.)
+- [x] Verified via the fallow skill and coding-conventions skill. (Both fallow CI gates exit 0 — `dead-code --baseline .fallow-baseline.json` and `health --max-cognitive 30 --max-cyclomatic 30 --max-crap 1000`; the section template first scored cognitive 32, so the raw-lines view was split out into [import-reading-lines](../../../src/app/feature-import/components/import-reading-lines/import-reading-lines.component.ts), and `fallow audit`'s one styling finding (an arbitrary `grid-cols-[…]`) was replaced by scale tokens. The `conventions-reviewer` pass found four must-fix items — CRLF churn, radios not bound to the form, visual utilities in feature templates, two consumer-less exports — all fixed.)
+
+## Notes
+
+- Part of the one-page import (TICKET-IMP-15).
+- The guesser only proposes values the parser supports (`SUPPORTED_DATE_FORMATS`, `SUPPORTED_ENCODINGS`).

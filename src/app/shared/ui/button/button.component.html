@@ -3,7 +3,12 @@
 </ng-template>
 
 @if (link(); as href) {
-  <a [routerLink]="href" [class]="classes()" [attr.aria-label]="ariaLabel()">
+  <a
+    [routerLink]="href"
+    [queryParams]="queryParams()"
+    [class]="classes()"
+    [attr.aria-label]="ariaLabel()"
+  >
     <ng-container [ngTemplateOutlet]="content" />
   </a>
 } @else {

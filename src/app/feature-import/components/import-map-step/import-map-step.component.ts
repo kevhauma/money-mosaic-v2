@@ -9,11 +9,10 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { merge } from 'rxjs';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   SIGN_CONVENTIONS,
-  SUPPORTED_DATE_FORMATS,
-  SUPPORTED_ENCODINGS,
   type CsvEncoding,
   type DateFormat,
   type MappingProfile,
@@ -22,18 +21,20 @@ import {
 } from '@/core/data-access';
 import {
   CsvImportService,
-  guessDelimiter,
+  guessColumns,
+  guessReadingOptions,
+  type AmountMode,
+  type ColumnGuess,
   type DuplicateHandling,
   type ParsedRowResult,
+  type ReadingOptions,
 } from '@/core/import';
 import { EMPTY_DUPLICATE_SCAN, type DuplicateScanVm } from '../../duplicate-scan';
 import {
   AlertComponent,
   BadgeComponent,
-  DividerComponent,
   FieldsetComponent,
   FlexComponent,
-  InputComponent,
   LabelComponent,
   SelectComponent,
   TableComponent,
@@ -43,30 +44,38 @@ import { MappingProfilesStore } from '../../mapping-profiles.store';
 import {
   COLUMN_FIELD_DEFS,
   SIGN_CONVENTION_LABELS,
-  duplicateWarnings as computeDuplicateWarnings,
-  invalidFieldLabels as computeInvalidFieldLabels,
-  resolvedSamples as computeResolvedSamples,
-  summaryRows as computeSummaryRows,
-  type ColumnFieldDef,
-  type ColumnFieldKey,
   type ImportMappingResult,
-  type MapperSummaryRow,
 } from '../../column-mapping';
 import {
-  MAPPER_STEPS,
-  stepStatus as computeStepStatus,
-  type MapperStepId,
-  type MapperStepTrackerItem,
-} from '../../mapper-steps';
-import { ColumnMapStepperComponent } from '../column-map-stepper/column-map-stepper.component';
-import { ColumnMapSimpleFieldComponent } from '../column-map-simple-field/column-map-simple-field.component';
-import {
-  ColumnMapAmountFieldComponent,
-  type AmountMode,
-} from '../column-map-amount-field/column-map-amount-field.component';
-import { ColumnMapCounterpartyFieldComponent } from '../column-map-counterparty-field/column-map-counterparty-field.component';
-import { ColumnMapSummaryStepComponent } from '../column-map-summary-step/column-map-summary-step.component';
+  columnGroups,
+  columnsSummary,
+  mappingNameFor,
+  missingColumns,
+  type ColumnControls,
+  type ColumnGroupVm,
+} from '../../column-statements';
+import { ImportColumnsSectionComponent } from '../import-columns-section/import-columns-section.component';
 import { ImportPreviewStepComponent } from '../import-preview-step/import-preview-step.component';
+import { ImportReadingSectionComponent } from '../import-reading-section/import-reading-section.component';
+import {
+  RECOGNISED_CONFIDENCE,
+  allSure,
+  readingLines,
+  readingNote,
+  readingSource,
+  readingStatements,
+  readingSummary,
+  splitGuess,
+  type ReadingConfidence,
+  type ReadingControls,
+  type ReadingLineVm,
+  type ReadingStatementVm,
+} from '../../reading-statements';
+
+/** Every column cleared — patched under a profile's own columns, because this step is reused from one
+ * file to the next and `patchValue` keeps any control the profile does not name (a guessed `debit`
+ * from the previous file would otherwise put a KBC file in split mode). */
+const EMPTY_COLUMNS = Object.fromEntries(COLUMN_FIELD_DEFS.map(({ key }) => [key, '']));
 
 @Component({
   selector: 'app-import-map-step',
@@ -74,16 +83,11 @@ import { ImportPreviewStepComponent } from '../import-preview-step/import-previe
     ReactiveFormsModule,
     AlertComponent,
     BadgeComponent,
-    ColumnMapStepperComponent,
-    ColumnMapSimpleFieldComponent,
-    ColumnMapAmountFieldComponent,
-    ColumnMapCounterpartyFieldComponent,
-    ColumnMapSummaryStepComponent,
-    DividerComponent,
     FieldsetComponent,
     FlexComponent,
+    ImportColumnsSectionComponent,
     ImportPreviewStepComponent,
-    InputComponent,
+    ImportReadingSectionComponent,
     LabelComponent,
     SelectComponent,
     TableComponent,
@@ -114,8 +118,7 @@ export class ImportMapStepComponent {
   readonly parseWarnings = input<string[]>([]);
 
   // Wizard-owned "apply to remaining files" state (TICKET-IMP-09) — gating/state stay wizard-owned
-  // (tied to `runCommit()`/`batchMapping`); the checkbox itself renders in the always-visible
-  // global options here, not gated behind the guided flow reaching Summary.
+  // (tied to `runCommit()`/`batchMapping`); the checkbox itself renders in the Columns section.
   readonly canOfferApplyToRemaining = input(false);
   readonly remainingFilesCount = input(0);
   readonly applyToRemaining = model(false);
@@ -126,8 +129,6 @@ export class ImportMapStepComponent {
   readonly duplicateScan = input<DuplicateScanVm>(EMPTY_DUPLICATE_SCAN);
   readonly duplicateHandling = model<DuplicateHandling>('skip');
 
-  protected readonly dateFormats = SUPPORTED_DATE_FORMATS;
-  protected readonly encodings = SUPPORTED_ENCODINGS;
   protected readonly signConventionOptions = SIGN_CONVENTIONS.map((value) => ({
     value,
     label: SIGN_CONVENTION_LABELS[value],
@@ -142,6 +143,16 @@ export class ImportMapStepComponent {
   protected readonly previewRows = signal<string[][]>([]);
   protected readonly detectedPreset = signal<MappingProfile | null>(null);
   protected readonly usedSavedProfile = signal(false);
+
+  // "How the file is read" (TICKET-IMP-16). While it is open the columns and previews wait and
+  // `result` stays null, so nothing is parsed with a reading the user has not confirmed yet.
+  protected readonly readingOpen = signal(false);
+  private readonly readingConfidence = signal<ReadingConfidence>(RECOGNISED_CONFIDENCE);
+  private readonly recognisedFrom = signal<string | null>(null);
+  /** The same first lines read with the other encoding — what the encoding options preview. */
+  private readonly otherEncodingRows = signal<string[][]>([]);
+  /** Bumped per re-read, so a slow read never overwrites the lines of a newer setting. */
+  private previewToken = 0;
 
   protected readonly form = this.formBuilder.nonNullable.group({
     name: ['Custom mapping', Validators.required],
@@ -160,57 +171,91 @@ export class ImportMapStepComponent {
     counterpartyIban: [''],
     ownIban: [''],
     balance: [''],
-    rememberForAccount: [false],
+    rememberForAccount: [true],
   });
 
-  /** Which guided-flow step is expanded for editing right now — never `null`; the flow's terminus
-   * is the `'summary'` step rather than an empty active field (TICKET-IMP-09). */
-  protected readonly activeStepId = signal<MapperStepId>('date');
+  /** The five reading controls, handed to the section so its radios bind to them directly. */
+  protected readonly readingControls: ReadingControls = {
+    encoding: this.form.controls.encoding,
+    delimiter: this.form.controls.delimiter,
+    headerRows: this.form.controls.headerRows,
+    dateFormat: this.form.controls.dateFormat,
+    decimalSeparator: this.form.controls.decimalSeparator,
+  };
 
-  /** Single-vs-split display mode for the Amount step (TICKET-IMP-09) — transient UI state, not
-   * persisted; defaults from whichever of `amount`/`debit`+`credit` a preset/saved-profile prefill
-   * populated. */
+  /** The nine column controls, handed to the Columns section so its selects bind to them. */
+  protected readonly columnControls = Object.fromEntries(
+    COLUMN_FIELD_DEFS.map((field) => [field.key, this.form.controls[field.key]]),
+  ) as ColumnControls;
+
+  // "Columns" (TICKET-IMP-17). Opens for a file no mapping recognises, with the guess filled in;
+  // while it is open `result` stays null, as it does while the reading section is open.
+  protected readonly columnsOpen = signal(false);
+  /** One signed column, or money out + money in — from the guess or a recognised mapping. */
   protected readonly amountMode = signal<AmountMode>('single');
+  /** The header line the columns were last guessed for, so confirming an unchanged reading again
+   * keeps the user's own picks instead of guessing over them. */
+  private guessedHeaders: string | null = null;
 
   private readonly formValue = toSignal(this.form.valueChanges, {
     initialValue: this.form.getRawValue(),
   });
 
-  /** The active step's live resolved sample(s) — the first data row's value for whichever column is
-   * currently selected, per individual form control (TICKET-IMP-07; unchanged by the step regrouping). */
-  protected readonly resolvedSamples = computed<Partial<Record<ColumnFieldKey, string>>>(() =>
-    computeResolvedSamples(this.formValue(), this.headers(), this.previewRows()),
-  );
-
-  /** Non-blocking "also mapped to X" warning for any two fields sharing the same source column
-   * (TICKET-IMP-07; unchanged by the step regrouping). */
-  protected readonly duplicateWarnings = computed<Partial<Record<ColumnFieldKey, string>>>(() =>
-    computeDuplicateWarnings(this.formValue()),
-  );
-
-  /** Required column fields still unmapped — surfaced so the wizard's Confirm/Next button can name
-   * what's blocking it (TICKET-IMP-07; unchanged by the step regrouping). */
-  readonly invalidFieldLabels = computed<string[]>(() =>
-    computeInvalidFieldLabels(this.formValue()),
-  );
-
-  /** The horizontal tracker's precomputed items — done/current/upcoming state plus a valid/set
-   * status; every step is freely clickable, so the user can jump anywhere in the guided flow, not
-   * just backward. */
-  protected readonly stepperItems = computed<MapperStepTrackerItem[]>(() => {
-    const activeIndex = MAPPER_STEPS.findIndex((step) => step.id === this.activeStepId());
-    return MAPPER_STEPS.map((step, index) => ({
-      id: step.id,
-      label: step.label,
-      state: index < activeIndex ? 'done' : index === activeIndex ? 'current' : 'upcoming',
-      status: computeStepStatus(step, this.formValue()),
-    }));
+  protected readonly readingOptions = computed<ReadingOptions>(() => {
+    this.formValue();
+    const { encoding, delimiter, headerRows, dateFormat, decimalSeparator } =
+      this.form.getRawValue();
+    return { encoding, delimiter, headerRows, dateFormat, decimalSeparator };
   });
 
-  /** The Summary step's recap — every field that's actually mapped, in `COLUMN_FIELD_DEFS` order. */
-  protected readonly summaryRows = computed<MapperSummaryRow[]>(() =>
-    computeSummaryRows(this.formValue(), this.headers(), this.previewRows()),
+  protected readonly readingStatementsVm = computed<ReadingStatementVm[]>(() =>
+    readingStatements({
+      rows: this.previewRows(),
+      otherEncodingRows: this.otherEncodingRows(),
+      options: this.readingOptions(),
+      confidence: this.readingConfidence(),
+    }),
   );
+  protected readonly readingLinesVm = computed<ReadingLineVm[]>(() =>
+    readingLines(this.previewRows(), this.readingOptions().headerRows),
+  );
+  protected readonly readingSummaryText = computed(() => readingSummary(this.readingOptions()));
+  protected readonly readingNoteText = computed(() =>
+    readingNote(this.readingConfidence(), this.recognisedFrom(), this.readingOpen()),
+  );
+
+  private readonly dataRows = computed(() =>
+    this.previewRows().slice(this.readingOptions().headerRows),
+  );
+
+  /** What the file's headers and values suggest under the reading as it stands. The section's
+   * markers compare each control against it, so a recognised mapping is checked against it too. */
+  private readonly columnGuess = computed<ColumnGuess>(() =>
+    guessColumns(this.headers(), this.dataRows(), this.readingOptions()),
+  );
+
+  protected readonly columnGroupsVm = computed<ColumnGroupVm[]>(() =>
+    columnGroups({
+      headers: this.headers(),
+      rows: this.dataRows(),
+      value: this.formValue(),
+      guess: this.columnGuess(),
+      amountMode: this.amountMode(),
+      reading: this.readingOptions(),
+      signConvention: this.formValue().signConvention ?? 'as-is',
+    }),
+  );
+  protected readonly missingColumnLabels = computed(() =>
+    missingColumns(this.formValue(), this.amountMode()),
+  );
+  protected readonly columnsSummaryText = computed(() =>
+    columnsSummary(this.formValue(), this.amountMode()),
+  );
+  protected readonly columnsNoteText = computed(() => {
+    const source = this.recognisedFrom();
+    if (source) return `From ${source}`;
+    return this.columnsOpen() ? 'Guessed from the file' : 'Checked by you';
+  });
 
   /** Row-preview valid/invalid counts, shown as badges beside the "Row preview" header rather than
    * inside `ImportPreviewStepComponent` itself — computed from the same `parsedRows` input that
@@ -233,6 +278,12 @@ export class ImportMapStepComponent {
 
   constructor() {
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.updateResult());
+    // The section's radios write these controls directly; the three that change how the lines
+    // split or decode re-read them, so the evidence always describes the file as now read.
+    const { delimiter, encoding, headerRows } = this.form.controls;
+    merge(delimiter.valueChanges, encoding.valueChanges, headerRows.valueChanges)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => void this.refreshPreview());
     effect(() => {
       const file = this.file();
       if (file === this.detectedFile) return;
@@ -243,21 +294,30 @@ export class ImportMapStepComponent {
 
   private async detectAndPrefill(file: File): Promise<void> {
     this.loading.set(true);
+    this.columnsOpen.set(false);
+    this.guessedHeaders = null;
     try {
-      const sampleBuffer = await file.slice(0, 8192).arrayBuffer();
-      const sampleText = new TextDecoder('utf-8').decode(sampleBuffer);
-      const guessedDelimiter = guessDelimiter(sampleText);
+      const { text, utf8Valid } = await this.csvImportService.readSample(file);
+      const guessed = splitGuess(guessReadingOptions(text, utf8Valid));
 
       const preset =
         (await this.mappingProfilesStore.detectTemplateForFile((encoding) =>
-          this.csvImportService.detectHeaders(file, guessedDelimiter, encoding),
+          this.csvImportService.detectHeaders(file, guessed.options.delimiter, encoding),
         )) ?? null;
       const savedProfile = preset
-        ? this.mappingProfilesStore.findForBankAndAccount(preset.bankPreset, this.accountId())
+        ? this.mappingProfilesStore.findRemembered(preset, this.accountId())
         : undefined;
 
       this.detectedPreset.set(preset);
       this.usedSavedProfile.set(!!savedProfile);
+
+      // A recognised file takes its reading from its mapping; anything else from the guess, and
+      // only opens the section when the guess is unsure of something.
+      const recognisedFrom = readingSource(savedProfile?.name, preset?.name);
+      const confidence = recognisedFrom ? RECOGNISED_CONFIDENCE : guessed.confidence;
+      this.recognisedFrom.set(recognisedFrom);
+      this.readingConfidence.set(confidence);
+      this.readingOpen.set(!allSure(confidence));
 
       if (savedProfile) {
         this.form.patchValue({
@@ -268,12 +328,10 @@ export class ImportMapStepComponent {
           encoding: savedProfile.encoding,
           headerRows: savedProfile.headerRows,
           signConvention: savedProfile.signConvention,
+          ...EMPTY_COLUMNS,
           ...savedProfile.columns,
           rememberForAccount: true,
         });
-        // A saved mapping profile already has every column mapped — skip straight to the Summary
-        // step instead of walking the guided flow again.
-        this.activeStepId.set('summary');
       } else if (preset) {
         this.form.patchValue({
           name: preset.name,
@@ -283,105 +341,105 @@ export class ImportMapStepComponent {
           encoding: preset.encoding,
           headerRows: preset.headerRows,
           signConvention: preset.signConvention,
+          ...EMPTY_COLUMNS,
           ...preset.columns,
         });
       } else {
-        this.form.patchValue({ delimiter: guessedDelimiter, name: 'Custom mapping' });
+        // Open before the patch, so the previous file's columns never make a result for this one
+        // in the moment before the guess replaces them.
+        this.columnsOpen.set(true);
+        this.form.patchValue({ ...guessed.options, name: mappingNameFor(file.name) });
       }
 
       const rawValue = this.form.getRawValue();
       this.amountMode.set(rawValue.debit || rawValue.credit ? 'split' : 'single');
 
       await this.refreshPreview();
+      // A recognised file brings its columns; anything else gets the guess — straight away when
+      // the reading is settled, or once the user confirms it, since the header line may move.
+      if (!recognisedFrom && !this.readingOpen()) this.applyColumnGuess();
+      // Once more now the amount mode and the headers are this file's: the patches above ran
+      // `updateResult` with the previous file's, and the saved header signature is read from them.
+      this.updateResult();
     } finally {
       this.loading.set(false);
     }
   }
 
-  protected async refreshPreview(): Promise<void> {
+  private async refreshPreview(): Promise<void> {
+    const token = ++this.previewToken;
     const { delimiter, encoding, headerRows } = this.form.getRawValue();
-    const rows = await this.csvImportService.previewRawRows(
-      this.file(),
-      delimiter,
-      encoding,
-      headerRows + 20,
+    const otherEncoding = encoding === 'utf-8' ? 'windows-1252' : 'utf-8';
+    const [rows, otherRows] = await Promise.all(
+      [encoding, otherEncoding].map((readAs) =>
+        this.csvImportService.previewRawRows(this.file(), delimiter, readAs, headerRows + 20),
+      ),
     );
+    if (token !== this.previewToken) return;
     this.headers.set(rows[headerRows - 1] ?? []);
     this.previewRows.set(rows);
+    this.otherEncodingRows.set(otherRows);
   }
 
-  /** Type-safe dynamic control lookup for the template, since `form.controls['x']` doesn't narrow. */
-  protected controlFor(key: ColumnFieldKey): FormControl<string> {
-    return this.form.controls[key];
+  protected confirmReading(): void {
+    this.readingOpen.set(false);
+    if (!this.recognisedFrom()) this.applyColumnGuess();
+    this.updateResult();
   }
 
-  /** Looks up a single-select step's field definition by key — returns the same `COLUMN_FIELD_DEFS`
-   * object reference every call, so passing it as a template input doesn't churn the child's
-   * `OnPush` change detection with a fresh object literal each cycle. */
-  protected fieldDef(key: ColumnFieldKey): ColumnFieldDef {
-    return COLUMN_FIELD_DEFS.find((field) => field.key === key)!;
+  protected changeReading(): void {
+    this.readingOpen.set(true);
+    this.updateResult();
   }
 
-  /** Switches the Amount step's mode, clearing the now-inactive control(s) so a stale `debit`/
-   * `credit` (or `amount`) value never silently survives into a saved/reused `MappingProfile` after
-   * the user switches away from it (`resolveAmount` gives `amount` priority whenever it's truthy). */
+  /** Fills the column controls from the guess and opens the section for the user to check it —
+   * unless these are the headers already guessed for, whose columns the user may have changed. */
+  private applyColumnGuess(): void {
+    const headersKey = JSON.stringify(this.headers());
+    if (headersKey === this.guessedHeaders) return;
+    this.guessedHeaders = headersKey;
+
+    const { amountMode, fields } = this.columnGuess();
+    this.amountMode.set(amountMode);
+    this.form.patchValue(
+      Object.fromEntries(COLUMN_FIELD_DEFS.map(({ key }) => [key, fields[key].column ?? ''])),
+    );
+    this.columnsOpen.set(true);
+  }
+
+  protected confirmColumns(): void {
+    if (this.missingColumnLabels().length > 0) return;
+    this.columnsOpen.set(false);
+    this.updateResult();
+  }
+
+  protected changeColumns(): void {
+    this.columnsOpen.set(true);
+    this.updateResult();
+  }
+
+  /** Switches the amount between one column and a money out + money in pair, clearing the side
+   * left behind so a stale `debit`/`credit` (or `amount`) never survives into a saved mapping —
+   * `resolveAmount` gives `amount` priority whenever it is set. The guess fills the new side. */
   protected setAmountMode(mode: AmountMode): void {
     if (mode === this.amountMode()) return;
     this.amountMode.set(mode);
+    const { fields } = this.columnGuess();
     if (mode === 'single') {
-      this.form.patchValue({ debit: '', credit: '' });
+      this.form.patchValue({ debit: '', credit: '', amount: fields.amount.column ?? '' });
     } else {
-      this.form.patchValue({ amount: '' });
+      this.form.patchValue({
+        amount: '',
+        debit: fields.debit.column ?? '',
+        credit: fields.credit.column ?? '',
+      });
     }
   }
 
-  /** Opens any step for editing — collapsing whichever step was previously active and marking its
-   * controls touched, so a skipped required field's error surfaces once the user moves away from
-   * it. Every step is reachable, including jumping ahead past ones not yet visited. */
-  protected openStep(id: MapperStepId): void {
-    const current = this.activeStepId();
-    if (id === current) return;
-
-    this.markStepTouched(current);
-    this.activeStepId.set(id);
-  }
-
-  /** Advances the guided flow past `id` once every required control in that step is valid — a
-   * no-op while a required field is still empty. */
-  protected advanceFrom(id: MapperStepId): void {
-    this.markStepTouched(id);
-    if (this.isStepBlocked(id)) return;
-
-    const currentIndex = MAPPER_STEPS.findIndex((step) => step.id === id);
-    const next = MAPPER_STEPS[currentIndex + 1];
-    if (next) this.activeStepId.set(next.id);
-  }
-  protected returnFrom(id: MapperStepId): void {
-    this.markStepTouched(id);
-    if (this.isStepBlocked(id)) return;
-
-    const currentIndex = MAPPER_STEPS.findIndex((step) => step.id === id);
-    const previous = MAPPER_STEPS[currentIndex - 1];
-    if (previous) this.activeStepId.set(previous.id);
-  }
-
-  private markStepTouched(id: MapperStepId): void {
-    const step = MAPPER_STEPS.find((s) => s.id === id);
-    step?.keys.forEach((key) => this.controlFor(key).markAsTouched());
-  }
-
-  private isStepBlocked(id: MapperStepId): boolean {
-    const step = MAPPER_STEPS.find((s) => s.id === id);
-    return (
-      step?.keys.some((key) => {
-        const def = COLUMN_FIELD_DEFS.find((f) => f.key === key);
-        return !!def?.required && this.controlFor(key).invalid;
-      }) ?? false
-    );
-  }
-
   private updateResult(): void {
-    if (this.form.invalid) {
+    const missing = missingColumns(this.form.getRawValue(), this.amountMode()).length > 0;
+    const blocked = this.readingOpen() || this.columnsOpen() || missing;
+    if (this.form.invalid || blocked) {
       this.result.set(null);
       return;
     }

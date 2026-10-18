@@ -14,256 +14,163 @@
     </mm-alert>
   } @else {
     <mm-alert status="info" class="mb-4 text-sm"
-      >No bank preset matched — map the columns below.</mm-alert
+      >No bank preset matched — check the columns we guessed below.</mm-alert
     >
   }
 
-  <form [formGroup]="form" class="flex flex-col gap-4">
-    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-      <mm-fieldset legend="Delimiter">
-        <mm-input
-          type="text"
-          formControlName="delimiter"
-          size="sm"
-          class="w-full"
-          [maxlength]="1"
-        />
-      </mm-fieldset>
-      <mm-fieldset legend="Decimal separator">
-        <mm-input
-          type="text"
-          formControlName="decimalSeparator"
-          size="sm"
-          class="w-full"
-          [maxlength]="1"
-        />
-      </mm-fieldset>
-      <mm-fieldset legend="Date format">
-        <mm-select formControlName="dateFormat" size="sm" class="w-full">
-          @for (format of dateFormats; track format) {
-            <option [value]="format">{{ format }}</option>
-          }
-        </mm-select>
-      </mm-fieldset>
-      <mm-fieldset legend="Encoding">
-        <mm-select formControlName="encoding" size="sm" class="w-full">
-          @for (encoding of encodings; track encoding) {
-            <option [value]="encoding">{{ encoding }}</option>
-          }
-        </mm-select>
-      </mm-fieldset>
-      <mm-fieldset legend="Header rows">
-        <mm-input type="number" formControlName="headerRows" min="1" size="sm" class="w-full" />
-      </mm-fieldset>
-      <mm-fieldset legend="Sign convention">
-        <mm-select formControlName="signConvention" size="sm" class="w-full">
-          @for (option of signConventionOptions; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </mm-select>
-      </mm-fieldset>
-    </div>
+  <app-import-reading-section
+    class="mb-4 block"
+    [fileName]="file().name"
+    [delimiter]="readingOptions().delimiter"
+    [lines]="readingLinesVm()"
+    [statements]="readingStatementsVm()"
+    [summary]="readingSummaryText()"
+    [note]="readingNoteText()"
+    [open]="readingOpen()"
+    [controls]="readingControls"
+    (confirmed)="confirmReading()"
+    (changeRequested)="changeReading()"
+  />
 
-    <mm-divider class="my-1 text-xs">Columns</mm-divider>
-
-    @if (invalidFieldLabels().length > 0) {
-      <mm-alert status="warning" variant="soft" class="text-sm">
-        Map a column for: {{ invalidFieldLabels().join(', ') }}
-      </mm-alert>
-    }
-
-    <app-column-map-stepper [items]="stepperItems()" (stepClicked)="openStep($event)" />
-
-    @switch (activeStepId()) {
-      @case ('date') {
-        <app-column-map-simple-field
-          [field]="fieldDef('date')"
-          [control]="controlFor('date')"
-          [headers]="headers()"
-          [resolvedSample]="resolvedSamples().date"
-          [duplicateWarning]="duplicateWarnings().date"
-          (advanced)="advanceFrom('date')"
-          (return)="returnFrom('date')"
-        />
-      }
-      @case ('description') {
-        <app-column-map-simple-field
-          [field]="fieldDef('description')"
-          [control]="controlFor('description')"
-          [headers]="headers()"
-          [resolvedSample]="resolvedSamples().description"
-          [duplicateWarning]="duplicateWarnings().description"
-          (advanced)="advanceFrom('description')"
-          (return)="returnFrom('description')"
-        />
-      }
-      @case ('amount') {
-        <app-column-map-amount-field
-          [mode]="amountMode()"
-          [headers]="headers()"
-          [amountControl]="controlFor('amount')"
-          [debitControl]="controlFor('debit')"
-          [creditControl]="controlFor('credit')"
-          [amountSample]="resolvedSamples().amount"
-          [debitSample]="resolvedSamples().debit"
-          [creditSample]="resolvedSamples().credit"
-          [amountWarning]="duplicateWarnings().amount"
-          [debitWarning]="duplicateWarnings().debit"
-          [creditWarning]="duplicateWarnings().credit"
-          (modeChange)="setAmountMode($event)"
-          (advanced)="advanceFrom('amount')"
-          (return)="returnFrom('amount')"
-        />
-      }
-      @case ('counterparty') {
-        <app-column-map-counterparty-field
-          [headers]="headers()"
-          [nameControl]="controlFor('counterpartyName')"
-          [ibanControl]="controlFor('counterpartyIban')"
-          [nameSample]="resolvedSamples().counterpartyName"
-          [ibanSample]="resolvedSamples().counterpartyIban"
-          [nameWarning]="duplicateWarnings().counterpartyName"
-          [ibanWarning]="duplicateWarnings().counterpartyIban"
-          (advanced)="advanceFrom('counterparty')"
-          (return)="returnFrom('counterparty')"
-        />
-      }
-      @case ('ownIban') {
-        <app-column-map-simple-field
-          [field]="fieldDef('ownIban')"
-          [control]="controlFor('ownIban')"
-          [headers]="headers()"
-          [resolvedSample]="resolvedSamples().ownIban"
-          [duplicateWarning]="duplicateWarnings().ownIban"
-          (advanced)="advanceFrom('ownIban')"
-          (return)="returnFrom('ownIban')"
-        />
-      }
-      @case ('balance') {
-        <app-column-map-simple-field
-          [field]="fieldDef('balance')"
-          [control]="controlFor('balance')"
-          [headers]="headers()"
-          [resolvedSample]="resolvedSamples().balance"
-          [duplicateWarning]="duplicateWarnings().balance"
-          (advanced)="advanceFrom('balance')"
-          (return)="returnFrom('balance')"
-        />
-      }
-      @case ('summary') {
-        <app-column-map-summary-step
-          [rows]="summaryRows()"
-          [nameControl]="form.controls.name"
-          [rememberControl]="form.controls.rememberForAccount"
-          [canOfferApplyToRemaining]="canOfferApplyToRemaining()"
-          [remainingFilesCount]="remainingFilesCount()"
-          [(applyToRemaining)]="applyToRemaining"
-        />
-      }
-    }
-
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div>
-        <mm-text as="p" weight="medium" class="mb-2 text-xs text-base-content/60"
-          >Raw file preview</mm-text
-        >
-        <mm-table density="compact" scroll="auto" class="h-96">
-          <tbody>
-            @for (row of previewRows(); track $index) {
-              <tr>
-                @for (cell of row; track $index) {
-                  <td class="whitespace-nowrap">{{ cell }}</td>
-                }
-              </tr>
+  <!-- Columns and previews wait until the reading is confirmed (TICKET-IMP-16): mapping columns
+       read with a separator the user is about to change would only have to be redone. -->
+  @if (!readingOpen()) {
+    <form [formGroup]="form" class="flex flex-col gap-4">
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <mm-fieldset legend="Sign convention">
+          <mm-select formControlName="signConvention" size="sm" class="w-full">
+            @for (option of signConventionOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
             }
-          </tbody>
-        </mm-table>
+          </mm-select>
+        </mm-fieldset>
       </div>
 
-      <div>
-        <mm-flex align="center" gap="2" class="mb-2">
-          <mm-text as="p" weight="medium" class="text-xs text-base-content/60">Row preview</mm-text>
-          @if (parsedRows().length > 0) {
-            <mm-badge color="success" size="sm">{{ validRowCount() }} valid</mm-badge>
-            @if (invalidRowCount() > 0) {
-              <mm-badge color="error" size="sm">{{ invalidRowCount() }} invalid</mm-badge>
-            }
-          }
-        </mm-flex>
-        @if (!result()) {
-          <mm-text as="p" class="text-sm text-base-content/60">
-            Complete the required mapping fields to see a preview.
-          </mm-text>
-        } @else if (parseError(); as error) {
-          <mm-text as="p" color="error" class="text-sm"
-            >Couldn't parse this file: {{ error }}</mm-text
+      <app-import-columns-section
+        [fileName]="file().name"
+        [headers]="headers()"
+        [groups]="columnGroupsVm()"
+        [controls]="columnControls"
+        [amountMode]="amountMode()"
+        [open]="columnsOpen()"
+        [summary]="columnsSummaryText()"
+        [note]="columnsNoteText()"
+        [missing]="missingColumnLabels()"
+        [nameControl]="form.controls.name"
+        [rememberControl]="form.controls.rememberForAccount"
+        [canOfferApplyToRemaining]="canOfferApplyToRemaining()"
+        [remainingFilesCount]="remainingFilesCount()"
+        [(applyToRemaining)]="applyToRemaining"
+        (amountModeChange)="setAmountMode($event)"
+        (confirmed)="confirmColumns()"
+        (changeRequested)="changeColumns()"
+      />
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div>
+          <mm-text as="p" weight="medium" class="mb-2 text-xs text-base-content/60"
+            >Raw file preview</mm-text
           >
-        } @else if (headerMismatchMessage(); as message) {
-          <mm-text as="p" color="error" class="text-sm">{{ message }}</mm-text>
-          <mm-text as="p" class="mt-1 text-sm text-base-content/60">
-            Remap this file below to continue.
-          </mm-text>
-        } @else if (parsing() && parsedRows().length === 0) {
-          <mm-flex justify="center" class="py-8">
-            <span class="loading loading-spinner loading-md"></span>
+          <mm-table density="compact" scroll="auto" class="h-96">
+            <tbody>
+              @for (row of previewRows(); track $index) {
+                <tr>
+                  @for (cell of row; track $index) {
+                    <td class="whitespace-nowrap">{{ cell }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </mm-table>
+        </div>
+
+        <div>
+          <mm-flex align="center" gap="2" class="mb-2">
+            <mm-text as="p" weight="medium" class="text-xs text-base-content/60"
+              >Row preview</mm-text
+            >
+            @if (parsedRows().length > 0) {
+              <mm-badge color="success" size="sm">{{ validRowCount() }} valid</mm-badge>
+              @if (invalidRowCount() > 0) {
+                <mm-badge color="error" size="sm">{{ invalidRowCount() }} invalid</mm-badge>
+              }
+            }
           </mm-flex>
-        } @else {
-          @if (parseWarnings().length > 0) {
-            <mm-alert status="warning" variant="soft" class="mb-3 block text-sm">
-              <div>
-                @for (warning of parseWarnings(); track warning) {
-                  <p>{{ warning }}</p>
-                }
-              </div>
-            </mm-alert>
-          }
-          <!-- Duplicate check (TICKET-IMP-14): the counts, then the choice. Both sit above the
+          @if (!result()) {
+            <mm-text as="p" class="text-sm text-base-content/60">
+              Confirm how the file is read and its columns to see a preview.
+            </mm-text>
+          } @else if (parseError(); as error) {
+            <mm-text as="p" color="error" class="text-sm"
+              >Couldn't parse this file: {{ error }}</mm-text
+            >
+          } @else if (headerMismatchMessage(); as message) {
+            <mm-text as="p" color="error" class="text-sm">{{ message }}</mm-text>
+            <mm-text as="p" class="mt-1 text-sm text-base-content/60">
+              Use Change on Columns above to remap this file.
+            </mm-text>
+          } @else if (parsing() && parsedRows().length === 0) {
+            <mm-flex justify="center" class="py-8">
+              <span class="loading loading-spinner loading-md"></span>
+            </mm-flex>
+          } @else {
+            @if (parseWarnings().length > 0) {
+              <mm-alert status="warning" variant="soft" class="mb-3 block text-sm">
+                <div>
+                  @for (warning of parseWarnings(); track warning) {
+                    <p>{{ warning }}</p>
+                  }
+                </div>
+              </mm-alert>
+            }
+            <!-- Duplicate check (TICKET-IMP-14): the counts, then the choice. Both sit above the
                table because they are what the user needs before committing, and the table below is
                how they check the claim. -->
-          @if (duplicateScan().scanning) {
-            <mm-text as="p" variant="caption" class="mb-2">
-              Checking which rows are already in this account…
-            </mm-text>
-          } @else if (duplicateScan().summary; as summary) {
-            <mm-alert [status]="duplicateScan().alertStatus" variant="soft" class="mb-3 block">
-              <mm-flex direction="col" gap="2">
-                <span>{{ summary }}</span>
-                @if (duplicateScan().duplicateCount > 0) {
-                  <mm-flex
-                    align="center"
-                    gap="4"
-                    [wrap]="true"
-                    role="radiogroup"
-                    aria-label="Rows already in this account"
-                  >
-                    <mm-label as="label" class="justify-start gap-2">
-                      <input
-                        type="radio"
-                        name="duplicate-handling"
-                        class="radio radio-sm"
-                        [checked]="duplicateHandling() === 'skip'"
-                        (change)="setDuplicateHandling('skip')"
-                      />
-                      <mm-text variant="caption" color="base-content">Skip them</mm-text>
-                    </mm-label>
-                    <mm-label as="label" class="justify-start gap-2">
-                      <input
-                        type="radio"
-                        name="duplicate-handling"
-                        class="radio radio-sm"
-                        [checked]="duplicateHandling() === 'import'"
-                        (change)="setDuplicateHandling('import')"
-                      />
-                      <mm-text variant="caption" color="base-content">Import them anyway</mm-text>
-                    </mm-label>
-                  </mm-flex>
-                }
-              </mm-flex>
-            </mm-alert>
+            @if (duplicateScan().scanning) {
+              <mm-text as="p" variant="caption" class="mb-2">
+                Checking which rows are already in this account…
+              </mm-text>
+            } @else if (duplicateScan().summary; as summary) {
+              <mm-alert [status]="duplicateScan().alertStatus" variant="soft" class="mb-3 block">
+                <mm-flex direction="col" gap="2">
+                  <span>{{ summary }}</span>
+                  @if (duplicateScan().duplicateCount > 0) {
+                    <mm-flex
+                      align="center"
+                      gap="4"
+                      [wrap]="true"
+                      role="radiogroup"
+                      aria-label="Rows already in this account"
+                    >
+                      <mm-label as="label" class="justify-start gap-2">
+                        <input
+                          type="radio"
+                          name="duplicate-handling"
+                          class="radio radio-sm"
+                          [checked]="duplicateHandling() === 'skip'"
+                          (change)="setDuplicateHandling('skip')"
+                        />
+                        <mm-text variant="caption" color="base-content">Skip them</mm-text>
+                      </mm-label>
+                      <mm-label as="label" class="justify-start gap-2">
+                        <input
+                          type="radio"
+                          name="duplicate-handling"
+                          class="radio radio-sm"
+                          [checked]="duplicateHandling() === 'import'"
+                          (change)="setDuplicateHandling('import')"
+                        />
+                        <mm-text variant="caption" color="base-content">Import them anyway</mm-text>
+                      </mm-label>
+                    </mm-flex>
+                  }
+                </mm-flex>
+              </mm-alert>
+            }
+            <app-import-preview-step [rows]="parsedRows()" [duplicates]="duplicateScan().rows" />
           }
-          <app-import-preview-step [rows]="parsedRows()" [duplicates]="duplicateScan().rows" />
-        }
+        </div>
       </div>
-    </div>
-  </form>
+    </form>
+  }
 }

@@ -7,7 +7,7 @@ import type { AlertStatus } from '@/shared/ui';
  * no count is derived in three places.
  *
  * Lives in the feature root rather than on `ImportMapStepComponent` for the reason
- * `column-mapping.ts` and `mapper-steps.ts` do: a new import concern is a module, not another
+ * `column-mapping.ts` and `column-statements.ts` do: a new import concern is a module, not another
  * cluster of fields on the map step's class.
  */
 export type DuplicateScanVm = {

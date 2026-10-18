@@ -1,0 +1,85 @@
+<mm-flex direction="col" gap="6">
+  <div>
+    <mm-text as="h2" variant="label">What changed</mm-text>
+    <mm-text as="p" variant="display" [numeric]="true" class="mt-1">{{ vm().headline }}</mm-text>
+    @if (vm().period; as period) {
+      <mm-text as="p" variant="caption" class="mt-1">{{ period }}</mm-text>
+    }
+  </div>
+
+  @if (vm().hasAdded) {
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <mm-stat-card label="Money in" [value]="vm().moneyIn" color="money-positive" />
+      <mm-stat-card label="Money out" [value]="vm().moneyOut" color="money-negative" />
+    </div>
+
+    <ul class="flex flex-col gap-3">
+      @for (line of vm().lines; track line.icon) {
+        <li class="flex items-center gap-3">
+          <mm-text [color]="line.color" class="flex shrink-0">
+            <ng-icon [name]="line.icon" size="22" aria-hidden="true" />
+          </mm-text>
+          <div class="min-w-0 flex-1">
+            <mm-text as="p" weight="semibold">{{ line.title }}</mm-text>
+            <mm-text as="p" variant="caption">{{ line.caption }}</mm-text>
+          </div>
+          @if (line.sortsBacklog) {
+            <mm-button
+              variant="link"
+              size="sm"
+              link="/transactions"
+              [queryParams]="uncategorisedQuery"
+            >
+              Sort them
+            </mm-button>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (files().length > 0) {
+    <div class="border-t border-base-300 pt-4">
+      <mm-text as="h3" variant="label">Files</mm-text>
+      <ul class="mt-2 flex flex-col">
+        @for (file of files(); track file.result.batch.id) {
+          <li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+            <div class="min-w-0 flex-1">
+              <mm-text as="p" weight="medium" class="truncate">{{ file.accountName }}</mm-text>
+              <mm-text as="p" variant="caption" class="truncate">{{ file.caption }}</mm-text>
+            </div>
+            <mm-button
+              variant="ghost"
+              size="sm"
+              class="text-error"
+              [ariaLabel]="file.undoAriaLabel"
+              (click)="openUndoConfirm(file)"
+            >
+              Undo
+            </mm-button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <mm-flex align="center" gap="3" [wrap]="true" class="border-t border-base-300 pt-4">
+    @if (vm().sortsFirst) {
+      <mm-button color="primary" size="sm" link="/transactions" [queryParams]="uncategorisedQuery">
+        {{ vm().sortLabel }}
+      </mm-button>
+    } @else {
+      <mm-button color="primary" size="sm" link="/dashboard">Go to the dashboard</mm-button>
+    }
+    <mm-button variant="ghost" size="sm" (click)="importMore.emit()">Import more files</mm-button>
+  </mm-flex>
+</mm-flex>
+
+<mm-confirm-dialog
+  [(open)]="undoConfirmOpen"
+  title="Undo this import?"
+  [message]="undoMessage()"
+  confirmLabel="Undo import"
+  [danger]="true"
+  (confirmed)="confirmUndo()"
+/>

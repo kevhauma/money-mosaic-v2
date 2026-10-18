@@ -29,6 +29,8 @@ export type SelectSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export class SelectComponent implements ControlValueAccessor {
   readonly color = input<SelectColor>();
   readonly size = input<SelectSize>('md');
+  /** The accessible name, for a select whose visible label is not a `<label>` wrapping it. */
+  readonly ariaLabel = input<string>();
   readonly class = input('', { alias: 'class' });
 
   protected readonly value = signal('');

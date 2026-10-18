@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**14 tickets** — 13 done, 1 open.
+**18 tickets** — 15 done, 3 open.
 
 - [ ] [TICKET-IMP-01](./tickets/TICKET-IMP-01-bank-presets.md) — Bank presets for BNP Paribas Fortis, ING & Argenta · _v1.0 Foundation_
 - [x] [TICKET-IMP-02](./tickets/TICKET-IMP-02-batch-multi-file-mapping.md) — Map a multi-file import batch once · _v1.0 Foundation_
@@ -18,3 +18,7 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-IMP-12](./tickets/TICKET-IMP-12-batch-wait-card-extraction.md) — Extract the wizard's batch-wait card into a presentational component · _v2 Code review (CR4)_
 - [x] [TICKET-IMP-13](./tickets/TICKET-IMP-13-import-history-with-undo.md) — Import history with per-batch undo · _v2.3 UX review_
 - [x] [TICKET-IMP-14](./tickets/TICKET-IMP-14-duplicate-preview-before-commit.md) — Say how many rows are duplicates before committing an import · _v2.3 UX review_
+- [ ] [TICKET-IMP-15](./tickets/TICKET-IMP-15-one-page-import.md) — Import on one page, top to bottom (FR-IMP-*; needs TICKET-IMP-16, TICKET-IMP-17, TICKET-IMP-18) · _unreleased_
+- [x] [TICKET-IMP-16](./tickets/TICKET-IMP-16-reading-step.md) — Guess how a CSV file is written, and only ask when unsure (FR-IMP-*; part of TICKET-IMP-15) · _unreleased_
+- [x] [TICKET-IMP-17](./tickets/TICKET-IMP-17-guess-columns.md) — Guess the columns, and let the user check the guess (FR-IMP-*; part of TICKET-IMP-15, reads TICKET-IMP-16) · _unreleased_
+- [x] [TICKET-IMP-18](./tickets/TICKET-IMP-18-what-changed-overview.md) — End an import on what changed, not on row counts (FR-CAT-3, FR-CAT-5, FR-TRF-2; part of TICKET-IMP-15) · _unreleased_

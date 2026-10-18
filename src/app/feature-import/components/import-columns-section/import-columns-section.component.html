@@ -1,0 +1,82 @@
+@if (open()) {
+  <mm-paper elevation="flat" bodyClass="p-4 flex flex-col gap-3">
+    <mm-flex align="baseline" justify="between" gap="3" [wrap]="true">
+      <mm-text as="h3" variant="subheading">Columns for {{ fileName() }}</mm-text>
+      @if (note()) {
+        <mm-text variant="caption">{{ note() }}</mm-text>
+      }
+    </mm-flex>
+    <mm-text as="p" variant="caption">
+      We read the headers and the first lines. Check anything marked "check this".
+    </mm-text>
+
+    @for (group of groupsVm(); track group.id) {
+      <div class="flex flex-col" [attr.data-group]="group.id">
+        <mm-flex align="center" justify="between" gap="3" [wrap]="true" class="pb-1">
+          <mm-flex align="baseline" gap="2" [wrap]="true">
+            <mm-text as="p" variant="label">{{ group.title }}</mm-text>
+            @if (group.caption) {
+              <mm-text variant="caption">{{ group.caption }}</mm-text>
+            }
+          </mm-flex>
+          @if (group.amountSwitch) {
+            <mm-tabs
+              variant="box"
+              [tabs]="amountTabs"
+              [selected]="amountMode()"
+              (selectedChange)="selectAmountMode($event)"
+            />
+          }
+        </mm-flex>
+        @for (row of group.rows; track row.vm.key) {
+          <app-import-column-row [row]="row.vm" [headers]="headers()" [control]="row.control" />
+        }
+      </div>
+    }
+
+    <mm-flex direction="col" gap="2" class="border-t border-base-200 pt-3">
+      <mm-label as="label" class="cursor-pointer justify-start gap-2">
+        <input type="checkbox" class="checkbox checkbox-sm" [formControl]="rememberControl()" />
+        <mm-text variant="caption" color="base-content"
+          >Remember these columns for files like this one</mm-text
+        >
+      </mm-label>
+      <mm-fieldset legend="Save as" class="md:w-80">
+        <mm-input type="text" size="sm" class="w-full" [formControl]="nameControl()" />
+      </mm-fieldset>
+      @if (canOfferApplyToRemaining()) {
+        <mm-label as="label" class="cursor-pointer justify-start gap-2">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm"
+            [checked]="applyToRemaining()"
+            (change)="onApplyToRemainingChange($event)"
+          />
+          <mm-text variant="caption" color="base-content">{{ remainingText() }}</mm-text>
+        </mm-label>
+      }
+    </mm-flex>
+
+    <mm-flex align="center" gap="3" [wrap]="true">
+      <mm-button color="primary" size="sm" [disabled]="!canConfirm()" (click)="confirmed.emit()"
+        >Looks right</mm-button
+      >
+      @if (missingText()) {
+        <mm-text variant="caption" color="warning">{{ missingText() }}</mm-text>
+      }
+    </mm-flex>
+  </mm-paper>
+} @else {
+  <mm-paper elevation="flat" bodyClass="px-4 py-2">
+    <mm-flex align="center" gap="3" [wrap]="true">
+      <mm-text weight="semibold">Columns</mm-text>
+      <mm-text variant="caption" class="flex-1" data-testid="columns-summary">{{
+        summary()
+      }}</mm-text>
+      @if (note()) {
+        <mm-text variant="caption">{{ note() }}</mm-text>
+      }
+      <mm-button variant="ghost" size="xs" (click)="changeRequested.emit()">Change</mm-button>
+    </mm-flex>
+  </mm-paper>
+}

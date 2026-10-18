@@ -15,7 +15,7 @@ import type { PendingAccountDraft, QueuedImportFile } from './import-queue';
 import type { ImportMappingResult } from './column-mapping';
 import { duplicateAlertStatus, duplicateScanSummary, type DuplicateScanVm } from './duplicate-scan';
 
-// Select → Map+Preview → Summary. Map and preview live on one screen (step 2); there is no
+// Select → Map+Preview → What changed (TICKET-IMP-18). Map and preview live on one screen (step 2); there is no
 // separate preview-only step anymore.
 export type WizardStep = 1 | 2 | 3;
 type ValidParsedRow = Extract<ParsedRowResult, { valid: true }>;
@@ -82,7 +82,7 @@ const earliestBalanceSeed = (rows: ValidParsedRow[]): OpeningBalanceSeed | null 
  * `providedIn: 'root'`: `ImportWizardComponent` provides it in its own `@Component.providers`, so a
  * fresh session is created and torn down with each mount of the `/import` route — no explicit
  * `reset()`-on-navigate discipline needed, though `startNewImport()` still resets it in place for
- * the in-page "start a new import" action once the wizard reaches Summary.
+ * the in-page "Import more files" action once the wizard reaches What changed.
  */
 @Injectable()
 export class ImportWizardSession {
@@ -438,7 +438,7 @@ export class ImportWizardSession {
           : mapResult.mappingProfile;
       const savedProfile =
         profile.defaultAccountId != null
-          ? await this.mappingProfilesStore.upsertForBankAndAccount(profile)
+          ? await this.mappingProfilesStore.upsertRemembered(profile)
           : undefined;
 
       const result = await this.importBatchesStore.commitImport({
@@ -499,7 +499,7 @@ export class ImportWizardSession {
   }
 
   /** Resets every session field back to its initial value — the in-page "start a new import"
-   * action once the wizard reaches Summary. Navigating away and back to `/import` doesn't need
+   * action once the wizard reaches What changed. Navigating away and back to `/import` doesn't need
    * this: a fresh `ImportWizardSession` is created per mount since it's provided on the component,
    * not `providedIn: 'root'`. */
   startNewImport(): void {

@@ -1,0 +1,89 @@
+@if (open()) {
+  <mm-paper elevation="flat" bodyClass="p-4 flex flex-col gap-3">
+    <mm-flex align="baseline" justify="between" gap="3" [wrap]="true">
+      <mm-text as="h3" variant="subheading">How the file is read</mm-text>
+      @if (note()) {
+        <mm-text variant="caption">{{ note() }}</mm-text>
+      }
+    </mm-flex>
+
+    <mm-text as="p" variant="label"
+      >The first lines of {{ fileName() }}, as we read them now</mm-text
+    >
+    <app-import-reading-lines [lines]="lines()" [delimiter]="delimiter()" />
+
+    <mm-text as="p" variant="label">What we read from it</mm-text>
+    <div class="flex flex-col">
+      @for (row of rows(); track row.key) {
+        <div [class]="row.containerClass" [attr.data-reading]="row.key">
+          <div class="flex flex-col gap-1 md:flex-row md:items-center md:gap-3">
+            <mm-button
+              variant="ghost"
+              size="sm"
+              class="justify-start md:w-64 md:shrink-0"
+              [ariaExpanded]="row.expanded"
+              (click)="toggleRow(row.key)"
+            >
+              {{ row.title }}
+            </mm-button>
+            <mm-text variant="caption" [numeric]="true" class="md:flex-1">
+              {{ row.evidence }}
+              @if (row.highlight) {
+                <mm-text variant="caption" weight="semibold" color="base-content">{{
+                  row.highlight
+                }}</mm-text>
+              }
+              {{ row.after }}
+            </mm-text>
+            <mm-badge [color]="row.chipColor" variant="soft" size="sm">{{
+              row.chipLabel
+            }}</mm-badge>
+          </div>
+          @if (row.expanded) {
+            <mm-flex
+              align="center"
+              gap="4"
+              [wrap]="true"
+              class="px-3 pb-1"
+              role="radiogroup"
+              [attr.aria-label]="row.title"
+            >
+              @for (option of row.options; track option.value) {
+                <mm-label as="label" class="justify-start gap-2">
+                  <input
+                    type="radio"
+                    class="radio radio-xs"
+                    [name]="row.radioName"
+                    [formControl]="row.control"
+                    [value]="option.value"
+                  />
+                  <mm-text variant="caption" color="base-content">{{ option.text }}</mm-text>
+                </mm-label>
+              }
+            </mm-flex>
+          }
+        </div>
+      }
+    </div>
+
+    <mm-flex align="center" gap="3" [wrap]="true">
+      <mm-button color="primary" size="sm" (click)="confirmed.emit()">Read it like this</mm-button>
+      <mm-text variant="caption">
+        Click any line to change it. These settings are saved with the columns.
+      </mm-text>
+    </mm-flex>
+  </mm-paper>
+} @else {
+  <mm-paper elevation="flat" bodyClass="px-4 py-2">
+    <mm-flex align="center" gap="3" [wrap]="true">
+      <mm-text weight="semibold">How the file is read</mm-text>
+      <mm-text variant="caption" class="flex-1" data-testid="reading-summary">{{
+        summary()
+      }}</mm-text>
+      @if (note()) {
+        <mm-text variant="caption">{{ note() }}</mm-text>
+      }
+      <mm-button variant="ghost" size="xs" (click)="changeRequested.emit()">Change</mm-button>
+    </mm-flex>
+  </mm-paper>
+}

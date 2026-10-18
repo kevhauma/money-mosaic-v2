@@ -10,7 +10,7 @@ import { MappingProfilesStore } from '../../mapping-profiles.store';
 import { ImportWizardComponent } from './import-wizard.component';
 import { ImportSelectStepComponent } from '../import-select-step/import-select-step.component';
 import { ImportMapStepComponent } from '../import-map-step/import-map-step.component';
-import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
+import { ImportWhatChangedComponent } from '../import-what-changed/import-what-changed.component';
 import { provideFakeApi } from '@/core/data-access/fake-api.testing';
 
 // Light stand-ins for the step children so the wizard's own control-flow is what's under test —
@@ -36,11 +36,11 @@ class MapStubComponent {
   readonly duplicateScan = input<unknown>(null);
   readonly duplicateHandling = model<'skip' | 'import'>('skip');
 }
-@Component({ selector: 'app-import-summary-step', template: '' })
-class SummaryStubComponent {
-  readonly batch = input.required<unknown>();
-  readonly showDoneLink = input(true);
-  readonly undo = output<void>();
+@Component({ selector: 'app-import-what-changed', template: '' })
+class WhatChangedStubComponent {
+  readonly results = input.required<unknown>();
+  readonly undo = output<unknown>();
+  readonly importMore = output<void>();
 }
 
 const MAPPING_PROFILE = {
@@ -108,16 +108,16 @@ describe('ImportWizardComponent: combined map + preview step', () => {
           provide: ImportBatchesStore,
           useValue: { commitImport, undoImport: vi.fn(), previewImport },
         },
-        { provide: MappingProfilesStore, useValue: { upsertForBankAndAccount: vi.fn() } },
+        { provide: MappingProfilesStore, useValue: { upsertRemembered: vi.fn() } },
         { provide: AccountsStore, useValue: { activeAccounts: signal([]) } },
       ],
     })
       .overrideComponent(ImportWizardComponent, {
         remove: {
-          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportSummaryStepComponent],
+          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportWhatChangedComponent],
         },
         add: {
-          imports: [SelectStubComponent, MapStubComponent, SummaryStubComponent],
+          imports: [SelectStubComponent, MapStubComponent, WhatChangedStubComponent],
         },
       })
       .compileComponents();
@@ -462,10 +462,9 @@ describe('ImportWizardComponent: combined map + preview step', () => {
       fixture.detectChanges();
       await settleParse();
 
-      // The "apply to remaining files" checkbox itself now renders inside ImportMapStepComponent's
-      // Summary step (TICKET-IMP-09) — stubbed empty here, so its DOM text isn't observable from this
-      // spec; see column-map-summary-step.component.spec.ts for that coverage. This spec only owns
-      // the gating signal fed to it as an input.
+      // The "apply to remaining files" checkbox itself renders inside ImportMapStepComponent's
+      // Columns section (TICKET-IMP-17) — stubbed empty here, so its DOM text isn't observable from
+      // this spec. This spec only owns the gating signal fed to it as an input.
       expect(read('canOfferApplyToRemaining')).toBe(false);
     });
   });
@@ -538,16 +537,16 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
           provide: ImportBatchesStore,
           useValue: { commitImport, undoImport: vi.fn(), previewImport },
         },
-        { provide: MappingProfilesStore, useValue: { upsertForBankAndAccount: vi.fn() } },
+        { provide: MappingProfilesStore, useValue: { upsertRemembered: vi.fn() } },
         { provide: AccountsStore, useValue: { activeAccounts: signal([]), addAccount } },
       ],
     })
       .overrideComponent(ImportWizardComponent, {
         remove: {
-          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportSummaryStepComponent],
+          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportWhatChangedComponent],
         },
         add: {
-          imports: [SelectStubComponent, MapStubComponent, SummaryStubComponent],
+          imports: [SelectStubComponent, MapStubComponent, WhatChangedStubComponent],
         },
       })
       .compileComponents();
@@ -770,10 +769,10 @@ describe('ImportWizardComponent: commit-flow invariants (TICKET-TEST-03)', () =>
     })
       .overrideComponent(ImportWizardComponent, {
         remove: {
-          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportSummaryStepComponent],
+          imports: [ImportSelectStepComponent, ImportMapStepComponent, ImportWhatChangedComponent],
         },
         add: {
-          imports: [SelectStubComponent, MapStubComponent, SummaryStubComponent],
+          imports: [SelectStubComponent, MapStubComponent, WhatChangedStubComponent],
         },
       })
       .compileComponents();

@@ -37,6 +37,7 @@ describe('ImportSelectStepComponent: quick-create a new account (TICKET-IMP-08)'
   const detectTemplateForFile = vi.fn().mockResolvedValue(undefined);
   const detectHeaders = vi.fn().mockResolvedValue([]);
   const previewRawRows = vi.fn().mockResolvedValue([]);
+  const readSample = vi.fn().mockResolvedValue({ text: 'Date;Desc', utf8Valid: true });
 
   const setup = async (accounts: Account[] = [account()]): Promise<void> => {
     vi.clearAllMocks();
@@ -48,7 +49,7 @@ describe('ImportSelectStepComponent: quick-create a new account (TICKET-IMP-08)'
       imports: [ImportSelectStepComponent],
       providers: [
         ...provideFakeApi(),
-        { provide: CsvImportService, useValue: { detectHeaders, previewRawRows } },
+        { provide: CsvImportService, useValue: { detectHeaders, previewRawRows, readSample } },
         { provide: MappingProfilesStore, useValue: { detectTemplateForFile } },
       ],
     }).compileComponents();

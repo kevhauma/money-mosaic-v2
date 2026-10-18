@@ -1,0 +1,34 @@
+<div [class]="containerClass()" [attr.data-column]="row().key">
+  <div class="flex flex-col gap-1 md:flex-row md:items-center md:gap-3">
+    <mm-text weight="semibold" class="md:w-40 md:shrink-0">{{ row().label }}</mm-text>
+    <mm-select
+      [formControl]="control()"
+      size="sm"
+      class="md:w-56 md:shrink-0"
+      [ariaLabel]="row().label"
+    >
+      <option value="">none</option>
+      @for (header of headers(); track $index) {
+        <option [value]="header">{{ header }}</option>
+      }
+    </mm-select>
+    <mm-text
+      variant="caption"
+      [numeric]="true"
+      [color]="readingColor()"
+      class="truncate md:flex-1"
+      data-testid="column-reading"
+    >
+      {{ detail() }}
+      @if (row().runnerUp) {
+        <mm-text variant="caption" weight="semibold">{{ row().runnerUp }}</mm-text>
+      }
+    </mm-text>
+    <mm-badge [color]="row().markerColor" variant="soft" size="sm">{{
+      row().markerLabel
+    }}</mm-badge>
+  </div>
+  @if (row().clash) {
+    <mm-text variant="caption" color="warning" class="md:pl-44">{{ row().clash }}</mm-text>
+  }
+</div>

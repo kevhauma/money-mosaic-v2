@@ -72,7 +72,7 @@ beforeEach(() => {
         provide: ImportBatchesStore,
         useValue: { commitImport, undoImport: vi.fn(), previewImport },
       },
-      { provide: MappingProfilesStore, useValue: { upsertForBankAndAccount: vi.fn() } },
+      { provide: MappingProfilesStore, useValue: { upsertRemembered: vi.fn() } },
       { provide: AccountsStore, useValue: { addAccount: vi.fn() } },
     ],
   });
@@ -237,5 +237,18 @@ describe('ImportWizardSession: duplicate scan and handling (TICKET-IMP-14)', () 
 
     expect(session.currentFileIndex()).toBe(1);
     expect(session.duplicateHandling()).toBe('skip');
+  });
+});
+
+describe('ImportWizardSession: undo from What changed (TICKET-IMP-18)', () => {
+  it('undoes that one file and removes only its line', async () => {
+    const first = { batch: { id: 1, accountId: 1 } } as unknown as CommitImportResult;
+    const second = { batch: { id: 2, accountId: 2 } } as unknown as CommitImportResult;
+    session.commitResults.set([first, second]);
+
+    await session.onUndo(first);
+
+    expect(TestBed.inject(ImportBatchesStore).undoImport).toHaveBeenCalledWith(first.batch);
+    expect(session.commitResults()).toEqual([second]);
   });
 });

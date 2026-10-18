@@ -2,6 +2,7 @@
   [class]="classes()"
   [disabled]="isDisabled()"
   [value]="value()"
+  [attr.aria-label]="ariaLabel()"
   (change)="handleChange($any($event.target).value)"
   (blur)="handleBlur()"
 >

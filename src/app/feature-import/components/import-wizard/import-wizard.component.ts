@@ -3,7 +3,6 @@ import { AccountsStore } from '@/core/state';
 import {
   AlertComponent,
   ButtonComponent,
-  FlexComponent,
   PageHeaderComponent,
   PaperComponent,
   TypographyComponent,
@@ -12,7 +11,7 @@ import { ImportWizardSession } from '../../import-wizard-session';
 import { BatchWaitCardComponent } from '../batch-wait-card/batch-wait-card.component';
 import { ImportSelectStepComponent } from '../import-select-step/import-select-step.component';
 import { ImportMapStepComponent } from '../import-map-step/import-map-step.component';
-import { ImportSummaryStepComponent } from '../import-summary-step/import-summary-step.component';
+import { ImportWhatChangedComponent } from '../import-what-changed/import-what-changed.component';
 
 /**
  * A thin view over `ImportWizardSession` (TICKET-IMP-11) — reads its computeds and calls its named
@@ -25,10 +24,9 @@ import { ImportSummaryStepComponent } from '../import-summary-step/import-summar
     BatchWaitCardComponent,
     ImportSelectStepComponent,
     ImportMapStepComponent,
-    ImportSummaryStepComponent,
+    ImportWhatChangedComponent,
     ButtonComponent,
     AlertComponent,
-    FlexComponent,
     PageHeaderComponent,
     PaperComponent,
     TypographyComponent,

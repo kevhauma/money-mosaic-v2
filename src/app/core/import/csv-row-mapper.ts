@@ -20,7 +20,8 @@ export type RowMapOptions = {
   signConvention: SignConvention;
 };
 
-const parseAmount = (raw: string | undefined, decimalSeparator: string): number | null => {
+/** Exported so the reading step's evidence (TICKET-IMP-16) reads a value exactly as the import will. */
+export const parseAmount = (raw: string | undefined, decimalSeparator: string): number | null => {
   if (raw === undefined || raw.trim() === '') return null;
   let normalized = raw.trim();
   if (decimalSeparator === ',') {
@@ -55,7 +56,8 @@ const DATE_FORMAT_PATTERNS: Record<DateFormat, { regex: RegExp; fieldOrder: Date
   'MM/DD/YYYY': { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, fieldOrder: ['month', 'day', 'year'] },
 };
 
-const parseDate = (raw: string | undefined, dateFormat: DateFormat): string | null => {
+/** Exported for the same reason as `parseAmount`: the reading step's evidence (TICKET-IMP-16). */
+export const parseDate = (raw: string | undefined, dateFormat: DateFormat): string | null => {
   if (raw === undefined || raw.trim() === '') return null;
   const value = raw.trim();
 

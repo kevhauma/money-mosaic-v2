@@ -21,6 +21,8 @@ const trimTruncatedTail = (decoded: string, sliceCoveredWholeFile: boolean): str
 export class CsvImportService {
   /** Decoded file heads, cached per `(File, encoding)` so repeated wizard interactions don't re-read (TICKET-IMP-06). */
   private readonly headCache = new WeakMap<File, Map<string, string>>();
+  /** `readSample` results per `File` — the select step and the map step both ask for the same file. */
+  private readonly sampleCache = new WeakMap<File, Promise<{ text: string; utf8Valid: boolean }>>();
 
   private readonly decodeHead = async (file: File, encoding: string): Promise<string> => {
     const cached = this.headCache.get(file)?.get(encoding);
@@ -28,12 +30,46 @@ export class CsvImportService {
 
     const buffer = await file.slice(0, HEAD_SLICE_BYTES).arrayBuffer();
     const decoded = new TextDecoder(encoding, { fatal: false }).decode(buffer);
-    const text = trimTruncatedTail(decoded, file.size <= HEAD_SLICE_BYTES);
+    return this.cacheHead(
+      file,
+      encoding,
+      trimTruncatedTail(decoded, file.size <= HEAD_SLICE_BYTES),
+    );
+  };
 
+  private cacheHead(file: File, encoding: string, text: string): string {
     const byEncoding = this.headCache.get(file) ?? new Map<string, string>();
     byEncoding.set(encoding, text);
     this.headCache.set(file, byEncoding);
     return text;
+  }
+
+  /**
+   * The start of the file decoded as UTF-8, plus whether those bytes *were* valid UTF-8 — what
+   * `guessReadingOptions` needs (TICKET-IMP-16). Streaming mode keeps a multi-byte character the
+   * slice cut in half from counting as invalid. The decoded head is cached like any other, so the
+   * first UTF-8 preview after the guess doesn't re-read the file.
+   */
+  readSample = (file: File): Promise<{ text: string; utf8Valid: boolean }> => {
+    const cached = this.sampleCache.get(file);
+    if (cached) return cached;
+    const sample = this.sampleOf(file);
+    this.sampleCache.set(file, sample);
+    return sample;
+  };
+
+  private readonly sampleOf = async (file: File): Promise<{ text: string; utf8Valid: boolean }> => {
+    const buffer = await file.slice(0, HEAD_SLICE_BYTES).arrayBuffer();
+    const wholeFile = file.size <= HEAD_SLICE_BYTES;
+    let utf8Valid = true;
+    try {
+      new TextDecoder('utf-8', { fatal: true }).decode(buffer, { stream: !wholeFile });
+    } catch {
+      utf8Valid = false;
+    }
+    const decoded = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+    const text = this.cacheHead(file, 'utf-8', trimTruncatedTail(decoded, wholeFile));
+    return { text, utf8Valid };
   };
 
   parse = async (

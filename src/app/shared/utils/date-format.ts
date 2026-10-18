@@ -25,6 +25,27 @@ export function formatDate(isoDate: string): string {
   return DATE_FORMATTER().format(parseIsoDate(isoDate));
 }
 
+const SPELLED_DATE_FORMATTER = computed(
+  () =>
+    new Intl.DateTimeFormat(locale(), {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }),
+);
+
+/**
+ * A date with its month named — `30 Sep 2026` under `en-BE`, `Sep 30, 2026` under `en-US`. For
+ * showing what a file's date *means* next to how the file wrote it (TICKET-IMP-16), where the
+ * numeric `formatDate` would just repeat `30/09/2026` back and settle nothing.
+ *
+ * Locale-aware like `formatDate` above, and for the same reason.
+ */
+export function formatDateSpelled(isoDate: string): string {
+  return SPELLED_DATE_FORMATTER().format(parseIsoDate(isoDate));
+}
+
 const SHORT_MONTH_FORMATTER = computed(
   () => new Intl.DateTimeFormat(locale(), { month: 'short', timeZone: 'UTC' }),
 );

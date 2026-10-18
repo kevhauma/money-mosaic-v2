@@ -3,7 +3,7 @@
 <mm-page-header title="Import CSV" />
 
 <!-- Step 2 (map + live preview) gets a wider shell — the mapper's own global options, side-by-side
-     previews, and guided stepper (TICKET-IMP-09) need more room than a single-column form. -->
+     previews, and the Columns section's rows (TICKET-IMP-17) need more room than a single-column form. -->
 <div
   class="mx-auto"
   [class.max-w-3xl]="session.step() !== 2"
@@ -12,7 +12,7 @@
   <ul class="steps mb-8 w-full">
     <li class="step" [class.step-primary]="session.step() >= 1">Select</li>
     <li class="step" [class.step-primary]="session.step() >= 2">Map &#38; preview</li>
-    <li class="step" [class.step-primary]="session.step() >= 3">Summary</li>
+    <li class="step" [class.step-primary]="session.step() >= 3">What changed</li>
   </ul>
 
   @if (session.step() === 2 && session.totalFiles() > 1) {
@@ -95,21 +95,11 @@
         }
       }
       @case (3) {
-        <mm-flex direction="col" gap="6">
-          @for (result of session.commitResults(); track result.batch.id) {
-            <app-import-summary-step
-              [batch]="result.batch"
-              [showDoneLink]="false"
-              (undo)="session.onUndo(result)"
-            />
-          }
-          <mm-flex align="center" gap="3" class="border-t border-base-300 pt-4">
-            <mm-button color="primary" size="sm" link="/accounts">Done</mm-button>
-            <mm-button variant="ghost" size="sm" (click)="session.startNewImport()">
-              Start new import
-            </mm-button>
-          </mm-flex>
-        </mm-flex>
+        <app-import-what-changed
+          [results]="session.commitResults()"
+          (undo)="session.onUndo($event)"
+          (importMore)="session.startNewImport()"
+        />
       }
     }
   </mm-paper>

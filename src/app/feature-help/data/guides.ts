@@ -30,9 +30,14 @@ export const GUIDES: readonly Guide[] = [
           'On the Import page, drag one or more CSV files onto the drop zone, or use "Browse" to pick them. Each file needs an account chosen next to it — if the file\'s IBAN matches an existing account, Money Mosaic picks it automatically and shows an "Auto-detected" badge.',
       },
       {
+        title: 'Check how the file is read',
+        description:
+          'Money Mosaic works out how the file is written — the separator, which line holds the column names, the date format, the decimal mark and the text encoding — and shows the first lines as it reads them, with one sentence of evidence per setting, such as what the first amount or date in the file reads as. When it is sure of all five, or recognises the file, this folds to one line you can reopen with Change. Otherwise it opens with the unsure ones marked "check this": pick the reading that looks right and choose "Read it like this".',
+      },
+      {
         title: 'Check the column mapping',
         description:
-          "If the file's format matches a known bank, its preset mapping is applied automatically (or your own saved mapping, if you've imported from this account before). Otherwise, map each column yourself — date, amount (or separate debit/credit), description, counterparty — using the raw file preview on the right to check you picked the right ones.",
+          'If the file matches a known bank, or a mapping you saved earlier for this account, its columns are used and this folds to one line you can reopen with Change. Otherwise Money Mosaic guesses which column is the date, the amount (one column, or "money out" and "money in"), the description, who it was with, their IBAN, your IBAN and the running balance, from the column names and the values under them. Each row shows what the first line reads as and is marked "sure", "check this" (with the next-best column named) or "not found"; change any of them with its dropdown. Keep "Remember these columns for files like this one" ticked and the next file with the same columns is recognised. "Looks right" is available once the date, the amount (or both money out and money in) and the description each have a column.',
       },
       {
         title: 'Review the preview',
@@ -43,6 +48,11 @@ export const GUIDES: readonly Guide[] = [
         title: 'Confirm',
         description:
           'Confirm the import to save the transactions. A failed import leaves your existing data untouched, and large files are parsed in the background so the app stays responsive.',
+      },
+      {
+        title: 'See what changed',
+        description:
+          'Once every file is in, the import ends on what it did: how many transactions were added and the period they cover, money in and money out (leaving out transfers between your accounts and moves to savings), how many your rules categorised, how many still need a category, and how many transfers were linked. These numbers follow you as you sort. Each file has its own line with Undo, which says what undoing would cost before you confirm. The main button is "Sort the N", straight to the uncategorised transactions, or "Go to the dashboard" when nothing is left to sort; "Import more files" starts again.',
       },
     ],
     tryItLabel: 'Try it — go to Import',

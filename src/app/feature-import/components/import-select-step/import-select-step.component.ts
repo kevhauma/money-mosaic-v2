@@ -1,6 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, input, model } from '@angular/core';
 import type { Account } from '@/core/data-access';
-import { detectOwnIban, matchAccountByIban, CsvImportService, guessDelimiter } from '@/core/import';
+import {
+  detectOwnIban,
+  matchAccountByIban,
+  CsvImportService,
+  guessReadingOptions,
+} from '@/core/import';
 import { FieldsetComponent, FlexComponent, PaperComponent, TypographyComponent } from '@/shared/ui';
 import { MappingProfilesStore } from '../../mapping-profiles.store';
 import type { PendingAccountDraft, QueuedImportFile } from '../../import-queue';
@@ -192,9 +197,8 @@ export class ImportSelectStepComponent {
     file: File,
   ): Promise<{ accountId: number | null; detectedIban: string | null }> {
     try {
-      const sampleBuffer = await file.slice(0, 8192).arrayBuffer();
-      const sampleText = new TextDecoder('utf-8').decode(sampleBuffer);
-      const delimiter = guessDelimiter(sampleText);
+      const { text, utf8Valid } = await this.csvImportService.readSample(file);
+      const delimiter = guessReadingOptions(text, utf8Valid).delimiter.value;
 
       const profile = await this.mappingProfilesStore.detectTemplateForFile((encoding) =>
         this.csvImportService.detectHeaders(file, delimiter, encoding),
