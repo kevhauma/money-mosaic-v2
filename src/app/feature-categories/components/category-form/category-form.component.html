@@ -7,6 +7,11 @@
       @if (form.controls.name.invalid && form.controls.name.touched) {
         <mm-label variant="error">Name is required.</mm-label>
       }
+      @if (form.controls.name.disabled) {
+        <mm-label
+          >Joint-account imports find this category by its name, so it can't be renamed.</mm-label
+        >
+      }
     </mm-fieldset>
 
     <div class="grid grid-cols-2 gap-3">

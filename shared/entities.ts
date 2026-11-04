@@ -12,16 +12,21 @@
  *
  * ## Rules for this file
  *
- * - **It imports nothing.** No Angular, no Dexie, no Drizzle, not even a sibling in `shared/` —
- *   asserted by `server/src/shared-module.spec.ts`. A dependency here would be a dependency in both a
- *   browser bundle and a Node process. That is why the four supporting unions below are declared
- *   here and re-exported by the modules that own them, rather than the other way round.
- * - **Types only.** Every runtime value the data model needs lives next door in
- *   `shared/seed-data.ts` or in `app-db.ts`, so this module erases completely at build time and
- *   adds not one byte to the initial bundle.
- * - Dexie's `AppDb` class, its sixteen shipped `.version()` blocks and the `Drizzle` tables in
- *   `server/src/schema/` are all *storage* concerns and stay where they are. This is the shape
- *   that travels between them.
+ * - **It imports nothing.** No Angular, no Drizzle, not even a sibling in `shared/` — asserted by
+ *   `server/src/shared-module.spec.ts`. A dependency here would be a dependency in both a browser
+ *   bundle and a Node process. That is why the supporting unions below are declared here and
+ *   re-exported by the modules that own them, rather than the other way round.
+ * - **Types only.** Every runtime value lives next door in `shared/seed-data.ts`, so this module
+ *   erases completely at build time. The Drizzle tables in `server/src/schema/` are the storage;
+ *   this is the shape that travels over the wire.
+ *
+ * ## The `field: T | undefined` convention
+ *
+ * Singleton settings rows (`AppSettings`, `UiPreferences`) declare every optional field as
+ * required-but-possibly-`undefined` rather than `field?:`. `@ngrx/signals`' `withState` keeps
+ * property optionality on the generated accessor, so `field?:` would make `store.field` itself
+ * possibly missing instead of a signal whose *value* can be `undefined`. `undefined` always means
+ * "never chosen" and falls back to a default where it is read.
  */
 
 /* --------------------------------------------------------------------------------------------
@@ -193,9 +198,6 @@ export type Category = {
    * done seeing it"); a window is a dated fact ("this was true until then, and still is about that
    * period"), which is what lets a picker keep offering an ended category for a 2022 transaction it
    * genuinely applied to (TICKET-CAT-11).
-   *
-   * Both are **non-indexed**, so adding them needed no `.version(n + 1)` block — `.stores()`
-   * declares indexes, not fields (the `appSettings` precedent in the data-model skill).
    */
   activeFrom?: string;
   activeUntil?: string;
@@ -238,8 +240,7 @@ export type MappingProfileColumns = {
 
 /**
  * How debit/credit-column signs map onto the stored (negative-expense) amount. Its option list,
- * `SIGN_CONVENTIONS`, stays in `app-db.ts` — only the import wizard's dropdown iterates it — and is
- * checked against this union with `satisfies`, so the two cannot drift.
+ * `SIGN_CONVENTIONS`, is in `shared/seed-data.ts`.
  */
 export type SignConvention = 'as-is' | 'debit-negative' | 'credit-negative';
 
@@ -271,7 +272,7 @@ export type CategoryComparisonSettings = {
   excludedCategoryIds: number[];
 };
 
-/** The eight Dashboard content rows a user can reorder/hide (TICKET-STAT-14) — matches `dashboard-overview.component.html`'s row structure 1:1. */
+/** The Dashboard content rows a user can reorder/hide (TICKET-STAT-14) — matches `dashboard-overview.component.html`'s row structure 1:1. */
 export type DashboardRowId =
   | 'stats'
   | 'weekday-weekend'
@@ -308,8 +309,7 @@ export type ImportBatch = {
    *
    * A separate figure rather than folding into `rowsDuplicate`: that one means "not added", and
    * `rowsRead = rowsAdded + rowsDuplicate` stays true. Without this, a batch where 40 known rows
-   * were knowingly re-imported would be indistinguishable from 40 genuinely new ones. Optional and
-   * non-indexed, so it needs no new `.version()` block.
+   * were knowingly re-imported would be indistinguishable from 40 genuinely new ones.
    */
   rowsDuplicateImported?: number;
   dateFrom: string;
@@ -323,7 +323,7 @@ export type ImportBatch = {
  *
  * **Identified by an occurrence, not by the series key.** `RecurringPaymentSeries.key` is
  * `<cluster>|<median amount>` and its own doc forbids hanging an override off it, because a price
- * change moves the median. A transaction id is a Dexie primary key: it does not move. A stored
+ * change moves the median. A transaction id is a primary key: it does not move. A stored
  * override applies to whichever series still contains `anchorTransactionId` among its occurrences,
  * which is why importing *older* history — which would move a series' first occurrence earlier —
  * does not lose the override either.
@@ -357,7 +357,7 @@ export type CategoryModelArtifact = {
   /** `epochsRun` is optional — absent on artifacts persisted before ML-15 added it. */
   metrics: { accuracy: number; trainedSampleCount: number; epochsRun?: number };
   trainedAt: string;
-  /** `MODEL_SCHEMA_VERSION` at training time, distinct from this table's own Dexie schema version. */
+  /** `MODEL_SCHEMA_VERSION` at training time, distinct from the database schema version. */
   schemaVersion: number;
 };
 
@@ -384,11 +384,7 @@ export type AppSettings = {
    * Additive field (TICKET-SET-02) — a fixed palette key, not a freeform hex. `undefined` falls
    * back to each theme's own baked-in accent. Only applied while a Default Light/Dark theme is
    * active (`DEFAULT_THEME_STYLE_IDS` in `core/theme/theme-styles.ts`); every other theme keeps
-   * its own accent regardless of this field. Required-but-possibly-`undefined` rather than
-   * optional (`primaryColor?:`) — `@ngrx/signals`' `withState` preserves property optionality
-   * onto the generated store accessor, which would make `store.primaryColor` itself possibly
-   * `undefined` instead of a signal whose *value* can be `undefined` (same fix as `AppSettings.id`
-   * needed in TICKET-SET-05).
+   * its own accent regardless of this field.
    */
   primaryColor: AccentColorId | undefined;
   /**
@@ -397,8 +393,7 @@ export type AppSettings = {
    * multi-currency accounting), the user instead picks/types the symbol they want shown and which
    * side of the number it renders on. `undefined` falls back to `DEFAULT_CURRENCY_SYMBOL`/
    * `DEFAULT_CURRENCY_SYMBOL_POSITION` (`'€'`/`'before'`) — today's exact hardcoded behavior — so
-   * nobody's amounts change until they opt in. Required-but-possibly-`undefined` rather than
-   * optional, same `withState` accessor-optionality pitfall as `primaryColor` above.
+   * nobody's amounts change until they opt in.
    */
   currencySymbol: string | undefined;
   currencySymbolPosition: CurrencySymbolPosition | undefined;
@@ -409,8 +404,6 @@ export type AppSettings = {
    * originally (SET-04's "keep today's formatting" argument), `'en-BE'` since TICKET-SET-10, which
    * re-made that call for the app's one documented Belgian user. A *stored* value always wins over
    * the default, so SET-10 changed nobody's opted-in formatting.
-   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as
-   * `primaryColor`/`currencySymbol` above.
    */
   locale: string | undefined;
   /**
@@ -418,11 +411,7 @@ export type AppSettings = {
    * growth" (FR-INC-3). Stored as an exclusion list rather than the selection itself, mirroring
    * `CategoryComparisonSettings.excludedCategoryIds`, so a newly created income category is
    * included by default without any sync effect keeping a stored selection in step with the
-   * category list. `undefined`/empty = every income category counts. Lives here rather than in its
-   * own singleton table because it's user-portable preference data and needs no schema version of
-   * its own — `.stores()` declares indexes, not fields (same as `Category.sortOrder`).
-   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as
-   * `primaryColor`/`currencySymbol`/`locale` above.
+   * category list. `undefined`/empty = every income category counts.
    */
   excludedIncomeCategoryIds: number[] | undefined;
   /**
@@ -430,10 +419,7 @@ export type AppSettings = {
    * which is not the same thing as where their imported history happens to begin (FR-INC-12). Only
    * the `/income` page reads it, where it clamps the span every panel covers so student-era income
    * or a back-imported opening balance stops distorting the growth story; `undefined` = today's
-   * behaviour, the full data history. Same "additive optional field, no version bump" reasoning as
-   * `excludedIncomeCategoryIds` above — `.stores()` declares indexes, not fields.
-   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as the fields
-   * above.
+   * behaviour, the full data history.
    */
   careerStartDate: string | undefined;
   /**
@@ -442,8 +428,7 @@ export type AppSettings = {
    * `/income` trend spreads each year's total across that year's months instead of drawing one
    * spike (FR-INC-4). Unlike `excludedIncomeCategoryIds` this is an **inclusion** list defaulting
    * to empty — "count this category" is a sensible default for a new income category, "smooth this
-   * category" never is. Same "additive optional field, no version bump" reasoning as the two fields
-   * above. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   * category" never is.
    */
   smoothedBonusCategoryIds: number[] | undefined;
   /**
@@ -453,8 +438,7 @@ export type AppSettings = {
    * vocabulary (and rather than a freeform hex, which could be invisible against the plot);
    * `undefined` falls back to the active theme's categorical palette, i.e. today's behaviour.
    * Unlike `primaryColor` it applies under *every* theme style, because it colours canvas rather
-   * than daisyUI tokens. Same "additive optional field, no version bump" reasoning as the three
-   * fields above. Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
+   * than daisyUI tokens.
    */
   grossColor: AccentColorId | undefined;
   /**
@@ -467,9 +451,7 @@ export type AppSettings = {
    * A single global id rather than a per-month choice: re-asking which category a bonus landed in
    * every bonus month is a worse setting than one the user states once (see the ticket's Notes).
    * `IncomeStore.toggleIncomeCategory` clears it when the category leaves the growth selection, the
-   * same pruning `smoothedBonusCategoryIds` gets. Same "additive optional field, no version bump"
-   * reasoning as the fields above. Required-but-possibly-`undefined`, same `withState`
-   * accessor-optionality pitfall.
+   * same pruning `smoothedBonusCategoryIds` gets.
    */
   mainIncomeCategoryId: number | undefined;
   /**
@@ -481,9 +463,6 @@ export type AppSettings = {
    * per-visit component state and stays that way (the income events rail is explicitly
    * undismissable, TICKET-INC-17). This records one thing — "we have introduced this page" — which
    * genuinely should survive a reload, where a cleared notice should not.
-   *
-   * Same "additive optional field, no version bump" reasoning as the fields above.
-   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    *
    * **Nothing writes this since TICKET-INC-23** removed the Income page's first-visit gate, which
    * was its only producer. The field stays because dropping it would be a migration that buys
@@ -502,10 +481,7 @@ export type AppSettings = {
    * Deliberately separate from `CategoryComparisonSettings.excludedCategoryIds`: "not interesting
    * to compare period-over-period" and "drowning out the heatmap" are different judgements about
    * different charts. Lives here rather than in a fourth singleton table because the newer
-   * convention for a list of category ids is a field on this row (see `excludedIncomeCategoryIds`)
-   * — `.stores()` declares indexes, not fields, so no version bump.
-   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall as the fields
-   * above.
+   * convention for a list of category ids is a field on this row (see `excludedIncomeCategoryIds`).
    */
   heatmapExcludedCategoryIds: number[] | undefined;
   /**
@@ -514,9 +490,6 @@ export type AppSettings = {
    * field already means; `AppSettingsStore.privacyModeEnabled` resolves the `?? false` once so no
    * consumer has to. A setting the user chooses on the Settings page, so it belongs on this row
    * rather than in `UiPreferences` with the interface's own state.
-   *
-   * Same "additive optional field, no version bump" reasoning as the fields above.
-   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    */
   privacyMode: boolean | undefined;
   /**
@@ -525,9 +498,6 @@ export type AppSettings = {
    * `undefined` means January, i.e. today's exact calendar-year behaviour — nobody's quarter/year
    * presets change until they opt in. Nothing reads this yet; it exists so STAT-37's two fiscal
    * quick ranges have a boundary to resolve against.
-   *
-   * Same "additive optional field, no version bump" reasoning as the fields above.
-   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    */
   fiscalYearStartMonth: number | undefined;
   /**
@@ -537,9 +507,6 @@ export type AppSettings = {
    * `now-30d`-style relative text where the applied range came from one — **not** resolved dates, so
    * a saved `now-30d` still means "the last 30 days" on read rather than freezing into the window it
    * happened to resolve to when saved. `undefined`/empty = nothing applied yet.
-   *
-   * Same "additive optional field, no version bump" reasoning as the fields above.
-   * Required-but-possibly-`undefined`, same `withState` accessor-optionality pitfall.
    */
   recentRanges: RecentRange[] | undefined;
 };
@@ -595,10 +562,6 @@ export type SavingsGoal = {
 /**
  * Which question `/future` is answering (TICKET-FUT-09): walk the measured rate forward and solve
  * for the *date* a goal becomes affordable, or fix the date and solve for the *rate* it demands.
- *
- * Declared here rather than in `core/stats` because FUT-09's aggregate only exists after this
- * ticket, and the field has to be part of `.version(14)`'s row shape from the start so that adding
- * the second mode needs no schema change (see TICKET-FUT-02's Notes).
  */
 export type ForecastMode = 'when-affordable' | 'required-rate';
 
@@ -612,13 +575,11 @@ export type ForecastSettings = {
   safetyNetAmount: number;
   /**
    * Which question `/future` is answering (FUT-09) — solve for the date, or for the rate.
-   * Declared here so the row has one shape; non-indexed, so FUT-09 needs no version bump.
    */
   mode?: ForecastMode;
   /**
    * Accounts the forecast is allowed to consider (FUT-08). `undefined` or empty = every account,
-   * which is the behaviour of every ticket before FUT-08 — declared here so the row has one
-   * shape, since a non-indexed field needs no version bump either way (the CAT-10 precedent).
+   * which is the behaviour of every ticket before FUT-08.
    */
   scopeAccountIds?: number[];
 };
@@ -635,7 +596,7 @@ export type LoanType = 'mortgage' | 'auto' | 'personal' | 'student' | 'other';
  * One tracked loan (TICKET-LOAN-01, FR-LOAN-1) — a mortgage, a car loan, a personal loan, or
  * anything else amortized on a fixed principal/rate/term. `categoryId` links it to the one expense
  * category whose transactions count as payments; enforcing "one active loan per category" is a
- * form-level invariant (LOAN-03), not a schema constraint, since Dexie has no FK constraints.
+ * form-level invariant (LOAN-03), not a schema constraint.
  */
 export type Loan = {
   id?: number;
@@ -698,8 +659,6 @@ export type UiPreferences = {
   id: number;
   /**
    * The chosen theme, or `undefined` for "never picked one" — which reads as `DEFAULT_STYLE`.
-   * Required-but-possibly-`undefined` rather than optional, the `withState` accessor-optionality
-   * pitfall `AppSettings.primaryColor` documents.
    */
   themeStyle: ThemeStyleId | undefined;
   /**

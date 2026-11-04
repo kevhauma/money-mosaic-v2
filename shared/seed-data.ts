@@ -1,30 +1,30 @@
 /**
- * First-run seed data, shared by both workspaces (TICKET-SRV-02).
+ * First-run seed data and the constants both workspaces must agree on (TICKET-SRV-02).
  *
- * Dexie's `on('populate')` hook writes these into a brand-new browser database; the server's
- * `seedUserDefaults` writes the same rows for a newly created user. One definition, so the two
- * cannot drift — which is what `server/src/seed-user-defaults.spec.ts` asserts.
+ * The server's `seedUserDefaults` writes the seed rows for a newly created user. The `DEFAULT_*`
+ * singleton fallbacks are what a settings row reads as before anyone has written it — the server
+ * answers with them and the client's stores start from them (TICKET-SRV-03).
  *
- * The `DEFAULT_*` singleton fallbacks at the bottom are here for the same reason: they are what a
- * singleton row reads as before anyone has written it, on both sides of the seam (TICKET-SRV-03).
- *
- * Plain data and type-only imports, per the rules in `shared/entities.ts`.
+ * Plain data and type-only imports from `./entities.js`, asserted by `server/src/shared-module.spec.ts`.
  */
 import type {
   AppSettings,
   Category,
   CategoryComparisonSettings,
   CategoryModelSettings,
+  CsvEncoding,
   DashboardLayoutSettings,
   DashboardRowId,
+  DateFormat,
   ForecastSettings,
   MappingProfile,
+  SignConvention,
   ThemeStyleId,
   TransferSettings,
   UiPreferences,
 } from './entities.js';
 
-/** Name of the seeded `neutral`-kind system category (TICKET-CAT-02), used to find it on both first-run seeding and the `.version(6)` backfill. */
+/** Name of the seeded `neutral`-kind system category (TICKET-CAT-02). Co-owner tagging finds it by this name, so the category form refuses to rename it. */
 export const PARTNER_CONTRIBUTION_CATEGORY_NAME = 'Partner contribution';
 
 /**
@@ -200,15 +200,11 @@ export const DEFAULT_TRANSFER_SETTINGS: TransferSettings = {
 /* --------------------------------------------------------------------------------------------
  * Singleton fallbacks
  *
- * What an **unwritten** singleton row reads as. Dexie's repositories return these via
- * `(await table.get(1)) ?? DEFAULT_X`, and the server's `/api/settings/<name>` endpoints answer
- * with the same objects for a user who has never written the row — and merge a PATCH into them
- * when creating it (TICKET-SRV-03).
- *
- * They live here, beside `DEFAULT_TRANSFER_SETTINGS`, for that second reader: a copy on the server
- * would be a second definition of "what the user gets before they choose", and the two would drift
- * the first time a default changed. The `id: 1` each one carries is the old singleton convention
- * the browser database still keys on; the server drops it, since there the owner is the key.
+ * What an **unwritten** singleton row reads as. The server's `/api/settings/<name>` endpoints
+ * answer with these for a user who has never written the row, and merge a PATCH into them when
+ * creating it (TICKET-SRV-03); the client's repositories and stores start from the same objects.
+ * The `id: 1` each one carries is the old singleton convention the client types still require; the
+ * server drops it, since there the owner is the key.
  * ------------------------------------------------------------------------------------------ */
 
 export const DEFAULT_CATEGORY_COMPARISON_SETTINGS: CategoryComparisonSettings = {
@@ -279,26 +275,48 @@ export const DEFAULT_FORECAST_SETTINGS: ForecastSettings = {
   scopeAccountIds: undefined,
 };
 
-/**
- * Every selectable theme id, as a non-empty tuple so the server's CHECK constraint and Drizzle's
- * `enum` both get the full list and TypeScript refuses a member that is not in {@link ThemeStyleId}.
+/* --------------------------------------------------------------------------------------------
+ * Allowed values of stored unions
  *
- * The labels, taglines and `data-theme` values that go with each id stay in
- * `src/app/core/theme/theme-styles.ts`, where they are rendered — only the ids are shared, because
- * only the ids are stored.
- */
-export const THEME_STYLE_IDS: readonly [ThemeStyleId, ...ThemeStyleId[]] = [
-  'deformable',
-  'deformable-dark',
-  'neumorphism',
-  'neumorphism-dark',
-  'liquid-glass',
-  'cyberpunk',
-  'skeuomorphism',
-  'anti-polish',
-  'memphis',
-  'retro-futurism',
-];
+ * The server pins each column to one of these lists with a CHECK constraint; the client offers the
+ * same list. Each is written as a `Record<Union, true>` so the compiler rejects a missing member as
+ * well as an extra one — a plain `Union[]` annotation only catches extras, which would let a value
+ * the client offers fail the server's CHECK. Changing a list still needs a migration.
+ * ------------------------------------------------------------------------------------------ */
+
+const allOf = <K extends string>(members: Record<K, true>): readonly [K, ...K[]] =>
+  Object.keys(members) as [K, ...K[]];
+
+/** Only the ids are shared, because only the ids are stored; labels live in `core/theme/theme-styles.ts`. */
+export const THEME_STYLE_IDS = allOf<ThemeStyleId>({
+  deformable: true,
+  'deformable-dark': true,
+  neumorphism: true,
+  'neumorphism-dark': true,
+  'liquid-glass': true,
+  cyberpunk: true,
+  skeuomorphism: true,
+  'anti-polish': true,
+  memphis: true,
+  'retro-futurism': true,
+});
+
+export const SIGN_CONVENTIONS = allOf<SignConvention>({
+  'as-is': true,
+  'debit-negative': true,
+  'credit-negative': true,
+});
+
+export const SUPPORTED_DATE_FORMATS = allOf<DateFormat>({
+  'DD/MM/YYYY': true,
+  'YYYY-MM-DD': true,
+  'MM/DD/YYYY': true,
+});
+
+export const SUPPORTED_ENCODINGS = allOf<CsvEncoding>({
+  'utf-8': true,
+  'windows-1252': true,
+});
 
 /**
  * What the per-user interface state reads as before anyone has written it (TICKET-SRV-10): no theme

@@ -16,11 +16,10 @@ describe it and they are not interchangeable:
 
 `core/data-access/entities.ts` and `seed-data.ts` are one-line re-exports of the two `shared/`
 modules, and the `core/data-access` barrel re-exports those — which is why every `src/app/` import
-still reads `from '@/core/data-access'` and no consumer names `shared/`. `csv-options.ts` is the
-barrel's third non-repository member: the option lists behind three of the CSV unions, which the
-import wizard's dropdowns iterate and `shared/` may not hold because they are a UI affordance. It
-lived in the deleted `app-db.ts` and stayed on this side of the barrel so no import path changed
-(TICKET-SRV-08). **Nothing in the browser
+still reads `from '@/core/data-access'` and no consumer names `shared/`. The allowed-value lists of the stored
+unions (`THEME_STYLE_IDS`, `SIGN_CONVENTIONS`, `SUPPORTED_DATE_FORMATS`, `SUPPORTED_ENCODINGS`) live
+in `shared/seed-data.ts`, written as `Record<Union, true>` so a missing member fails to compile:
+the server's CHECK constraints and the import wizard's dropdowns read the same list. **Nothing in the browser
 persists anything** (TICKET-SRV-10): the theme, the landing-page "seen" flag and the backup-reminder
 dismissal that used to be `localStorage` keys are the `uiPreferences` singleton now, and `src/` has no
 `localStorage` call left. Don't add one back — a new piece of interface state that must survive a

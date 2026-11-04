@@ -16,7 +16,7 @@ import {
   type ValidationErrors,
   type ValidatorFn,
 } from '@angular/forms';
-import type { Category } from '@/core/data-access';
+import { PARTNER_CONTRIBUTION_CATEGORY_NAME, type Category } from '@/core/data-access';
 import {
   ButtonComponent,
   FieldsetComponent,
@@ -117,6 +117,10 @@ export class CategoryFormComponent {
             activeUntil: '',
           },
     );
+    // Co-owner tagging finds this category by name, so a rename would silently switch it off.
+    const nameLocked = existing?.isSystem && existing.name === PARTNER_CONTRIBUTION_CATEGORY_NAME;
+    if (nameLocked) this.form.controls.name.disable();
+    else this.form.controls.name.enable();
   }
 
   protected submit(): void {

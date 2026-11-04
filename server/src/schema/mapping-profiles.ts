@@ -1,29 +1,17 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-import type {
-  CsvEncoding,
-  DateFormat,
-  MappingProfileColumns,
-  SignConvention,
-} from 'shared/entities.js';
+import type { MappingProfileColumns } from 'shared/entities.js';
+import {
+  SIGN_CONVENTIONS,
+  SUPPORTED_DATE_FORMATS as DATE_FORMATS,
+  SUPPORTED_ENCODINGS as ENCODINGS,
+} from 'shared/seed-data.js';
 import { inList, json, jsonArray, ownerId } from './columns.js';
-
-const DATE_FORMATS: readonly [DateFormat, ...DateFormat[]] = [
-  'DD/MM/YYYY',
-  'YYYY-MM-DD',
-  'MM/DD/YYYY',
-];
-const ENCODINGS: readonly [CsvEncoding, ...CsvEncoding[]] = ['utf-8', 'windows-1252'];
-const SIGN_CONVENTIONS: readonly [SignConvention, ...SignConvention[]] = [
-  'as-is',
-  'debit-negative',
-  'credit-negative',
-];
 
 /**
  * A saved CSV column mapping (FR-IMP-2), ported from Dexie's `mappingProfiles` store
  * (TICKET-SRV-02). `seedUserDefaults` puts the KBC and Belfius templates here for a new user, the
- * same two rows Dexie's `populate` hook writes into a new browser database.
+ * same two rows every account starts with.
  *
  * `defaultAccountId` is a plain column rather than a foreign key: a profile outliving the account
  * it was last used for is a stale preference, not a broken reference, and deleting an account

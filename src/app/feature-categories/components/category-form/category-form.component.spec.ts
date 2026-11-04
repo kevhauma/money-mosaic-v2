@@ -50,6 +50,19 @@ describe('CategoryFormComponent', () => {
     fixture.detectChanges();
   };
 
+  it('locks the seeded partner category’s name, which co-owner tagging finds it by', async () => {
+    const partner = { ...rent, name: 'Partner contribution', isSystem: true };
+
+    await openWith(partner);
+    expect(form().controls.name.disabled).toBe(true);
+    expect(submit()?.name).toBe('Partner contribution');
+
+    fixture.componentRef.setInput('open', false);
+    await fixture.whenStable();
+    await openWith(rent);
+    expect(form().controls.name.enabled).toBe(true);
+  });
+
   describe('applicability window (TICKET-CAT-10)', () => {
     it('loads an existing category’s window into the form', async () => {
       await openWith(rent);

@@ -36,7 +36,7 @@ import { uiPreferences } from '../schema/ui-preferences.js';
  *
  * **A user with no row reads exactly like a user whose row is all NULLs.** That tri-state is the
  * whole design of `appSettings` (see its schema), so `GET` answers an unwritten singleton with the
- * shared `DEFAULT_*` constant the Dexie repository falls back to, and `PATCH` merges into that
+ * shared `DEFAULT_*` constant the client's stores start from, and `PATCH` merges into that
  * same constant when it creates the row. The constants live in `shared/seed-data.ts` precisely so
  * there is one definition of them rather than one per side.
  *
@@ -51,7 +51,7 @@ export type SingletonSettings = {
   /** The `<name>` in `/api/settings/<name>`, which is the table's own name. */
   readonly name: string;
   readonly table: SingletonTable;
-  /** What an unwritten row reads as — the same object the Dexie repository falls back to. */
+  /** What an unwritten row reads as — the same object the client's stores start from. */
   readonly defaults: EntityValues;
 };
 
