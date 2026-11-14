@@ -1,10 +1,10 @@
-import { eq, getTableName, sql } from 'drizzle-orm';
+import { and, eq, getTableName, sql } from 'drizzle-orm';
 import { Router } from 'express';
 
 import type { DbOrTx, DrizzleDb } from '../db.js';
 import { toEntity } from '../http/entity-response.js';
 import { httpError } from '../http/errors.js';
-import { assertReferencesOwned } from '../http/ownership.js';
+import { assertReferencesOwned, rowExists } from '../http/ownership.js';
 import {
   asUploadId,
   discardStagedUpload,
@@ -30,6 +30,7 @@ import {
   type PerUserTable,
 } from '../operations/user-rows.js';
 import { transactions } from '../schema/transactions.js';
+import { transfers } from '../schema/transfers.js';
 import { DERIVED_COLUMNS, deriveReimbursementTransferId } from './transactions.js';
 
 /**
@@ -235,6 +236,35 @@ const parseRow = (
 };
 
 /**
+ * Removes a written transfer whose legs are not there, and reports whether it did.
+ *
+ * The pre-v3 app deleted transactions without always deleting their links, so its backups carry
+ * transfers between two rows that no longer exist. Here the legs' cascade would already have removed
+ * them, so they are pruned rather than refused — and a surviving leg's stamp goes with them, as it
+ * does when an account is deleted.
+ */
+const pruneOrphanTransfer = (
+  tx: DbOrTx,
+  table: PerUserTable,
+  values: EntityValues,
+  id: number | undefined,
+  userId: number,
+): boolean => {
+  if (table !== (transfers as unknown as PerUserTable) || id === undefined) return false;
+  const orphan = [values['fromTransactionId'], values['toTransactionId']].some(
+    (leg) => typeof leg === 'number' && !rowExists(tx, transactions, leg),
+  );
+  if (!orphan) return false;
+
+  tx.delete(transfers).where(eq(transfers.id, id)).run();
+  tx.update(transactions)
+    .set({ transferId: null })
+    .where(and(eq(transactions.userId, userId), eq(transactions.transferId, id)))
+    .run();
+  return true;
+};
+
+/**
  * The whole document, in one transaction (NFR-RESIL-1): a failure anywhere — a malformed row, an id
  * that belongs to someone else, a reference to a row that is not in the document — leaves every
  * table exactly as it was.
@@ -253,7 +283,7 @@ const importDocument = (
 
     if (mode === 'replace') clearUserRows(tx, userId);
 
-    const written: { table: PerUserTable; values: EntityValues }[] = [];
+    const written: { table: PerUserTable; values: EntityValues; id: number | undefined }[] = [];
     for (const table of TRANSPORT_TABLES) {
       // A name the document does not carry is an empty table, and one this schema does not have is
       // ignored — which is how a backup from a version with a since-dropped table still loads.
@@ -261,7 +291,7 @@ const importDocument = (
       rows.forEach((row, index) => {
         const { values, id } = parseRow(table, row, index);
         upsertRow(tx, table, values, id, userId);
-        written.push({ table, values });
+        written.push({ table, values, id });
       });
     }
 
@@ -274,7 +304,11 @@ const importDocument = (
     // envelope — `assertReferencesOwned` answers a *path* with 404, and a document is not a path,
     // so a dangling reference is reported as the malformed payload it is. The wording keeps the
     // 404 rule's intent: it does not say which of the two happened.
-    for (const { table, values } of written) {
+    // Pruned first: a leg may be written after its transfer, so only now is "not there" final.
+    const kept = written.filter(
+      ({ table, values, id }) => !pruneOrphanTransfer(tx, table, values, id, userId),
+    );
+    for (const { table, values } of kept) {
       try {
         assertReferencesOwned(tx, table, values, userId);
       } catch {

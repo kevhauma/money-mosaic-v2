@@ -129,7 +129,7 @@ export const ownsRow = (tx: DbOrTx, table: SQLiteTable, id: number, userId: numb
 };
 
 /** Whether a row with this id exists at all, whoever owns it. */
-const rowExists = (tx: DbOrTx, table: SQLiteTable, id: number): boolean => {
+export const rowExists = (tx: DbOrTx, table: SQLiteTable, id: number): boolean => {
   const { id: idColumn } = ownedColumnsOf(table);
   return tx.select({ id: idColumn }).from(table).where(eq(idColumn, id)).get() !== undefined;
 };

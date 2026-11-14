@@ -312,6 +312,37 @@ describe('POST /api/data/import', () => {
     ).toHaveLength(1);
   });
 
+  it('drops a transfer whose legs are not in the backup, as the pre-v3 app left behind', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const backup = (await exportAs(app, alice.session)).body;
+    const orphan = {
+      id: 999_999,
+      fromTransactionId: 999_998,
+      toTransactionId: 999_999,
+      method: 'auto-amountdate',
+      confidence: 'medium',
+      linkedAt: '2026-07-05T20:44:18.337Z',
+    };
+
+    const restored = await importAs(app, alice.session, {
+      mode: 'replace',
+      data: {
+        ...backup,
+        tables: {
+          ...backup.tables,
+          transfers: [...(backup.tables['transfers'] ?? []), orphan],
+        },
+      },
+    });
+
+    expect(restored.status).toBe(204);
+    const kept = await apiJson<Row[]>(app, '/api/transfers', { as: alice.session });
+    expect(kept.body.map((row) => row.id)).not.toContain(orphan.id);
+    expect(
+      (await apiJson<Row[]>(app, '/api/transactions', { as: alice.session })).body,
+    ).toHaveLength(2);
+  });
+
   it('writes nothing when a later table fails', async () => {
     const { app, alice } = await startTwoUserApp();
     const backup = (await exportAs(app, alice.session)).body;
