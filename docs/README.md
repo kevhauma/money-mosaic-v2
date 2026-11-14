@@ -18,8 +18,9 @@ docs/dashboard/
 The area folders map onto `src/app/feature-*` wherever a matching feature exists
 (`docs/transactions/` ↔ `feature-transactions/`), plus three that don't:
 `docs/engineering/` (code-review output — refactors, performance, cleanup, tests),
-`docs/tooling/` (repo tooling, skills, dev seed), and `docs/server/` (the backend — Express,
-SQLite, Drizzle — which lives in `server/`, not in `src/app/`).
+`docs/tooling/` (repo tooling, skills, dev seed), `docs/server/` (the backend — Express,
+SQLite, Drizzle — which lives in `server/`, not in `src/app/`), and `docs/mcp/` (prefix `MCP`:
+the agent-facing MCP endpoint, which also lives in `server/`).
 
 Don't hardcode the area list anywhere; `ls docs/` is the source of truth.
 

@@ -48,6 +48,32 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     isTopic: true,
   },
   {
+    ticketId: 'TICKET-CAT-12',
+    title:
+      'Deleting a category is refused while rules still use it, and a refused delete leaves your transactions untouched',
+    area: 'Categories',
+  },
+  {
+    ticketId: 'TICKET-MCP-01',
+    title: 'Let Claude read your transactions, loans, goals and income from your home network',
+    area: 'MCP',
+  },
+  {
+    ticketId: 'TICKET-MCP-02',
+    title: 'Let Claude categorise many transactions at once, with a preview first',
+    area: 'MCP',
+  },
+  {
+    ticketId: 'TICKET-MCP-03',
+    title: 'Let Claude preview and run your categorisation rules',
+    area: 'MCP',
+  },
+  {
+    ticketId: 'TICKET-MCP-04',
+    title: 'Let Claude create, edit, archive and delete categories and rules',
+    area: 'MCP',
+  },
+  {
     ticketId: 'topic-multi-device',
     title: 'Two-way sync between multiple devices (desktop, mobile, tablet) via E2E, P2P',
     area: 'Ideas',
