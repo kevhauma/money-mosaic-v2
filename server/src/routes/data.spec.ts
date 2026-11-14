@@ -278,6 +278,40 @@ describe('POST /api/data/import', () => {
     ).toHaveLength(2);
   });
 
+  it('accepts import batches and profiles still naming a since-deleted account', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const backup = (await exportAs(app, alice.session)).body;
+    const goneAccountId = 999_999;
+    const batch = {
+      id: 999_999,
+      accountId: goneAccountId,
+      fileName: 'old.csv',
+      importedAt: '2026-03-02T09:00:00.000Z',
+      rowsRead: 1,
+      rowsAdded: 1,
+      rowsDuplicate: 0,
+      dateFrom: '2026-03-01',
+      dateTo: '2026-03-31',
+    };
+    const profiles = (backup.tables['mappingProfiles'] ?? []).map((profile) => ({
+      ...profile,
+      defaultAccountId: goneAccountId,
+    }));
+
+    const restored = await importAs(app, alice.session, {
+      mode: 'replace',
+      data: {
+        ...backup,
+        tables: { ...backup.tables, importBatches: [batch], mappingProfiles: profiles },
+      },
+    });
+
+    expect(restored.status).toBe(204);
+    expect(
+      (await apiJson<Row[]>(app, '/api/importBatches', { as: alice.session })).body,
+    ).toHaveLength(1);
+  });
+
   it('writes nothing when a later table fails', async () => {
     const { app, alice } = await startTwoUserApp();
     const backup = (await exportAs(app, alice.session)).body;

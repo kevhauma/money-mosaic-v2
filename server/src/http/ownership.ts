@@ -128,10 +128,20 @@ export const ownsRow = (tx: DbOrTx, table: SQLiteTable, id: number, userId: numb
   return row !== undefined;
 };
 
+/** Whether a row with this id exists at all, whoever owns it. */
+const rowExists = (tx: DbOrTx, table: SQLiteTable, id: number): boolean => {
+  const { id: idColumn } = ownedColumnsOf(table);
+  return tx.select({ id: idColumn }).from(table).where(eq(idColumn, id)).get() !== undefined;
+};
+
 /**
  * Throws a 404 if any foreign-key field in a validated body names a row the signed-in user does
  * not own. Call it inside the same transaction as the write, so the row cannot be handed away
  * between the check and the insert.
+ *
+ * A soft reference may name a row that no longer exists: outliving its parent is why it is soft,
+ * and deleting an account leaves its batches and profiles pointing at it, so every backup taken
+ * afterwards carries such ids. It still may never name a row another user owns.
  */
 export const assertReferencesOwned = (
   tx: DbOrTx,
@@ -139,10 +149,15 @@ export const assertReferencesOwned = (
   values: EntityValues,
   userId: number,
 ): void => {
-  for (const { key, parent } of referencesOf(table)) {
-    const id = values[key];
+  const soft = SOFT_REFERENCES.get(table) ?? [];
+  const allowed = (reference: OwnedReference, id: number): boolean =>
+    ownsRow(tx, reference.parent, id, userId) ||
+    (soft.includes(reference) && !rowExists(tx, reference.parent, id));
+
+  const refused = referencesOf(table).some((reference) => {
+    const id = values[reference.key];
     // Absent (not being written) or explicitly null (being cleared) — neither references anything.
-    if (typeof id !== 'number') continue;
-    if (!ownsRow(tx, parent, id, userId)) throw notFound();
-  }
+    return typeof id === 'number' && !allowed(reference, id);
+  });
+  if (refused) throw notFound();
 };
