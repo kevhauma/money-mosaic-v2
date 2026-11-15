@@ -12,7 +12,9 @@ import {
   type TestApp,
   type TestSession,
 } from '../app.testing.js';
+import { createApiToken } from '../auth/api-tokens.js';
 import { readCookie, SESSION_COOKIE } from '../auth/cookies.js';
+import { apiTokens } from '../schema/api-tokens.js';
 import { ownerOf, PER_USER_TABLES } from '../operations/user-rows.js';
 import { categoryModel } from '../schema/category-model.js';
 import { sessions } from '../schema/sessions.js';
@@ -570,12 +572,14 @@ describe('api: DELETE /api/admin/users/:id', () => {
       ]),
     );
 
-  it('removes the account, its sessions and every row it owns, leaving everyone else intact', async () => {
+  it('removes the account, its sessions, its API tokens and every row it owns, leaving everyone else intact', async () => {
     const context = await startAdminApp();
     const victim = await signInAs(context.app, 'victim');
     const bystander = await signInAs(context.app, 'bystander');
     await fillEveryTable(context.app, victim);
     await fillEveryTable(context.app, bystander);
+    createApiToken(context.app.db, victim.id, 'laptop');
+    createApiToken(context.app.db, bystander.id, 'laptop');
 
     const before = rowCounts(context.app, victim.id);
     const bystanderBefore = rowCounts(context.app, bystander.id);
@@ -599,6 +603,13 @@ describe('api: DELETE /api/admin/users/:id', () => {
     expect(
       context.app.db.select().from(sessions).where(eq(sessions.userId, victim.id)).all(),
     ).toEqual([]);
+    expect(
+      context.app.db
+        .select()
+        .from(apiTokens)
+        .all()
+        .map((token) => token.userId),
+    ).toEqual([bystander.id]);
     // Ids are unique per table across users, so a delete that filtered on the wrong column would
     // take somebody else's rows with it.
     expect(rowCounts(context.app, bystander.id)).toEqual(bystanderBefore);

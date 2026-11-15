@@ -20,8 +20,8 @@ import * as schema from '../schema/index.js';
  * module for it would make that endpoint's blast radius depend on an import nobody expects.
  */
 
-/** `users` and `sessions` are the server's own bookkeeping (TICKET-AUTH-01), not the user's data. */
-const SERVER_OWN_TABLES = new Set(['users', 'sessions']);
+/** `users`, `sessions` and `apiTokens` (TICKET-MCP-01) are the server's own bookkeeping, not the user's data. */
+const SERVER_OWN_TABLES = new Set(['users', 'sessions', 'apiTokens']);
 
 /** A table of user-owned rows: `userId`, and (except on the singletons) a surrogate `id`. */
 export type PerUserTable = SQLiteTable & { readonly userId: SQLiteColumn };

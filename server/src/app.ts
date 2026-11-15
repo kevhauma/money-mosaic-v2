@@ -2,6 +2,7 @@ import express, { type Express } from 'express';
 
 import type { DatabaseHandle } from './db.js';
 import { mountStaticSite } from './http/static-site.js';
+import { createMcpRouter } from './mcp/mcp-router.js';
 import { createErrorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/request-logger.js';
 import { createRequireAuth } from './middleware/require-auth.js';
@@ -68,6 +69,9 @@ export const createApp = ({
   for (const { path, router } of createApiRouters(handle.db, stagedImportDir)) {
     app.use(path, requireAuth, router);
   }
+
+  // A bearer token of its own and never the cookie (TICKET-MCP-01), so not behind `requireAuth`.
+  app.use('/mcp', createMcpRouter(handle.db));
 
   // After every `/api` router and before the 404, which is the whole of the ordering contract:
   // a deep link has to reach `index.html` (it is not a file, so nothing else would answer it) and

@@ -92,7 +92,11 @@ export const SETTINGS_TABLES: readonly SingletonSettings[] = [
 ];
 
 /** The stored row layered over the defaults, which is what an unwritten field means. */
-const readSettings = (tx: DbOrTx, { table, defaults }: SingletonSettings, userId: number) => {
+export const readSettings = (
+  tx: DbOrTx,
+  { table, defaults }: SingletonSettings,
+  userId: number,
+) => {
   const row = tx.select().from(table).where(eq(table.userId, userId)).get() as
     Record<string, unknown> | undefined;
 

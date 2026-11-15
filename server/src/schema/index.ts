@@ -11,6 +11,7 @@
 // invisible to `drizzle-kit generate` and never reaches a migration. `dexie-parity.spec.ts`
 // enumerates the Dexie stores against these exports so that cannot happen quietly.
 export * from './accounts.js';
+export * from './api-tokens.js';
 export * from './app-settings.js';
 export * from './categories.js';
 export * from './category-comparison-settings.js';

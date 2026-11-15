@@ -154,6 +154,58 @@ cannot change hands between the check and the write.
   destructive operation on whoever else holds those ids. `categoryModel` is not in the document:
   megabytes of weights cannot survive JSON, and `/api/categoryModel` carries them as bytes.
 
+### The MCP endpoint (TICKET-MCP-01)
+
+- `POST /mcp` — a [Model Context Protocol](https://modelcontextprotocol.io) server over Streamable
+  HTTP, **stateless** (no MCP session; `GET`/`DELETE` answer 405). It accepts **only**
+  `Authorization: Bearer <token>`: the session cookie does not authenticate it, and a token does not
+  authenticate `/api`. A missing, unknown or revoked token, or a disabled user's token, is a 401.
+  Every tool runs as the token's user; no admin tool exists.
+- Read tools: `list_accounts`, `list_categories`, `list_rules`, `search_transactions` (date range
+  required, keyset-paged with `nextCursor`), `get_loans`, `get_future`, `get_income`. They return
+  stored rows, not the browser's computed views (forecasts, amortisation).
+
+**Tokens** are created from the command line — there is no UI. Only the SHA-256 of a token is
+stored, so the token is printed once; a lost token is revoked and replaced. Tokens are not part of a
+data export and survive `DELETE /api/data`; deleting the user deletes them.
+
+```bash
+npm --prefix server run token:create -- <login> <name>   # prints the token once
+npm --prefix server run token:list                       # id, login, name, createdAt — never the hash
+npm --prefix server run token:revoke -- <id>
+```
+
+They read the same `DB_FILE` the server does, so run them with the same environment.
+
+**Claude Code** speaks Streamable HTTP directly:
+
+```bash
+claude mcp add --transport http money-mosaic http://<host>:4300/mcp \
+  --header "Authorization: Bearer <token>"
+```
+
+**Claude Desktop** reaches a LAN URL only through a local stdio bridge: as far as we know, its
+remote connectors are opened from Anthropic's cloud, which cannot see a home network. Add this to
+`claude_desktop_config.json` (`--allow-http` because the server has no TLS):
+
+```json
+{
+  "mcpServers": {
+    "money-mosaic": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote", "http://<host>:4300/mcp", "--allow-http",
+        "--header", "Authorization: Bearer ${MM_TOKEN}"
+      ],
+      "env": { "MM_TOKEN": "<token>" }
+    }
+  }
+}
+```
+
+A token is full read **and write** access to that user's data, as that user. Treat it like the
+password.
+
 
 **First boot seeds one account: `admin` / `admin`** (role `admin`, display name "Administrator").
 The identifier is literally `admin` — the login field is free text, not a validated email address.

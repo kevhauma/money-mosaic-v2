@@ -77,6 +77,33 @@ describe('db: runMigrations', () => {
     expect(readSchemaVersion(handle)).toBe(first);
   });
 
+  it('brings a database one migration behind up to date, with its rows intact', () => {
+    // The repo folder minus its newest journal entry: a database as the previous release left it.
+    const behind = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-server-migrations-'));
+    tempDirs.push(behind);
+    fs.cpSync(MIGRATIONS_DIR, behind, { recursive: true });
+    const journalFile = path.join(behind, 'meta', '_journal.json');
+    const journal = JSON.parse(fs.readFileSync(journalFile, 'utf8')) as { entries: unknown[] };
+    fs.writeFileSync(
+      journalFile,
+      JSON.stringify({ ...journal, entries: journal.entries.slice(0, -1) }),
+    );
+    const handle = openMemory();
+    runMigrations(handle, behind);
+    handle.sqlite
+      .prepare(
+        `INSERT INTO users (email, displayName, passwordHash, passwordSalt) VALUES ('a', 'a', 'h', 's')`,
+      )
+      .run();
+
+    runMigrations(handle, MIGRATIONS_DIR);
+
+    expect(readSchemaVersion(handle)).toBe(journal.entries.length);
+    expect(handle.sqlite.prepare('SELECT count(*) AS count FROM users').get()).toEqual({
+      count: 1,
+    });
+  });
+
   it('ships a migrations journal drizzle-kit can extend', () => {
     const journal = JSON.parse(
       fs.readFileSync(path.join(MIGRATIONS_DIR, 'meta', '_journal.json'), 'utf8'),

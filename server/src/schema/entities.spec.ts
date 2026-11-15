@@ -244,7 +244,8 @@ const insertEveryTable = (db: DrizzleDb, userId: number): { transactionId: numbe
 const entityTables = (Object.values(schema) as unknown[])
   .filter((value): value is SQLiteTable => is(value, SQLiteTable))
   .filter((table) => getTableConfig(table).name !== 'users')
-  .filter((table) => getTableConfig(table).name !== 'sessions');
+  .filter((table) => getTableConfig(table).name !== 'sessions')
+  .filter((table) => getTableConfig(table).name !== 'apiTokens');
 
 const countFor = (db: DrizzleDb, table: SQLiteTable, userId: number): number => {
   const owner = getTableConfig(table).columns.find((column) => column.name === 'userId');
