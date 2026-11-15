@@ -52,17 +52,19 @@ Six write tools: `create_category`, `update_category`, `delete_category`, `creat
 
 ## Acceptance criteria
 
-- [ ] `create_category` stores `isSystem: false` and `archived: false`, fills in the default colour and icon, and refuses a duplicate name regardless of case.
-- [ ] `update_category` with `archived: true` archives, and `list_categories` then hides the category by default. The tool returns the previous values.
-- [ ] Renaming or deleting the Partner contribution category is refused. Every other seeded category can be renamed and deleted, as in the UI.
-- [ ] Without `confirm`, `delete_category` writes nothing and reports the affected transaction count and any blocking loans or rules. With `confirm`, it uses TICKET-CAT-12's operation, so it refuses while a rule or loan targets the category and otherwise clears the category from its transactions with `categoryManual: false`.
-- [ ] `create_rule` and `update_rule` reject: an operator not allowed for its field, a malformed `between`, an invalid regex, no conditions, and a target category that is foreign, missing or archived. Each error names the offending condition or field.
-- [ ] Saving a rule changes no transaction (covered by a spec).
-- [ ] A missing `priority` on create places the rule after every existing rule.
-- [ ] `update_rule` with `enabled: false` disables the rule, and `run_rules` then ignores it.
-- [ ] Without `confirm`, `delete_rule` writes nothing. With `confirm`, it deletes, and transactions the rule categorised keep their category.
-- [ ] Every tool refuses another user's IDs (covered by a two-user spec).
-- [ ] `npm --prefix server run lint`, `npm --prefix server run typecheck` and `npm run test:server` pass. Verified via the fallow skill and the coding-conventions skill.
+> **Implementation notes (2026-11-15):** regex conditions are also capped at 200 characters, the rule form's own limit, because `run_rules` now evaluates them on the server. A condition on `amount` or `accountId` must have a numeric value. `activeUntil` before `activeFrom` is refused, as the category form does.
+
+- [x] `create_category` stores `isSystem: false` and `archived: false`, fills in the default colour and icon, and refuses a duplicate name regardless of case. (`server/src/mcp/edit-tools.spec.ts` "creates a non-system, unarchived category with the default colour and icon" and "refuses a duplicate name regardless of case, on create and on rename")
+- [x] `update_category` with `archived: true` archives, and `list_categories` then hides the category by default. The tool returns the previous values. (`server/src/mcp/edit-tools.spec.ts` "archives with archived: true, hides it from list_categories, and returns the previous values")
+- [x] Renaming or deleting the Partner contribution category is refused. Every other seeded category can be renamed and deleted, as in the UI. (`server/src/mcp/edit-tools.spec.ts` "refuses renaming Partner contribution, but renames any other seeded category" and "refuses deleting Partner contribution, but deletes another seeded category")
+- [x] Without `confirm`, `delete_category` writes nothing and reports the affected transaction count and any blocking loans or rules. With `confirm`, it uses TICKET-CAT-12's operation, so it refuses while a rule or loan targets the category and otherwise clears the category from its transactions with `categoryManual: false`. (`server/src/mcp/edit-tools.spec.ts` "previews without writing…" and "with confirm, refuses while a rule targets it and otherwise clears its transactions as non-manual" — confirm calls `deleteCategory` from `operations/category-delete.ts`, TICKET-CAT-12)
+- [x] `create_rule` and `update_rule` reject: an operator not allowed for its field, a malformed `between`, an invalid regex, no conditions, and a target category that is foreign, missing or archived. Each error names the offending condition or field. (`server/src/mcp/edit-tools.spec.ts` "create_rule / update_rule" — one test each for operator, between, regex, no conditions, and foreign/missing/archived target, with errors such as `conditions[0]: …` and `action.setCategoryId: …`; update is checked for an archived target and a bad condition too)
+- [x] Saving a rule changes no transaction (covered by a spec). (`server/src/mcp/edit-tools.spec.ts` "changes no transaction when a rule is saved")
+- [x] A missing `priority` on create places the rule after every existing rule. (`server/src/mcp/edit-tools.spec.ts` "puts a rule without a priority after every existing rule")
+- [x] `update_rule` with `enabled: false` disables the rule, and `run_rules` then ignores it. (`server/src/mcp/edit-tools.spec.ts` "disables with enabled: false, returns the previous rule, and run_rules then ignores it")
+- [x] Without `confirm`, `delete_rule` writes nothing. With `confirm`, it deletes, and transactions the rule categorised keep their category. (`server/src/mcp/edit-tools.spec.ts` "writes nothing without confirm; with confirm it deletes and the categorised rows keep their category")
+- [x] Every tool refuses another user's IDs (covered by a two-user spec). (`server/src/mcp/edit-tools.spec.ts` "every tool refuses another user's ids")
+- [x] `npm --prefix server run lint`, `npm --prefix server run typecheck` and `npm run test:server` pass. Verified via the fallow skill and the coding-conventions skill. (server lint, typecheck and 492 tests green; fallow dead-code + health exit 0; server-only change, coding-conventions **Backend** section applies)
 
 ## Notes
 

@@ -48,16 +48,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     isTopic: true,
   },
   {
-    ticketId: 'TICKET-MCP-01',
-    title: 'Let Claude read your transactions, loans, goals and income from your home network',
-    area: 'MCP',
-  },
-  {
-    ticketId: 'TICKET-MCP-04',
-    title: 'Let Claude create, edit, archive and delete categories and rules',
-    area: 'MCP',
-  },
-  {
     ticketId: 'topic-multi-device',
     title: 'Two-way sync between multiple devices (desktop, mobile, tablet) via E2E, P2P',
     area: 'Ideas',

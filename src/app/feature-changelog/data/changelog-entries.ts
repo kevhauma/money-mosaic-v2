@@ -1300,4 +1300,18 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Your transactions keep their category until the delete actually goes through',
     ],
   },
+  {
+    date: '2026-11-15',
+    release: 'unreleased',
+    ticketIds: ['TICKET-MCP-01', 'TICKET-MCP-02', 'TICKET-MCP-03', 'TICKET-MCP-04'],
+    title: 'Let Claude read and tidy up your finances from your home network',
+    area: 'MCP',
+    details: [
+      'Connect Claude Code or Claude Desktop with a personal token made from the server command line',
+      'Claude can read your accounts, transactions, categories, rules, loans, goals and income',
+      'It can categorise many transactions at once and run your rules, always showing a preview first',
+      'It can create, edit, archive and delete categories and rules; deletes need a confirmation',
+      'Every change Claude makes reports what was there before, so it can be put back',
+    ],
+  },
 ];

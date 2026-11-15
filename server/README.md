@@ -173,6 +173,13 @@ cannot change hands between the check and the write.
   categories are skipped. `run_rules` (TICKET-MCP-03) runs the rules exactly as the app's "Run
   rules" does (the matcher is `shared/rule-matching.ts`); with `ruleIds` it reports only the changes
   those rules decide, evaluating them even if disabled.
+- Editing tools (TICKET-MCP-04): `create_category`, `update_category` (archiving included),
+  `create_rule` and `update_rule` apply at once and return the previous values; `delete_category`
+  and `delete_rule` are destructive and preview first. Category names must be unique ignoring case;
+  "Partner contribution" cannot be renamed or deleted (co-owner tagging finds it by name). Rules are
+  validated against `OPERATORS_BY_FIELD` (regex patterns must compile and stay under 200
+  characters), and saving one never applies it — `run_rules` does. `delete_category` goes through
+  the same operation as `DELETE /api/categories/:id`, so loans and rules still block it.
 
 **Tokens** are created from the command line — there is no UI. Only the SHA-256 of a token is
 stored, so the token is printed once; a lost token is revoked and replaced. Tokens are not part of a
