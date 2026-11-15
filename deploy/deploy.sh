@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build step of a deploy, run between your `git pull` and `sudo systemctl restart money-mosaic`:
+# Build step of a deploy, run between your `git pull` and `sudo systemctl restart money-mosaic-server`:
 # install, build, back up the database. See docs/server/deploy/README.md.
 set -euo pipefail
 
@@ -19,4 +19,4 @@ if [ -f "$DB" ]; then
   (cd server && node -e "require('better-sqlite3')(process.argv[1]).backup(process.argv[2]).catch((e) => { console.error(e); process.exit(1); })" "../$DB" "../$BACKUP")
   echo "Database backup: $BACKUP"
 fi
-echo "Built. Now: sudo systemctl restart money-mosaic"
+echo "Built. Now: sudo systemctl restart money-mosaic-server"

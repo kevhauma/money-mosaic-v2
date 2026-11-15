@@ -43,7 +43,7 @@
    check `which node` is `/usr/bin/node`):
 
    ```bash
-   sudo tee /etc/systemd/system/money-mosaic.service >/dev/null <<EOF
+   sudo tee /etc/systemd/system/money-mosaic-server.service >/dev/null <<EOF
    [Unit]
    Description=Money Mosaic (server version)
    After=network.target
@@ -69,12 +69,12 @@
    WantedBy=multi-user.target
    EOF
    sudo systemctl daemon-reload
-   sudo systemctl enable money-mosaic
+   sudo systemctl enable money-mosaic-server
    ```
 
    Stop any copy you started by hand first — it holds port 4300 (`sudo ss -ltnp | grep 4300`).
 
-4. Build and start it: `bash /opt/money-mosaic-server/deploy/deploy.sh && sudo systemctl start money-mosaic`.
+4. Build and start it: `bash /opt/money-mosaic-server/deploy/deploy.sh && sudo systemctl start money-mosaic-server`.
 
 5. If `ufw` is active, open port 4300 to the home network (adjust the subnet):
 
@@ -101,7 +101,7 @@
 cd /opt/money-mosaic-server
 git pull                                        # note the "Updating PREV..REL" line, for a rollback
 bash deploy/deploy.sh                           # install, build, back up to server/data/backups/pre-REL.sqlite
-sudo systemctl restart money-mosaic
+sudo systemctl restart money-mosaic-server
 curl -s localhost:4300/api/health               # expect {"ok":true,...}
 ```
 
@@ -111,8 +111,8 @@ data must still be there.
 Check on it any time:
 
 ```bash
-systemctl status money-mosaic
-journalctl -u money-mosaic -n 50 --no-pager
+systemctl status money-mosaic-server
+journalctl -u money-mosaic-server -n 50 --no-pager
 curl -s localhost:4300/api/health               # expect {"ok":true,...}
 ```
 
@@ -124,17 +124,17 @@ With `PREV` and `REL` from `git pull`'s "Updating PREV..REL" line (or `git reflo
 cd /opt/money-mosaic-server
 git reset --hard $PREV
 npm ci && npm --prefix server ci && npm run build -- --configuration production
-sudo systemctl restart money-mosaic
+sudo systemctl restart money-mosaic-server
 ```
 
 Only if it still fails on the database (the new release changed its structure) — this loses
 everything written since the deploy:
 
 ```bash
-sudo systemctl stop money-mosaic
+sudo systemctl stop money-mosaic-server
 cp server/data/backups/pre-$REL.sqlite server/data/money-mosaic.sqlite
 rm -f server/data/money-mosaic.sqlite-wal server/data/money-mosaic.sqlite-shm
-sudo systemctl start money-mosaic
+sudo systemctl start money-mosaic-server
 ```
 
 The next `git pull` moves forward again.
