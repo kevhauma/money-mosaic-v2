@@ -243,6 +243,25 @@ describe('search_transactions', () => {
     ]);
   });
 
+  it('filters on direction and on absolute amount bounds, as the UI does', async () => {
+    const { app, alice, client } = await setup();
+    const smallOut = addRow(app, alice, { amount: -5 });
+    const bigOut = addRow(app, alice, { amount: -500 });
+    const smallIn = addRow(app, alice, { amount: 5 });
+    const bigIn = addRow(app, alice, { amount: 500 });
+    const rows = async (args: Record<string, unknown>) =>
+      ids((await search(client, args)).transactions);
+
+    expect(await rows({ direction: 'income' })).toEqual([smallIn, bigIn]);
+    expect(await rows({ direction: 'expense' })).toEqual([smallOut, bigOut]);
+    expect(await rows({ amountMin: 100 })).toEqual([bigOut, bigIn]);
+    expect(await rows({ amountMax: 5 })).toEqual([smallOut, smallIn]);
+    expect(await rows({ direction: 'expense', amountMin: 5, amountMax: 500 })).toEqual([
+      smallOut,
+      bigOut,
+    ]);
+  });
+
   it('pages with nextCursor, returning every row exactly once even when dates repeat', async () => {
     const { app, alice, client } = await setup();
     const created = [

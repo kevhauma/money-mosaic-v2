@@ -164,7 +164,8 @@ cannot change hands between the check and the write.
   authenticate `/api`. A missing, unknown or revoked token, or a disabled user's token, is a 401.
   Every tool runs as the token's user; no admin tool exists.
 - Read tools: `list_accounts`, `list_categories`, `list_rules`, `search_transactions` (date range
-  required, keyset-paged with `nextCursor`), `get_loans`, `get_future`, `get_income`. They return
+  required; the transactions page's other filters — account, category, text, income/expense,
+  amount bounds — are optional; keyset-paged with `nextCursor`), `get_loans`, `get_future`, `get_income`. They return
   stored rows, not the browser's computed views (forecasts, amortisation).
 - Write tools, each **destructive**: called without `confirm: true` they only preview, and the
   confirmed result carries the previous values so a change can be put back.

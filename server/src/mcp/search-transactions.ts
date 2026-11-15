@@ -25,6 +25,24 @@ export const searchTransactionsInput = {
     .min(1)
     .optional()
     .describe('Case-insensitive match on description, counterparty name and notes.'),
+  direction: z
+    .enum(['all', 'income', 'expense'])
+    .optional()
+    .describe('income: amount >= 0; expense: amount < 0; all (default): both.'),
+  amountMin: z
+    .number()
+    .nonnegative()
+    .optional()
+    .describe(
+      'Smallest absolute amount, inclusive; applies to both signs unless direction narrows it.',
+    ),
+  amountMax: z
+    .number()
+    .nonnegative()
+    .optional()
+    .describe(
+      'Largest absolute amount, inclusive; applies to both signs unless direction narrows it.',
+    ),
   limit: z
     .number()
     .int()
@@ -86,6 +104,14 @@ const filtersOf = (userId: number, input: SearchInput): (SQL | undefined)[] => [
         contains(transactions.counterpartyName, input.text),
         contains(transactions.notes, input.text),
       ),
+  input.direction === 'income' ? gte(transactions.amount, 0) : undefined,
+  input.direction === 'expense' ? lt(transactions.amount, 0) : undefined,
+  input.amountMin === undefined
+    ? undefined
+    : sql`abs(${transactions.amount}) >= ${input.amountMin}`,
+  input.amountMax === undefined
+    ? undefined
+    : sql`abs(${transactions.amount}) <= ${input.amountMax}`,
   input.cursor === undefined ? undefined : afterCursor(input.cursor),
 ];
 
