@@ -70,6 +70,7 @@ const ENDPOINTS: Record<string, Record<string, Endpoint>> = {
     getAll: ['GET', '/api/mappingProfiles'],
     add: ['POST', '/api/mappingProfiles'],
     update: ['PATCH', '/api/mappingProfiles/1'],
+    remove: ['DELETE', '/api/mappingProfiles/1'],
   },
   ImportBatchesRepository: {
     getAll: ['GET', '/api/importBatches'],
