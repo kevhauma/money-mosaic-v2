@@ -312,6 +312,33 @@ describe('POST /api/data/import', () => {
     ).toHaveLength(1);
   });
 
+  it("accepts a batch naming a deleted account whose id is now another user's", async () => {
+    const { app, alice, bob } = await startTwoUserApp();
+    const backup = (await exportAs(app, alice.session)).body;
+    const batch = {
+      id: 999_999,
+      accountId: bob.fixtures.accountId,
+      fileName: 'old.csv',
+      importedAt: '2026-03-02T09:00:00.000Z',
+      rowsRead: 1,
+      rowsAdded: 1,
+      rowsDuplicate: 0,
+      dateFrom: '2026-03-01',
+      dateTo: '2026-03-31',
+    };
+
+    const restored = await importAs(app, alice.session, {
+      mode: 'replace',
+      data: { ...backup, tables: { ...backup.tables, importBatches: [batch] } },
+    });
+
+    expect(restored.status).toBe(204);
+    // bob keeps his account: the batch only carries its id, it does not take it over.
+    expect(
+      (await apiJson<Row[]>(app, '/api/accounts', { as: bob.session })).body.map((a) => a.id),
+    ).toContain(bob.fixtures.accountId);
+  });
+
   it('drops a transfer whose legs are not in the backup, as the pre-v3 app left behind', async () => {
     const { app, alice } = await startTwoUserApp();
     const backup = (await exportAs(app, alice.session)).body;

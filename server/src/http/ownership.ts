@@ -148,11 +148,13 @@ export const assertReferencesOwned = (
   table: SQLiteTable,
   values: EntityValues,
   userId: number,
+  // An import passes "not in the document": there a deleted row's id may since belong to someone else.
+  isGone: (parent: SQLiteTable, id: number) => boolean = (parent, id) => !rowExists(tx, parent, id),
 ): void => {
   const soft = SOFT_REFERENCES.get(table) ?? [];
   const allowed = (reference: OwnedReference, id: number): boolean =>
     ownsRow(tx, reference.parent, id, userId) ||
-    (soft.includes(reference) && !rowExists(tx, reference.parent, id));
+    (soft.includes(reference) && isGone(reference.parent, id));
 
   const refused = referencesOf(table).some((reference) => {
     const id = values[reference.key];

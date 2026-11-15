@@ -1,4 +1,5 @@
 import { and, eq, getTableName, sql } from 'drizzle-orm';
+import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import { Router } from 'express';
 
 import type { DbOrTx, DrizzleDb } from '../db.js';
@@ -308,9 +309,15 @@ const importDocument = (
     const kept = written.filter(
       ({ table, values, id }) => !pruneOrphanTransfer(tx, table, values, id, userId),
     );
+    // A soft reference to a row the document does not carry names a row deleted before the export.
+    // Ids are shared across accounts here, so that id may already be another user's row; it was
+    // never meant to point at it, and nothing on the server follows a soft reference anyway.
+    const inDocument = new Set(kept.map(({ table, id }) => `${getTableName(table)}:${id}`));
+    const isGone = (parent: SQLiteTable, id: number): boolean =>
+      !inDocument.has(`${getTableName(parent)}:${id}`);
     for (const { table, values } of kept) {
       try {
-        assertReferencesOwned(tx, table, values, userId);
+        assertReferencesOwned(tx, table, values, userId, isGone);
       } catch {
         throw httpError(
           400,
