@@ -59,11 +59,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'MCP',
   },
   {
-    ticketId: 'TICKET-MCP-02',
-    title: 'Let Claude categorise many transactions at once, with a preview first',
-    area: 'MCP',
-  },
-  {
     ticketId: 'TICKET-MCP-03',
     title: 'Let Claude preview and run your categorisation rules',
     area: 'MCP',

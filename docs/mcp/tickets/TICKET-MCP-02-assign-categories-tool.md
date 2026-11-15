@@ -43,16 +43,18 @@ This adds one write tool, `assign_categories`. It takes a mixed list of `{transa
 
 ## Acceptance criteria
 
-- [ ] Assigning sets `categoryManual: true`. Clearing with `null` sets `categoryId: null, categoryManual: false`.
-- [ ] Without `confirm`, nothing is written: the database is unchanged after the call.
-- [ ] With `confirm`, every non-skipped row changes in one transaction. A spec forces a failure partway through and shows nothing was written.
-- [ ] Transfer-linked rows are skipped with reason "linked transfer", and the other rows still apply.
-- [ ] Archived categories, and categories outside their `activeFrom`/`activeUntil` on the row's date, are skipped with a reason.
-- [ ] Another user's transaction or category refuses the whole call, and the error doesn't reveal whether that row exists.
-- [ ] 501 items, or a repeated `transactionId`, is a tool error.
-- [ ] The confirm result carries each changed row's previous `categoryId` and `categoryManual`, and feeding those back restores the original state (covered by a spec).
-- [ ] A row that was already manual can be reassigned; the preview shows that its current category is manual.
-- [ ] `npm --prefix server run lint`, `npm --prefix server run typecheck` and `npm run test:server` pass. Verified via the fallow skill and the coding-conventions skill.
+> **Implementation note (2026-11-15):** each assignment also takes an optional `manual` flag (default `true`). Without it, restoring a **rule-assigned** row from the confirm result (`previousCategoryManual: false`) would make it manual, so "feeding those back restores the original state" could not hold. The result's fields are named `previousCategoryId` / `previousCategoryManual`.
+
+- [x] Assigning sets `categoryManual: true`. Clearing with `null` sets `categoryId: null, categoryManual: false`. (`server/src/mcp/assign-categories.spec.ts` "assigns as manual, and clearing with null sets categoryManual false")
+- [x] Without `confirm`, nothing is written: the database is unchanged after the call. (`server/src/mcp/assign-categories.spec.ts` "writes nothing without confirm…" compares a full snapshot before/after)
+- [x] With `confirm`, every non-skipped row changes in one transaction. A spec forces a failure partway through and shows nothing was written. (`server/src/mcp/assign-categories.spec.ts` "applies all or nothing when a write fails partway through" — a trigger aborts the second row's UPDATE; the first row is unchanged)
+- [x] Transfer-linked rows are skipped with reason "linked transfer", and the other rows still apply. (`server/src/mcp/assign-categories.spec.ts` "skips transfer-linked rows and still applies the rest")
+- [x] Archived categories, and categories outside their `activeFrom`/`activeUntil` on the row's date, are skipped with a reason. (`server/src/mcp/assign-categories.spec.ts` "skips archived categories and ones outside their active window, with a reason")
+- [x] Another user's transaction or category refuses the whole call, and the error doesn't reveal whether that row exists. (`server/src/mcp/assign-categories.spec.ts` "refuses the whole call for another user's transaction or category, without saying which" — foreign row, foreign category and a missing id all get the same message)
+- [x] 501 items, or a repeated `transactionId`, is a tool error. (`server/src/mcp/assign-categories.spec.ts` "refuses 501 items and a repeated transactionId")
+- [x] The confirm result carries each changed row's previous `categoryId` and `categoryManual`, and feeding those back restores the original state (covered by a spec). (`server/src/mcp/assign-categories.spec.ts` "returns previous values that put every row back when fed in again" — covers a rule-set and a manual row; see the `manual` note above)
+- [x] A row that was already manual can be reassigned; the preview shows that its current category is manual. (`server/src/mcp/assign-categories.spec.ts` "reassigns a row that was already manual, and the preview says it was")
+- [x] `npm --prefix server run lint`, `npm --prefix server run typecheck` and `npm run test:server` pass. Verified via the fallow skill and the coding-conventions skill. (lint, typecheck and 466 server tests green; fallow dead-code + health gates exit 0; server-only change, coding-conventions **Backend** section applies)
 
 ## Notes
 
