@@ -52,6 +52,21 @@ const addLoan = (
     },
   });
 
+const addRule = (app: TestApp, as: TestSession, categoryId: number, name: string) =>
+  apiJson<Row>(app, '/api/rules', {
+    as,
+    method: 'POST',
+    body: {
+      name,
+      priority: 1,
+      enabled: false,
+      continueOnMatch: false,
+      conditionMatch: 'all',
+      conditions: [{ field: 'description', operator: 'contains', value: 'x' }],
+      action: { setCategoryId: categoryId },
+    },
+  });
+
 describe('DELETE /api/categories/:id', () => {
   it('deletes a category nothing tracks', async () => {
     const { app, alice } = await startTwoUserApp();
@@ -155,5 +170,63 @@ describe('DELETE /api/categories/:id', () => {
 
     expect(rejected.status).toBe(404);
     expect(rejected.body.error).toBe('Not found');
+  });
+
+  it('refuses with a 409 naming the rules that assign the category, even disabled ones, and changes nothing (TICKET-CAT-12)', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const categoryId = await addCategory(app, alice.session, 'Groceries');
+    await addRule(app, alice.session, categoryId, 'Delhaize');
+    await addRule(app, alice.session, categoryId, 'Colruyt');
+    const transaction = await apiJson<Row>(app, '/api/transactions', {
+      as: alice.session,
+      method: 'POST',
+      body: transactionBody(alice.fixtures.accountId, { categoryId, categoryManual: true }),
+    });
+
+    const refused = await apiJson<{ error: string }>(app, `/api/categories/${categoryId}`, {
+      as: alice.session,
+      method: 'DELETE',
+    });
+
+    expect(refused.status).toBe(409);
+    expect(refused.body.error).toContain('the rules "Delhaize" and "Colruyt" assign it');
+    expect(
+      (await apiFetch(app, `/api/categories/${categoryId}`, { as: alice.session })).status,
+    ).toBe(200);
+    const after = await apiJson<Row>(app, `/api/transactions/${transaction.body.id}`, {
+      as: alice.session,
+    });
+    expect(after.body).toMatchObject({ categoryId, categoryManual: true });
+  });
+
+  it('names a loan and a rule together when both block', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const categoryId = await addCategory(app, alice.session, 'Car');
+    await addLoan(app, alice.session, categoryId, { name: 'Volvo' });
+    await addRule(app, alice.session, categoryId, 'Leasing');
+
+    const refused = await apiJson<{ error: string }>(app, `/api/categories/${categoryId}`, {
+      as: alice.session,
+      method: 'DELETE',
+    });
+
+    expect(refused.status).toBe(409);
+    expect(refused.body.error).toContain(
+      'the loan "Volvo" tracks it and the rule "Leasing" assigns it',
+    );
+  });
+
+  it("isn't blocked by another user's rule aiming at the same id", async () => {
+    const { app, alice, bob } = await startTwoUserApp();
+    const categoryId = await addCategory(app, alice.session, 'Mine');
+    // Rule targets are JSON with no ownership check, so Bob can aim one at Alice's id.
+    await addRule(app, bob.session, categoryId, 'Not yours');
+
+    const deleted = await apiFetch(app, `/api/categories/${categoryId}`, {
+      as: alice.session,
+      method: 'DELETE',
+    });
+
+    expect(deleted.status).toBe(204);
   });
 });

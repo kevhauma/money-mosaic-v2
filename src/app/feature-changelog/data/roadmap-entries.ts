@@ -48,12 +48,6 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     isTopic: true,
   },
   {
-    ticketId: 'TICKET-CAT-12',
-    title:
-      'Deleting a category is refused while rules still use it, and a refused delete leaves your transactions untouched',
-    area: 'Categories',
-  },
-  {
     ticketId: 'TICKET-MCP-01',
     title: 'Let Claude read your transactions, loans, goals and income from your home network',
     area: 'MCP',

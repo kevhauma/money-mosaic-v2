@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**12 tickets** — 11 done.
+**12 tickets** — 12 done.
 
 - [x] [TICKET-CAT-01](./tickets/TICKET-CAT-01-and-or-rule-conditions.md) — AND/OR combinators for rule conditions · _v1.0 Foundation_
 - [x] [TICKET-CAT-02](./tickets/TICKET-CAT-02-neutral-category-kind.md) — "Neutral" category kind for partner/external contributions · _v1.1 Joint accounts_
@@ -15,4 +15,4 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-CAT-09](./tickets/TICKET-CAT-09-categories-rules-page-header.md) — Categories/Rules header: the switch, the create button, and each tab's own control · _v1.6.2 Interface polish_
 - [x] [TICKET-CAT-10](./tickets/TICKET-CAT-10-category-applicability-range.md) — Assign an applicability range to a category · _v2.1 Extra graphs_
 - [x] [TICKET-CAT-11](./tickets/TICKET-CAT-11-pickers-respect-applicability.md) — Pickers and filters only offer categories that apply to the date at hand · _v2.1 Extra graphs_
-- [ ] [TICKET-CAT-12](./tickets/TICKET-CAT-12-category-delete-orphans-rules.md) — Deleting a category no longer orphans its rules or clears transactions it then fails to delete (bug fix, FR-CAT-1 / FR-CAT-2 — rules keep a dangling `setCategoryId`, and `CategoriesStore.removeCategory` persists the transaction clear before the server can refuse) — independent, can ship any time; TICKET-MCP-04 needs it · _unreleased_
+- [x] [TICKET-CAT-12](./tickets/TICKET-CAT-12-category-delete-orphans-rules.md) — Deleting a category no longer orphans its rules or clears transactions it then fails to delete (bug fix, FR-CAT-1 / FR-CAT-2 — rules keep a dangling `setCategoryId`, and `CategoriesStore.removeCategory` persists the transaction clear before the server can refuse) — independent, can ship any time; TICKET-MCP-04 needs it · _unreleased_

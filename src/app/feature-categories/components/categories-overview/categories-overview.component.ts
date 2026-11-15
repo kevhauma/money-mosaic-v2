@@ -12,6 +12,7 @@ import {
 } from '@ng-icons/tabler-icons';
 import type { Category } from '@/core/data-access';
 import {
+  AlertComponent,
   BadgeComponent,
   ButtonComponent,
   ConfirmDialogComponent,
@@ -55,6 +56,7 @@ const CATEGORIES_TABS: TabDefinition[] = [
   selector: 'app-categories-overview',
   imports: [
     NgIcon,
+    AlertComponent,
     CategoryFormComponent,
     BadgeComponent,
     ButtonComponent,
@@ -178,10 +180,19 @@ export class CategoriesOverviewComponent {
     this.deleteConfirm.request(category);
   }
 
-  protected deleteConfirmed(): void {
+  /** The server's reason a delete was refused — a loan or rule still targets it (TICKET-CAT-12). */
+  protected readonly deleteError = signal<string | null>(null);
+
+  protected async deleteConfirmed(): Promise<void> {
     const target = this.deleteConfirm.confirm();
-    if (target?.id != null) {
-      void this.categoriesStore.removeCategory(target.id);
+    if (target?.id == null) return;
+    this.deleteError.set(null);
+    try {
+      await this.categoriesStore.removeCategory(target.id);
+    } catch (error) {
+      this.deleteError.set(
+        error instanceof Error ? error.message : 'The category could not be deleted.',
+      );
     }
   }
 

@@ -95,7 +95,7 @@ describe('TransactionsRepository', () => {
   });
 
   // The old table's `update` deleted a property set to `undefined`; `null` is how that reads on the wire,
-  // and it is what `TransactionsStore.bulkClearCategory` depends on to actually clear a category.
+  // and it is what clearing a field through `bulkUpdate` depends on.
   it('bulkUpdate sends a cleared field as null rather than dropping it', async () => {
     expect(
       await callApi(

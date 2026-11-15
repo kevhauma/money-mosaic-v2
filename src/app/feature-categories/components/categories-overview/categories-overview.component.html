@@ -21,6 +21,10 @@
   </mm-flex>
 </mm-page-header>
 
+@if (deleteError(); as message) {
+  <mm-alert status="error" variant="soft" class="mb-4 text-sm" role="alert">{{ message }}</mm-alert>
+}
+
 @if (!categoriesStore.hydrated()) {
   <mm-loading-skeleton [rows]="3" />
 } @else if (visibleCategories().length === 0) {

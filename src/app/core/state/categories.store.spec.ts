@@ -134,7 +134,7 @@ describe('CategoriesStore: manual category ordering (TICKET-CAT-03)', () => {
   });
 });
 
-describe('CategoriesStore: removeCategory clears the category off referencing transactions before deleting it (TICKET-TEST-01)', () => {
+describe('CategoriesStore: removeCategory deletes on the server before touching local state (TICKET-CAT-12)', () => {
   const categoriesRepository = {
     getAll: vi.fn().mockResolvedValue([]),
     remove: vi.fn().mockResolvedValue(undefined),
@@ -153,42 +153,49 @@ describe('CategoriesStore: removeCategory clears the category off referencing tr
         { provide: TransactionsRepository, useValue: transactionsRepository },
       ],
     });
-  });
-
-  it('clears categoryId and categoryManual on referencing transactions in one batched write, and leaves non-referencing rows untouched — even when TransactionsStore has not hydrated yet (TICKET-PERF-05, TICKET-PERF-04)', async () => {
     transactionsRepository.getAll.mockResolvedValue([
       transaction({ id: 1, categoryId: 7, categoryManual: true }),
       transaction({ id: 2, categoryId: 7, categoryManual: false }),
       transaction({ id: 3, categoryId: 8, categoryManual: true }),
     ]);
+    categoriesRepository.getAll.mockResolvedValue([category({ id: 7 }), category({ id: 8 })]);
+  });
+
+  it('on success, clears the category off its transactions in memory with no request of its own — even when TransactionsStore has not hydrated yet (TICKET-PERF-05)', async () => {
     const transactionsStore = TestBed.inject(TransactionsStore);
     expect(transactionsStore.hydrated()).toBe(false);
-
-    categoriesRepository.getAll.mockResolvedValue([category({ id: 7 }), category({ id: 8 })]);
     const categoriesStore = TestBed.inject(CategoriesStore);
     await categoriesStore.hydrate();
 
     await categoriesStore.removeCategory(7);
 
-    expect(transactionsStore.hydrated()).toBe(true);
-
-    // Single batched write, not N sequential updates.
-    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledTimes(1);
+    // The server clears the transactions in the same transaction as the delete.
+    expect(categoriesRepository.remove).toHaveBeenCalledWith(7);
+    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
     expect(transactionsRepository.update).not.toHaveBeenCalled();
-    expect(transactionsRepository.bulkUpdate).toHaveBeenCalledWith([
-      { id: 1, changes: { categoryId: undefined, categoryManual: false } },
-      { id: 2, changes: { categoryId: undefined, categoryManual: false } },
-    ]);
 
     const byId = new Map(transactionsStore.transactions().map((t) => [t.id, t]));
     expect(byId.get(1)).toMatchObject({ categoryId: undefined, categoryManual: false });
     expect(byId.get(2)).toMatchObject({ categoryId: undefined, categoryManual: false });
-    // Untouched — referenced a different category.
     expect(byId.get(3)).toMatchObject({ categoryId: 8, categoryManual: true });
+    expect(categoriesStore.categories().map((c) => c.id)).toEqual([8]);
+  });
 
-    expect(categoriesRepository.remove).toHaveBeenCalledWith(7);
-    expect(categoriesStore.categories().some((c) => c.id === 7)).toBe(false);
-    expect(categoriesStore.categories().some((c) => c.id === 8)).toBe(true);
+  it('on a refusal, rejects with the server message and changes nothing', async () => {
+    categoriesRepository.remove.mockRejectedValueOnce(
+      new Error('This category cannot be deleted while the rule "Delhaize" assigns it.'),
+    );
+    const transactionsStore = TestBed.inject(TransactionsStore);
+    await transactionsStore.hydrate();
+    const categoriesStore = TestBed.inject(CategoriesStore);
+    await categoriesStore.hydrate();
+    const before = transactionsStore.transactions();
+
+    await expect(categoriesStore.removeCategory(7)).rejects.toThrow('"Delhaize"');
+
+    expect(transactionsRepository.bulkUpdate).not.toHaveBeenCalled();
+    expect(transactionsStore.transactions()).toEqual(before);
+    expect(categoriesStore.categories().map((c) => c.id)).toEqual([7, 8]);
   });
 });
 

@@ -115,6 +115,41 @@ describe('CategoriesOverviewComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('No categories yet');
   });
 
+  it('shows the server’s reason when a delete is refused, and keeps the category (TICKET-CAT-12)', async () => {
+    const message = 'This category cannot be deleted while the rule "Delhaize" assigns it.';
+    const rent: Category = {
+      id: 1,
+      name: 'Rent',
+      kind: 'expense',
+      color: '#7F77DD',
+      icon: 'tag',
+      archived: false,
+      isSystem: false,
+    };
+    await setup([
+      {
+        provide: CategoriesRepository,
+        useValue: {
+          getAll: vi.fn().mockResolvedValue([rent]),
+          remove: vi.fn().mockRejectedValue(new Error(message)),
+        },
+      },
+    ]);
+    await TestBed.inject(CategoriesStore).hydrate();
+    const component = fixture.componentInstance;
+
+    component['deleteConfirm'].request(rent);
+    await component['deleteConfirmed']();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(message);
+    expect(
+      TestBed.inject(CategoriesStore)
+        .categories()
+        .map((c) => c.id),
+    ).toEqual([1]);
+  });
+
   describe('applicability window (TICKET-CAT-10)', () => {
     withCleanFormatSettings();
 

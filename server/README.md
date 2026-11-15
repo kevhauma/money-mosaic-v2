@@ -139,8 +139,10 @@ cannot change hands between the check and the write.
   has its `transferId` cleared (the half no foreign key can do).
   `POST /api/accounts/:id/transactions/delete` is the same cascade with the account row kept.
 - **Categories** — `DELETE /api/categories/:id` answers **409 naming the loans** that track the
-  category instead of the bare 500 SQLite's NO ACTION constraint would produce. Built from a query,
-  not from a caught constraint message.
+  category instead of the bare 500 SQLite's NO ACTION constraint would produce, **and the rules**
+  that assign it, enabled or not (TICKET-CAT-12) — a rule's target is JSON with no foreign key, so
+  nothing else would stop it dangling. Built from a query, not from a caught constraint message;
+  the check, the transaction clear and the delete are one transaction (`operations/category-delete.ts`).
 - **The whole dataset** — `GET /api/data/export` → `{ schemaVersion, exportedAt, tables }` over the
   signed-in user's rows; an import is **two requests** (TICKET-SRV-11) — `POST /api/data/import/staged`
   streams the backup's bytes to a file and answers `{ uploadId }`, then `POST /api/data/import` takes

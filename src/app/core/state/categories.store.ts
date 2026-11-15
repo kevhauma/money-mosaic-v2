@@ -85,21 +85,23 @@ export const CategoriesStore = signalStore(
       },
 
       /**
-       * Clears the category off any transaction that referenced it before deleting, so nothing
-       * points at a dangling id. Awaits `TransactionsStore`'s own hydration first (idempotent) so
-       * the affected-ids scan below never runs against a not-yet-hydrated entity map
-       * (TICKET-PERF-05).
+       * Deletes on the server **first** (TICKET-CAT-12): the server refuses while a loan or rule
+       * targets the category, and otherwise clears it off its transactions in the same transaction.
+       * Only once it has said yes does local state follow — the category goes, and the affected
+       * transactions are patched in memory with no second request. A refusal rejects with the
+       * server's message and leaves both stores untouched. Awaits `TransactionsStore`'s hydration
+       * (idempotent) so the affected-ids scan never runs against an empty map (TICKET-PERF-05).
        */
       removeCategory: async (id: number): Promise<void> => {
-        await transactionsStore.hydrate();
-        const affectedIds = transactionsStore
-          .transactions()
-          .filter((transaction) => transaction.categoryId === id)
-          .map((transaction) => transaction.id!);
-
-        await transactionsStore.bulkClearCategory(affectedIds);
-
         await categoriesRepository.remove(id);
+        await transactionsStore.hydrate();
+        const changes = { categoryId: undefined, categoryManual: false };
+        transactionsStore.patchMany(
+          transactionsStore
+            .transactions()
+            .filter((transaction) => transaction.categoryId === id)
+            .map((transaction) => ({ id: transaction.id!, changes })),
+        );
         patchState(store, removeEntity(id));
       },
     };

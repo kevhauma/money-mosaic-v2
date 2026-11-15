@@ -1288,4 +1288,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Duplicate a mapping to start a new one from it',
     ],
   },
+  {
+    date: '2026-11-15',
+    release: 'unreleased',
+    ticketIds: ['TICKET-CAT-12'],
+    title:
+      'Deleting a category is refused while rules still use it, and a refused delete leaves your transactions untouched',
+    area: 'Categories',
+    details: [
+      'The page tells you which rules or loans are in the way',
+      'Your transactions keep their category until the delete actually goes through',
+    ],
+  },
 ];

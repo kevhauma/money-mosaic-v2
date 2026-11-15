@@ -60,7 +60,7 @@ const safeJson = (text: string): unknown => {
  * A field explicitly set to `undefined` means **clear it**, which on the wire is `null`.
  *
  * This is the old table's semantics, kept: `update(id, { transferId: undefined })` deleted the
- * property, and `TransactionsStore.bulkClearCategory` and the fourteen `AppSettings` setters all
+ * property, and `TransactionsStore.updateTransaction` and the fourteen `AppSettings` setters all
  * rely on it. `JSON.stringify` drops an `undefined` value instead, which would turn every "clear
  * this" into a patch that names no field — a silent no-op. Recursive, because `bulkUpdate` sends
  * its changes one level down inside `{ id, changes }`.
