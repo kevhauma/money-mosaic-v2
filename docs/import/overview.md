@@ -22,3 +22,4 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-IMP-16](./tickets/TICKET-IMP-16-reading-step.md) — Guess how a CSV file is written, and only ask when unsure (FR-IMP-*; part of TICKET-IMP-15) · _unreleased_
 - [x] [TICKET-IMP-17](./tickets/TICKET-IMP-17-guess-columns.md) — Guess the columns, and let the user check the guess (FR-IMP-*; part of TICKET-IMP-15, reads TICKET-IMP-16) · _unreleased_
 - [x] [TICKET-IMP-18](./tickets/TICKET-IMP-18-what-changed-overview.md) — End an import on what changed, not on row counts (FR-CAT-3, FR-CAT-5, FR-TRF-2; part of TICKET-IMP-15) · _unreleased_
+- [x] [TICKET-IMP-19](./tickets/TICKET-IMP-19-saved-mapping-404-blocks-import.md) — An import that uses a saved mapping fails with a 404 on the mapping (bug fix, FR-IMP-* — the awaited mapping save 404s, most likely a stale profile id from the client store, and cancels the commit; independent, can ship any time) · _unreleased_

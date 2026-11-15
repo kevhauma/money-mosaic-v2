@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { DataManagementRepository, type AppDataExport } from '@/core/data-access';
+import { StoreResetService } from '@/core/store-reset';
 import { DataManagementOverviewComponent } from './data-management-overview.component';
 
 type Internals = {
@@ -41,6 +42,8 @@ describe('DataManagementOverviewComponent', () => {
     deleteAll: vi.fn().mockResolvedValue(undefined),
   };
 
+  const storeReset = { resetAll: vi.fn(), rehydrateAll: vi.fn().mockResolvedValue(undefined) };
+
   const setup = async (): Promise<void> => {
     vi.clearAllMocks();
     dataManagementRepository.exportAll.mockResolvedValue(backup);
@@ -49,7 +52,10 @@ describe('DataManagementOverviewComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [DataManagementOverviewComponent],
-      providers: [{ provide: DataManagementRepository, useValue: dataManagementRepository }],
+      providers: [
+        { provide: DataManagementRepository, useValue: dataManagementRepository },
+        { provide: StoreResetService, useValue: storeReset },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DataManagementOverviewComponent);
@@ -266,6 +272,17 @@ describe('DataManagementOverviewComponent', () => {
       expect(dataManagementRepository.importAll).toHaveBeenCalledExactlyOnceWith(backup, 'replace');
       expect(internals().importDialogOpen()).toBe(false);
       expect(internals().reloadPromptOpen()).toBe(true);
+    });
+
+    it('reloads every store after a restore, so declining the reload leaves nothing stale (TICKET-IMP-19)', async () => {
+      await setup();
+      const file = new File([JSON.stringify(backup)], 'backup.json', { type: 'application/json' });
+      await internals().onFileSelected(fileSelectEvent(file));
+
+      await internals().confirmImport();
+
+      expect(storeReset.resetAll).toHaveBeenCalledTimes(1);
+      expect(storeReset.rehydrateAll).toHaveBeenCalledTimes(1);
     });
 
     it('keeps the dialog open with an error message when importAll fails, so the user can retry', async () => {

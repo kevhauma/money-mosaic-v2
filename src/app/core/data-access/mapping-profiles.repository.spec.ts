@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { callApi, withApiTesting } from './api-client.testing';
 import type { MappingProfile } from './entities';
@@ -36,5 +37,17 @@ describe('MappingProfilesRepository', () => {
         profile,
       ),
     ).toBe(1);
+  });
+
+  it('update resolves 0 for a row the server no longer has (TICKET-IMP-19)', async () => {
+    const settled = repository().update(5, { name: 'KBC 2026' });
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/mappingProfiles/5')
+      .flush(
+        { error: 'Not found', code: 'row_not_found' },
+        { status: 404, statusText: 'Not Found' },
+      );
+
+    expect(await settled).toBe(0);
   });
 });

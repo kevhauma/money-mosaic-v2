@@ -22,8 +22,11 @@
     </mm-text>
   }
 
-  @if (session.accountCreationError(); as message) {
+  @if (session.commitError(); as message) {
     <mm-alert status="error" class="mb-4 text-sm">{{ message }}</mm-alert>
+  }
+  @if (session.mappingNotSaved(); as message) {
+    <mm-alert status="warning" class="mb-4 text-sm">{{ message }}</mm-alert>
   }
 
   <mm-paper elevation="flat">

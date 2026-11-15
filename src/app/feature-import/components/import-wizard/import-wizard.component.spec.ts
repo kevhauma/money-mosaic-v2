@@ -690,7 +690,7 @@ describe('ImportWizardComponent: pending account draft resolution (TICKET-IMP-08
 
     await goNext();
 
-    expect(read('accountCreationError')).toContain('a.csv');
+    expect(read('commitError')).toContain('a.csv');
     expect(commitImport).not.toHaveBeenCalled();
     expect(read('step')).toBe(2);
     expect(read('currentFileIndex')).toBe(0);
@@ -858,7 +858,7 @@ describe('ImportWizardComponent: commit-flow invariants (TICKET-TEST-03)', () =>
 
     await goNext();
 
-    expect(read('accountCreationError')).toContain('owner.csv');
+    expect(read('commitError')).toContain('owner.csv');
     expect(TestBed.inject(ImportBatchesStore).batches()).toHaveLength(0);
     expect(read('currentFileIndex')).toBe(0); // never advanced past the owner file
     expect(read<{ pendingDraftId: string | null }[]>('queue')[1].pendingDraftId).toBe('draft-1'); // the linked file is still stuck on the same unresolved draft, untouched

@@ -1264,4 +1264,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'Every figure opens the matching transactions for this account',
     ],
   },
+  {
+    date: '2026-11-15',
+    release: 'unreleased',
+    ticketIds: ['TICKET-IMP-19'],
+    title: 'Importing a file with a saved mapping no longer fails with a 404',
+    area: 'Import',
+    details: [
+      'A mapping that went missing is saved again instead of stopping the import',
+      "If remembering the mapping still fails, the import goes ahead and says the mapping wasn't kept",
+      'After restoring a backup, the app reloads your data even if you choose "Later"',
+    ],
+  },
 ];

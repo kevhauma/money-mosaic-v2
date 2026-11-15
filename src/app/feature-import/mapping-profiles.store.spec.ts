@@ -139,7 +139,7 @@ describe('MappingProfilesStore: remembering a mapping (TICKET-IMP-17)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mappingProfilesRepository.add.mockResolvedValue(7);
-    mappingProfilesRepository.update.mockResolvedValue(undefined);
+    mappingProfilesRepository.update.mockResolvedValue(1);
     TestBed.configureTestingModule({
       providers: [{ provide: MappingProfilesRepository, useValue: mappingProfilesRepository }],
     });
@@ -188,5 +188,19 @@ describe('MappingProfilesStore: remembering a mapping (TICKET-IMP-17)', () => {
 
     expect(store.findRemembered(KBC_TEMPLATE, 1)?.id).toBe(9);
     expect(store.findRemembered(BELFIUS_TEMPLATE, 1)).toBeUndefined();
+  });
+
+  it('replaces a remembered row the server no longer has instead of failing (TICKET-IMP-19)', async () => {
+    const store = await hydratedStore([KBC_TEMPLATE, { ...custom(ARGENTA), id: 3 }]);
+    mappingProfilesRepository.update.mockResolvedValue(0);
+
+    const saved = await store.upsertRemembered(custom(ARGENTA));
+
+    expect(mappingProfilesRepository.update).toHaveBeenCalledWith(3, expect.anything());
+    expect(mappingProfilesRepository.add).toHaveBeenCalledTimes(1);
+    expect(saved.id).toBe(7);
+    expect(store.profiles().filter((profile) => profile.defaultAccountId === 1)).toEqual([
+      { ...custom(ARGENTA), id: 7 },
+    ]);
   });
 });

@@ -120,7 +120,8 @@ describe('ImportWizardSession: startNewImport() clears all session state (TICKET
     session.batchMapping.set(MAPPING_PROFILE);
     session.manualOverrideActive.set(true);
     session.applyToRemaining.set(true);
-    session.accountCreationError.set('boom');
+    session.commitError.set('boom');
+    session.mappingNotSaved.set('boom');
 
     session.startNewImport();
 
@@ -133,7 +134,8 @@ describe('ImportWizardSession: startNewImport() clears all session state (TICKET
     expect(session.batchMapping()).toBeNull();
     expect(session.manualOverrideActive()).toBe(false);
     expect(session.applyToRemaining()).toBe(false);
-    expect(session.accountCreationError()).toBeNull();
+    expect(session.commitError()).toBeNull();
+    expect(session.mappingNotSaved()).toBeNull();
   });
 });
 
@@ -250,5 +252,52 @@ describe('ImportWizardSession: undo from What changed (TICKET-IMP-18)', () => {
 
     expect(TestBed.inject(ImportBatchesStore).undoImport).toHaveBeenCalledWith(first.batch);
     expect(session.commitResults()).toEqual([second]);
+  });
+});
+
+describe('ImportWizardSession: remembering the mapping never blocks the import (TICKET-IMP-19)', () => {
+  const REMEMBERED = { mappingProfile: { ...MAPPING_PROFILE, defaultAccountId: 11 } };
+  const upsertRemembered = (): Mock =>
+    TestBed.inject(MappingProfilesStore).upsertRemembered as Mock;
+
+  it('passes the saved mapping id to the commit when remembering succeeds', async () => {
+    upsertRemembered().mockResolvedValue({ ...REMEMBERED.mappingProfile, id: 7 });
+    enterStep2WithFile(11);
+    session.mapResult.set(REMEMBERED);
+    await settleParse();
+
+    await session.goNext();
+
+    expect(commitImport).toHaveBeenCalledWith(expect.objectContaining({ mappingProfileId: 7 }));
+    expect(session.mappingNotSaved()).toBeNull();
+  });
+
+  it('commits without a mapping id, and says so, when remembering fails', async () => {
+    upsertRemembered().mockRejectedValue(new Error('Not found'));
+    enterStep2WithFile(11);
+    session.mapResult.set(REMEMBERED);
+    await settleParse();
+
+    await session.goNext();
+
+    expect(commitImport).toHaveBeenCalledWith(
+      expect.objectContaining({ mappingProfileId: undefined }),
+    );
+    expect(session.commitResults()).toHaveLength(1);
+    expect(session.mappingNotSaved()).toContain('a.csv');
+    expect(session.step()).toBe(3);
+  });
+
+  it('names the import step when the commit itself fails, and stays on the file', async () => {
+    commitImport.mockRejectedValue(new Error('Not found'));
+    enterStep2WithFile(11);
+    session.mapResult.set(VALID_RESULT);
+    await settleParse();
+
+    await session.goNext();
+
+    expect(session.commitError()).toBe("Couldn't import a.csv: Not found.");
+    expect(session.step()).toBe(2);
+    expect(session.committing()).toBe(false);
   });
 });

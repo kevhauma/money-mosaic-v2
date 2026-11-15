@@ -11,6 +11,7 @@ import {
   TypographyComponent,
 } from '@/shared/ui';
 import { downloadJson } from '@/shared/utils';
+import { StoreResetService } from '@/core/store-reset';
 import type { QrTransferResult } from '@/core/qr-sync';
 import { QrReceiveDialogComponent } from '../qr-receive-dialog/qr-receive-dialog.component';
 import { QrSendDialogComponent } from '../qr-send-dialog/qr-send-dialog.component';
@@ -58,6 +59,7 @@ const describeOmissions = (omitted: Record<string, string[]>): string | null => 
 })
 export class DataManagementOverviewComponent {
   private readonly dataManagementRepository = inject(DataManagementRepository);
+  private readonly storeReset = inject(StoreResetService);
 
   protected readonly exporting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -132,6 +134,10 @@ export class DataManagementOverviewComponent {
       await this.dataManagementRepository.importAll(this.pendingImport, this.importMode());
       this.pendingImport = null;
       this.importDialogOpen.set(false);
+      // Reload every store now, so declining the reload prompt cannot leave ids the restore removed
+      // in memory — the next import would PATCH a mapping that is gone (TICKET-IMP-19).
+      this.storeReset.resetAll();
+      void this.storeReset.rehydrateAll();
       this.reloadPromptOpen.set(true);
     } catch (error) {
       // Deliberately keep pendingImport and the dialog open on failure so the user can retry

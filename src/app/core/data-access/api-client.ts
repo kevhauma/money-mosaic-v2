@@ -125,6 +125,11 @@ export class ApiClient {
     return this.settled(this.http.patch<T>(this.url(path), withClearedFields(body)));
   }
 
+  /** A `PATCH` whose "no such row" 404 answers `undefined`, as `getOptional` does for a read. */
+  patchOptional<T>(path: string, body: unknown): Promise<T | undefined> {
+    return this.settled(this.absent(this.http.patch<T>(this.url(path), withClearedFields(body))));
+  }
+
   put<T>(path: string, body: unknown): Promise<T> {
     return this.settled(this.http.put<T>(this.url(path), withClearedFields(body)));
   }

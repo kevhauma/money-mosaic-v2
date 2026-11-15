@@ -67,6 +67,23 @@ describe('ApiClient', () => {
     await expect(settled).rejects.toThrow('No route for GET /api/importBatches/9');
   });
 
+  it('patchOptional reads a coded 404 as "no such row" and still rejects any other failure', async () => {
+    const gone = client().patchOptional('/mappingProfiles/3', { name: 'x' });
+    http()
+      .expectOne('/api/mappingProfiles/3')
+      .flush(
+        { error: 'Not found', code: 'row_not_found' },
+        { status: 404, statusText: 'Not Found' },
+      );
+    expect(await gone).toBeUndefined();
+
+    const refused = client().patchOptional('/mappingProfiles/3', { name: 'x' });
+    http()
+      .expectOne('/api/mappingProfiles/3')
+      .flush({ error: 'Invalid value for "name"' }, { status: 400, statusText: 'Bad Request' });
+    await expect(refused).rejects.toThrow('Invalid value for "name"');
+  });
+
   it('getOptional still rejects on any other status', async () => {
     const settled = client().getOptional('/importBatches/9');
     http()

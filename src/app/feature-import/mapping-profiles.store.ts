@@ -3,6 +3,7 @@ import { patchState, signalStore, type, withComputed, withHooks, withMethods } f
 import {
   addEntity,
   entityConfig,
+  removeEntity,
   setAllEntities,
   updateEntity,
   withEntities,
@@ -82,18 +83,20 @@ export const MappingProfilesStore = signalStore(
               candidate.defaultAccountId === profile.defaultAccountId &&
               sameFileType(candidate, profile),
           );
-        if (!existing) {
-          const id = await mappingProfilesRepository.add(profile);
-          const added: MappingProfile = { ...profile, id };
-          patchState(store, addEntity(added, mappingProfileConfig));
-          return added;
+        if (existing && (await mappingProfilesRepository.update(existing.id!, profile)) > 0) {
+          patchState(
+            store,
+            updateEntity({ id: existing.id!, changes: profile }, mappingProfileConfig),
+          );
+          return { ...profile, id: existing.id };
         }
-        await mappingProfilesRepository.update(existing.id!, profile);
-        patchState(
-          store,
-          updateEntity({ id: existing.id!, changes: profile }, mappingProfileConfig),
-        );
-        return { ...profile, id: existing.id };
+        // Nothing remembered yet, or the remembered row is gone from the server — a backup
+        // restore without a reload leaves its id behind in this store (TICKET-IMP-19).
+        const id = await mappingProfilesRepository.add(profile);
+        const added: MappingProfile = { ...profile, id };
+        if (existing) patchState(store, removeEntity(existing.id!));
+        patchState(store, addEntity(added, mappingProfileConfig));
+        return added;
       },
 
       /** The mapping remembered for this account and the file type `detected` stands for — which is

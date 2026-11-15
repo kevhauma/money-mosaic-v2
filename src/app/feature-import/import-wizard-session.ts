@@ -100,8 +100,11 @@ export class ImportWizardSession {
   readonly commitResults = signal<CommitImportResult[]>([]);
 
   readonly committing = signal(false);
-  /** Set when resolving/persisting a pending account draft fails mid-commit (TICKET-IMP-08) — that file (and anything linked to the same draft) does not proceed. */
-  readonly accountCreationError = signal<string | null>(null);
+  /** Set when a file's commit fails — creating its pending account (TICKET-IMP-08) or the import
+   * itself (TICKET-IMP-19) — naming the step; that file does not proceed. */
+  readonly commitError = signal<string | null>(null);
+  /** Set when remembering a file's mapping fails; the import went ahead without it (TICKET-IMP-19). */
+  readonly mappingNotSaved = signal<string | null>(null);
 
   // Batch mapping (TICKET-IMP-02): once a mapping is applied to "the rest of the batch",
   // `batchMapping` holds the shared column mapping and every later file's `mapResult` is derived
@@ -413,7 +416,7 @@ export class ImportWizardSession {
     // the transactional commit that follows it (a harmless widening: the Confirm button already
     // reads this same signal to show "Importing…" and disable itself for the whole operation).
     this.committing.set(true);
-    this.accountCreationError.set(null);
+    this.commitError.set(null);
     const validRows = this.parsedRows().filter((row): row is ValidParsedRow => row.valid);
 
     try {
@@ -421,7 +424,7 @@ export class ImportWizardSession {
       try {
         accountId = await this.resolveAccountId(queuedRow, earliestBalanceSeed(validRows));
       } catch {
-        this.accountCreationError.set(
+        this.commitError.set(
           `Couldn't create the new account for ${file.name} — nothing was imported for it.`,
         );
         return;
@@ -438,17 +441,25 @@ export class ImportWizardSession {
           : mapResult.mappingProfile;
       const savedProfile =
         profile.defaultAccountId != null
-          ? await this.mappingProfilesStore.upsertRemembered(profile)
+          ? await this.rememberMapping(profile, file.name)
           : undefined;
 
-      const result = await this.importBatchesStore.commitImport({
-        accountId,
-        fileName: file.name,
-        mappingProfileId: savedProfile?.id,
-        totalRowsRead: this.parsedRows().length,
-        validRows,
-        duplicateHandling: this.duplicateHandling(),
-      });
+      let result: CommitImportResult;
+      try {
+        result = await this.importBatchesStore.commitImport({
+          accountId,
+          fileName: file.name,
+          mappingProfileId: savedProfile?.id,
+          totalRowsRead: this.parsedRows().length,
+          validRows,
+          duplicateHandling: this.duplicateHandling(),
+        });
+      } catch (error) {
+        this.commitError.set(
+          `Couldn't import ${file.name}: ${error instanceof Error ? error.message : 'the server refused it'}.`,
+        );
+        return;
+      }
 
       this.commitResults.update((results) => [...results, result]);
 
@@ -488,6 +499,21 @@ export class ImportWizardSession {
     }
   }
 
+  /** Remembering a mapping is a convenience, so its failure never cancels the import (TICKET-IMP-19). */
+  private async rememberMapping(
+    profile: Omit<MappingProfile, 'id'>,
+    fileName: string,
+  ): Promise<MappingProfile | undefined> {
+    try {
+      return await this.mappingProfilesStore.upsertRemembered(profile);
+    } catch {
+      this.mappingNotSaved.set(
+        `Couldn't remember the mapping for ${fileName} — the import went ahead without it.`,
+      );
+      return undefined;
+    }
+  }
+
   mapFileIndividually(): void {
     this.manualOverrideActive.set(true);
     this.mapResult.set(null);
@@ -513,6 +539,7 @@ export class ImportWizardSession {
     this.manualOverrideActive.set(false);
     this.applyToRemaining.set(false);
     this.duplicateHandling.set('skip');
-    this.accountCreationError.set(null);
+    this.commitError.set(null);
+    this.mappingNotSaved.set(null);
   }
 }
