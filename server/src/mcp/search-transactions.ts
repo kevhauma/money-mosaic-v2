@@ -128,20 +128,24 @@ export const searchTransactions = (db: DbOrTx, userId: number, input: SearchInpu
       bookingDate: transactions.bookingDate,
       amount: transactions.amount,
       currency: transactions.currency,
-      accountId: accounts.id,
+      accountId: transactions.accountId,
       accountName: accounts.name,
       counterpartyName: transactions.counterpartyName,
       counterpartyIban: transactions.counterpartyIban,
       rawDescription: transactions.rawDescription,
-      categoryId: categories.id,
+      categoryId: transactions.categoryId,
       categoryName: categories.name,
       categoryManual: transactions.categoryManual,
       transferId: transactions.transferId,
       notes: transactions.notes,
     })
     .from(transactions)
-    .innerJoin(accounts, eq(accounts.id, transactions.accountId))
-    .leftJoin(categories, eq(categories.id, transactions.categoryId))
+    // Joined on the owner too: a transaction must never surface another account's names.
+    .leftJoin(accounts, and(eq(accounts.id, transactions.accountId), eq(accounts.userId, userId)))
+    .leftJoin(
+      categories,
+      and(eq(categories.id, transactions.categoryId), eq(categories.userId, userId)),
+    )
     .where(and(...filtersOf(userId, input)))
     .orderBy(desc(transactions.bookingDate), desc(transactions.id))
     .limit(limit + 1)

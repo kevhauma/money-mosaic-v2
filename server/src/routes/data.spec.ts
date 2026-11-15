@@ -1,8 +1,12 @@
+import { eq } from 'drizzle-orm';
 import { readdir } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import { abortOn, apiFetch, apiJson, type TestApp, type TestSession } from '../app.testing.js';
 import { JSON_BODY_LIMIT } from '../app.js';
+import { rules } from '../schema/rules.js';
+import { transactions } from '../schema/transactions.js';
+import { transfers } from '../schema/transfers.js';
 import { DATA_SCHEMA_VERSION } from './data.js';
 import { startTwoUserApp, transactionBody } from './samples.testing.js';
 
@@ -229,31 +233,89 @@ describe('POST /api/data/import', () => {
   });
 
   /**
-   * The exact inverse of what this asserted until TICKET-SRV-12, which is why that ticket records a
-   * data-loss path rather than a convenience. Ids are preserved by this endpoint, so a backup taken
-   * from one account and restored into another collides on every row — and the importer now wins
-   * every collision. Pinned deliberately: if this ever starts passing by accident again, the
-   * behaviour being asserted is somebody losing their data.
+   * Ids are unique per table across every account, so a backup restored into another account
+   * collides on every row. TICKET-SRV-12 took the other account's rows over; TICKET-SRV-14 writes
+   * the importer's copies under fresh ids and rewrites every reference to them — foreign keys, soft
+   * references and the ids inside a rule's JSON — so both accounts end up with a whole dataset.
    */
-  it('takes over a row whose id belongs to another account, and that account loses it', async () => {
+  it("renumbers rows whose ids another account holds, and leaves that account's rows alone", async () => {
     const { app, alice, bob } = await startTwoUserApp();
+    const { accountId, categoryId, transactionIds } = bob.fixtures;
+    const transferId = app.db
+      .insert(transfers)
+      .values({
+        userId: bob.session.id,
+        fromTransactionId: transactionIds[0],
+        toTransactionId: transactionIds[1],
+        method: 'manual',
+        confidence: 'high',
+        linkedAt: '2026-03-02T09:00:00.000Z',
+      })
+      .returning({ id: transfers.id })
+      .get().id;
+    app.db
+      .update(transactions)
+      .set({ transferId, categoryId })
+      .where(eq(transactions.userId, bob.session.id))
+      .run();
+    app.db
+      .insert(rules)
+      .values({
+        userId: bob.session.id,
+        name: 'Bob rule',
+        priority: 1,
+        enabled: true,
+        continueOnMatch: false,
+        conditions: [{ field: 'accountId', operator: 'equals', value: accountId }],
+        action: { setCategoryId: categoryId },
+      })
+      .run();
     const theirBackup = (await exportAs(app, bob.session)).body;
 
     const imported = await importAs(app, alice.session, { mode: 'merge', data: theirBackup });
-
     expect(imported.status).toBe(204);
-    // The row is Alice's now, under the same id Bob's backup carried — it changed hands rather than
-    // being copied, so there is one row where there was one row.
+
+    // Bob keeps everything he had, under the same ids.
     expect(
-      (await apiJson<Row>(app, `/api/accounts/${bob.fixtures.accountId}`, { as: alice.session }))
-        .body['name'],
+      (await apiJson<Row>(app, `/api/accounts/${accountId}`, { as: bob.session })).body['name'],
     ).toBe('Checking');
-    // And Bob cannot see it any more. His backup described his whole account, so he is left with
-    // nothing: this is the cost the ticket and `upsertRow` both state outright.
+    expect((await apiJson<Row[]>(app, '/api/rules', { as: bob.session })).body).toHaveLength(1);
     expect(
-      (await apiFetch(app, `/api/accounts/${bob.fixtures.accountId}`, { as: bob.session })).status,
-    ).toBe(404);
-    expect((await apiJson<Row[]>(app, '/api/accounts', { as: bob.session })).body).toEqual([]);
+      (await apiJson<Row[]>(app, '/api/transactions', { as: bob.session })).body.map((t) => [
+        t.id,
+        t['categoryId'],
+        t['transferId'],
+      ]),
+    ).toEqual(transactionIds.map((id) => [id, categoryId, transferId]));
+
+    // Alice gets her own copies, and every reference among them points at her copies.
+    const account = (await apiJson<Row[]>(app, '/api/accounts', { as: alice.session })).body.find(
+      (row) => row.id !== alice.fixtures.accountId,
+    )!;
+    const category = (
+      await apiJson<Row[]>(app, '/api/categories', { as: alice.session })
+    ).body.find((row) => row.id !== alice.fixtures.categoryId)!;
+    const transfer = (await apiJson<Row[]>(app, '/api/transfers', { as: alice.session })).body[0]!;
+    const copied = (
+      await apiJson<Row[]>(app, '/api/transactions', { as: alice.session })
+    ).body.filter((row) => row['accountId'] === account.id);
+    const [rule] = (await apiJson<Row[]>(app, '/api/rules', { as: alice.session })).body;
+
+    expect(account.id).not.toBe(accountId);
+    expect(category.id).not.toBe(categoryId);
+    expect(transfer.id).not.toBe(transferId);
+    expect(copied).toHaveLength(2);
+    expect(copied.map((row) => [row['categoryId'], row['transferId']])).toEqual([
+      [category.id, transfer.id],
+      [category.id, transfer.id],
+    ]);
+    expect([transfer['fromTransactionId'], transfer['toTransactionId']]).toEqual(
+      copied.map((row) => row.id),
+    );
+    expect(rule!['action']).toEqual({ setCategoryId: category.id });
+    expect(rule!['conditions']).toEqual([
+      { field: 'accountId', operator: 'equals', value: account.id },
+    ]);
   });
 
   it('rejects a document whose rows reference rows it does not contain', async () => {

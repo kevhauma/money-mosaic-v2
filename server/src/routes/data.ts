@@ -23,6 +23,7 @@ import {
   type EntityValues,
 } from '../http/validate.js';
 import { authUserOf } from '../middleware/require-auth.js';
+import { planImportIds, remapReferences } from '../operations/import-ids.js';
 import {
   clearUserRows,
   idOf,
@@ -185,30 +186,16 @@ const upsertRow = (
     return;
   }
 
+  // `planImportIds` renumbered every id another account holds, so a stored row is the importer's.
+  if (existing.userId !== userId) throw new Error('An import row collided with another account');
+
   // `merge` is a `bulkPut`: the document's row **replaces** the stored one, field for field.
   // `values` carries only the keys the document had, and `toEntity` strips nulls on the way out —
   // so setting it directly would be a patch, leaving a field the backup does not have standing on
   // the stored row. `asReplacement` fills the absent nullable columns back in as null, which is
   // what writing the whole object gives you, and what `merge` has always meant here.
-  //
-  // **`userId` is written with it, so a row whose id belongs to another account changes hands**
-  // (TICKET-SRV-12). Ids are unique per table across all users here, where a browser database's
-  // were unique to its one owner, so a backup restored into a different account collides by
-  // construction — and this endpoint preserves ids rather than remapping them, because every
-  // `accountId` / `categoryId` / `transferId` in the document points at them.
-  //
-  // What that costs is written down because it cannot be undone: **the other account loses the
-  // row.** Its contents become the backup's and its ownership moves to the importer, so a row that
-  // account still holds pointing at this id now references something it does not own — SQLite's
-  // foreign keys still resolve, since the row is there, but the reference stops meaning what it
-  // meant. Until TICKET-SRV-12 this was a 409 naming the row and nothing was written.
-  //
-  // Taking ownership rather than merely overwriting is the deliberate half. `assertReferencesOwned`
-  // runs after these writes and rejects a document that references a row the importer does not own,
-  // so leaving `userId` where it was would corrupt the other account *and* still fail the import —
-  // the worst of both. For a row that is already the importer's, writing `userId` is a no-op.
   tx.update(table)
-    .set({ ...asReplacement(table, values), userId } as never)
+    .set(asReplacement(table, values) as never)
     .where(key)
     .run();
 };
@@ -220,12 +207,12 @@ const parseRow = (
   index: number,
 ): { values: EntityValues; id: number | undefined } => {
   const values = parseEntityBody(table, row, { mode: 'create', derived: derivedOf(table) });
-  const withDerived = { ...values, ...deriveFor(table, values) };
 
-  if (idOf(table) === undefined) return { values: withDerived, id: undefined };
+  if (idOf(table) === undefined) return { values, id: undefined };
 
-  // Ids are preserved, not reassigned: `accountId`, `categoryId`, `transferId` and the rest point at
-  // them, so a row that arrives without one is a row whose references cannot be honoured.
+  // Ids are preserved unless another account holds them (`planImportIds`): `accountId`,
+  // `categoryId`, `transferId` and the rest point at them, so a row that arrives without one is a
+  // row whose references cannot be honoured.
   const id = toId(asRecord(row)['id']);
   if (id === undefined)
     throw httpError(
@@ -233,7 +220,7 @@ const parseRow = (
       `Row ${index} of "${getTableName(table)}" has no id, so the rows referencing it could not be kept consistent.`,
     );
 
-  return { values: withDerived, id };
+  return { values, id };
 };
 
 /**
@@ -266,9 +253,9 @@ const pruneOrphanTransfer = (
 };
 
 /**
- * The whole document, in one transaction (NFR-RESIL-1): a failure anywhere — a malformed row, an id
- * that belongs to someone else, a reference to a row that is not in the document — leaves every
- * table exactly as it was.
+ * The whole document, in one transaction (NFR-RESIL-1): a failure anywhere — a malformed row, a
+ * reference to a row that is not in the document — leaves every table exactly as it was. A row whose
+ * id another account holds is written under a fresh id, never over theirs (TICKET-SRV-14).
  */
 const importDocument = (
   db: DrizzleDb,
@@ -284,17 +271,34 @@ const importDocument = (
 
     if (mode === 'replace') clearUserRows(tx, userId);
 
-    const written: { table: PerUserTable; values: EntityValues; id: number | undefined }[] = [];
-    for (const table of TRANSPORT_TABLES) {
-      // A name the document does not carry is an empty table, and one this schema does not have is
-      // ignored — which is how a backup from a version with a since-dropped table still loads.
-      const rows = document.tables[getTableName(table)] ?? [];
-      rows.forEach((row, index) => {
-        const { values, id } = parseRow(table, row, index);
-        upsertRow(tx, table, values, id, userId);
-        written.push({ table, values, id });
-      });
-    }
+    // A name the document does not carry is an empty table, and one this schema does not have is
+    // ignored — which is how a backup from a version with a since-dropped table still loads.
+    const parsed = TRANSPORT_TABLES.flatMap((table) =>
+      (document.tables[getTableName(table)] ?? []).map((row, index) => ({
+        table,
+        ...parseRow(table, row, index),
+      })),
+    );
+    const plan = planImportIds(
+      tx,
+      new Map(
+        TRANSPORT_TABLES.filter((table) => idOf(table) !== undefined).map((table) => [
+          table,
+          parsed.filter((row) => row.table === table).map((row) => row.id!),
+        ]),
+      ),
+      userId,
+    );
+    const written = parsed.map(({ table, values, id }) => {
+      const remapped = remapReferences(plan, table, values);
+      const row = {
+        table,
+        values: { ...remapped, ...deriveFor(table, remapped) },
+        id: id === undefined ? undefined : (plan.get(table)?.get(id) ?? id),
+      };
+      upsertRow(tx, row.table, row.values, row.id, userId);
+      return row;
+    });
 
     // Ownership is checked **after** the writes and **inside** the transaction: a reference may
     // point at a row that is later in the document, so it can only be resolved once everything is

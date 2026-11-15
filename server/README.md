@@ -148,12 +148,10 @@ cannot change hands between the check and the write.
   streams the backup's bytes to a file and answers `{ uploadId }`, then `POST /api/data/import` takes
   `{ mode: 'replace' | 'merge', uploadId }` and applies it in one transaction — and still
   rejects a `schemaVersion` newer than the server's before writing anything; `DELETE /api/data` clears
-  this user's rows and nobody else's. Ids are preserved, so cross-table references survive a restore
-  — which also means **an import takes over a row whose id belongs to another account, and that
-  account loses it** (TICKET-SRV-12; it was a 409 refusing the whole document until then). There is
-  no id remapping on this path: the engine that did that was TICKET-SRV-07's and was deleted with
-  Dexie in TICKET-SRV-08, so restoring a backup into an account other than the one it came from is a
-  destructive operation on whoever else holds those ids. `categoryModel` is not in the document:
+  this user's rows and nobody else's. Ids are preserved, so cross-table references survive a restore,
+  except where another account already holds an id: that row is written under a fresh id and every
+  reference to it in the document is rewritten (TICKET-SRV-14, `operations/import-ids.ts`), so
+  restoring a backup into a different account never touches the other account's rows. `categoryModel` is not in the document:
   megabytes of weights cannot survive JSON, and `/api/categoryModel` carries them as bytes.
 
 ### The MCP endpoint (TICKET-MCP-01)
