@@ -35,7 +35,7 @@
   "ignoreExports": [
     { "file": "src/app/core/accounts/joint-owner-lookup.ts", "exports": ["coOwnerIbanSet"] },
     {
-      "file": "src/app/core/categorisation/rule-matching.ts",
+      "file": "shared/rule-matching.ts",
       "exports": ["resolveCategoryForTransaction"]
     },
     // TICKET-STAT-35: `parseRangeExpression`/`resolveRangeExpression` are now consumed by

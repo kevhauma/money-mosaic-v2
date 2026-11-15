@@ -1,5 +1,6 @@
 import type { Rule, Transaction } from '@/core/data-access';
 import {
+  applyRules,
   conditionMatches,
   matchesRule,
   prepareRules,
@@ -304,5 +305,35 @@ describe('prepareRules + resolveCategoryForPreparedRules: prepared once per pass
     expect(resolveCategoryForPreparedRules(transaction(), prepareRules(rules))).toBe(
       resolveCategoryForTransaction(transaction(), rules),
     );
+  });
+});
+
+describe('applyRules (TICKET-MCP-03)', () => {
+  it('names the deciding rule: the last match before a rule that stops the run', () => {
+    const rules = [
+      rule({ id: 1, priority: 10, continueOnMatch: true, action: { setCategoryId: 1 } }),
+      rule({ id: 2, priority: 20, action: { setCategoryId: 2 } }),
+      rule({ id: 3, priority: 30, action: { setCategoryId: 3 } }),
+    ];
+
+    expect(applyRules([transaction({ categoryId: 9 })], rules)).toEqual([
+      { id: 1, categoryId: 2, ruleId: 2 },
+    ]);
+  });
+
+  it('skips manual rows, transfer legs and rows whose category would not change', () => {
+    const rules = [rule({ id: 1 })];
+
+    expect(
+      applyRules(
+        [
+          transaction({ id: 1, categoryManual: true }),
+          transaction({ id: 2, transferId: 5 }),
+          transaction({ id: 3, categoryId: 1 }),
+          transaction({ id: 4 }),
+        ],
+        rules,
+      ),
+    ).toEqual([{ id: 4, categoryId: 1, ruleId: 1 }]);
   });
 });

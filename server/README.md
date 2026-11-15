@@ -164,6 +164,13 @@ cannot change hands between the check and the write.
 - Read tools: `list_accounts`, `list_categories`, `list_rules`, `search_transactions` (date range
   required, keyset-paged with `nextCursor`), `get_loans`, `get_future`, `get_income`. They return
   stored rows, not the browser's computed views (forecasts, amortisation).
+- Write tools, each **destructive**: called without `confirm: true` they only preview, and the
+  confirmed result carries the previous values so a change can be put back.
+  `assign_categories` (TICKET-MCP-02) sets or clears categories on up to 500 transactions — an
+  assignment is manual, so rules never overwrite it; transfer legs and archived or out-of-window
+  categories are skipped. `run_rules` (TICKET-MCP-03) runs the rules exactly as the app's "Run
+  rules" does (the matcher is `shared/rule-matching.ts`); with `ruleIds` it reports only the changes
+  those rules decide, evaluating them even if disabled.
 
 **Tokens** are created from the command line — there is no UI. Only the SHA-256 of a token is
 stored, so the token is printed once; a lost token is revoked and replaced. Tokens are not part of a

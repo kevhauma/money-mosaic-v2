@@ -47,15 +47,17 @@ Rule matching runs only in the browser today. This ticket moves the pure matcher
 
 ## Acceptance criteria
 
-- [ ] The matcher and the pure apply step live in `shared/`, import nothing outside it, and `shared-module.spec.ts` passes.
-- [ ] No file in `src/` still contains matcher logic. The UI rule run and the rule form behave as before, and the existing rule specs pass unchanged apart from import paths.
-- [ ] `run_rules` never touches manual or transfer-linked rows (covered by a spec).
-- [ ] Without `confirm`, nothing is written. The preview's totals equal what confirm then applies.
-- [ ] With `ruleIds`, a higher-priority rule that would win still wins, and its rows are left out of the result (covered by a spec). A named disabled rule is evaluated.
-- [ ] Confirm sets `categoryId` and leaves `categoryManual` false. It returns every changed row's `previousCategoryId`.
-- [ ] Only the token user's rules and transactions are read or written. Another user's rule id in `ruleIds` is an error.
-- [ ] `ng lint`, `ng test` and `ng build --configuration development` pass, as do `npm --prefix server run lint`, `npm --prefix server run typecheck` and `npm run test:server`. Verified via the fallow skill and the coding-conventions skill.
-- [ ] Browser check: "Run rules" on the Rules page still categorises a freshly imported batch.
+> **Implementation note (2026-11-15):** `rule-matching.spec.ts` stays in `src/app/core/categorisation/` rather than moving to `shared/`: `ng test` only discovers specs under `src/` and the server suite only under `server/src/` (see `shared-module.spec.ts`), so a spec in `shared/` would never run. It imports through the re-export, so it still tests the shared module.
+
+- [x] The matcher and the pure apply step live in `shared/`, import nothing outside it, and `shared-module.spec.ts` passes. (`shared/rule-matching.ts`, moved with `git mv`, imports only `./entities.js`; new `applyRules` returns `{id, categoryId, ruleId}`; `shared-module.spec.ts` green)
+- [x] No file in `src/` still contains matcher logic. The UI rule run and the rule form behave as before, and the existing rule specs pass unchanged apart from import paths. (`src/app/core/categorisation/rule-matching.ts` is now a one-line re-export of `shared/rule-matching`, so every `@/core/categorisation` importer is unchanged; `RulesEngineService.applyToTransactions` delegates to `applyRules`; the existing rule specs pass with no edits — `rule-matching.spec.ts` gained an `applyRules` describe, see note)
+- [x] `run_rules` never touches manual or transfer-linked rows (covered by a spec). (`server/src/mcp/run-rules.spec.ts` "never touches manual or transfer-linked rows")
+- [x] Without `confirm`, nothing is written. The preview's totals equal what confirm then applies. (`server/src/mcp/run-rules.spec.ts` "writes nothing without confirm, and the preview totals equal what confirm applies")
+- [x] With `ruleIds`, a higher-priority rule that would win still wins, and its rows are left out of the result (covered by a spec). A named disabled rule is evaluated. (`server/src/mcp/run-rules.spec.ts` "with ruleIds, a higher-priority winner still wins…" and "evaluates a named disabled rule, and ignores it otherwise")
+- [x] Confirm sets `categoryId` and leaves `categoryManual` false. It returns every changed row's `previousCategoryId`. (`server/src/mcp/run-rules.spec.ts` "confirm sets categoryId only, leaving the row non-manual, and returns the previous category")
+- [x] Only the token user's rules and transactions are read or written. Another user's rule id in `ruleIds` is an error. (`server/src/mcp/run-rules.spec.ts` "reads and writes only the token user's rules and rows, and refuses another user's rule id")
+- [x] `ng lint`, `ng test` and `ng build --configuration development` pass, as do `npm --prefix server run lint`, `npm --prefix server run typecheck` and `npm run test:server`. Verified via the fallow skill and the coding-conventions skill. (ng lint clean; ng test 349 files / 3976 tests; ng build dev OK; server lint, typecheck, 472 tests green; fallow dead-code + health exit 0 after repointing the existing `resolveCategoryForTransaction` ignore in `.fallowrc.json` to the moved file)
+- [x] Browser check: "Run rules" on the Rules page still categorises a freshly imported batch. (2026-11-15, Orca browser on a scratch DB: a fresh 3-row import batch plus a "contains delhaize → Groceries" rule; clicking "Re-run rules" showed "Re-ran rules: 2 transactions recategorised." and `GET /api/transactions?importBatchId=1` showed both Delhaize rows on Groceries, non-manual, and the Shell row untouched)
 
 ## Notes
 
