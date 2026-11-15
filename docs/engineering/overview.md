@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**33 tickets** — 31 done, 2 open.
+**50 tickets** — 31 done, 19 open.
 
 ## CLEANUP
 
@@ -25,6 +25,18 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-NG-08](./tickets/TICKET-NG-08-with-persisted-crud-decision.md) — Decide (and if yes, build) a `withPersistedCrud` signal-store feature · _v1.3 Code review (CR3)_
 - [x] [TICKET-NG-09](./tickets/TICKET-NG-09-mm-modal-focus-restore.md) — `mm-modal` restores focus to its trigger on close · _v1.3 Code review (CR3)_
 - [x] [TICKET-NG-10](./tickets/TICKET-NG-10-locale-aware-formatting.md) — Locale-aware formatting: fix the drift, consolidate the channels, guard recurrence · _v2 Code review (CR4)_
+- [ ] [TICKET-NG-11](./tickets/TICKET-NG-11-dashboard-waits-for-settings.md) — The dashboard waits for its settings stores, so no write starts from unloaded defaults (bug fix, CR6-14 — the dashboard gates only on transactions + accounts, so a toggle after a failed settings load overwrites the saved list with defaults) — independent · _unreleased_
+- [ ] [TICKET-NG-12](./tickets/TICKET-NG-12-settings-inputs-keep-typing.md) — Settings text fields never drop typed characters (bug fix, CR6-27 — `linkControlToSetting` saves every keystroke and writes each late reply back into the focused field) — independent · _unreleased_
+- [ ] [TICKET-NG-13](./tickets/TICKET-NG-13-failed-saves-surfaced.md) — Failed saves are shown; dialogs close only on success (bug fix, CR6-19 — goal/loan forms close before the save runs and nothing surfaces a rejected write) — independent · _unreleased_
+- [ ] [TICKET-NG-14](./tickets/TICKET-NG-14-hydration-generation-guard.md) — Store hydration ignores loads a reset or newer load superseded (bug fix, CR5-7 — `createHydration` has no generation guard, so a load in flight at sign-out patches the next user's store) — independent · _unreleased_
+- [ ] [TICKET-NG-15](./tickets/TICKET-NG-15-api-client-keeps-http-status.md) — ApiClient keeps the HTTP status on its rejections (bug fix, CR6-26 — `asRejection` flattens 4xx/5xx to a plain `Error`, so `reportIfUnexpected` logs every server answer) — independent · _unreleased_
+- [ ] [TICKET-NG-16](./tickets/TICKET-NG-16-no-negative-zero.md) — Formatters never print "-0,00" or "-0%" (bug fix, CR5-24 — default `signDisplay` keeps the minus on a value that rounds to zero, and `moneyColor` tests `< 0`) — independent · _unreleased_
+- [ ] [TICKET-NG-17](./tickets/TICKET-NG-17-reorder-ties-renumbered.md) — Reorder renumbers tied or missing sort orders, and new accounts/categories get one (bug fix, CR6-20 — swapping two equal order values writes the same value to both) — independent · _unreleased_
+- [ ] [TICKET-NG-18](./tickets/TICKET-NG-18-reorder-within-visible-list.md) — Reorder swaps within the visible list, not with hidden archived rows (bug fix, CR6-20 — `moveAccount`/`moveCategory` pick the neighbour from the full list, archived included) — independent · _unreleased_
+- [ ] [TICKET-NG-19](./tickets/TICKET-NG-19-accounts-store-no-raw-remove.md) — `AccountsStore` exposes no `remove()` that skips the delete cascade (CR6-20; TICKET-NG-08's `withPersistedCrud` always adds a public `remove`) — independent · _unreleased_
+- [ ] [TICKET-NG-20](./tickets/TICKET-NG-20-atomic-reorder.md) — Moving an account or category saves both positions atomically (bug fix, CR6-20 — two independent PATCHes via `Promise.all`; goals already use one bulk request) — independent · _unreleased_
+- [ ] [TICKET-NG-21](./tickets/TICKET-NG-21-api-client-absent-uses-status.md) — `ApiClient.absent()` checks the status, not `instanceof HttpErrorResponse` (bug fix, CR6-26 — the identity check the file itself warns against) — independent · _unreleased_
+- [ ] [TICKET-NG-22](./tickets/TICKET-NG-22-list-toggles-keep-clicks.md) — Settings list toggles never lose a click (bug fix, CR6-27 — each toggle sends the whole list built from client state before the previous write landed) — independent · _unreleased_
 
 ## PERF
 
@@ -45,6 +57,11 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-SOLID-05](./tickets/TICKET-SOLID-05-entity-stores-to-core.md) — Move the shared entity stores to `core/state`, breaking all 20 barrel cycles · _v1.3 Code review (CR3)_
 - [x] [TICKET-SOLID-06](./tickets/TICKET-SOLID-06-attribution-fieldset-extraction.md) — Extract the attribution-override fieldset from `transaction-edit-form` · _v1.3 Code review (CR3)_
 - [x] [TICKET-SOLID-07](./tickets/TICKET-SOLID-07-range-state-store-to-core-state.md) — Move `range-state.store.ts` to `core/state/` under the widened placement rule · _v2 Code review (CR4)_
+- [ ] [TICKET-SOLID-08](./tickets/TICKET-SOLID-08-local-today.md) — One local-date "today" helper replaces the ~25 UTC copies (bug fix, CR5-11, FR-STAT-7 — "today" is `new Date().toISOString().slice(0, 10)`, the UTC date, in 24 places) — independent · _unreleased_
+- [ ] [TICKET-SOLID-09](./tickets/TICKET-SOLID-09-shared-balance-formula.md) — Client and MCP share one balance formula (CR6-A4, FR-STAT-1) — independent · _unreleased_
+- [ ] [TICKET-SOLID-10](./tickets/TICKET-SOLID-10-one-month-step-rule.md) — One month-step rule that clamps to month-end (bug fix, CR6-A1 — `addMonths` lets the day overflow while `stepBy` and the month-end helpers clamp) — do before LOAN-17, REC-13, FUT-11 · _unreleased_
+- [ ] [TICKET-SOLID-11](./tickets/TICKET-SOLID-11-drop-private-date-helpers.md) — Private date-helper copies use the canonical `date-buckets` helpers (CR5-23, CR6-A1) — after SOLID-10 · _unreleased_
+- [ ] [TICKET-SOLID-12](./tickets/TICKET-SOLID-12-one-percent-delta.md) — One `percentDelta` replaces the four private copies (CR6-A4, CR5-23, FR-STAT-11) — independent · _unreleased_
 
 ## TEST
 

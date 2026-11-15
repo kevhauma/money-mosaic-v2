@@ -2,10 +2,11 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**5 tickets** — 5 done.
+**6 tickets** — 5 done.
 
 - [x] [TICKET-DAT-01](./tickets/TICKET-DAT-01-full-data-export-import.md) — Full data export & import (JSON backup / restore) · _v1.4 Data management_
 - [x] [TICKET-DAT-02](./tickets/TICKET-DAT-02-persistent-storage-request.md) — Request persistent browser storage · _v1.4 Data management_
 - [x] [TICKET-DAT-03](./tickets/TICKET-DAT-03-delete-all-data.md) — Delete all data, with confirmation · _v1.4 Data management_
 - [x] [TICKET-DAT-04](./tickets/TICKET-DAT-04-commit-to-embed-set06-repair.md) — Commit to the settings embed: delete dead route wiring, repair the SET-06 record · _v2 Code review (CR4)_
 - [x] [TICKET-DAT-05](./tickets/TICKET-DAT-05-qr-code-data-sync.md) — QR code data sync between two browsers (show on one, scan with the other) (extends FR-DAT-1/FR-DAT-2 — export/import over an animated QR sequence instead of a file) — builds on TICKET-DAT-01's `exportAll`/`importAll`, which already shipped, so it can be picked up any time · _unreleased_
+- [ ] [TICKET-DAT-06](./tickets/TICKET-DAT-06-stale-storage-copy.md) — The data-management page says the theme is stored per account (bug fix, follows TICKET-SRV-10 — the "Where your data lives" card still says the browser keeps per-browser preferences like the theme) — independent · _unreleased_

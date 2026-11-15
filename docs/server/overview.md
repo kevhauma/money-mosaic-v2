@@ -5,13 +5,13 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 The backend itself — Express, SQLite, Drizzle — and the move of the app's data out of the browser and onto it. Identity, sessions and account management live next door in [docs/auth/](../auth/overview.md).
 
 > **No Roadmap or Changelog entries for this area.** The in-app Roadmap and Changelog tabs
-> (`feature-changelog`) exist to tell *users* what is coming and what landed. This is
+> (`feature-changelog`) exist to tell _users_ what is coming and what landed. This is
 > local-hosting infrastructure that nobody reading those tabs is waiting for, so the
 > `story-ticket` skill's Step 4.5 and the `work-ticket` skill's Step 6.5 are **skipped** for
 > every `SRV` ticket — decided with the user on 2026-09-23. Don't add them back, and don't
 > treat their absence as an oversight to repair.
 
-**13 tickets** — 12 done.
+**23 tickets** — 13 done.
 
 - [x] [TICKET-SRV-01](./tickets/TICKET-SRV-01-express-sqlite-drizzle-skeleton.md) — Express + SQLite + Drizzle backend skeleton (new — introduces a backend, superseding the "no backend" premise in `CLAUDE.md`) — nothing depends on it yet, but everything in v3 does; build it first · _unreleased_
 - [x] [TICKET-SRV-02](./tickets/TICKET-SRV-02-drizzle-schema-per-user.md) — Every Dexie table as a Drizzle table, owned by a user (ports the data model in `data-model/SKILL.md`) — needs TICKET-SRV-01 and TICKET-AUTH-01 · _unreleased_
@@ -27,3 +27,12 @@ The backend itself — Express, SQLite, Drizzle — and the move of the app's da
 - [x] [TICKET-SRV-14](./tickets/TICKET-SRV-14-import-renumbers-colliding-ids.md) — An import renumbers a row whose id another account holds instead of taking it over (bug fix, FR-DAT-2 — reverses TICKET-SRV-12, which silently moved other accounts’ rows to the importer) · _unreleased_
 - [ ] [TICKET-SRV-12](./tickets/TICKET-SRV-12-import-takes-over-colliding-ids.md) — An import takes over a colliding id instead of refusing the document (FR-DAT-2 — removes the cross-account 409 `upsertRow` threw; **destructive by design**, the other account loses the row) — needs TICKET-SRV-04, and sits on TICKET-SRV-11 · _unreleased_ — **superseded by TICKET-SRV-14**
 - [x] [TICKET-SRV-13](./tickets/TICKET-SRV-13-port-account-detail-dashboard-to-v3.md) — Bring the account-detail dashboard onto the v3 server branch (refactor, carries TICKET-ACC-14 — keeps SRV-06 hydration, AUTH-02 sign-out wipe and SRV-10 no-browser-storage intact) — needs TICKET-ACC-14; superseded if v3 merges into `main` first · _unreleased_
+- [ ] [TICKET-SRV-15](./tickets/TICKET-SRV-15-restore-prunes-orphan-transfers-by-ownership.md) — Restore prunes an orphan transfer when its legs aren't the importer's (bug fix, FR-DAT-2 — `pruneOrphanTransfer` tests a leg with `rowExists` across all users instead of `ownsRow`, so a leg id another user holds keeps the orphan and the restore is refused) — independent · _unreleased_
+- [ ] [TICKET-SRV-16](./tickets/TICKET-SRV-16-restore-remaps-joint-account-override.md) — Restore renumbers `attributionOverride.jointAccountId` (bug fix, FR-DAT-2 — `EMBEDDED` in `import-ids.ts` rewrites only `reimbursementTransferId`, so a renumbered joint account leaves shared overrides on the old id) — independent · _unreleased_
+- [ ] [TICKET-SRV-17](./tickets/TICKET-SRV-17-restore-prunes-dangling-hard-references.md) — Restore prunes recurring overrides whose anchor transaction is gone (bug fix, FR-DAT-2 — only transfers are pruned, so a pre-v3 override anchored on a deleted transaction fails `assertReferencesOwned` and refuses the restore) — after SRV-15 (same prune path) · _unreleased_
+- [ ] [TICKET-SRV-18](./tickets/TICKET-SRV-18-cross-account-merge-idempotent.md) — A repeated cross-account merge doesn't duplicate rows (bug fix, FR-DAT-2 — `freshIdsFor` gives colliding rows brand-new ids on every run and never matches the previous run's copy) — independent · _unreleased_
+- [ ] [TICKET-SRV-19](./tickets/TICKET-SRV-19-transaction-delete-clears-reimbursement-overrides.md) — Deleting transactions clears overrides naming their deleted transfers (bug fix, FR-TXN-4 — `cleanupTransfersForRemovedTransactions` deletes transfers without the `clearDanglingOverrides` step unlink runs) — independent · _unreleased_
+- [ ] [TICKET-SRV-20](./tickets/TICKET-SRV-20-restore-fresh-ids-from-sqlite-sequence.md) — Restore never hands out a deleted id again (bug fix, FR-DAT-2 — fresh ids start at `max(id)`, not `sqlite_sequence`, so a soft reference to a deleted row can land on a renumbered one) — after SRV-18 · _unreleased_
+- [ ] [TICKET-SRV-21](./tickets/TICKET-SRV-21-import-commit-skips-duplicate-fingerprints.md) — The server skips already-present fingerprints on import commit (bug fix, FR-IMP-6 — `/import/commit` inserts every row it is sent and the fingerprint index isn't unique, so two overlapping commits insert twice) — after IMP-24 · _unreleased_
+- [ ] [TICKET-SRV-22](./tickets/TICKET-SRV-22-restore-remap-covers-every-id-field.md) — A spec fails when an id-bearing field has no restore remap (refactor, FR-DAT-2 — CR6-A5, `EMBEDDED` is hand-kept and unchecked) — after SRV-16 · _unreleased_
+- [ ] [TICKET-SRV-23](./tickets/TICKET-SRV-23-restore-handles-orphan-loans.md) — Restore handles a loan whose category is gone (bug fix, FR-DAT-2 / FR-LOAN-1 — a pre-v3 loan whose category was deleted fails the generic reference check, and the refusal doesn't name the loan) — after SRV-15 · _unreleased_

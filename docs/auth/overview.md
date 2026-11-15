@@ -11,9 +11,11 @@ Not to be confused with [docs/accounts/](../accounts/overview.md), which is abou
 > plumbing. The `story-ticket` skill's Step 4.5 and the `work-ticket` skill's Step 6.5 are
 > **skipped** for every `AUTH` ticket — decided with the user on 2026-09-23.
 
-**4 tickets** — 4 done.
+**6 tickets** — 4 done.
 
 - [x] [TICKET-AUTH-01](./tickets/TICKET-AUTH-01-users-seeded-admin-login.md) — Users table, a seeded admin/admin account, and email + password login (new — no FR covers accounts; extends the Persistence section of the spec) — needs TICKET-SRV-01 · _unreleased_
 - [x] [TICKET-AUTH-02](./tickets/TICKET-AUTH-02-login-screen-session-guard.md) — Login screen, session store, and a guarded app (extends `ui-layout-spec.md` with a pre-shell route) — needs TICKET-AUTH-01 · _unreleased_
 - [x] [TICKET-AUTH-03](./tickets/TICKET-AUTH-03-admin-user-management.md) — Admin panel: create, rename, reset, disable and delete the other accounts — needs TICKET-AUTH-01, TICKET-AUTH-02 and TICKET-SRV-02 (for the per-user tables its delete cascades through) · _unreleased_
 - [x] [TICKET-AUTH-04](./tickets/TICKET-AUTH-04-change-own-password.md) — Change your own password, and stop the default admin password being forgotten — needs TICKET-AUTH-01 and TICKET-AUTH-02; independent of the SRV data-migration tickets, so it can ship as soon as the login screen exists · _unreleased_
+- [ ] [TICKET-AUTH-05](./tickets/TICKET-AUTH-05-login-awaits-ui-preferences.md) — Sign-in waits for the account's UI preferences (bug fix, follows TICKET-SRV-10 — `login` fires `void rehydrateAll()` and the login page navigates before `UiPreferencesService.restore` lands) — independent · _unreleased_
+- [ ] [TICKET-AUTH-06](./tickets/TICKET-AUTH-06-admin-self-rename-refreshes-shell.md) — Renaming yourself on the admin page updates the shell (bug fix, extends TICKET-AUTH-03 — `saveRename` never calls `session.refresh()` for your own row, unlike `toggleRole`) — independent · _unreleased_

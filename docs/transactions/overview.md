@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**12 tickets** — 12 done.
+**15 tickets** — 12 done, 3 open.
 
 - [x] [TICKET-TXN-01](./tickets/TICKET-TXN-01-bulk-category-assign.md) — Bulk-assign a category to selected rows · _v1.0 Foundation_
 - [x] [TICKET-TXN-02](./tickets/TICKET-TXN-02-virtualized-table.md) — Virtualize the transactions table · _v1.0 Foundation_
@@ -16,3 +16,6 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-TXN-10](./tickets/TICKET-TXN-10-amount-type-with-min-max.md) — Amount type sits with min/max, gains an "All", and filters on its own · _v1.6.2 Interface polish_
 - [x] [TICKET-TXN-11](./tickets/TICKET-TXN-11-filter-bar-controls-overlap.md) — Transactions filter controls overlap each other · _v2.3 UX review_
 - [x] [TICKET-TXN-12](./tickets/TICKET-TXN-12-mobile-transactions-table.md) — Transactions is unusable on a phone · _v2.3 UX review_
+- [ ] [TICKET-TXN-13](./tickets/TICKET-TXN-13-rule-from-filter-matches-filter.md) — "Make rule from filter" matches what the filter shows (bug fix, CR6-9, FR-TXN-3 — text becomes description-only and a lone amount bound becomes strict; independent) · _unreleased_
+- [ ] [TICKET-TXN-14](./tickets/TICKET-TXN-14-selection-pruned-on-filter-and-delete.md) — Bulk actions never hit rows hidden by filters or already deleted (bug fix, CR6-11, FR-TXN-3 — the selected-id set is never pruned on filter change or delete; independent) · _unreleased_
+- [ ] [TICKET-TXN-15](./tickets/TICKET-TXN-15-archived-category-on-rows.md) — Rows keep showing their archived category (bug fix, CR6-22, FR-TXN-2 — option lists keep the assigned category only from `activeCategories()`; independent) · _unreleased_

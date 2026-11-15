@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**47 tickets** — 46 done, 1 won't do.
+**54 tickets** — 46 done, 1 won't do, 7 open.
 
 - [x] [TICKET-STAT-01](./tickets/TICKET-STAT-01-custom-range-enable.md) — ~~Enable custom range when "Custom" preset is selected (bug)~~ · _v1.0 Foundation_
 - [x] [TICKET-STAT-02](./tickets/TICKET-STAT-02-per-account-networth.md) — Account balance-history charts (detail + overview) · _v1.0 Foundation_
@@ -51,3 +51,10 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-STAT-45](./tickets/TICKET-STAT-45-heatmap-one-hue-ramp.md) — The heatmap's six category hues make the grid unreadable · _v2.3 UX review_
 - [x] [TICKET-STAT-46](./tickets/TICKET-STAT-46-contribution-net-worth.md) — Contribution-based net worth for joint accounts · _v1.1 Joint accounts_
 - [x] [TICKET-STAT-47](./tickets/TICKET-STAT-47-shared-stats-classifier.md) — Extract the shared per-transaction stats classifier · _v1.3 Code review (CR3)_
+- [ ] [TICKET-STAT-48](./tickets/TICKET-STAT-48-yoy-full-prior-year-coverage.md) — Year-over-year needs a fully covered prior year (bug fix, FR-STAT-11 — a prior year is dropped only when it ends before the first transaction, not when it starts before it) — independent · _unreleased_
+- [ ] [TICKET-STAT-49](./tickets/TICKET-STAT-49-fiscal-year-shift.md) — Stepping a fiscal year keeps its start month (bug fix, FR-STAT-7 — `shiftRangeByCalendarUnit`'s `year` case always rebuilds 1 Jan–31 Dec) — independent · _unreleased_
+- [ ] [TICKET-STAT-50](./tickets/TICKET-STAT-50-money-flow-uses-transfer-links.md) — The money-flow diagram honours confirmed transfer links (bug fix, FR-EXP-2 — `classifyMovement` finds the other account by counterparty IBAN only, never by `transferId`) — independent · _unreleased_
+- [ ] [TICKET-STAT-51](./tickets/TICKET-STAT-51-shared-refund-reduces-expense.md) — A refund marked shared reduces expense instead of counting as income (bug fix, FR-STAT-2 — a `shared` override buckets by weight sign instead of netting by category kind) — independent · _unreleased_
+- [ ] [TICKET-STAT-52](./tickets/TICKET-STAT-52-trend-chart-label-encoding.md) — Fix the double-encoded trend-chart label (bug fix, NFR-A11Y-1 — `trend-chart-panel.component.ts` holds mojibake `â€“` in its aria-label) — independent · _unreleased_
+- [ ] [TICKET-STAT-53](./tickets/TICKET-STAT-53-all-time-range-derived-and-reset.md) — "All time" follows the data and resets on sign-out (bug fix, FR-STAT-7 — the range is frozen into absolute dates when picked, and `RangeStore` is exempt from the sign-out reset) — independent · _unreleased_
+- [ ] [TICKET-STAT-54](./tickets/TICKET-STAT-54-top-transactions-skip-nullified.md) — The top-transactions card skips nullified rows (bug fix, FR-STAT-12 — `computeTopTransactions` never reads `nullified`) — independent · _unreleased_
