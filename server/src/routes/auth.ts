@@ -1,5 +1,7 @@
 import { Router } from 'express';
 
+import { issueApiToken, listOwnApiTokens, revokeApiToken } from '../auth/api-tokens.js';
+
 import { clearSessionCookie, readSessionToken, setSessionCookie } from '../auth/cookies.js';
 import { hashPassword, unmatchableDigest, verifyPassword } from '../auth/passwords.js';
 import { toSessionUser } from '../auth/session-user.js';
@@ -11,8 +13,8 @@ import {
   updateUserPassword,
 } from '../auth/users.js';
 import type { DrizzleDb } from '../db.js';
-import { httpError } from '../http/errors.js';
-import { asRecord } from '../http/validate.js';
+import { httpError, notFound } from '../http/errors.js';
+import { asRecord, toId } from '../http/validate.js';
 import { authUserOf, createRequireAuth } from '../middleware/require-auth.js';
 
 /**
@@ -89,6 +91,14 @@ const readDisplayName = (body: unknown): string => {
     throw httpError(400, 'Display name is required');
   }
   return displayName.trim();
+};
+
+/** A token's label — required, so the Settings list can tell a laptop from a desktop. */
+const readTokenName = (body: unknown): string => {
+  const { name } = asRecord(body);
+  if (typeof name !== 'string' || name.trim() === '')
+    throw httpError(400, 'Token name is required');
+  return name.trim();
 };
 
 /**
@@ -182,6 +192,26 @@ export const createAuthRouter = (db: DrizzleDb): Router => {
     // back: the update targeted one column of one id, so a second `SELECT` would only be a slower
     // way of saying the same thing.
     res.json({ ...user, displayName });
+  });
+
+  /**
+   * The caller's own MCP tokens (TICKET-MCP-05). Like the password route, nothing here takes a user
+   * id: the account is the session's, so another user's token id is simply not found. Behind the
+   * cookie, never a bearer token — a token cannot mint or revoke tokens.
+   */
+  router.get('/tokens', requireAuth, (req, res) => {
+    res.json(listOwnApiTokens(db, authUserOf(req).id));
+  });
+
+  router.post('/tokens', requireAuth, (req, res) => {
+    const name = readTokenName(req.body);
+    res.status(201).json(issueApiToken(db, authUserOf(req).id, name));
+  });
+
+  router.delete('/tokens/:id', requireAuth, (req, res) => {
+    const id = toId(req.params['id']);
+    if (id === undefined || !revokeApiToken(db, id, authUserOf(req).id)) throw notFound();
+    res.status(204).end();
   });
 
   return router;

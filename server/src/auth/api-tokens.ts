@@ -16,14 +16,37 @@ const TOKEN_BYTES = 32;
 
 const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
-/** Creates a token for a user and returns the plain token — the only time it exists. */
-export const createApiToken = (db: DrizzleDb, userId: number, name: string): string => {
-  const token = `mm_${randomBytes(TOKEN_BYTES).toString('hex')}`;
-  db.insert(apiTokens)
-    .values({ userId, name, tokenHash: hashToken(token) })
-    .run();
-  return token;
+/** One of a user's own tokens, as the Settings panel lists it (TICKET-MCP-05) — never the hash. */
+export type OwnApiToken = {
+  readonly id: number;
+  readonly name: string;
+  readonly createdAt: Date;
 };
+
+const OWN_TOKEN_COLUMNS = {
+  id: apiTokens.id,
+  name: apiTokens.name,
+  createdAt: apiTokens.createdAt,
+};
+
+/** Creates a token for a user and returns it with its plain token — the only time that exists. */
+export const issueApiToken = (
+  db: DrizzleDb,
+  userId: number,
+  name: string,
+): OwnApiToken & { readonly token: string } => {
+  const token = `mm_${randomBytes(TOKEN_BYTES).toString('hex')}`;
+  const row = db
+    .insert(apiTokens)
+    .values({ userId, name, tokenHash: hashToken(token) })
+    .returning(OWN_TOKEN_COLUMNS)
+    .get();
+  return { ...row, token };
+};
+
+/** `issueApiToken`, keeping only the plain token. */
+export const createApiToken = (db: DrizzleDb, userId: number, name: string): string =>
+  issueApiToken(db, userId, name).token;
 
 /**
  * The user a token belongs to, or `undefined` for an unknown or revoked token, or one whose user
@@ -61,6 +84,23 @@ export const listApiTokens = (db: DrizzleDb): ApiTokenListing[] =>
     .orderBy(asc(apiTokens.id))
     .all();
 
-/** Deletes a token; answers whether one existed. */
-export const revokeApiToken = (db: DrizzleDb, id: number): boolean =>
-  db.delete(apiTokens).where(eq(apiTokens.id, id)).run().changes > 0;
+/** One user's tokens, oldest first (TICKET-MCP-05). */
+export const listOwnApiTokens = (db: DrizzleDb, userId: number): OwnApiToken[] =>
+  db
+    .select(OWN_TOKEN_COLUMNS)
+    .from(apiTokens)
+    .where(eq(apiTokens.userId, userId))
+    .orderBy(asc(apiTokens.id))
+    .all();
+
+/**
+ * Deletes a token; answers whether one existed. With `userId`, only that user's token — the web
+ * route's form (TICKET-MCP-05); the CLI omits it to revoke anyone's.
+ */
+export const revokeApiToken = (db: DrizzleDb, id: number, userId?: number): boolean =>
+  db
+    .delete(apiTokens)
+    .where(
+      and(eq(apiTokens.id, id), userId === undefined ? undefined : eq(apiTokens.userId, userId)),
+    )
+    .run().changes > 0;

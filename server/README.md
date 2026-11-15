@@ -181,9 +181,18 @@ cannot change hands between the check and the write.
   characters), and saving one never applies it — `run_rules` does. `delete_category` goes through
   the same operation as `DELETE /api/categories/:id`, so loans and rules still block it.
 
-**Tokens** are created from the command line — there is no UI. Only the SHA-256 of a token is
-stored, so the token is printed once; a lost token is revoked and replaced. Tokens are not part of a
-data export and survive `DELETE /api/data`; deleting the user deletes them.
+**Tokens**: any signed-in user creates, lists and revokes **their own** in **Settings → Agent access
+(MCP)** (TICKET-MCP-05), which also shows the `claude mcp add` command to run. Behind it, on the
+session cookie (a bearer token cannot mint tokens):
+
+- `GET /api/auth/tokens` — the caller's tokens, `{id, name, createdAt}`, never the hash.
+- `POST /api/auth/tokens` `{name}` — 201 with `{id, name, createdAt, token}`, the only time the
+  token is sent. A blank name is a 400.
+- `DELETE /api/auth/tokens/:id` — 204; another user's or an unknown id is a 404.
+
+Only the SHA-256 of a token is stored, so the token is shown once; a lost token is revoked and
+replaced. Tokens are not part of a data export and survive `DELETE /api/data`; deleting the user
+deletes them. An operator with a shell can also manage **every** user's tokens:
 
 ```bash
 npm --prefix server run token:create -- <login> <name>   # prints the token once

@@ -42,6 +42,11 @@ export const ROADMAP_ENTRIES: readonly RoadmapEntry[] = [
     area: 'Dashboard',
   },
   {
+    ticketId: 'TICKET-MCP-05',
+    title: 'Create and revoke your own agent (MCP) access tokens from Settings',
+    area: 'MCP',
+  },
+  {
     ticketId: 'topic-chart-builder',
     title: 'Chart builder: create your own custom visualizations from your data',
     area: 'Ideas',

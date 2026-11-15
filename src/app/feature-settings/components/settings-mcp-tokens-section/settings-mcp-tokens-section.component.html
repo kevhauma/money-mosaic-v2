@@ -1,0 +1,109 @@
+<mm-paper>
+  <mm-text variant="heading" as="h2">Agent access (MCP)</mm-text>
+  <mm-text as="p" variant="caption" class="mt-1">
+    A token lets an AI agent such as Claude Code read and change your data through this server's MCP
+    endpoint, as you. Treat it like your password, and revoke it when you stop using it.
+  </mm-text>
+
+  <form class="mt-4 flex flex-wrap items-end gap-3" [formGroup]="form" (ngSubmit)="create()">
+    <mm-fieldset legend="Token name" class="w-full max-w-xs">
+      <mm-input
+        type="text"
+        formControlName="name"
+        autocomplete="off"
+        placeholder="e.g. Laptop, Claude Code"
+        [ariaInvalid]="form.controls.name.touched && form.controls.name.invalid"
+      />
+    </mm-fieldset>
+    <mm-button type="submit" color="primary" size="sm" [disabled]="pending()">
+      Create token
+    </mm-button>
+  </form>
+
+  @if (createError(); as message) {
+    <mm-alert status="error" variant="soft" class="mt-2 text-sm" role="alert">{{
+      message
+    }}</mm-alert>
+  }
+
+  @if (issued(); as token) {
+    <mm-alert status="warning" variant="soft" class="mt-3 block text-sm" role="status">
+      <div class="flex w-full min-w-0 flex-col gap-2">
+        <span>
+          Copy <span class="font-semibold">{{ token.name }}</span> now — it is not shown again.
+        </span>
+        <div class="flex flex-wrap items-center gap-2">
+          <code class="min-w-0 break-all">{{ token.token }}</code>
+          <mm-button size="xs" variant="outline" (click)="copy(token.token)">Copy token</mm-button>
+        </div>
+        <span>To connect Claude Code, run:</span>
+        <div class="flex flex-wrap items-center gap-2">
+          <code class="min-w-0 break-all">{{ connectCommand() }}</code>
+          <mm-button size="xs" variant="outline" (click)="copy(connectCommand())">
+            Copy command
+          </mm-button>
+        </div>
+        <span>
+          If the agent runs on another machine, replace the host with this server's network address.
+        </span>
+        @if (copied()) {
+          <span>Copied.</span>
+        }
+      </div>
+    </mm-alert>
+  }
+
+  @if (loadError(); as message) {
+    <mm-alert status="error" variant="soft" class="mt-3 text-sm" role="alert">{{
+      message
+    }}</mm-alert>
+  } @else if (loaded()) {
+    @if (rows().length === 0) {
+      <mm-text as="p" variant="caption" class="mt-4 block">You have no tokens yet.</mm-text>
+    } @else {
+      <mm-table class="mt-4">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Created</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <tr>
+              <td>{{ row.name }}</td>
+              <td>{{ row.created }}</td>
+              <td class="text-right">
+                <mm-button
+                  size="xs"
+                  variant="ghost"
+                  color="error"
+                  [ariaLabel]="row.revokeLabel"
+                  (click)="askRevoke(row)"
+                >
+                  Revoke
+                </mm-button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </mm-table>
+    }
+  }
+
+  @if (revokeError(); as message) {
+    <mm-alert status="error" variant="soft" class="mt-2 text-sm" role="alert">{{
+      message
+    }}</mm-alert>
+  }
+</mm-paper>
+
+<mm-confirm-dialog
+  [(open)]="revokeOpen"
+  [title]="revokePrompt().title"
+  [message]="revokePrompt().message"
+  [danger]="true"
+  confirmLabel="Revoke token"
+  (confirmed)="confirmRevoke()"
+/>

@@ -5,6 +5,7 @@ import { SettingsAboutSectionComponent } from '../settings-about-section/setting
 import { SettingsAccountSectionComponent } from '../settings-account-section/settings-account-section.component';
 import { SettingsCurrencyLocaleSectionComponent } from '../settings-currency-locale-section/settings-currency-locale-section.component';
 import { SettingsDataSectionComponent } from '../settings-data-section/settings-data-section.component';
+import { SettingsMcpTokensSectionComponent } from '../settings-mcp-tokens-section/settings-mcp-tokens-section.component';
 import { SettingsImportMappingsSectionComponent } from '../settings-import-mappings-section/settings-import-mappings-section.component';
 import { SettingsPrivacySectionComponent } from '../settings-privacy-section/settings-privacy-section.component';
 import { SettingsReportingSectionComponent } from '../settings-reporting-section/settings-reporting-section.component';
@@ -26,6 +27,7 @@ import { SettingsThemeSectionComponent } from '../settings-theme-section/setting
     SettingsCurrencyLocaleSectionComponent,
     SettingsDataSectionComponent,
     SettingsImportMappingsSectionComponent,
+    SettingsMcpTokensSectionComponent,
     SettingsPrivacySectionComponent,
     SettingsReportingSectionComponent,
     SettingsThemeSectionComponent,

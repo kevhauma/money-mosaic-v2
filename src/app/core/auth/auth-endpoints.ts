@@ -23,6 +23,9 @@ export const AUTH_PASSWORD_URL = '/api/auth/password';
  */
 export const WRONG_CURRENT_PASSWORD_CODE = 'wrong_current_password';
 
+/** The caller's own MCP tokens (TICKET-MCP-05) — a plain session-guarded route, nothing exempt. */
+export const AUTH_TOKENS_URL = '/api/auth/tokens';
+
 /**
  * The admin panel's account management (TICKET-AUTH-03). Not exempt from anything in the
  * interceptor: a 401 here means exactly what it means everywhere else behind the session guard, and

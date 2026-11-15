@@ -63,3 +63,16 @@ export type SessionUser = PublicUser & {
    */
   readonly usingDefaultPassword: boolean;
 };
+
+/**
+ * One of the caller's MCP tokens (TICKET-MCP-05) — the mirror of `OwnApiToken` in
+ * `server/src/auth/api-tokens.ts`. `createdAt` is the ISO string JSON delivers.
+ */
+export type ApiToken = {
+  readonly id: number;
+  readonly name: string;
+  readonly createdAt: string;
+};
+
+/** What creating a token answers: the token itself, which is never sent again. */
+export type IssuedApiToken = ApiToken & { readonly token: string };

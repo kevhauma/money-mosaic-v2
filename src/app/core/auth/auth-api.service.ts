@@ -1,8 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { AUTH_LOGIN_URL, AUTH_LOGOUT_URL, AUTH_ME_URL, AUTH_PASSWORD_URL } from './auth-endpoints';
-import type { SessionUser } from './public-user';
+import {
+  AUTH_LOGIN_URL,
+  AUTH_LOGOUT_URL,
+  AUTH_ME_URL,
+  AUTH_PASSWORD_URL,
+  AUTH_TOKENS_URL,
+} from './auth-endpoints';
+import type { ApiToken, IssuedApiToken, SessionUser } from './public-user';
 
 /**
  * The `/api/auth` calls, as promises. The session cookie is `HttpOnly`, so there is no client-side
@@ -44,5 +50,19 @@ export class AuthApiService {
   /** Renames the signed-in user — the one field a non-admin may change about themselves. */
   updateDisplayName(displayName: string): Promise<SessionUser> {
     return firstValueFrom(this.http.patch<SessionUser>(AUTH_ME_URL, { displayName }));
+  }
+
+  /** The signed-in user's own MCP tokens (TICKET-MCP-05); like the password, never anyone else's. */
+  listTokens(): Promise<ApiToken[]> {
+    return firstValueFrom(this.http.get<ApiToken[]>(AUTH_TOKENS_URL));
+  }
+
+  /** The only response that ever carries the plain token. */
+  createToken(name: string): Promise<IssuedApiToken> {
+    return firstValueFrom(this.http.post<IssuedApiToken>(AUTH_TOKENS_URL, { name }));
+  }
+
+  async revokeToken(id: number): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${AUTH_TOKENS_URL}/${id}`));
   }
 }
