@@ -110,6 +110,7 @@ describe('/mcp authentication', () => {
     expect(await client.toolNames()).toEqual(
       expect.arrayContaining([
         'list_accounts',
+        'get_balances',
         'list_categories',
         'list_rules',
         'search_transactions',

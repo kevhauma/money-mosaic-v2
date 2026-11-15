@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { DbOrTx } from '../db.js';
@@ -12,8 +12,9 @@ import { recurringOverrides } from '../schema/recurring-overrides.js';
 import { rules } from '../schema/rules.js';
 import { salaryMetadata } from '../schema/salary-metadata.js';
 import { savingsGoals } from '../schema/savings-goals.js';
+import { transactions } from '../schema/transactions.js';
 import { searchTransactions, searchTransactionsInput } from './search-transactions.js';
-import { toolResult } from './tool-result.js';
+import { ISO_DATE, toolResult } from './tool-result.js';
 
 const READ_ONLY = { readOnlyHint: true } as const;
 
@@ -49,6 +50,56 @@ const listAccounts = (db: DbOrTx, userId: number) =>
       archived: account.archived,
       joint: account.type === 'joint' || (account.coOwners?.length ?? 0) > 0,
     }));
+
+/** Each account's transaction total, booked on or before `upTo` (every row when omitted). */
+const totalsByAccount = (db: DbOrTx, userId: number, upTo?: string): Map<number, number> =>
+  new Map(
+    db
+      .select({
+        accountId: transactions.accountId,
+        total: sql<number>`sum(${transactions.amount})`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          upTo === undefined ? undefined : lte(transactions.bookingDate, upTo),
+        ),
+      )
+      .groupBy(transactions.accountId)
+      .all()
+      .map((row) => [row.accountId, row.total]),
+  );
+
+const cents = (value: number): number => Math.round(value * 100) / 100;
+
+/**
+ * The real bank balance, `openingBalance + Σ amount` — the formula `AccountsStore.balancesById` and
+ * `computeAccountBalanceHistory` use, so a joint account counts in full, not at the user's share.
+ */
+const getBalances = (db: DbOrTx, userId: number, dates: readonly string[]) => {
+  const current = totalsByAccount(db, userId);
+  const history = dates.map((date) => ({ date, totals: totalsByAccount(db, userId, date) }));
+  return db
+    .select({
+      id: accounts.id,
+      name: accounts.name,
+      archived: accounts.archived,
+      openingBalance: accounts.openingBalance,
+    })
+    .from(accounts)
+    .where(eq(accounts.userId, userId))
+    .orderBy(asc(accounts.id))
+    .all()
+    .map(({ openingBalance, ...account }) => ({
+      ...account,
+      balance: cents(openingBalance + (current.get(account.id) ?? 0)),
+      history: history.map(({ date, totals }) => ({
+        date,
+        balance: cents(openingBalance + (totals.get(account.id) ?? 0)),
+      })),
+    }));
+};
 
 const listCategories = (db: DbOrTx, userId: number, includeArchived: boolean) =>
   db
@@ -138,6 +189,19 @@ export const registerReadTools = (server: McpServer, db: DbOrTx, userId: number)
       annotations: READ_ONLY,
     },
     () => toolResult(listAccounts(db, userId)),
+  );
+
+  server.registerTool(
+    'get_balances',
+    {
+      description:
+        "Each account's current balance (opening balance plus every transaction), and its balance at the end of each date in dates (e.g. month ends, for a trend). A joint account's balance is the full bank balance, not the user's share.",
+      inputSchema: {
+        dates: z.array(z.string().regex(ISO_DATE)).max(400).optional(),
+      },
+      annotations: READ_ONLY,
+    },
+    ({ dates }) => toolResult(getBalances(db, userId, dates ?? [])),
   );
 
   server.registerTool(

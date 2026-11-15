@@ -46,6 +46,7 @@ const ownIds = (db: DrizzleDb, table: IdTable, userId: number): number[] =>
 describe('read tools: isolation', () => {
   const readAll = async (client: McpTestClient) => ({
     accounts: await client.value<Row[]>('list_accounts'),
+    balances: await client.value<Row[]>('get_balances'),
     categories: await client.value<Row[]>('list_categories', { includeArchived: true }),
     rules: await client.value<Row[]>('list_rules'),
     transactions: await client.value<Page>('search_transactions', {
@@ -77,6 +78,7 @@ describe('read tools: isolation', () => {
       const read = await readAll(await connectMcp(app, userId));
 
       expect(ids(read.accounts)).toEqual(ownIds(app.db, accounts, userId));
+      expect(ids(read.balances)).toEqual(ownIds(app.db, accounts, userId));
       expect(ids(read.categories)).toEqual(ownIds(app.db, categories, userId));
       expect(ids(read.rules)).toEqual(ownIds(app.db, rules, userId));
       expect(ids(read.transactions.transactions)).toEqual(ownIds(app.db, transactions, userId));
@@ -117,6 +119,73 @@ describe('read tools: isolation', () => {
 
     expect(rule?.category).toEqual({ id: alice.fixtures.categoryId, name: 'Groceries' });
     expect(loan?.categoryName).toBe('Groceries');
+  });
+});
+
+describe('get_balances', () => {
+  it('adds every transaction to the opening balance, and only those up to each date', async () => {
+    const { app, alice, bob } = await startTwoUserApp();
+    const account = app.db
+      .insert(accounts)
+      .values({
+        userId: alice.session.id,
+        name: 'Savings',
+        type: 'joint',
+        ownershipShare: 0.5,
+        openingBalance: 100,
+        openingBalanceDate: '2026-01-01',
+        color: '#000',
+        icon: 'bank',
+        archived: false,
+      })
+      .returning({ id: accounts.id })
+      .get().id;
+    const add = (userId: number, accountId: number, bookingDate: string, amount: number) =>
+      app.db
+        .insert(transactions)
+        .values({
+          userId,
+          accountId,
+          bookingDate,
+          amount,
+          rawDescription: 'Row',
+          fingerprint: `fp-${Math.random()}`,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        })
+        .run();
+    add(alice.session.id, account, '2026-01-31', 0.1);
+    add(alice.session.id, account, '2026-02-15', 0.2);
+    add(alice.session.id, account, '2026-03-01', -50);
+    // Another user's row on this account id must not count.
+    add(bob.session.id, account, '2026-01-15', 1000);
+
+    const balances = await (
+      await connectMcp(app, alice.session.id)
+    ).value<{ id: number; balance: number; history: { date: string; balance: number }[] }[]>(
+      'get_balances',
+      { dates: ['2025-12-31', '2026-01-31', '2026-02-28'] },
+    );
+
+    expect(balances.find((row) => row.id === account)).toEqual({
+      id: account,
+      name: 'Savings',
+      archived: false,
+      balance: 50.3,
+      history: [
+        { date: '2025-12-31', balance: 100 },
+        { date: '2026-01-31', balance: 100.1 },
+        { date: '2026-02-28', balance: 100.3 },
+      ],
+    });
+  });
+
+  it('answers a tool error for a malformed date', async () => {
+    const { app, alice } = await startTwoUserApp();
+    const client = await connectMcp(app, alice.session.id);
+
+    expect(await client.call('get_balances', { dates: ['31/01/2026'] })).toMatchObject({
+      ok: false,
+    });
   });
 });
 

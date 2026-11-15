@@ -163,7 +163,8 @@ cannot change hands between the check and the write.
   `Authorization: Bearer <token>`: the session cookie does not authenticate it, and a token does not
   authenticate `/api`. A missing, unknown or revoked token, or a disabled user's token, is a 401.
   Every tool runs as the token's user; no admin tool exists.
-- Read tools: `list_accounts`, `list_categories`, `list_rules`, `search_transactions` (date range
+- Read tools: `list_accounts`, `get_balances` (each account's current balance, plus its balance at
+  the end of each optional `dates` entry), `list_categories`, `list_rules`, `search_transactions` (date range
   required; the transactions page's other filters — account, category, text, income/expense,
   amount bounds — are optional; keyset-paged with `nextCursor`), `get_loans`, `get_future`, `get_income`. They return
   stored rows, not the browser's computed views (forecasts, amortisation).
