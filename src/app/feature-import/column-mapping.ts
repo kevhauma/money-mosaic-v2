@@ -1,4 +1,10 @@
-import type { MappingProfile, MappingProfileColumns, SignConvention } from '@/core/data-access';
+import type {
+  CsvEncoding,
+  DateFormat,
+  MappingProfile,
+  MappingProfileColumns,
+  SignConvention,
+} from '@/core/data-access';
 
 export type ImportMappingResult = { mappingProfile: Omit<MappingProfile, 'id'> };
 
@@ -6,6 +12,29 @@ export const SIGN_CONVENTION_LABELS: Record<SignConvention, string> = {
   'as-is': 'As-is',
   'debit-negative': 'Debit negative (default)',
   'credit-negative': 'Credit negative',
+};
+
+/** The reading settings' option labels, shared by the wizard and Settings' mapping form. */
+export const DELIMITER_LABELS: Record<string, string> = {
+  ';': 'Semicolon ;',
+  ',': 'Comma ,',
+  '\t': 'Tab',
+};
+
+export const DATE_FORMAT_LABELS: Record<DateFormat, string> = {
+  'DD/MM/YYYY': 'day/month/year',
+  'MM/DD/YYYY': 'month/day/year',
+  'YYYY-MM-DD': 'year-month-day',
+};
+
+export const ENCODING_LABELS: Record<CsvEncoding, string> = {
+  'utf-8': 'UTF-8',
+  'windows-1252': 'Windows-1252',
+};
+
+export const DECIMAL_SEPARATOR_LABELS: Record<string, string> = {
+  ',': 'Comma (1.234,56)',
+  '.': 'Point (1,234.56)',
 };
 
 /** A column-mapping field's key — one of `MappingProfileColumns`'s own properties. */

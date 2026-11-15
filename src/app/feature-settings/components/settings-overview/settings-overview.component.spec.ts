@@ -43,7 +43,7 @@ describe('SettingsOverviewComponent', () => {
 
     const sections = Array.from(
       element.querySelectorAll(
-        'app-settings-account-section, app-settings-theme-section, app-settings-currency-locale-section, app-settings-data-section, app-settings-about-section',
+        'app-settings-account-section, app-settings-theme-section, app-settings-currency-locale-section, app-settings-data-section, app-settings-import-mappings-section, app-settings-about-section',
       ),
     ).map((section) => section.tagName.toLowerCase());
 
@@ -54,6 +54,7 @@ describe('SettingsOverviewComponent', () => {
       'app-settings-theme-section',
       'app-settings-currency-locale-section',
       'app-settings-data-section',
+      'app-settings-import-mappings-section',
       'app-settings-about-section',
     ]);
   });

@@ -1,0 +1,73 @@
+<mm-paper>
+  <mm-text variant="heading" as="h2">Import mappings</mm-text>
+  <mm-text as="p" variant="caption" class="mt-1 mb-3">
+    How each bank's CSV files are read. To make a new one, duplicate a mapping and edit the copy, or
+    import a file and save its mapping in the wizard.
+  </mm-text>
+
+  <mm-hydration-boundary
+    [loading]="hydration.loading()"
+    [error]="hydration.error()"
+    [rows]="2"
+    (retry)="hydration.retry()"
+  >
+    @if (rows().length === 0) {
+      <mm-empty-state
+        title="No import mappings yet"
+        message="Import a CSV file and the wizard saves its mapping here."
+      />
+    } @else {
+      <mm-table density="compact">
+        <caption class="sr-only">
+          Saved import mappings
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Bank preset</th>
+            <th scope="col">Default account</th>
+            <th scope="col">Auto-detects</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.profile.id) {
+            <tr>
+              <td>{{ row.profile.name }}</td>
+              <td>{{ row.preset }}</td>
+              <td>{{ row.account }}</td>
+              <td>{{ row.autoDetects }}</td>
+              <td>
+                <mm-flex gap="1" justify="end">
+                  <mm-button size="xs" variant="ghost" (click)="edit(row.profile)">Edit</mm-button>
+                  <mm-button size="xs" variant="ghost" (click)="duplicate(row.profile)">
+                    Duplicate
+                  </mm-button>
+                  <mm-button
+                    size="xs"
+                    variant="ghost"
+                    color="error"
+                    (click)="deleteConfirm.request(row.profile)"
+                  >
+                    Delete
+                  </mm-button>
+                </mm-flex>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </mm-table>
+    }
+  </mm-hydration-boundary>
+</mm-paper>
+
+<app-mapping-profile-form [(open)]="formOpen" [profile]="editing()" (saved)="save($event)" />
+
+<mm-confirm-dialog
+  [(open)]="deleteConfirm.open"
+  title="Delete this mapping?"
+  [message]="deleteMessage()"
+  confirmLabel="Delete mapping"
+  [danger]="true"
+  (confirmed)="deleteConfirmed()"
+/>

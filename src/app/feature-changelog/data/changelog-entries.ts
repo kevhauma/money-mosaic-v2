@@ -1276,4 +1276,16 @@ export const CHANGELOG_ENTRIES: readonly ChangelogEntry[] = [
       'After restoring a backup, the app reloads your data even if you choose "Later"',
     ],
   },
+  {
+    date: '2026-11-15',
+    release: 'unreleased',
+    ticketIds: ['TICKET-SET-11'],
+    title: 'See, edit, duplicate and delete your import mappings in Settings',
+    area: 'Settings',
+    details: [
+      'Every saved mapping is listed, the bank templates included',
+      'Fix a wrong column or setting without starting an import',
+      'Duplicate a mapping to start a new one from it',
+    ],
+  },
 ];

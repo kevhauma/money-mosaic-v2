@@ -20,4 +20,6 @@ export class MappingProfilesRepository {
 
   update = (id: number, changes: Partial<MappingProfile>): Promise<number> =>
     this.api.patchOptional<MappingProfile>(`${PATH}/${id}`, changes).then((row) => (row ? 1 : 0));
+
+  remove = (id: number): Promise<void> => this.api.delete(`${PATH}/${id}`);
 }

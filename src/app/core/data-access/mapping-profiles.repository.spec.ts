@@ -50,4 +50,12 @@ describe('MappingProfilesRepository', () => {
 
     expect(await settled).toBe(0);
   });
+
+  it('remove deletes the one row (TICKET-SET-11)', async () => {
+    await callApi(
+      () => repository().remove(5),
+      { method: 'DELETE', url: '/api/mappingProfiles/5' },
+      null,
+    );
+  });
 });

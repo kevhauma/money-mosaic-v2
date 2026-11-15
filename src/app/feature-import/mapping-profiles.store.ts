@@ -99,6 +99,33 @@ export const MappingProfilesStore = signalStore(
         return added;
       },
 
+      /** Settings' edit (TICKET-SET-11). A row the server no longer has leaves the list too. */
+      updateProfile: async (id: number, changes: Partial<MappingProfile>): Promise<void> => {
+        const updated = (await mappingProfilesRepository.update(id, changes)) > 0;
+        patchState(
+          store,
+          updated ? updateEntity({ id, changes }, mappingProfileConfig) : removeEntity(id),
+        );
+      },
+
+      /**
+       * A copy to edit (TICKET-SET-11), without the header signature: `matchTemplateForHeaders`
+       * takes the first match, so two profiles sharing one would make detection depend on row order.
+       */
+      duplicateProfile: async (profile: MappingProfile): Promise<MappingProfile> => {
+        const copy = { ...profile, name: `${profile.name} (copy)` };
+        delete copy.id;
+        delete copy.headerSignature;
+        const added: MappingProfile = { ...copy, id: await mappingProfilesRepository.add(copy) };
+        patchState(store, addEntity(added, mappingProfileConfig));
+        return added;
+      },
+
+      removeProfile: async (id: number): Promise<void> => {
+        await mappingProfilesRepository.remove(id);
+        patchState(store, removeEntity(id));
+      },
+
       /** The mapping remembered for this account and the file type `detected` stands for — which is
        * `detected` itself when the header match already landed on this account's saved mapping. */
       findRemembered: (detected: MappingProfile, accountId: number): MappingProfile | undefined =>

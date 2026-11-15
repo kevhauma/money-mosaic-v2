@@ -2,7 +2,7 @@
 
 Every ticket for this area, whichever release shipped it. This file is an **index**: the build order, dependency notes and scope decisions for a given release live in that release's own overview under [docs/releases/](../releases/), linked from each ticket's **Released in** line.
 
-**11 tickets** — 11 done.
+**12 tickets** — 12 done.
 
 ## PRIV
 
@@ -20,3 +20,4 @@ Every ticket for this area, whichever release shipped it. This file is an **inde
 - [x] [TICKET-SET-08](./tickets/TICKET-SET-08-gross-series-color-setting.md) — Gross series color setting · _v1.6 Income & growth_
 - [x] [TICKET-SET-09](./tickets/TICKET-SET-09-fiscal-year-start-setting.md) — Fiscal year start month in Settings · _v1.8 Extended date-range picker_
 - [x] [TICKET-SET-10](./tickets/TICKET-SET-10-default-locale-to-belgian.md) — Default locale ships US date order to a Belgian user · _v2.3 UX review_
+- [x] [TICKET-SET-11](./tickets/TICKET-SET-11-import-mappings-section.md) — Manage import mappings in Settings: list, edit, duplicate, delete (extends FR-IMP-3 / FR-IMP-5) — independent, can ship any time; planned before the MCP tickets · _unreleased_

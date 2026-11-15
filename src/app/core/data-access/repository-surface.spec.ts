@@ -118,6 +118,7 @@ type Pins = [
       getAll: () => Promise<MappingProfile[]>;
       add: (profile: MappingProfile) => Promise<number>;
       update: (id: number, changes: Partial<MappingProfile>) => Promise<number>;
+      remove: (id: number) => Promise<void>;
     }
   >,
   Pinned<
@@ -260,7 +261,11 @@ const ARITIES: readonly [string, new () => object, Arities][] = [
   ['CategoriesRepository', CategoriesRepository, { getAll: 0, add: 1, update: 2, remove: 1 }],
   ['RulesRepository', RulesRepository, { getAll: 0, add: 1, update: 2, remove: 1 }],
   ['LoansRepository', LoansRepository, { getAll: 0, add: 1, update: 2, remove: 1 }],
-  ['MappingProfilesRepository', MappingProfilesRepository, { getAll: 0, add: 1, update: 2 }],
+  [
+    'MappingProfilesRepository',
+    MappingProfilesRepository,
+    { getAll: 0, add: 1, update: 2, remove: 1 },
+  ],
   [
     'ImportBatchesRepository',
     ImportBatchesRepository,

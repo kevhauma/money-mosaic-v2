@@ -204,3 +204,73 @@ describe('MappingProfilesStore: remembering a mapping (TICKET-IMP-17)', () => {
     ]);
   });
 });
+
+describe('MappingProfilesStore: managing profiles in Settings (TICKET-SET-11)', () => {
+  const mappingProfilesRepository = {
+    getAll: vi.fn(),
+    add: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn(),
+  };
+  const KBC = { ...KBC_TEMPLATE, id: 1 };
+
+  const hydratedStore = async () => {
+    mappingProfilesRepository.getAll.mockResolvedValue([KBC, { ...BELFIUS_TEMPLATE, id: 2 }]);
+    const store = TestBed.inject(MappingProfilesStore);
+    await store.hydrate();
+    return store;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mappingProfilesRepository.add.mockResolvedValue(7);
+    mappingProfilesRepository.update.mockResolvedValue(1);
+    mappingProfilesRepository.remove.mockResolvedValue(undefined);
+    TestBed.configureTestingModule({
+      providers: [{ provide: MappingProfilesRepository, useValue: mappingProfilesRepository }],
+    });
+  });
+
+  it('updateProfile persists the changes and patches the row', async () => {
+    const store = await hydratedStore();
+
+    await store.updateProfile(1, { name: 'KBC 2026', headerSignature: undefined });
+
+    expect(mappingProfilesRepository.update).toHaveBeenCalledWith(1, {
+      name: 'KBC 2026',
+      headerSignature: undefined,
+    });
+    expect(store.entityMap()[1]).toMatchObject({ name: 'KBC 2026', headerSignature: undefined });
+  });
+
+  it('updateProfile drops a row the server no longer has', async () => {
+    const store = await hydratedStore();
+    mappingProfilesRepository.update.mockResolvedValue(0);
+
+    await store.updateProfile(1, { name: 'KBC 2026' });
+
+    expect(store.profiles().map((profile) => profile.id)).toEqual([2]);
+  });
+
+  it('duplicateProfile adds a "(copy)" without the id or header signature', async () => {
+    const store = await hydratedStore();
+
+    const copy = await store.duplicateProfile(KBC);
+
+    const expected = { ...KBC_TEMPLATE, name: 'KBC (copy)', headerSignature: undefined };
+    delete expected.headerSignature;
+    expect(mappingProfilesRepository.add).toHaveBeenCalledWith(expected);
+    expect(copy).toEqual({ ...expected, id: 7 });
+    expect(store.entityMap()[7]).toEqual(copy);
+    expect(store.entityMap()[1]).toEqual(KBC);
+  });
+
+  it('removeProfile deletes it on the server and from the list', async () => {
+    const store = await hydratedStore();
+
+    await store.removeProfile(1);
+
+    expect(mappingProfilesRepository.remove).toHaveBeenCalledWith(1);
+    expect(store.profiles().map((profile) => profile.id)).toEqual([2]);
+  });
+});

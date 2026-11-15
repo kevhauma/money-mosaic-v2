@@ -1,0 +1,103 @@
+<mm-modal [(open)]="open">
+  <span mm-modal-title>Edit mapping</span>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2">
+    <mm-fieldset legend="Name">
+      <mm-input type="text" formControlName="name" class="w-full" />
+      @if (nameError; as message) {
+        <mm-label variant="error">{{ message }}</mm-label>
+      }
+    </mm-fieldset>
+
+    <mm-fieldset legend="Bank preset (optional)">
+      <mm-input type="text" formControlName="bankPreset" class="w-full" placeholder="e.g. kbc" />
+    </mm-fieldset>
+
+    <div class="grid gap-x-4 sm:grid-cols-2">
+      <mm-fieldset legend="Columns are split by">
+        <mm-select formControlName="delimiter" class="w-full">
+          @for (option of delimiterOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </mm-select>
+      </mm-fieldset>
+
+      <mm-fieldset legend="Decimal separator">
+        <mm-select formControlName="decimalSeparator" class="w-full">
+          @for (option of decimalSeparatorOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </mm-select>
+      </mm-fieldset>
+
+      <mm-fieldset legend="Date format">
+        <mm-select formControlName="dateFormat" class="w-full">
+          @for (option of dateFormatOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </mm-select>
+      </mm-fieldset>
+
+      <mm-fieldset legend="Encoding">
+        <mm-select formControlName="encoding" class="w-full">
+          @for (option of encodingOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </mm-select>
+      </mm-fieldset>
+
+      <mm-fieldset legend="Header rows">
+        <mm-input type="number" step="1" min="0" formControlName="headerRows" class="w-full" />
+        @if (headerRowsError; as message) {
+          <mm-label variant="error">{{ message }}</mm-label>
+        }
+      </mm-fieldset>
+
+      <mm-fieldset legend="Sign convention">
+        <mm-select formControlName="signConvention" class="w-full">
+          @for (option of signConventionOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </mm-select>
+      </mm-fieldset>
+    </div>
+
+    <div formGroupName="columns" class="grid gap-x-4 sm:grid-cols-2">
+      @for (field of columnFields; track field.key) {
+        <mm-fieldset [legend]="field.legend">
+          <mm-input type="text" [formControlName]="field.key" class="w-full" />
+          @if (columnErrors[field.key]; as message) {
+            <mm-label variant="error">{{ message }}</mm-label>
+          }
+        </mm-fieldset>
+      }
+    </div>
+
+    <mm-fieldset legend="Default account">
+      <mm-select formControlName="defaultAccountId" class="w-full">
+        <option value="">Any</option>
+        @for (account of accounts(); track account.id) {
+          <option [value]="account.id">{{ account.name }}</option>
+        }
+      </mm-select>
+    </mm-fieldset>
+
+    <mm-fieldset legend="Header signature (one header per line)" for="mapping-header-signature">
+      <textarea
+        id="mapping-header-signature"
+        formControlName="headerSignature"
+        class="textarea w-full"
+        rows="4"
+      ></textarea>
+      <mm-alert status="warning" variant="soft" class="mt-2">
+        Changing the header signature changes which files this mapping auto-detects. Leave it empty
+        and the mapping is only used where it is remembered for an account.
+      </mm-alert>
+    </mm-fieldset>
+
+    <div class="modal-action">
+      <mm-button (click)="cancel()">Cancel</mm-button>
+      <mm-button type="submit" color="primary">Save changes</mm-button>
+    </div>
+  </form>
+</mm-modal>

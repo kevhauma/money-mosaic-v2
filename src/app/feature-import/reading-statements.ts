@@ -1,9 +1,4 @@
-import {
-  SUPPORTED_DATE_FORMATS,
-  SUPPORTED_ENCODINGS,
-  type CsvEncoding,
-  type DateFormat,
-} from '@/core/data-access';
+import { SUPPORTED_DATE_FORMATS, SUPPORTED_ENCODINGS, type DateFormat } from '@/core/data-access';
 import type { FormControl } from '@angular/forms';
 import type { TextColor, TextWeight } from '@/shared/ui';
 import {
@@ -20,6 +15,7 @@ import {
   type ReadingOptions,
 } from '@/core/import';
 import { formatCurrency, formatDateSpelled } from '@/shared/utils';
+import { DATE_FORMAT_LABELS, DELIMITER_LABELS, ENCODING_LABELS } from './column-mapping';
 
 /**
  * The "How the file is read" section's view-model (TICKET-IMP-16): one plain statement per reading
@@ -81,21 +77,7 @@ const DATA_LINES_SHOWN = 4;
 const HEADER_CHOICES = 8;
 
 const DELIMITER_NAMES: Record<string, string> = { ';': ';', ',': ',', '\t': 'tabs' };
-const DELIMITER_LABELS: Record<string, string> = {
-  ';': 'Semicolon ;',
-  ',': 'Comma ,',
-  '\t': 'Tab',
-};
-const DATE_FORMAT_LABELS: Record<DateFormat, string> = {
-  'DD/MM/YYYY': 'day/month/year',
-  'MM/DD/YYYY': 'month/day/year',
-  'YYYY-MM-DD': 'year-month-day',
-};
 const DECIMAL_NAMES: Record<string, string> = { ',': 'comma', '.': 'dot' };
-const ENCODING_LABELS: Record<CsvEncoding, string> = {
-  'utf-8': 'UTF-8',
-  'windows-1252': 'Windows-1252',
-};
 
 /** The `Ã©`-style pairs UTF-8 bytes turn into when read as Windows-1252: an `Ã`/`Â` followed by a
  * continuation byte's Windows-1252 reading (0x80–0xBF, or the Œ…™ block that 0x80–0x9F maps to). */
